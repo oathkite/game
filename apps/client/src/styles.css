@@ -223,11 +223,50 @@ a {
   image-rendering: pixelated;
 }
 
-.timer {
+/* 上端中央の HUD。残り時間と手番のラベルを縦に積む。入力は遮らない */
+.hud-top {
   position: absolute;
   top: 0;
   left: 50%;
   transform: translateX(-50%);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+  pointer-events: none;
+  z-index: 2;
+}
+
+/* 色は既存の .dim に任せる。手番の明暗を他の dim な部品と揃えるため */
+.turn-label {
+  font-size: 16px;
+  background: var(--bg);
+  padding: 2px 8px;
+  white-space: nowrap;
+}
+
+/* ターン開始時にマップの中央へ一瞬だけ出す。入力は遮らない */
+.turn-banner {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  pointer-events: none;
+  z-index: 2;
+}
+
+/* 文字色は .dim に任せ、枠線だけ文字色に合わせる */
+.turn-banner-text {
+  font-size: 48px;
+  letter-spacing: 0.1em;
+  background: var(--bg);
+  border: 2px solid currentColor;
+  padding: 12px 32px;
+  white-space: nowrap;
+}
+
+.timer {
   border: 2px solid var(--ui);
   border-top: none;
   background: var(--bg);
@@ -236,7 +275,6 @@ a {
   min-width: 3ch;
   text-align: center;
   font-variant-numeric: tabular-nums;
-  z-index: 2;
 }
 
 .map-topline {

@@ -81,6 +81,10 @@ test("2 つのブラウザで部屋を作って入り、撃って、降参で決
   const other = shooter === a ? b : a;
   await waitFor(shooter, (s) => s.phase === "acting");
 
+  // 手番の表示。手番側には「あなたの番」、相手には「相手の番」が出る
+  await expect(shooter.getByTestId("turn-label")).toHaveText("あなたの番");
+  await expect(other.getByTestId("turn-label")).toHaveText("相手の番");
+
   // 手番側が移動して撃つ。押している時間でパワーが決まる
   await shooter.keyboard.down("ArrowRight");
   await shooter.waitForTimeout(300);

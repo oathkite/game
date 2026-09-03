@@ -68,7 +68,8 @@ pnpm --filter @game/e2e test:e2e   # server か client の振る舞いを変え�
 
 本番は Cloudflare にある。手順と URL は `README.md` の「デプロイ」にある。
 
-- 配置の順序は server（`wrangler deploy`）、次に client（`VITE_SERVER_URL` を server の URL にしてビルドし `wrangler pages deploy`）。
+- `main` へのマージで GitHub Actions（`.github/workflows/deploy.yml`）が本番へ配置する。PR をマージすることが配置の操作なので、マージ前に e2e まで通しておく。
+- 配置の順序は server（`wrangler deploy`）、次に client（`VITE_SERVER_URL` を server の URL にしてビルドし `wrangler pages deploy`）。workflow もこの順序で行う。
 - 配置後は 2 つのブラウザで部屋の作成、入室、開始、射撃、ターン進行を確かめる。
 - 費用の見張り: alarm の下限（1 秒）と「部屋も接続も無ければ storage を空にする」を外さない。Durable Object の要求数と storage 書き込みが増える変更（命令ごとの保存回数、alarm の頻度）は PR に見積もりを書く。
 - 認証は `wrangler login` で行い、トークンや `.env` をコミットしない。

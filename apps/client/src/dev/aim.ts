@@ -8,6 +8,10 @@ export type Aim = {
   readonly power: number;
 };
 
+// パワーの探索上限。100 に達すると自動で発射されるので（設計書 03 の 3.5）、
+// 押している時間で作る e2e が待ち時間の誤差でしきい値を跨がないよう余裕を取る
+const POWER_SEARCH_MAX = 90;
+
 /** パワーが前後 tolerance ずれても相手にダメージが入る照準。見つからなければ null */
 export const findRobustAim = (view: MatchView, tolerance = 2): Aim | null => {
   const c = view.control;
@@ -24,7 +28,7 @@ export const findRobustAim = (view: MatchView, tolerance = 2): Aim | null => {
   let best: (Aim & { readonly score: number }) | null = null;
   // 粗く探す。e2e で 1 ターンあたり数秒に収めるため
   for (let elevation = 20; elevation <= 75; elevation += 3) {
-    for (let power = 30; power <= 100 - tolerance; power += 2) {
+    for (let power = 30; power <= POWER_SEARCH_MAX - tolerance; power += 2) {
       let score = Number.POSITIVE_INFINITY;
       for (const d of [-tolerance, 0, tolerance]) score = Math.min(score, damageOf(elevation, power + d));
       if (score > 0 && (best === null || score > best.score)) best = { elevation, power, score };

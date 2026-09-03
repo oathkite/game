@@ -5,6 +5,7 @@ import type { MatchStore } from "@/match/matchStore";
 import { LeftPanel } from "./LeftPanel";
 import { RightPanel } from "./RightPanel";
 import { Timer } from "./Timer";
+import { TurnBanner, TurnLabel } from "./TurnIndicator";
 import { useHold } from "./useHold";
 import { useKeyboardInput } from "./useKeyboardInput";
 import { usePowerGauge } from "./usePowerGauge";
@@ -56,8 +57,12 @@ export const GameScreen = ({ store, clockOffset, swapPanels, onSurrender, onLeav
       <div className="map-area">
         <div className="map-frame" style={{ width: layout.mapWidth, height: layout.mapHeight }}>
           <div className="map-topline" />
-          <Timer deadlineAt={view.deadlineAt} clockOffset={clockOffset} myTurn={myTurn} />
+          <div className="hud-top">
+            <Timer deadlineAt={view.deadlineAt} clockOffset={clockOffset} myTurn={myTurn} />
+            <TurnLabel view={view} />
+          </div>
           <GameCanvas store={store} view={view} layout={layout} />
+          <TurnBanner view={view} />
           {view.opponentDisconnectedUntil !== null && (
             <div className="overlay">
               <div className="box">相手の再接続を待っています</div>

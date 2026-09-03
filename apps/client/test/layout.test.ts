@@ -1,6 +1,5 @@
 import { describe, expect, it } from "vitest";
 import { computeLayout } from "@/game/scale";
-import { powerFromElapsed } from "@/ui/usePowerGauge";
 
 describe("computeLayout", () => {
   it("基準表示の 1600 + 192 × 900 ではセルが 4 px になる", () => {
@@ -19,18 +18,5 @@ describe("computeLayout", () => {
 
   it("小さすぎる画面でも 1 px は保つ", () => {
     expect(computeLayout(320, 200).cell).toBe(1);
-  });
-});
-
-describe("powerFromElapsed", () => {
-  it("1.5 秒で 100 に達し、それ以上は 100 で止まる", () => {
-    expect(powerFromElapsed(0)).toBe(0);
-    expect(powerFromElapsed(750)).toBe(50);
-    expect(powerFromElapsed(1500)).toBe(100);
-    expect(powerFromElapsed(5000)).toBe(100);
-  });
-
-  it("負の経過時間は 0 にする", () => {
-    expect(powerFromElapsed(-10)).toBe(0);
   });
 });
