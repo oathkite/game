@@ -46,14 +46,14 @@
 
 | 名前 | 方向 | 内容 |
 |---|---|---|
-| `room.create` | C→S | 匿名 ID、名前、主色と副色、表示名、公開か非公開か、マップ名 |
-| `room.join` | C→S | 部屋コード、匿名 ID、名前、主色と副色 |
-| `room.spectate` | C→S | 部屋コード、匿名 ID、名前。観戦者として入る |
+| `room.create` | C→S | 匿名 ID、プレイヤー名、主色と副色、表示名、公開か非公開か、マップ名 |
+| `room.join` | C→S | 部屋コード、匿名 ID、プレイヤー名、主色と副色 |
+| `room.spectate` | C→S | 部屋コード、匿名 ID、プレイヤー名。観戦者として入る |
 | `room.takeSeat` | C→S | 観戦者が空いた席に参加者として移る。主色と副色 |
-| `room.joined` | S→C | 部屋コード、招待用の URL、自分の席番号、接続トークン、部屋の状態（[データモデル](./06-data-model.md) の RoomState） |
-| `room.state` | S→C | 部屋の状態の全体。入退室、ready、色や名前の変更、マップ変更のたびに配信する |
+| `room.joined` | S→C | 部屋コード、招待用の URL、自分の席番号（観戦者なら null）、観戦者かどうか、接続トークン、部屋の状態（[データモデル](./06-data-model.md) の RoomState） |
+| `room.state` | S→C | 部屋の状態の全体。入退室、ready、色やプレイヤー名の変更、マップ変更のたびに配信する |
 | `room.ready` | C→S | ready の on か off |
-| `room.profile` | C→S | 名前、主色、副色の変更 |
+| `room.profile` | C→S | プレイヤー名、主色、副色の変更 |
 | `room.setMap` | C→S | オーナーのみ。マップ名 |
 | `room.kick` | C→S | オーナーのみ。対象の席番号 |
 | `room.start` | C→S | オーナーのみ |
@@ -87,7 +87,7 @@
 | 名前 | 方向 | 内容 |
 |---|---|---|
 | `match.surrender` | C→S | なし |
-| `match.finished` | S→C | 勝者の席番号か引き分け、理由（HP、リングアウト、ターン上限、降参、切断）、各席の与えたダメージと直撃数、経過ターン数 |
+| `match.finished` | S→C | 勝者の席番号か引き分け、理由（HP、リングアウト、ターン上限、降参、切断、解散）、各席の与えたダメージと直撃数、経過ターン数 |
 | `result.close` | C→S | リザルトを閉じた。全員が閉じるか一定時間で部屋は募集中に戻る |
 | `conn.opponentDisconnected` | S→C | 再接続を待つ期限 |
 | `conn.opponentReconnected` | S→C | なし |

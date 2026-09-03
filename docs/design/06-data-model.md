@@ -19,6 +19,7 @@ type RoomMember = {
   readonly colors: TankColors;
   readonly ready: boolean;
   readonly colorConflict: boolean;  // 先にいる参加者と主色が重なっている
+  readonly joinOrder: number;       // 入室の順番。オーナーの引き継ぎに使う
   readonly connected: boolean;
 };
 
@@ -50,7 +51,7 @@ type RoomState = {
 type Seat = 0 | 1;
 
 type Phase =
-  | "ready"
+  | "loading"
   | "turnStart"
   | "acting"
   | "resolving"
@@ -86,7 +87,7 @@ type PlayerState = {
   readonly colors: TankColors;
   readonly hp: number;
   readonly x: number;                 // 機体中心の x（整数セル）
-  readonly facing: Facing;            // 最後に動いた方向
+  readonly facing: Facing;            // 最後に動いた方向。対戦開始時は相手側を向く
   readonly connected: boolean;
 };
 
@@ -167,7 +168,8 @@ type FinishReason =
   | "ringOut"
   | "turnLimit"
   | "surrender"
-  | "disconnect";
+  | "disconnect"
+  | "dissolved";                  // 対戦中の解散。勝者なし
 
 type MatchResult = {
   readonly winner: Seat | null;   // null は引き分け
@@ -232,11 +234,11 @@ type SeatStats = {
 弾がマップの左右か下の端を越えたら消え、着弾なしとする。
 上端は越えてよい。
 
-機体との接触は、弾のセルの中心と機体中心との距離が判定半径以下であることとする。
-距離の比較は 2 乗のまま整数で行う。
+機体との接触は、弾のセルと機体中心のセルの差 (dx, dy) について `dx*dx + dy*dy <= 9` が成り立つこととする（判定半径 3 セル）。
 
-ダメージの距離は、爆心と機体中心の距離の 2 乗を整数の平方根（切り捨て）で開いて求める。
-ダメージは 35 − 3 × 距離で、距離が 10 を超えれば 0 とする。
+ダメージの着弾距離は、爆心と機体中心の距離の 2 乗を整数の平方根（切り捨て）で開き、判定半径 3 を引いた値とする。負なら 0 にする。
+ダメージは 35 − 3 × 着弾距離で、着弾距離が 10 を超えれば 0 とする。
+直撃数は、着弾距離が 0 だった回数とする。
 
 1 発の処理順は、弾道、着弾、地形の削り、ダメージ（落下前の位置で判定）、両機体の落下、リングアウト、勝敗判定の順とする。
 
@@ -280,14 +282,14 @@ type SeatStats = {
 風の抽選はサーバーだけが行い、結果を数値として送る。
 
 **入力以外の状態を読まない。**
-物理コードは `TrajectoryInput`、現在の地形マスク、両者の x だけを読む。
+物理コードは `TrajectoryInput`、現在の地形マスク、両者の x と HP だけを読む。
 時刻、環境変数、グローバル状態を読まない。
 
 ## 6.8 契約の検証
 
 契約が守られていることは、テストで固定する。
 
-- **golden replay**：代表的な入力（角度とパワーの組み合わせ、風の端の値、山越え、リングアウト）について `ShotResult` を記録し、コードを変えても同じ結果が出ることを確認する。記録する入力は `TrajectoryInput` に加えて、地形マスクの初期状態と適用済みの `terrainOps`、両者の x を含める。この 3 つがなければ 1 発の射撃を再現できないからである。
+- **golden replay**：代表的な入力（角度とパワーの組み合わせ、風の端の値、山越え、リングアウト）について `ShotResult` を記録し、コードを変えても同じ結果が出ることを確認する。記録する入力は `TrajectoryInput` に加えて、地形マスクの初期状態と適用済みの `terrainOps`、両者の x と HP を含める。これらがなければ 1 発の射撃を再現できないからである。
 - **クロス環境**：同じテストを Node とブラウザ（Playwright）で実行し、結果を比較する。
 - **不整合の記録**：本番でクライアントの再計算がサーバーの `turn.result` と食い違ったら、その `TrajectoryInput` を記録する。これが契約違反の発見手段になる。
 
