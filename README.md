@@ -1,6 +1,6 @@
 # FORTRESS
 
-ブラウザで遊ぶ 1 対 1 のターン制砲撃対戦ゲーム。設計は [docs/design](./docs/design/README.md) にある。
+ブラウザで遊ぶ 1 対 1 のターン制砲撃対戦ゲーム。設計は [docs/design](./docs/design/README.md) に、開発の進め方は [CLAUDE.md](./CLAUDE.md) にある。
 
 ## 構成
 
