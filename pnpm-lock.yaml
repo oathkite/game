@@ -15,6 +15,15 @@ importers:
         specifier: ^3.2.4
         version: 3.2.7
 
+  packages/maps:
+    dependencies:
+      '@game/protocol':
+        specifier: workspace:*
+        version: link:../protocol
+      '@game/sim':
+        specifier: workspace:*
+        version: link:../sim
+
   packages/protocol:
     dependencies:
       zod:
