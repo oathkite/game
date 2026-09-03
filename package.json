@@ -3,6 +3,7 @@
   "private": true,
   "packageManager": "pnpm@11.1.1",
   "scripts": {
+    "dev": "pnpm -r --parallel --filter @game/client --filter @game/server dev",
     "test": "pnpm -r test",
     "typecheck": "pnpm -r typecheck"
   },

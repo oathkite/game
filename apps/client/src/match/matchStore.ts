@@ -1,9 +1,9 @@
-import type { Facing } from "@game/protocol";
-import { ELEVATION_MAX, ELEVATION_MIN, stepOutcome } from "@game/sim";
+import type { Facing, Seat } from "@game/protocol";
+import { ELEVATION_MAX, ELEVATION_MIN, STEPS_PER_TURN, stepOutcome } from "@game/sim";
 import { createListeners } from "@/net/connection";
 import type { Connection } from "@/net/connection";
 import { reduce, type ReduceOptions } from "./reduce";
-import { EMPTY_VIEW, type MatchView } from "./types";
+import { EMPTY_VIEW, type LocalControl, type MatchView } from "./types";
 
 // 対戦の表示状態を持ち、操作をサーバーへのメッセージに変える。
 
@@ -19,10 +19,13 @@ export type MatchStore = {
   readonly surrender: () => void;
   readonly closeResult: () => void;
   readonly onMismatch: (fn: (view: MatchView) => void) => () => void;
+  /** 自分の席が決まった（入室、席の移動）ときに呼ぶ。手番中なら操作を有効にする */
+  readonly setSeat: (seat: Seat | null, spectator: boolean) => void;
   readonly dispose: () => void;
 };
 
-export const createMatchStore = (connection: Connection, options: ReduceOptions): MatchStore => {
+export const createMatchStore = (connection: Connection, initialOptions: ReduceOptions): MatchStore => {
+  let options = initialOptions;
   let view = EMPTY_VIEW;
   let replaySeq = 0;
   const listeners = createListeners<void>();
@@ -95,9 +98,20 @@ export const createMatchStore = (connection: Connection, options: ReduceOptions)
     if (!finished && !view.spectator) connection.send({ type: "turn.replayDone" });
   };
 
+  const setSeat = (seat: Seat | null, spectator: boolean): void => {
+    options = { ...options, mySeat: seat, spectator };
+    if (view.phase === "idle" || options.followCurrentSeat) return;
+    const acting = seat !== null && !spectator && view.currentSeat === seat && view.deadlineAt !== null && (view.phase === "waiting" || view.phase === "acting");
+    const player = view.players?.[seat ?? 0];
+    const control: LocalControl | null =
+      acting && player ? { x: player.x, facing: player.facing, elevation: view.control?.elevation ?? 45, stepsLeft: STEPS_PER_TURN, fell: false } : null;
+    set({ ...view, mySeat: seat, spectator, phase: acting ? "acting" : view.phase === "acting" ? "waiting" : view.phase, control: acting ? control : view.phase === "acting" ? null : view.control });
+  };
+
   return {
     getView: () => view,
     subscribe: (fn) => listeners.add(() => fn()),
+    setSeat,
     moveStep,
     changeElevation,
     canStep,

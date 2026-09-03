@@ -3,6 +3,7 @@ import { useCallback, useEffect, useMemo, useState } from "react";
 import { setAudioSettings, unlockAudio } from "./app/audio";
 import { loadProfile, saveProfile, type Profile } from "./app/profile";
 import { SoloMatch } from "./screens/SoloMatch";
+import { hasSessionToken } from "./screens/useOnlineSession";
 import { SetupScreen } from "./screens/SetupScreen";
 import { OnlineFlow } from "./screens/OnlineFlow";
 
@@ -18,7 +19,8 @@ const inviteCodeFromUrl = (): string | null => {
 
 export const App = () => {
   const [profile, setProfile] = useState<Profile>(() => loadProfile());
-  const [route, setRoute] = useState<Route>({ kind: "setup" });
+  // 対戦中に再読み込みしても、接続トークンが残っていれば部屋へ戻る
+  const [route, setRoute] = useState<Route>(() => (hasSessionToken() ? { kind: "online" } : { kind: "setup" }));
   const inviteCode = useMemo(inviteCodeFromUrl, []);
 
   useEffect(() => {

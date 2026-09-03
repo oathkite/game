@@ -1,4 +1,5 @@
 import { realClock } from "@game/engine";
+import { randomInt } from "node:crypto";
 import { createServer } from "node:http";
 import { WebSocketServer } from "ws";
 import { createServerState, DEFAULT_SERVER_TIMING } from "./state.js";
@@ -18,7 +19,10 @@ const http = createServer((req, res) => {
   res.end();
 });
 
-const state = createServerState({ ...DEFAULT_SERVER_TIMING, rng: Math.random });
+// 接続トークンは席の証明になるので、暗号論的な乱数から引く
+const secureRng = (): number => randomInt(0, 2 ** 31) / 2 ** 31;
+
+const state = createServerState({ ...DEFAULT_SERVER_TIMING, rng: secureRng });
 const wss = new WebSocketServer({ server: http });
 attachWebSocket(state, wss, realClock, (line) => console.log(line));
 
