@@ -65,6 +65,8 @@ export type MatchView = {
   readonly mismatches: number;
   /** 再接続で Replaying の途中に復帰した。次の turn.result は再生せず確定状態のままにする */
   readonly skipNextResult: boolean;
+  /** 最後に使った仰角。ターンをまたいで引き継ぐ */
+  readonly lastElevation: number;
 };
 
 export const EMPTY_VIEW: MatchView = {
@@ -83,4 +85,5 @@ export const EMPTY_VIEW: MatchView = {
   opponentDisconnectedUntil: null,
   mismatches: 0,
   skipNextResult: false,
+  lastElevation: 45,
 };

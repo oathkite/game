@@ -48,7 +48,8 @@ export const OnlineFlow = ({ profile, onProfileChange, inviteCode, onExit }: Pro
   }
 
   const { room, seat, spectator } = s.session;
-  const showMatch = room.phase === "inMatch" || (room.phase === "result" && !resultDismissed && view.phase === "finished");
+  // 決着したショットの再生中に room.state(result) が届いても、再生が終わってリザルトを出すまでは対戦画面を保つ
+  const showMatch = room.phase === "inMatch" || (room.phase === "result" && !resultDismissed && (view.phase === "finished" || view.phase === "replaying"));
 
   if (showMatch && view.phase !== "idle") {
     return (

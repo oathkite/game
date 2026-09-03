@@ -162,4 +162,23 @@ describe("createMatchStore", () => {
     expect(f.sent.map((m) => m.type)).toEqual(["match.ready"]);
     store.dispose();
   });
+
+  it("仰角は次の自分のターンに引き継がれる", () => {
+    const f = fakeConnection();
+    const store = createMatchStore(f.connection, { followCurrentSeat: false, mySeat: 0, spectator: false });
+    const e = startedEngine();
+    f.push(e.setup);
+    f.push(e.start);
+    store.changeElevation(12);
+    store.fire(50);
+    const fired = handle(e.state, { type: "fire", seat: 0, fire: { type: "turn.fire", facing: 1, elevation: 57, power: 50, x: 55 } }, 1000);
+    f.push(fired.effects[0]?.message as ServerMessage);
+    store.completeReplay(store.getView().replay?.id ?? -1);
+    // 相手のターンを飛ばして自分のターンへ
+    const next = handle(handle(fired.state, { type: "tick" }, 12_000).state, { type: "tick" }, 40_000);
+    const myStart = next.effects.map((x) => x.message).filter((m) => m.type === "turn.start").pop();
+    f.push(myStart as ServerMessage);
+    expect(store.getView().control?.elevation).toBe(57);
+    store.dispose();
+  });
 });

@@ -74,7 +74,7 @@ export const createMatchStore = (connection: Connection, initialOptions: ReduceO
     const c = view.control;
     if (view.phase !== "acting" || !c) return;
     const elevation = Math.min(ELEVATION_MAX, Math.max(ELEVATION_MIN, c.elevation + delta));
-    if (elevation !== c.elevation) set({ ...view, control: { ...c, elevation } });
+    if (elevation !== c.elevation) set({ ...view, lastElevation: elevation, control: { ...c, elevation } });
   };
 
   const fire = (power: number): void => {
@@ -106,7 +106,7 @@ export const createMatchStore = (connection: Connection, initialOptions: ReduceO
     const acting = seat !== null && !spectator && view.currentSeat === seat && view.deadlineAt !== null && (view.phase === "waiting" || view.phase === "acting");
     const player = view.players?.[seat ?? 0];
     const control: LocalControl | null =
-      acting && player ? { x: player.x, facing: player.facing, elevation: view.control?.elevation ?? 45, stepsLeft: STEPS_PER_TURN, fell: false } : null;
+      acting && player ? { x: player.x, facing: player.facing, elevation: view.lastElevation, stepsLeft: STEPS_PER_TURN, fell: false } : null;
     set({ ...view, mySeat: seat, spectator, phase: acting ? "acting" : view.phase === "acting" ? "waiting" : view.phase, control: acting ? control : view.phase === "acting" ? null : view.control });
   };
 

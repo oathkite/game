@@ -119,12 +119,12 @@ export const useOnlineSession = (profile: Profile, inviteCode: string | null) =>
           conn.send({ type: "lobby.query", ...queryRef.current });
           break;
         case "room.error":
-          if (m.reason === "invalidToken") {
-            writeToken(null);
+          if (m.reason === "invalidToken") writeToken(null);
+          else setError(ERRORS[m.reason]);
+          // 部屋に入れなかったらロビーに立つ。招待リンクや再接続の失敗もここに来る
+          if (!sessionRef.current) {
             conn.send({ type: "lobby.subscribe" });
             conn.send({ type: "lobby.query", ...queryRef.current });
-          } else {
-            setError(ERRORS[m.reason]);
           }
           break;
         default:

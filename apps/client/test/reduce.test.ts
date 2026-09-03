@@ -167,4 +167,20 @@ describe("reduce", () => {
     expect(r.view.skipNextResult).toBe(false);
     expect(r.view.players?.[0].x).toBe(55);
   });
+
+  it("Loading 中の再接続では match.ready を送り直し、表示も loading にする", () => {
+    const r = reduce(EMPTY_VIEW, { type: "conn.state", match: state.match, seat: 0 }, opts, 1);
+    expect(r.reply).toBe("match.ready");
+    expect(r.view.phase).toBe("loading");
+  });
+
+  it("手番側の相手が切断したら、こちらの残り時間の表示も止める", () => {
+    const s1 = handle(state, { type: "loaded", seat: 0 }, 0);
+    const s2 = handle(s1.state, { type: "loaded", seat: 1 }, 0);
+    const start = s2.effects[0]?.message as ServerMessageOf<"turn.start">;
+    // 席 1 から見ると、手番の席 0 が切れた
+    const view = apply(EMPTY_VIEW, [setup, start, { type: "conn.opponentDisconnected", deadlineAt: 65_000 }], { ...opts, mySeat: 1 });
+    expect(view.deadlineAt).toBeNull();
+    expect(view.opponentDisconnectedUntil).toBe(65_000);
+  });
 });

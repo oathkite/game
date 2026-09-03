@@ -19,6 +19,8 @@ export type Reduced = {
   readonly mismatch: boolean;
 };
 
+const otherSeat = (seat: Seat): Seat => (seat === 0 ? 1 : 0);
+
 const just = (view: MatchView, reply: Reduced["reply"] = null, mismatch = false): Reduced => ({ view, reply, mismatch });
 
 const freshControl = (player: PlayerView, elevation: number): LocalControl => ({
@@ -45,8 +47,8 @@ const fromMatchState = (view: MatchView, match: MatchState, seat: Seat | null, o
     wind: match.wind,
     deadlineAt: match.deadlineAt,
     result: match.result,
-    phase: match.phase === "finished" ? "finished" : match.phase === "replaying" ? "waiting" : acting ? "acting" : "waiting",
-    control: acting ? freshControl(players[match.currentSeat], view.control?.elevation ?? 45) : null,
+    phase: match.phase === "finished" ? "finished" : match.phase === "loading" ? "loading" : match.phase === "replaying" ? "waiting" : acting ? "acting" : "waiting",
+    control: acting ? freshControl(players[match.currentSeat], view.lastElevation) : null,
     replay: null,
     // 送り直される turn.result は再生せず、確定状態に直行する（設計書 05 の 5.3）
     skipNextResult: match.phase === "replaying",
@@ -104,7 +106,8 @@ export const reduce = (view: MatchView, message: ServerMessage, options: ReduceO
       );
     }
     case "conn.state":
-      return just(fromMatchState(view, message.match, message.seat, options), null);
+      // Loading 中に再接続したら、読み込み完了を送り直す。送らないとサーバーは両者の完了を待ち続ける
+      return just(fromMatchState(view, message.match, message.seat, options), message.match.phase === "loading" ? "match.ready" : null);
     case "turn.start": {
       // 再生が終わる前に次のターンが来たら、再生を打ち切って確定状態に合わせる（設計書 04 の 4.4）
       const settled: MatchView = view.replay ? { ...view, mask: view.replay.maskAfter, players: view.replay.playersAfter, replay: null } : view;
@@ -119,7 +122,7 @@ export const reduce = (view: MatchView, message: ServerMessage, options: ReduceO
         turnNumber: message.turnNumber,
         wind: message.wind,
         deadlineAt: message.deadlineAt,
-        control: acting ? freshControl(settled.players[message.seat], settled.control?.elevation ?? 45) : null,
+        control: acting ? freshControl(settled.players[message.seat], settled.lastElevation) : null,
         skipNextResult: false,
       });
     }
@@ -134,8 +137,12 @@ export const reduce = (view: MatchView, message: ServerMessage, options: ReduceO
       // 再生中なら再生の終わりに finished へ移す
       return just(view.phase === "replaying" ? finished : { ...finished, phase: "finished", control: null });
     }
-    case "conn.opponentDisconnected":
-      return just({ ...view, opponentDisconnectedUntil: message.deadlineAt });
+    case "conn.opponentDisconnected": {
+      // 切れたのが手番側なら、サーバーは制限時間を止めている。こちらの表示も止める
+      const opponent = view.mySeat === null ? null : otherSeat(view.mySeat);
+      const paused = opponent !== null && view.currentSeat === opponent;
+      return just({ ...view, opponentDisconnectedUntil: message.deadlineAt, deadlineAt: paused ? null : view.deadlineAt });
+    }
     case "conn.opponentReconnected":
       return just({ ...view, opponentDisconnectedUntil: null });
     default:

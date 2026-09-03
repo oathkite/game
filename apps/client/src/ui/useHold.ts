@@ -32,7 +32,14 @@ export const useHold = (fn: () => void, intervalMs: number, enabled: boolean): H
     if (!enabled) stop();
   }, [enabled, stop]);
 
-  useEffect(() => stop, [stop]);
+  // フォーカスを失ったら keyup を取り逃しても止める
+  useEffect(() => {
+    window.addEventListener("blur", stop);
+    return () => {
+      window.removeEventListener("blur", stop);
+      stop();
+    };
+  }, [stop]);
 
   return { held, start, stop };
 };

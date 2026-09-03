@@ -32,9 +32,11 @@ export const createWsConnection = (url: string = serverUrl()): Connection => {
     ws.onmessage = (ev) => {
       if (typeof ev.data !== "string") return;
       try {
-        messages.emit(JSON.parse(ev.data) as ServerMessage);
+        const parsed: unknown = JSON.parse(ev.data);
+        // type を持つオブジェクトだけを通す。壊れたフレームは捨てる
+        if (typeof parsed === "object" && parsed !== null && typeof (parsed as { type?: unknown }).type === "string") messages.emit(parsed as ServerMessage);
       } catch {
-        // 壊れたフレームは捨てる
+        // JSON でないフレームは捨てる
       }
     };
     ws.onclose = () => {
