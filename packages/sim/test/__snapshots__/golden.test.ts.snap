@@ -1,0 +1,589 @@
+// Vitest Snapshot v1, https://vitest.dev/guide/snapshot.html
+
+exports[`golden replay > 上り坂 +45 度 1`] = `
+{
+  "last": {
+    "x": 8552448,
+    "y": 7897088,
+  },
+  "result": {
+    "damage": [
+      0,
+      0,
+    ],
+    "finished": null,
+    "hpAfter": [
+      100,
+      100,
+    ],
+    "impact": {
+      "x": 130,
+      "y": 120,
+    },
+    "input": {
+      "elevation": 30,
+      "facing": 1,
+      "power": 60,
+      "seat": 0,
+      "wind": 0,
+      "x": 100,
+    },
+    "ringOut": [],
+    "terrainOp": {
+      "cx": 130,
+      "cy": 120,
+      "radius": 10,
+    },
+    "xAfter": [
+      100,
+      300,
+    ],
+  },
+  "steps": 71,
+}
+`;
+
+exports[`golden replay > 下り坂 -45 度 1`] = `
+{
+  "last": {
+    "x": 9273344,
+    "y": 12484608,
+  },
+  "result": {
+    "damage": [
+      0,
+      0,
+    ],
+    "finished": null,
+    "hpAfter": [
+      100,
+      100,
+    ],
+    "impact": {
+      "x": 141,
+      "y": 190,
+    },
+    "input": {
+      "elevation": 10,
+      "facing": 1,
+      "power": 50,
+      "seat": 0,
+      "wind": 0,
+      "x": 100,
+    },
+    "ringOut": [],
+    "terrainOp": {
+      "cx": 141,
+      "cy": 190,
+      "radius": 10,
+    },
+    "xAfter": [
+      100,
+      300,
+    ],
+  },
+  "steps": 30,
+}
+`;
+
+exports[`golden replay > 壁の中で爆発 自爆 1`] = `
+{
+  "last": {
+    "x": 6848512,
+    "y": 9535488,
+  },
+  "result": {
+    "damage": [
+      32,
+      0,
+    ],
+    "finished": null,
+    "hpAfter": [
+      68,
+      100,
+    ],
+    "impact": {
+      "x": 104,
+      "y": 145,
+    },
+    "input": {
+      "elevation": 10,
+      "facing": 1,
+      "power": 50,
+      "seat": 0,
+      "wind": 0,
+      "x": 100,
+    },
+    "ringOut": [],
+    "terrainOp": {
+      "cx": 104,
+      "cy": 145,
+      "radius": 10,
+    },
+    "xAfter": [
+      100,
+      300,
+    ],
+  },
+  "steps": 1,
+}
+`;
+
+exports[`golden replay > 平地 右端から右へ 消失 1`] = `
+{
+  "last": {
+    "x": 26043588,
+    "y": 9491217,
+  },
+  "result": {
+    "damage": [
+      0,
+      0,
+    ],
+    "finished": null,
+    "hpAfter": [
+      100,
+      100,
+    ],
+    "impact": null,
+    "input": {
+      "elevation": 10,
+      "facing": 1,
+      "power": 100,
+      "seat": 0,
+      "wind": 0,
+      "x": 390,
+    },
+    "ringOut": [],
+    "terrainOp": null,
+    "xAfter": [
+      390,
+      60,
+    ],
+  },
+  "steps": 2,
+}
+`;
+
+exports[`golden replay > 平地 最小仰角 最小パワー 1`] = `
+{
+  "last": {
+    "x": 4227072,
+    "y": 9863168,
+  },
+  "result": {
+    "damage": [
+      29,
+      0,
+    ],
+    "finished": null,
+    "hpAfter": [
+      71,
+      100,
+    ],
+    "impact": {
+      "x": 64,
+      "y": 150,
+    },
+    "input": {
+      "elevation": 10,
+      "facing": 1,
+      "power": 0,
+      "seat": 0,
+      "wind": 0,
+      "x": 60,
+    },
+    "ringOut": [],
+    "terrainOp": {
+      "cx": 64,
+      "cy": 150,
+      "radius": 10,
+    },
+    "xAfter": [
+      60,
+      340,
+    ],
+  },
+  "steps": 16,
+}
+`;
+
+exports[`golden replay > 平地 直撃 1`] = `
+{
+  "last": {
+    "x": 4751360,
+    "y": 9469952,
+  },
+  "result": {
+    "damage": [
+      8,
+      35,
+    ],
+    "finished": null,
+    "hpAfter": [
+      92,
+      65,
+    ],
+    "impact": {
+      "x": 72,
+      "y": 144,
+    },
+    "input": {
+      "elevation": 10,
+      "facing": 1,
+      "power": 40,
+      "seat": 0,
+      "wind": 0,
+      "x": 60,
+    },
+    "ringOut": [],
+    "terrainOp": {
+      "cx": 72,
+      "cy": 144,
+      "radius": 10,
+    },
+    "xAfter": [
+      60,
+      72,
+    ],
+  },
+  "steps": 8,
+}
+`;
+
+exports[`golden replay > 平地 真上 最大パワー 1`] = `
+{
+  "last": {
+    "x": 13139968,
+    "y": 9469952,
+  },
+  "result": {
+    "damage": [
+      35,
+      0,
+    ],
+    "finished": null,
+    "hpAfter": [
+      65,
+      100,
+    ],
+    "impact": {
+      "x": 200,
+      "y": 144,
+    },
+    "input": {
+      "elevation": 90,
+      "facing": 1,
+      "power": 100,
+      "seat": 0,
+      "wind": 0,
+      "x": 200,
+    },
+    "ringOut": [],
+    "terrainOp": {
+      "cx": 200,
+      "cy": 144,
+      "radius": 10,
+    },
+    "xAfter": [
+      200,
+      340,
+    ],
+  },
+  "steps": 151,
+}
+`;
+
+exports[`golden replay > 浮島 奈落へ 消失 1`] = `
+{
+  "last": {
+    "x": 10533551,
+    "y": 14663791,
+  },
+  "result": {
+    "damage": [
+      0,
+      0,
+    ],
+    "finished": null,
+    "hpAfter": [
+      100,
+      100,
+    ],
+    "impact": null,
+    "input": {
+      "elevation": 10,
+      "facing": 1,
+      "power": 30,
+      "seat": 0,
+      "wind": 0,
+      "x": 118,
+    },
+    "ringOut": [],
+    "terrainOp": null,
+    "xAfter": [
+      118,
+      340,
+    ],
+  },
+  "steps": 50,
+}
+`;
+
+exports[`golden replay > 浮島 相手の足元を狙う 1`] = `
+{
+  "last": {
+    "x": 18382848,
+    "y": 12419072,
+  },
+  "result": {
+    "damage": [
+      0,
+      0,
+    ],
+    "finished": null,
+    "hpAfter": [
+      100,
+      100,
+    ],
+    "impact": {
+      "x": 280,
+      "y": 189,
+    },
+    "input": {
+      "elevation": 50,
+      "facing": 1,
+      "power": 88,
+      "seat": 0,
+      "wind": -2,
+      "x": 80,
+    },
+    "ringOut": [],
+    "terrainOp": {
+      "cx": 280,
+      "cy": 189,
+      "radius": 10,
+    },
+    "xAfter": [
+      80,
+      300,
+    ],
+  },
+  "steps": 121,
+}
+`;
+
+exports[`golden replay > 谷 向かい風 10 1`] = `
+{
+  "last": {
+    "x": 13271040,
+    "y": 13074432,
+  },
+  "result": {
+    "damage": [
+      0,
+      0,
+    ],
+    "finished": null,
+    "hpAfter": [
+      100,
+      100,
+    ],
+    "impact": {
+      "x": 202,
+      "y": 199,
+    },
+    "input": {
+      "elevation": 45,
+      "facing": 1,
+      "power": 72,
+      "seat": 0,
+      "wind": -10,
+      "x": 60,
+    },
+    "ringOut": [],
+    "terrainOp": {
+      "cx": 202,
+      "cy": 199,
+      "radius": 10,
+    },
+    "xAfter": [
+      60,
+      340,
+    ],
+  },
+  "steps": 108,
+}
+`;
+
+exports[`golden replay > 谷 基本の直接射撃 1`] = `
+{
+  "last": {
+    "x": 14385152,
+    "y": 12288000,
+  },
+  "result": {
+    "damage": [
+      0,
+      0,
+    ],
+    "finished": null,
+    "hpAfter": [
+      100,
+      100,
+    ],
+    "impact": {
+      "x": 219,
+      "y": 187,
+    },
+    "input": {
+      "elevation": 45,
+      "facing": 1,
+      "power": 72,
+      "seat": 0,
+      "wind": 0,
+      "x": 60,
+    },
+    "ringOut": [],
+    "terrainOp": {
+      "cx": 219,
+      "cy": 187,
+      "radius": 10,
+    },
+    "xAfter": [
+      60,
+      340,
+    ],
+  },
+  "steps": 103,
+}
+`;
+
+exports[`golden replay > 谷 山越えの高角度 1`] = `
+{
+  "last": {
+    "x": 10452992,
+    "y": 11370496,
+  },
+  "result": {
+    "damage": [
+      0,
+      0,
+    ],
+    "finished": null,
+    "hpAfter": [
+      100,
+      100,
+    ],
+    "impact": {
+      "x": 159,
+      "y": 173,
+    },
+    "input": {
+      "elevation": 80,
+      "facing": 1,
+      "power": 100,
+      "seat": 0,
+      "wind": 3,
+      "x": 60,
+    },
+    "ringOut": [],
+    "terrainOp": {
+      "cx": 159,
+      "cy": 173,
+      "radius": 10,
+    },
+    "xAfter": [
+      60,
+      340,
+    ],
+  },
+  "steps": 161,
+}
+`;
+
+exports[`golden replay > 谷 左向きから 1`] = `
+{
+  "last": {
+    "x": 11894784,
+    "y": 12288000,
+  },
+  "result": {
+    "damage": [
+      0,
+      0,
+    ],
+    "finished": null,
+    "hpAfter": [
+      100,
+      100,
+    ],
+    "impact": {
+      "x": 181,
+      "y": 187,
+    },
+    "input": {
+      "elevation": 45,
+      "facing": -1,
+      "power": 72,
+      "seat": 0,
+      "wind": 0,
+      "x": 340,
+    },
+    "ringOut": [],
+    "terrainOp": {
+      "cx": 181,
+      "cy": 187,
+      "radius": 10,
+    },
+    "xAfter": [
+      340,
+      60,
+    ],
+  },
+  "steps": 103,
+}
+`;
+
+exports[`golden replay > 谷 追い風 10 1`] = `
+{
+  "last": {
+    "x": 15302656,
+    "y": 11698176,
+  },
+  "result": {
+    "damage": [
+      0,
+      0,
+    ],
+    "finished": null,
+    "hpAfter": [
+      100,
+      100,
+    ],
+    "impact": {
+      "x": 233,
+      "y": 178,
+    },
+    "input": {
+      "elevation": 45,
+      "facing": 1,
+      "power": 72,
+      "seat": 0,
+      "wind": 10,
+      "x": 60,
+    },
+    "ringOut": [],
+    "terrainOp": {
+      "cx": 233,
+      "cy": 178,
+      "radius": 10,
+    },
+    "xAfter": [
+      60,
+      340,
+    ],
+  },
+  "steps": 100,
+}
+`;
