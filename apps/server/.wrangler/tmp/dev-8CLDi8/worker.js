@@ -21699,6 +21699,7 @@ var handleCommand = /* @__PURE__ */ __name((state, command, now) => {
 
 // src/cf/worker.ts
 var STATE_KEY = "state";
+var MIN_ALARM_GAP_MS = 1e3;
 var secureRng = /* @__PURE__ */ __name(() => {
   const buf = new Uint32Array(1);
   crypto.getRandomValues(buf);
@@ -21735,9 +21736,10 @@ var Hub = class {
       const ws = sockets.get(e.connId);
       if (ws) ws.send(JSON.stringify(e.message));
     }
-    await this.ctx.storage.put(STATE_KEY, serializeState(state));
+    if (state.rooms.size > 0 || state.connections.size > 0) await this.ctx.storage.put(STATE_KEY, serializeState(state));
+    else await this.ctx.storage.delete(STATE_KEY);
     if (result.wakeAt === null) await this.ctx.storage.deleteAlarm();
-    else await this.ctx.storage.setAlarm(result.wakeAt);
+    else await this.ctx.storage.setAlarm(Math.max(result.wakeAt, Date.now() + MIN_ALARM_GAP_MS));
   }
   async fetch(request) {
     const url2 = new URL(request.url);

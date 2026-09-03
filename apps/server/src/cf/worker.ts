@@ -13,6 +13,7 @@ type Env = {
 };
 
 const STATE_KEY = "state";
+const MIN_ALARM_GAP_MS = 1000;
 
 const secureRng = (): number => {
   const buf = new Uint32Array(1);
@@ -49,9 +50,12 @@ export class Hub implements DurableObject {
       const ws = sockets.get(e.connId);
       if (ws) ws.send(JSON.stringify(e.message));
     }
-    await this.ctx.storage.put(STATE_KEY, serializeState(state));
+    // 部屋も接続も無ければ storage を空に保つ。退避と復元のたびに読む量を増やさないため
+    if (state.rooms.size > 0 || state.connections.size > 0) await this.ctx.storage.put(STATE_KEY, serializeState(state));
+    else await this.ctx.storage.delete(STATE_KEY);
+    // alarm は 1 秒より短い間隔で鳴らさない。過去の wakeAt で連続して起きて課金が増えるのを防ぐ
     if (result.wakeAt === null) await this.ctx.storage.deleteAlarm();
-    else await this.ctx.storage.setAlarm(result.wakeAt);
+    else await this.ctx.storage.setAlarm(Math.max(result.wakeAt, Date.now() + MIN_ALARM_GAP_MS));
   }
 
   async fetch(request: Request): Promise<Response> {
