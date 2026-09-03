@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState, useSyncExternalStore } from "react";
+import { useEffect, useMemo, useRef, useState, useSyncExternalStore } from "react";
 import { GameCanvas } from "@/game/GameCanvas";
 import { computeLayout } from "@/game/scale";
 import type { MatchStore } from "@/match/matchStore";
@@ -44,25 +44,29 @@ export const GameScreen = ({ store, clockOffset, swapPanels, onSurrender, onLeav
   const gauge = usePowerGauge(acting, (power) => store.fire(power));
 
   // キーボード。keydown で開始、keyup で停止。オートリピートの keydown は無視する（設計書 03 の 3.3）
+  // listener は 1 回だけ登録し、最新の hold と gauge は ref で参照する
+  const inputRef = useRef({ holds, gauge });
+  inputRef.current = { holds, gauge };
   useEffect(() => {
     const down = (e: KeyboardEvent): void => {
       if (e.repeat) return;
       if (e.target instanceof HTMLInputElement) return;
+      const { holds: h, gauge: g } = inputRef.current;
       switch (e.code) {
         case "ArrowUp":
-          holds.up.start();
+          h.up.start();
           break;
         case "ArrowDown":
-          holds.down.start();
+          h.down.start();
           break;
         case "ArrowLeft":
-          holds.left.start();
+          h.left.start();
           break;
         case "ArrowRight":
-          holds.right.start();
+          h.right.start();
           break;
         case "Space":
-          gauge.begin("key");
+          g.begin("key");
           break;
         default:
           return;
@@ -70,21 +74,22 @@ export const GameScreen = ({ store, clockOffset, swapPanels, onSurrender, onLeav
       e.preventDefault();
     };
     const up = (e: KeyboardEvent): void => {
+      const { holds: h, gauge: g } = inputRef.current;
       switch (e.code) {
         case "ArrowUp":
-          holds.up.stop();
+          h.up.stop();
           break;
         case "ArrowDown":
-          holds.down.stop();
+          h.down.stop();
           break;
         case "ArrowLeft":
-          holds.left.stop();
+          h.left.stop();
           break;
         case "ArrowRight":
-          holds.right.stop();
+          h.right.stop();
           break;
         case "Space":
-          gauge.release("key");
+          g.release("key");
           break;
         default:
           return;
@@ -97,7 +102,7 @@ export const GameScreen = ({ store, clockOffset, swapPanels, onSurrender, onLeav
       window.removeEventListener("keydown", down);
       window.removeEventListener("keyup", up);
     };
-  }, [holds.up, holds.down, holds.left, holds.right, gauge]);
+  }, []);
 
   const left = <LeftPanel view={view} store={store} width={layout.panelWidth} cell={layout.cell} holds={holds} />;
   const right = <RightPanel width={layout.panelWidth} height={h} enabled={acting} gauge={gauge} />;

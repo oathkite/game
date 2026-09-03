@@ -63,6 +63,8 @@ export type MatchView = {
   readonly result: MatchResult | null;
   readonly opponentDisconnectedUntil: number | null;
   readonly mismatches: number;
+  /** 再接続で Replaying の途中に復帰した。次の turn.result は再生せず確定状態のままにする */
+  readonly skipNextResult: boolean;
 };
 
 export const EMPTY_VIEW: MatchView = {
@@ -80,4 +82,5 @@ export const EMPTY_VIEW: MatchView = {
   result: null,
   opponentDisconnectedUntil: null,
   mismatches: 0,
+  skipNextResult: false,
 };

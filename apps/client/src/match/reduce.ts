@@ -15,7 +15,7 @@ export type ReduceOptions = {
 export type Reduced = {
   readonly view: MatchView;
   /** 呼び出し側が送るべきメッセージ */
-  readonly reply: "match.ready" | null;
+  readonly reply: "match.ready" | "turn.replayDone" | null;
   readonly mismatch: boolean;
 };
 
@@ -48,6 +48,8 @@ const fromMatchState = (view: MatchView, match: MatchState, seat: Seat | null, o
     phase: match.phase === "finished" ? "finished" : match.phase === "replaying" ? "waiting" : acting ? "acting" : "waiting",
     control: acting ? freshControl(players[match.currentSeat], view.control?.elevation ?? 45) : null,
     replay: null,
+    // 送り直される turn.result は再生せず、確定状態に直行する（設計書 05 の 5.3）
+    skipNextResult: match.phase === "replaying",
   };
 };
 
@@ -104,22 +106,25 @@ export const reduce = (view: MatchView, message: ServerMessage, options: ReduceO
     case "conn.state":
       return just(fromMatchState(view, message.match, message.seat, options), null);
     case "turn.start": {
-      if (!view.players) return just(view);
-      const mySeat = options.followCurrentSeat ? message.seat : view.mySeat;
-      const acting = mySeat === message.seat && !view.spectator;
+      // 再生が終わる前に次のターンが来たら、再生を打ち切って確定状態に合わせる（設計書 04 の 4.4）
+      const settled: MatchView = view.replay ? { ...view, mask: view.replay.maskAfter, players: view.replay.playersAfter, replay: null } : view;
+      if (!settled.players) return just(settled);
+      const mySeat = options.followCurrentSeat ? message.seat : settled.mySeat;
+      const acting = mySeat === message.seat && !settled.spectator;
       return just({
-        ...view,
+        ...settled,
         phase: acting ? "acting" : "waiting",
         mySeat,
         currentSeat: message.seat,
         turnNumber: message.turnNumber,
         wind: message.wind,
         deadlineAt: message.deadlineAt,
-        control: acting ? freshControl(view.players[message.seat], view.control?.elevation ?? 45) : null,
-        replay: null,
+        control: acting ? freshControl(settled.players[message.seat], settled.control?.elevation ?? 45) : null,
+        skipNextResult: false,
       });
     }
     case "turn.result":
+      if (view.skipNextResult) return just({ ...view, skipNextResult: false, phase: "waiting" }, "turn.replayDone");
       return onResult(view, message.shot, replayId);
     case "turn.pass":
       // 移動はサーバーに届いていないので、表示上の位置をターン開始時に戻す

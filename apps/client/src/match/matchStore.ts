@@ -41,6 +41,7 @@ export const createMatchStore = (connection: Connection, options: ReduceOptions)
       mismatches.emit(r.view);
     }
     if (r.reply === "match.ready") connection.send({ type: "match.ready" });
+    if (r.reply === "turn.replayDone" && !options.spectator) connection.send({ type: "turn.replayDone" });
   });
 
   const moveStep = (dir: Facing): void => {
