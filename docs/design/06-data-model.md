@@ -51,7 +51,6 @@ type PlayerState = {
   readonly hp: number;
   readonly x: number;                 // 機体中心の x（整数セル）
   readonly connected: boolean;
-  readonly lastTrajectory: TrajectoryInput | null; // 前回の射撃。軌跡表示に使う
 };
 ```
 
