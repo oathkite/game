@@ -1,5 +1,5 @@
 import { z } from "zod";
-import { MAP_NAMES, NICKNAME_MAX, PLAYER_COLORS, ROOM_CODE_ALPHABET, ROOM_CODE_LENGTH, ROOM_TITLE_MAX } from "./constants.js";
+import { MAP_NAMES, MAP_WIDTH, MAX_MESSAGE_BYTES, NICKNAME_MAX, PLAYER_COLORS, ROOM_CODE_ALPHABET, ROOM_CODE_LENGTH, ROOM_TITLE_MAX } from "./constants.js";
 
 // クライアントからサーバーへ届くメッセージの Zod スキーマ。設計書 05 の 5.2。
 // サーバーは受信したすべてのメッセージをこれで検証する。
@@ -14,11 +14,13 @@ export const tankColorsSchema = z.object({
   secondary: playerColorSchema,
 });
 
-/** 1 文字以上 12 文字以下。空白のみは不可 */
+/** 1 文字以上 12 文字以下。前後の空白は落とし、空白のみと制御文字は不可 */
 export const nicknameSchema = z
   .string()
   .max(NICKNAME_MAX)
-  .refine((s) => s.trim().length > 0, "空白のみの名前は使えない");
+  .transform((s) => s.trim())
+  .refine((s) => s.length > 0, "空白のみの名前は使えない")
+  .refine((s) => !/[\u0000-\u001f\u007f]/.test(s), "制御文字は使えない");
 
 export const roomCodeSchema = z
   .string()
@@ -68,7 +70,7 @@ export const turnFireSchema = z.object({
   facing: facingSchema,
   elevation: z.number().int().min(10).max(90),
   power: z.number().int().min(0).max(100),
-  x: z.number().int().min(0).max(399),
+  x: z.number().int().min(0).max(MAP_WIDTH - 1),
 });
 
 export const clientMessageSchema = z.discriminatedUnion("type", [
@@ -103,6 +105,7 @@ export type ParseResult = { readonly ok: true; readonly message: ClientMessage }
 
 /** 生の文字列を検証する。JSON でないものや未知の type は ok: false */
 export const parseClientMessage = (raw: string): ParseResult => {
+  if (raw.length > MAX_MESSAGE_BYTES) return { ok: false, error: "too large" };
   let json: unknown;
   try {
     json = JSON.parse(raw);

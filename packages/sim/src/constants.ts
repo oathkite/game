@@ -3,8 +3,7 @@
 /** 固定小数点の 1.0 */
 export const ONE = 65536;
 
-export const MAP_WIDTH = 400;
-export const MAP_HEIGHT = 225;
+export { MAP_HEIGHT, MAP_WIDTH } from "@game/protocol";
 
 export const TANK_RADIUS = 3;
 export const TANK_RADIUS_SQ = TANK_RADIUS * TANK_RADIUS;

@@ -44,7 +44,8 @@ const onReplayDone = (state: EngineState, seat: Seat, now: number): Step => {
 };
 
 const onDisconnect = (state: EngineState, seat: Seat, now: number): Step => {
-  if (state.match.phase === "finished") return noop(state);
+  // 既に切断中の席への二重の切断は無視する。再接続の期限を延ばさないため
+  if (state.match.phase === "finished" || !state.match.players[seat].connected) return noop(state);
   const connected = setConnected(state, seat, false);
   const deadlineAt = now + state.config.reconnectWaitMs;
   const pausing = state.match.phase === "acting" && state.match.currentSeat === seat && state.match.deadlineAt !== null;
@@ -80,6 +81,8 @@ const onReconnect = (state: EngineState, seat: Seat, now: number): Step => {
     { to: otherSeat(seat), message: { type: "conn.opponentReconnected" } },
     { to: seat, message: { type: "conn.state", match: next.match, seat } },
   ];
+  // 制限時間を再開したら、新しい期限を相手と観戦者にも配る
+  if (resuming && next.lastTurnStart) effects.push({ to: otherSeat(seat), message: next.lastTurnStart });
   if (next.match.phase === "replaying" && next.lastResult) effects.push({ to: seat, message: next.lastResult });
   return { state: next, effects, wakeAt: computeWakeAt(next) };
 };
@@ -87,10 +90,13 @@ const onReconnect = (state: EngineState, seat: Seat, now: number): Step => {
 const onTick = (state: EngineState, now: number): Step => {
   const { match } = state;
   if (match.phase === "finished") return noop(state);
-  for (const seat of [0, 1] as const) {
-    const d = state.disconnectDeadlines[seat];
-    if (d !== null && now >= d) return finish(state, otherSeat(seat), "disconnect");
-  }
+  // 両席の期限が同時に切れていたら、先に切れた側の負け
+  const expired = ([0, 1] as const)
+    .map((seat) => ({ seat, at: state.disconnectDeadlines[seat] }))
+    .filter((e): e is { seat: Seat; at: number } => e.at !== null && now >= e.at)
+    .sort((a, b) => a.at - b.at);
+  const first = expired[0];
+  if (first) return finish(state, otherSeat(first.seat), "disconnect");
   if (match.phase === "acting" && match.deadlineAt !== null && now >= match.deadlineAt + state.config.graceMs) {
     return pass(state, "timeout", now);
   }
@@ -109,7 +115,8 @@ export const handle = (state: EngineState, event: EngineEvent, now: number): Ste
     case "replayDone":
       return onReplayDone(state, event.seat, now);
     case "surrender":
-      return state.match.phase === "finished" ? noop(state) : finish(state, otherSeat(event.seat), "surrender");
+      // 降参は対戦が始まってから（設計書 04 の 4.7）。Loading 中と決着後は無視する
+      return state.match.phase === "finished" || state.match.phase === "loading" ? noop(state) : finish(state, otherSeat(event.seat), "surrender");
     case "disconnect":
       return onDisconnect(state, event.seat, now);
     case "reconnect":

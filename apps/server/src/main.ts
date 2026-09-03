@@ -2,6 +2,7 @@ import { realClock } from "@game/engine";
 import { randomInt } from "node:crypto";
 import { createServer } from "node:http";
 import { WebSocketServer } from "ws";
+import { MAX_MESSAGE_BYTES } from "@game/protocol";
 import { createServerState, DEFAULT_SERVER_TIMING } from "./state.js";
 import { attachWebSocket } from "./ws.js";
 
@@ -23,7 +24,7 @@ const http = createServer((req, res) => {
 const secureRng = (): number => randomInt(0, 2 ** 31) / 2 ** 31;
 
 const state = createServerState({ ...DEFAULT_SERVER_TIMING, rng: secureRng });
-const wss = new WebSocketServer({ server: http });
+const wss = new WebSocketServer({ server: http, maxPayload: MAX_MESSAGE_BYTES });
 attachWebSocket(state, wss, realClock, (line) => console.log(line));
 
 http.listen(port, () => {

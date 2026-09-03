@@ -23,6 +23,19 @@ describe("parseClientMessage", () => {
     expect(parseClientMessage(raw).ok).toBe(false);
   });
 
+  it("上限を超える大きさのフレームは拒否する", () => {
+    expect(parseClientMessage(`{"type":"lobby.subscribe","pad":"${"x".repeat(5000)}"}`).ok).toBe(false);
+  });
+
+  it("プレイヤー名の前後の空白は落とし、制御文字は拒否する", () => {
+    const join = (nickname: string) =>
+      parseClientMessage(JSON.stringify({ type: "room.join", code: "ABCDEF", playerId: "player-0001", nickname, colors: { primary: "red", secondary: "red" } }));
+    const ok = join("  bob ");
+    expect(ok.ok && ok.message.type === "room.join" && ok.message.nickname).toBe("bob");
+    expect(join("a\u0007b").ok).toBe(false);
+    expect(join("1234567890123").ok).toBe(false);
+  });
+
   it("JSON でない文字列は拒否する", () => {
     expect(parseClientMessage("{").ok).toBe(false);
   });

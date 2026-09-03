@@ -17,7 +17,10 @@ describe("切断と再接続", () => {
     expect(t.state.match.turnNumber).toBe(1);
     const r = handle(t.state, { type: "reconnect", seat: 0 }, T0 + 40_000);
     expect(r.state.match.deadlineAt).toBe(T0 + 40_000 + 15_000);
-    expect(types(r.effects)).toEqual(["conn.opponentReconnected", "conn.state"]);
+    // 相手には再開後の期限を turn.start で配り直す
+    expect(types(r.effects)).toEqual(["conn.opponentReconnected", "conn.state", "turn.start"]);
+    expect(r.effects[2]?.to).toBe(1);
+    expect(find(r.effects, "turn.start")?.deadlineAt).toBe(T0 + 55_000);
     const st = find(r.effects, "conn.state");
     expect(st?.seat).toBe(0);
     expect(st?.match.deadlineAt).toBe(T0 + 55_000);

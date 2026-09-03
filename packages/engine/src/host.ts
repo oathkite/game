@@ -46,8 +46,9 @@ export const createMatchHost = (initial: EngineState, clock: Clock, onEffect: (e
     if (stopped) return [];
     const step = handle(state, event, clock.now());
     state = step.state;
-    for (const e of step.effects) onEffect(e);
+    // 先にタイマーを予約する。onEffect の中から再入した dispatch の予約を、後から古い wakeAt で上書きしないため
     arm(step.wakeAt);
+    for (const e of step.effects) onEffect(e);
     return step.effects;
   };
 

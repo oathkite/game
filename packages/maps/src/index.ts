@@ -6,7 +6,7 @@ import { heightsFromProfile, slabs, solidBelow } from "./profile.js";
 
 export type MapDefinition = {
   readonly name: MapName;
-  /** 2 箇所のスポーン x。席 0 が左、席 1 が右 */
+  /** 2 箇所のスポーン x。左と右。どの席がどちらに立つかは対戦開始時に engine が決める */
   readonly spawns: readonly [number, number];
   readonly build: () => TerrainMask;
 };
@@ -14,7 +14,7 @@ export type MapDefinition = {
 /** 谷。中央が深く落ち込み、両者は左右の高台に立つ */
 const valley: MapDefinition = {
   name: "valley",
-  spawns: [55, 344],
+  spawns: [55, 345],
   build: () =>
     solidBelow(
       heightsFromProfile([
@@ -38,7 +38,7 @@ const valley: MapDefinition = {
 /** 山越え。中央に高い山があり、直接は狙えない */
 const mountain: MapDefinition = {
   name: "mountain",
-  spawns: [60, 339],
+  spawns: [60, 340],
   build: () =>
     solidBelow(
       heightsFromProfile([

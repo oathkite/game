@@ -21,6 +21,13 @@ export const MAP_LABELS: Readonly<Record<(typeof MAP_NAMES)[number], string>> = 
   island: "浮島",
 };
 
+/** マップの大きさ（セル）。sim もこの値を使う */
+export const MAP_WIDTH = 400;
+export const MAP_HEIGHT = 225;
+
+/** 1 フレームの上限（バイト）。最大のメッセージでも 1 KiB に収まる */
+export const MAX_MESSAGE_BYTES = 4096;
+
 export const NICKNAME_MAX = 12;
 export const ROOM_TITLE_MAX = 24;
 export const ROOM_CODE_LENGTH = 6;

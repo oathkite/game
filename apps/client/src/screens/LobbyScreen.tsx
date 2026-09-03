@@ -75,7 +75,7 @@ export const LobbyScreen = ({ page, query, onQuery, onCreate, onJoin, onSpectate
           </button>
         </div>
         <div className="row">
-          <input value={query.search} placeholder="検索" aria-label="search" onChange={(e) => onQuery({ ...query, search: e.target.value, page: 0 })} />
+          <input value={query.search} maxLength={ROOM_TITLE_MAX} placeholder="検索" aria-label="search" onChange={(e) => onQuery({ ...query, search: e.target.value, page: 0 })} />
           <select value={query.phase} aria-label="phase filter" onChange={(e) => onQuery({ ...query, phase: e.target.value as LobbyPhaseFilter, page: 0 })}>
             <option value="all">すべて</option>
             <option value="open">募集中</option>
