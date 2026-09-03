@@ -59,16 +59,16 @@ export const dispatchEngine = (room: RoomRecord, event: EngineEvent, now: number
   return { room: result, effects: [...effects, ...broadcastState(result)] };
 };
 
-/** リザルトを閉じて募集中に戻す。全員が閉じたか、一定時間で呼ばれる */
+/**
+ * リザルトを閉じて募集中に戻す。全員が閉じたか、一定時間で呼ばれる。
+ * 切断したまま戻らなかった参加者は外し、オーナーが抜けていれば入室が最も早い参加者に移す。
+ * 参加者が誰もいなくなった場合は members が空になるので、呼び出し側が部屋を消す。
+ */
 export const reopenRoom = (room: RoomRecord, now: number): RoomStep => {
-  const next: RoomRecord = {
-    ...room,
-    phase: "open",
-    engine: null,
-    resultOpenedAt: null,
-    lastActivityAt: now,
-    members: room.members.map((m) => ({ ...m, ready: false, closedResult: false })),
-  };
+  const members = room.members.filter((m) => m.connId !== null).map((m) => ({ ...m, ready: false, closedResult: false }));
+  const ownerStays = members.some((m) => m.seat === room.ownerSeat);
+  const ownerSeat = ownerStays ? room.ownerSeat : ([...members].sort((a, b) => a.joinOrder - b.joinOrder)[0]?.seat ?? room.ownerSeat);
+  const next: RoomRecord = { ...room, phase: "open", engine: null, resultOpenedAt: null, lastActivityAt: now, members, ownerSeat };
   return { room: next, effects: broadcastState(next) };
 };
 

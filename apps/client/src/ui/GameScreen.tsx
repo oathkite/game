@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useRef, useState, useSyncExternalStore } from "react";
+import { useEffect, useMemo, useState, useSyncExternalStore } from "react";
 import { GameCanvas } from "@/game/GameCanvas";
 import { computeLayout } from "@/game/scale";
 import type { MatchStore } from "@/match/matchStore";
@@ -6,6 +6,7 @@ import { LeftPanel } from "./LeftPanel";
 import { RightPanel } from "./RightPanel";
 import { Timer } from "./Timer";
 import { useHold } from "./useHold";
+import { useKeyboardInput } from "./useKeyboardInput";
 import { usePowerGauge } from "./usePowerGauge";
 
 // 対戦画面。設計書 03 の 3.2 のレイアウト。左右のパネルと中央のマップ領域。
@@ -43,66 +44,7 @@ export const GameScreen = ({ store, clockOffset, swapPanels, onSurrender, onLeav
   };
   const gauge = usePowerGauge(acting, (power) => store.fire(power));
 
-  // キーボード。keydown で開始、keyup で停止。オートリピートの keydown は無視する（設計書 03 の 3.3）
-  // listener は 1 回だけ登録し、最新の hold と gauge は ref で参照する
-  const inputRef = useRef({ holds, gauge });
-  inputRef.current = { holds, gauge };
-  useEffect(() => {
-    const down = (e: KeyboardEvent): void => {
-      if (e.repeat) return;
-      if (e.target instanceof HTMLInputElement) return;
-      const { holds: h, gauge: g } = inputRef.current;
-      switch (e.code) {
-        case "ArrowUp":
-          h.up.start();
-          break;
-        case "ArrowDown":
-          h.down.start();
-          break;
-        case "ArrowLeft":
-          h.left.start();
-          break;
-        case "ArrowRight":
-          h.right.start();
-          break;
-        case "Space":
-          g.begin("key");
-          break;
-        default:
-          return;
-      }
-      e.preventDefault();
-    };
-    const up = (e: KeyboardEvent): void => {
-      const { holds: h, gauge: g } = inputRef.current;
-      switch (e.code) {
-        case "ArrowUp":
-          h.up.stop();
-          break;
-        case "ArrowDown":
-          h.down.stop();
-          break;
-        case "ArrowLeft":
-          h.left.stop();
-          break;
-        case "ArrowRight":
-          h.right.stop();
-          break;
-        case "Space":
-          g.release("key");
-          break;
-        default:
-          return;
-      }
-      e.preventDefault();
-    };
-    window.addEventListener("keydown", down);
-    window.addEventListener("keyup", up);
-    return () => {
-      window.removeEventListener("keydown", down);
-      window.removeEventListener("keyup", up);
-    };
-  }, []);
+  useKeyboardInput(holds, gauge);
 
   const left = <LeftPanel view={view} store={store} width={layout.panelWidth} cell={layout.cell} holds={holds} />;
   const right = <RightPanel width={layout.panelWidth} height={h} enabled={acting} gauge={gauge} />;

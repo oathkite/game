@@ -7,7 +7,7 @@ import { fileURLToPath } from "node:url";
 const here = fileURLToPath(new URL(".", import.meta.url));
 
 test("golden replay は Node とブラウザで同じ結果になる", async ({ page }) => {
-  const fromNode = execFileSync("npx", ["tsx", "scripts/golden-node.ts"], { cwd: `${here}/..`, encoding: "utf8" });
+  const fromNode = execFileSync("pnpm", ["exec", "tsx", "scripts/golden-node.ts"], { cwd: `${here}/..`, encoding: "utf8" });
   await page.goto("/golden.html");
   await page.waitForFunction(() => typeof (window as Window & { __golden?: string }).__golden === "string");
   const fromBrowser = await page.evaluate(() => (window as Window & { __golden?: string }).__golden ?? "");

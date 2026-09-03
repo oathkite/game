@@ -1,5 +1,6 @@
 import type { ClientMessageOf, RoomErrorReason } from "@game/protocol";
 import type { ConnId, Outgoing, RoomRecord, ServerState } from "../state.js";
+import { closeRoom } from "./commands.js";
 import { dispatchEngine, reopenRoom } from "./match.js";
 import { broadcastState, findRoomOfConn, memberByConn, send, toRoomState } from "./view.js";
 
@@ -60,8 +61,9 @@ export const resultClose = (state: ServerState, connId: ConnId, now: number): re
     return [];
   }
   const step = reopenRoom(marked, now);
-  put(state, step.room);
   state.lobbyDirty = true;
+  if (step.room.members.length === 0) return closeRoom(state, step.room, "dissolved");
+  put(state, step.room);
   return step.effects;
 };
 
@@ -71,16 +73,21 @@ export const resume = (state: ServerState, connId: ConnId, m: ClientMessageOf<"c
   for (const room of state.rooms.values()) {
     const member = room.members.find((x) => x.token === m.token);
     if (member) {
-      if (member.connId !== null) return error(connId, "invalidToken");
+      // 古い接続がまだ閉じていなければ（半開きのソケット）、新しい接続に席を移し、古い方は部屋から外す
+      const effects: Outgoing[] = [];
+      if (member.connId !== null) {
+        effects.push(send(member.connId, { type: "room.closed", reason: "dissolved" }));
+        state.connections.set(member.connId, { roomCode: null, lobbySubscribed: false, lobbyQuery: null });
+      }
       let next: RoomRecord = { ...room, members: room.members.map((x) => (x === member ? { ...x, connId } : x)), lastActivityAt: now };
-      const effects: Outgoing[] = [
+      effects.push(
         send(connId, { type: "room.joined", code: next.code, inviteUrl: `?room=${next.code}`, seat: member.seat, spectator: false, token: member.token, room: toRoomState(next) }),
-      ];
-      if (next.phase === "inMatch") {
+      );
+      if (next.phase === "inMatch" && member.connId === null) {
         const step = dispatchEngine(next, { type: "reconnect", seat: member.seat }, now);
         next = step.room;
         effects.push(...step.effects);
-      } else if (next.engine && next.phase === "result") {
+      } else if (next.engine && next.phase !== "open") {
         effects.push(send(connId, { type: "conn.state", match: next.engine.match, seat: member.seat }));
       }
       state.rooms.set(next.code, next);

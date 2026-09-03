@@ -97,8 +97,12 @@ const tickRoom = (state: ServerState, room: RoomRecord, now: number): readonly O
     const step = reopenRoom(current, now);
     current = step.room;
     effects.push(...step.effects);
-    state.rooms.set(current.code, current);
     state.lobbyDirty = true;
+    if (current.members.length === 0) {
+      effects.push(...rooms.closeRoom(state, current, "dissolved"));
+      return effects;
+    }
+    state.rooms.set(current.code, current);
   }
   if (current.phase === "open" && now >= current.lastActivityAt + state.config.idleRoomMs) {
     effects.push(...rooms.closeRoom(state, current, "idle"));

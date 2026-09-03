@@ -34,6 +34,7 @@ export const closeRoom = (state: ServerState, room: RoomRecord, reason: RoomClos
 export const create = (state: ServerState, connId: ConnId, m: ClientMessageOf<"room.create">, now: number): readonly Outgoing[] => {
   if (findRoomOfConn(state, connId)) return error(connId, "badRequest");
   const code = generateCode(state.config.rng, (c) => state.rooms.has(c));
+  if (code === null) return error(connId, "badRequest");
   const owner: Member = {
     seat: 0,
     playerId: m.playerId,

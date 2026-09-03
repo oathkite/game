@@ -4,13 +4,14 @@ import { ROOM_CODE_ALPHABET, ROOM_CODE_LENGTH } from "@game/protocol";
 
 const pick = (rng: () => number, alphabet: string): string => alphabet[Math.min(alphabet.length - 1, Math.floor(rng() * alphabet.length))] ?? alphabet[0] ?? "A";
 
-export const generateCode = (rng: () => number, taken: (code: string) => boolean): string => {
+/** 空いている入室コード。100 回試して見つからなければ null */
+export const generateCode = (rng: () => number, taken: (code: string) => boolean): string | null => {
   for (let attempt = 0; attempt < 100; attempt++) {
     let code = "";
     for (let i = 0; i < ROOM_CODE_LENGTH; i++) code += pick(rng, ROOM_CODE_ALPHABET);
     if (!taken(code)) return code;
   }
-  throw new Error("入室コードを生成できない");
+  return null;
 };
 
 const TOKEN_ALPHABET = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789";

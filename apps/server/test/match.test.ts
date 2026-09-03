@@ -162,4 +162,51 @@ describe("決着とリザルト", () => {
     expect(last(h.inbox("b"), "room.closed")?.reason).toBe("dissolved");
     expect(h.state.rooms.size).toBe(0);
   });
+
+  it("リザルトの自動クローズで切断中の参加者は外れ、残った側がオーナーになる", () => {
+    const h = harness();
+    startedMatch(h);
+    h.at(T0 + 2000);
+    h.close("a");
+    h.at(T0 + 62_000);
+    h.tick();
+    expect(last(h.inbox("b"), "room.state")?.room.phase).toBe("result");
+    h.at(T0 + 62_000 + 60_000);
+    h.tick();
+    const reopened = last(h.inbox("b"), "room.state");
+    expect(reopened?.room.phase).toBe("open");
+    expect(reopened?.room.members.map((m) => m.seat)).toEqual([1]);
+    expect(reopened?.room.ownerSeat).toBe(1);
+  });
+
+  it("両者が切断したまま決着した部屋は、リザルトの自動クローズで消える", () => {
+    const h = harness();
+    startedMatch(h);
+    h.at(T0 + 2000);
+    h.close("a");
+    h.at(T0 + 3000);
+    h.close("b");
+    h.at(T0 + 62_000);
+    h.tick();
+    h.at(T0 + 122_000);
+    h.tick();
+    expect(h.state.rooms.size).toBe(0);
+  });
+});
+
+describe("半開きの接続", () => {
+  it("古い接続が閉じていなくても、トークンで新しい接続に席を移す", () => {
+    const h = harness();
+    const { tokenA } = startedMatch(h);
+    h.at(T0 + 2000);
+    h.open("a2");
+    h.send("a2", { type: "conn.resume", token: tokenA });
+    expect(last(h.inbox("a2"), "room.joined")?.seat).toBe(0);
+    expect(last(h.inbox("a"), "room.closed")).toBeDefined();
+    // 古い接続が後から閉じても、席には影響しない
+    h.close("a");
+    expect(last(h.inbox("b"), "conn.opponentDisconnected")).toBeUndefined();
+    h.send("a2", { type: "turn.fire", facing: 1, elevation: 45, power: 50, x: 55 });
+    expect(last(h.inbox("b"), "turn.result")).toBeDefined();
+  });
 });
