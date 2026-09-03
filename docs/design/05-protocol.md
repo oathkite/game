@@ -50,7 +50,7 @@
 | `room.join` | C→S | 部屋コード、匿名 ID、プレイヤー名、主色と副色 |
 | `room.spectate` | C→S | 部屋コード、匿名 ID、プレイヤー名。観戦者として入る |
 | `room.takeSeat` | C→S | 観戦者が空いた席に参加者として移る。主色と副色 |
-| `room.joined` | S→C | 部屋コード、招待用の URL、自分の席番号（観戦者なら null）、観戦者かどうか、接続トークン、部屋の状態（[データモデル](./06-data-model.md) の RoomState） |
+| `room.joined` | S→C | 部屋コード、招待用の URL（サーバーはクライアントの origin を知らないので `?room=コード` のクエリだけを送り、クライアントが自分の origin に付ける）、自分の席番号（観戦者なら null）、観戦者かどうか、接続トークン、部屋の状態（[データモデル](./06-data-model.md) の RoomState） |
 | `room.state` | S→C | 部屋の状態の全体。入退室、ready、色やプレイヤー名の変更、マップ変更のたびに配信する |
 | `room.ready` | C→S | ready の on か off |
 | `room.profile` | C→S | プレイヤー名、主色、副色の変更 |
@@ -59,7 +59,7 @@
 | `room.start` | C→S | オーナーのみ |
 | `room.leave` | C→S | 退出 |
 | `room.dissolve` | C→S | オーナーのみ。解散 |
-| `room.closed` | S→C | 部屋が消えた理由（解散、放置） |
+| `room.closed` | S→C | 部屋から出された理由（解散、放置、キック）。キックは対象者にだけ届く |
 | `room.error` | S→C | 理由（部屋がない、満室、対戦中、権限がない、開始条件を満たさない、など） |
 
 部屋の中の変化は差分ではなく `room.state` の全体で配信する。
@@ -92,7 +92,9 @@
 | `conn.opponentDisconnected` | S→C | 再接続を待つ期限 |
 | `conn.opponentReconnected` | S→C | なし |
 | `conn.resume` | C→S | 接続トークン |
-| `conn.state` | S→C | 現在の対戦状態のすべて（[データモデル](./06-data-model.md) の MatchState） |
+| `conn.state` | S→C | 現在の対戦状態のすべて（[データモデル](./06-data-model.md) の MatchState）と、受け手の席番号（観戦者なら null） |
+| `time.ping` | C→S | 送信時刻。5.6 の時刻差の測定に使う |
+| `time.pong` | S→C | 受け取った送信時刻と、サーバー時刻 |
 
 ## 5.3 `turn.result` の内容
 
