@@ -121,9 +121,12 @@ type PlayerColor =
 ```ts
 type Wind = {
   readonly value: number;   // -10 から 10 の整数
-  readonly gust: boolean;   // このターンが突風で再抽選されたか
 };
 ```
+
+突風で再抽選されたかどうかは、クライアントに配信する状態には含めない。
+`conn.state` は MatchState をそのまま送るので、含めると改造したクライアントに突風を表示できてしまう。
+サーバーは抽選の記録として別に持つ。
 
 ## 6.5 射撃の入力と結果
 
