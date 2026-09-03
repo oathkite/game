@@ -1,0 +1,60 @@
+# main にマージされたら本番（Cloudflare）へ配置する。手順と順序は README の「デプロイ」に合わせる。
+# server（Workers）を先に、次に client（Pages）を server の URL でビルドして配置する。
+# 必要な secrets: CLOUDFLARE_API_TOKEN（Workers Scripts、Durable Objects、Pages の編集権限）、CLOUDFLARE_ACCOUNT_ID
+
+name: deploy
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+# 連続するマージで配置が重ならないようにする。後から来た方を待たせ、取り消さない
+concurrency:
+  group: deploy-production
+  cancel-in-progress: false
+
+env:
+  SERVER_URL: wss://fortress-server.kita-396.workers.dev
+  PAGES_PROJECT: fortress
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: pnpm/action-setup@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: pnpm
+
+      - run: pnpm install --frozen-lockfile
+
+      # 配置前のゲート。typecheck と単体テストが通らなければ配置しない
+      - run: pnpm -r typecheck
+      - run: pnpm test
+
+      - name: deploy server (Workers)
+        working-directory: apps/server
+        run: pnpm exec wrangler deploy
+        env:
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+
+      - name: build client
+        working-directory: apps/client
+        run: pnpm build
+        env:
+          VITE_SERVER_URL: ${{ env.SERVER_URL }}
+
+      # wrangler は server の devDependency にだけあるので、そこから client の dist を配置する
+      - name: deploy client (Pages)
+        working-directory: apps/server
+        run: pnpm exec wrangler pages deploy ../client/dist --project-name "$PAGES_PROJECT" --branch main --commit-dirty=true
+        env:
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
