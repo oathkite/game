@@ -74,8 +74,10 @@ export const usePowerGauge = (enabled: boolean, onFire: (power: number) => void)
     setValue(0);
   }, [stopLoop]);
 
+  // 操作が無効になっても、離した瞬間の高さは次に溜め始めるまで固定表示する（設計書 03 の 3.5）。
+  // 溜めている途中で無効になった場合だけ捨てる
   useEffect(() => {
-    if (!enabled) cancel();
+    if (!enabled && startedAt.current !== null) cancel();
   }, [enabled, cancel]);
 
   useEffect(() => {

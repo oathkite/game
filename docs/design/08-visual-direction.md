@@ -71,13 +71,13 @@
 
 ## 8.3 フォント
 
-数字と英字にはピクセルフォントの Geist Pixel を、日本語には DotGothic16 を使う。
-Geist Pixel は日本語を持たないので、日本語の文字は DotGothic16 で補う。
+最初の版では数字、英字、日本語のすべてに DotGothic16 を使う。
+数字と英字はいずれピクセルフォントの Geist Pixel に置き換え、日本語の文字は DotGothic16 で補う。
 どちらも SIL Open Font License で、Web への埋め込みができる。
 
 | 用途 | フォント | 備考 |
 |---|---|---|
-| 数値、英字、記号 | Geist Pixel Square | 5 種の形状のうち、正方形のセルと揃う Square を使う。`geist` パッケージか GitHub の配布ファイルから読み込む |
+| 数値、英字、記号 | DotGothic16（最初の版） | 将来は Geist Pixel Square に置き換える。5 種の形状のうち、正方形のセルと揃う Square を使う予定で、配布形態を確認してから足す |
 | 日本語 | DotGothic16 | 16 px で設計された 1 ウェイトのフォント。Google Fonts から読み込む |
 
 ドットのにじみを避けるため、フォントは設計サイズの整数倍でだけ表示する。

@@ -74,6 +74,23 @@ test("対戦中に再読み込みしても席と手番が復元され、観戦�
   expect(after?.phase).toBe("acting");
   expect(after?.turnNumber).toBe(1);
 
+  // 2 人目の観戦者。手番側が降参すると観戦者にもリザルトが出る
+  const ctxS2 = await browser.newContext();
+  const s2 = await ctxS2.newPage();
+  await setup(s2, "spec2", 3);
+  await s2.getByRole("button", { name: "観戦" }).first().click();
+  await waitView(s2, (v) => v.turnNumber === 1);
+  await shooter.getByRole("button", { name: "降参", exact: true }).click();
+  await shooter.getByRole("button", { name: "降参する" }).click();
+  await expect(s.getByTestId("result")).toBeVisible();
+  await expect(s2.getByTestId("result")).toBeVisible();
+  await expect(s.getByTestId("result")).toContainText("降参");
+  // 観戦者がリザルトを閉じると部屋の画面に戻り、観戦者数が 2 と表示される
+  await s.getByTestId("result-close").click();
+  await expect(s.getByTestId("room")).toBeVisible();
+  await expect(s.getByTestId("room")).toContainText("観戦 2 人");
+  await ctxS2.close();
+
   await ctxA.close();
   await ctxB.close();
   await ctxS.close();

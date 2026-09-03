@@ -25,7 +25,9 @@ declare global {
 
 export const MatchStage = ({ store, clockOffset, swapPanels, closeLabel, onClose, onLeave }: Props) => {
   const view = useSyncExternalStore(store.subscribe, store.getView, store.getView);
+  // 開発と e2e のためのフック。本番ビルドでは置かない。照準の探索は相手に当たる撃ち方を教えるので、遊びに持ち込ませない
   useEffect(() => {
+    if (!import.meta.env.DEV) return;
     window.__fortress = { getView: store.getView, store, aim: () => findRobustAim(store.getView()) };
     return () => {
       delete window.__fortress;
