@@ -16,10 +16,15 @@ type RoomMember = {
   readonly seat: Seat;
   readonly playerId: string;        // 端末ごとの匿名 ID
   readonly nickname: string;
-  readonly color: PlayerColor;
+  readonly colors: TankColors;
   readonly ready: boolean;
-  readonly colorConflict: boolean;  // 先にいる参加者と色が重なっている
+  readonly colorConflict: boolean;  // 先にいる参加者と主色が重なっている
   readonly connected: boolean;
+};
+
+type Spectator = {
+  readonly playerId: string;
+  readonly nickname: string;
 };
 
 type RoomState = {
@@ -31,6 +36,8 @@ type RoomState = {
   readonly ownerSeat: Seat;
   readonly phase: RoomPhase;
   readonly members: readonly RoomMember[];
+  readonly spectators: readonly Spectator[];
+  readonly maxSpectators: number;   // 最初の版では 8
 };
 ```
 
@@ -76,7 +83,7 @@ type MatchState = {
 type PlayerState = {
   readonly seat: Seat;
   readonly nickname: string;
-  readonly color: PlayerColor;
+  readonly colors: TankColors;
   readonly hp: number;
   readonly x: number;                 // 機体中心の x（整数セル）
   readonly facing: Facing;            // 最後に動いた方向
@@ -90,9 +97,14 @@ y 座標と車体の傾きは持たない。
 どちらも x と現在の地形から一意に決まるので、持つと不整合の元になる。
 描画のたびに地表の高さと傾きの対応表から求める。
 
-色の候補は [グラフィックの方向性](./08-visual-direction.md) の 7 色で、名前で持つ。
+色は主色と副色の 2 つで、候補は [グラフィックの方向性](./08-visual-direction.md) の 7 色を名前で持つ。
 
 ```ts
+type TankColors = {
+  readonly primary: PlayerColor;    // 車体、弾、HP バー、名前
+  readonly secondary: PlayerColor;  // 砲塔と主砲
+};
+
 type PlayerColor =
   | "red"
   | "orange"

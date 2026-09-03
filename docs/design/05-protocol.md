@@ -36,21 +36,24 @@
 
 | 名前 | 方向 | 内容 |
 |---|---|---|
-| `lobby.subscribe` | C→S | 一覧の配信を開始する |
-| `lobby.list` | S→C | 公開部屋の一覧（表示名、マップ、人数、状態） |
-| `lobby.update` | S→C | 一覧の差分（追加、変更、削除） |
+| `lobby.subscribe` | C→S | 変化通知の配信を開始する |
+| `lobby.query` | C→S | 検索語、状態の絞り込み、マップ、ページ番号 |
+| `lobby.page` | S→C | 該当する部屋の 1 ページ（表示名、マップ、人数、観戦者数、状態）、総件数、ページ番号 |
+| `lobby.changed` | S→C | 一覧に変化があった。クライアントは表示中の条件で `lobby.query` を送り直す。数秒に 1 回まで間引く |
 | `lobby.unsubscribe` | C→S | 配信を止める |
 
 ### 部屋
 
 | 名前 | 方向 | 内容 |
 |---|---|---|
-| `room.create` | C→S | 匿名 ID、名前、色、表示名、公開か非公開か、マップ名 |
-| `room.join` | C→S | 部屋コード、匿名 ID、名前、色 |
+| `room.create` | C→S | 匿名 ID、名前、主色と副色、表示名、公開か非公開か、マップ名 |
+| `room.join` | C→S | 部屋コード、匿名 ID、名前、主色と副色 |
+| `room.spectate` | C→S | 部屋コード、匿名 ID、名前。観戦者として入る |
+| `room.takeSeat` | C→S | 観戦者が空いた席に参加者として移る。主色と副色 |
 | `room.joined` | S→C | 部屋コード、招待用の URL、自分の席番号、接続トークン、部屋の状態（[データモデル](./06-data-model.md) の RoomState） |
 | `room.state` | S→C | 部屋の状態の全体。入退室、ready、色や名前の変更、マップ変更のたびに配信する |
 | `room.ready` | C→S | ready の on か off |
-| `room.profile` | C→S | 名前と色の変更 |
+| `room.profile` | C→S | 名前、主色、副色の変更 |
 | `room.setMap` | C→S | オーナーのみ。マップ名 |
 | `room.kick` | C→S | オーナーのみ。対象の席番号 |
 | `room.start` | C→S | オーナーのみ |
@@ -66,7 +69,7 @@
 
 | 名前 | 方向 | 内容 |
 |---|---|---|
-| `match.setup` | S→C | マップ名、両者のスポーン x と色、HP、先攻の席番号、ターン上限。`room.start` が受理されたときに配信する |
+| `match.setup` | S→C | マップ名、両者のスポーン x と主色と副色、HP、先攻の席番号、ターン上限。`room.start` が受理されたときに配信する。観戦者が途中で入った場合は `conn.state` で代える |
 | `match.ready` | C→S | マップの読み込みが終わった |
 
 ### ターン
@@ -126,8 +129,8 @@ Zod スキーマによる型と範囲の検査（向きが左か右、仰角が 
 
 ## 5.5 部屋の操作の検証
 
-色は [グラフィックの方向性](./08-visual-direction.md) の候補にある値だけを受け付ける。
-入室時に先にいる参加者と色が重なっていても入室は許し、`room.state` で衝突を示す。
+主色と副色は [グラフィックの方向性](./08-visual-direction.md) の候補にある値だけを受け付ける。
+入室時に先にいる参加者と主色が重なっていても入室は許し、`room.state` で衝突を示す。
 衝突している参加者の `room.ready` は拒否する。
 自動で別の色に振り替えることはしない。
 振り替えると、選んだ色と違う戦車で対戦が始まるためである。
@@ -136,6 +139,9 @@ Zod スキーマによる型と範囲の検査（向きが左か右、仰角が 
 `room.setMap`、`room.kick`、`room.dissolve` は送信者がオーナーでなければ拒否する。
 `room.profile` は対戦中（部屋が InMatch）には拒否する。
 `room.join` は部屋が InMatch か満室なら拒否する。
+`room.spectate` は観戦者が上限に達していれば拒否する。
+`room.takeSeat` は部屋が Open で席が空いているときだけ受理する。
+観戦者からの `turn.fire`、`room.ready`、`match.surrender` は拒否する。
 
 ## 5.6 時刻の扱い
 
