@@ -77,7 +77,7 @@ export type LobbyPhaseFilter = "all" | "open" | "inMatch";
 
 export type PassReason = "timeout" | "invalidFire";
 
-export type RoomClosedReason = "dissolved" | "idle";
+export type RoomClosedReason = "dissolved" | "idle" | "kicked";
 
 export type RoomErrorReason =
   | "notFound"
