@@ -29,7 +29,7 @@ pnpm dev          # server（:8787）と client（:5173）を同時に起動す�
 
 ```sh
 pnpm test                      # sim、protocol、maps、engine、server、client の単体テスト
-pnpm --filter @game/e2e test   # Playwright（server と client を自動で起動する）
+pnpm --filter @game/e2e test:e2e   # Playwright（server と client を自動で起動する）
 pnpm typecheck
 ```
 
