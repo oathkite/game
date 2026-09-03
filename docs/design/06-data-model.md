@@ -4,7 +4,37 @@
 型はすべて共有パッケージに置き、サーバーとクライアントが同じ定義を参照する。
 永続化は最初の版では持たないので、ここで定めるのはメモリ上の構造だけである。
 
-## 6.1 対戦状態（MatchState）
+## 6.1 部屋の状態（RoomState）
+
+部屋の状態は対戦の外側にあり、対戦が終わっても残る。
+`room.state` でそのまま配信する。
+
+```ts
+type RoomPhase = "open" | "inMatch" | "result";
+
+type RoomMember = {
+  readonly seat: Seat;
+  readonly playerId: string;        // 端末ごとの匿名 ID
+  readonly nickname: string;
+  readonly color: PlayerColor;
+  readonly ready: boolean;
+  readonly colorConflict: boolean;  // 先にいる参加者と色が重なっている
+  readonly connected: boolean;
+};
+
+type RoomState = {
+  readonly code: string;            // 入室コード。サーバーが生成
+  readonly title: string;           // 表示名
+  readonly isPublic: boolean;
+  readonly mapName: string;
+  readonly maxPlayers: number;      // 最初の版では 2
+  readonly ownerSeat: Seat;
+  readonly phase: RoomPhase;
+  readonly members: readonly RoomMember[];
+};
+```
+
+## 6.2 対戦状態（MatchState）
 
 対戦の全体を表す。
 サーバーが正を持ち、再接続時には `conn.state` でそのまま送る。
@@ -13,7 +43,6 @@
 type Seat = 0 | 1;
 
 type Phase =
-  | "waiting"
   | "ready"
   | "turnStart"
   | "acting"
@@ -22,7 +51,7 @@ type Phase =
   | "finished";
 
 type MatchState = {
-  readonly roomCode: string;
+  readonly roomCode: string;      // RoomState.code と同じ
   readonly mapName: string;
   readonly phase: Phase;
   readonly turnNumber: number;        // 1 から始まる通し番号
@@ -41,7 +70,7 @@ type MatchState = {
 再接続したクライアントはこの履歴を再適用して地形を復元する。
 一戦のターン数は多くても 20 なので、履歴の長さは問題にならない。
 
-## 6.2 プレイヤー状態（PlayerState）
+## 6.3 プレイヤー状態（PlayerState）
 
 ```ts
 type PlayerState = {
@@ -74,7 +103,7 @@ type PlayerColor =
   | "purple";
 ```
 
-## 6.3 風（Wind）
+## 6.4 風（Wind）
 
 ```ts
 type Wind = {
@@ -83,7 +112,7 @@ type Wind = {
 };
 ```
 
-## 6.4 射撃の入力と結果
+## 6.5 射撃の入力と結果
 
 ```ts
 type TrajectoryInput = {
@@ -118,7 +147,7 @@ type ShotResult = {
 車体の傾きも地形と x から求まるので含めない。
 発射角は「傾き + 仰角」を向きに応じて鏡像にした値で、物理コードの中で求める。
 
-## 6.5 対戦結果（MatchResult）
+## 6.6 対戦結果（MatchResult）
 
 ```ts
 type FinishReason =
@@ -131,10 +160,17 @@ type FinishReason =
 type MatchResult = {
   readonly winner: Seat | null;   // null は引き分け
   readonly reason: FinishReason;
+  readonly turns: number;         // 経過ターン数
+  readonly stats: readonly [SeatStats, SeatStats];
+};
+
+type SeatStats = {
+  readonly damageDealt: number;
+  readonly directHits: number;    // 爆心が相手の判定円の内側だった回数
 };
 ```
 
-## 6.6 決定論の契約
+## 6.7 決定論の契約
 
 弾道再計算方式は、「同じ `TrajectoryInput` と同じ地形から、サーバーとクライアントが同じ `ShotResult` を得る」ことに依存する。
 これを保証するため、共有パッケージの物理コードは次の制約を守る。
@@ -194,7 +230,7 @@ type MatchResult = {
 物理コードは `TrajectoryInput`、現在の地形マスク、両者の x だけを読む。
 時刻、環境変数、グローバル状態を読まない。
 
-## 6.7 契約の検証
+## 6.8 契約の検証
 
 契約が守られていることは、テストで固定する。
 
