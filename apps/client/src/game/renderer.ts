@@ -26,6 +26,14 @@ export type RendererInit = {
   readonly players: readonly [{ colors: TankColors; nickname: string }, { colors: TankColors; nickname: string }];
 };
 
+const safely = (fn: () => void): void => {
+  try {
+    fn();
+  } catch (e) {
+    console.warn("renderer の破棄で例外", e);
+  }
+};
+
 export const createRenderer = async (init: RendererInit): Promise<Renderer> => {
   const app = new Application();
   await app.init({
@@ -95,10 +103,12 @@ export const createRenderer = async (init: RendererInit): Promise<Renderer> => {
       };
     },
     destroy: () => {
-      terrain.destroy();
-      for (const t of tanks) t.destroy();
-      if (projectile) projectile.destroy();
-      app.destroy(true, { children: true });
+      // PixiJS v8 の Text は破棄時にテクスチャプールへの返却で例外を出すことがある。撤収なので握りつぶす
+      safely(() => terrain.destroy());
+      for (const t of tanks) safely(() => t.destroy());
+      const p = projectile;
+      if (p) safely(() => p.destroy());
+      safely(() => app.destroy(true, { children: true }));
     },
   };
 };
