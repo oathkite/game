@@ -35,3 +35,20 @@ pnpm typecheck
 
 サーバーの接続先は `VITE_SERVER_URL`（例 `wss://example.com`）で切り替える。
 開発時は Vite が `/ws` を `ws://localhost:8787` へ中継する。
+
+## デプロイ
+
+本番は Cloudflare に置いている。
+
+| 対象 | 場所 | 配置コマンド |
+|---|---|---|
+| client | Cloudflare Pages: https://fortress-9hj.pages.dev | `cd apps/client && VITE_SERVER_URL=wss://fortress-server.kita-396.workers.dev pnpm build && pnpm exec wrangler pages deploy dist --project-name fortress --branch main` |
+| server | Cloudflare Workers + Durable Objects: https://fortress-server.kita-396.workers.dev | `cd apps/server && pnpm exec wrangler deploy` |
+
+server は 1 つの Durable Object が全部屋を持ち、WebSocket Hibernation で接続を受け、制限時間などの起床は alarm で行う。
+状態は命令のたびに storage へ保存し、退避から戻ったときに復元する。
+費用が増える経路は Durable Object の要求数、実行時間、storage 書き込みで、alarm は 1 秒より短い間隔で鳴らさない。
+部屋も接続も無いときは storage を空にし、alarm も持たないので、誰も遊んでいなければ費用はかからない。
+
+Node で動かす場合は `apps/server/Dockerfile` をリポジトリのルートからビルドする。
+待ち受けポートは環境変数 `PORT`、生存確認は `/health` で行う。
