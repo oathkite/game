@@ -1,0 +1,27 @@
+{
+  "name": "@game/server",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "dev": "tsx watch src/main.ts",
+    "start": "tsx src/main.ts",
+    "test": "vitest run",
+    "typecheck": "tsc -p tsconfig.json && tsc -p tsconfig.cf.json",
+    "deploy:cf": "wrangler deploy"
+  },
+  "dependencies": {
+    "@game/engine": "workspace:*",
+    "@game/maps": "workspace:*",
+    "@game/protocol": "workspace:*",
+    "@game/sim": "workspace:*",
+    "ws": "^8.21.3"
+  },
+  "devDependencies": {
+    "@cloudflare/workers-types": "^5.20260903.1",
+    "@types/node": "^26.4.1",
+    "@types/ws": "^8.18.1",
+    "tsx": "^4.20.0",
+    "wrangler": "^4.129.0"
+  }
+}

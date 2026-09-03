@@ -1,0 +1,16 @@
+{
+  "name": "@game/e2e",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "test:e2e": "playwright test",
+    "typecheck": "tsc -p tsconfig.json"
+  },
+  "devDependencies": {
+    "@game/sim": "workspace:*",
+    "@playwright/test": "^1.62.1",
+    "@types/node": "^26.4.1",
+    "tsx": "^4.20.0"
+  }
+}
