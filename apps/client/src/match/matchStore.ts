@@ -99,6 +99,8 @@ export const createMatchStore = (connection: Connection, initialOptions: ReduceO
   };
 
   const setSeat = (seat: Seat | null, spectator: boolean): void => {
+    // 席が変わらなければ何もしない。手番中の移動や歩数を巻き戻さないため
+    if (options.mySeat === seat && options.spectator === spectator) return;
     options = { ...options, mySeat: seat, spectator };
     if (view.phase === "idle" || options.followCurrentSeat) return;
     const acting = seat !== null && !spectator && view.currentSeat === seat && view.deadlineAt !== null && (view.phase === "waiting" || view.phase === "acting");

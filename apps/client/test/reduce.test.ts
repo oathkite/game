@@ -111,6 +111,15 @@ describe("reduce", () => {
     expect(view.result?.reason).toBe("surrender");
   });
 
+  it("自分の手番の途中で再接続すると、conn.state から acting と操作を復元する", () => {
+    const s1 = handle(state, { type: "loaded", seat: 0 }, 0);
+    const s2 = handle(s1.state, { type: "loaded", seat: 1 }, 0);
+    const view = apply(EMPTY_VIEW, [{ type: "conn.state", match: s2.state.match, seat: 0 }]);
+    expect(view.phase).toBe("acting");
+    expect(view.control).toMatchObject({ x: 55, stepsLeft: 15 });
+    expect(view.deadlineAt).toBe(20_000);
+  });
+
   it("conn.state から地形と状態を復元する", () => {
     const s1 = handle(state, { type: "loaded", seat: 0 }, 0);
     const s2 = handle(s1.state, { type: "loaded", seat: 1 }, 0);

@@ -107,13 +107,10 @@ export const useOnlineSession = (profile: Profile, inviteCode: string | null) =>
           matchStore.setSeat(m.seat, m.spectator);
           setSession({ code: m.code, seat: m.seat, spectator: m.spectator, token: m.token, room: m.room });
           break;
-        case "room.state": {
-          const mine = m.room.members.find((x) => x.playerId === profileRef.current.playerId);
-          const seat = mine?.seat ?? null;
-          matchStore.setSeat(seat, seat === null);
-          setSession((s) => (s ? { ...s, room: m.room, seat, spectator: seat === null } : s));
+        case "room.state":
+          // 席は room.joined でだけ決まる。キックは room.closed、席の移動は新しい room.joined で届く
+          setSession((s) => (s ? { ...s, room: m.room } : s));
           break;
-        }
         case "room.closed":
           writeToken(null);
           setSession(null);

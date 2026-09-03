@@ -121,6 +121,34 @@ describe("createMatchStore", () => {
     store.dispose();
   });
 
+  it("同じ席で setSeat を呼び直しても、手番中の移動と歩数は巻き戻らない", () => {
+    const f = fakeConnection();
+    const store = createMatchStore(f.connection, { followCurrentSeat: false, mySeat: 0, spectator: false });
+    const e = startedEngine();
+    f.push(e.setup);
+    f.push(e.start);
+    store.moveStep(1);
+    store.moveStep(1);
+    store.moveStep(1);
+    const before = store.getView().control;
+    store.setSeat(0, false);
+    expect(store.getView().control).toBe(before);
+    store.dispose();
+  });
+
+  it("席が後から決まったとき、自分の手番なら操作が有効になる", () => {
+    const f = fakeConnection();
+    const store = createMatchStore(f.connection, { followCurrentSeat: false, mySeat: null, spectator: false });
+    const e = startedEngine();
+    f.push(e.setup);
+    f.push(e.start);
+    expect(store.getView().phase).toBe("waiting");
+    store.setSeat(0, false);
+    expect(store.getView().phase).toBe("acting");
+    expect(store.getView().control?.stepsLeft).toBe(15);
+    store.dispose();
+  });
+
   it("観戦者は turn.replayDone を送らない", () => {
     const f = fakeConnection();
     const store = createMatchStore(f.connection, { followCurrentSeat: false, mySeat: null, spectator: true });
