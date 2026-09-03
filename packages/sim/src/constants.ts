@@ -25,10 +25,10 @@ export const BARREL_LENGTH = 4;
 
 /** 1 ステップあたりの重力加速（固定小数点）。約 0.04 セル/step^2 */
 export const GRAVITY = 2621;
-/** 風 1 につき 1 ステップあたりの横加速（固定小数点）。約 0.0004 セル/step^2 */
-export const WIND_ACCEL_PER_UNIT = 26;
-/** パワー 100 のときの初速（固定小数点）。3 セル/step */
-export const MAX_SPEED = 196608;
+/** 風 1 につき 1 ステップあたりの横加速（固定小数点）。約 0.0003 セル/step^2 */
+export const WIND_ACCEL_PER_UNIT = 20;
+/** パワー 100 のときの初速（固定小数点）。3.5 セル/step */
+export const MAX_SPEED = 229376;
 export const MAX_STEPS = 4000;
 
 export const STEPS_PER_TURN = 15;

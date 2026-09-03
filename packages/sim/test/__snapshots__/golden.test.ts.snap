@@ -3,51 +3,8 @@
 exports[`golden replay > 上り坂 +45 度 1`] = `
 {
   "last": {
-    "x": 8552448,
-    "y": 7897088,
-  },
-  "result": {
-    "damage": [
-      0,
-      0,
-    ],
-    "finished": null,
-    "hpAfter": [
-      100,
-      100,
-    ],
-    "impact": {
-      "x": 130,
-      "y": 120,
-    },
-    "input": {
-      "elevation": 30,
-      "facing": 1,
-      "power": 60,
-      "seat": 0,
-      "wind": 0,
-      "x": 100,
-    },
-    "ringOut": [],
-    "terrainOp": {
-      "cx": 130,
-      "cy": 120,
-      "radius": 10,
-    },
-    "xAfter": [
-      100,
-      300,
-    ],
-  },
-  "steps": 71,
-}
-`;
-
-exports[`golden replay > 下り坂 -45 度 1`] = `
-{
-  "last": {
     "x": 9273344,
-    "y": 12484608,
+    "y": 7241728,
   },
   "result": {
     "damage": [
@@ -61,6 +18,49 @@ exports[`golden replay > 下り坂 -45 度 1`] = `
     ],
     "impact": {
       "x": 141,
+      "y": 110,
+    },
+    "input": {
+      "elevation": 30,
+      "facing": 1,
+      "power": 60,
+      "seat": 0,
+      "wind": 0,
+      "x": 100,
+    },
+    "ringOut": [],
+    "terrainOp": {
+      "cx": 141,
+      "cy": 110,
+      "radius": 10,
+    },
+    "xAfter": [
+      100,
+      300,
+    ],
+  },
+  "steps": 81,
+}
+`;
+
+exports[`golden replay > 下り坂 -45 度 1`] = `
+{
+  "last": {
+    "x": 9404416,
+    "y": 12484608,
+  },
+  "result": {
+    "damage": [
+      0,
+      0,
+    ],
+    "finished": null,
+    "hpAfter": [
+      100,
+      100,
+    ],
+    "impact": {
+      "x": 143,
       "y": 190,
     },
     "input": {
@@ -73,7 +73,7 @@ exports[`golden replay > 下り坂 -45 度 1`] = `
     },
     "ringOut": [],
     "terrainOp": {
-      "cx": 141,
+      "cx": 143,
       "cy": 190,
       "radius": 10,
     },
@@ -82,7 +82,7 @@ exports[`golden replay > 下り坂 -45 度 1`] = `
       300,
     ],
   },
-  "steps": 30,
+  "steps": 28,
 }
 `;
 
@@ -132,8 +132,8 @@ exports[`golden replay > 壁の中で爆発 自爆 1`] = `
 exports[`golden replay > 平地 右端から右へ 消失 1`] = `
 {
   "last": {
-    "x": 26043588,
-    "y": 9491217,
+    "x": 26075858,
+    "y": 9485527,
   },
   "result": {
     "damage": [
@@ -247,7 +247,7 @@ exports[`golden replay > 平地 直撃 1`] = `
       72,
     ],
   },
-  "steps": 8,
+  "steps": 7,
 }
 `;
 
@@ -290,15 +290,15 @@ exports[`golden replay > 平地 真上 最大パワー 1`] = `
       340,
     ],
   },
-  "steps": 151,
+  "steps": 176,
 }
 `;
 
 exports[`golden replay > 浮島 奈落へ 消失 1`] = `
 {
   "last": {
-    "x": 10533551,
-    "y": 14663791,
+    "x": 10815365,
+    "y": 14606927,
   },
   "result": {
     "damage": [
@@ -326,15 +326,15 @@ exports[`golden replay > 浮島 奈落へ 消失 1`] = `
       340,
     ],
   },
-  "steps": 50,
+  "steps": 48,
 }
 `;
 
 exports[`golden replay > 浮島 相手の足元を狙う 1`] = `
 {
   "last": {
-    "x": 18382848,
-    "y": 12419072,
+    "x": 20742144,
+    "y": 9863168,
   },
   "result": {
     "damage": [
@@ -347,8 +347,8 @@ exports[`golden replay > 浮島 相手の足元を狙う 1`] = `
       100,
     ],
     "impact": {
-      "x": 280,
-      "y": 189,
+      "x": 316,
+      "y": 150,
     },
     "input": {
       "elevation": 50,
@@ -360,8 +360,8 @@ exports[`golden replay > 浮島 相手の足元を狙う 1`] = `
     },
     "ringOut": [],
     "terrainOp": {
-      "cx": 280,
-      "cy": 189,
+      "cx": 316,
+      "cy": 150,
       "radius": 10,
     },
     "xAfter": [
@@ -376,8 +376,8 @@ exports[`golden replay > 浮島 相手の足元を狙う 1`] = `
 exports[`golden replay > 谷 向かい風 10 1`] = `
 {
   "last": {
-    "x": 13271040,
-    "y": 13074432,
+    "x": 15564800,
+    "y": 11567104,
   },
   "result": {
     "damage": [
@@ -390,8 +390,8 @@ exports[`golden replay > 谷 向かい風 10 1`] = `
       100,
     ],
     "impact": {
-      "x": 202,
-      "y": 199,
+      "x": 237,
+      "y": 176,
     },
     "input": {
       "elevation": 45,
@@ -403,8 +403,8 @@ exports[`golden replay > 谷 向かい風 10 1`] = `
     },
     "ringOut": [],
     "terrainOp": {
-      "cx": 202,
-      "cy": 199,
+      "cx": 237,
+      "cy": 176,
       "radius": 10,
     },
     "xAfter": [
@@ -412,15 +412,15 @@ exports[`golden replay > 谷 向かい風 10 1`] = `
       340,
     ],
   },
-  "steps": 108,
+  "steps": 109,
 }
 `;
 
 exports[`golden replay > 谷 基本の直接射撃 1`] = `
 {
   "last": {
-    "x": 14385152,
-    "y": 12288000,
+    "x": 16351232,
+    "y": 11042816,
   },
   "result": {
     "damage": [
@@ -433,8 +433,8 @@ exports[`golden replay > 谷 基本の直接射撃 1`] = `
       100,
     ],
     "impact": {
-      "x": 219,
-      "y": 187,
+      "x": 249,
+      "y": 168,
     },
     "input": {
       "elevation": 45,
@@ -446,8 +446,8 @@ exports[`golden replay > 谷 基本の直接射撃 1`] = `
     },
     "ringOut": [],
     "terrainOp": {
-      "cx": 219,
-      "cy": 187,
+      "cx": 249,
+      "cy": 168,
       "radius": 10,
     },
     "xAfter": [
@@ -455,15 +455,15 @@ exports[`golden replay > 谷 基本の直接射撃 1`] = `
       340,
     ],
   },
-  "steps": 103,
+  "steps": 106,
 }
 `;
 
 exports[`golden replay > 谷 山越えの高角度 1`] = `
 {
   "last": {
-    "x": 10452992,
-    "y": 11370496,
+    "x": 12550144,
+    "y": 12746752,
   },
   "result": {
     "damage": [
@@ -476,8 +476,8 @@ exports[`golden replay > 谷 山越えの高角度 1`] = `
       100,
     ],
     "impact": {
-      "x": 159,
-      "y": 173,
+      "x": 191,
+      "y": 194,
     },
     "input": {
       "elevation": 80,
@@ -489,8 +489,8 @@ exports[`golden replay > 谷 山越えの高角度 1`] = `
     },
     "ringOut": [],
     "terrainOp": {
-      "cx": 159,
-      "cy": 173,
+      "cx": 191,
+      "cy": 194,
       "radius": 10,
     },
     "xAfter": [
@@ -498,15 +498,15 @@ exports[`golden replay > 谷 山越えの高角度 1`] = `
       340,
     ],
   },
-  "steps": 161,
+  "steps": 189,
 }
 `;
 
 exports[`golden replay > 谷 左向きから 1`] = `
 {
   "last": {
-    "x": 11894784,
-    "y": 12288000,
+    "x": 9928704,
+    "y": 11042816,
   },
   "result": {
     "damage": [
@@ -519,8 +519,8 @@ exports[`golden replay > 谷 左向きから 1`] = `
       100,
     ],
     "impact": {
-      "x": 181,
-      "y": 187,
+      "x": 151,
+      "y": 168,
     },
     "input": {
       "elevation": 45,
@@ -532,8 +532,8 @@ exports[`golden replay > 谷 左向きから 1`] = `
     },
     "ringOut": [],
     "terrainOp": {
-      "cx": 181,
-      "cy": 187,
+      "cx": 151,
+      "cy": 168,
       "radius": 10,
     },
     "xAfter": [
@@ -541,15 +541,15 @@ exports[`golden replay > 谷 左向きから 1`] = `
       60,
     ],
   },
-  "steps": 103,
+  "steps": 106,
 }
 `;
 
 exports[`golden replay > 谷 追い風 10 1`] = `
 {
   "last": {
-    "x": 15302656,
-    "y": 11698176,
+    "x": 17072128,
+    "y": 10518528,
   },
   "result": {
     "damage": [
@@ -562,8 +562,8 @@ exports[`golden replay > 谷 追い風 10 1`] = `
       100,
     ],
     "impact": {
-      "x": 233,
-      "y": 178,
+      "x": 260,
+      "y": 160,
     },
     "input": {
       "elevation": 45,
@@ -575,8 +575,8 @@ exports[`golden replay > 谷 追い風 10 1`] = `
     },
     "ringOut": [],
     "terrainOp": {
-      "cx": 233,
-      "cy": 178,
+      "cx": 260,
+      "cy": 160,
       "radius": 10,
     },
     "xAfter": [
@@ -584,6 +584,6 @@ exports[`golden replay > 谷 追い風 10 1`] = `
       340,
     ],
   },
-  "steps": 100,
+  "steps": 103,
 }
 `;
