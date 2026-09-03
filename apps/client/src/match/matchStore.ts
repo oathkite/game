@@ -1,7 +1,8 @@
 import type { Facing, Seat } from "@game/protocol";
-import { ELEVATION_MAX, ELEVATION_MIN, STEPS_PER_TURN, stepOutcome } from "@game/sim";
+import { STEPS_PER_TURN } from "@game/sim";
 import { createListeners } from "@/net/connection";
 import type { Connection } from "@/net/connection";
+import { applyElevation, applyStep, canStep as canStepView } from "./control";
 import { reduce, type ReduceOptions } from "./reduce";
 import { EMPTY_VIEW, type LocalControl, type MatchView } from "./types";
 
@@ -48,33 +49,13 @@ export const createMatchStore = (connection: Connection, initialOptions: ReduceO
   });
 
   const moveStep = (dir: Facing): void => {
-    const c = view.control;
-    if (view.phase !== "acting" || !c || !view.mask) return;
-    // 左右の入力は向きも変える。歩数がなくても向きだけは変わる
-    if (c.stepsLeft <= 0 || c.fell) {
-      set({ ...view, control: { ...c, facing: dir } });
-      return;
-    }
-    const outcome = stepOutcome(view.mask, c.x, dir);
-    if (outcome === "blocked") {
-      set({ ...view, control: { ...c, facing: dir } });
-      return;
-    }
-    set({ ...view, control: { ...c, facing: dir, x: c.x + dir, stepsLeft: c.stepsLeft - 1, fell: outcome === "fell" } });
-  };
-
-  const canStep = (dir: Facing): boolean => {
-    const c = view.control;
-    if (view.phase !== "acting" || !c || !view.mask) return false;
-    if (c.stepsLeft <= 0 || c.fell) return false;
-    return stepOutcome(view.mask, c.x, dir) !== "blocked";
+    const next = applyStep(view, dir);
+    if (next !== view) set(next);
   };
 
   const changeElevation = (delta: number): void => {
-    const c = view.control;
-    if (view.phase !== "acting" || !c) return;
-    const elevation = Math.min(ELEVATION_MAX, Math.max(ELEVATION_MIN, c.elevation + delta));
-    if (elevation !== c.elevation) set({ ...view, lastElevation: elevation, control: { ...c, elevation } });
+    const next = applyElevation(view, delta);
+    if (next !== view) set(next);
   };
 
   const fire = (power: number): void => {
@@ -116,7 +97,7 @@ export const createMatchStore = (connection: Connection, initialOptions: ReduceO
     setSeat,
     moveStep,
     changeElevation,
-    canStep,
+    canStep: (dir) => canStepView(view, dir),
     fire,
     completeReplay,
     surrender: () => connection.send({ type: "match.surrender" }),

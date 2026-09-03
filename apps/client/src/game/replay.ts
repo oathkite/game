@@ -2,6 +2,7 @@ import type { Seat } from "@game/protocol";
 import { BLAST_RADIUS, isRingOut, MAP_HEIGHT, ONE, surfaceY, tiltOf, type TerrainMask } from "@game/sim";
 import type { SoundName } from "@/app/audio";
 import type { PlayerView, ReplayJob } from "@/match/types";
+import type { ProjectileView } from "./projectileView";
 import type { Renderer } from "./renderer";
 import type { TankPose } from "./tankView";
 
@@ -18,6 +19,26 @@ const FLASH_MS = 300;
 /** 落下の速さ（セル/秒） */
 const FALL_CELLS_PER_S = 90;
 
+type Fall = { readonly seat: Seat; readonly from: number; readonly to: number };
+
+type Phase = "flight" | "blast" | "fall" | "done";
+
+/** 再生 1 回分の可変状態 */
+type Run = {
+  readonly renderer: Renderer;
+  readonly job: ReplayJob;
+  readonly projectile: ProjectileView;
+  readonly elevations: readonly [number, number];
+  readonly mySeat: Seat | null;
+  readonly cb: ReplayCallbacks;
+  readonly falls: readonly Fall[];
+  phase: Phase;
+  elapsed: number;
+  phaseStart: number;
+  trailIndex: number;
+  stopFrames: () => void;
+};
+
 const poseOf = (p: PlayerView, mask: TerrainMask, elevation: number, over: Partial<TankPose> = {}): TankPose => ({
   x: p.x,
   y: surfaceY(mask, p.x),
@@ -30,7 +51,118 @@ const poseOf = (p: PlayerView, mask: TerrainMask, elevation: number, over: Parti
   ...over,
 });
 
-type Fall = { readonly seat: Seat; readonly from: number; readonly to: number };
+const elevationOf = (run: Run, seat: Seat): number => (seat === run.job.shot.input.seat ? run.job.shot.input.elevation : run.elevations[seat]);
+
+/** 着弾で地面を失った機体の落下。着弾前と後の地表の差から求める */
+const computeFalls = (job: ReplayJob): Fall[] => {
+  const falls: Fall[] = [];
+  for (const seat of [0, 1] as const) {
+    const p = job.playersAfter[seat];
+    const from = surfaceY(job.maskBefore, p.x);
+    const to = isRingOut(job.maskAfter, p.x) ? MAP_HEIGHT + 12 : surfaceY(job.maskAfter, p.x);
+    if (to > from) falls.push({ seat, from, to });
+  }
+  return falls;
+};
+
+/** 着弾後の HP と位置で、地形は着弾前のまま描く。落下前の姿勢 */
+const poseAfterHit = (run: Run, seat: Seat, flash: boolean): TankPose => {
+  const before = run.job.playersBefore[seat];
+  const after = run.job.playersAfter[seat];
+  return poseOf({ ...before, hp: after.hp, x: after.x, facing: after.facing }, run.job.maskBefore, elevationOf(run, seat), { flash });
+};
+
+const finish = (run: Run): void => {
+  if (run.phase === "done") return;
+  run.phase = "done";
+  run.projectile.clear();
+  for (const seat of [0, 1] as const) run.renderer.setTank(seat, poseOf(run.job.playersAfter[seat], run.job.maskAfter, elevationOf(run, seat)));
+  run.stopFrames();
+  run.cb.done();
+};
+
+const enterFall = (run: Run): void => {
+  run.phase = "fall";
+  run.phaseStart = run.elapsed;
+  run.projectile.clear();
+  for (const seat of [0, 1] as const) {
+    run.renderer.setTank(seat, poseOf(run.job.playersAfter[seat], run.job.maskBefore, elevationOf(run, seat), { visible: true }));
+  }
+  if (run.falls.length === 0) finish(run);
+};
+
+const enterBlast = (run: Run): void => {
+  run.phase = "blast";
+  run.phaseStart = run.elapsed;
+  run.projectile.setBullet(null, 0, 0);
+  const { shot } = run.job;
+  if (!shot.impact) {
+    enterFall(run);
+    return;
+  }
+  run.cb.sound("explosion");
+  run.renderer.setTerrain(run.job.maskAfter);
+  for (const seat of [0, 1] as const) {
+    const damaged = shot.damage[seat] > 0;
+    if (damaged && seat === run.mySeat) run.cb.sound("hit");
+    run.renderer.setTank(seat, poseAfterHit(run, seat, damaged));
+  }
+};
+
+const stepFlight = (run: Run): void => {
+  const { path } = run.job;
+  const t = run.elapsed / STEP_MS;
+  const i = Math.floor(t);
+  if (i >= path.length - 1) {
+    enterBlast(run);
+    return;
+  }
+  const a = path[i];
+  const b = path[i + 1];
+  if (!a || !b) return;
+  const f = t - i;
+  run.projectile.setBullet((a.x + (b.x - a.x) * f) / ONE, (a.y + (b.y - a.y) * f) / ONE, Math.atan2(b.y - a.y, b.x - a.x));
+  // 尾は 1 セル置きに残す
+  while (run.trailIndex + 2 <= i) {
+    run.trailIndex += 2;
+    const p = path[run.trailIndex];
+    if (p) run.projectile.addTrail(Math.floor(p.x / ONE), Math.floor(p.y / ONE));
+  }
+};
+
+const stepBlast = (run: Run): void => {
+  const t = run.elapsed - run.phaseStart;
+  if (t >= BLAST_MS) {
+    enterFall(run);
+    return;
+  }
+  const { shot } = run.job;
+  const on = Math.floor(t / 80) % 2 === 0;
+  if (shot.impact) run.projectile.setBlast(shot.impact.x, shot.impact.y, BLAST_RADIUS, on);
+  if (t >= FLASH_MS) {
+    for (const seat of [0, 1] as const) {
+      if (shot.damage[seat] > 0) run.renderer.setTank(seat, poseAfterHit(run, seat, false));
+    }
+  }
+};
+
+const stepFall = (run: Run): void => {
+  const t = (run.elapsed - run.phaseStart) / 1000;
+  let allDone = true;
+  for (const f of run.falls) {
+    const y = Math.min(f.to, f.from + FALL_CELLS_PER_S * t);
+    if (y < f.to) allDone = false;
+    run.renderer.setTank(f.seat, poseOf(run.job.playersAfter[f.seat], run.job.maskBefore, elevationOf(run, f.seat), { y, visible: y < MAP_HEIGHT + 6 }));
+  }
+  if (allDone) finish(run);
+};
+
+const stepFrame = (run: Run, deltaMs: number): void => {
+  run.elapsed += deltaMs;
+  if (run.phase === "flight") stepFlight(run);
+  else if (run.phase === "blast") stepBlast(run);
+  else if (run.phase === "fall") stepFall(run);
+};
 
 /** 再生を始める。返り値で中断できる */
 export const playReplay = (
@@ -40,134 +172,30 @@ export const playReplay = (
   mySeat: Seat | null,
   cb: ReplayCallbacks,
 ): (() => void) => {
-  const { shot, path } = job;
-  const shooter = job.playersBefore[shot.input.seat];
-  const projectile = renderer.projectile(shooter.colors.primary);
-  const elevOf = (seat: Seat): number => (seat === shot.input.seat ? shot.input.elevation : elevations[seat]);
-
-  const setBefore = (): void => {
-    for (const seat of [0, 1] as const) renderer.setTank(seat, poseOf(job.playersBefore[seat], job.maskBefore, elevOf(seat)));
+  const shooter = job.playersBefore[job.shot.input.seat];
+  const run: Run = {
+    renderer,
+    job,
+    projectile: renderer.projectile(shooter.colors.primary),
+    elevations,
+    mySeat,
+    cb,
+    falls: computeFalls(job),
+    phase: "flight",
+    elapsed: 0,
+    phaseStart: 0,
+    trailIndex: 0,
+    stopFrames: () => {},
   };
-  setBefore();
+  for (const seat of [0, 1] as const) renderer.setTank(seat, poseOf(job.playersBefore[seat], job.maskBefore, elevationOf(run, seat)));
   // 撃つ側の位置は移動後の x で描く
-  renderer.setTank(shot.input.seat, poseOf({ ...shooter, x: shot.input.x, facing: shot.input.facing }, job.maskBefore, shot.input.elevation));
+  renderer.setTank(job.shot.input.seat, poseOf({ ...shooter, x: job.shot.input.x, facing: job.shot.input.facing }, job.maskBefore, job.shot.input.elevation));
   cb.sound("fire");
-
-  const falls: Fall[] = [];
-  for (const seat of [0, 1] as const) {
-    const p = job.playersAfter[seat];
-    const from = surfaceY(job.maskBefore, p.x);
-    const to = isRingOut(job.maskAfter, p.x) ? MAP_HEIGHT + 12 : surfaceY(job.maskAfter, p.x);
-    if (to > from) falls.push({ seat, from, to });
-  }
-
-  let phase: "flight" | "blast" | "fall" | "done" = "flight";
-  let elapsed = 0;
-  let trailIndex = 0;
-  let phaseStart = 0;
-
-  const enterBlast = (): void => {
-    phase = "blast";
-    phaseStart = elapsed;
-    projectile.setBullet(null, 0, 0);
-    if (!shot.impact) {
-      enterFall();
-      return;
-    }
-    cb.sound("explosion");
-    renderer.setTerrain(job.maskAfter);
-    for (const seat of [0, 1] as const) {
-      const damaged = shot.damage[seat] > 0;
-      if (damaged && seat === mySeat) cb.sound("hit");
-      // HP はここで更新し、位置と傾きは落下前のまま
-      const before = job.playersBefore[seat];
-      const after = job.playersAfter[seat];
-      renderer.setTank(seat, poseOf({ ...before, hp: after.hp, x: after.x, facing: after.facing }, job.maskBefore, elevOf(seat), { flash: damaged }));
-    }
-  };
-
-  const enterFall = (): void => {
-    phase = "fall";
-    phaseStart = elapsed;
-    projectile.clear();
-    for (const seat of [0, 1] as const) {
-      renderer.setTank(seat, poseOf(job.playersAfter[seat], job.maskBefore, elevOf(seat), { visible: true }));
-    }
-    if (falls.length === 0) finish();
-  };
-
-  const finish = (): void => {
-    if (phase === "done") return;
-    phase = "done";
-    projectile.clear();
-    for (const seat of [0, 1] as const) renderer.setTank(seat, poseOf(job.playersAfter[seat], job.maskAfter, elevOf(seat)));
-    stop();
-    cb.done();
-  };
-
-  const flight = (): void => {
-    const t = elapsed / STEP_MS;
-    const i = Math.floor(t);
-    if (i >= path.length - 1) {
-      enterBlast();
-      return;
-    }
-    const a = path[i];
-    const b = path[i + 1];
-    if (!a || !b) return;
-    const f = t - i;
-    const x = (a.x + (b.x - a.x) * f) / ONE;
-    const y = (a.y + (b.y - a.y) * f) / ONE;
-    projectile.setBullet(x, y, Math.atan2(b.y - a.y, b.x - a.x));
-    while (trailIndex + 2 <= i) {
-      trailIndex += 2;
-      const p = path[trailIndex];
-      if (p) projectile.addTrail(Math.floor(p.x / ONE), Math.floor(p.y / ONE));
-    }
-  };
-
-  const blast = (): void => {
-    const t = elapsed - phaseStart;
-    if (t >= BLAST_MS) {
-      enterFall();
-      return;
-    }
-    const on = Math.floor(t / 80) % 2 === 0;
-    if (shot.impact) projectile.setBlast(shot.impact.x, shot.impact.y, BLAST_RADIUS, on);
-    if (t >= FLASH_MS) {
-      for (const seat of [0, 1] as const) {
-        if (shot.damage[seat] > 0) {
-          const after = job.playersAfter[seat];
-          renderer.setTank(seat, poseOf({ ...job.playersBefore[seat], hp: after.hp, x: after.x, facing: after.facing }, job.maskBefore, elevOf(seat)));
-        }
-      }
-    }
-  };
-
-  const fall = (): void => {
-    const t = (elapsed - phaseStart) / 1000;
-    let allDone = true;
-    for (const f of falls) {
-      const y = Math.min(f.to, f.from + FALL_CELLS_PER_S * t);
-      if (y < f.to) allDone = false;
-      const p = job.playersAfter[f.seat];
-      renderer.setTank(f.seat, poseOf(p, job.maskBefore, elevOf(f.seat), { y, visible: y < MAP_HEIGHT + 6 }));
-    }
-    if (allDone) finish();
-  };
-
-  const stop = renderer.onFrame((deltaMs) => {
-    elapsed += deltaMs;
-    if (phase === "flight") flight();
-    else if (phase === "blast") blast();
-    else if (phase === "fall") fall();
-  });
-
+  run.stopFrames = renderer.onFrame((deltaMs) => stepFrame(run, deltaMs));
   return () => {
-    if (phase !== "done") {
-      phase = "done";
-      projectile.clear();
-      stop();
-    }
+    if (run.phase === "done") return;
+    run.phase = "done";
+    run.projectile.clear();
+    run.stopFrames();
   };
 };
