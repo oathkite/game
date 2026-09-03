@@ -44,9 +44,12 @@ describe("谷の手触り", () => {
       for (let y = 0; y < m.height; y++) if (m.cells[y * m.width + x] === 1) return y;
       return m.height;
     };
-    const aim = [...calm][0]?.split("/").map(Number) as [number, number];
-    const r = simulateShot(mask, [{ x: x0, hp: 100 }, { x: x1, hp: 100 }], { seat: 0, x: x0, facing: 1, elevation: aim[0], power: aim[1], wind: 0 });
-    expect(r.result.damage[1]).toBeGreaterThan(0);
-    expect(surfaceAt(r.mask, x1)).toBeGreaterThan(surfaceAt(mask, x1));
+    // 当たる照準の中に、相手の真下の地表を下げるものがある
+    const lowers = [...calm].some((k) => {
+      const [elevation, power] = k.split("/").map(Number) as [number, number];
+      const r = simulateShot(mask, [{ x: x0, hp: 100 }, { x: x1, hp: 100 }], { seat: 0, x: x0, facing: 1, elevation, power, wind: 0 });
+      return surfaceAt(r.mask, x1) > surfaceAt(mask, x1);
+    });
+    expect(lowers).toBe(true);
   });
 });

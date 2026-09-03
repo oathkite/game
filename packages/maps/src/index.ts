@@ -14,7 +14,7 @@ export type MapDefinition = {
 /** 谷。中央が深く落ち込み、両者は左右の高台に立つ */
 const valley: MapDefinition = {
   name: "valley",
-  spawns: [55, 345],
+  spawns: [75, 325],
   build: () =>
     solidBelow(
       heightsFromProfile([

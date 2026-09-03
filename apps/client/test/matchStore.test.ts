@@ -95,7 +95,7 @@ describe("createMatchStore", () => {
     store.moveStep(1);
     store.changeElevation(5);
     store.fire(77);
-    expect(f.sent[1]).toEqual({ type: "turn.fire", facing: 1, elevation: 50, power: 77, x: 56 });
+    expect(f.sent[1]).toEqual({ type: "turn.fire", facing: 1, elevation: 50, power: 77, x: 76 });
     expect(store.getView().phase).toBe("fired");
     // 2 回目は送らない
     store.fire(50);
@@ -109,7 +109,7 @@ describe("createMatchStore", () => {
     const e = startedEngine();
     f.push(e.setup);
     f.push(e.start);
-    const fired = handle(e.state, { type: "fire", seat: 0, fire: { type: "turn.fire", facing: 1, elevation: 45, power: 60, x: 55 } }, 1000);
+    const fired = handle(e.state, { type: "fire", seat: 0, fire: { type: "turn.fire", facing: 1, elevation: 45, power: 60, x: 75 } }, 1000);
     f.push(fired.effects[0]?.message as ServerMessage);
     const job = store.getView().replay;
     expect(job).not.toBeNull();
@@ -156,7 +156,7 @@ describe("createMatchStore", () => {
     f.push(e.setup);
     f.push(e.start);
     expect(store.getView().phase).toBe("waiting");
-    const fired = handle(e.state, { type: "fire", seat: 0, fire: { type: "turn.fire", facing: 1, elevation: 45, power: 60, x: 55 } }, 1000);
+    const fired = handle(e.state, { type: "fire", seat: 0, fire: { type: "turn.fire", facing: 1, elevation: 45, power: 60, x: 75 } }, 1000);
     f.push(fired.effects[0]?.message as ServerMessage);
     store.completeReplay(store.getView().replay?.id ?? -1);
     expect(f.sent.map((m) => m.type)).toEqual(["match.ready"]);
@@ -171,7 +171,7 @@ describe("createMatchStore", () => {
     f.push(e.start);
     store.changeElevation(12);
     store.fire(50);
-    const fired = handle(e.state, { type: "fire", seat: 0, fire: { type: "turn.fire", facing: 1, elevation: 57, power: 50, x: 55 } }, 1000);
+    const fired = handle(e.state, { type: "fire", seat: 0, fire: { type: "turn.fire", facing: 1, elevation: 57, power: 50, x: 75 } }, 1000);
     f.push(fired.effects[0]?.message as ServerMessage);
     store.completeReplay(store.getView().replay?.id ?? -1);
     // 相手のターンを飛ばして自分のターンへ

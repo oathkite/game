@@ -26,7 +26,7 @@ describe("turn.fire の検証", () => {
   it("歩数超過はパスになる", () => {
     const h = harness();
     startedMatch(h);
-    h.send("a", { type: "turn.fire", facing: 1, elevation: 45, power: 50, x: 55 + 16 });
+    h.send("a", { type: "turn.fire", facing: 1, elevation: 45, power: 50, x: 75 + 16 });
     expect(last(h.inbox("b"), "turn.pass")?.reason).toBe("invalidFire");
     expect(last(h.inbox("b"), "turn.start")?.turnNumber).toBe(2);
   });
@@ -37,7 +37,7 @@ describe("turn.fire の検証", () => {
     h.open("s");
     h.send("s", { type: "room.spectate", code, playerId: "player-spec", nickname: "spec" });
     expect(last(h.inbox("s"), "conn.state")?.seat).toBeNull();
-    h.send("s", { type: "turn.fire", facing: 1, elevation: 45, power: 50, x: 55 });
+    h.send("s", { type: "turn.fire", facing: 1, elevation: 45, power: 50, x: 75 });
     expect(last(h.inbox("s"), "room.error")?.reason).toBe("notMember");
   });
 
@@ -71,7 +71,7 @@ describe("制限時間と再生", () => {
     const h = harness();
     startedMatch(h);
     h.at(T0 + 3000);
-    h.send("a", { type: "turn.fire", facing: 1, elevation: 45, power: 50, x: 55 });
+    h.send("a", { type: "turn.fire", facing: 1, elevation: 45, power: 50, x: 75 });
     h.send("a", { type: "turn.replayDone" });
     expect(last(h.inbox("a"), "turn.start")?.turnNumber).toBe(1);
     h.send("b", { type: "turn.replayDone" });
@@ -206,7 +206,7 @@ describe("半開きの接続", () => {
     // 古い接続が後から閉じても、席には影響しない
     h.close("a");
     expect(last(h.inbox("b"), "conn.opponentDisconnected")).toBeUndefined();
-    h.send("a2", { type: "turn.fire", facing: 1, elevation: 45, power: 50, x: 55 });
+    h.send("a2", { type: "turn.fire", facing: 1, elevation: 45, power: 50, x: 75 });
     expect(last(h.inbox("b"), "turn.result")).toBeDefined();
   });
 });
