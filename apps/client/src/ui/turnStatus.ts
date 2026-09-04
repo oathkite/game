@@ -1,6 +1,6 @@
 import type { MatchView } from "@/match/types";
 
-// 手番の状態を文字にする純関数。設計書 03 の 3.7。ターン数は含めない。
+// 手番の状態を文字にする純関数。設計書 03 の 3.7。
 // 自分の手番だけを明るい緑で、それ以外は暗い緑で出す。
 
 export type TurnStatus = {
@@ -32,6 +32,12 @@ export const turnStatus = (view: MatchView): TurnStatus | null => {
   }
   if (view.currentSeat === view.mySeat) return { kind: "mine", label: "あなたの番", bright: true };
   return { kind: "theirs", label: "相手の番", bright: false };
+};
+
+/** ターン数の表示。「3 / 20」の形。まだ 1 ターン目が始まっていなければ出さない */
+export const turnCounter = (view: MatchView): string | null => {
+  if (view.phase === "idle" || view.phase === "loading" || view.turnNumber < 1) return null;
+  return `${view.turnNumber} / ${view.turnLimit}`;
 };
 
 /** ターン開始のバナーを出すか。手番が決まって制限時間が動き始めたときだけ */

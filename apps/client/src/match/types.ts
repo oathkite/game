@@ -1,4 +1,4 @@
-import type { Facing, MatchResult, Seat, ShotResult, TankColors, Wind } from "@game/protocol";
+import { type Facing, type MatchResult, type Seat, type ShotResult, type TankColors, TURN_LIMIT, type Wind } from "@game/protocol";
 import type { FixedPoint, TerrainMask } from "@game/sim";
 
 // クライアントが持つ対戦の表示状態。サーバーの通知から組み立て、勝手には進めない（設計書 04）。
@@ -55,6 +55,8 @@ export type MatchView = {
   readonly spectator: boolean;
   readonly currentSeat: Seat;
   readonly turnNumber: number;
+  /** ターン数の上限。match.setup と conn.state から受け取る */
+  readonly turnLimit: number;
   readonly wind: Wind;
   /** サーバー時刻の期限 */
   readonly deadlineAt: number | null;
@@ -77,6 +79,7 @@ export const EMPTY_VIEW: MatchView = {
   spectator: false,
   currentSeat: 0,
   turnNumber: 0,
+  turnLimit: TURN_LIMIT,
   wind: { value: 0 },
   deadlineAt: null,
   control: null,

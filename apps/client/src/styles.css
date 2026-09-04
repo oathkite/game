@@ -202,7 +202,11 @@ a {
   display: flex;
   flex-direction: column;
   align-items: center;
+  justify-content: flex-end;
   gap: 4px;
+  /* 縦に収まらないときは上から詰める。操作部品は下端に寄せたままにする */
+  min-height: 0;
+  overflow: hidden;
 }
 
 .map-area {
@@ -237,11 +241,24 @@ a {
   z-index: 2;
 }
 
+/* ターン数と手番を 1 行に並べる */
+.turn-line {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  background: var(--bg);
+  padding: 2px 8px;
+}
+
 /* 色は既存の .dim に任せる。手番の明暗を他の dim な部品と揃えるため */
 .turn-label {
   font-size: 16px;
-  background: var(--bg);
-  padding: 2px 8px;
+  white-space: nowrap;
+}
+
+.turn-count {
+  font-size: 16px;
+  font-variant-numeric: tabular-nums;
   white-space: nowrap;
 }
 
@@ -297,11 +314,11 @@ a {
   z-index: 3;
 }
 
+/* 行と列の大きさは LeftPanel が px で決める。1fr にすると縦が余ったぶんだけ潰れるためである */
 .dpad {
   display: grid;
-  grid-template-columns: repeat(3, 1fr);
-  grid-template-rows: repeat(3, 1fr);
   gap: 2px;
+  flex: none;
 }
 
 .dpad button {
@@ -317,6 +334,16 @@ a {
   color: var(--bg);
 }
 
+/* 右パネル上端の離脱ボタン。誤って押さないよう暗い緑で置く */
+.exit {
+  width: 100%;
+  padding: 0;
+  font-size: 16px;
+  border-color: var(--ui-dim);
+  color: var(--ui-dim);
+  flex: none;
+}
+
 .fire {
   width: 100%;
   touch-action: none;
@@ -324,6 +351,8 @@ a {
   display: flex;
   align-items: center;
   justify-content: center;
+  font-size: 20px;
+  letter-spacing: 0.1em;
 }
 
 .fire.held {
@@ -336,6 +365,8 @@ a {
   width: 100%;
   border: 2px solid var(--ui-dim);
   overflow: hidden;
+  touch-action: none;
+  cursor: pointer;
 }
 
 .gauge-fill {
@@ -344,6 +375,18 @@ a {
   right: 0;
   bottom: 0;
   background: var(--ui);
+}
+
+/* 目安ライン。高さは powerMarker.ts の MARKER_HEIGHT と合わせる。
+   溜まった分と同じ色なので、重なっても分かるよう上下を地の色で挟む。
+   border-box では枠線が高さを食って中の色が潰れるため、背景のグラデーションで 3 本の帯にする */
+.gauge-marker {
+  position: absolute;
+  left: 0;
+  right: 0;
+  height: 4px;
+  background: linear-gradient(var(--bg) 1px, var(--ui) 1px 3px, var(--bg) 3px);
+  pointer-events: none;
 }
 
 .steps {

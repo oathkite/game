@@ -1,5 +1,5 @@
 import { COLOR_HEX, type Seat, type TankColors } from "@game/protocol";
-import { MAP_HEIGHT, MAP_WIDTH, type TerrainMask } from "@game/sim";
+import type { TerrainMask } from "@game/sim";
 import { Application, Container } from "pixi.js";
 import { createProjectileView, type ProjectileView } from "./projectileView";
 import type { Layout } from "./scale";
@@ -80,7 +80,7 @@ export const createRenderer = async (init: RendererInit): Promise<Renderer> => {
     setLayout: (layout) => {
       cell = layout.cell;
       world.scale.set(cell);
-      app.renderer.resize(MAP_WIDTH * cell, MAP_HEIGHT * cell);
+      app.renderer.resize(layout.mapWidth, layout.mapHeight);
       applyPose(0);
       applyPose(1);
     },

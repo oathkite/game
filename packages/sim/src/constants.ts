@@ -30,7 +30,7 @@ export const WIND_ACCEL_PER_UNIT = 20;
 export const MAX_SPEED = 229376;
 export const MAX_STEPS = 4000;
 
-export const STEPS_PER_TURN = 15;
+export const STEPS_PER_TURN = 30;
 /** 1 歩で登れる高さの上限（セル） */
 export const CLIMB_MAX = 1;
 /** 傾きを測る幅。中心から左右にこのセル数 */

@@ -44,6 +44,7 @@ const fromMatchState = (view: MatchView, match: MatchState, seat: Seat | null, o
     spectator: options.spectator,
     currentSeat: match.currentSeat,
     turnNumber: match.turnNumber,
+    turnLimit: match.turnLimit,
     wind: match.wind,
     deadlineAt: match.deadlineAt,
     result: match.result,
@@ -101,7 +102,7 @@ export const reduce = (view: MatchView, message: ServerMessage, options: ReduceO
         { ...message.players[1], hp: message.hp, facing: message.players[1].x < message.players[0].x ? 1 : -1, connected: true },
       ];
       return just(
-        { ...EMPTY_VIEW, phase: "loading", mask, players, mySeat: options.mySeat, spectator: options.spectator, currentSeat: message.firstSeat },
+        { ...EMPTY_VIEW, phase: "loading", mask, players, mySeat: options.mySeat, spectator: options.spectator, currentSeat: message.firstSeat, turnLimit: message.turnLimit },
         "match.ready",
       );
     }

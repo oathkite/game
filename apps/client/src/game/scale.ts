@@ -1,26 +1,50 @@
 import { MAP_HEIGHT, MAP_WIDTH } from "@game/sim";
 
-// 設計書 03 の 3.1。1 セルを何 px で描くかは、画面に収まる最大の整数にする。
+// 設計書 03 の 3.1。パネルは指が届く幅を先に確保し、残った領域にマップを収まる限り大きく描く。
+// 倍率は整数に丸めない。小さな画面で 1 px 刻みに丸めると、画面の半分近くが余白になるためである。
 
 /** 基準表示のパネル幅（セル） */
 export const PANEL_CELLS = 24;
 
+/** 指で押せる最小の大きさ（px）。十字キーの 1 ボタンがこれを下回らないようにする */
+export const TOUCH_MIN = 44;
+
+/** 十字キーのボタンの間隔（px）。styles.css の .dpad の gap と合わせる */
+export const DPAD_GAP = 2;
+
+/** パネルの最小幅（px）。十字キーの 3 列と間の隙間、左右 4 px の余白 */
+export const PANEL_MIN = TOUCH_MIN * 3 + DPAD_GAP * 2 + 8;
+
+/** パネル 2 枚が画面から奪ってよい幅の割合。残りがマップになる */
+const PANEL_SHARE_MAX = 0.4;
+
 export type Layout = {
-  /** 1 セルの px */
+  /** マップの 1 セルの px。整数とは限らない */
   readonly cell: number;
   readonly panelWidth: number;
   readonly mapWidth: number;
   readonly mapHeight: number;
+  /** パネルの中で 1 セル相当として使う px。マップの cell とは独立に決める */
+  readonly panelCell: number;
 };
 
 export const computeLayout = (viewportWidth: number, viewportHeight: number): Layout => {
-  const byWidth = Math.floor(viewportWidth / (MAP_WIDTH + PANEL_CELLS * 2));
-  const byHeight = Math.floor(viewportHeight / MAP_HEIGHT);
-  const cell = Math.max(1, Math.min(byWidth, byHeight));
+  // マップ 400 セルとパネル 24 セル 2 枚で画面を分けたときのパネル幅を基準にする。
+  // 狭い画面ではこれが指の幅を割るので、下限を優先してマップを譲る
+  const byShare = (viewportWidth / (MAP_WIDTH + PANEL_CELLS * 2)) * PANEL_CELLS;
+  // 割合で決めた幅は画面の 4 割で頭打ちにする。マップが読めなくなると狙いを定められないためである
+  const capped = Math.min(byShare, (viewportWidth * PANEL_SHARE_MAX) / 2);
+  // 指で押せない操作部品は置いていないのと同じなので、下限はこの頭打ちより優先する。
+  // ただしパネル 2 枚で画面を埋めるわけにはいかないので、画面の半分では譲る
+  const panelWidth = Math.max(1, Math.floor(Math.min(Math.max(capped, PANEL_MIN), viewportWidth / 2)));
+  const forMap = Math.max(1, viewportWidth - panelWidth * 2);
+  // 幅と高さのどちらか厳しい方に合わせる
+  const cell = Math.max(0.01, Math.min(forMap / MAP_WIDTH, viewportHeight / MAP_HEIGHT));
   return {
     cell,
-    panelWidth: PANEL_CELLS * cell,
-    mapWidth: MAP_WIDTH * cell,
-    mapHeight: MAP_HEIGHT * cell,
+    panelWidth,
+    mapWidth: Math.floor(MAP_WIDTH * cell),
+    mapHeight: Math.floor(MAP_HEIGHT * cell),
+    panelCell: panelWidth / PANEL_CELLS,
   };
 };

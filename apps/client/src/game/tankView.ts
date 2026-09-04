@@ -15,6 +15,8 @@ export type TankPose = {
   readonly hp: number;
   readonly visible: boolean;
   readonly flash: boolean;
+  /** 発射角の線を出す。自分が狙いを付けている間だけ true */
+  readonly aiming: boolean;
 };
 
 export type TankView = {
@@ -27,6 +29,14 @@ export type TankView = {
 
 const DEG = Math.PI / 180;
 const BODY_W = 7;
+/** 発射角の線の長さ（セル）。弾の届く距離とは無関係の、向きだけを示す長さにする */
+const AIM_LENGTH = 24;
+/** 砲口から線を離す長さ（セル）。砲身と線がつながって見えないようにする */
+const AIM_GAP = 2;
+/** 破線の本数 */
+const AIM_DASHES = 5;
+/** 破線の太さ（セル） */
+const AIM_WIDTH = 1.2;
 
 const hex = (c: string): number => Number.parseInt(c.slice(1), 16);
 
@@ -46,8 +56,19 @@ export const createTankView = (colors: TankColors, nickname: string): TankView =
   const barrel = new Graphics();
   barrel.rect(0, -0.5, BARREL_LENGTH, 1).fill(hex(COLOR_HEX[colors.secondary]));
   barrel.position.set(0, -BARREL_BASE_UP);
+  // 発射角の線。砲身の延長に破線を引き、どの向きへ飛び出すかだけを示す。弾道の予測ではない
+  const aim = new Graphics();
+  // 破線にする。実線だと弾道の予測に見えるため、飛び出す向きだけを示す点線にする
+  for (let i = 0; i < AIM_DASHES; i++) {
+    const from = BARREL_LENGTH + AIM_GAP + i * (AIM_LENGTH / AIM_DASHES);
+    aim.rect(from, -AIM_WIDTH / 2, AIM_LENGTH / (AIM_DASHES * 2), AIM_WIDTH);
+  }
+  aim.fill(hex(COLOR_HEX[colors.secondary]));
+  aim.alpha = 0.7;
+  aim.position.set(0, -BARREL_BASE_UP);
+  aim.visible = false;
   const rotating = new Container();
-  rotating.addChild(body, barrel);
+  rotating.addChild(body, barrel, aim);
   world.addChild(rotating);
 
   // HP バー。横 12、縦 3 の黒い下地の中に、主色で 10 HP を 1 セルとして描く
@@ -73,6 +94,8 @@ export const createTankView = (colors: TankColors, nickname: string): TankView =
     rotating.rotation = -pose.tilt * DEG;
     const local = pose.facing === 1 ? pose.elevation : 180 - pose.elevation;
     barrel.rotation = -local * DEG;
+    aim.rotation = barrel.rotation;
+    aim.visible = pose.aiming;
     if (pose.flash !== wasWhite) {
       drawBody(body, colors, pose.flash);
       wasWhite = pose.flash;

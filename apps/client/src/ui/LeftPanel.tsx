@@ -1,8 +1,10 @@
 import type { Facing } from "@game/protocol";
 import { STEPS_PER_TURN, tiltOf } from "@game/sim";
+import { DPAD_GAP } from "@/game/scale";
 import type { MatchStore } from "@/match/matchStore";
 import type { MatchView } from "@/match/types";
 import { AngleGauge, fireAngleLabel } from "./AngleGauge";
+import { stepMarkWidth } from "./stepMeter";
 import { holdHandlers, type Hold } from "./useHold";
 import { WindWindow } from "./WindWindow";
 
@@ -12,6 +14,7 @@ type Props = {
   readonly view: MatchView;
   readonly store: MatchStore;
   readonly width: number;
+  readonly height: number;
   readonly cell: number;
   readonly holds: { readonly up: Hold; readonly down: Hold; readonly left: Hold; readonly right: Hold };
 };
@@ -25,18 +28,23 @@ const Arrow = ({ dir }: { dir: "up" | "down" | "left" | "right" }) => {
   );
 };
 
-export const LeftPanel = ({ view, store, width, cell, holds }: Props) => {
+export const LeftPanel = ({ view, store, width, height, cell, holds }: Props) => {
   const acting = view.phase === "acting" && view.control !== null;
   const control = view.control;
   const mask = view.mask;
   const me = view.mySeat !== null && view.players ? view.players[view.mySeat] : null;
   const x = control ? control.x : me?.x ?? 0;
   const facing: Facing = control ? control.facing : me?.facing ?? 1;
-  const elevation = control ? control.elevation : 45;
+  // 手番でない間も最後に決めた仰角を出す。control が消えるたびに 45 に戻ると、維持されていないように見えるため
+  const elevation = control ? control.elevation : view.lastElevation;
   const tilt = mask ? tiltOf(mask, x) : 0;
   const stepsLeft = control ? control.stepsLeft : STEPS_PER_TURN;
-  const gaugeSize = Math.min(width - 8, 22 * cell);
-  const btn = Math.floor((width - 8) / 3);
+  // 角度計は幅と、パネルの高さのうち操作部品を除いた分に収める
+  const gaugeSize = Math.min(width - 8, 22 * cell, Math.max(48, Math.floor(height * 0.35)));
+  // 十字キーの 1 ボタン。3 列と間の隙間をパネルの内側に収める
+  const btn = Math.floor((width - 8 - DPAD_GAP * 2) / 3);
+  // 歩数のメーターは歩数ぶんの目盛りをパネルの幅に収める。歩数を増やしてもはみ出さないため
+  const markWidth = stepMarkWidth(width, STEPS_PER_TURN);
   const canLeft = store.canStep(-1);
   const canRight = store.canStep(1);
 
@@ -45,18 +53,18 @@ export const LeftPanel = ({ view, store, width, cell, holds }: Props) => {
       <WindWindow wind={view.wind.value} cell={cell} />
       <div className="panel-bottom">
         <AngleGauge size={gaugeSize} tilt={tilt} elevation={elevation} facing={facing} />
-        <div style={{ fontSize: 32, fontVariantNumeric: "tabular-nums" }} data-testid="fire-angle">
+        <div style={{ fontSize: Math.max(20, Math.min(32, Math.floor(width / 4))), fontVariantNumeric: "tabular-nums" }} data-testid="fire-angle">
           {fireAngleLabel(tilt, elevation, facing)}
         </div>
         <div className="dim" style={{ fontSize: 16 }}>
           {tilt > 0 ? `+${tilt}` : tilt} / {elevation}
         </div>
-        <div className="steps" data-testid="steps" style={{ height: cell }}>
+        <div className="steps" data-testid="steps" style={{ height: Math.max(4, cell) }}>
           {Array.from({ length: STEPS_PER_TURN }, (_, i) => (
-            <span key={i} style={{ width: cell, height: cell, background: i < stepsLeft ? "var(--ui)" : "var(--ui-dim)" }} />
+            <span key={i} style={{ width: markWidth, height: cell, background: i < stepsLeft ? "var(--ui)" : "var(--ui-dim)" }} />
           ))}
         </div>
-        <div className="dpad" style={{ gridAutoRows: btn, gridTemplateColumns: `repeat(3, ${btn}px)` }}>
+        <div className="dpad" style={{ gridTemplateRows: `repeat(3, ${btn}px)`, gridTemplateColumns: `repeat(3, ${btn}px)` }}>
           <span />
           <button type="button" className={holds.up.held ? "held" : ""} disabled={!acting} aria-label="up" {...holdHandlers(holds.up)}>
             <Arrow dir="up" />

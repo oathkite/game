@@ -1,5 +1,6 @@
 import { createEngine, DEFAULT_ENGINE_TIMING, handle, setupMessage, type EngineState } from "@game/engine";
 import type { ClientMessage, ServerMessage, ServerMessageOf } from "@game/protocol";
+import { STEPS_PER_TURN } from "@game/sim";
 import { describe, expect, it } from "vitest";
 import { createMatchStore } from "@/match/matchStore";
 import { createListeners, type Connection } from "@/net/connection";
@@ -55,7 +56,7 @@ describe("createMatchStore", () => {
     store.moveStep(1);
     store.moveStep(1);
     store.moveStep(-1);
-    expect(store.getView().control).toMatchObject({ x: x0 + 1, stepsLeft: 12, facing: -1 });
+    expect(store.getView().control).toMatchObject({ x: x0 + 1, stepsLeft: STEPS_PER_TURN - 3, facing: -1 });
     store.dispose();
   });
 
@@ -65,8 +66,10 @@ describe("createMatchStore", () => {
     const e = startedEngine();
     f.push(e.setup);
     f.push(e.start);
-    for (let i = 0; i < 15; i++) store.moveStep(1);
+    for (let i = 0; i < STEPS_PER_TURN; i++) store.moveStep(1);
     const x = store.getView().control?.x;
+    expect(store.getView().control?.stepsLeft).toBe(0);
+    // 歩数が尽きても向きだけは変わり、位置は動かない
     store.moveStep(-1);
     expect(store.getView().control).toMatchObject({ x, stepsLeft: 0, facing: -1 });
     expect(store.canStep(1)).toBe(false);
@@ -145,7 +148,7 @@ describe("createMatchStore", () => {
     expect(store.getView().phase).toBe("waiting");
     store.setSeat(0, false);
     expect(store.getView().phase).toBe("acting");
-    expect(store.getView().control?.stepsLeft).toBe(15);
+    expect(store.getView().control?.stepsLeft).toBe(STEPS_PER_TURN);
     store.dispose();
   });
 

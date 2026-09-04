@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from "react";
 import type { MatchView } from "@/match/types";
-import { shouldAnnounceTurn, turnStatus } from "./turnStatus";
+import { shouldAnnounceTurn, turnCounter, turnStatus } from "./turnStatus";
 
 // 手番の表示。設計書 03 の 3.7。
 // 上端中央の残り時間の下に常時ラベルを出し、ターンの切り替わりにはマップの中央へ大きく一瞬だけ出す。
@@ -10,10 +10,20 @@ export const TURN_BANNER_MS = 1200;
 
 export const TurnLabel = ({ view }: { readonly view: MatchView }) => {
   const status = turnStatus(view);
-  if (!status) return null;
+  const counter = turnCounter(view);
+  if (!status && counter === null) return null;
   return (
-    <div className={`turn-label${status.bright ? "" : " dim"}`} data-testid="turn-label" data-turn={status.kind}>
-      {status.label}
+    <div className="turn-line">
+      {counter !== null && (
+        <span className="turn-count dim" data-testid="turn-count">
+          {counter}
+        </span>
+      )}
+      {status && (
+        <span className={`turn-label${status.bright ? "" : " dim"}`} data-testid="turn-label" data-turn={status.kind}>
+          {status.label}
+        </span>
+      )}
     </div>
   );
 };
