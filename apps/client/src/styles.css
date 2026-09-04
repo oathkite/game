@@ -202,7 +202,11 @@ a {
   display: flex;
   flex-direction: column;
   align-items: center;
+  justify-content: flex-end;
   gap: 4px;
+  /* 縦に収まらないときは上から詰める。操作部品は下端に寄せたままにする */
+  min-height: 0;
+  overflow: hidden;
 }
 
 .map-area {
@@ -310,11 +314,11 @@ a {
   z-index: 3;
 }
 
+/* 行と列の大きさは LeftPanel が px で決める。1fr にすると縦が余ったぶんだけ潰れるためである */
 .dpad {
   display: grid;
-  grid-template-columns: repeat(3, 1fr);
-  grid-template-rows: repeat(3, 1fr);
   gap: 2px;
+  flex: none;
 }
 
 .dpad button {

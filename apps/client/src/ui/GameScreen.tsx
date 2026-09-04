@@ -50,7 +50,7 @@ export const GameScreen = ({ store, clockOffset, swapPanels, onSurrender, onLeav
 
   useKeyboardInput(holds, gauge);
 
-  const left = <LeftPanel view={view} store={store} width={layout.panelWidth} cell={layout.panelCell} holds={holds} />;
+  const left = <LeftPanel view={view} store={store} width={layout.panelWidth} height={h} cell={layout.panelCell} holds={holds} />;
   // 離脱のボタンは右パネルの上端に置く。対戦中は降参、観戦なら退出
   const exitLabel = view.spectator ? "退出" : view.phase === "finished" ? null : "降参";
   const onExit = view.spectator ? onLeave : () => setConfirmSurrender(true);

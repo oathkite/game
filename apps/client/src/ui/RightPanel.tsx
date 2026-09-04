@@ -17,7 +17,8 @@ type Props = {
 
 export const RightPanel = ({ width, height, enabled, gauge, exitLabel, onExit }: Props) => {
   const [marker, setMarker] = useState<number | null>(null);
-  const fireHeight = Math.max(48, Math.floor(width * 1.2));
+  // 幅に合わせて縦に伸ばすが、画面が低いときにゲージの取り分を食わないよう高さの 3 割で止める
+  const fireHeight = Math.max(48, Math.min(Math.floor(width * 1.2), Math.floor(height * 0.3)));
   // 上端の離脱ボタンとゲージ、射撃ボタンを縦に積む。ボタンが無いときはゲージが上端まで伸びる
   const exitHeight = exitLabel === null ? 0 : 36;
   const gaugeHeight = Math.max(0, height - fireHeight - exitHeight - 24);

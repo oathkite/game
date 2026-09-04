@@ -1,5 +1,6 @@
 import type { Facing } from "@game/protocol";
 import { STEPS_PER_TURN, tiltOf } from "@game/sim";
+import { DPAD_GAP } from "@/game/scale";
 import type { MatchStore } from "@/match/matchStore";
 import type { MatchView } from "@/match/types";
 import { AngleGauge, fireAngleLabel } from "./AngleGauge";
@@ -13,6 +14,7 @@ type Props = {
   readonly view: MatchView;
   readonly store: MatchStore;
   readonly width: number;
+  readonly height: number;
   readonly cell: number;
   readonly holds: { readonly up: Hold; readonly down: Hold; readonly left: Hold; readonly right: Hold };
 };
@@ -26,7 +28,7 @@ const Arrow = ({ dir }: { dir: "up" | "down" | "left" | "right" }) => {
   );
 };
 
-export const LeftPanel = ({ view, store, width, cell, holds }: Props) => {
+export const LeftPanel = ({ view, store, width, height, cell, holds }: Props) => {
   const acting = view.phase === "acting" && view.control !== null;
   const control = view.control;
   const mask = view.mask;
@@ -37,8 +39,10 @@ export const LeftPanel = ({ view, store, width, cell, holds }: Props) => {
   const elevation = control ? control.elevation : view.lastElevation;
   const tilt = mask ? tiltOf(mask, x) : 0;
   const stepsLeft = control ? control.stepsLeft : STEPS_PER_TURN;
-  const gaugeSize = Math.min(width - 8, 22 * cell);
-  const btn = Math.floor((width - 8) / 3);
+  // 角度計は幅と、パネルの高さのうち操作部品を除いた分に収める
+  const gaugeSize = Math.min(width - 8, 22 * cell, Math.max(48, Math.floor(height * 0.35)));
+  // 十字キーの 1 ボタン。3 列と間の隙間をパネルの内側に収める
+  const btn = Math.floor((width - 8 - DPAD_GAP * 2) / 3);
   // 歩数のメーターは歩数ぶんの目盛りをパネルの幅に収める。歩数を増やしてもはみ出さないため
   const markWidth = stepMarkWidth(width, STEPS_PER_TURN);
   const canLeft = store.canStep(-1);
@@ -60,7 +64,7 @@ export const LeftPanel = ({ view, store, width, cell, holds }: Props) => {
             <span key={i} style={{ width: markWidth, height: cell, background: i < stepsLeft ? "var(--ui)" : "var(--ui-dim)" }} />
           ))}
         </div>
-        <div className="dpad" style={{ gridAutoRows: btn, gridTemplateColumns: `repeat(3, ${btn}px)` }}>
+        <div className="dpad" style={{ gridTemplateRows: `repeat(3, ${btn}px)`, gridTemplateColumns: `repeat(3, ${btn}px)` }}>
           <span />
           <button type="button" className={holds.up.held ? "held" : ""} disabled={!acting} aria-label="up" {...holdHandlers(holds.up)}>
             <Arrow dir="up" />

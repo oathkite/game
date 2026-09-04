@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { computeLayout, PANEL_MIN, TOUCH_MIN } from "@/game/scale";
+import { computeLayout, DPAD_GAP, PANEL_MIN, TOUCH_MIN } from "@/game/scale";
 import { powerFromElapsed } from "@/ui/powerGauge";
 import { stepMarkWidth } from "@/ui/stepMeter";
 
@@ -26,7 +26,7 @@ describe("computeLayout", () => {
     const l = computeLayout(932, 430);
     expect(l.panelWidth).toBeGreaterThanOrEqual(PANEL_MIN);
     // 十字キーの 1 ボタンがタップできる大きさになる
-    expect(Math.floor((l.panelWidth - 8) / 3)).toBeGreaterThanOrEqual(TOUCH_MIN);
+    expect(Math.floor((l.panelWidth - 8 - DPAD_GAP * 2) / 3)).toBeGreaterThanOrEqual(TOUCH_MIN);
     // マップは残りの幅に収まる
     expect(l.mapWidth).toBeLessThanOrEqual(932 - l.panelWidth * 2);
     expect(l.mapHeight).toBeLessThanOrEqual(430);

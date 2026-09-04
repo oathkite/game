@@ -30,9 +30,13 @@ export type TankView = {
 const DEG = Math.PI / 180;
 const BODY_W = 7;
 /** 発射角の線の長さ（セル）。弾の届く距離とは無関係の、向きだけを示す長さにする */
-const AIM_LENGTH = 18;
+const AIM_LENGTH = 24;
 /** 砲口から線を離す長さ（セル）。砲身と線がつながって見えないようにする */
 const AIM_GAP = 2;
+/** 破線の本数 */
+const AIM_DASHES = 5;
+/** 破線の太さ（セル） */
+const AIM_WIDTH = 1.2;
 
 const hex = (c: string): number => Number.parseInt(c.slice(1), 16);
 
@@ -54,12 +58,13 @@ export const createTankView = (colors: TankColors, nickname: string): TankView =
   barrel.position.set(0, -BARREL_BASE_UP);
   // 発射角の線。砲身の延長に破線を引き、どの向きへ飛び出すかだけを示す。弾道の予測ではない
   const aim = new Graphics();
-  for (let i = 0; i < 4; i++) {
-    const from = BARREL_LENGTH + AIM_GAP + i * (AIM_LENGTH / 4);
-    aim.rect(from, -0.5, AIM_LENGTH / 8, 1);
+  // 破線にする。実線だと弾道の予測に見えるため、飛び出す向きだけを示す点線にする
+  for (let i = 0; i < AIM_DASHES; i++) {
+    const from = BARREL_LENGTH + AIM_GAP + i * (AIM_LENGTH / AIM_DASHES);
+    aim.rect(from, -AIM_WIDTH / 2, AIM_LENGTH / (AIM_DASHES * 2), AIM_WIDTH);
   }
   aim.fill(hex(COLOR_HEX[colors.secondary]));
-  aim.alpha = 0.5;
+  aim.alpha = 0.7;
   aim.position.set(0, -BARREL_BASE_UP);
   aim.visible = false;
   const rotating = new Container();

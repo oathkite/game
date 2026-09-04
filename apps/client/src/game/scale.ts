@@ -9,8 +9,11 @@ export const PANEL_CELLS = 24;
 /** 指で押せる最小の大きさ（px）。十字キーの 1 ボタンがこれを下回らないようにする */
 export const TOUCH_MIN = 44;
 
-/** パネルの最小幅（px）。十字キーの 3 列がタップできる幅と、左右 4 px の余白 */
-export const PANEL_MIN = TOUCH_MIN * 3 + 8;
+/** 十字キーのボタンの間隔（px）。styles.css の .dpad の gap と合わせる */
+export const DPAD_GAP = 2;
+
+/** パネルの最小幅（px）。十字キーの 3 列と間の隙間、左右 4 px の余白 */
+export const PANEL_MIN = TOUCH_MIN * 3 + DPAD_GAP * 2 + 8;
 
 /** パネル 2 枚が画面から奪ってよい幅の割合。残りがマップになる */
 const PANEL_SHARE_MAX = 0.4;
