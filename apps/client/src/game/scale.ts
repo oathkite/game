@@ -32,8 +32,11 @@ export const computeLayout = (viewportWidth: number, viewportHeight: number): La
   // マップ 400 セルとパネル 24 セル 2 枚で画面を分けたときのパネル幅を基準にする。
   // 狭い画面ではこれが指の幅を割るので、下限を優先してマップを譲る
   const byShare = (viewportWidth / (MAP_WIDTH + PANEL_CELLS * 2)) * PANEL_CELLS;
-  const cap = (viewportWidth * PANEL_SHARE_MAX) / 2;
-  const panelWidth = Math.max(1, Math.floor(Math.min(Math.max(byShare, PANEL_MIN), cap)));
+  // 割合で決めた幅は画面の 4 割で頭打ちにする。マップが読めなくなると狙いを定められないためである
+  const capped = Math.min(byShare, (viewportWidth * PANEL_SHARE_MAX) / 2);
+  // 指で押せない操作部品は置いていないのと同じなので、下限はこの頭打ちより優先する。
+  // ただしパネル 2 枚で画面を埋めるわけにはいかないので、画面の半分では譲る
+  const panelWidth = Math.max(1, Math.floor(Math.min(Math.max(capped, PANEL_MIN), viewportWidth / 2)));
   const forMap = Math.max(1, viewportWidth - panelWidth * 2);
   // 幅と高さのどちらか厳しい方に合わせる
   const cell = Math.max(0.01, Math.min(forMap / MAP_WIDTH, viewportHeight / MAP_HEIGHT));

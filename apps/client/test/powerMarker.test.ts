@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { MARKER_TOLERANCE, powerAtOffset, toggleMarker } from "@/ui/powerMarker";
+import { MARKER_HEIGHT, MARKER_TOLERANCE, markerBottom, powerAtOffset, toggleMarker } from "@/ui/powerMarker";
 
 // パワーゲージの目安ライン。押した位置を値にし、同じ位置をもう一度押すと消す。
 
@@ -34,5 +34,22 @@ describe("toggleMarker", () => {
   it("離れた位置を押したら引き直す", () => {
     expect(toggleMarker(70, 70 + MARKER_TOLERANCE + 1)).toBe(74);
     expect(toggleMarker(70, 30)).toBe(30);
+  });
+});
+
+describe("markerBottom", () => {
+  it("パワーに応じた高さに置く", () => {
+    expect(markerBottom(0, 200)).toBe(0);
+    expect(markerBottom(50, 200)).toBe(100);
+  });
+
+  it("パワー 100 でも線が枠の中に収まる", () => {
+    // 上端いっぱいに置くとゲージが中身を切り落とし、最大の目安が引けなくなる
+    expect(markerBottom(100, 200)).toBe(200 - MARKER_HEIGHT);
+    expect(markerBottom(99, 200)).toBe(196);
+  });
+
+  it("ゲージが線より低ければ下端に置く", () => {
+    expect(markerBottom(100, 2)).toBe(0);
   });
 });

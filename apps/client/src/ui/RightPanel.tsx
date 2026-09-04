@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { powerAtOffset, toggleMarker } from "./powerMarker";
+import { GAUGE_BORDER, markerBottom, powerAtOffset, toggleMarker } from "./powerMarker";
 import type { PowerGauge } from "./usePowerGauge";
 
 // 右パネル。設計書 03 の 3.5。上端に離脱のボタン、下端にパワーゲージと射撃ボタン。
@@ -22,13 +22,16 @@ export const RightPanel = ({ width, height, enabled, gauge, exitLabel, onExit }:
   // 上端の離脱ボタンとゲージ、射撃ボタンを縦に積む。ボタンが無いときはゲージが上端まで伸びる
   const exitHeight = exitLabel === null ? 0 : 36;
   const gaugeHeight = Math.max(0, height - fireHeight - exitHeight - 24);
-  const step = gaugeHeight / 100;
-  const fill = Math.floor(gauge.value * step);
+  // 枠線の内側の高さ。溜まった量も目安ラインもこの中に収める
+  const inner = Math.max(0, gaugeHeight - GAUGE_BORDER * 2);
+  const fill = Math.floor((gauge.value / 100) * inner);
 
   const press = (e: React.PointerEvent<HTMLDivElement>): void => {
     e.preventDefault();
-    const rect = e.currentTarget.getBoundingClientRect();
-    setMarker((current) => toggleMarker(current, powerAtOffset(e.clientY - rect.top, rect.height)));
+    // 枠の内側で測る。getBoundingClientRect は枠線を含むので、上端を押しても 100 に届かなくなる
+    const box = e.currentTarget;
+    const top = box.getBoundingClientRect().top + box.clientTop;
+    setMarker((current) => toggleMarker(current, powerAtOffset(e.clientY - top, box.clientHeight)));
   };
 
   return (
@@ -49,7 +52,7 @@ export const RightPanel = ({ width, height, enabled, gauge, exitLabel, onExit }:
           onContextMenu={(e) => e.preventDefault()}
         >
           <div className="gauge-fill" style={{ height: fill }} />
-          {marker !== null && <div className="gauge-marker" style={{ bottom: Math.floor(marker * step) }} data-testid="power-marker" />}
+          {marker !== null && <div className="gauge-marker" style={{ bottom: Math.floor(markerBottom(marker, inner)) }} data-testid="power-marker" />}
         </div>
         <button
           type="button"

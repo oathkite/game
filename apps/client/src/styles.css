@@ -377,15 +377,15 @@ a {
   background: var(--ui);
 }
 
-/* 目安ライン。溜まった分の上に出ても読めるよう、地の色で縁取る */
+/* 目安ライン。高さは powerMarker.ts の MARKER_HEIGHT と合わせる。
+   溜まった分と同じ色なので、重なっても分かるよう上下を地の色で挟む。
+   border-box では枠線が高さを食って中の色が潰れるため、背景のグラデーションで 3 本の帯にする */
 .gauge-marker {
   position: absolute;
   left: 0;
   right: 0;
-  height: 2px;
-  background: var(--bg);
-  border-top: 2px solid var(--ui);
-  border-bottom: 2px solid var(--ui);
+  height: 4px;
+  background: linear-gradient(var(--bg) 1px, var(--ui) 1px 3px, var(--bg) 3px);
   pointer-events: none;
 }
 

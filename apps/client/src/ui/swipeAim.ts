@@ -15,16 +15,28 @@ export type SwipeDelta = {
   readonly elevation: number;
 };
 
+/** なぞる向き。指を置いてから離すまで変えない */
+export type SwipeAxis = "move" | "aim";
+
+/**
+ * どちらの向きになぞったか。指のぶれの範囲を出るまでは決まらない。
+ * 一度決めた向きはなぞっている間は変えない。途中で持ち替えると、
+ * それまでに送った歩数を打ち消す向きの入力が流れ、歩数だけが減るためである。
+ */
+export const swipeAxis = (dx: number, dy: number): SwipeAxis | null => {
+  if (Math.abs(dx) < SWIPE_DEADZONE_PX && Math.abs(dy) < SWIPE_DEADZONE_PX) return null;
+  return Math.abs(dx) >= Math.abs(dy) ? "move" : "aim";
+};
+
 /**
  * 押し始めからの移動量を、送るべき歩数と仰角に変える。
- * 横と縦のうち大きい方だけを見る。斜めになぞったときに両方動くと狙いが定まらないためである。
+ * 見る向きは呼び出し側が決める。斜めになぞったときに両方動くと狙いが定まらないためである。
  */
-export const swipeDelta = (dx: number, dy: number): SwipeDelta => {
-  if (Math.abs(dx) < SWIPE_DEADZONE_PX && Math.abs(dy) < SWIPE_DEADZONE_PX) return { steps: 0, elevation: 0 };
-  if (Math.abs(dx) >= Math.abs(dy)) return { steps: Math.trunc(dx / SWIPE_STEP_PX), elevation: 0 };
-  // 画面の y は下向きが正なので、上へなぞると仰角が上がる
-  return { steps: 0, elevation: Math.trunc(-dy / SWIPE_ELEVATION_PX) };
-};
+export const swipeDelta = (dx: number, dy: number, axis: SwipeAxis): SwipeDelta =>
+  axis === "move"
+    ? { steps: Math.trunc(dx / SWIPE_STEP_PX), elevation: 0 }
+    : // 画面の y は下向きが正なので、上へなぞると仰角が上がる
+      { steps: 0, elevation: Math.trunc(-dy / SWIPE_ELEVATION_PX) };
 
 /** 既に送った量との差。なぞっている間に何度も呼ばれるので、進んだぶんだけを返す */
 export const swipeAdvance = (sent: SwipeDelta, current: SwipeDelta): SwipeDelta => ({

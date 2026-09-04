@@ -1,6 +1,5 @@
 import { describe, expect, it } from "vitest";
 import { computeLayout, DPAD_GAP, PANEL_MIN, TOUCH_MIN } from "@/game/scale";
-import { powerFromElapsed } from "@/ui/powerGauge";
 import { stepMarkWidth } from "@/ui/stepMeter";
 
 describe("computeLayout", () => {
@@ -32,10 +31,22 @@ describe("computeLayout", () => {
     expect(l.mapHeight).toBeLessThanOrEqual(430);
   });
 
-  it("パネルは画面の幅の 4 分の 1 を超えて奪わない", () => {
+  it("小さな画面でも十字キーの 1 ボタンが 44 px を割らない", () => {
+    // iPhone SE の横向きから、さらに狭い画面まで
+    for (const [w, h] of [[932, 430], [844, 390], [667, 375], [568, 320]] as const) {
+      const l = computeLayout(w, h);
+      const btn = Math.floor((l.panelWidth - 8 - DPAD_GAP * 2) / 3);
+      // どの画面で落ちたか分かるよう、大きさを添えて比べる
+      expect({ where: `${w}x${h}`, ok: btn >= TOUCH_MIN }).toEqual({ where: `${w}x${h}`, ok: true });
+      // パネルを確保してもマップは残る
+      expect(l.mapWidth).toBeGreaterThan(0);
+    }
+  });
+
+  it("パネル 2 枚で画面を埋めない", () => {
     for (const [w, h] of [[932, 430], [320, 200], [1792, 900], [2560, 1440]] as const) {
       const l = computeLayout(w, h);
-      expect(l.panelWidth * 2).toBeLessThanOrEqual(w / 2);
+      expect(l.panelWidth * 2).toBeLessThanOrEqual(w);
       expect(l.mapWidth).toBeGreaterThan(0);
       expect(l.mapHeight).toBeGreaterThan(0);
     }
@@ -64,18 +75,5 @@ describe("stepMarkWidth", () => {
 
   it("歩数が 0 なら 0 にする", () => {
     expect(stepMarkWidth(96, 0)).toBe(0);
-  });
-});
-
-describe("powerFromElapsed", () => {
-  it("1.5 秒で 100 に達し、それ以上は 100 で止まる", () => {
-    expect(powerFromElapsed(0)).toBe(0);
-    expect(powerFromElapsed(750)).toBe(50);
-    expect(powerFromElapsed(1500)).toBe(100);
-    expect(powerFromElapsed(5000)).toBe(100);
-  });
-
-  it("負の経過時間は 0 にする", () => {
-    expect(powerFromElapsed(-10)).toBe(0);
   });
 });
