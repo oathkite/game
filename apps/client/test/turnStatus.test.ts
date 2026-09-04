@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { EMPTY_VIEW, type MatchView, type PlayerView } from "@/match/types";
-import { shouldAnnounceTurn, turnStatus } from "@/ui/turnStatus";
+import { shouldAnnounceTurn, turnCounter, turnStatus } from "@/ui/turnStatus";
 
 // 手番の表示。自分の番だけ明るく、相手の番と再生中は暗く出す。
 
@@ -65,5 +65,25 @@ describe("shouldAnnounceTurn", () => {
   // バナーが結果の到着まで出続ける
   it("射撃を送った後は告知しない", () => {
     expect(shouldAnnounceTurn({ ...base, phase: "fired", currentSeat: 0 })).toBe(false);
+  });
+});
+
+describe("turnCounter", () => {
+  it("ターン数と上限を「3 / 20」の形で出す", () => {
+    expect(turnCounter({ ...base, phase: "acting", turnNumber: 3, turnLimit: 20 })).toBe("3 / 20");
+  });
+
+  it("上限はサーバーから来た値を使う", () => {
+    expect(turnCounter({ ...base, phase: "acting", turnNumber: 1, turnLimit: 12 })).toBe("1 / 12");
+  });
+
+  it("対戦が始まる前は出さない", () => {
+    expect(turnCounter({ ...base, phase: "idle", turnNumber: 0 })).toBeNull();
+    expect(turnCounter({ ...base, phase: "loading", turnNumber: 0 })).toBeNull();
+    expect(turnCounter({ ...base, phase: "waiting", turnNumber: 0 })).toBeNull();
+  });
+
+  it("決着後も最後のターン数を残す", () => {
+    expect(turnCounter({ ...base, phase: "finished", turnNumber: 20, turnLimit: 20 })).toBe("20 / 20");
   });
 });

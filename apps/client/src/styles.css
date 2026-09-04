@@ -237,11 +237,24 @@ a {
   z-index: 2;
 }
 
+/* ターン数と手番を 1 行に並べる */
+.turn-line {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  background: var(--bg);
+  padding: 2px 8px;
+}
+
 /* 色は既存の .dim に任せる。手番の明暗を他の dim な部品と揃えるため */
 .turn-label {
   font-size: 16px;
-  background: var(--bg);
-  padding: 2px 8px;
+  white-space: nowrap;
+}
+
+.turn-count {
+  font-size: 16px;
+  font-variant-numeric: tabular-nums;
   white-space: nowrap;
 }
 
