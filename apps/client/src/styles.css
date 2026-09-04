@@ -330,6 +330,16 @@ a {
   color: var(--bg);
 }
 
+/* 右パネル上端の離脱ボタン。誤って押さないよう暗い緑で置く */
+.exit {
+  width: 100%;
+  padding: 0;
+  font-size: 16px;
+  border-color: var(--ui-dim);
+  color: var(--ui-dim);
+  flex: none;
+}
+
 .fire {
   width: 100%;
   touch-action: none;
@@ -337,6 +347,8 @@ a {
   display: flex;
   align-items: center;
   justify-content: center;
+  font-size: 20px;
+  letter-spacing: 0.1em;
 }
 
 .fire.held {
@@ -349,6 +361,8 @@ a {
   width: 100%;
   border: 2px solid var(--ui-dim);
   overflow: hidden;
+  touch-action: none;
+  cursor: pointer;
 }
 
 .gauge-fill {
@@ -357,6 +371,18 @@ a {
   right: 0;
   bottom: 0;
   background: var(--ui);
+}
+
+/* 目安ライン。溜まった分の上に出ても読めるよう、地の色で縁取る */
+.gauge-marker {
+  position: absolute;
+  left: 0;
+  right: 0;
+  height: 2px;
+  background: var(--bg);
+  border-top: 2px solid var(--ui);
+  border-bottom: 2px solid var(--ui);
+  pointer-events: none;
 }
 
 .steps {
