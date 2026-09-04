@@ -6,6 +6,7 @@ import type { MatchView } from "@/match/types";
 import { createRenderer, type Renderer } from "./renderer";
 import { playReplay } from "./replay";
 import type { Layout } from "./scale";
+import type { SwipeAim } from "@/ui/useSwipeAim";
 import type { TankPose } from "./tankView";
 
 // PixiJS の Canvas を React から 1 箇所でマウントする（設計書 07 の 7.1）。
@@ -14,6 +15,8 @@ type Props = {
   readonly store: MatchStore;
   readonly view: MatchView;
   readonly layout: Layout;
+  /** マップの上をなぞる操作。Pointer Events のハンドラをそのまま渡す */
+  readonly swipe: SwipeAim;
 };
 
 const posesOf = (view: MatchView, elevations: readonly [number, number]): readonly [TankPose, TankPose] | null => {
@@ -30,7 +33,7 @@ const posesOf = (view: MatchView, elevations: readonly [number, number]): readon
   return [pose(0), pose(1)];
 };
 
-export const GameCanvas = ({ store, view, layout }: Props) => {
+export const GameCanvas = ({ store, view, layout, swipe }: Props) => {
   const hostRef = useRef<HTMLDivElement | null>(null);
   const rendererRef = useRef<Renderer | null>(null);
   const elevationsRef = useRef<[number, number]>([45, 45]);
@@ -106,5 +109,5 @@ export const GameCanvas = ({ store, view, layout }: Props) => {
     }
   }, [view, store]);
 
-  return <div ref={hostRef} className="map-frame" style={{ width: layout.mapWidth, height: layout.mapHeight }} />;
+  return <div ref={hostRef} className="map-frame" style={{ width: layout.mapWidth, height: layout.mapHeight }} {...swipe} />;
 };

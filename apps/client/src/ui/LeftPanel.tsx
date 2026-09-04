@@ -3,6 +3,7 @@ import { STEPS_PER_TURN, tiltOf } from "@game/sim";
 import type { MatchStore } from "@/match/matchStore";
 import type { MatchView } from "@/match/types";
 import { AngleGauge, fireAngleLabel } from "./AngleGauge";
+import { stepMarkWidth } from "./stepMeter";
 import { holdHandlers, type Hold } from "./useHold";
 import { WindWindow } from "./WindWindow";
 
@@ -38,6 +39,8 @@ export const LeftPanel = ({ view, store, width, cell, holds }: Props) => {
   const stepsLeft = control ? control.stepsLeft : STEPS_PER_TURN;
   const gaugeSize = Math.min(width - 8, 22 * cell);
   const btn = Math.floor((width - 8) / 3);
+  // 歩数のメーターは歩数ぶんの目盛りをパネルの幅に収める。歩数を増やしてもはみ出さないため
+  const markWidth = stepMarkWidth(width, STEPS_PER_TURN);
   const canLeft = store.canStep(-1);
   const canRight = store.canStep(1);
 
@@ -46,15 +49,15 @@ export const LeftPanel = ({ view, store, width, cell, holds }: Props) => {
       <WindWindow wind={view.wind.value} cell={cell} />
       <div className="panel-bottom">
         <AngleGauge size={gaugeSize} tilt={tilt} elevation={elevation} facing={facing} />
-        <div style={{ fontSize: 32, fontVariantNumeric: "tabular-nums" }} data-testid="fire-angle">
+        <div style={{ fontSize: Math.max(20, Math.min(32, Math.floor(width / 4))), fontVariantNumeric: "tabular-nums" }} data-testid="fire-angle">
           {fireAngleLabel(tilt, elevation, facing)}
         </div>
         <div className="dim" style={{ fontSize: 16 }}>
           {tilt > 0 ? `+${tilt}` : tilt} / {elevation}
         </div>
-        <div className="steps" data-testid="steps" style={{ height: cell }}>
+        <div className="steps" data-testid="steps" style={{ height: Math.max(4, cell) }}>
           {Array.from({ length: STEPS_PER_TURN }, (_, i) => (
-            <span key={i} style={{ width: cell, height: cell, background: i < stepsLeft ? "var(--ui)" : "var(--ui-dim)" }} />
+            <span key={i} style={{ width: markWidth, height: cell, background: i < stepsLeft ? "var(--ui)" : "var(--ui-dim)" }} />
           ))}
         </div>
         <div className="dpad" style={{ gridAutoRows: btn, gridTemplateColumns: `repeat(3, ${btn}px)` }}>

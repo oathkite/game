@@ -9,6 +9,7 @@ import { TurnBanner, TurnLabel } from "./TurnIndicator";
 import { useHold } from "./useHold";
 import { useKeyboardInput } from "./useKeyboardInput";
 import { usePowerGauge } from "./usePowerGauge";
+import { useSwipeAim } from "./useSwipeAim";
 
 // 対戦画面。設計書 03 の 3.2 のレイアウト。左右のパネルと中央のマップ領域。
 
@@ -44,10 +45,12 @@ export const GameScreen = ({ store, clockOffset, swapPanels, onSurrender, onLeav
     right: useHold(() => store.moveStep(1), 80, acting),
   };
   const gauge = usePowerGauge(acting, (power) => store.fire(power));
+  // マップをなぞっても移動と仰角を変えられる。十字キーが押しにくい小さな画面のため
+  const swipe = useSwipeAim(acting, { moveStep: store.moveStep, changeElevation: store.changeElevation });
 
   useKeyboardInput(holds, gauge);
 
-  const left = <LeftPanel view={view} store={store} width={layout.panelWidth} cell={layout.cell} holds={holds} />;
+  const left = <LeftPanel view={view} store={store} width={layout.panelWidth} cell={layout.panelCell} holds={holds} />;
   // 離脱のボタンは右パネルの上端に置く。対戦中は降参、観戦なら退出
   const exitLabel = view.spectator ? "退出" : view.phase === "finished" ? null : "降参";
   const onExit = view.spectator ? onLeave : () => setConfirmSurrender(true);
@@ -64,7 +67,7 @@ export const GameScreen = ({ store, clockOffset, swapPanels, onSurrender, onLeav
             <Timer deadlineAt={view.deadlineAt} clockOffset={clockOffset} myTurn={myTurn} />
             <TurnLabel view={view} />
           </div>
-          <GameCanvas store={store} view={view} layout={layout} />
+          <GameCanvas store={store} view={view} layout={layout} swipe={swipe} />
           <TurnBanner view={view} />
           {view.opponentDisconnectedUntil !== null && (
             <div className="overlay">
