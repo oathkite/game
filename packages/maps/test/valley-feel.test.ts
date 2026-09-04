@@ -1,6 +1,6 @@
 import { getMap } from "../src/index.js";
 import { describe, expect, it } from "vitest";
-import { simulateShot } from "@game/sim";
+import { simulateShot, STEPS_PER_TURN, walk } from "@game/sim";
 
 // 設計書 07 の開発順序 4「谷で遊び、面白さを確認する」の数値による裏付け。
 // 遊びの判断そのものは人が行うが、設計書 01 の判断基準「風を読み切って狙った場所に当てた報い」が成り立つ条件を固定する。
@@ -51,5 +51,34 @@ describe("谷の手触り", () => {
       return surfaceAt(r.mask, x1) > surfaceAt(mask, x1);
     });
     expect(lowers).toBe(true);
+  });
+});
+
+// 1 ターンの移動が、地形に阻まれずに歩数どおり届くことを固定する。
+// 歩数を増やしても崖や急斜面で頭打ちになるなら「移動を広げた」ことにならないためである。
+describe("1 ターンで動ける範囲", () => {
+  it("どのマップでも、スポーンから左右に歩数のぶんだけ地形に阻まれず歩ける", () => {
+    for (const name of ["valley", "mountain", "island"] as const) {
+      const map = getMap(name);
+      const mask = map.build();
+      for (const x of map.spawns) {
+        for (const dir of [-1, 1] as const) {
+          const r = walk(mask, x, dir, STEPS_PER_TURN);
+          // どのマップのどちら向きで落ちたかが分かるよう、場所を添えて比べる
+          expect({ where: `${name} x=${x} dir=${dir}`, ...r }).toEqual({
+            where: `${name} x=${x} dir=${dir}`,
+            x: x + dir * STEPS_PER_TURN,
+            stepsUsed: STEPS_PER_TURN,
+            fell: false,
+          });
+        }
+      }
+    }
+  });
+
+  it("谷では、動ける幅が両者の間合いの半分を超えない", () => {
+    const [x0, x1] = valley.spawns;
+    // 間合いの半分を超えて動けると、相手の真上へ回り込めてしまい撃ち合いにならない
+    expect(STEPS_PER_TURN).toBeLessThan((x1 - x0) / 2);
   });
 });

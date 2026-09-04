@@ -1,5 +1,6 @@
 import { createEngine, DEFAULT_ENGINE_TIMING, handle, setupMessage } from "@game/engine";
 import type { ServerMessage, ServerMessageOf } from "@game/protocol";
+import { STEPS_PER_TURN } from "@game/sim";
 import { describe, expect, it } from "vitest";
 import { applyElevation } from "@/match/control";
 import { reduce, type ReduceOptions } from "@/match/reduce";
@@ -45,7 +46,7 @@ describe("reduce", () => {
     const start = s2.effects[0]?.message as ServerMessageOf<"turn.start">;
     const view = apply(EMPTY_VIEW, [setup, start]);
     expect(view.phase).toBe("acting");
-    expect(view.control).toMatchObject({ x: 75, facing: 1, elevation: 45, stepsLeft: 15, fell: false });
+    expect(view.control).toMatchObject({ x: 75, facing: 1, elevation: 45, stepsLeft: STEPS_PER_TURN, fell: false });
     expect(view.deadlineAt).toBe(start.deadlineAt);
   });
 
@@ -117,7 +118,7 @@ describe("reduce", () => {
     const s2 = handle(s1.state, { type: "loaded", seat: 1 }, 0);
     const view = apply(EMPTY_VIEW, [{ type: "conn.state", match: s2.state.match, seat: 0 }]);
     expect(view.phase).toBe("acting");
-    expect(view.control).toMatchObject({ x: 75, stepsLeft: 15 });
+    expect(view.control).toMatchObject({ x: 75, stepsLeft: STEPS_PER_TURN });
     expect(view.deadlineAt).toBe(20_000);
   });
 

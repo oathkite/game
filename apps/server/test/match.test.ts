@@ -1,3 +1,4 @@
+import { STEPS_PER_TURN } from "@game/sim";
 import { describe, expect, it } from "vitest";
 import { harness, last, startedMatch, T0, types } from "./helpers.js";
 
@@ -26,7 +27,7 @@ describe("turn.fire の検証", () => {
   it("歩数超過はパスになる", () => {
     const h = harness();
     startedMatch(h);
-    h.send("a", { type: "turn.fire", facing: 1, elevation: 45, power: 50, x: 75 + 16 });
+    h.send("a", { type: "turn.fire", facing: 1, elevation: 45, power: 50, x: 75 + STEPS_PER_TURN + 1 });
     expect(last(h.inbox("b"), "turn.pass")?.reason).toBe("invalidFire");
     expect(last(h.inbox("b"), "turn.start")?.turnNumber).toBe(2);
   });

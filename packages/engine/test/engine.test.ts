@@ -1,4 +1,5 @@
 import { describe, expect, it } from "vitest";
+import { STEPS_PER_TURN } from "@game/sim";
 import { handle } from "../src/index.js";
 import { find, fireMsg, newEngine, started, types } from "./helpers.js";
 
@@ -56,7 +57,7 @@ describe("Acting と Resolving", () => {
 
   it("歩数を超えた移動はパスになる", () => {
     const s = started();
-    const x = s.state.match.players[0].x + 16;
+    const x = s.state.match.players[0].x + STEPS_PER_TURN + 1;
     const r = handle(s.state, { type: "fire", seat: 0, fire: fireMsg(s.state, 0, { x }) }, T0 + 1000);
     expect(types(r.effects)).toEqual(["turn.pass", "turn.start"]);
     expect(find(r.effects, "turn.pass")?.reason).toBe("invalidFire");

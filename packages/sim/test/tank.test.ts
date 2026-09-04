@@ -47,7 +47,7 @@ describe("機体の位置と傾き", () => {
 
 describe("移動", () => {
   it("平坦なら歩数の上限まで進む", () => {
-    expect(walk(flatMask(), 100, 1, STEPS_PER_TURN)).toEqual({ x: 115, stepsUsed: 15, fell: false });
+    expect(walk(flatMask(), 100, 1, STEPS_PER_TURN)).toEqual({ x: 100 + STEPS_PER_TURN, stepsUsed: STEPS_PER_TURN, fell: false });
     expect(walk(flatMask(), 100, -1, 3)).toEqual({ x: 97, stepsUsed: 3, fell: false });
   });
 
@@ -83,9 +83,9 @@ describe("移動", () => {
   it("移動の検証は正味の移動を同じ規則で歩き直す（行って戻る経路は見ない）", () => {
     const mask = flatMask();
     expect(validateMove(mask, 100, 100)).toBe(true);
-    expect(validateMove(mask, 100, 115)).toBe(true);
-    expect(validateMove(mask, 100, 85)).toBe(true);
-    expect(validateMove(mask, 100, 116)).toBe(false);
+    expect(validateMove(mask, 100, 100 + STEPS_PER_TURN)).toBe(true);
+    expect(validateMove(mask, 100, 100 - STEPS_PER_TURN)).toBe(true);
+    expect(validateMove(mask, 100, 100 + STEPS_PER_TURN + 1)).toBe(false);
     const step2 = heights((x) => (x < 100 ? 150 : 148));
     expect(validateMove(step2, 95, 100)).toBe(false);
     expect(validateMove(step2, 95, 99)).toBe(true);
