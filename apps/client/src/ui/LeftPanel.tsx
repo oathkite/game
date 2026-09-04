@@ -32,7 +32,8 @@ export const LeftPanel = ({ view, store, width, cell, holds }: Props) => {
   const me = view.mySeat !== null && view.players ? view.players[view.mySeat] : null;
   const x = control ? control.x : me?.x ?? 0;
   const facing: Facing = control ? control.facing : me?.facing ?? 1;
-  const elevation = control ? control.elevation : 45;
+  // 手番でない間も最後に決めた仰角を出す。control が消えるたびに 45 に戻ると、維持されていないように見えるため
+  const elevation = control ? control.elevation : view.lastElevation;
   const tilt = mask ? tiltOf(mask, x) : 0;
   const stepsLeft = control ? control.stepsLeft : STEPS_PER_TURN;
   const gaugeSize = Math.min(width - 8, 22 * cell);

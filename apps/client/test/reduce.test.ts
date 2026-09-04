@@ -1,6 +1,7 @@
 import { createEngine, DEFAULT_ENGINE_TIMING, handle, setupMessage } from "@game/engine";
 import type { ServerMessage, ServerMessageOf } from "@game/protocol";
 import { describe, expect, it } from "vitest";
+import { applyElevation } from "@/match/control";
 import { reduce, type ReduceOptions } from "@/match/reduce";
 import { EMPTY_VIEW, type MatchView } from "@/match/types";
 
@@ -183,4 +184,30 @@ describe("reduce", () => {
     expect(view.deadlineAt).toBeNull();
     expect(view.opponentDisconnectedUntil).toBe(65_000);
   });
+  it("発射角は自分の次の手番へ引き継ぐ", () => {
+    const s1 = handle(state, { type: "loaded", seat: 0 }, 0);
+    const s2 = handle(s1.state, { type: "loaded", seat: 1 }, 0);
+    const start = s2.effects[0]?.message as ServerMessageOf<"turn.start">;
+    const mine = apply(EMPTY_VIEW, [setup, start]);
+    expect(mine.control?.elevation).toBe(45);
+
+    // 仰角を 70 に変えて撃つ
+    const aimed = applyElevation(mine, 25);
+    expect(aimed.lastElevation).toBe(70);
+
+    const fired = handle(s2.state, { type: "fire", seat: 0, fire: { type: "turn.fire", facing: 1, elevation: 70, power: 60, x: 75 } }, 1000);
+    const result = fired.effects[0]?.message as ServerMessageOf<"turn.result">;
+    const next = handle(fired.state, { type: "tick" }, 12_000);
+    const opponentTurn = next.effects[0]?.message as ServerMessageOf<"turn.start">;
+
+    // 相手の手番を挟んでも lastElevation は保つ
+    const waiting = apply(aimed, [result, opponentTurn]);
+    expect(waiting.lastElevation).toBe(70);
+    expect(waiting.control).toBeNull();
+
+    // 自分の手番に戻ったら 70 から始まる
+    const mineAgain = reduce(waiting, { ...opponentTurn, turnNumber: 3, seat: 0 }, opts, 20).view;
+    expect(mineAgain.control?.elevation).toBe(70);
+  });
+
 });
