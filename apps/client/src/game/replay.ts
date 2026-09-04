@@ -48,6 +48,8 @@ const poseOf = (p: PlayerView, mask: TerrainMask, elevation: number, over: Parti
   hp: p.hp,
   visible: !isRingOut(mask, p.x),
   flash: false,
+  // 再生の間は狙いを付ける時間ではないので線を出さない
+  aiming: false,
   ...over,
 });
 
