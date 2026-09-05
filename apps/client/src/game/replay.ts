@@ -2,7 +2,7 @@ import type { Seat } from "@game/protocol";
 import { isRingOut, MAP_HEIGHT, ONE, surfaceY, tiltOf, type TerrainMask } from "@game/sim";
 import type { SoundName } from "@/app/audio";
 import type { PlayerView, ReplayJob } from "@/match/types";
-import { blastFrameAt, CARVE_AT_MS, damageSounds, flashMsOf } from "./hitFeedback";
+import { blastFrameAt, CARVE_AT_MS, damageLabelText, damageSounds, damageTier, flashMsOf, hpBarAt, shakeOffsetAt } from "./hitFeedback";
 import type { ProjectileView } from "./projectileView";
 import type { Renderer } from "./renderer";
 import type { TankPose } from "./tankView";
@@ -13,6 +13,8 @@ import type { TankPose } from "./tankView";
 export type ReplayCallbacks = {
   readonly sound: (name: SoundName) => void;
   readonly done: () => void;
+  /** 利用者が動きを減らす設定にしている。画面揺れを出さない */
+  readonly reduceMotion: boolean;
 };
 
 const STEP_MS = 1000 / 60;
@@ -69,11 +71,16 @@ const computeFalls = (job: ReplayJob): Fall[] => {
   return falls;
 };
 
-/** 着弾後の HP と位置で、地形は着弾前のまま描く。落下前の姿勢 */
-const poseAfterHit = (run: Run, seat: Seat, flash: boolean): TankPose => {
+/** 着弾後の位置で、地形は着弾前のまま描く。落下前の姿勢。HP バーは削れてからの時間で減らしていく */
+const poseAfterHit = (run: Run, seat: Seat, flash: boolean, sinceCarve: number): TankPose => {
   const before = run.job.playersBefore[seat];
   const after = run.job.playersAfter[seat];
-  return poseOf({ ...before, hp: after.hp, x: after.x, facing: after.facing }, run.job.maskBefore, elevationOf(run, seat), { flash });
+  const bar = hpBarAt(sinceCarve, before.hp, after.hp);
+  return poseOf({ ...before, hp: bar.hp, x: after.x, facing: after.facing }, run.job.maskBefore, elevationOf(run, seat), {
+    flash,
+    hpGhost: bar.hpGhost,
+    ghostOn: bar.ghostOn,
+  });
 };
 
 const finish = (run: Run): void => {
@@ -81,6 +88,7 @@ const finish = (run: Run): void => {
   run.phase = "done";
   run.projectile.clear();
   for (const seat of [0, 1] as const) run.renderer.setTank(seat, poseOf(run.job.playersAfter[seat], run.job.maskAfter, elevationOf(run, seat)));
+  run.renderer.setShake({ dx: 0, dy: 0 });
   run.stopFrames();
   run.cb.done();
 };
@@ -121,7 +129,12 @@ const carve = (run: Run): void => {
   run.carved = true;
   const { shot } = run.job;
   run.renderer.setTerrain(run.job.maskAfter);
-  for (const seat of [0, 1] as const) run.renderer.setTank(seat, poseAfterHit(run, seat, shot.damage[seat] > 0));
+  const shooterColor = run.job.playersBefore[shot.input.seat].colors.primary;
+  for (const seat of [0, 1] as const) {
+    const damage = shot.damage[seat];
+    run.renderer.setTank(seat, poseAfterHit(run, seat, damage > 0, 0));
+    if (damage > 0) run.renderer.showDamage(seat, damageLabelText(damage), shooterColor, damageTier(damage) === 3);
+  }
   for (const name of damageSounds(shot, run.mySeat)) run.cb.sound(name);
 };
 
@@ -146,13 +159,14 @@ const stepFlight = (run: Run): void => {
   }
 };
 
-/** 白い点滅は地形が削れた時点から数え、ダメージが大きいほど長く続く */
-const updateFlashes = (run: Run, sinceCarve: number): void => {
+/** 削れてからの被弾の見せ方。白はダメージが大きいほど長く続き、HP バーは減っていき、画面が揺れる */
+const updateHits = (run: Run, sinceCarve: number): void => {
   const { shot } = run.job;
   for (const seat of [0, 1] as const) {
     const damage = shot.damage[seat];
-    if (damage > 0 && sinceCarve >= flashMsOf(damage)) run.renderer.setTank(seat, poseAfterHit(run, seat, false));
+    if (damage > 0) run.renderer.setTank(seat, poseAfterHit(run, seat, sinceCarve < flashMsOf(damage), sinceCarve));
   }
+  if (!run.cb.reduceMotion) run.renderer.setShake(shakeOffsetAt(sinceCarve, shot.damage));
 };
 
 const stepBlast = (run: Run): void => {
@@ -167,7 +181,7 @@ const stepBlast = (run: Run): void => {
   if (!frame.hold) run.projectile.setBullet(null, 0, 0);
   run.projectile.setBlast(impact.x, impact.y, frame.radius, frame.on, frame.ring);
   if (frame.carved && !run.carved) carve(run);
-  if (run.carved) updateFlashes(run, t - CARVE_AT_MS);
+  if (run.carved) updateHits(run, t - CARVE_AT_MS);
 };
 
 const stepFall = (run: Run): void => {
@@ -221,6 +235,7 @@ export const playReplay = (
     if (run.phase === "done") return;
     run.phase = "done";
     run.projectile.clear();
+    run.renderer.setShake({ dx: 0, dy: 0 });
     run.stopFrames();
   };
 };

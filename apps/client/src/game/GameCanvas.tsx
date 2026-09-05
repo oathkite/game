@@ -19,6 +19,9 @@ type Props = {
   readonly swipe: SwipeAim;
 };
 
+/** 利用者が OS で動きを減らす設定にしているか。画面揺れを止める */
+const prefersReducedMotion = (): boolean => typeof matchMedia === "function" && matchMedia("(prefers-reduced-motion: reduce)").matches;
+
 const posesOf = (view: MatchView, elevations: readonly [number, number]): readonly [TankPose, TankPose] | null => {
   const { mask, players } = view;
   if (!mask || !players) return null;
@@ -90,6 +93,7 @@ export const GameCanvas = ({ store, view, layout, swipe }: Props) => {
       if (replayCancelRef.current) replayCancelRef.current();
       replayCancelRef.current = playReplay(r, job, elevationsRef.current, view.mySeat, {
         sound: playSound,
+        reduceMotion: prefersReducedMotion(),
         done: () => {
           replayCancelRef.current = null;
           store.completeReplay(job.id);
