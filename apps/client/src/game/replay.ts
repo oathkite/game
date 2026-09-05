@@ -1,12 +1,14 @@
 import type { Seat } from "@game/protocol";
-import { BLAST_RADIUS, isRingOut, MAP_HEIGHT, ONE, surfaceY, tiltOf, type TerrainMask } from "@game/sim";
+import { isRingOut, MAP_HEIGHT, ONE, surfaceY, tiltOf, type TerrainMask } from "@game/sim";
 import type { SoundName } from "@/app/audio";
 import type { PlayerView, ReplayJob } from "@/match/types";
+import { blastFrameAt, CARVE_AT_MS, damageSounds, flashMsOf } from "./hitFeedback";
 import type { ProjectileView } from "./projectileView";
 import type { Renderer } from "./renderer";
 import type { TankPose } from "./tankView";
 
-// 射撃結果の再生。設計書 03 の 3.9。弾道は 1 ステップ 1/60 秒で進め、着弾で爆風、地形の削り、落下を順に描く。
+// 射撃結果の再生。設計書 03 の 3.9。弾道は 1 ステップ 1/60 秒で進め、着弾で弾を一瞬止め、爆風の膨張、地形の削り、落下を順に描く。
+// 着弾の時間の流れは hitFeedback.ts が決める。
 
 export type ReplayCallbacks = {
   readonly sound: (name: SoundName) => void;
@@ -14,8 +16,6 @@ export type ReplayCallbacks = {
 };
 
 const STEP_MS = 1000 / 60;
-const BLAST_MS = 500;
-const FLASH_MS = 300;
 /** 落下の速さ（セル/秒） */
 const FALL_CELLS_PER_S = 90;
 
@@ -36,6 +36,8 @@ type Run = {
   elapsed: number;
   phaseStart: number;
   trailIndex: number;
+  /** 爆風の膨張が終わり、地形を削って被弾を見せたか */
+  carved: boolean;
   stopFrames: () => void;
 };
 
@@ -93,22 +95,34 @@ const enterFall = (run: Run): void => {
   if (run.falls.length === 0) finish(run);
 };
 
+/** 飛行の最後の向き。静止中の弾を飛んできた向きのまま描くために使う */
+const lastFlightAngle = (path: ReplayJob["path"]): number => {
+  const a = path[path.length - 2];
+  const b = path[path.length - 1];
+  return a && b ? Math.atan2(b.y - a.y, b.x - a.x) : 0;
+};
+
+/** 着弾。弾を着弾点に止め、爆発音を鳴らす。地形はまだ削らない */
 const enterBlast = (run: Run): void => {
   run.phase = "blast";
   run.phaseStart = run.elapsed;
-  run.projectile.setBullet(null, 0, 0);
   const { shot } = run.job;
   if (!shot.impact) {
+    run.projectile.setBullet(null, 0, 0);
     enterFall(run);
     return;
   }
+  run.projectile.setBullet(shot.impact.x + 0.5, shot.impact.y + 0.5, lastFlightAngle(run.job.path));
   run.cb.sound("explosion");
+};
+
+/** 爆風が最大に達した瞬間。地形を削り、被弾した機体を白くし、被弾と手応えの音を鳴らす */
+const carve = (run: Run): void => {
+  run.carved = true;
+  const { shot } = run.job;
   run.renderer.setTerrain(run.job.maskAfter);
-  for (const seat of [0, 1] as const) {
-    const damaged = shot.damage[seat] > 0;
-    if (damaged && seat === run.mySeat) run.cb.sound("hit");
-    run.renderer.setTank(seat, poseAfterHit(run, seat, damaged));
-  }
+  for (const seat of [0, 1] as const) run.renderer.setTank(seat, poseAfterHit(run, seat, shot.damage[seat] > 0));
+  for (const name of damageSounds(shot, run.mySeat)) run.cb.sound(name);
 };
 
 const stepFlight = (run: Run): void => {
@@ -132,20 +146,28 @@ const stepFlight = (run: Run): void => {
   }
 };
 
+/** 白い点滅は地形が削れた時点から数え、ダメージが大きいほど長く続く */
+const updateFlashes = (run: Run, sinceCarve: number): void => {
+  const { shot } = run.job;
+  for (const seat of [0, 1] as const) {
+    const damage = shot.damage[seat];
+    if (damage > 0 && sinceCarve >= flashMsOf(damage)) run.renderer.setTank(seat, poseAfterHit(run, seat, false));
+  }
+};
+
 const stepBlast = (run: Run): void => {
   const t = run.elapsed - run.phaseStart;
-  if (t >= BLAST_MS) {
+  const frame = blastFrameAt(t);
+  if (!frame) {
     enterFall(run);
     return;
   }
-  const { shot } = run.job;
-  const on = Math.floor(t / 80) % 2 === 0;
-  if (shot.impact) run.projectile.setBlast(shot.impact.x, shot.impact.y, BLAST_RADIUS, on);
-  if (t >= FLASH_MS) {
-    for (const seat of [0, 1] as const) {
-      if (shot.damage[seat] > 0) run.renderer.setTank(seat, poseAfterHit(run, seat, false));
-    }
-  }
+  const { impact } = run.job.shot;
+  if (!impact) return;
+  if (!frame.hold) run.projectile.setBullet(null, 0, 0);
+  run.projectile.setBlast(impact.x, impact.y, frame.radius, frame.on, frame.ring);
+  if (frame.carved && !run.carved) carve(run);
+  if (run.carved) updateFlashes(run, t - CARVE_AT_MS);
 };
 
 const stepFall = (run: Run): void => {
@@ -187,6 +209,7 @@ export const playReplay = (
     elapsed: 0,
     phaseStart: 0,
     trailIndex: 0,
+    carved: false,
     stopFrames: () => {},
   };
   for (const seat of [0, 1] as const) renderer.setTank(seat, poseOf(job.playersBefore[seat], job.maskBefore, elevationOf(run, seat)));
