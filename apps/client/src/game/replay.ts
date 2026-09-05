@@ -1,8 +1,8 @@
-import type { Seat } from "@game/protocol";
+import type { CellPoint, Seat } from "@game/protocol";
 import { isRingOut, MAP_HEIGHT, ONE, surfaceY, tiltOf, type TerrainMask } from "@game/sim";
 import type { SoundName } from "@/app/audio";
 import type { PlayerView, ReplayJob } from "@/match/types";
-import { blastFrameAt, CARVE_AT_MS, damageLabelText, damageSounds, damageTier, flashMsOf, hpBarAt, shakeOffsetAt } from "./hitFeedback";
+import { blastFrameAt, CARVE_AT_MS, damageLabelText, damageSounds, damageTier, debrisAt, flashMsOf, hpBarAt, missMarkAt, shakeOffsetAt } from "./hitFeedback";
 import type { ProjectileView } from "./projectileView";
 import type { Renderer } from "./renderer";
 import type { TankPose } from "./tankView";
@@ -115,13 +115,28 @@ const enterBlast = (run: Run): void => {
   run.phase = "blast";
   run.phaseStart = run.elapsed;
   const { shot } = run.job;
-  if (!shot.impact) {
-    run.projectile.setBullet(null, 0, 0);
+  run.projectile.setBullet(null, 0, 0);
+  // 外れは印だけを出す。stepMiss が時間で消して落下へ進める
+  if (!shot.impact) return;
+  run.projectile.setBullet(shot.impact.x + 0.5, shot.impact.y + 0.5, lastFlightAngle(run.job.path));
+  run.cb.sound("explosion");
+};
+
+/** 弾が最後にいた位置（セル） */
+const lastCell = (path: ReplayJob["path"]): CellPoint => {
+  const p = path[path.length - 1];
+  return p ? { x: Math.floor(p.x / ONE), y: Math.floor(p.y / ONE) } : { x: 0, y: 0 };
+};
+
+/** 外れ。弾が消えた位置をマップの端に寄せて短く印を出す */
+const stepMiss = (run: Run, t: number): void => {
+  const mark = missMarkAt(t, lastCell(run.job.path));
+  if (!mark) {
+    // 印は enterFall の clear で消える
     enterFall(run);
     return;
   }
-  run.projectile.setBullet(shot.impact.x + 0.5, shot.impact.y + 0.5, lastFlightAngle(run.job.path));
-  run.cb.sound("explosion");
+  run.projectile.setMissMark(mark.x, mark.y, mark.on);
 };
 
 /** 爆風が最大に達した瞬間。地形を削り、被弾した機体を白くし、被弾と手応えの音を鳴らす */
@@ -171,17 +186,23 @@ const updateHits = (run: Run, sinceCarve: number): void => {
 
 const stepBlast = (run: Run): void => {
   const t = run.elapsed - run.phaseStart;
+  const { impact } = run.job.shot;
+  if (!impact) {
+    stepMiss(run, t);
+    return;
+  }
   const frame = blastFrameAt(t);
   if (!frame) {
     enterFall(run);
     return;
   }
-  const { impact } = run.job.shot;
-  if (!impact) return;
   if (!frame.hold) run.projectile.setBullet(null, 0, 0);
   run.projectile.setBlast(impact.x, impact.y, frame.radius, frame.on, frame.ring);
   if (frame.carved && !run.carved) carve(run);
-  if (run.carved) updateHits(run, t - CARVE_AT_MS);
+  if (run.carved) {
+    updateHits(run, t - CARVE_AT_MS);
+    run.projectile.setDebris(debrisAt(t - CARVE_AT_MS, impact));
+  }
 };
 
 const stepFall = (run: Run): void => {
