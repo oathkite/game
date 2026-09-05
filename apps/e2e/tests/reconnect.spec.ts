@@ -80,7 +80,7 @@ test("対戦中に再読み込みしても席と手番が復元され、観戦�
   await setup(s2, "spec2", 3);
   await s2.getByRole("button", { name: "観戦" }).first().click();
   await waitView(s2, (v) => v.turnNumber === 1);
-  await shooter.getByRole("button", { name: "降参", exact: true }).click();
+  await shooter.getByTestId("options-open").click();
   await shooter.getByRole("button", { name: "降参する" }).click();
   await expect(s.getByTestId("result")).toBeVisible();
   await expect(s2.getByTestId("result")).toBeVisible();
