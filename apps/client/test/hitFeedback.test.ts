@@ -10,7 +10,11 @@ import {
   FLASH_MS_BY_TIER,
   flashMsOf,
   HOLD_MS,
+  HP_DRAIN_MS,
+  hpBarAt,
   IMPACT_TOTAL_MS,
+  SHAKE_MS,
+  shakeOffsetAt,
 } from "@/game/hitFeedback";
 
 // 着弾の手応えの時間の流れを数値で固定する。設計書 03 の 3.9 と 08 の 8.6
@@ -100,5 +104,55 @@ describe("damageSounds", () => {
     expect(damageSounds(shotOf(0, [0, 35], [100, 5]), 0)).toEqual(["hitConfirm"]);
     // すでに 0 の相手に当てていない場合は鳴らさない
     expect(damageSounds(shotOf(0, [0, 0], [100, 0]), 0)).toEqual([]);
+  });
+});
+
+describe("shakeOffsetAt", () => {
+  it("無傷の着弾では揺れない", () => {
+    expect(shakeOffsetAt(0, [0, 0])).toEqual({ dx: 0, dy: 0 });
+  });
+
+  it("直撃は大きく揺れ、時間とともに小さくなり、終わりで止まる", () => {
+    const first = shakeOffsetAt(0, [0, 35]);
+    expect(Math.max(Math.abs(first.dx), Math.abs(first.dy))).toBe(3);
+    const late = shakeOffsetAt(SHAKE_MS - 1, [0, 35]);
+    expect(Math.max(Math.abs(late.dx), Math.abs(late.dy))).toBe(1);
+    expect(shakeOffsetAt(SHAKE_MS, [0, 35])).toEqual({ dx: 0, dy: 0 });
+  });
+
+  it("かすりは 1 セルだけ揺れ、ずらし量は常に整数セル", () => {
+    for (let t = 0; t < SHAKE_MS; t += 7) {
+      const o = shakeOffsetAt(t, [5, 0]);
+      expect(Number.isInteger(o.dx) && Number.isInteger(o.dy)).toBe(true);
+      expect(Math.max(Math.abs(o.dx), Math.abs(o.dy))).toBeLessThanOrEqual(1);
+    }
+  });
+
+  it("両方に当たったときは大きい方のダメージで揺れる", () => {
+    expect(shakeOffsetAt(0, [5, 30])).toEqual(shakeOffsetAt(0, [0, 30]));
+  });
+
+  it("揺れは爆風が消えるまでに収まる", () => {
+    expect(SHAKE_MS).toBeLessThanOrEqual(IMPACT_TOTAL_MS - CARVE_AT_MS);
+  });
+});
+
+describe("hpBarAt", () => {
+  it("減る前の値から後の値へ一定の速さで減り、減り切るのは爆風が消える時点", () => {
+    expect(hpBarAt(0, 100, 65).hp).toBe(100);
+    expect(hpBarAt(HP_DRAIN_MS / 2, 100, 65).hp).toBe(83);
+    expect(hpBarAt(HP_DRAIN_MS, 100, 65).hp).toBe(65);
+    expect(hpBarAt(HP_DRAIN_MS * 2, 100, 65).hp).toBe(65);
+    expect(HP_DRAIN_MS).toBe(IMPACT_TOTAL_MS - CARVE_AT_MS);
+  });
+
+  it("失った区間は減る前の値を保ち、爆風と同じ周期で明滅する", () => {
+    expect(hpBarAt(0, 100, 65)).toMatchObject({ hpGhost: 100, ghostOn: true });
+    expect(hpBarAt(80, 100, 65).ghostOn).toBe(false);
+    expect(hpBarAt(160, 100, 65).ghostOn).toBe(true);
+  });
+
+  it("0 を下回る HP でも塗る値は後の値で止まる", () => {
+    expect(hpBarAt(HP_DRAIN_MS, 10, -25).hp).toBe(-25);
   });
 });

@@ -77,3 +77,58 @@ export const damageSounds = (shot: ShotResult, mySeat: Seat | null): readonly So
   if (killed) sounds.push("finish");
   return sounds;
 };
+
+/** 画面揺れの長さ。地形が削れた時点から数える */
+export const SHAKE_MS = 250;
+/** 揺れの向きを替える間隔 */
+export const SHAKE_STEP_MS = 33;
+/** 揺れの幅（セル）。ダメージの段階で変える */
+export const SHAKE_CELLS_BY_TIER: Readonly<Record<DamageTier, number>> = { 0: 0, 1: 1, 2: 2, 3: 3 };
+/** 揺れの向きの並び。乱数を使わず、同じ着弾なら同じ揺れになる */
+const SHAKE_PATTERN: readonly (readonly [number, number])[] = [
+  [1, 0],
+  [-1, 1],
+  [0, -1],
+  [1, 1],
+  [-1, 0],
+  [0, 1],
+];
+
+export type Offset = { readonly dx: number; readonly dy: number };
+
+/** 地形が削れてから t ミリ秒後の画面のずらし量（整数セル）。強さは両機体のうち大きいダメージで決める */
+export const shakeOffsetAt = (t: number, damage: readonly [number, number]): Offset => {
+  const cells = SHAKE_CELLS_BY_TIER[damageTier(Math.max(damage[0], damage[1]))];
+  if (cells === 0 || t < 0 || t >= SHAKE_MS) return { dx: 0, dy: 0 };
+  const amp = Math.ceil((cells * (SHAKE_MS - t)) / SHAKE_MS);
+  const step = Math.floor(t / SHAKE_STEP_MS);
+  const dir = SHAKE_PATTERN[step % SHAKE_PATTERN.length] ?? [0, 0];
+  return { dx: dir[0] * amp, dy: dir[1] * amp };
+};
+
+/** HP バーが減り切るまでの長さ。爆風が消えるまでに収める */
+export const HP_DRAIN_MS = FLICKER_MS + RING_MS;
+
+export type HpBar = {
+  /** 塗って見せる HP */
+  readonly hp: number;
+  /** 減る前の HP。hp との差を失った区間として点滅で見せる */
+  readonly hpGhost: number;
+  readonly ghostOn: boolean;
+};
+
+/** 地形が削れてから t ミリ秒後の HP バー。減る前の値から後の値へ一定の速さで減らし、失った区間を明滅させる */
+export const hpBarAt = (t: number, before: number, after: number): HpBar => {
+  const f = Math.min(1, Math.max(0, t) / HP_DRAIN_MS);
+  const hp = before - Math.floor((before - after) * f);
+  return { hp, hpGhost: before, ghostOn: Math.floor(Math.max(0, t) / FLICKER_HALF_MS) % 2 === 0 };
+};
+
+/** ダメージ数字が浮いて消えるまでの長さ */
+export const DAMAGE_LABEL_MS = 600;
+/** ダメージ数字が浮く高さ（px）。文字と同じく px で決め、小さな画面でも名前の上に抜ける */
+export const DAMAGE_LABEL_RISE_PX = 24;
+/** 名前の文字との隙間（px） */
+export const DAMAGE_LABEL_GAP_PX = 4;
+
+export const damageLabelText = (damage: number): string => `-${damage}`;

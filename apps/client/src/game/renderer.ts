@@ -1,6 +1,8 @@
 import { COLOR_HEX, type Seat, type TankColors } from "@game/protocol";
 import type { TerrainMask } from "@game/sim";
 import { Application, Container } from "pixi.js";
+import { spawnDamageLabel } from "./damageLabel";
+import { DAMAGE_LABEL_GAP_PX, type Offset } from "./hitFeedback";
 import { createProjectileView, type ProjectileView } from "./projectileView";
 import type { Layout } from "./scale";
 import { createTankView, type TankPose, type TankView } from "./tankView";
@@ -16,6 +18,10 @@ export type Renderer = {
   readonly setTank: (seat: Seat, pose: TankPose) => void;
   readonly projectile: (color: TankColors["primary"]) => ProjectileView;
   readonly onFrame: (fn: (deltaMs: number) => void) => () => void;
+  /** 画面全体を整数セルだけずらす。着弾の揺れに使う */
+  readonly setShake: (offset: Offset) => void;
+  /** 機体の上にダメージ数字を出す。数字は自分で浮いて消える */
+  readonly showDamage: (seat: Seat, text: string, color: TankColors["primary"], big: boolean) => void;
   readonly destroy: () => void;
 };
 
@@ -69,6 +75,7 @@ export const createRenderer = async (init: RendererInit): Promise<Renderer> => {
     labels.addChild(t.label);
   }
   const poses: [TankPose | null, TankPose | null] = [null, null];
+  const labelStops = new Set<() => void>();
 
   const applyPose = (seat: Seat): void => {
     const pose = poses[seat];
@@ -102,7 +109,20 @@ export const createRenderer = async (init: RendererInit): Promise<Renderer> => {
         app.ticker.remove(handler);
       };
     },
+    setShake: (offset) => {
+      app.stage.position.set(offset.dx * cell, offset.dy * cell);
+    },
+    showDamage: (seat, text, color, big) => {
+      const pose = poses[seat];
+      if (!pose) return;
+      // 名前の文字の上端から隙間を空けて出す。名前は px で描かれるので px で積む
+      const y = tanks[seat].label.getBounds().minY - DAMAGE_LABEL_GAP_PX;
+      const stop = spawnDamageLabel({ parent: labels, ticker: app.ticker, text, color, big, x: (pose.x + 0.5) * cell, y, onEnd: () => labelStops.delete(stop) });
+      labelStops.add(stop);
+    },
     destroy: () => {
+      for (const stop of labelStops) safely(stop);
+      labelStops.clear();
       // PixiJS v8 の Text は破棄時にテクスチャプールへの返却で例外を出すことがある。撤収なので握りつぶす
       safely(() => terrain.destroy());
       for (const t of tanks) safely(() => t.destroy());

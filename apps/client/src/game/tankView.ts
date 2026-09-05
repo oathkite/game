@@ -13,6 +13,10 @@ export type TankPose = {
   readonly facing: Facing;
   readonly elevation: number;
   readonly hp: number;
+  /** 減る前の HP。hp より大きいとき、その差を失った区間として描く。省略なら hp と同じ */
+  readonly hpGhost?: number;
+  /** 失った区間を描くか。明滅に使う */
+  readonly ghostOn?: boolean;
   readonly visible: boolean;
   readonly flash: boolean;
   /** 発射角の線を出す。自分が狙いを付けている間だけ true */
@@ -47,6 +51,18 @@ const drawBody = (g: Graphics, colors: TankColors, white: boolean): void => {
   // 下 3 段が車体（主色）、上 2 段が砲塔（副色）
   g.rect(-BODY_W / 2, -3, BODY_W, 3).fill(primary);
   g.rect(-2.5, -5, 5, 2).fill(secondary);
+};
+
+const hpCells = (hp: number): number => Math.min(10, Math.ceil(Math.max(0, hp) / (HP_MAX / 10)));
+
+/** HP バー。横 12、縦 3 の黒い下地の中に、主色で 10 HP を 1 セルとして描く。失った区間は明滅で見せる */
+const drawHpBar = (g: Graphics, colors: TankColors, pose: TankPose): void => {
+  g.clear();
+  g.rect(-6, 1, 12, 3).fill(0x000000);
+  const cells = hpCells(pose.hp);
+  if (cells > 0) g.rect(-5, 2, cells, 1).fill(hex(COLOR_HEX[colors.primary]));
+  const ghost = hpCells(pose.hpGhost ?? pose.hp);
+  if (pose.ghostOn && ghost > cells) g.rect(-5 + cells, 2, ghost - cells, 1).fill(hex(COLOR_HEX[colors.primary]));
 };
 
 export const createTankView = (colors: TankColors, nickname: string): TankView => {
@@ -100,10 +116,7 @@ export const createTankView = (colors: TankColors, nickname: string): TankView =
       drawBody(body, colors, pose.flash);
       wasWhite = pose.flash;
     }
-    hpBar.clear();
-    hpBar.rect(-6, 1, 12, 3).fill(0x000000);
-    const cells = Math.min(10, Math.ceil(Math.max(0, pose.hp) / (HP_MAX / 10)));
-    if (cells > 0) hpBar.rect(-5, 2, cells, 1).fill(hex(COLOR_HEX[colors.primary]));
+    drawHpBar(hpBar, colors, pose);
 
     label.position.set((pose.x + 0.5) * cell, (pose.y - 9) * cell);
     labelBg.clear();
