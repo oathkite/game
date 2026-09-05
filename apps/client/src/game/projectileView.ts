@@ -7,8 +7,8 @@ export type ProjectileView = {
   readonly setBullet: (x: number | null, y: number, angle: number) => void;
   readonly addTrail: (cx: number, cy: number) => void;
   readonly clear: () => void;
-  /** 爆風。半径 r の円をセルで塗る。intensity は 0 から 1 で明滅に使う */
-  readonly setBlast: (cx: number | null, cy: number, r: number, on: boolean) => void;
+  /** 爆風。半径 r の円をセルで塗る。ring なら縁の 1 セルだけを残す。on が偽なら消す */
+  readonly setBlast: (cx: number | null, cy: number, r: number, on: boolean, ring?: boolean) => void;
   readonly destroy: () => void;
 };
 
@@ -40,13 +40,15 @@ export const createProjectileView = (color: number): ProjectileView => {
       blast.clear();
       bullet.visible = false;
     },
-    setBlast: (cx, cy, r, on) => {
+    setBlast: (cx, cy, r, on, ring = false) => {
       blast.clear();
-      if (cx === null || !on) return;
+      if (cx === null || !on || r <= 0) return;
       const r2 = r * r;
+      const inner = ring ? (r - 1) * (r - 1) : -1;
       for (let dy = -r; dy <= r; dy++) {
         for (let dx = -r; dx <= r; dx++) {
-          if (dx * dx + dy * dy <= r2) blast.rect(cx + dx, cy + dy, 1, 1);
+          const d2 = dx * dx + dy * dy;
+          if (d2 <= r2 && d2 > inner) blast.rect(cx + dx, cy + dy, 1, 1);
         }
       }
       blast.fill(color);
