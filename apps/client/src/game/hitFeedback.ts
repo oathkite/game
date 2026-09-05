@@ -1,5 +1,5 @@
-import type { Seat, ShotResult } from "@game/protocol";
-import { BLAST_RADIUS } from "@game/sim";
+import type { CellPoint, Seat, ShotResult } from "@game/protocol";
+import { BLAST_RADIUS, MAP_HEIGHT, MAP_WIDTH } from "@game/sim";
 import type { SoundName } from "@/app/audio";
 
 // 着弾の手応え。設計書 03 の 3.8 と 3.9、08 の 8.2 と 8.6。
@@ -132,3 +132,46 @@ export const DAMAGE_LABEL_RISE_PX = 24;
 export const DAMAGE_LABEL_GAP_PX = 4;
 
 export const damageLabelText = (damage: number): string => `-${damage}`;
+
+/** 破片が飛んで消えるまでの長さ。爆風が消えるまでに収める */
+export const DEBRIS_MS = FLICKER_MS + RING_MS;
+/** 破片の重さ（セル/秒²） */
+export const DEBRIS_GRAVITY = 400;
+/** 破片の初速（セル/秒）。上へ寄せた 8 方向で、乱数を使わない。最も高い破片は約 10 セル上がって 0.23 秒で落ち始める */
+const DEBRIS_VELOCITIES: readonly (readonly [number, number])[] = [
+  [-47, -68],
+  [-29, -83],
+  [-10, -91],
+  [10, -91],
+  [29, -83],
+  [47, -68],
+  [-62, -39],
+  [62, -39],
+];
+/** 最も高い破片が頂点に達する時刻 */
+export const DEBRIS_APEX_MS = 230;
+
+/** 地形が削れてから t ミリ秒後の破片の位置（セル、格子に揃える）。左右対称に散るよう 0 へ向けて丸める。消えたら空 */
+export const debrisAt = (t: number, impact: CellPoint): readonly CellPoint[] => {
+  if (t < 0 || t >= DEBRIS_MS) return [];
+  const sec = t / 1000;
+  return DEBRIS_VELOCITIES.map(([vx, vy]) => ({
+    x: impact.x + Math.trunc(vx * sec),
+    y: impact.y + Math.trunc(vy * sec + (DEBRIS_GRAVITY * sec * sec) / 2),
+  }));
+};
+
+/** 外れ（弾がマップの外へ出た）の印を出す長さ */
+export const MISS_MS = 200;
+/** 印の明滅の周期の半分 */
+export const MISS_BLINK_MS = 50;
+
+export type MissMark = { readonly x: number; readonly y: number; readonly on: boolean };
+
+/** 弾が消えた位置をマップの端に寄せ、t ミリ秒後の印。過ぎたら null */
+export const missMarkAt = (t: number, last: CellPoint): MissMark | null => {
+  if (t < 0 || t >= MISS_MS) return null;
+  const x = Math.min(MAP_WIDTH - 2, Math.max(1, last.x));
+  const y = Math.min(MAP_HEIGHT - 2, Math.max(1, last.y));
+  return { x, y, on: Math.floor(t / MISS_BLINK_MS) % 2 === 0 };
+};

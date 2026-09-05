@@ -9,8 +9,13 @@ import {
   damageTier,
   FLASH_MS_BY_TIER,
   flashMsOf,
+  DEBRIS_APEX_MS,
+  DEBRIS_MS,
+  debrisAt,
   HOLD_MS,
   HP_DRAIN_MS,
+  MISS_MS,
+  missMarkAt,
   hpBarAt,
   IMPACT_TOTAL_MS,
   SHAKE_MS,
@@ -154,5 +159,39 @@ describe("hpBarAt", () => {
 
   it("0 を下回る HP でも塗る値は後の値で止まる", () => {
     expect(hpBarAt(HP_DRAIN_MS, 10, -25).hp).toBe(-25);
+  });
+});
+
+describe("debrisAt", () => {
+  const impact = { x: 200, y: 100 };
+
+  it("削れた瞬間は爆心から出て、上へ飛んでから落ち、爆風が消えるまでに消える", () => {
+    const start = debrisAt(0, impact);
+    expect(start.length).toBe(8);
+    for (const c of start) expect(c).toEqual(impact);
+    const apex = debrisAt(DEBRIS_APEX_MS, impact);
+    const apexMinY = Math.min(...apex.map((c) => c.y));
+    expect(impact.y - apexMinY).toBeGreaterThanOrEqual(9);
+    const late = debrisAt(DEBRIS_MS - 1, impact);
+    const lateMinY = Math.min(...late.map((c) => c.y));
+    expect(lateMinY).toBeGreaterThan(apexMinY);
+    expect(debrisAt(DEBRIS_MS, impact)).toEqual([]);
+    expect(DEBRIS_MS).toBeLessThanOrEqual(IMPACT_TOTAL_MS - CARVE_AT_MS);
+  });
+
+  it("位置は整数セルで、左右に散る", () => {
+    const cells = debrisAt(200, impact);
+    for (const c of cells) expect(Number.isInteger(c.x) && Number.isInteger(c.y)).toBe(true);
+    expect(cells.some((c) => c.x < impact.x)).toBe(true);
+    expect(cells.some((c) => c.x > impact.x)).toBe(true);
+  });
+});
+
+describe("missMarkAt", () => {
+  it("弾が消えた位置をマップの内側に寄せ、明滅しながら短く出る", () => {
+    expect(missMarkAt(0, { x: 420, y: -5 })).toEqual({ x: 398, y: 1, on: true });
+    expect(missMarkAt(50, { x: -3, y: 300 })).toEqual({ x: 1, y: 223, on: false });
+    expect(missMarkAt(MISS_MS, { x: 10, y: 10 })).toBeNull();
+    expect(MISS_MS).toBeLessThan(IMPACT_TOTAL_MS);
   });
 });
