@@ -111,8 +111,20 @@ test("2 つのブラウザで部屋を作って入り、撃って、降参で決
   expect(passed.hp).toEqual(afterA.hp);
   expect(passed.ops).toEqual(afterA.ops);
 
-  // 降参で決着し、両者にリザルトが出る
-  await a.getByRole("button", { name: "降参", exact: true }).click();
+  // 設定メニューで左右を入れ替えると、射撃ボタンが左半分に移る。戻ると対戦は続いている
+  const fireBefore = await b.getByTestId("fire").boundingBox();
+  expect(fireBefore?.x ?? 0).toBeGreaterThan(700);
+  await b.getByTestId("options-open").click();
+  await b.getByRole("checkbox", { name: "左右を入れ替える" }).check();
+  const fireAfter = await b.getByTestId("fire").boundingBox();
+  expect(fireAfter?.x ?? 1400).toBeLessThan(700);
+  await b.getByRole("checkbox", { name: "消音" }).check();
+  await expect(b.getByRole("checkbox", { name: "消音" })).toBeChecked();
+  await b.getByRole("button", { name: "戻る" }).click();
+  await expect(b.getByTestId("options")).toBeHidden();
+
+  // 設定メニューから降参で決着し、両者にリザルトが出る
+  await a.getByTestId("options-open").click();
   await a.getByRole("button", { name: "降参する" }).click();
   await expect(a.getByTestId("result")).toBeVisible();
   await expect(b.getByTestId("result")).toBeVisible();

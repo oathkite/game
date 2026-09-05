@@ -57,26 +57,6 @@ export const SetupScreen = ({ profile, onChange, onEnterLobby, onSolo, inviteCod
         </label>
         <ColorPicker label="主色" value={profile.colors.primary} onPick={(c) => onChange({ ...profile, colors: { ...profile.colors, primary: c } })} />
         <ColorPicker label="副色" value={profile.colors.secondary} onPick={(c) => onChange({ ...profile, colors: { ...profile.colors, secondary: c } })} />
-        <div className="row">
-          <label className="row" style={{ flex: 1 }}>
-            <input
-              type="checkbox"
-              checked={profile.muted}
-              style={{ flex: "none", width: 24, height: 24 }}
-              onChange={(e) => onChange({ ...profile, muted: e.target.checked })}
-            />
-            <span>消音</span>
-          </label>
-          <label className="row" style={{ flex: 1 }}>
-            <input
-              type="checkbox"
-              checked={profile.swapPanels}
-              style={{ flex: "none", width: 24, height: 24 }}
-              onChange={(e) => onChange({ ...profile, swapPanels: e.target.checked })}
-            />
-            <span>左右を入れ替える</span>
-          </label>
-        </div>
         <button type="button" disabled={!valid} onClick={onEnterLobby} data-testid="enter-lobby">
           {inviteCode ? `部屋 ${inviteCode} に入る` : "ロビーへ"}
         </button>

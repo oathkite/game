@@ -9,11 +9,12 @@ import { MatchStage } from "./MatchStage";
 
 type Props = {
   readonly profile: Profile;
+  readonly onProfileChange: (profile: Profile) => void;
   readonly mapName: MapName;
   readonly onExit: () => void;
 };
 
-export const SoloMatch = ({ profile, mapName, onExit }: Props) => {
+export const SoloMatch = ({ profile, onProfileChange, mapName, onExit }: Props) => {
   const [store, setStore] = useState<MatchStore | null>(null);
 
   // 接続とストアは effect の中で作る。StrictMode の二重マウントでも cleanup と対にする
@@ -40,7 +41,8 @@ export const SoloMatch = ({ profile, mapName, onExit }: Props) => {
     <MatchStage
       store={store}
       clockOffset={0}
-      swapPanels={profile.swapPanels}
+      profile={profile}
+      onProfileChange={onProfileChange}
       closeLabel="もう一度"
       onClose={() => store.closeResult()}
       onLeave={onExit}
