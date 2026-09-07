@@ -12,8 +12,8 @@ export const newEngine = (rng: () => number = fixedRng): EngineState =>
       roomCode: "ABCDEF",
       mapName: "valley",
       players: [
-        { nickname: "alpha", colors: { primary: "red", secondary: "red" }, loadout: { main: "cannon", sub: "digger" } },
-        { nickname: "beta", colors: { primary: "blue", secondary: "blue" }, loadout: { main: "cannon", sub: "digger" } },
+        { nickname: "alpha", colors: { primary: "red", secondary: "red" }, loadout: ["cannon", "digger"] },
+        { nickname: "beta", colors: { primary: "blue", secondary: "blue" }, loadout: ["cannon", "digger"] },
       ],
     },
   );
@@ -26,7 +26,7 @@ export const started = (t0 = 1_000_000): Step => {
 
 export const fireMsg = (state: EngineState, seat: Seat, over: Partial<ClientMessageOf<"turn.fire">> = {}): ClientMessageOf<"turn.fire"> => ({
   type: "turn.fire",
-  slot: "main",
+  slot: 0,
   facing: state.match.players[seat].facing,
   elevation: 45,
   power: 50,

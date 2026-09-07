@@ -74,14 +74,14 @@ describe("部屋の作成と入室", () => {
     const code = last(h.inbox("a"), "room.joined")?.code ?? "";
     h.send("b", joinMsg(code, "bob", BLUE));
     h.send("b", { type: "room.ready", ready: true });
-    h.send("b", { type: "room.profile", nickname: "bob", colors: BLUE, loadout: { main: "sniper", sub: "stinger" } });
+    h.send("b", { type: "room.profile", nickname: "bob", colors: BLUE, loadout: ["laser", "stinger"] });
     const state = last(h.inbox("a"), "room.state");
-    expect(state?.room.members.find((m) => m.seat === 1)?.loadout).toEqual({ main: "sniper", sub: "stinger" });
+    expect(state?.room.members.find((m) => m.seat === 1)?.loadout).toEqual(["laser", "stinger"]);
     expect(state?.room.members.find((m) => m.seat === 1)?.ready).toBe(true);
     h.send("a", { type: "room.start" });
     const setup = last(h.inbox("a"), "match.setup");
     expect(setup?.players[0].loadout).toEqual(DEFAULT_LOADOUT);
-    expect(setup?.players[1].loadout).toEqual({ main: "sniper", sub: "stinger" });
+    expect(setup?.players[1].loadout).toEqual(["laser", "stinger"]);
   });
 
   it("オーナーは ready を持たない", () => {

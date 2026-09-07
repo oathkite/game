@@ -1,4 +1,4 @@
-import { WEAPON_LABELS, type Loadout, type WeaponSlot } from "@game/protocol";
+import { WEAPON_LABELS, WEAPON_SLOTS, type Loadout, type WeaponSlot } from "@game/protocol";
 import { useState } from "react";
 import { GAUGE_BORDER, markerBottom, powerAtOffset, toggleMarker } from "./powerMarker";
 import type { PowerGauge } from "./usePowerGauge";
@@ -30,10 +30,10 @@ type SwitchProps = {
   readonly onSelectSlot: (slot: WeaponSlot) => void;
 };
 
-/** メインとサブの切り替え。選んでいる側を明るい緑で塗り、手番の間だけ押せる */
+/** 2 つの武器の切り替え。選んでいる側を明るい緑で塗り、手番の間だけ押せる */
 const WeaponSwitch = ({ loadout, slot, enabled, onSelectSlot }: SwitchProps) => (
   <div className="weapon-switch" data-testid="weapon-switch" data-slot={slot}>
-    {(["main", "sub"] as const).map((s) => (
+    {WEAPON_SLOTS.map((s) => (
       <button
         key={s}
         type="button"
@@ -43,7 +43,7 @@ const WeaponSwitch = ({ loadout, slot, enabled, onSelectSlot }: SwitchProps) => 
         aria-pressed={slot === s}
         onClick={() => onSelectSlot(s)}
       >
-        {s === "main" ? "MAIN" : "SUB"} {WEAPON_LABELS[s === "main" ? loadout.main : loadout.sub]}
+        {WEAPON_LABELS[loadout[s]]}
       </button>
     ))}
   </div>

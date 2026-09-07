@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { STEPS_PER_TURN } from "@game/sim";
+import { damageDealtTo, STEPS_PER_TURN } from "@game/sim";
 import { handle } from "../src/index.js";
 import { find, fireMsg, newEngine, started, types } from "./helpers.js";
 
@@ -43,12 +43,15 @@ describe("Acting と Resolving", () => {
 
   it("スロットは手番側の装備から武器に解決され、結果の入力に残る（設計書 10）", () => {
     const s = started();
-    const main = handle(s.state, { type: "fire", seat: 0, fire: fireMsg(s.state, 0, { slot: "main" }) }, T0 + 5000);
-    expect(find(main.effects, "turn.result")?.shot.input.weapon).toBe("cannon");
-    const sub = handle(s.state, { type: "fire", seat: 0, fire: fireMsg(s.state, 0, { slot: "sub" }) }, T0 + 5000);
-    expect(find(sub.effects, "turn.result")?.shot.input.weapon).toBe("digger");
+    const first = handle(s.state, { type: "fire", seat: 0, fire: fireMsg(s.state, 0, { slot: 0 }) }, T0 + 5000);
+    expect(find(first.effects, "turn.result")?.shot.input.weapon).toBe("cannon");
+    const second = handle(s.state, { type: "fire", seat: 0, fire: fireMsg(s.state, 0, { slot: 1 }) }, T0 + 5000);
+    expect(find(second.effects, "turn.result")?.shot.input.weapon).toBe("digger");
     // 掘削弾は標準砲より広く削る
-    expect(find(sub.effects, "turn.result")?.shot.terrainOp?.radius ?? 0).toBeGreaterThan(find(main.effects, "turn.result")?.shot.terrainOp?.radius ?? 0);
+    const radiusOf = (step: typeof first) => find(step.effects, "turn.result")?.shot.impacts[0]?.terrainOp.radius ?? 0;
+    expect(radiusOf(second)).toBeGreaterThan(radiusOf(first));
+    // 着弾の分だけ地形の履歴が伸びる
+    expect(second.state.match.terrainOps).toHaveLength(1);
   });
 
   it("手番でない席の射撃は無視する", () => {
@@ -137,7 +140,7 @@ describe("決着", () => {
         for (let power = 40; power <= 100; power += 2) {
           const trial = handle(state, { type: "fire", seat: 0, fire: fireMsg(state, 0, { elevation, power }) }, T0 + 100);
           const res = find(trial.effects, "turn.result");
-          const damage = res ? res.shot.damage[1] - res.shot.damage[0] : -1;
+          const damage = res ? damageDealtTo(res.shot, 1) - damageDealtTo(res.shot, 0) : -1;
           if (damage > best.damage) best = { elevation, power, damage };
         }
       }

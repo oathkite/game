@@ -8,8 +8,8 @@ import { GOLDEN_CASES, runGolden } from "../src/golden.js";
 describe("golden replay", () => {
   for (const c of GOLDEN_CASES) {
     it(c.name, () => {
-      const { result, steps, last } = runGolden(c);
-      expect({ result, steps, last }).toMatchSnapshot();
+      const { result, paths } = runGolden(c);
+      expect({ result, paths }).toMatchSnapshot();
     });
   }
 });

@@ -1,4 +1,3 @@
-import type { ShotResult } from "@game/protocol";
 import { BLAST_RADIUS } from "@game/sim";
 import { describe, expect, it } from "vitest";
 import {
@@ -12,8 +11,14 @@ import {
   DEBRIS_APEX_MS,
   DEBRIS_MS,
   debrisAt,
+  debrisCount,
   HOLD_MS,
   HP_DRAIN_MS,
+  impactTimeMs,
+  launchDelayMs,
+  projectileFrameAt,
+  STEP_MS,
+  VOLLEY_DELAY_MS,
   MISS_MS,
   missMarkAt,
   hpBarAt,
@@ -24,17 +29,9 @@ import {
 
 // 着弾の手応えの時間の流れを数値で固定する。設計書 03 の 3.9 と 08 の 8.6
 
-const shotOf = (seat: 0 | 1, damage: readonly [number, number], hpAfter: readonly [number, number]): ShotResult =>
-  ({
-    input: { seat, x: 100, facing: 1, elevation: 45, power: 50 },
-    impact: { x: 200, y: 100 },
-    terrainOp: { cx: 200, cy: 100, radius: BLAST_RADIUS },
-    damage,
-    hpAfter,
-    xAfter: [100, 300],
-    ringOut: [],
-    finished: null,
-  }) as unknown as ShotResult;
+/** 着弾 1 つぶんの音の入力。撃った席、その着弾のダメージ、着弾後の HP。着弾前の HP は後の値にダメージを足し戻す */
+const sounds = (seat: 0 | 1, damage: readonly [number, number], hpAfter: readonly [number, number], mySeat: 0 | 1 | null) =>
+  damageSounds(damage, [hpAfter[0] + damage[0], hpAfter[1] + damage[1]], hpAfter, seat, mySeat);
 
 describe("blastFrameAt", () => {
   it("武器の爆風半径を渡すと、その半径まで広がって止まる", () => {
@@ -90,31 +87,33 @@ describe("damageTier と flashMsOf", () => {
 
 describe("damageSounds", () => {
   it("観戦者には被弾も手応えも鳴らない", () => {
-    expect(damageSounds(shotOf(0, [0, 20], [100, 80]), null)).toEqual([]);
+    expect(sounds(0, [0, 20], [100, 80], null)).toEqual([]);
   });
 
   it("自分の弾が相手に入ると手応えの音が鳴る", () => {
-    expect(damageSounds(shotOf(0, [0, 20], [100, 80]), 0)).toEqual(["hitConfirm"]);
+    expect(sounds(0, [0, 20], [100, 80], 0)).toEqual(["hitConfirm"]);
   });
 
   it("被弾した側には警告音が鳴り、手応えの音は鳴らない", () => {
-    expect(damageSounds(shotOf(0, [0, 20], [100, 80]), 1)).toEqual(["hit"]);
+    expect(sounds(0, [0, 20], [100, 80], 1)).toEqual(["hit"]);
   });
 
   it("自爆を巻き込んだ命中では警告音と手応えの音が両方鳴る", () => {
-    expect(damageSounds(shotOf(0, [5, 20], [95, 80]), 0)).toEqual(["hit", "hitConfirm"]);
+    expect(sounds(0, [5, 20], [95, 80], 0)).toEqual(["hit", "hitConfirm"]);
   });
 
   it("外れでは何も鳴らない", () => {
-    expect(damageSounds(shotOf(0, [0, 0], [100, 100]), 0)).toEqual([]);
+    expect(sounds(0, [0, 0], [100, 100], 0)).toEqual([]);
   });
 
   it("この一撃で HP が尽きたときは決着音を最後に足し、観戦者にも鳴る", () => {
-    expect(damageSounds(shotOf(0, [0, 35], [100, 0]), 0)).toEqual(["hitConfirm", "finish"]);
-    expect(damageSounds(shotOf(0, [0, 35], [100, 0]), null)).toEqual(["finish"]);
-    expect(damageSounds(shotOf(0, [0, 35], [100, 5]), 0)).toEqual(["hitConfirm"]);
+    expect(sounds(0, [0, 35], [100, 0], 0)).toEqual(["hitConfirm", "finish"]);
+    expect(sounds(0, [0, 35], [100, 0], null)).toEqual(["finish"]);
+    expect(sounds(0, [0, 35], [100, 5], 0)).toEqual(["hitConfirm"]);
     // すでに 0 の相手に当てていない場合は鳴らさない
-    expect(damageSounds(shotOf(0, [0, 0], [100, 0]), 0)).toEqual([]);
+    expect(sounds(0, [0, 0], [100, 0], 0)).toEqual([]);
+    // すでに沈んだ機体に続きの段が入っても、決着音は繰り返さない（貫通弾の食い込み）
+    expect(damageSounds([0, 8], [100, -6], [100, -14], 0, 0)).toEqual(["hitConfirm"]);
   });
 });
 
@@ -199,5 +198,52 @@ describe("missMarkAt", () => {
     expect(missMarkAt(50, { x: -3, y: 300 })).toEqual({ x: 1, y: 223, on: false });
     expect(missMarkAt(MISS_MS, { x: 10, y: 10 })).toBeNull();
     expect(MISS_MS).toBeLessThan(IMPACT_TOTAL_MS);
+  });
+});
+
+describe("複数の弾道と多段の着弾の時間", () => {
+  it("同じ扇の弾は同時に、次の発は VOLLEY_DELAY_MS ずつ遅れて発射する", () => {
+    expect([0, 1, 2].map((p) => launchDelayMs(p, 3))).toEqual([0, 0, 0]);
+    expect([3, 4, 5].map((p) => launchDelayMs(p, 3))).toEqual([VOLLEY_DELAY_MS, VOLLEY_DELAY_MS, VOLLEY_DELAY_MS]);
+    expect(launchDelayMs(8, 3)).toBe(VOLLEY_DELAY_MS * 2);
+    expect(launchDelayMs(0, 1)).toBe(0);
+  });
+
+  it("k 段目の着弾の時刻は、その添字のステップ時間に前の段の静止ぶんを足したもの", () => {
+    expect(impactTimeMs(0, [30, 40, 45])).toBe(30 * STEP_MS);
+    expect(impactTimeMs(1, [30, 40, 45])).toBe(40 * STEP_MS + HOLD_MS);
+    expect(impactTimeMs(2, [30, 40, 45])).toBe(45 * STEP_MS + 2 * HOLD_MS);
+  });
+
+  it("弾は 1 ステップを STEP_MS で進み、着弾で HOLD_MS 止まってから続きを飛ぶ", () => {
+    const at = [30, 40];
+    expect(projectileFrameAt(0, at, 50)).toMatchObject({ index: 0, holding: false, ended: false });
+    expect(projectileFrameAt(15 * STEP_MS, at, 50).index).toBeCloseTo(15);
+    expect(projectileFrameAt(30 * STEP_MS, at, 50)).toMatchObject({ index: 30, holding: true });
+    expect(projectileFrameAt(30 * STEP_MS + HOLD_MS - 1, at, 50)).toMatchObject({ index: 30, holding: true });
+    // 浮動小数点の誤差を避けて 1 ミリ秒だけ後を見る
+    expect(projectileFrameAt(30 * STEP_MS + HOLD_MS + 1, at, 50)).toMatchObject({ holding: false });
+    expect(projectileFrameAt(35 * STEP_MS + HOLD_MS, at, 50).index).toBeCloseTo(35, 3);
+    expect(projectileFrameAt(40 * STEP_MS + HOLD_MS + 1, at, 50)).toMatchObject({ index: 40, holding: true });
+    expect(projectileFrameAt(49 * STEP_MS + 2 * HOLD_MS + 1, at, 50)).toMatchObject({ index: 49, ended: true });
+  });
+
+  it("着弾の無い弾道は位置列の終わりで ended になり、添字は終わりで止まる", () => {
+    const f = projectileFrameAt(1000 * STEP_MS, [], 20);
+    expect(f.ended).toBe(true);
+    expect(f.index).toBe(19);
+  });
+});
+
+describe("debrisCount", () => {
+  it("爆風が広いほど破片は多く、狭い爆風は 2 個。左右対称を保つため偶数", () => {
+    expect(debrisCount(BLAST_RADIUS)).toBe(8);
+    expect(debrisCount(16)).toBe(8);
+    expect(debrisCount(6)).toBe(6);
+    expect(debrisCount(3)).toBe(4);
+    expect(debrisCount(2)).toBe(2);
+    for (const r of [2, 3, 6, 8, 10, 16]) expect(debrisCount(r) % 2).toBe(0);
+    expect(debrisAt(100, { x: 100, y: 100 }, 2)).toHaveLength(2);
+    expect(debrisAt(100, { x: 100, y: 100 })).toHaveLength(8);
   });
 });

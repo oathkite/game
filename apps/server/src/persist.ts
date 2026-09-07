@@ -1,5 +1,5 @@
 import type { EngineState } from "@game/engine";
-import { DEFAULT_LOADOUT } from "@game/protocol";
+import { DEFAULT_LOADOUT, parseLoadout, type Loadout } from "@game/protocol";
 import type { TerrainMask } from "@game/sim";
 import { createServerState, type RoomRecord, type ServerConfig, type ServerState } from "./state.js";
 
@@ -46,10 +46,10 @@ export const serializeState = (state: ServerState): ServerStateJson => ({
   lobbyNotifiedAt: state.lobbyNotifiedAt,
 });
 
-/** 武器（設計書 10）を持たない古い保存には既定の装備を補う。保存済みの部屋を壊さないため */
-const withLoadout = <T extends { readonly loadout?: RoomRecord["members"][number]["loadout"] }>(p: T): T & { readonly loadout: RoomRecord["members"][number]["loadout"] } => ({
+/** 武器（設計書 10）を持たない保存や、装備として成り立たない保存には既定の装備を補う。保存済みの部屋を壊さないため */
+const withLoadout = <T extends { readonly loadout?: unknown }>(p: T): T & { readonly loadout: Loadout } => ({
   ...p,
-  loadout: p.loadout ?? DEFAULT_LOADOUT,
+  loadout: parseLoadout(p.loadout) ?? DEFAULT_LOADOUT,
 });
 
 const engineFromJson = (j: EngineJson, engineConfig: EngineState["config"]): EngineState => ({

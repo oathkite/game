@@ -1,6 +1,6 @@
 import { getMap } from "../src/index.js";
 import { describe, expect, it } from "vitest";
-import { simulateShot, STEPS_PER_TURN, walk } from "@game/sim";
+import { damageDealtTo, simulateShot, STEPS_PER_TURN, walk } from "@game/sim";
 
 // 設計書 07 の開発順序 4「谷で遊び、面白さを確認する」の数値による裏付け。
 // 遊びの判断そのものは人が行うが、設計書 01 の判断基準「風を読み切って狙った場所に当てた報い」が成り立つ条件を固定する。
@@ -15,7 +15,7 @@ const hitting = (wind: number): Set<string> => {
   for (let elevation = 20; elevation <= 80; elevation++) {
     for (let power = 40; power <= 100; power++) {
       const r = simulateShot(mask, [{ x: x0, hp: 100 }, { x: x1, hp: 100 }], { seat: 0, weapon: "cannon", x: x0, facing: 1, elevation, power, wind }).result;
-      if (r.damage[1] > 0) out.add(`${elevation}/${power}`);
+      if (damageDealtTo(r, 1) > 0) out.add(`${elevation}/${power}`);
     }
   }
   return out;

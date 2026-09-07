@@ -1,5 +1,5 @@
 import { createEngine, createMatchHost, DEFAULT_ENGINE_TIMING, realClock, setupMessage, type MatchHost } from "@game/engine";
-import type { ClientMessage, Loadout, MapName, ServerMessage, TankColors } from "@game/protocol";
+import type { ClientMessage, Loadout, MapName, ServerMessage, TankColors, WeaponId } from "@game/protocol";
 import { createListeners, type Connection, type ConnectionStatus } from "./connection";
 
 // solo モード。サーバーなしでエンジンをブラウザ内に置き、両席をひとりで操作する。
@@ -18,11 +18,12 @@ const otherColors = (colors: TankColors): TankColors => (colors.primary === "cya
 
 export const defaultOpponentColors = otherColors;
 
-/** 相手の装備は自分と違うものにして、絵と弾の違いを一人でも見られるようにする */
-export const defaultOpponentLoadout = (loadout: Loadout): Loadout => ({
-  main: loadout.main === "heavy" ? "sniper" : "heavy",
-  sub: loadout.sub === "floater" ? "stinger" : "floater",
-});
+/** 相手の装備は自分と違うものにして、弾の違いを一人でも見られるようにする */
+export const defaultOpponentLoadout = (loadout: Loadout): Loadout => {
+  const pool: readonly WeaponId[] = ["triple", "drill", "laser", "multiple", "floater", "stinger"];
+  const [a, b] = pool.filter((w) => !loadout.includes(w));
+  return [a ?? "triple", b ?? "drill"];
+};
 
 export const createLocalConnection = (options: LocalMatchOptions): Connection => {
   const messages = createListeners<ServerMessage>();

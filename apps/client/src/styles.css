@@ -182,8 +182,13 @@ a {
 /* 武器の選択。設計書 10 の 10.4。名前と一行の説明を縦に積む */
 .weapon-grid {
   display: grid;
-  grid-template-columns: repeat(3, 1fr);
+  grid-template-columns: repeat(4, 1fr);
   gap: 8px;
+}
+
+/* もう一方のスロットで選んでいる武器。押すと入れ替わる */
+.weapon-cell.other {
+  opacity: 0.55;
 }
 
 .weapon-cell {

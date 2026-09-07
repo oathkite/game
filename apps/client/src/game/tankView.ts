@@ -1,10 +1,9 @@
-import { COLOR_HEX, type Facing, type Loadout, type TankColors } from "@game/protocol";
+import { COLOR_HEX, type Facing, type TankColors } from "@game/protocol";
 import { BARREL_BASE_UP, BARREL_LENGTH, HP_MAX } from "@game/sim";
 import { Container, Graphics, Text } from "pixi.js";
-import { loadoutRects } from "./weaponArt";
 
-// 戦車のドット絵。設計書 08 の 8.6、10 の 10.5。幅 7、高さ 5 の正方形の集まりと主砲を 1 つのコンテナにまとめて回す。
-// 主砲の形はメインウェポン、砲塔の上の部品はサブウェポンで変わる（weaponArt）。
+// 戦車のドット絵。設計書 08 の 8.6。幅 7、高さ 5 の正方形の集まりと主砲を 1 つのコンテナにまとめて回す。
+// 武器で形は変えない（設計書 10 の 10.5）。
 // 座標の単位はセルで、親のコンテナで整数倍に拡大する。
 
 export type TankPose = {
@@ -46,16 +45,13 @@ const AIM_WIDTH = 1.2;
 
 const hex = (c: string): number => Number.parseInt(c.slice(1), 16);
 
-const drawBody = (g: Graphics, colors: TankColors, loadout: Loadout, white: boolean): void => {
+const drawBody = (g: Graphics, colors: TankColors, white: boolean): void => {
   g.clear();
   const primary = white ? 0xffffff : hex(COLOR_HEX[colors.primary]);
   const secondary = white ? 0xffffff : hex(COLOR_HEX[colors.secondary]);
   // 下 3 段が車体（主色）、上 2 段が砲塔（副色）
   g.rect(-BODY_W / 2, -3, BODY_W, 3).fill(primary);
   g.rect(-2.5, -5, 5, 2).fill(secondary);
-  // 砲塔の上のサブウェポンの部品（主色）
-  for (const r of loadoutRects(loadout).pod) g.rect(r.x, r.y, r.w, r.h);
-  g.fill(primary);
 };
 
 const hpCells = (hp: number): number => Math.min(10, Math.ceil(Math.max(0, hp) / (HP_MAX / 10)));
@@ -70,14 +66,13 @@ const drawHpBar = (g: Graphics, colors: TankColors, pose: TankPose): void => {
   if (pose.ghostOn && ghost > cells) g.rect(-5 + cells, 2, ghost - cells, 1).fill(hex(COLOR_HEX[colors.primary]));
 };
 
-export const createTankView = (colors: TankColors, nickname: string, loadout: Loadout): TankView => {
+export const createTankView = (colors: TankColors, nickname: string): TankView => {
   const world = new Container();
   const body = new Graphics();
-  drawBody(body, colors, loadout, false);
-  // 主砲。形はメインウェポンで変わるが、長さは物理の主砲（4 セル）に揃える
+  drawBody(body, colors, false);
+  // 主砲。1 セル幅で長さは物理の主砲（4 セル）に揃える
   const barrel = new Graphics();
-  for (const r of loadoutRects(loadout).barrel) barrel.rect(r.x, r.y, r.w, r.h);
-  barrel.fill(hex(COLOR_HEX[colors.secondary]));
+  barrel.rect(0, -0.5, BARREL_LENGTH, 1).fill(hex(COLOR_HEX[colors.secondary]));
   barrel.position.set(0, -BARREL_BASE_UP);
   // 発射角の線。砲身の延長に破線を引き、どの向きへ飛び出すかだけを示す。弾道の予測ではない
   const aim = new Graphics();
@@ -120,7 +115,7 @@ export const createTankView = (colors: TankColors, nickname: string, loadout: Lo
     aim.rotation = barrel.rotation;
     aim.visible = pose.aiming;
     if (pose.flash !== wasWhite) {
-      drawBody(body, colors, loadout, pose.flash);
+      drawBody(body, colors, pose.flash);
       wasWhite = pose.flash;
     }
     drawHpBar(hpBar, colors, pose);

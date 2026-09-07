@@ -17,14 +17,14 @@ export {
 export { initialWind, nextWind, type WindDraw, type WindRolls } from "./wind.js";
 export {
   damageAt,
+  damageDealtTo,
   fireAngle,
   muzzleOf,
   simulateShot,
-  traceShot,
   type Combatant,
   type FixedPoint,
   type Muzzle,
+  type ProjectilePath,
   type ShotOutcome,
-  type Trace,
 } from "./ballistics.js";
-export { WEAPON_SPECS, scalePercent, weaponSpec, type WeaponSpec } from "./weapons.js";
+export { WEAPON_SPECS, firstStage, fullHitDamage, projectileCount, scalePercent, weaponSpec, type StageSpec, type WeaponSpec } from "./weapons.js";

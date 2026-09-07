@@ -72,11 +72,24 @@ export type CellPoint = {
   readonly y: number;
 };
 
+/**
+ * 着弾 1 つ。1 発の射撃は弾道が複数（扇）で、弾道ごとに着弾が複数（貫通）になりうるので、結果は着弾の列で持つ（設計書 10 の 10.2）。
+ * 適用は列の順で、前の着弾が削った地形の上で次の着弾を判定する。
+ */
+export type Impact = {
+  /** 何本目の弾道か。0 始まり。描画で弾と対応づける */
+  readonly projectile: number;
+  /** その弾道の何段目の着弾か。0 始まり。貫通弾とレーザー弾だけ 1 以上になる */
+  readonly stage: number;
+  readonly cell: CellPoint;
+  readonly terrainOp: TerrainOp;
+  readonly damage: readonly [number, number];
+};
+
 export type ShotResult = {
   readonly input: TrajectoryInput;
-  readonly impact: CellPoint | null;
-  readonly terrainOp: TerrainOp | null;
-  readonly damage: readonly [number, number];
+  /** 着弾の列。空なら全弾が消失した */
+  readonly impacts: readonly Impact[];
   readonly hpAfter: readonly [number, number];
   readonly xAfter: readonly [number, number];
   readonly ringOut: readonly Seat[];

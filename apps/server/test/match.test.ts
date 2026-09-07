@@ -20,14 +20,14 @@ describe("turn.fire の検証", () => {
   it("手番でない席の射撃は無視される", () => {
     const h = harness();
     startedMatch(h);
-    const out = h.send("b", { type: "turn.fire", slot: "main", facing: -1, elevation: 45, power: 50, x: 344 });
+    const out = h.send("b", { type: "turn.fire", slot: 0, facing: -1, elevation: 45, power: 50, x: 344 });
     expect(out).toEqual([]);
   });
 
   it("歩数超過はパスになる", () => {
     const h = harness();
     startedMatch(h);
-    h.send("a", { type: "turn.fire", slot: "main", facing: 1, elevation: 45, power: 50, x: 75 + STEPS_PER_TURN + 1 });
+    h.send("a", { type: "turn.fire", slot: 0, facing: 1, elevation: 45, power: 50, x: 75 + STEPS_PER_TURN + 1 });
     expect(last(h.inbox("b"), "turn.pass")?.reason).toBe("invalidFire");
     expect(last(h.inbox("b"), "turn.start")?.turnNumber).toBe(2);
   });
@@ -38,7 +38,7 @@ describe("turn.fire の検証", () => {
     h.open("s");
     h.send("s", { type: "room.spectate", code, playerId: "player-spec", nickname: "spec" });
     expect(last(h.inbox("s"), "conn.state")?.seat).toBeNull();
-    h.send("s", { type: "turn.fire", slot: "main", facing: 1, elevation: 45, power: 50, x: 75 });
+    h.send("s", { type: "turn.fire", slot: 0, facing: 1, elevation: 45, power: 50, x: 75 });
     expect(last(h.inbox("s"), "room.error")?.reason).toBe("notMember");
   });
 
@@ -48,7 +48,7 @@ describe("turn.fire の検証", () => {
     h.open("s");
     h.send("s", { type: "room.spectate", code, playerId: "player-spec", nickname: "spec" });
     h.at(T0 + 3000);
-    h.send("a", { type: "turn.fire", slot: "main", facing: 1, elevation: 45, power: 50, x: 60 });
+    h.send("a", { type: "turn.fire", slot: 0, facing: 1, elevation: 45, power: 50, x: 60 });
     expect(last(h.inbox("a"), "turn.result")?.shot.input.x).toBe(60);
     expect(last(h.inbox("b"), "turn.result")).toBeDefined();
     expect(last(h.inbox("s"), "turn.result")).toBeDefined();
@@ -72,7 +72,7 @@ describe("制限時間と再生", () => {
     const h = harness();
     startedMatch(h);
     h.at(T0 + 3000);
-    h.send("a", { type: "turn.fire", slot: "main", facing: 1, elevation: 45, power: 50, x: 75 });
+    h.send("a", { type: "turn.fire", slot: 0, facing: 1, elevation: 45, power: 50, x: 75 });
     h.send("a", { type: "turn.replayDone" });
     expect(last(h.inbox("a"), "turn.start")?.turnNumber).toBe(1);
     h.send("b", { type: "turn.replayDone" });
@@ -207,7 +207,7 @@ describe("半開きの接続", () => {
     // 古い接続が後から閉じても、席には影響しない
     h.close("a");
     expect(last(h.inbox("b"), "conn.opponentDisconnected")).toBeUndefined();
-    h.send("a2", { type: "turn.fire", slot: "main", facing: 1, elevation: 45, power: 50, x: 75 });
+    h.send("a2", { type: "turn.fire", slot: 0, facing: 1, elevation: 45, power: 50, x: 75 });
     expect(last(h.inbox("b"), "turn.result")).toBeDefined();
   });
 });
