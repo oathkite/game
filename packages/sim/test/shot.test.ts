@@ -247,6 +247,9 @@ describe("鏡像の対称性", () => {
       { mask: slopedMask(4), players: two(120, 300), input: shot({ x: 120, facing: 1, elevation: 25, power: 90, wind: -3 }) },
       { mask: flatMask(), players: two(60, 72), input: shot({ x: 60, facing: 1, elevation: 10, power: 40, wind: 0 }) },
       { mask: valleyMask(), players: two(340, 60, 100, 100), input: shot({ seat: 0, x: 340, facing: -1, elevation: 60, power: 55, wind: -9 }) },
+      // 扇のずれも鏡像になる
+      { mask: valleyMask(), players: two(60, 340), input: shot({ weapon: "triple", x: 60, facing: 1, elevation: 35, power: 80, wind: 4 }) },
+      { mask: valleyMask(), players: two(60, 340), input: shot({ weapon: "multiple", x: 60, facing: 1, elevation: 50, power: 70, wind: -5 }) },
     ];
     for (const c of cases) {
       const a = simulateShot(c.mask, c.players, c.input);

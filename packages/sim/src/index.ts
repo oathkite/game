@@ -27,4 +27,4 @@ export {
   type ProjectilePath,
   type ShotOutcome,
 } from "./ballistics.js";
-export { WEAPON_SPECS, firstStage, fullHitDamage, projectileCount, scalePercent, weaponSpec, type StageSpec, type WeaponSpec } from "./weapons.js";
+export { WEAPON_SPECS, firstStage, fullHitDamage, projectileCount, scalePercent, weaponSpec, type FanSpec, type StageSpec, type WeaponSpec } from "./weapons.js";

@@ -14,6 +14,7 @@ import {
   debrisCount,
   HOLD_MS,
   HP_DRAIN_MS,
+  FAN_DELAY_MS,
   impactTimeMs,
   launchDelayMs,
   projectileFrameAt,
@@ -202,10 +203,11 @@ describe("missMarkAt", () => {
 });
 
 describe("複数の弾道と多段の着弾の時間", () => {
-  it("同じ扇の弾は同時に、次の発は VOLLEY_DELAY_MS ずつ遅れて発射する", () => {
-    expect([0, 1, 2].map((p) => launchDelayMs(p, 3))).toEqual([0, 0, 0]);
-    expect([3, 4, 5].map((p) => launchDelayMs(p, 3))).toEqual([VOLLEY_DELAY_MS, VOLLEY_DELAY_MS, VOLLEY_DELAY_MS]);
-    expect(launchDelayMs(8, 3)).toBe(VOLLEY_DELAY_MS * 2);
+  it("扇の弾は FAN_DELAY_MS ずつ順に、次の発は VOLLEY_DELAY_MS 遅れて発射し、発は重ならない", () => {
+    expect([0, 1, 2].map((p) => launchDelayMs(p, 3))).toEqual([0, FAN_DELAY_MS, FAN_DELAY_MS * 2]);
+    expect([3, 4, 5].map((p) => launchDelayMs(p, 3))).toEqual([VOLLEY_DELAY_MS, VOLLEY_DELAY_MS + FAN_DELAY_MS, VOLLEY_DELAY_MS + FAN_DELAY_MS * 2]);
+    expect(launchDelayMs(8, 3)).toBe(VOLLEY_DELAY_MS * 2 + FAN_DELAY_MS * 2);
+    expect(VOLLEY_DELAY_MS).toBeGreaterThan(FAN_DELAY_MS * 3);
     expect(launchDelayMs(0, 1)).toBe(0);
   });
 

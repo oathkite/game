@@ -5,10 +5,10 @@ exports[`golden replay > トリプル弾 平地 至近で 3 発をまとめて�
   "paths": [
     {
       "last": {
-        "x": 4620288,
-        "y": 9535488,
+        "x": 4751360,
+        "y": 9469952,
       },
-      "steps": 5,
+      "steps": 7,
     },
     {
       "last": {
@@ -19,23 +19,23 @@ exports[`golden replay > トリプル弾 平地 至近で 3 発をまとめて�
     },
     {
       "last": {
-        "x": 6520832,
-        "y": 9863168,
+        "x": 4620288,
+        "y": 9535488,
       },
-      "steps": 28,
+      "steps": 6,
     },
   ],
   "result": {
     "finished": null,
     "hpAfter": [
       100,
-      70,
+      55,
     ],
     "impacts": [
       {
         "cell": {
-          "x": 70,
-          "y": 145,
+          "x": 72,
+          "y": 144,
         },
         "damage": [
           0,
@@ -44,8 +44,8 @@ exports[`golden replay > トリプル弾 平地 至近で 3 発をまとめて�
         "projectile": 0,
         "stage": 0,
         "terrainOp": {
-          "cx": 70,
-          "cy": 145,
+          "cx": 72,
+          "cy": 144,
           "radius": 6,
         },
       },
@@ -68,18 +68,18 @@ exports[`golden replay > トリプル弾 平地 至近で 3 発をまとめて�
       },
       {
         "cell": {
-          "x": 99,
-          "y": 150,
+          "x": 70,
+          "y": 145,
         },
         "damage": [
           0,
-          0,
+          15,
         ],
         "projectile": 2,
         "stage": 0,
         "terrainOp": {
-          "cx": 99,
-          "cy": 150,
+          "cx": 70,
+          "cy": 145,
           "radius": 6,
         },
       },
@@ -107,24 +107,24 @@ exports[`golden replay > トリプル弾 谷 基本の直接射撃 1`] = `
   "paths": [
     {
       "last": {
-        "x": 16482304,
-        "y": 10911744,
+        "x": 16875520,
+        "y": 10649600,
       },
-      "steps": 97,
+      "steps": 113,
     },
     {
       "last": {
-        "x": 16547840,
-        "y": 11304960,
+        "x": 16351232,
+        "y": 11042816,
       },
-      "steps": 108,
+      "steps": 106,
     },
     {
       "last": {
-        "x": 16023552,
-        "y": 11239424,
+        "x": 15761408,
+        "y": 11436032,
       },
-      "steps": 115,
+      "steps": 100,
     },
   ],
   "result": {
@@ -136,8 +136,8 @@ exports[`golden replay > トリプル弾 谷 基本の直接射撃 1`] = `
     "impacts": [
       {
         "cell": {
-          "x": 251,
-          "y": 166,
+          "x": 257,
+          "y": 162,
         },
         "damage": [
           0,
@@ -146,15 +146,15 @@ exports[`golden replay > トリプル弾 谷 基本の直接射撃 1`] = `
         "projectile": 0,
         "stage": 0,
         "terrainOp": {
-          "cx": 251,
-          "cy": 166,
+          "cx": 257,
+          "cy": 162,
           "radius": 6,
         },
       },
       {
         "cell": {
-          "x": 252,
-          "y": 172,
+          "x": 249,
+          "y": 168,
         },
         "damage": [
           0,
@@ -163,15 +163,15 @@ exports[`golden replay > トリプル弾 谷 基本の直接射撃 1`] = `
         "projectile": 1,
         "stage": 0,
         "terrainOp": {
-          "cx": 252,
-          "cy": 172,
+          "cx": 249,
+          "cy": 168,
           "radius": 6,
         },
       },
       {
         "cell": {
-          "x": 244,
-          "y": 171,
+          "x": 240,
+          "y": 174,
         },
         "damage": [
           0,
@@ -180,8 +180,8 @@ exports[`golden replay > トリプル弾 谷 基本の直接射撃 1`] = `
         "projectile": 2,
         "stage": 0,
         "terrainOp": {
-          "cx": 244,
-          "cy": 171,
+          "cx": 240,
+          "cy": 174,
           "radius": 6,
         },
       },
@@ -209,66 +209,66 @@ exports[`golden replay > マルチプル弾 谷 追い風 10 1`] = `
   "paths": [
     {
       "last": {
-        "x": 16941056,
-        "y": 10649600,
+        "x": 17661952,
+        "y": 10125312,
       },
-      "steps": 92,
+      "steps": 110,
     },
     {
       "last": {
-        "x": 17137664,
-        "y": 10584064,
+        "x": 17072128,
+        "y": 10518528,
       },
       "steps": 103,
     },
     {
       "last": {
-        "x": 16678912,
-        "y": 10780672,
+        "x": 16351232,
+        "y": 11042816,
       },
-      "steps": 115,
+      "steps": 97,
     },
     {
       "last": {
-        "x": 17137664,
+        "x": 17793024,
+        "y": 10321920,
+      },
+      "steps": 111,
+    },
+    {
+      "last": {
+        "x": 17203200,
+        "y": 10715136,
+      },
+      "steps": 104,
+    },
+    {
+      "last": {
+        "x": 16547840,
+        "y": 11108352,
+      },
+      "steps": 98,
+    },
+    {
+      "last": {
+        "x": 17989632,
+        "y": 10452992,
+      },
+      "steps": 112,
+    },
+    {
+      "last": {
+        "x": 17399808,
         "y": 10846208,
-      },
-      "steps": 94,
-    },
-    {
-      "last": {
-        "x": 17334272,
-        "y": 10780672,
       },
       "steps": 105,
     },
     {
       "last": {
-        "x": 16875520,
-        "y": 10911744,
+        "x": 16678912,
+        "y": 11304960,
       },
-      "steps": 116,
-    },
-    {
-      "last": {
-        "x": 17334272,
-        "y": 11042816,
-      },
-      "steps": 95,
-    },
-    {
-      "last": {
-        "x": 17530880,
-        "y": 11108352,
-      },
-      "steps": 107,
-    },
-    {
-      "last": {
-        "x": 16941056,
-        "y": 11108352,
-      },
-      "steps": 117,
+      "steps": 99,
     },
   ],
   "result": {
@@ -280,8 +280,8 @@ exports[`golden replay > マルチプル弾 谷 追い風 10 1`] = `
     "impacts": [
       {
         "cell": {
-          "x": 258,
-          "y": 162,
+          "x": 269,
+          "y": 154,
         },
         "damage": [
           0,
@@ -290,15 +290,15 @@ exports[`golden replay > マルチプル弾 谷 追い風 10 1`] = `
         "projectile": 0,
         "stage": 0,
         "terrainOp": {
-          "cx": 258,
-          "cy": 162,
+          "cx": 269,
+          "cy": 154,
           "radius": 3,
         },
       },
       {
         "cell": {
-          "x": 261,
-          "y": 161,
+          "x": 260,
+          "y": 160,
         },
         "damage": [
           0,
@@ -307,15 +307,15 @@ exports[`golden replay > マルチプル弾 谷 追い風 10 1`] = `
         "projectile": 1,
         "stage": 0,
         "terrainOp": {
-          "cx": 261,
-          "cy": 161,
+          "cx": 260,
+          "cy": 160,
           "radius": 3,
         },
       },
       {
         "cell": {
-          "x": 254,
-          "y": 164,
+          "x": 249,
+          "y": 168,
         },
         "damage": [
           0,
@@ -324,15 +324,15 @@ exports[`golden replay > マルチプル弾 谷 追い風 10 1`] = `
         "projectile": 2,
         "stage": 0,
         "terrainOp": {
-          "cx": 254,
-          "cy": 164,
+          "cx": 249,
+          "cy": 168,
           "radius": 3,
         },
       },
       {
         "cell": {
-          "x": 261,
-          "y": 165,
+          "x": 271,
+          "y": 157,
         },
         "damage": [
           0,
@@ -341,15 +341,15 @@ exports[`golden replay > マルチプル弾 谷 追い風 10 1`] = `
         "projectile": 3,
         "stage": 0,
         "terrainOp": {
-          "cx": 261,
-          "cy": 165,
+          "cx": 271,
+          "cy": 157,
           "radius": 3,
         },
       },
       {
         "cell": {
-          "x": 264,
-          "y": 164,
+          "x": 262,
+          "y": 163,
         },
         "damage": [
           0,
@@ -358,15 +358,15 @@ exports[`golden replay > マルチプル弾 谷 追い風 10 1`] = `
         "projectile": 4,
         "stage": 0,
         "terrainOp": {
-          "cx": 264,
-          "cy": 164,
+          "cx": 262,
+          "cy": 163,
           "radius": 3,
         },
       },
       {
         "cell": {
-          "x": 257,
-          "y": 166,
+          "x": 252,
+          "y": 169,
         },
         "damage": [
           0,
@@ -375,15 +375,15 @@ exports[`golden replay > マルチプル弾 谷 追い風 10 1`] = `
         "projectile": 5,
         "stage": 0,
         "terrainOp": {
-          "cx": 257,
-          "cy": 166,
+          "cx": 252,
+          "cy": 169,
           "radius": 3,
         },
       },
       {
         "cell": {
-          "x": 264,
-          "y": 168,
+          "x": 274,
+          "y": 159,
         },
         "damage": [
           0,
@@ -392,15 +392,15 @@ exports[`golden replay > マルチプル弾 谷 追い風 10 1`] = `
         "projectile": 6,
         "stage": 0,
         "terrainOp": {
-          "cx": 264,
-          "cy": 168,
+          "cx": 274,
+          "cy": 159,
           "radius": 3,
         },
       },
       {
         "cell": {
-          "x": 267,
-          "y": 169,
+          "x": 265,
+          "y": 165,
         },
         "damage": [
           0,
@@ -409,15 +409,15 @@ exports[`golden replay > マルチプル弾 谷 追い風 10 1`] = `
         "projectile": 7,
         "stage": 0,
         "terrainOp": {
-          "cx": 267,
-          "cy": 169,
+          "cx": 265,
+          "cy": 165,
           "radius": 3,
         },
       },
       {
         "cell": {
-          "x": 258,
-          "y": 169,
+          "x": 254,
+          "y": 172,
         },
         "damage": [
           0,
@@ -426,8 +426,8 @@ exports[`golden replay > マルチプル弾 谷 追い風 10 1`] = `
         "projectile": 8,
         "stage": 0,
         "terrainOp": {
-          "cx": 258,
-          "cy": 169,
+          "cx": 254,
+          "cy": 172,
           "radius": 3,
         },
       },
