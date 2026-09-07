@@ -94,6 +94,63 @@ a {
   align-items: center;
 }
 
+/* 設定とロビー。横長の画面を左右 2 つのペインに分ける（設計書 08 の 8.4）。
+   各ペインは独立に縦へスクロールし、下端に寄せたい部品は .pane-bottom に置く */
+.screen-split {
+  width: 100%;
+  height: 100%;
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+}
+
+.screen-split.lobby {
+  grid-template-columns: 5fr 7fr;
+}
+
+.pane {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  padding: 32px;
+  min-height: 0;
+  overflow-y: auto;
+}
+
+.pane + .pane {
+  border-left: 2px solid var(--ui-dim);
+}
+
+.pane .pager {
+  margin-top: auto;
+}
+
+.pane-bottom {
+  margin-top: auto;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+/* 狭い画面では 1 列に戻し、画面全体でスクロールする */
+@media (max-width: 900px) {
+  .screen-split,
+  .screen-split.lobby {
+    grid-template-columns: 1fr;
+    height: auto;
+    min-height: 100%;
+    overflow-y: auto;
+  }
+
+  .pane {
+    overflow-y: visible;
+    padding: 24px 16px;
+  }
+
+  .pane + .pane {
+    border-left: none;
+    border-top: 2px solid var(--ui-dim);
+  }
+}
 
 .row > * {
   flex: 1;

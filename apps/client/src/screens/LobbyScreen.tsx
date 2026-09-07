@@ -1,7 +1,7 @@
 import { MAP_LABELS, MAP_NAMES, ROOM_TITLE_MAX, type LobbyPhaseFilter, type MapName, type ServerMessageOf } from "@game/protocol";
 import { useState } from "react";
 
-// ロビー。設計書 09 の 9.3 と 9.4。検索と絞り込み、公開部屋の一覧、部屋を作る、コードで入る。
+// ロビー。設計書 09 の 9.3 と 9.4、08 の 8.4。左のペインに部屋を作るとコードで入る、右のペインに検索と絞り込みと公開部屋の一覧。
 
 export type LobbyQueryState = {
   readonly search: string;
@@ -30,14 +30,9 @@ export const LobbyScreen = ({ page, query, onQuery, onCreate, onJoin, onSpectate
   const totalPages = page ? Math.max(1, Math.ceil(page.total / page.pageSize)) : 1;
 
   return (
-    <div className="screen" data-testid="lobby">
-      <div className="column">
-        <div className="row">
-          <div className="title">LOBBY</div>
-          <span className={connected ? "" : "dim blink"} style={{ textAlign: "right" }}>
-            {connected ? "接続中" : "再接続しています"}
-          </span>
-        </div>
+    <div className="screen-split lobby" data-testid="lobby">
+      <div className="pane">
+        <div className="title">LOBBY</div>
         {error && <div className="box blink">{error}</div>}
         <div className="box column">
           <div className="label">部屋を作る</div>
@@ -61,18 +56,34 @@ export const LobbyScreen = ({ page, query, onQuery, onCreate, onJoin, onSpectate
             作る
           </button>
         </div>
-        <div className="box row">
-          <input
-            value={code}
-            maxLength={6}
-            placeholder="コードで入る"
-            aria-label="room code"
-            style={{ textTransform: "uppercase" }}
-            onChange={(e) => setCode(e.target.value.toUpperCase())}
-          />
-          <button type="button" data-testid="join-code" disabled={code.length !== 6} onClick={() => onJoin(code)}>
-            入る
+        <div className="box column">
+          <div className="label">コードで入る</div>
+          <div className="row">
+            <input
+              value={code}
+              maxLength={6}
+              placeholder="6 文字のコード"
+              aria-label="room code"
+              style={{ textTransform: "uppercase" }}
+              onChange={(e) => setCode(e.target.value.toUpperCase())}
+            />
+            <button type="button" data-testid="join-code" disabled={code.length !== 6} onClick={() => onJoin(code)}>
+              入る
+            </button>
+          </div>
+        </div>
+        <div className="pane-bottom">
+          <button type="button" onClick={onBack}>
+            設定へ戻る
           </button>
+        </div>
+      </div>
+      <div className="pane">
+        <div className="row">
+          <div className="label">公開部屋</div>
+          <span className={connected ? "" : "dim blink"} style={{ textAlign: "right" }}>
+            {connected ? "接続中" : "再接続しています"}
+          </span>
         </div>
         <div className="row">
           <input value={query.search} maxLength={ROOM_TITLE_MAX} placeholder="検索" aria-label="search" onChange={(e) => onQuery({ ...query, search: e.target.value, page: 0 })} />
@@ -113,7 +124,7 @@ export const LobbyScreen = ({ page, query, onQuery, onCreate, onJoin, onSpectate
             </div>
           ))}
         </div>
-        <div className="row">
+        <div className="row pager">
           <button type="button" disabled={query.page <= 0} onClick={() => onQuery({ ...query, page: query.page - 1 })}>
             前へ
           </button>
@@ -124,9 +135,6 @@ export const LobbyScreen = ({ page, query, onQuery, onCreate, onJoin, onSpectate
             次へ
           </button>
         </div>
-        <button type="button" onClick={onBack}>
-          設定へ戻る
-        </button>
       </div>
     </div>
   );
