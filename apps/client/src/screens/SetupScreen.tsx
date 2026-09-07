@@ -15,9 +15,9 @@ import {
 } from "@game/protocol";
 import { useState } from "react";
 import type { Profile } from "@/app/profile";
-import { TankPreview } from "./TankPreview";
+import { TankPreview, type WeaponDemo } from "./TankPreview";
 
-// プレイヤー設定。設計書 09 の 9.2、10 の 10.4。名前、主色と副色、メインとサブの武器、プレビュー。
+// プレイヤー設定。設計書 09 の 9.2、10 の 10.4、08 の 8.4。左のペインに名前と色とプレビュー、右のペインに武器と出発の操作。
 
 type Props = {
   readonly profile: Profile;
@@ -56,8 +56,8 @@ export const pickWeapon = (loadout: Loadout, slot: WeaponSlot, w: WeaponId): Loa
   return next;
 };
 
-/** 装備の 1 スロット。8 つの候補から 1 つ選ぶ。もう一方のスロットで選んでいる武器には印を付ける */
-const WeaponPicker = ({ label, slot, loadout, onPick }: { label: string; slot: WeaponSlot; loadout: Loadout; onPick: (l: Loadout) => void }) => (
+/** 装備の 1 スロット。8 つの候補から 1 つ選ぶ。もう一方のスロットで選んでいる武器には印を付ける。選んだ武器も返し、呼び出し側がデモを撃つ */
+const WeaponPicker = ({ label, slot, loadout, onPick }: { label: string; slot: WeaponSlot; loadout: Loadout; onPick: (l: Loadout, w: WeaponId) => void }) => (
   <div className="column" style={{ gap: 8 }}>
     <div className="label">{label}</div>
     <div className="weapon-grid" role="radiogroup" aria-label={label}>
@@ -69,7 +69,7 @@ const WeaponPicker = ({ label, slot, loadout, onPick }: { label: string; slot: W
           aria-checked={loadout[slot] === w}
           aria-label={`${label} ${w}`}
           className={`weapon-cell${loadout[slot] === w ? " active" : ""}${loadout[slot === 0 ? 1 : 0] === w ? " other" : ""}`}
-          onClick={() => onPick(pickWeapon(loadout, slot, w))}
+          onClick={() => onPick(pickWeapon(loadout, slot, w), w)}
         >
           <span>{WEAPON_LABELS[w]}</span>
           <span className="weapon-desc">{WEAPON_DESCRIPTIONS[w]}</span>
@@ -79,32 +79,23 @@ const WeaponPicker = ({ label, slot, loadout, onPick }: { label: string; slot: W
   </div>
 );
 
-export const SetupScreen = ({ profile, onChange, onEnterLobby, onSolo, inviteCode }: Props) => {
-  const [soloMap, setSoloMap] = useState<MapName>("valley");
-  const valid = profile.nickname.trim().length > 0;
-  const cell = Math.max(4, Math.min(24, Math.floor(Math.min(window.innerWidth, window.innerHeight) / 2 / 12)));
+type LoadoutPaneProps = {
+  readonly profile: Profile;
+  readonly onPick: (loadout: Loadout, weapon: WeaponId) => void;
+  readonly onEnterLobby: () => void;
+  readonly onSolo: (mapName: MapName) => void;
+  readonly inviteCode: string | null;
+  readonly valid: boolean;
+};
 
+/** 右のペイン。武器 1 と武器 2、下端にロビーへ、ひとりで撃つ、キーの案内 */
+const LoadoutPane = ({ profile, onPick, onEnterLobby, onSolo, inviteCode, valid }: LoadoutPaneProps) => {
+  const [soloMap, setSoloMap] = useState<MapName>("valley");
   return (
-    <div className="screen">
-      <div className="column">
-        <div className="title">FORTRESS</div>
-        <div style={{ display: "flex", justifyContent: "center", padding: 16 }}>
-          <TankPreview colors={profile.colors} cell={cell} />
-        </div>
-        <label className="column" style={{ gap: 8 }}>
-          <span className="label">プレイヤー名</span>
-          <input
-            value={profile.nickname}
-            maxLength={NICKNAME_MAX}
-            placeholder="1 から 12 文字"
-            aria-label="nickname"
-            onChange={(e) => onChange({ ...profile, nickname: e.target.value.slice(0, NICKNAME_MAX) })}
-          />
-        </label>
-        <ColorPicker label="主色" value={profile.colors.primary} onPick={(c) => onChange({ ...profile, colors: { ...profile.colors, primary: c } })} />
-        <ColorPicker label="副色" value={profile.colors.secondary} onPick={(c) => onChange({ ...profile, colors: { ...profile.colors, secondary: c } })} />
-        <WeaponPicker label="武器 1" slot={0} loadout={profile.loadout} onPick={(loadout) => onChange({ ...profile, loadout })} />
-        <WeaponPicker label="武器 2" slot={1} loadout={profile.loadout} onPick={(loadout) => onChange({ ...profile, loadout })} />
+    <div className="pane">
+      <WeaponPicker label="武器 1" slot={0} loadout={profile.loadout} onPick={onPick} />
+      <WeaponPicker label="武器 2" slot={1} loadout={profile.loadout} onPick={onPick} />
+      <div className="pane-bottom">
         <button type="button" disabled={!valid} onClick={onEnterLobby} data-testid="enter-lobby">
           {inviteCode ? `部屋 ${inviteCode} に入る` : "ロビーへ"}
         </button>
@@ -121,9 +112,41 @@ export const SetupScreen = ({ profile, onChange, onEnterLobby, onSolo, inviteCod
           </button>
         </div>
         <div className="dim" style={{ fontSize: 16, lineHeight: 1.5 }}>
-          矢印キー: 上下で仰角、左右で移動。シフト: メインとサブの切り替え。スペース: 押して溜め、離して発射。
+          矢印キー: 上下で仰角、左右で移動。Tab: メインとサブの切り替え。スペース: 押して溜め、離して発射。Esc: 設定。
         </div>
       </div>
+    </div>
+  );
+};
+
+export const SetupScreen = ({ profile, onChange, onEnterLobby, onSolo, inviteCode }: Props) => {
+  const [demo, setDemo] = useState<WeaponDemo | null>(null);
+  const valid = profile.nickname.trim().length > 0;
+  // 武器を選ぶたびにデモを撃ち直す。同じ武器を選び直しても key が変わるので撃つ
+  const pickLoadout = (loadout: Loadout, weapon: WeaponId): void => {
+    onChange({ ...profile, loadout });
+    setDemo({ weapon, key: (demo?.key ?? 0) + 1 });
+  };
+
+  return (
+    <div className="screen-split">
+      <div className="pane">
+        <div className="title">FORTRESS</div>
+        <TankPreview colors={profile.colors} demo={demo} />
+        <label className="column" style={{ gap: 8 }}>
+          <span className="label">プレイヤー名</span>
+          <input
+            value={profile.nickname}
+            maxLength={NICKNAME_MAX}
+            placeholder="1 から 12 文字"
+            aria-label="nickname"
+            onChange={(e) => onChange({ ...profile, nickname: e.target.value.slice(0, NICKNAME_MAX) })}
+          />
+        </label>
+        <ColorPicker label="主色" value={profile.colors.primary} onPick={(c) => onChange({ ...profile, colors: { ...profile.colors, primary: c } })} />
+        <ColorPicker label="副色" value={profile.colors.secondary} onPick={(c) => onChange({ ...profile, colors: { ...profile.colors, secondary: c } })} />
+      </div>
+      <LoadoutPane profile={profile} onPick={pickLoadout} onEnterLobby={onEnterLobby} onSolo={onSolo} inviteCode={inviteCode} valid={valid} />
     </div>
   );
 };
