@@ -17,7 +17,7 @@ type RoomMember = {
   readonly playerId: string;        // 端末ごとの匿名 ID
   readonly nickname: string;
   readonly colors: TankColors;
-  readonly loadout: Loadout;        // メインとサブの武器（10 章）
+  readonly loadout: Loadout;        // 装備する 2 つの武器（10 章）
   readonly ready: boolean;
   readonly colorConflict: boolean;  // 先にいる参加者と主色が重なっている
   readonly joinOrder: number;       // 入室の順番。オーナーの引き継ぎに使う
@@ -86,7 +86,7 @@ type PlayerState = {
   readonly seat: Seat;
   readonly nickname: string;
   readonly colors: TankColors;
-  readonly loadout: Loadout;          // メインとサブの武器。対戦中は固定
+  readonly loadout: Loadout;          // 装備する 2 つの武器。対戦中は固定
   readonly hp: number;
   readonly x: number;                 // 機体中心の x（整数セル）
   readonly facing: Facing;            // 最後に動いた方向。対戦開始時は相手側を向く
@@ -149,11 +149,18 @@ type TerrainOp = {
   readonly radius: number;
 };
 
+/** 着弾 1 つ。1 発の射撃は弾道が複数（扇）で、弾道ごとに着弾が複数（貫通）になりうる（10 章の 10.2） */
+type Impact = {
+  readonly projectile: number;              // 何本目の弾道か。0 始まり
+  readonly stage: number;                   // その弾道の何段目の着弾か。0 始まり
+  readonly cell: { readonly x: number; readonly y: number };
+  readonly terrainOp: TerrainOp;
+  readonly damage: readonly [number, number];
+};
+
 type ShotResult = {
   readonly input: TrajectoryInput;
-  readonly impact: { readonly x: number; readonly y: number } | null;
-  readonly terrainOp: TerrainOp | null;
-  readonly damage: readonly [number, number];
+  readonly impacts: readonly Impact[];      // 着弾の列。空なら全弾が消失した。適用は列の順
   readonly hpAfter: readonly [number, number];
   readonly xAfter: readonly [number, number];
   readonly ringOut: readonly Seat[];
@@ -163,8 +170,9 @@ type ShotResult = {
 ```
 
 `TrajectoryInput` は弾道を再計算するのに必要なものをすべて含み、それ以外を含まない。
-武器はスロット（メインかサブか）ではなく武器そのもので持つ。装備を知らない観戦者や再接続後のクライアントも、この入力だけで同じ結果を出せるようにするためである。
+武器はスロット（0 か 1 か）ではなく武器そのもので持つ。装備を知らない観戦者や再接続後のクライアントも、この入力だけで同じ結果を出せるようにするためである。
 地形は `terrainOps` から復元する前提なので、入力には含めない。
+着弾は 1 つではなく列で持つ。最初の版は「着弾点 1 つ、地形の円 1 つ、ダメージ 1 組」だったが、扇に広がる武器と貫通する武器（10 章）を入れるために一般化した。1 発 1 段の武器では列の長さが 1 で、値は最初の版と同じである。
 車体の傾きも地形と x から求まるので含めない。
 発射角は「傾き + 仰角」を向きに応じて鏡像にした値で、物理コードの中で求める。
 

@@ -62,7 +62,7 @@ export const RoomScreen = ({ room, mySeat, onReady, onSetMap, onKick, onStart, o
                 {m.nickname}
                 <span className="dim" data-testid={`loadout-${m.seat}`}>
                   {" "}
-                  {WEAPON_LABELS[m.loadout.main]} / {WEAPON_LABELS[m.loadout.sub]}
+                  {WEAPON_LABELS[m.loadout[0]]} / {WEAPON_LABELS[m.loadout[1]]}
                 </span>
                 {!m.connected && <span className="dim"> 切断中</span>}
                 {m.colorConflict && <span className="blink"> 主色が重なっています</span>}

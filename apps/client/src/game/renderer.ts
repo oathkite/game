@@ -1,4 +1,4 @@
-import { COLOR_HEX, type Loadout, type Seat, type TankColors, type WeaponId } from "@game/protocol";
+import { COLOR_HEX, type Seat, type TankColors, type WeaponId } from "@game/protocol";
 import type { TerrainMask } from "@game/sim";
 import { Application, Container } from "pixi.js";
 import { spawnDamageLabel } from "./damageLabel";
@@ -30,10 +30,7 @@ export type RendererInit = {
   readonly host: HTMLElement;
   readonly layout: Layout;
   readonly mask: TerrainMask;
-  readonly players: readonly [
-    { colors: TankColors; nickname: string; loadout: Loadout },
-    { colors: TankColors; nickname: string; loadout: Loadout },
-  ];
+  readonly players: readonly [{ colors: TankColors; nickname: string }, { colors: TankColors; nickname: string }];
 };
 
 const safely = (fn: () => void): void => {
@@ -71,8 +68,8 @@ export const createRenderer = async (init: RendererInit): Promise<Renderer> => {
   let projectile: ProjectileView | null = null;
 
   const tanks: readonly [TankView, TankView] = [
-    createTankView(init.players[0].colors, init.players[0].nickname, init.players[0].loadout),
-    createTankView(init.players[1].colors, init.players[1].nickname, init.players[1].loadout),
+    createTankView(init.players[0].colors, init.players[0].nickname),
+    createTankView(init.players[1].colors, init.players[1].nickname),
   ];
   for (const t of tanks) {
     world.addChild(t.world);

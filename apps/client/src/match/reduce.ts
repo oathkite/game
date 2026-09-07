@@ -58,8 +58,7 @@ const fromMatchState = (view: MatchView, match: MatchState, seat: Seat | null, o
 };
 
 const sameShot = (a: ShotResult, b: ShotResult): boolean =>
-  JSON.stringify([a.impact, a.terrainOp, a.damage, a.hpAfter, a.xAfter, a.ringOut, a.finished]) ===
-  JSON.stringify([b.impact, b.terrainOp, b.damage, b.hpAfter, b.xAfter, b.ringOut, b.finished]);
+  JSON.stringify([a.impacts, a.hpAfter, a.xAfter, a.ringOut, a.finished]) === JSON.stringify([b.impacts, b.hpAfter, b.xAfter, b.ringOut, b.finished]);
 
 const onResult = (view: MatchView, shot: ShotResult, replayId: number): Reduced => {
   if (!view.mask || !view.players) return just(view);
@@ -67,11 +66,7 @@ const onResult = (view: MatchView, shot: ShotResult, replayId: number): Reduced 
   const local = simulateShot(view.mask, [{ x: p0.x, hp: p0.hp }, { x: p1.x, hp: p1.hp }], shot.input);
   const mismatch = !sameShot(local.result, shot);
   // 食い違ったらサーバーの値で上書きする（設計書 05 の 5.1）
-  const maskAfter = mismatch
-    ? shot.terrainOp
-      ? applyOps(view.mask, [shot.terrainOp])
-      : view.mask
-    : local.mask;
+  const maskAfter = mismatch ? applyOps(view.mask, shot.impacts.map((i) => i.terrainOp)) : local.mask;
   const after = (p: PlayerView): PlayerView => ({
     ...p,
     hp: shot.hpAfter[p.seat],
@@ -81,7 +76,7 @@ const onResult = (view: MatchView, shot: ShotResult, replayId: number): Reduced 
   const job: ReplayJob = {
     id: replayId,
     shot,
-    path: local.path,
+    paths: local.paths,
     maskBefore: view.mask,
     maskAfter,
     playersBefore: view.players,

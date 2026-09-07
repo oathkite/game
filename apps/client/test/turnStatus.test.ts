@@ -8,7 +8,7 @@ const player = (seat: 0 | 1, nickname: string): PlayerView => ({
   seat,
   nickname,
   colors: { primary: "red", secondary: "red" },
-  loadout: { main: "cannon", sub: "digger" },
+  loadout: ["cannon", "digger"],
   hp: 100,
   x: 100,
   facing: 1,

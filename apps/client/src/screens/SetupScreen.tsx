@@ -1,16 +1,17 @@
 import {
   COLOR_HEX,
-  MAIN_WEAPON_IDS,
   MAP_LABELS,
   MAP_NAMES,
   NICKNAME_MAX,
   PLAYER_COLORS,
-  SUB_WEAPON_IDS,
   WEAPON_DESCRIPTIONS,
+  WEAPON_IDS,
   WEAPON_LABELS,
   type MapName,
   type PlayerColor,
+  type Loadout,
   type WeaponId,
+  type WeaponSlot,
 } from "@game/protocol";
 import { useState } from "react";
 import type { Profile } from "@/app/profile";
@@ -46,19 +47,29 @@ const ColorPicker = ({ value, onPick, label }: { value: PlayerColor; onPick: (c:
   </div>
 );
 
-const WeaponPicker = <T extends WeaponId>({ label, ids, value, onPick }: { label: string; ids: readonly T[]; value: T; onPick: (w: T) => void }) => (
+/** 装備のスロット slot に武器 w を入れる。もう一方のスロットが同じ武器なら入れ替えて、同じ武器が 2 つ並ばないようにする */
+export const pickWeapon = (loadout: Loadout, slot: WeaponSlot, w: WeaponId): Loadout => {
+  const other = slot === 0 ? 1 : 0;
+  const next: [WeaponId, WeaponId] = [loadout[0], loadout[1]];
+  if (loadout[other] === w) next[other] = loadout[slot];
+  next[slot] = w;
+  return next;
+};
+
+/** 装備の 1 スロット。8 つの候補から 1 つ選ぶ。もう一方のスロットで選んでいる武器には印を付ける */
+const WeaponPicker = ({ label, slot, loadout, onPick }: { label: string; slot: WeaponSlot; loadout: Loadout; onPick: (l: Loadout) => void }) => (
   <div className="column" style={{ gap: 8 }}>
     <div className="label">{label}</div>
     <div className="weapon-grid" role="radiogroup" aria-label={label}>
-      {ids.map((w) => (
+      {WEAPON_IDS.map((w) => (
         <button
           key={w}
           type="button"
           role="radio"
-          aria-checked={value === w}
+          aria-checked={loadout[slot] === w}
           aria-label={`${label} ${w}`}
-          className={`weapon-cell${value === w ? " active" : ""}`}
-          onClick={() => onPick(w)}
+          className={`weapon-cell${loadout[slot] === w ? " active" : ""}${loadout[slot === 0 ? 1 : 0] === w ? " other" : ""}`}
+          onClick={() => onPick(pickWeapon(loadout, slot, w))}
         >
           <span>{WEAPON_LABELS[w]}</span>
           <span className="weapon-desc">{WEAPON_DESCRIPTIONS[w]}</span>
@@ -78,7 +89,7 @@ export const SetupScreen = ({ profile, onChange, onEnterLobby, onSolo, inviteCod
       <div className="column">
         <div className="title">FORTRESS</div>
         <div style={{ display: "flex", justifyContent: "center", padding: 16 }}>
-          <TankPreview colors={profile.colors} loadout={profile.loadout} cell={cell} />
+          <TankPreview colors={profile.colors} cell={cell} />
         </div>
         <label className="column" style={{ gap: 8 }}>
           <span className="label">プレイヤー名</span>
@@ -92,8 +103,8 @@ export const SetupScreen = ({ profile, onChange, onEnterLobby, onSolo, inviteCod
         </label>
         <ColorPicker label="主色" value={profile.colors.primary} onPick={(c) => onChange({ ...profile, colors: { ...profile.colors, primary: c } })} />
         <ColorPicker label="副色" value={profile.colors.secondary} onPick={(c) => onChange({ ...profile, colors: { ...profile.colors, secondary: c } })} />
-        <WeaponPicker label="メインウェポン" ids={MAIN_WEAPON_IDS} value={profile.loadout.main} onPick={(w) => onChange({ ...profile, loadout: { ...profile.loadout, main: w } })} />
-        <WeaponPicker label="サブウェポン" ids={SUB_WEAPON_IDS} value={profile.loadout.sub} onPick={(w) => onChange({ ...profile, loadout: { ...profile.loadout, sub: w } })} />
+        <WeaponPicker label="武器 1" slot={0} loadout={profile.loadout} onPick={(loadout) => onChange({ ...profile, loadout })} />
+        <WeaponPicker label="武器 2" slot={1} loadout={profile.loadout} onPick={(loadout) => onChange({ ...profile, loadout })} />
         <button type="button" disabled={!valid} onClick={onEnterLobby} data-testid="enter-lobby">
           {inviteCode ? `部屋 ${inviteCode} に入る` : "ロビーへ"}
         </button>

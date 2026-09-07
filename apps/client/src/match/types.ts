@@ -1,5 +1,5 @@
 import { type Facing, type Loadout, type MatchResult, type Seat, type ShotResult, type TankColors, TURN_LIMIT, type WeaponSlot, type Wind } from "@game/protocol";
-import type { FixedPoint, TerrainMask } from "@game/sim";
+import type { ProjectilePath, TerrainMask } from "@game/sim";
 
 // クライアントが持つ対戦の表示状態。サーバーの通知から組み立て、勝手には進めない（設計書 04）。
 
@@ -41,8 +41,8 @@ export type LocalControl = {
 export type ReplayJob = {
   readonly id: number;
   readonly shot: ShotResult;
-  /** 弾の位置列（固定小数点）。クライアントの再計算から得る */
-  readonly path: readonly FixedPoint[];
+  /** 弾道ごとの位置列（固定小数点）。クライアントの再計算から得る。添字は Impact.projectile と対応する */
+  readonly paths: readonly ProjectilePath[];
   /** 再生開始時点の地形。再生の終わりに削られる */
   readonly maskBefore: TerrainMask;
   readonly maskAfter: TerrainMask;
@@ -94,5 +94,5 @@ export const EMPTY_VIEW: MatchView = {
   mismatches: 0,
   skipNextResult: false,
   lastElevation: 45,
-  lastSlot: "main",
+  lastSlot: 0,
 };

@@ -1,5 +1,5 @@
 import { weaponOf } from "@game/protocol";
-import { simulateShot } from "@game/sim";
+import { damageDealtTo, simulateShot } from "@game/sim";
 import type { MatchView } from "@/match/types";
 
 // e2e と開発時の確認用。現在の盤面で相手にダメージが入る照準を探す。ゲームの UI からは使わない。
@@ -25,7 +25,7 @@ export const findRobustAim = (view: MatchView, tolerance = 2): Aim | null => {
   const damageOf = (elevation: number, power: number): number => {
     const input = { seat: me, weapon, x: c.x, facing: c.facing, elevation, power, wind: view.wind.value };
     const r = simulateShot(view.mask as NonNullable<MatchView["mask"]>, players, input).result;
-    return r.damage[opp] - r.damage[me];
+    return damageDealtTo(r, opp) - damageDealtTo(r, me);
   };
   let best: (Aim & { readonly score: number }) | null = null;
   // 粗く探す。e2e で 1 ターンあたり数秒に収めるため

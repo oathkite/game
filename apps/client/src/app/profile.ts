@@ -1,4 +1,4 @@
-import { DEFAULT_LOADOUT, MAIN_WEAPON_IDS, PLAYER_COLORS, SUB_WEAPON_IDS, type Loadout, type MainWeaponId, type PlayerColor, type SubWeaponId, type TankColors } from "@game/protocol";
+import { DEFAULT_LOADOUT, parseLoadout, PLAYER_COLORS, type Loadout, type PlayerColor, type TankColors } from "@game/protocol";
 
 // 端末に保存するプレイヤー設定。設計書 09 の 9.2。
 
@@ -6,7 +6,7 @@ export type Profile = {
   readonly playerId: string;
   readonly nickname: string;
   readonly colors: TankColors;
-  /** メインとサブの武器。設計書 10 */
+  /** 装備する 2 つの武器。設計書 10 */
   readonly loadout: Loadout;
   readonly volume: number;
   readonly muted: boolean;
@@ -21,8 +21,6 @@ const randomId = (): string => {
 };
 
 const isColor = (v: unknown): v is PlayerColor => typeof v === "string" && (PLAYER_COLORS as readonly string[]).includes(v);
-const isMain = (v: unknown): v is MainWeaponId => typeof v === "string" && (MAIN_WEAPON_IDS as readonly string[]).includes(v);
-const isSub = (v: unknown): v is SubWeaponId => typeof v === "string" && (SUB_WEAPON_IDS as readonly string[]).includes(v);
 
 const defaults = (): Profile => ({
   playerId: randomId(),
@@ -52,7 +50,6 @@ export const loadProfile = (): Profile => {
   }
   const r = raw as Record<string, unknown>;
   const colors = typeof r.colors === "object" && r.colors !== null ? (r.colors as Record<string, unknown>) : {};
-  const loadout = typeof r.loadout === "object" && r.loadout !== null ? (r.loadout as Record<string, unknown>) : {};
   const profile: Profile = {
     playerId: typeof r.playerId === "string" && r.playerId.length >= 8 ? r.playerId : base.playerId,
     nickname: typeof r.nickname === "string" ? r.nickname.slice(0, 12) : base.nickname,
@@ -60,10 +57,7 @@ export const loadProfile = (): Profile => {
       primary: isColor(colors.primary) ? colors.primary : base.colors.primary,
       secondary: isColor(colors.secondary) ? colors.secondary : base.colors.secondary,
     },
-    loadout: {
-      main: isMain(loadout.main) ? loadout.main : base.loadout.main,
-      sub: isSub(loadout.sub) ? loadout.sub : base.loadout.sub,
-    },
+    loadout: parseLoadout(r.loadout) ?? DEFAULT_LOADOUT,
     volume: typeof r.volume === "number" ? Math.min(1, Math.max(0, r.volume)) : base.volume,
     muted: typeof r.muted === "boolean" ? r.muted : base.muted,
     swapPanels: typeof r.swapPanels === "boolean" ? r.swapPanels : base.swapPanels,

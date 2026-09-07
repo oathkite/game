@@ -1,5 +1,5 @@
 import { weaponOf, type ClientMessageOf, type FinishReason, type MatchResult, type PassReason, type Seat, type ServerMessageOf } from "@game/protocol";
-import { initialWind, nextWind, simulateShot, validateMove, weaponSpec, WIND_DELTA_MAX, WIND_MAX } from "@game/sim";
+import { damageDealtTo, initialWind, nextWind, simulateShot, validateMove, weaponSpec, WIND_DELTA_MAX, WIND_MAX } from "@game/sim";
 import { otherSeat, type Effect, type EngineState, type Step } from "./types.js";
 
 // ターンの開始、射撃の解決、パス、決着。engine.ts から呼ばれる純関数。
@@ -71,9 +71,10 @@ export const resolveFire = (state: EngineState, seat: Seat, fire: ClientMessageO
   const r = outcome.result;
   const opp = otherSeat(seat);
   const stat = state.stats[seat];
-  // 直撃は着弾距離 0、つまりその武器の最大ダメージが出た回数
-  const direct = r.damage[opp] === weaponSpec(weapon).damageMax ? 1 : 0;
-  const dealt = { damageDealt: stat.damageDealt + r.damage[opp], directHits: stat.directHits + direct };
+  // 直撃は着弾距離 0、つまりその段の最大ダメージが出た着弾が 1 つでもあれば 1 回と数える
+  const stages = weaponSpec(weapon).stages;
+  const direct = r.impacts.some((i) => i.damage[opp] > 0 && i.damage[opp] === stages[i.stage]?.damageMax) ? 1 : 0;
+  const dealt = { damageDealt: stat.damageDealt + damageDealtTo(r, opp), directHits: stat.directHits + direct };
   const stats: EngineState["stats"] = seat === 0 ? [dealt, state.stats[1]] : [state.stats[0], dealt];
   const players: EngineState["match"]["players"] = [
     { ...p0, hp: r.hpAfter[0], x: r.xAfter[0], facing: seat === 0 ? fire.facing : p0.facing },
@@ -93,7 +94,7 @@ export const resolveFire = (state: EngineState, seat: Seat, fire: ClientMessageO
       ...state.match,
       players,
       deadlineAt: null,
-      terrainOps: r.terrainOp ? [...state.match.terrainOps, r.terrainOp] : state.match.terrainOps,
+      terrainOps: [...state.match.terrainOps, ...r.impacts.map((i) => i.terrainOp)],
     },
   };
   if (finished) {

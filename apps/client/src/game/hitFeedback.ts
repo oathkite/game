@@ -1,4 +1,4 @@
-import type { CellPoint, Seat, ShotResult } from "@game/protocol";
+import type { CellPoint, Seat } from "@game/protocol";
 import { BLAST_RADIUS, MAP_HEIGHT, MAP_WIDTH } from "@game/sim";
 import type { SoundName } from "@/app/audio";
 
@@ -66,16 +66,60 @@ export const FLASH_MS_BY_TIER: Readonly<Record<DamageTier, number>> = { 0: 0, 1:
 
 export const flashMsOf = (damage: number): number => FLASH_MS_BY_TIER[damageTier(damage)];
 
-/** 機体が白くなる瞬間に鳴らす音。自機の被弾、自分が当てた手応え、決着の順に並べる。観戦者には決着音だけ */
-export const damageSounds = (shot: ShotResult, mySeat: Seat | null): readonly SoundName[] => {
+/**
+ * 機体が白くなる瞬間に鳴らす音。自機の被弾、自分が当てた手応え、決着の順に並べる。観戦者には決着音だけ。
+ * 着弾 1 つごとに呼ぶ。決着音はこの着弾で HP が 0 を割った 1 回だけで、すでに沈んだ機体への続きの段では鳴らさない
+ */
+export const damageSounds = (
+  damage: readonly [number, number],
+  hpBefore: readonly [number, number],
+  hpAfter: readonly [number, number],
+  shooter: Seat,
+  mySeat: Seat | null,
+): readonly SoundName[] => {
   const sounds: SoundName[] = [];
-  const shooter = shot.input.seat;
   const opponent: Seat = shooter === 0 ? 1 : 0;
-  if (mySeat !== null && shot.damage[mySeat] > 0) sounds.push("hit");
-  if (mySeat === shooter && shot.damage[opponent] > 0) sounds.push("hitConfirm");
-  const killed = ([0, 1] as const).some((seat) => shot.damage[seat] > 0 && shot.hpAfter[seat] <= 0);
+  if (mySeat !== null && damage[mySeat] > 0) sounds.push("hit");
+  if (mySeat === shooter && damage[opponent] > 0) sounds.push("hitConfirm");
+  const killed = ([0, 1] as const).some((seat) => damage[seat] > 0 && hpBefore[seat] > 0 && hpAfter[seat] <= 0);
   if (killed) sounds.push("finish");
   return sounds;
+};
+
+/** 弾道の 1 ステップの長さ。物理の 1 ステップを 1/60 秒で見せる */
+export const STEP_MS = 1000 / 60;
+/** 同じ角度を時間差で辿る発（マルチプル弾）の発射の間隔 */
+export const VOLLEY_DELAY_MS = 100;
+
+/** 弾道 p の発射の遅れ。扇の本数 fanCount ごとに 1 発ぶん遅らせる（弾道の添字は 発 × 扇の本数 + 扇の番号） */
+export const launchDelayMs = (projectile: number, fanCount: number): number => Math.floor(projectile / fanCount) * VOLLEY_DELAY_MS;
+
+/** 発射から k 段目の着弾までの時間。前の着弾ごとに HOLD_MS だけ止まるぶんを足す */
+export const impactTimeMs = (stage: number, impactAt: readonly number[]): number => (impactAt[stage] ?? 0) * STEP_MS + stage * HOLD_MS;
+
+export type ProjectileFrame = {
+  /** 位置列の添字（小数）。隣の点との補間に使う */
+  readonly index: number;
+  /** 着弾点で止まって見せている */
+  readonly holding: boolean;
+  /** 位置列の終わりを過ぎた */
+  readonly ended: boolean;
+};
+
+/**
+ * 発射から t ミリ秒後の弾の位置。1 ステップを STEP_MS で進み、着弾（impactAt の添字、昇順）ごとに HOLD_MS だけ止まってから続きを飛ぶ。
+ * length は位置列の長さ
+ */
+export const projectileFrameAt = (t: number, impactAt: readonly number[], length: number): ProjectileFrame => {
+  let flying = t;
+  for (const at of impactAt) {
+    const reach = at * STEP_MS;
+    if (flying < reach) break;
+    if (flying - reach < HOLD_MS) return { index: at, holding: true, ended: false };
+    flying -= HOLD_MS;
+  }
+  const index = flying / STEP_MS;
+  return { index: Math.min(index, length - 1), holding: false, ended: index >= length - 1 };
 };
 
 /** 画面揺れの長さ。地形が削れた時点から数える */
@@ -137,25 +181,33 @@ export const damageLabelText = (damage: number): string => `-${damage}`;
 export const DEBRIS_MS = FLICKER_MS + RING_MS;
 /** 破片の重さ（セル/秒²） */
 export const DEBRIS_GRAVITY = 400;
-/** 破片の初速（セル/秒）。上へ寄せた 8 方向で、乱数を使わない。最も高い破片は約 10 セル上がって 0.23 秒で落ち始める */
+/** 破片の初速（セル/秒）。上へ寄せた 8 方向を左右対称の対で並べ、乱数を使わない。最も高い破片は約 10 セル上がって 0.23 秒で落ち始める */
 const DEBRIS_VELOCITIES: readonly (readonly [number, number])[] = [
-  [-47, -68],
-  [-29, -83],
   [-10, -91],
   [10, -91],
+  [-29, -83],
   [29, -83],
+  [-47, -68],
   [47, -68],
   [-62, -39],
   [62, -39],
 ];
+
+/** 破片の数。爆風が広いほど多く、狭い爆風（レーザー弾、針弾）は 2 個。左右対称を保つため偶数 */
+export const debrisCount = (blastRadius: number): number => {
+  if (blastRadius >= BLAST_RADIUS) return 8;
+  if (blastRadius >= 6) return 6;
+  if (blastRadius >= 3) return 4;
+  return 2;
+};
 /** 最も高い破片が頂点に達する時刻 */
 export const DEBRIS_APEX_MS = 230;
 
-/** 地形が削れてから t ミリ秒後の破片の位置（セル、格子に揃える）。左右対称に散るよう 0 へ向けて丸める。消えたら空 */
-export const debrisAt = (t: number, impact: CellPoint): readonly CellPoint[] => {
+/** 地形が削れてから t ミリ秒後の破片の位置（セル、格子に揃える）。左右対称に散るよう 0 へ向けて丸める。消えたら空。数は爆風半径で決まる */
+export const debrisAt = (t: number, impact: CellPoint, blastRadius: number = BLAST_RADIUS): readonly CellPoint[] => {
   if (t < 0 || t >= DEBRIS_MS) return [];
   const sec = t / 1000;
-  return DEBRIS_VELOCITIES.map(([vx, vy]) => ({
+  return DEBRIS_VELOCITIES.slice(0, debrisCount(blastRadius)).map(([vx, vy]) => ({
     x: impact.x + Math.trunc(vx * sec),
     y: impact.y + Math.trunc(vy * sec + (DEBRIS_GRAVITY * sec * sec) / 2),
   }));

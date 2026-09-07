@@ -1,3 +1,4 @@
+import { otherSlot } from "@game/protocol";
 import { useEffect, useMemo, useState, useSyncExternalStore } from "react";
 import type { Profile } from "@/app/profile";
 import { GameCanvas } from "@/game/GameCanvas";
@@ -52,7 +53,7 @@ export const GameScreen = ({ store, clockOffset, profile, onProfileChange, onSur
   const swipe = useSwipeAim(acting, { moveStep: store.moveStep, changeElevation: store.changeElevation });
 
   const slot = view.control?.slot ?? view.lastSlot;
-  useKeyboardInput(holds, gauge, () => store.selectSlot(slot === "main" ? "sub" : "main"));
+  useKeyboardInput(holds, gauge, () => store.selectSlot(otherSlot(slot)));
 
   // 左右を入れ替えても同じ要素を動かすだけにするため key を付ける。マップ（PixiJS）を作り直さない
   const left = <LeftPanel key="left" view={view} store={store} width={layout.panelWidth} height={h} cell={layout.panelCell} holds={holds} />;

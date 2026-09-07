@@ -34,8 +34,14 @@ export const GOLDEN_CASES: readonly GoldenCase[] = [
   { name: "浮島 奈落へ 消失", mask: islandMask, players: two(60, 340), input: shot({ x: 118, elevation: 10, power: 30, wind: 0 }) },
   { name: "浮島 相手の足元を狙う", mask: islandMask, players: two(80, 300), input: shot({ x: 80, elevation: 50, power: 88, wind: -2 }) },
   // 武器ごとの弾道（設計書 10）。標準砲と同じ入力で撃ち、初速、重力、風、爆風、ダメージの違いを記録する
-  { name: "重砲 谷 基本の直接射撃", mask: valleyMask, players: two(60, 340), input: shot({ weapon: "heavy", x: 60, elevation: 45, power: 72, wind: 0 }) },
-  { name: "長砲 谷 追い風 10", mask: valleyMask, players: two(60, 340), input: shot({ weapon: "sniper", x: 60, elevation: 45, power: 72, wind: 10 }) },
+  { name: "トリプル弾 谷 基本の直接射撃", mask: valleyMask, players: two(60, 340), input: shot({ weapon: "triple", x: 60, elevation: 45, power: 72, wind: 0 }) },
+  { name: "トリプル弾 平地 至近で 3 発をまとめて当てる", mask: flatMask, players: two(60, 72), input: shot({ weapon: "triple", x: 60, elevation: 10, power: 40, wind: 0 }) },
+  { name: "マルチプル弾 谷 追い風 10", mask: valleyMask, players: two(60, 340), input: shot({ weapon: "multiple", x: 60, elevation: 45, power: 72, wind: 10 }) },
+  { name: "貫通弾 谷 基本の直接射撃", mask: valleyMask, players: two(60, 340), input: shot({ weapon: "drill", x: 60, elevation: 45, power: 72, wind: 0 }) },
+  { name: "貫通弾 平地 直撃", mask: flatMask, players: two(60, 72), input: shot({ weapon: "drill", x: 60, elevation: 10, power: 40, wind: 0 }) },
+  { name: "貫通弾 壁の中で爆発 自爆", mask: () => wallMask(104, 130), players: two(100, 300), input: shot({ weapon: "drill", x: 100, elevation: 10, power: 50, wind: 0 }) },
+  { name: "レーザー弾 谷 向かい風 10", mask: valleyMask, players: two(60, 340), input: shot({ weapon: "laser", x: 60, elevation: 45, power: 72, wind: -10 }) },
+  { name: "レーザー弾 平地 直撃", mask: flatMask, players: two(60, 72), input: shot({ weapon: "laser", x: 60, elevation: 10, power: 40, wind: 0 }) },
   { name: "掘削弾 平地 直撃", mask: flatMask, players: two(60, 72), input: shot({ weapon: "digger", x: 60, elevation: 10, power: 40, wind: 0 }) },
   { name: "浮遊弾 谷 向かい風 10", mask: valleyMask, players: two(60, 340), input: shot({ weapon: "floater", x: 60, elevation: 45, power: 72, wind: -10 }) },
   { name: "針弾 平地 直撃", mask: flatMask, players: two(60, 72), input: shot({ weapon: "stinger", x: 60, elevation: 10, power: 40, wind: 0 }) },
@@ -44,13 +50,13 @@ export const GOLDEN_CASES: readonly GoldenCase[] = [
 export type GoldenRecord = {
   readonly name: string;
   readonly result: ShotResult;
-  readonly steps: number;
-  readonly last: FixedPoint | undefined;
+  /** 弾道ごとの歩数と最後の位置。弾道の数だけ並ぶ */
+  readonly paths: readonly { readonly steps: number; readonly last: FixedPoint | undefined }[];
 };
 
 export const runGolden = (c: GoldenCase): GoldenRecord => {
   const out = simulateShot(c.mask(), c.players, c.input);
-  return { name: c.name, result: out.result, steps: out.path.length, last: out.path[out.path.length - 1] };
+  return { name: c.name, result: out.result, paths: out.paths.map((p) => ({ steps: p.points.length, last: p.points[p.points.length - 1] })) };
 };
 
 /** 全ケースの結果を JSON 文字列にする。環境を越えて比べるための形 */

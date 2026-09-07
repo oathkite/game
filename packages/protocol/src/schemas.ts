@@ -1,6 +1,6 @@
 import { z } from "zod";
 import { MAP_NAMES, MAP_WIDTH, MAX_MESSAGE_BYTES, NICKNAME_MAX, PLAYER_COLORS, ROOM_CODE_ALPHABET, ROOM_CODE_LENGTH, ROOM_TITLE_MAX } from "./constants.js";
-import { MAIN_WEAPON_IDS, SUB_WEAPON_IDS, WEAPON_SLOTS } from "./weapons.js";
+import { isValidLoadout, WEAPON_IDS } from "./weapons.js";
 
 // クライアントからサーバーへ届くメッセージの Zod スキーマ。設計書 05 の 5.2。
 // サーバーは受信したすべてのメッセージをこれで検証する。
@@ -15,12 +15,12 @@ export const tankColorsSchema = z.object({
   secondary: playerColorSchema,
 });
 
-export const loadoutSchema = z.object({
-  main: z.enum(MAIN_WEAPON_IDS),
-  sub: z.enum(SUB_WEAPON_IDS),
-});
+const weaponIdSchema = z.enum(WEAPON_IDS);
 
-export const weaponSlotSchema = z.enum(WEAPON_SLOTS);
+/** 2 つの武器。同じ武器を 2 つは選べない（設計書 10 の 10.1） */
+export const loadoutSchema = z.tuple([weaponIdSchema, weaponIdSchema]).readonly().refine(isValidLoadout, "同じ武器を 2 つは選べない");
+
+export const weaponSlotSchema = z.union([z.literal(0), z.literal(1)]);
 
 /** 1 文字以上 12 文字以下。前後の空白は落とし、空白のみと制御文字は不可 */
 export const nicknameSchema = z

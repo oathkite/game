@@ -1,14 +1,33 @@
-import type { CellPoint, Seat } from "@game/protocol";
-import { isRingOut, MAP_HEIGHT, ONE, surfaceY, tiltOf, type TerrainMask } from "@game/sim";
+import type { CellPoint, Impact, Seat } from "@game/protocol";
+import { carve, isRingOut, MAP_HEIGHT, ONE, surfaceY, tiltOf, weaponSpec, type ProjectilePath, type TerrainMask } from "@game/sim";
 import type { SoundName } from "@/app/audio";
 import type { PlayerView, ReplayJob } from "@/match/types";
-import { blastFrameAt, CARVE_AT_MS, damageLabelText, damageSounds, damageTier, debrisAt, flashMsOf, hpBarAt, missMarkAt, shakeOffsetAt } from "./hitFeedback";
+import {
+  blastFrameAt,
+  CARVE_AT_MS,
+  damageLabelText,
+  damageSounds,
+  damageTier,
+  debrisAt,
+  flashMsOf,
+  hpBarAt,
+  IMPACT_TOTAL_MS,
+  impactTimeMs,
+  launchDelayMs,
+  MISS_MS,
+  missMarkAt,
+  projectileFrameAt,
+  shakeOffsetAt,
+  STEP_MS,
+} from "./hitFeedback";
 import type { ProjectileView } from "./projectileView";
 import type { Renderer } from "./renderer";
 import type { TankPose } from "./tankView";
+import { trailStep } from "./weaponArt";
 
 // 射撃結果の再生。設計書 03 の 3.9。弾道は 1 ステップ 1/60 秒で進め、着弾で弾を一瞬止め、爆風の膨張、地形の削り、落下を順に描く。
-// 着弾の時間の流れは hitFeedback.ts が決める。
+// 1 発の射撃に弾道は複数（扇）、着弾も複数（段）ありうる（設計書 10）。弾道はそれぞれの発射の遅れから、着弾はそれぞれの時刻から独立に演出し、
+// 地形と HP は着弾が削れた順に積み上げる。着弾の時間の流れは hitFeedback.ts が決める。
 
 export type ReplayCallbacks = {
   readonly sound: (name: SoundName) => void;
@@ -17,29 +36,51 @@ export type ReplayCallbacks = {
   readonly reduceMotion: boolean;
 };
 
-const STEP_MS = 1000 / 60;
 /** 落下の速さ（セル/秒） */
 const FALL_CELLS_PER_S = 90;
 
 type Fall = { readonly seat: Seat; readonly from: number; readonly to: number };
 
-type Phase = "flight" | "blast" | "fall" | "done";
+type Phase = "shot" | "fall" | "done";
+
+/** HP バーの減り。減る前の値から後の値へ、at から減らしていく */
+type Drain = { readonly before: number; readonly after: number; readonly at: number };
+
+/** 着弾 1 つの再生の状態 */
+type ImpactRun = {
+  readonly impact: Impact;
+  readonly key: string;
+  /** 再生の開始からこの着弾までの時間 */
+  readonly at: number;
+  exploded: boolean;
+  carved: boolean;
+};
 
 /** 再生 1 回分の可変状態 */
 type Run = {
   readonly renderer: Renderer;
   readonly job: ReplayJob;
-  readonly projectile: ProjectileView;
+  readonly view: ProjectileView;
   readonly elevations: readonly [number, number];
   readonly mySeat: Seat | null;
   readonly cb: ReplayCallbacks;
   readonly falls: readonly Fall[];
+  /** 弾道ごとの発射の遅れ */
+  readonly launchAt: readonly number[];
+  readonly impacts: readonly ImpactRun[];
+  readonly trailEvery: number;
   phase: Phase;
   elapsed: number;
   phaseStart: number;
-  trailIndex: number;
-  /** 爆風の膨張が終わり、地形を削って被弾を見せたか */
-  carved: boolean;
+  /** 弾道ごとに、尾を置いた最後の添字 */
+  readonly trailIndex: number[];
+  /** 着弾で削られていく地形 */
+  mask: TerrainMask;
+  /** 着弾で減っていく HP */
+  hp: [number, number];
+  readonly flashUntil: [number, number];
+  readonly drains: [Drain | null, Drain | null];
+  shake: { readonly at: number; readonly damage: readonly [number, number] } | null;
   stopFrames: () => void;
 };
 
@@ -71,11 +112,24 @@ const computeFalls = (job: ReplayJob): Fall[] => {
   return falls;
 };
 
+/** 弾道ごとの発射の遅れと、着弾ごとの時刻。弾道の位置列はクライアントの再計算から得る */
+const timeline = (job: ReplayJob): { launchAt: number[]; impacts: ImpactRun[] } => {
+  const fanCount = weaponSpec(job.shot.input.weapon).fanDeg.length;
+  const launchAt = job.paths.map((_, p) => launchDelayMs(p, fanCount));
+  const impacts = job.shot.impacts.map((impact) => {
+    const path = job.paths[impact.projectile];
+    const at = (launchAt[impact.projectile] ?? 0) + impactTimeMs(impact.stage, path?.impactAt ?? []);
+    return { impact, key: `${impact.projectile}/${impact.stage}`, at, exploded: false, carved: false };
+  });
+  return { launchAt, impacts };
+};
+
 /** 着弾後の位置で、地形は着弾前のまま描く。落下前の姿勢。HP バーは削れてからの時間で減らしていく */
-const poseAfterHit = (run: Run, seat: Seat, flash: boolean, sinceCarve: number): TankPose => {
+const poseAfterHit = (run: Run, seat: Seat, flash: boolean): TankPose => {
   const before = run.job.playersBefore[seat];
   const after = run.job.playersAfter[seat];
-  const bar = hpBarAt(sinceCarve, before.hp, after.hp);
+  const drain = run.drains[seat];
+  const bar = drain ? hpBarAt(run.elapsed - drain.at, drain.before, drain.after) : { hp: run.hp[seat], hpGhost: run.hp[seat], ghostOn: false };
   return poseOf({ ...before, hp: bar.hp, x: after.x, facing: after.facing }, run.job.maskBefore, elevationOf(run, seat), {
     flash,
     hpGhost: bar.hpGhost,
@@ -86,7 +140,7 @@ const poseAfterHit = (run: Run, seat: Seat, flash: boolean, sinceCarve: number):
 const finish = (run: Run): void => {
   if (run.phase === "done") return;
   run.phase = "done";
-  run.projectile.clear();
+  run.view.clear();
   for (const seat of [0, 1] as const) run.renderer.setTank(seat, poseOf(run.job.playersAfter[seat], run.job.maskAfter, elevationOf(run, seat)));
   run.renderer.setShake({ dx: 0, dy: 0 });
   run.stopFrames();
@@ -96,113 +150,119 @@ const finish = (run: Run): void => {
 const enterFall = (run: Run): void => {
   run.phase = "fall";
   run.phaseStart = run.elapsed;
-  run.projectile.clear();
+  run.view.clear();
+  run.renderer.setTerrain(run.job.maskAfter);
   for (const seat of [0, 1] as const) {
     run.renderer.setTank(seat, poseOf(run.job.playersAfter[seat], run.job.maskBefore, elevationOf(run, seat), { visible: true }));
   }
   if (run.falls.length === 0) finish(run);
 };
 
-/** 飛行の最後の向き。静止中の弾を飛んできた向きのまま描くために使う */
-const lastFlightAngle = (path: ReplayJob["path"]): number => {
-  const a = path[path.length - 2];
-  const b = path[path.length - 1];
+/** 位置列の添字 i 付近の進む向き。静止中の弾も飛んできた向きのまま描く */
+const angleAt = (points: ProjectilePath["points"], i: number): number => {
+  const k = Math.min(points.length - 1, Math.max(1, Math.ceil(i)));
+  const a = points[k - 1];
+  const b = points[k];
   return a && b ? Math.atan2(b.y - a.y, b.x - a.x) : 0;
 };
 
-/** 着弾。弾を着弾点に止め、爆発音を鳴らす。地形はまだ削らない */
-const enterBlast = (run: Run): void => {
-  run.phase = "blast";
-  run.phaseStart = run.elapsed;
-  const { shot } = run.job;
-  run.projectile.setBullet(null, 0, 0);
-  // 外れは印だけを出す。stepMiss が時間で消して落下へ進める
-  if (!shot.impact) return;
-  run.projectile.setBullet(shot.impact.x + 0.5, shot.impact.y + 0.5, lastFlightAngle(run.job.path));
-  run.cb.sound("explosion");
-};
+const cellOfPoint = (p: { readonly x: number; readonly y: number }): CellPoint => ({ x: Math.floor(p.x / ONE), y: Math.floor(p.y / ONE) });
 
-/** 弾が最後にいた位置（セル） */
-const lastCell = (path: ReplayJob["path"]): CellPoint => {
-  const p = path[path.length - 1];
-  return p ? { x: Math.floor(p.x / ONE), y: Math.floor(p.y / ONE) } : { x: 0, y: 0 };
-};
-
-/** 外れ。弾が消えた位置をマップの端に寄せて短く印を出す */
-const stepMiss = (run: Run, t: number): void => {
-  const mark = missMarkAt(t, lastCell(run.job.path));
-  if (!mark) {
-    // 印は enterFall の clear で消える
-    enterFall(run);
+/** 弾道 p の弾の位置と尾。発射前は隠す。着弾が 1 つも無い弾道は、消えた位置に外れの印を出す */
+const updateBullet = (run: Run, p: number): void => {
+  const path = run.job.paths[p];
+  const t = run.elapsed - (run.launchAt[p] ?? 0);
+  if (!path || t < 0) {
+    run.view.setBullet(p, null, 0, 0);
     return;
   }
-  run.projectile.setMissMark(mark.x, mark.y, mark.on);
-};
-
-/** 爆風が最大に達した瞬間。地形を削り、被弾した機体を白くし、被弾と手応えの音を鳴らす */
-const carve = (run: Run): void => {
-  run.carved = true;
-  const { shot } = run.job;
-  run.renderer.setTerrain(run.job.maskAfter);
-  const shooterColor = run.job.playersBefore[shot.input.seat].colors.primary;
-  for (const seat of [0, 1] as const) {
-    const damage = shot.damage[seat];
-    run.renderer.setTank(seat, poseAfterHit(run, seat, damage > 0, 0));
-    if (damage > 0) run.renderer.showDamage(seat, damageLabelText(damage), shooterColor, damageTier(damage) === 3);
-  }
-  for (const name of damageSounds(shot, run.mySeat)) run.cb.sound(name);
-};
-
-const stepFlight = (run: Run): void => {
-  const { path } = run.job;
-  const t = run.elapsed / STEP_MS;
-  const i = Math.floor(t);
-  if (i >= path.length - 1) {
-    enterBlast(run);
+  const points = path.points;
+  const frame = projectileFrameAt(t, path.impactAt, points.length);
+  const last = points[points.length - 1];
+  if (frame.ended && last) {
+    run.view.setBullet(p, null, 0, 0);
+    const mark = path.impactAt.length === 0 ? missMarkAt(t - (points.length - 1) * STEP_MS, cellOfPoint(last)) : null;
+    run.view.setMissMark(`miss/${p}`, mark ? mark.x : null, mark?.y ?? 0, mark?.on ?? false);
     return;
   }
-  const a = path[i];
-  const b = path[i + 1];
+  const i = Math.floor(frame.index);
+  const a = points[i];
+  const b = points[i + 1] ?? a;
   if (!a || !b) return;
-  const f = t - i;
-  run.projectile.setBullet((a.x + (b.x - a.x) * f) / ONE, (a.y + (b.y - a.y) * f) / ONE, Math.atan2(b.y - a.y, b.x - a.x));
-  // 尾は 1 セル置きに残す
-  while (run.trailIndex + 2 <= i) {
-    run.trailIndex += 2;
-    const p = path[run.trailIndex];
-    if (p) run.projectile.addTrail(Math.floor(p.x / ONE), Math.floor(p.y / ONE));
+  const f = frame.index - i;
+  run.view.setBullet(p, (a.x + (b.x - a.x) * f) / ONE, (a.y + (b.y - a.y) * f) / ONE, angleAt(points, frame.holding ? i : frame.index));
+  if (run.trailEvery === 0) return;
+  while ((run.trailIndex[p] ?? 0) + run.trailEvery <= i) {
+    const next = (run.trailIndex[p] ?? 0) + run.trailEvery;
+    run.trailIndex[p] = next;
+    const q = points[next];
+    if (q) run.view.addTrail(Math.floor(q.x / ONE), Math.floor(q.y / ONE));
   }
 };
 
-/** 削れてからの被弾の見せ方。白はダメージが大きいほど長く続き、HP バーは減っていき、画面が揺れる */
-const updateHits = (run: Run, sinceCarve: number): void => {
-  const { shot } = run.job;
+/** 爆風が最大に達した瞬間。地形を削り、被弾した機体を白くし、HP を減らし始め、被弾と手応えの音を鳴らす */
+const carveImpact = (run: Run, ir: ImpactRun): void => {
+  ir.carved = true;
+  const { impact } = ir;
+  run.mask = carve(run.mask, impact.terrainOp);
+  run.renderer.setTerrain(run.mask);
+  const shooter = run.job.shot.input.seat;
+  const shooterColor = run.job.playersBefore[shooter].colors.primary;
+  const hpBefore: [number, number] = [run.hp[0], run.hp[1]];
+  run.hp = [run.hp[0] - impact.damage[0], run.hp[1] - impact.damage[1]];
   for (const seat of [0, 1] as const) {
-    const damage = shot.damage[seat];
-    if (damage > 0) run.renderer.setTank(seat, poseAfterHit(run, seat, sinceCarve < flashMsOf(damage), sinceCarve));
+    const damage = impact.damage[seat];
+    if (damage <= 0) continue;
+    // 減り始めの値は、前の着弾の減りが途中なら今見えている値
+    const prev = run.drains[seat];
+    const shown = prev ? hpBarAt(run.elapsed - prev.at, prev.before, prev.after).hp : hpBefore[seat];
+    run.drains[seat] = { before: shown, after: run.hp[seat], at: run.elapsed };
+    run.flashUntil[seat] = Math.max(run.flashUntil[seat], run.elapsed + flashMsOf(damage));
+    run.renderer.showDamage(seat, damageLabelText(damage), shooterColor, damageTier(damage) === 3);
   }
-  if (!run.cb.reduceMotion) run.renderer.setShake(shakeOffsetAt(sinceCarve, shot.damage));
+  if (impact.damage[0] > 0 || impact.damage[1] > 0) run.shake = { at: run.elapsed, damage: impact.damage };
+  for (const name of damageSounds(impact.damage, hpBefore, run.hp, shooter, run.mySeat)) run.cb.sound(name);
 };
 
-const stepBlast = (run: Run): void => {
-  const t = run.elapsed - run.phaseStart;
-  const { impact } = run.job.shot;
-  if (!impact) {
-    stepMiss(run, t);
-    return;
+/** 着弾 1 つの爆風と破片。時刻が来るまでは何も描かない */
+const updateImpact = (run: Run, ir: ImpactRun): void => {
+  const t = run.elapsed - ir.at;
+  if (t < 0) return;
+  if (!ir.exploded) {
+    ir.exploded = true;
+    run.cb.sound("explosion");
   }
-  const frame = blastFrameAt(t, run.job.shot.terrainOp?.radius);
-  if (!frame) {
-    enterFall(run);
-    return;
+  const { cell, terrainOp } = ir.impact;
+  const frame = blastFrameAt(t, terrainOp.radius);
+  run.view.setBlast(ir.key, frame ? cell.x : null, cell.y, frame?.radius ?? 0, frame?.on ?? false, frame?.ring ?? false);
+  if (frame?.carved && !ir.carved) carveImpact(run, ir);
+  if (ir.carved) run.view.setDebris(ir.key, debrisAt(t - CARVE_AT_MS, cell, terrainOp.radius));
+};
+
+/** 被弾の見せ方。白はダメージが大きいほど長く続き、HP バーは減っていき、画面が揺れる */
+const updateHits = (run: Run): void => {
+  for (const seat of [0, 1] as const) {
+    if (run.drains[seat]) run.renderer.setTank(seat, poseAfterHit(run, seat, run.elapsed < run.flashUntil[seat]));
   }
-  if (!frame.hold) run.projectile.setBullet(null, 0, 0);
-  run.projectile.setBlast(impact.x, impact.y, frame.radius, frame.on, frame.ring);
-  if (frame.carved && !run.carved) carve(run);
-  if (run.carved) {
-    updateHits(run, t - CARVE_AT_MS);
-    run.projectile.setDebris(debrisAt(t - CARVE_AT_MS, impact));
-  }
+  if (run.cb.reduceMotion) return;
+  run.renderer.setShake(run.shake ? shakeOffsetAt(run.elapsed - run.shake.at, run.shake.damage) : { dx: 0, dy: 0 });
+};
+
+/** すべての弾道が終わり、すべての着弾の演出と外れの印が消えたか */
+const shotDone = (run: Run): boolean => {
+  const impactsDone = run.impacts.every((ir) => run.elapsed - ir.at >= IMPACT_TOTAL_MS);
+  const pathsDone = run.job.paths.every((path, p) => {
+    const flightMs = (run.launchAt[p] ?? 0) + impactTimeMs(path.impactAt.length, [...path.impactAt, path.points.length - 1]);
+    return run.elapsed >= flightMs + (path.impactAt.length === 0 ? MISS_MS : 0);
+  });
+  return impactsDone && pathsDone;
+};
+
+const stepShot = (run: Run): void => {
+  for (let p = 0; p < run.job.paths.length; p++) updateBullet(run, p);
+  for (const ir of run.impacts) updateImpact(run, ir);
+  updateHits(run);
+  if (shotDone(run)) enterFall(run);
 };
 
 const stepFall = (run: Run): void => {
@@ -218,8 +278,7 @@ const stepFall = (run: Run): void => {
 
 const stepFrame = (run: Run, deltaMs: number): void => {
   run.elapsed += deltaMs;
-  if (run.phase === "flight") stepFlight(run);
-  else if (run.phase === "blast") stepBlast(run);
+  if (run.phase === "shot") stepShot(run);
   else if (run.phase === "fall") stepFall(run);
 };
 
@@ -232,19 +291,27 @@ export const playReplay = (
   cb: ReplayCallbacks,
 ): (() => void) => {
   const shooter = job.playersBefore[job.shot.input.seat];
+  const { launchAt, impacts } = timeline(job);
   const run: Run = {
     renderer,
     job,
-    projectile: renderer.projectile(shooter.colors.primary, job.shot.input.weapon),
+    view: renderer.projectile(shooter.colors.primary, job.shot.input.weapon),
     elevations,
     mySeat,
     cb,
     falls: computeFalls(job),
-    phase: "flight",
+    launchAt,
+    impacts,
+    trailEvery: trailStep(job.shot.input.weapon),
+    phase: "shot",
     elapsed: 0,
     phaseStart: 0,
-    trailIndex: 0,
-    carved: false,
+    trailIndex: job.paths.map(() => 0),
+    mask: job.maskBefore,
+    hp: [job.playersBefore[0].hp, job.playersBefore[1].hp],
+    flashUntil: [0, 0],
+    drains: [null, null],
+    shake: null,
     stopFrames: () => {},
   };
   for (const seat of [0, 1] as const) renderer.setTank(seat, poseOf(job.playersBefore[seat], job.maskBefore, elevationOf(run, seat)));
@@ -255,7 +322,7 @@ export const playReplay = (
   return () => {
     if (run.phase === "done") return;
     run.phase = "done";
-    run.projectile.clear();
+    run.view.clear();
     run.renderer.setShake({ dx: 0, dy: 0 });
     run.stopFrames();
   };

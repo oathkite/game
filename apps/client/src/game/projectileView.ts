@@ -1,79 +1,124 @@
 import type { CellPoint, WeaponId } from "@game/protocol";
 import { Container, Graphics } from "pixi.js";
-import { bulletSize } from "./weaponArt";
+import { bulletSize, type BulletSize } from "./weaponArt";
 
-// 弾、飛行中の尾、爆風。設計書 08 の 8.6、10 の 10.5。単位はセル。弾の大きさは武器で変わり、尾と爆風は変わらない。
+// 弾、飛行中の尾、爆風、破片、外れの印。設計書 08 の 8.6、10 の 10.5。単位はセル。
+// 1 発の射撃に弾は複数（扇）、爆風も複数（弾道 × 段）ありうるので、弾は添字で、爆風と破片と印は鍵で持つ。
 
 export type ProjectileView = {
   readonly container: Container;
-  readonly setBullet: (x: number | null, y: number, angle: number) => void;
+  /** 弾道 index の弾。x が null なら隠す */
+  readonly setBullet: (index: number, x: number | null, y: number, angle: number) => void;
   readonly addTrail: (cx: number, cy: number) => void;
   readonly clear: () => void;
-  /** 爆風。半径 r の円をセルで塗る。ring なら縁の 1 セルだけを残す。on が偽なら消す */
-  readonly setBlast: (cx: number | null, cy: number, r: number, on: boolean, ring?: boolean) => void;
+  /** 爆風。半径 r の円をセルで塗る。ring なら縁の 1 セルだけを残す。cx が null か on が偽なら消す */
+  readonly setBlast: (key: string, cx: number | null, cy: number, r: number, on: boolean, ring?: boolean) => void;
   /** 破片。1 セルの正方形を格子に揃えて置く */
-  readonly setDebris: (cells: readonly CellPoint[]) => void;
-  /** 外れの印。中心のセルと上下左右の 4 セルを塗る十字。on が偽なら消す */
-  readonly setMissMark: (cx: number, cy: number, on: boolean) => void;
+  readonly setDebris: (key: string, cells: readonly CellPoint[]) => void;
+  /** 外れの印。中心のセルと上下左右の 4 セルを塗る十字。cx が null か on が偽なら消す */
+  readonly setMissMark: (key: string, cx: number | null, cy: number, on: boolean) => void;
   readonly destroy: () => void;
+};
+
+/** 鍵ごとに Graphics を持つ層。無い鍵は作る */
+const keyedLayer = (parent: Container) => {
+  const map = new Map<string, Graphics>();
+  return {
+    get: (key: string): Graphics => {
+      const found = map.get(key);
+      if (found) return found;
+      const g = new Graphics();
+      map.set(key, g);
+      parent.addChild(g);
+      return g;
+    },
+    clear: () => {
+      for (const g of map.values()) g.clear();
+    },
+  };
+};
+
+const drawBlast = (g: Graphics, color: number, cx: number, cy: number, r: number, ring: boolean): void => {
+  const r2 = r * r;
+  const inner = ring ? (r - 1) * (r - 1) : -1;
+  for (let dy = -r; dy <= r; dy++) {
+    for (let dx = -r; dx <= r; dx++) {
+      const d2 = dx * dx + dy * dy;
+      if (d2 <= r2 && d2 > inner) g.rect(cx + dx, cy + dy, 1, 1);
+    }
+  }
+  g.fill(color);
+};
+
+/** 弾の列。弾道の数だけ矩形を持ち、足りなければ作る */
+const bulletPool = (parent: Container, size: BulletSize, color: number) => {
+  const list: Graphics[] = [];
+  return (index: number): Graphics => {
+    while (list.length <= index) {
+      const g = new Graphics().rect(-size.w / 2, -size.h / 2, size.w, size.h).fill(color);
+      g.visible = false;
+      parent.addChild(g);
+      list.push(g);
+    }
+    return list[index] as Graphics;
+  };
+};
+
+const drawMissMark = (g: Graphics, color: number, cx: number, cy: number): void => {
+  g.rect(cx, cy, 1, 1).rect(cx - 1, cy, 1, 1).rect(cx + 1, cy, 1, 1).rect(cx, cy - 1, 1, 1).rect(cx, cy + 1, 1, 1).fill(color);
 };
 
 export const createProjectileView = (color: number, weapon: WeaponId): ProjectileView => {
   const container = new Container();
   const trail = new Graphics();
-  const bullet = new Graphics();
-  const size = bulletSize(weapon);
-  bullet.rect(-size.w / 2, -size.h / 2, size.w, size.h).fill(color);
-  bullet.visible = false;
-  const blast = new Graphics();
-  const debris = new Graphics();
-  const miss = new Graphics();
-  container.addChild(trail, blast, debris, miss, bullet);
+  const blasts = new Container();
+  const debris = new Container();
+  const misses = new Container();
+  const bullets = new Container();
+  container.addChild(trail, blasts, debris, misses, bullets);
+  const blastLayer = keyedLayer(blasts);
+  const debrisLayer = keyedLayer(debris);
+  const missLayer = keyedLayer(misses);
+  const bulletAt = bulletPool(bullets, bulletSize(weapon), color);
 
   return {
     container,
-    setBullet: (x, y, angle) => {
-      if (x === null) {
-        bullet.visible = false;
-        return;
-      }
-      bullet.visible = true;
-      bullet.position.set(x, y);
-      bullet.rotation = angle;
+    setBullet: (index, x, y, angle) => {
+      const g = bulletAt(index);
+      g.visible = x !== null;
+      if (x === null) return;
+      g.position.set(x, y);
+      g.rotation = angle;
     },
     addTrail: (cx, cy) => {
       trail.rect(cx, cy, 1, 1).fill(color);
     },
     clear: () => {
       trail.clear();
-      blast.clear();
-      debris.clear();
-      miss.clear();
-      bullet.visible = false;
+      blastLayer.clear();
+      debrisLayer.clear();
+      missLayer.clear();
+      bullets.children.forEach((g) => {
+        g.visible = false;
+      });
     },
-    setBlast: (cx, cy, r, on, ring = false) => {
-      blast.clear();
+    setBlast: (key, cx, cy, r, on, ring = false) => {
+      const g = blastLayer.get(key);
+      g.clear();
       if (cx === null || !on || r <= 0) return;
-      const r2 = r * r;
-      const inner = ring ? (r - 1) * (r - 1) : -1;
-      for (let dy = -r; dy <= r; dy++) {
-        for (let dx = -r; dx <= r; dx++) {
-          const d2 = dx * dx + dy * dy;
-          if (d2 <= r2 && d2 > inner) blast.rect(cx + dx, cy + dy, 1, 1);
-        }
-      }
-      blast.fill(color);
+      drawBlast(g, color, cx, cy, r, ring);
     },
-    setDebris: (cells) => {
-      debris.clear();
+    setDebris: (key, cells) => {
+      const g = debrisLayer.get(key);
+      g.clear();
       if (cells.length === 0) return;
-      for (const c of cells) debris.rect(c.x, c.y, 1, 1);
-      debris.fill(color);
+      for (const c of cells) g.rect(c.x, c.y, 1, 1);
+      g.fill(color);
     },
-    setMissMark: (cx, cy, on) => {
-      miss.clear();
-      if (!on) return;
-      miss.rect(cx, cy, 1, 1).rect(cx - 1, cy, 1, 1).rect(cx + 1, cy, 1, 1).rect(cx, cy - 1, 1, 1).rect(cx, cy + 1, 1, 1).fill(color);
+    setMissMark: (key, cx, cy, on) => {
+      const g = missLayer.get(key);
+      g.clear();
+      if (cx !== null && on) drawMissMark(g, color, cx, cy);
     },
     destroy: () => container.destroy({ children: true }),
   };

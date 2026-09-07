@@ -1,8 +1,8 @@
 import { describe, expect, it } from "vitest";
-import { parseClientMessage, roomCodeSchema } from "../src/index.js";
+import { parseClientMessage, parseLoadout, roomCodeSchema } from "../src/index.js";
 
 const fire = (over: Record<string, unknown> = {}): string =>
-  JSON.stringify({ type: "turn.fire", slot: "main", facing: 1, elevation: 45, power: 60, x: 100, ...over });
+  JSON.stringify({ type: "turn.fire", slot: 0, facing: 1, elevation: 45, power: 60, x: 100, ...over });
 
 describe("parseClientMessage", () => {
   it("正しい turn.fire を受け付ける", () => {
@@ -32,7 +32,7 @@ describe("parseClientMessage", () => {
   it("プレイヤー名の前後の空白は落とし、制御文字は拒否する", () => {
     const join = (nickname: string) =>
       parseClientMessage(
-        JSON.stringify({ type: "room.join", code: "ABCDEF", playerId: "player-0001", nickname, colors: { primary: "red", secondary: "red" }, loadout: { main: "cannon", sub: "digger" } }),
+        JSON.stringify({ type: "room.join", code: "ABCDEF", playerId: "player-0001", nickname, colors: { primary: "red", secondary: "red" }, loadout: ["cannon", "digger"] }),
       );
     const ok = join("  bob ");
     expect(ok.ok && ok.message.type === "room.join" && ok.message.nickname).toBe("bob");
@@ -55,7 +55,7 @@ describe("parseClientMessage", () => {
       playerId: "player-0001",
       nickname: "   ",
       colors: { primary: "red", secondary: "red" },
-      loadout: { main: "cannon", sub: "digger" },
+      loadout: ["cannon", "digger"],
     });
     expect(parseClientMessage(raw).ok).toBe(false);
   });
@@ -78,5 +78,27 @@ describe("roomCodeSchema", () => {
     expect(roomCodeSchema.safeParse("ABCDEI").success).toBe(false);
     expect(roomCodeSchema.safeParse("ABCDE1").success).toBe(false);
     expect(roomCodeSchema.safeParse("ABCDE2").success).toBe(true);
+  });
+});
+
+describe("parseLoadout", () => {
+  it("武器 2 つの組を読み、最初の版のメインとサブの対も読み替える", () => {
+    expect(parseLoadout(["cannon", "stinger"])).toEqual(["cannon", "stinger"]);
+    expect(parseLoadout({ main: "cannon", sub: "stinger" })).toEqual(["cannon", "stinger"]);
+  });
+
+  it("削除した武器、同じ武器 2 つ、形の違う値は null", () => {
+    expect(parseLoadout({ main: "heavy", sub: "stinger" })).toBeNull();
+    expect(parseLoadout(["cannon", "cannon"])).toBeNull();
+    expect(parseLoadout(["cannon"])).toBeNull();
+    expect(parseLoadout("cannon")).toBeNull();
+    expect(parseLoadout(null)).toBeNull();
+  });
+
+  it("スキーマも同じ武器 2 つの装備を拒否する", () => {
+    const msg = (loadout: unknown) => JSON.stringify({ type: "room.takeSeat", colors: { primary: "red", secondary: "red" }, loadout });
+    expect(parseClientMessage(msg(["cannon", "digger"])).ok).toBe(true);
+    expect(parseClientMessage(msg(["cannon", "cannon"])).ok).toBe(false);
+    expect(parseClientMessage(msg({ main: "cannon", sub: "digger" })).ok).toBe(false);
   });
 });
