@@ -1,11 +1,12 @@
 import { getMap } from "@game/maps";
-import type { MapName, PlayerState, Seat, ServerMessageOf, TankColors } from "@game/protocol";
+import type { Loadout, MapName, PlayerState, Seat, ServerMessageOf, TankColors } from "@game/protocol";
 import { HP_MAX } from "@game/sim";
 import type { EngineConfig, EngineState } from "./types.js";
 
 export type MatchPlayerSpec = {
   readonly nickname: string;
   readonly colors: TankColors;
+  readonly loadout: Loadout;
 };
 
 export type CreateParams = {
@@ -26,6 +27,7 @@ export const createEngine = (config: EngineConfig, params: CreateParams): Engine
     seat,
     nickname: params.players[seat].nickname,
     colors: params.players[seat].colors,
+    loadout: params.players[seat].loadout,
     hp: HP_MAX,
     x: spawnOf(seat),
     // 対戦開始時は相手側を向く
@@ -68,7 +70,7 @@ export const createEngine = (config: EngineConfig, params: CreateParams): Engine
 /** match.setup の内容。createEngine の直後に両席へ送る */
 export const setupMessage = (state: EngineState): ServerMessageOf<"match.setup"> => {
   const [p0, p1] = state.match.players;
-  const spec = (p: PlayerState) => ({ seat: p.seat, nickname: p.nickname, colors: p.colors, x: p.x });
+  const spec = (p: PlayerState) => ({ seat: p.seat, nickname: p.nickname, colors: p.colors, loadout: p.loadout, x: p.x });
   return {
     type: "match.setup",
     mapName: state.match.mapName,

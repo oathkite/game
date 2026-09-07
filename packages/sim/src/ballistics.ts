@@ -2,9 +2,6 @@ import type { CellPoint, Facing, Seat, ShotResult, TerrainOp, TrajectoryInput } 
 import {
   BARREL_BASE_UP,
   BARREL_LENGTH,
-  BLAST_RADIUS,
-  DAMAGE_MAX,
-  DAMAGE_PER_CELL,
   GRAVITY,
   MAX_SPEED,
   MAX_STEPS,
@@ -17,8 +14,10 @@ import {
 import { cellOf, cosFixed, isqrt, mulFixed, sinFixed } from "./fixed.js";
 import { isRingOut, tankCenterY, tiltOf } from "./tank.js";
 import { carve, isSolid, surfaceY, type TerrainMask } from "./terrain.js";
+import { scalePercent, weaponSpec, type WeaponSpec } from "./weapons.js";
 
 // 弾道と着弾の処理。設計書 06 の 6.7 決定論の契約に従い、整数と固定小数点だけを使う。
+// 爆風半径、ダメージ、初速と重力と風の倍率は武器ごとに違う（設計書 10）。入力の weapon から引く。
 
 export type Combatant = {
   readonly x: number;
@@ -108,10 +107,12 @@ export type Trace = {
   readonly path: readonly FixedPoint[];
 };
 
-/** 弾道を追い、着弾セルか消失（null）を返す */
+/** 弾道を追い、着弾セルか消失（null）を返す。初速、重力、風の作用は武器の倍率を掛けてから使う */
 export const traceShot = (mask: TerrainMask, centers: readonly CellPoint[], input: TrajectoryInput): Trace => {
+  const spec = weaponSpec(input.weapon);
   const muzzle = muzzleOf(mask, input.x, input.facing, input.elevation);
-  const speed = Math.trunc((MAX_SPEED * input.power) / POWER_MAX);
+  const speed = Math.trunc((scalePercent(MAX_SPEED, spec.speedPercent) * input.power) / POWER_MAX);
+  const gravity = scalePercent(GRAVITY, spec.gravityPercent);
   let vx = mulFixed(speed, cosFixed(muzzle.angle));
   let vy = -mulFixed(speed, sinFixed(muzzle.angle));
   let px = muzzle.position.x;
@@ -121,10 +122,10 @@ export const traceShot = (mask: TerrainMask, centers: readonly CellPoint[], inpu
   const first = checkCell(mask, prev, centers);
   if (first === "impact") return { impact: prev, path: [cellCenter(prev)] };
   if (first === "vanish") return { impact: null, path };
-  const windAccel = WIND_ACCEL_PER_UNIT * input.wind;
+  const windAccel = scalePercent(WIND_ACCEL_PER_UNIT, spec.windPercent) * input.wind;
   for (let step = 0; step < MAX_STEPS; step++) {
     vx += windAccel;
-    vy += GRAVITY;
+    vy += gravity;
     px += vx;
     py += vy;
     const next: CellPoint = { x: cellOf(px), y: cellOf(py) };
@@ -142,13 +143,13 @@ export const traceShot = (mask: TerrainMask, centers: readonly CellPoint[], inpu
   return { impact: null, path };
 };
 
-/** 着弾距離（爆心から判定円までのセル数）に対するダメージ */
-export const damageAt = (impact: CellPoint, center: CellPoint): number => {
+/** 着弾距離（爆心から判定円までのセル数）に対するダメージ。武器を省けば標準砲 */
+export const damageAt = (impact: CellPoint, center: CellPoint, spec: WeaponSpec = weaponSpec("cannon")): number => {
   const dx = impact.x - center.x;
   const dy = impact.y - center.y;
   const dist = Math.max(0, isqrt(dx * dx + dy * dy) - TANK_RADIUS);
-  if (dist > BLAST_RADIUS) return 0;
-  return DAMAGE_MAX - DAMAGE_PER_CELL * dist;
+  if (dist > spec.blastRadius) return 0;
+  return Math.max(0, spec.damageMax - spec.damagePerCell * dist);
 };
 
 type Finish = ShotResult["finished"];
@@ -206,10 +207,11 @@ export const simulateShot = (
       result: { input, impact: null, terrainOp: null, damage: [0, 0], hpAfter: hp, xAfter: xs, ringOut, finished: judge(hp, ringOut) },
     };
   }
-  const terrainOp: TerrainOp = { cx: trace.impact.x, cy: trace.impact.y, radius: BLAST_RADIUS };
+  const spec = weaponSpec(input.weapon);
+  const terrainOp: TerrainOp = { cx: trace.impact.x, cy: trace.impact.y, radius: spec.blastRadius };
   const next = carve(mask, terrainOp);
   const damageFor = (seat: Seat): number =>
-    isRingOut(mask, xs[seat]) ? 0 : damageAt(trace.impact as CellPoint, { x: xs[seat], y: tankCenterY(mask, xs[seat]) });
+    isRingOut(mask, xs[seat]) ? 0 : damageAt(trace.impact as CellPoint, { x: xs[seat], y: tankCenterY(mask, xs[seat]) }, spec);
   const damage: readonly [number, number] = [damageFor(0), damageFor(1)];
   const hpAfter: readonly [number, number] = [hp[0] - damage[0], hp[1] - damage[1]];
   const ringOut = ringOuts(next, xs);

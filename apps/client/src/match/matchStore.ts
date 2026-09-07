@@ -1,8 +1,8 @@
-import type { Facing, Seat } from "@game/protocol";
+import type { Facing, Seat, WeaponSlot } from "@game/protocol";
 import { STEPS_PER_TURN } from "@game/sim";
 import { createListeners } from "@/net/connection";
 import type { Connection } from "@/net/connection";
-import { applyElevation, applyStep, canStep as canStepView } from "./control";
+import { applyElevation, applySlot, applyStep, canStep as canStepView } from "./control";
 import { reduce, type ReduceOptions } from "./reduce";
 import { EMPTY_VIEW, type LocalControl, type MatchView } from "./types";
 
@@ -15,6 +15,8 @@ export type MatchStore = {
   readonly changeElevation: (delta: number) => void;
   /** dir 方向に 1 歩進めるか。進めなければボタンを暗くする */
   readonly canStep: (dir: Facing) => boolean;
+  /** このターンに撃つ武器のスロットを選ぶ */
+  readonly selectSlot: (slot: WeaponSlot) => void;
   readonly fire: (power: number) => void;
   readonly completeReplay: (id: number) => void;
   readonly surrender: () => void;
@@ -58,10 +60,15 @@ export const createMatchStore = (connection: Connection, initialOptions: ReduceO
     if (next !== view) set(next);
   };
 
+  const selectSlot = (slot: WeaponSlot): void => {
+    const next = applySlot(view, slot);
+    if (next !== view) set(next);
+  };
+
   const fire = (power: number): void => {
     const c = view.control;
     if (view.phase !== "acting" || !c) return;
-    connection.send({ type: "turn.fire", facing: c.facing, elevation: c.elevation, power, x: c.x });
+    connection.send({ type: "turn.fire", slot: c.slot, facing: c.facing, elevation: c.elevation, power, x: c.x });
     set({ ...view, phase: "fired" });
   };
 
@@ -87,7 +94,7 @@ export const createMatchStore = (connection: Connection, initialOptions: ReduceO
     const acting = seat !== null && !spectator && view.currentSeat === seat && view.deadlineAt !== null && (view.phase === "waiting" || view.phase === "acting");
     const player = view.players?.[seat ?? 0];
     const control: LocalControl | null =
-      acting && player ? { x: player.x, facing: player.facing, elevation: view.lastElevation, stepsLeft: STEPS_PER_TURN, fell: false } : null;
+      acting && player ? { x: player.x, facing: player.facing, elevation: view.lastElevation, slot: view.lastSlot, stepsLeft: STEPS_PER_TURN, fell: false } : null;
     set({ ...view, mySeat: seat, spectator, phase: acting ? "acting" : view.phase === "acting" ? "waiting" : view.phase, control: acting ? control : view.phase === "acting" ? null : view.control });
   };
 
@@ -97,6 +104,7 @@ export const createMatchStore = (connection: Connection, initialOptions: ReduceO
     setSeat,
     moveStep,
     changeElevation,
+    selectSlot,
     canStep: (dir) => canStepView(view, dir),
     fire,
     completeReplay,

@@ -1,7 +1,8 @@
-import type { CellPoint } from "@game/protocol";
+import type { CellPoint, WeaponId } from "@game/protocol";
 import { Container, Graphics } from "pixi.js";
+import { bulletSize } from "./weaponArt";
 
-// 弾、飛行中の尾、爆風。設計書 08 の 8.6。単位はセル。
+// 弾、飛行中の尾、爆風。設計書 08 の 8.6、10 の 10.5。単位はセル。弾の大きさは武器で変わり、尾と爆風は変わらない。
 
 export type ProjectileView = {
   readonly container: Container;
@@ -17,11 +18,12 @@ export type ProjectileView = {
   readonly destroy: () => void;
 };
 
-export const createProjectileView = (color: number): ProjectileView => {
+export const createProjectileView = (color: number, weapon: WeaponId): ProjectileView => {
   const container = new Container();
   const trail = new Graphics();
   const bullet = new Graphics();
-  bullet.rect(-0.5, -0.5, 1, 1).fill(color);
+  const size = bulletSize(weapon);
+  bullet.rect(-size.w / 2, -size.h / 2, size.w, size.h).fill(color);
   bullet.visible = false;
   const blast = new Graphics();
   const debris = new Graphics();

@@ -17,8 +17,8 @@ const engine = () =>
       roomCode: "ABCDEF",
       mapName: "valley",
       players: [
-        { nickname: "a", colors: { primary: "red", secondary: "red" } },
-        { nickname: "b", colors: { primary: "blue", secondary: "blue" } },
+        { nickname: "a", colors: { primary: "red", secondary: "red" }, loadout: { main: "cannon", sub: "digger" } },
+        { nickname: "b", colors: { primary: "blue", secondary: "blue" }, loadout: { main: "heavy", sub: "floater" } },
       ],
     },
   );
@@ -63,7 +63,7 @@ describe("reduce", () => {
     const s1 = handle(state, { type: "loaded", seat: 0 }, 0);
     const s2 = handle(s1.state, { type: "loaded", seat: 1 }, 0);
     const start = s2.effects[0]?.message as ServerMessageOf<"turn.start">;
-    const fired = handle(s2.state, { type: "fire", seat: 0, fire: { type: "turn.fire", facing: 1, elevation: 45, power: 60, x: 75 } }, 1000);
+    const fired = handle(s2.state, { type: "fire", seat: 0, fire: { type: "turn.fire", slot: "main", facing: 1, elevation: 45, power: 60, x: 75 } }, 1000);
     const result = fired.effects[0]?.message as ServerMessageOf<"turn.result">;
     const before = apply(EMPTY_VIEW, [setup, start]);
     const r = reduce(before, result, opts, 3);
@@ -78,7 +78,7 @@ describe("reduce", () => {
     const s1 = handle(state, { type: "loaded", seat: 0 }, 0);
     const s2 = handle(s1.state, { type: "loaded", seat: 1 }, 0);
     const start = s2.effects[0]?.message as ServerMessageOf<"turn.start">;
-    const fired = handle(s2.state, { type: "fire", seat: 0, fire: { type: "turn.fire", facing: 1, elevation: 45, power: 60, x: 75 } }, 1000);
+    const fired = handle(s2.state, { type: "fire", seat: 0, fire: { type: "turn.fire", slot: "main", facing: 1, elevation: 45, power: 60, x: 75 } }, 1000);
     const result = fired.effects[0]?.message as ServerMessageOf<"turn.result">;
     const tampered: ServerMessageOf<"turn.result"> = { ...result, shot: { ...result.shot, hpAfter: [100, 1] } };
     const before = apply(EMPTY_VIEW, [setup, start]);
@@ -102,7 +102,7 @@ describe("reduce", () => {
     const s1 = handle(state, { type: "loaded", seat: 0 }, 0);
     const s2 = handle(s1.state, { type: "loaded", seat: 1 }, 0);
     const start = s2.effects[0]?.message as ServerMessageOf<"turn.start">;
-    const fired = handle(s2.state, { type: "fire", seat: 0, fire: { type: "turn.fire", facing: 1, elevation: 45, power: 60, x: 75 } }, 1000);
+    const fired = handle(s2.state, { type: "fire", seat: 0, fire: { type: "turn.fire", slot: "main", facing: 1, elevation: 45, power: 60, x: 75 } }, 1000);
     const result = fired.effects[0]?.message as ServerMessageOf<"turn.result">;
     const finished: ServerMessage = {
       type: "match.finished",
@@ -125,7 +125,7 @@ describe("reduce", () => {
   it("conn.state から地形と状態を復元する", () => {
     const s1 = handle(state, { type: "loaded", seat: 0 }, 0);
     const s2 = handle(s1.state, { type: "loaded", seat: 1 }, 0);
-    const fired = handle(s2.state, { type: "fire", seat: 0, fire: { type: "turn.fire", facing: 1, elevation: 45, power: 60, x: 75 } }, 1000);
+    const fired = handle(s2.state, { type: "fire", seat: 0, fire: { type: "turn.fire", slot: "main", facing: 1, elevation: 45, power: 60, x: 75 } }, 1000);
     const view = apply(EMPTY_VIEW, [{ type: "conn.state", match: fired.state.match, seat: 1 }], { ...opts, mySeat: 1 });
     expect(view.mask).not.toBeNull();
     expect(view.mySeat).toBe(1);
@@ -140,7 +140,7 @@ describe("reduce", () => {
     const s1 = handle(state, { type: "loaded", seat: 0 }, 0);
     const s2 = handle(s1.state, { type: "loaded", seat: 1 }, 0);
     const start = s2.effects[0]?.message as ServerMessageOf<"turn.start">;
-    const fired = handle(s2.state, { type: "fire", seat: 0, fire: { type: "turn.fire", facing: 1, elevation: 45, power: 60, x: 60 } }, 1000);
+    const fired = handle(s2.state, { type: "fire", seat: 0, fire: { type: "turn.fire", slot: "main", facing: 1, elevation: 45, power: 60, x: 60 } }, 1000);
     const result = fired.effects[0]?.message as ServerMessageOf<"turn.result">;
     const next = handle(fired.state, { type: "tick" }, 12_000);
     const start2 = next.effects[0]?.message as ServerMessageOf<"turn.start">;
@@ -155,7 +155,7 @@ describe("reduce", () => {
   it("Replaying の途中に再接続したら、送り直された turn.result は再生せず replayDone を返す", () => {
     const s1 = handle(state, { type: "loaded", seat: 0 }, 0);
     const s2 = handle(s1.state, { type: "loaded", seat: 1 }, 0);
-    const fired = handle(s2.state, { type: "fire", seat: 0, fire: { type: "turn.fire", facing: 1, elevation: 45, power: 60, x: 75 } }, 1000);
+    const fired = handle(s2.state, { type: "fire", seat: 0, fire: { type: "turn.fire", slot: "main", facing: 1, elevation: 45, power: 60, x: 75 } }, 1000);
     const dropped = handle(fired.state, { type: "disconnect", seat: 1 }, 1500);
     const back = handle(dropped.state, { type: "reconnect", seat: 1 }, 2000);
     const toMe = back.effects.filter((e) => e.to === 1).map((e) => e.message);
@@ -196,7 +196,7 @@ describe("reduce", () => {
     const aimed = applyElevation(mine, 25);
     expect(aimed.lastElevation).toBe(70);
 
-    const fired = handle(s2.state, { type: "fire", seat: 0, fire: { type: "turn.fire", facing: 1, elevation: 70, power: 60, x: 75 } }, 1000);
+    const fired = handle(s2.state, { type: "fire", seat: 0, fire: { type: "turn.fire", slot: "main", facing: 1, elevation: 70, power: 60, x: 75 } }, 1000);
     const result = fired.effects[0]?.message as ServerMessageOf<"turn.result">;
     const next = handle(fired.state, { type: "tick" }, 12_000);
     const opponentTurn = next.effects[0]?.message as ServerMessageOf<"turn.start">;

@@ -37,6 +37,12 @@ const shotOf = (seat: 0 | 1, damage: readonly [number, number], hpAfter: readonl
   }) as unknown as ShotResult;
 
 describe("blastFrameAt", () => {
+  it("武器の爆風半径を渡すと、その半径まで広がって止まる", () => {
+    expect(blastFrameAt(CARVE_AT_MS, 16)).toMatchObject({ radius: 16, carved: true });
+    expect(blastFrameAt(CARVE_AT_MS, 3)).toMatchObject({ radius: 3, carved: true });
+    expect(blastFrameAt(HOLD_MS, 16)).toMatchObject({ radius: BLAST_MIN_RADIUS });
+  });
+
   it("着弾の直後は弾を止め、爆風を描かない", () => {
     expect(blastFrameAt(0)).toEqual({ hold: true, radius: 0, ring: false, on: false, carved: false });
     expect(blastFrameAt(HOLD_MS - 1)?.hold).toBe(true);

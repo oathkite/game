@@ -1,3 +1,4 @@
+import type { WeaponId } from "./weapons.js";
 // 設計書 06 データモデルの型。sim と server と client が共有する。
 // ここでは対戦に関わる型だけを置き、部屋やメッセージの型はサーバー実装時に足す。
 
@@ -27,6 +28,8 @@ export type Wind = {
 
 export type TrajectoryInput = {
   readonly seat: Seat;
+  /** 使った武器。弾道と爆風とダメージの数値を決める（設計書 10） */
+  readonly weapon: WeaponId;
   /** 移動後の機体中心 x（整数セル） */
   readonly x: number;
   readonly facing: Facing;

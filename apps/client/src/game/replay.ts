@@ -191,7 +191,7 @@ const stepBlast = (run: Run): void => {
     stepMiss(run, t);
     return;
   }
-  const frame = blastFrameAt(t);
+  const frame = blastFrameAt(t, run.job.shot.terrainOp?.radius);
   if (!frame) {
     enterFall(run);
     return;
@@ -235,7 +235,7 @@ export const playReplay = (
   const run: Run = {
     renderer,
     job,
-    projectile: renderer.projectile(shooter.colors.primary),
+    projectile: renderer.projectile(shooter.colors.primary, job.shot.input.weapon),
     elevations,
     mySeat,
     cb,

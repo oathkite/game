@@ -51,11 +51,25 @@ export const GameScreen = ({ store, clockOffset, profile, onProfileChange, onSur
   // マップをなぞっても移動と仰角を変えられる。十字キーが押しにくい小さな画面のため
   const swipe = useSwipeAim(acting, { moveStep: store.moveStep, changeElevation: store.changeElevation });
 
-  useKeyboardInput(holds, gauge);
+  const slot = view.control?.slot ?? view.lastSlot;
+  useKeyboardInput(holds, gauge, () => store.selectSlot(slot === "main" ? "sub" : "main"));
 
   // 左右を入れ替えても同じ要素を動かすだけにするため key を付ける。マップ（PixiJS）を作り直さない
   const left = <LeftPanel key="left" view={view} store={store} width={layout.panelWidth} height={h} cell={layout.panelCell} holds={holds} />;
-  const right = <RightPanel key="right" width={layout.panelWidth} height={h} enabled={acting} gauge={gauge} onOpenOptions={() => setOptionsOpen(true)} />;
+  const me = view.mySeat !== null && !view.spectator && view.players ? view.players[view.mySeat] : null;
+  const right = (
+    <RightPanel
+      key="right"
+      width={layout.panelWidth}
+      height={h}
+      enabled={acting}
+      gauge={gauge}
+      onOpenOptions={() => setOptionsOpen(true)}
+      loadout={me?.loadout ?? null}
+      slot={slot}
+      onSelectSlot={store.selectSlot}
+    />
+  );
   // 離脱は設定メニューの中に置く。対戦中は降参、観戦なら退出。決着後は要らない
   const exitLabel = view.spectator ? "退出する" : view.phase === "finished" ? null : "降参する";
   const onExit = (): void => {

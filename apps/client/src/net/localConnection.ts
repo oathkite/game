@@ -1,5 +1,5 @@
 import { createEngine, createMatchHost, DEFAULT_ENGINE_TIMING, realClock, setupMessage, type MatchHost } from "@game/engine";
-import type { ClientMessage, MapName, ServerMessage, TankColors } from "@game/protocol";
+import type { ClientMessage, Loadout, MapName, ServerMessage, TankColors } from "@game/protocol";
 import { createListeners, type Connection, type ConnectionStatus } from "./connection";
 
 // solo モード。サーバーなしでエンジンをブラウザ内に置き、両席をひとりで操作する。
@@ -9,12 +9,20 @@ export type LocalMatchOptions = {
   readonly mapName: MapName;
   readonly nickname: string;
   readonly colors: TankColors;
+  readonly loadout: Loadout;
   readonly opponentColors: TankColors;
+  readonly opponentLoadout: Loadout;
 };
 
 const otherColors = (colors: TankColors): TankColors => (colors.primary === "cyan" ? { primary: "orange", secondary: "yellow" } : { primary: "cyan", secondary: "blue" });
 
 export const defaultOpponentColors = otherColors;
+
+/** 相手の装備は自分と違うものにして、絵と弾の違いを一人でも見られるようにする */
+export const defaultOpponentLoadout = (loadout: Loadout): Loadout => ({
+  main: loadout.main === "heavy" ? "sniper" : "heavy",
+  sub: loadout.sub === "floater" ? "stinger" : "floater",
+});
 
 export const createLocalConnection = (options: LocalMatchOptions): Connection => {
   const messages = createListeners<ServerMessage>();
@@ -35,8 +43,8 @@ export const createLocalConnection = (options: LocalMatchOptions): Connection =>
         roomCode: "SOLO00",
         mapName: options.mapName,
         players: [
-          { nickname: options.nickname || "P1", colors: options.colors },
-          { nickname: "P2", colors: options.opponentColors },
+          { nickname: options.nickname || "P1", colors: options.colors, loadout: options.loadout },
+          { nickname: "P2", colors: options.opponentColors, loadout: options.opponentLoadout },
         ],
       },
     );

@@ -1,3 +1,4 @@
+import { weaponOf } from "@game/protocol";
 import { simulateShot } from "@game/sim";
 import type { MatchView } from "@/match/types";
 
@@ -20,8 +21,9 @@ export const findRobustAim = (view: MatchView, tolerance = 2): Aim | null => {
   const opp = me === 0 ? 1 : 0;
   const [p0, p1] = view.players;
   const players = [{ x: p0.x, hp: p0.hp }, { x: p1.x, hp: p1.hp }] as const;
+  const weapon = weaponOf((me === 0 ? p0 : p1).loadout, c.slot);
   const damageOf = (elevation: number, power: number): number => {
-    const input = { seat: me, x: c.x, facing: c.facing, elevation, power, wind: view.wind.value };
+    const input = { seat: me, weapon, x: c.x, facing: c.facing, elevation, power, wind: view.wind.value };
     const r = simulateShot(view.mask as NonNullable<MatchView["mask"]>, players, input).result;
     return r.damage[opp] - r.damage[me];
   };

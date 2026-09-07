@@ -1,5 +1,6 @@
 import { z } from "zod";
 import { MAP_NAMES, MAP_WIDTH, MAX_MESSAGE_BYTES, NICKNAME_MAX, PLAYER_COLORS, ROOM_CODE_ALPHABET, ROOM_CODE_LENGTH, ROOM_TITLE_MAX } from "./constants.js";
+import { MAIN_WEAPON_IDS, SUB_WEAPON_IDS, WEAPON_SLOTS } from "./weapons.js";
 
 // クライアントからサーバーへ届くメッセージの Zod スキーマ。設計書 05 の 5.2。
 // サーバーは受信したすべてのメッセージをこれで検証する。
@@ -13,6 +14,13 @@ export const tankColorsSchema = z.object({
   primary: playerColorSchema,
   secondary: playerColorSchema,
 });
+
+export const loadoutSchema = z.object({
+  main: z.enum(MAIN_WEAPON_IDS),
+  sub: z.enum(SUB_WEAPON_IDS),
+});
+
+export const weaponSlotSchema = z.enum(WEAPON_SLOTS);
 
 /** 1 文字以上 12 文字以下。前後の空白は落とし、空白のみと制御文字は不可 */
 export const nicknameSchema = z
@@ -45,6 +53,7 @@ export const roomCreateSchema = z.object({
   playerId: playerIdSchema,
   nickname: nicknameSchema,
   colors: tankColorsSchema,
+  loadout: loadoutSchema,
   title: roomTitleSchema,
   isPublic: z.boolean(),
   mapName: mapNameSchema,
@@ -56,6 +65,7 @@ export const roomJoinSchema = z.object({
   playerId: playerIdSchema,
   nickname: nicknameSchema,
   colors: tankColorsSchema,
+  loadout: loadoutSchema,
 });
 
 export const roomSpectateSchema = z.object({
@@ -67,6 +77,7 @@ export const roomSpectateSchema = z.object({
 
 export const turnFireSchema = z.object({
   type: z.literal("turn.fire"),
+  slot: weaponSlotSchema,
   facing: facingSchema,
   elevation: z.number().int().min(10).max(90),
   power: z.number().int().min(0).max(100),
@@ -80,9 +91,9 @@ export const clientMessageSchema = z.discriminatedUnion("type", [
   roomCreateSchema,
   roomJoinSchema,
   roomSpectateSchema,
-  z.object({ type: z.literal("room.takeSeat"), colors: tankColorsSchema }),
+  z.object({ type: z.literal("room.takeSeat"), colors: tankColorsSchema, loadout: loadoutSchema }),
   z.object({ type: z.literal("room.ready"), ready: z.boolean() }),
-  z.object({ type: z.literal("room.profile"), nickname: nicknameSchema, colors: tankColorsSchema }),
+  z.object({ type: z.literal("room.profile"), nickname: nicknameSchema, colors: tankColorsSchema, loadout: loadoutSchema }),
   z.object({ type: z.literal("room.setMap"), mapName: mapNameSchema }),
   z.object({ type: z.literal("room.kick"), seat: seatSchema }),
   z.object({ type: z.literal("room.start") }),

@@ -35,23 +35,23 @@ export type BlastFrame = {
   readonly carved: boolean;
 };
 
-/** 着弾から t ミリ秒後の爆風の見え方。合計を過ぎたら null */
-export const blastFrameAt = (t: number): BlastFrame | null => {
+/** 着弾から t ミリ秒後の爆風の見え方。合計を過ぎたら null。最大半径は武器の爆風半径（省けば標準砲） */
+export const blastFrameAt = (t: number, blastRadius: number = BLAST_RADIUS): BlastFrame | null => {
   if (t >= IMPACT_TOTAL_MS) return null;
   if (t < HOLD_MS) return { hold: true, radius: 0, ring: false, on: false, carved: false };
   const e = t - HOLD_MS;
   if (e < EXPAND_MS) {
-    const radius = BLAST_MIN_RADIUS + Math.floor(((BLAST_RADIUS - BLAST_MIN_RADIUS) * e) / EXPAND_MS);
+    const radius = BLAST_MIN_RADIUS + Math.floor(((blastRadius - BLAST_MIN_RADIUS) * e) / EXPAND_MS);
     return { hold: false, radius, ring: false, on: true, carved: false };
   }
   const f = e - EXPAND_MS;
   if (f < FLICKER_MS) {
-    return { hold: false, radius: BLAST_RADIUS, ring: false, on: Math.floor(f / FLICKER_HALF_MS) % 2 === 0, carved: true };
+    return { hold: false, radius: blastRadius, ring: false, on: Math.floor(f / FLICKER_HALF_MS) % 2 === 0, carved: true };
   }
-  return { hold: false, radius: BLAST_RADIUS, ring: true, on: true, carved: true };
+  return { hold: false, radius: blastRadius, ring: true, on: true, carved: true };
 };
 
-/** ダメージの段階。0 は無傷、3 は直撃 */
+/** ダメージの段階。0 は無傷、3 は標準砲の直撃に相当する大ダメージ。武器ではなくダメージの値で決める（掘削弾の直撃は 2、針弾のかすりでも 3 になる） */
 export type DamageTier = 0 | 1 | 2 | 3;
 
 export const damageTier = (damage: number): DamageTier => {

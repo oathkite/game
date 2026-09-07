@@ -1,5 +1,6 @@
 import type { MAP_NAMES } from "./constants.js";
 import type { Facing, MatchResult, Seat, TankColors, TerrainOp, Wind } from "./match.js";
+import type { Loadout } from "./weapons.js";
 
 // 設計書 06 の 6.1 から 6.3。部屋と対戦の状態。
 
@@ -12,6 +13,7 @@ export type RoomMember = {
   readonly playerId: string;
   readonly nickname: string;
   readonly colors: TankColors;
+  readonly loadout: Loadout;
   readonly ready: boolean;
   readonly colorConflict: boolean;
   readonly joinOrder: number;
@@ -42,6 +44,7 @@ export type PlayerState = {
   readonly seat: Seat;
   readonly nickname: string;
   readonly colors: TankColors;
+  readonly loadout: Loadout;
   readonly hp: number;
   readonly x: number;
   readonly facing: Facing;

@@ -62,7 +62,7 @@ export const onConnectionOpen = (ctx: SessionContext, inviteCode: string | null)
   }
   if (inviteCode) {
     const p = ctx.profile();
-    ctx.conn.send({ type: "room.join", code: inviteCode, playerId: p.playerId, nickname: p.nickname, colors: p.colors });
+    ctx.conn.send({ type: "room.join", code: inviteCode, playerId: p.playerId, nickname: p.nickname, colors: p.colors, loadout: p.loadout });
     return;
   }
   enterLobby(ctx);

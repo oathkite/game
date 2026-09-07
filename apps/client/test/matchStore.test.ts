@@ -27,8 +27,8 @@ const startedEngine = (): { state: EngineState; setup: ServerMessage; start: Ser
       roomCode: "ABCDEF",
       mapName: "valley",
       players: [
-        { nickname: "a", colors: { primary: "red", secondary: "red" } },
-        { nickname: "b", colors: { primary: "blue", secondary: "blue" } },
+        { nickname: "a", colors: { primary: "red", secondary: "red" }, loadout: { main: "cannon", sub: "digger" } },
+        { nickname: "b", colors: { primary: "blue", secondary: "blue" }, loadout: { main: "heavy", sub: "floater" } },
       ],
     },
   );
@@ -98,11 +98,33 @@ describe("createMatchStore", () => {
     store.moveStep(1);
     store.changeElevation(5);
     store.fire(77);
-    expect(f.sent[1]).toEqual({ type: "turn.fire", facing: 1, elevation: 50, power: 77, x: 76 });
+    expect(f.sent[1]).toEqual({ type: "turn.fire", slot: "main", facing: 1, elevation: 50, power: 77, x: 76 });
     expect(store.getView().phase).toBe("fired");
     // 2 回目は送らない
     store.fire(50);
     expect(f.sent.length).toBe(2);
+    store.dispose();
+  });
+
+  it("サブを選んで撃つと slot: sub を送り、選択は次のターンにも引き継ぐ", () => {
+    const f = fakeConnection();
+    const store = createMatchStore(f.connection, { followCurrentSeat: false, mySeat: 0, spectator: false });
+    const e = startedEngine();
+    f.push(e.setup);
+    f.push(e.start);
+    expect(store.getView().control?.slot).toBe("main");
+    store.selectSlot("sub");
+    expect(store.getView().control?.slot).toBe("sub");
+    store.fire(40);
+    expect(f.sent[1]).toMatchObject({ type: "turn.fire", slot: "sub" });
+    // 相手の手番を挟んで自分の手番に戻っても、サブのまま
+    f.push({ ...e.start, turnNumber: 2, seat: 1 });
+    f.push({ ...e.start, turnNumber: 3, seat: 0 });
+    expect(store.getView().control?.slot).toBe("sub");
+    // 手番でないときは切り替えられない
+    f.push({ ...e.start, turnNumber: 4, seat: 1 });
+    store.selectSlot("main");
+    expect(store.getView().lastSlot).toBe("sub");
     store.dispose();
   });
 
@@ -112,7 +134,7 @@ describe("createMatchStore", () => {
     const e = startedEngine();
     f.push(e.setup);
     f.push(e.start);
-    const fired = handle(e.state, { type: "fire", seat: 0, fire: { type: "turn.fire", facing: 1, elevation: 45, power: 60, x: 75 } }, 1000);
+    const fired = handle(e.state, { type: "fire", seat: 0, fire: { type: "turn.fire", slot: "main", facing: 1, elevation: 45, power: 60, x: 75 } }, 1000);
     f.push(fired.effects[0]?.message as ServerMessage);
     const job = store.getView().replay;
     expect(job).not.toBeNull();
@@ -159,7 +181,7 @@ describe("createMatchStore", () => {
     f.push(e.setup);
     f.push(e.start);
     expect(store.getView().phase).toBe("waiting");
-    const fired = handle(e.state, { type: "fire", seat: 0, fire: { type: "turn.fire", facing: 1, elevation: 45, power: 60, x: 75 } }, 1000);
+    const fired = handle(e.state, { type: "fire", seat: 0, fire: { type: "turn.fire", slot: "main", facing: 1, elevation: 45, power: 60, x: 75 } }, 1000);
     f.push(fired.effects[0]?.message as ServerMessage);
     store.completeReplay(store.getView().replay?.id ?? -1);
     expect(f.sent.map((m) => m.type)).toEqual(["match.ready"]);
@@ -174,7 +196,7 @@ describe("createMatchStore", () => {
     f.push(e.start);
     store.changeElevation(12);
     store.fire(50);
-    const fired = handle(e.state, { type: "fire", seat: 0, fire: { type: "turn.fire", facing: 1, elevation: 57, power: 50, x: 75 } }, 1000);
+    const fired = handle(e.state, { type: "fire", seat: 0, fire: { type: "turn.fire", slot: "main", facing: 1, elevation: 57, power: 50, x: 75 } }, 1000);
     f.push(fired.effects[0]?.message as ServerMessage);
     store.completeReplay(store.getView().replay?.id ?? -1);
     // 相手のターンを飛ばして自分のターンへ

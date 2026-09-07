@@ -1,4 +1,4 @@
-import type { Facing } from "@game/protocol";
+import type { Facing, WeaponSlot } from "@game/protocol";
 import { ELEVATION_MAX, ELEVATION_MIN, stepOutcome } from "@game/sim";
 import type { MatchView } from "./types";
 
@@ -29,4 +29,11 @@ export const applyElevation = (view: MatchView, delta: number): MatchView => {
   const elevation = Math.min(ELEVATION_MAX, Math.max(ELEVATION_MIN, c.elevation + delta));
   if (elevation === c.elevation) return view;
   return { ...view, lastElevation: elevation, control: { ...c, elevation } };
+};
+
+/** 武器のスロットの選択。最後の値はターンをまたいで引き継ぐ（設計書 10 の 10.3） */
+export const applySlot = (view: MatchView, slot: WeaponSlot): MatchView => {
+  const c = view.control;
+  if (view.phase !== "acting" || !c || c.slot === slot) return view;
+  return { ...view, lastSlot: slot, control: { ...c, slot } };
 };

@@ -1,4 +1,5 @@
 import type { EngineState } from "@game/engine";
+import { DEFAULT_LOADOUT } from "@game/protocol";
 import type { TerrainMask } from "@game/sim";
 import { createServerState, type RoomRecord, type ServerConfig, type ServerState } from "./state.js";
 
@@ -45,12 +46,25 @@ export const serializeState = (state: ServerState): ServerStateJson => ({
   lobbyNotifiedAt: state.lobbyNotifiedAt,
 });
 
+/** 武器（設計書 10）を持たない古い保存には既定の装備を補う。保存済みの部屋を壊さないため */
+const withLoadout = <T extends { readonly loadout?: RoomRecord["members"][number]["loadout"] }>(p: T): T & { readonly loadout: RoomRecord["members"][number]["loadout"] } => ({
+  ...p,
+  loadout: p.loadout ?? DEFAULT_LOADOUT,
+});
+
+const engineFromJson = (j: EngineJson, engineConfig: EngineState["config"]): EngineState => ({
+  ...j,
+  config: engineConfig,
+  mask: maskFromJson(j.mask),
+  match: { ...j.match, players: [withLoadout(j.match.players[0]), withLoadout(j.match.players[1])] },
+});
+
 /** 保存した状態を戻す。config（乱数と時間）は保存しないので、呼び出し側が渡す */
 export const deserializeState = (json: ServerStateJson, config: ServerConfig, engineConfig: EngineState["config"]): ServerState => {
   const state = createServerState(config);
   for (const room of json.rooms) {
-    const engine: EngineState | null = room.engine ? { ...room.engine, config: engineConfig, mask: maskFromJson(room.engine.mask) } : null;
-    state.rooms.set(room.code, { ...room, engine });
+    const engine: EngineState | null = room.engine ? engineFromJson(room.engine, engineConfig) : null;
+    state.rooms.set(room.code, { ...room, members: room.members.map(withLoadout), engine });
   }
   for (const [id, c] of json.connections) state.connections.set(id, c);
   state.lobbyDirty = json.lobbyDirty;

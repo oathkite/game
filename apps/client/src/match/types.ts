@@ -1,4 +1,4 @@
-import { type Facing, type MatchResult, type Seat, type ShotResult, type TankColors, TURN_LIMIT, type Wind } from "@game/protocol";
+import { type Facing, type Loadout, type MatchResult, type Seat, type ShotResult, type TankColors, TURN_LIMIT, type WeaponSlot, type Wind } from "@game/protocol";
 import type { FixedPoint, TerrainMask } from "@game/sim";
 
 // クライアントが持つ対戦の表示状態。サーバーの通知から組み立て、勝手には進めない（設計書 04）。
@@ -7,6 +7,7 @@ export type PlayerView = {
   readonly seat: Seat;
   readonly nickname: string;
   readonly colors: TankColors;
+  readonly loadout: Loadout;
   readonly hp: number;
   readonly x: number;
   readonly facing: Facing;
@@ -30,6 +31,8 @@ export type LocalControl = {
   readonly x: number;
   readonly facing: Facing;
   readonly elevation: number;
+  /** このターンに撃つ武器のスロット（設計書 10） */
+  readonly slot: WeaponSlot;
   readonly stepsLeft: number;
   /** 落下で移動が終わった */
   readonly fell: boolean;
@@ -69,6 +72,8 @@ export type MatchView = {
   readonly skipNextResult: boolean;
   /** 最後に使った仰角。ターンをまたいで引き継ぐ */
   readonly lastElevation: number;
+  /** 最後に選んだ武器のスロット。ターンをまたいで引き継ぐ */
+  readonly lastSlot: WeaponSlot;
 };
 
 export const EMPTY_VIEW: MatchView = {
@@ -89,4 +94,5 @@ export const EMPTY_VIEW: MatchView = {
   mismatches: 0,
   skipNextResult: false,
   lastElevation: 45,
+  lastSlot: "main",
 };

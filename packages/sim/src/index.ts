@@ -27,3 +27,4 @@ export {
   type ShotOutcome,
   type Trace,
 } from "./ballistics.js";
+export { WEAPON_SPECS, scalePercent, weaponSpec, type WeaponSpec } from "./weapons.js";

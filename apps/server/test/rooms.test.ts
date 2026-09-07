@@ -1,3 +1,4 @@
+import { DEFAULT_LOADOUT } from "@game/protocol";
 import { describe, expect, it } from "vitest";
 import { BLUE, createMsg, harness, joinMsg, last, RED, sequenceRng, T0, types } from "./helpers.js";
 
@@ -60,9 +61,27 @@ describe("部屋の作成と入室", () => {
     h.send("b", { type: "room.ready", ready: true });
     expect(last(h.inbox("b"), "room.error")?.reason).toBe("colorConflict");
     // 色を変えれば ready にできる
-    h.send("b", { type: "room.profile", nickname: "bob", colors: BLUE });
+    h.send("b", { type: "room.profile", nickname: "bob", colors: BLUE, loadout: DEFAULT_LOADOUT });
     h.send("b", { type: "room.ready", ready: true });
     expect(last(h.inbox("a"), "room.state")?.room.members.find((m) => m.seat === 1)?.ready).toBe(true);
+  });
+
+  it("武器の変更は room.state に載り、ready を解除せず、対戦開始の match.setup に引き継がれる（設計書 10）", () => {
+    const h = harness();
+    h.open("a");
+    h.open("b");
+    h.send("a", createMsg("alice", RED));
+    const code = last(h.inbox("a"), "room.joined")?.code ?? "";
+    h.send("b", joinMsg(code, "bob", BLUE));
+    h.send("b", { type: "room.ready", ready: true });
+    h.send("b", { type: "room.profile", nickname: "bob", colors: BLUE, loadout: { main: "sniper", sub: "stinger" } });
+    const state = last(h.inbox("a"), "room.state");
+    expect(state?.room.members.find((m) => m.seat === 1)?.loadout).toEqual({ main: "sniper", sub: "stinger" });
+    expect(state?.room.members.find((m) => m.seat === 1)?.ready).toBe(true);
+    h.send("a", { type: "room.start" });
+    const setup = last(h.inbox("a"), "match.setup");
+    expect(setup?.players[0].loadout).toEqual(DEFAULT_LOADOUT);
+    expect(setup?.players[1].loadout).toEqual({ main: "sniper", sub: "stinger" });
   });
 
   it("オーナーは ready を持たない", () => {
@@ -93,13 +112,13 @@ describe("ready の解除と開始条件", () => {
     h.send("a", { type: "room.setMap", mapName: "island" });
     expect(readyOf(h, 1)).toBe(false);
     h.send("b", { type: "room.ready", ready: true });
-    h.send("b", { type: "room.profile", nickname: "bob", colors: { primary: "cyan", secondary: "blue" } });
+    h.send("b", { type: "room.profile", nickname: "bob", colors: { primary: "cyan", secondary: "blue" }, loadout: DEFAULT_LOADOUT });
     expect(readyOf(h, 1)).toBe(false);
   });
 
   it("副色の変更と観戦者の入退室では ready を解除しない", () => {
     const { h, code } = setup();
-    h.send("b", { type: "room.profile", nickname: "bob", colors: { primary: "blue", secondary: "pink" } });
+    h.send("b", { type: "room.profile", nickname: "bob", colors: { primary: "blue", secondary: "pink" }, loadout: DEFAULT_LOADOUT });
     expect(readyOf(h, 1)).toBe(true);
     h.open("s");
     h.send("s", { type: "room.spectate", code, playerId: "player-spec", nickname: "spec" });

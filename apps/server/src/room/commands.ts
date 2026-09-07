@@ -41,6 +41,7 @@ export const create = (state: ServerState, connId: ConnId, m: ClientMessageOf<"r
     token: generateToken(state.config.rng),
     nickname: m.nickname,
     colors: m.colors,
+    loadout: m.loadout,
     ready: false,
     joinOrder: 0,
     connId,
@@ -79,6 +80,7 @@ export const join = (state: ServerState, connId: ConnId, m: ClientMessageOf<"roo
     token: generateToken(state.config.rng),
     nickname: m.nickname,
     colors: m.colors,
+    loadout: m.loadout,
     ready: false,
     joinOrder: room.joinCounter,
     connId,
@@ -120,6 +122,7 @@ export const takeSeat = (state: ServerState, connId: ConnId, m: ClientMessageOf<
     token: spectator.token,
     nickname: spectator.nickname,
     colors: m.colors,
+    loadout: m.loadout,
     ready: false,
     joinOrder: room.joinCounter,
     connId,
@@ -161,8 +164,8 @@ export const profile = (state: ServerState, connId: ConnId, m: ClientMessageOf<"
     return broadcastState(next);
   }
   const primaryChanged = member.colors.primary !== m.colors.primary;
-  const updated = updateMember(room, member.seat, { nickname: m.nickname, colors: m.colors });
-  // 主色が変わったら全員の ready を解除する。副色だけなら解除しない
+  const updated = updateMember(room, member.seat, { nickname: m.nickname, colors: m.colors, loadout: m.loadout });
+  // 主色が変わったら全員の ready を解除する。副色と武器だけなら解除しない（設計書 10 の 10.4）
   const next = touch(primaryChanged ? resetReady(updated) : updated, now);
   put(state, next);
   return broadcastState(next);

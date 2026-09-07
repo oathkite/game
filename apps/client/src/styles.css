@@ -179,6 +179,45 @@ a {
   border-color: var(--ui);
 }
 
+/* 武器の選択。設計書 10 の 10.4。名前と一行の説明を縦に積む */
+.weapon-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 8px;
+}
+
+.weapon-cell {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 6px;
+  padding: 8px;
+  text-align: left;
+  line-height: 1.3;
+}
+
+.weapon-desc {
+  font-size: 12px;
+  opacity: 0.8;
+}
+
+/* 対戦中の武器の切り替え。右パネルのゲージの上に 2 段で置く */
+.weapon-switch {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.weapon-switch button {
+  padding: 4px;
+  font-size: 12px;
+  line-height: 1.2;
+  height: 36px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
 /* ゲーム画面 */
 .game-root {
   position: fixed;

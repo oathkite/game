@@ -25,6 +25,7 @@ exports[`golden replay > 上り坂 +45 度 1`] = `
       "facing": 1,
       "power": 60,
       "seat": 0,
+      "weapon": "cannon",
       "wind": 0,
       "x": 100,
     },
@@ -68,6 +69,7 @@ exports[`golden replay > 下り坂 -45 度 1`] = `
       "facing": 1,
       "power": 50,
       "seat": 0,
+      "weapon": "cannon",
       "wind": 0,
       "x": 100,
     },
@@ -111,6 +113,7 @@ exports[`golden replay > 壁の中で爆発 自爆 1`] = `
       "facing": 1,
       "power": 50,
       "seat": 0,
+      "weapon": "cannon",
       "wind": 0,
       "x": 100,
     },
@@ -151,6 +154,7 @@ exports[`golden replay > 平地 右端から右へ 消失 1`] = `
       "facing": 1,
       "power": 100,
       "seat": 0,
+      "weapon": "cannon",
       "wind": 0,
       "x": 390,
     },
@@ -190,6 +194,7 @@ exports[`golden replay > 平地 最小仰角 最小パワー 1`] = `
       "facing": 1,
       "power": 0,
       "seat": 0,
+      "weapon": "cannon",
       "wind": 0,
       "x": 60,
     },
@@ -233,6 +238,7 @@ exports[`golden replay > 平地 直撃 1`] = `
       "facing": 1,
       "power": 40,
       "seat": 0,
+      "weapon": "cannon",
       "wind": 0,
       "x": 60,
     },
@@ -276,6 +282,7 @@ exports[`golden replay > 平地 真上 最大パワー 1`] = `
       "facing": 1,
       "power": 100,
       "seat": 0,
+      "weapon": "cannon",
       "wind": 0,
       "x": 200,
     },
@@ -291,6 +298,50 @@ exports[`golden replay > 平地 真上 最大パワー 1`] = `
     ],
   },
   "steps": 176,
+}
+`;
+
+exports[`golden replay > 掘削弾 平地 直撃 1`] = `
+{
+  "last": {
+    "x": 4751360,
+    "y": 9469952,
+  },
+  "result": {
+    "damage": [
+      7,
+      16,
+    ],
+    "finished": null,
+    "hpAfter": [
+      93,
+      84,
+    ],
+    "impact": {
+      "x": 72,
+      "y": 144,
+    },
+    "input": {
+      "elevation": 10,
+      "facing": 1,
+      "power": 40,
+      "seat": 0,
+      "weapon": "digger",
+      "wind": 0,
+      "x": 60,
+    },
+    "ringOut": [],
+    "terrainOp": {
+      "cx": 72,
+      "cy": 144,
+      "radius": 16,
+    },
+    "xAfter": [
+      60,
+      72,
+    ],
+  },
+  "steps": 8,
 }
 `;
 
@@ -316,6 +367,7 @@ exports[`golden replay > 浮島 奈落へ 消失 1`] = `
       "facing": 1,
       "power": 30,
       "seat": 0,
+      "weapon": "cannon",
       "wind": 0,
       "x": 118,
     },
@@ -355,6 +407,7 @@ exports[`golden replay > 浮島 相手の足元を狙う 1`] = `
       "facing": 1,
       "power": 88,
       "seat": 0,
+      "weapon": "cannon",
       "wind": -2,
       "x": 80,
     },
@@ -370,6 +423,50 @@ exports[`golden replay > 浮島 相手の足元を狙う 1`] = `
     ],
   },
   "steps": 121,
+}
+`;
+
+exports[`golden replay > 浮遊弾 谷 向かい風 10 1`] = `
+{
+  "last": {
+    "x": 12091392,
+    "y": 12419072,
+  },
+  "result": {
+    "damage": [
+      0,
+      0,
+    ],
+    "finished": null,
+    "hpAfter": [
+      100,
+      100,
+    ],
+    "impact": {
+      "x": 184,
+      "y": 189,
+    },
+    "input": {
+      "elevation": 45,
+      "facing": 1,
+      "power": 72,
+      "seat": 0,
+      "weapon": "floater",
+      "wind": -10,
+      "x": 60,
+    },
+    "ringOut": [],
+    "terrainOp": {
+      "cx": 184,
+      "cy": 189,
+      "radius": 8,
+    },
+    "xAfter": [
+      60,
+      340,
+    ],
+  },
+  "steps": 160,
 }
 `;
 
@@ -398,6 +495,7 @@ exports[`golden replay > 谷 向かい風 10 1`] = `
       "facing": 1,
       "power": 72,
       "seat": 0,
+      "weapon": "cannon",
       "wind": -10,
       "x": 60,
     },
@@ -441,6 +539,7 @@ exports[`golden replay > 谷 基本の直接射撃 1`] = `
       "facing": 1,
       "power": 72,
       "seat": 0,
+      "weapon": "cannon",
       "wind": 0,
       "x": 60,
     },
@@ -484,6 +583,7 @@ exports[`golden replay > 谷 山越えの高角度 1`] = `
       "facing": 1,
       "power": 100,
       "seat": 0,
+      "weapon": "cannon",
       "wind": 3,
       "x": 60,
     },
@@ -527,6 +627,7 @@ exports[`golden replay > 谷 左向きから 1`] = `
       "facing": -1,
       "power": 72,
       "seat": 0,
+      "weapon": "cannon",
       "wind": 0,
       "x": 340,
     },
@@ -570,6 +671,7 @@ exports[`golden replay > 谷 追い風 10 1`] = `
       "facing": 1,
       "power": 72,
       "seat": 0,
+      "weapon": "cannon",
       "wind": 10,
       "x": 60,
     },
@@ -585,5 +687,137 @@ exports[`golden replay > 谷 追い風 10 1`] = `
     ],
   },
   "steps": 103,
+}
+`;
+
+exports[`golden replay > 重砲 谷 基本の直接射撃 1`] = `
+{
+  "last": {
+    "x": 14254080,
+    "y": 12419072,
+  },
+  "result": {
+    "damage": [
+      0,
+      0,
+    ],
+    "finished": null,
+    "hpAfter": [
+      100,
+      100,
+    ],
+    "impact": {
+      "x": 217,
+      "y": 189,
+    },
+    "input": {
+      "elevation": 45,
+      "facing": 1,
+      "power": 72,
+      "seat": 0,
+      "weapon": "heavy",
+      "wind": 0,
+      "x": 60,
+    },
+    "ringOut": [],
+    "terrainOp": {
+      "cx": 217,
+      "cy": 189,
+      "radius": 13,
+    },
+    "xAfter": [
+      60,
+      340,
+    ],
+  },
+  "steps": 104,
+}
+`;
+
+exports[`golden replay > 針弾 平地 直撃 1`] = `
+{
+  "last": {
+    "x": 4751360,
+    "y": 9469952,
+  },
+  "result": {
+    "damage": [
+      0,
+      55,
+    ],
+    "finished": null,
+    "hpAfter": [
+      100,
+      45,
+    ],
+    "impact": {
+      "x": 72,
+      "y": 144,
+    },
+    "input": {
+      "elevation": 10,
+      "facing": 1,
+      "power": 40,
+      "seat": 0,
+      "weapon": "stinger",
+      "wind": 0,
+      "x": 60,
+    },
+    "ringOut": [],
+    "terrainOp": {
+      "cx": 72,
+      "cy": 144,
+      "radius": 3,
+    },
+    "xAfter": [
+      60,
+      72,
+    ],
+  },
+  "steps": 7,
+}
+`;
+
+exports[`golden replay > 長砲 谷 追い風 10 1`] = `
+{
+  "last": {
+    "x": 18907136,
+    "y": 9338880,
+  },
+  "result": {
+    "damage": [
+      0,
+      0,
+    ],
+    "finished": null,
+    "hpAfter": [
+      100,
+      100,
+    ],
+    "impact": {
+      "x": 288,
+      "y": 142,
+    },
+    "input": {
+      "elevation": 45,
+      "facing": 1,
+      "power": 72,
+      "seat": 0,
+      "weapon": "sniper",
+      "wind": 10,
+      "x": 60,
+    },
+    "ringOut": [],
+    "terrainOp": {
+      "cx": 288,
+      "cy": 142,
+      "radius": 6,
+    },
+    "xAfter": [
+      60,
+      340,
+    ],
+  },
+  "steps": 107,
 }
 `;

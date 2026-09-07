@@ -22,6 +22,7 @@ export const toRoomState = (room: RoomRecord): RoomState => ({
       playerId: m.playerId,
       nickname: m.nickname,
       colors: m.colors,
+      loadout: m.loadout,
       ready: m.ready,
       colorConflict: hasColorConflict(room, m),
       joinOrder: m.joinOrder,

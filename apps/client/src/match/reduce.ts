@@ -1,5 +1,5 @@
 import { getMap } from "@game/maps";
-import type { MatchState, Seat, ServerMessage, ShotResult } from "@game/protocol";
+import type { MatchState, Seat, ServerMessage, ShotResult, WeaponSlot } from "@game/protocol";
 import { applyOps, ELEVATION_MAX, ELEVATION_MIN, simulateShot, STEPS_PER_TURN } from "@game/sim";
 import { EMPTY_VIEW, type LocalControl, type MatchView, type PlayerView, type ReplayJob } from "./types";
 
@@ -23,10 +23,11 @@ const otherSeat = (seat: Seat): Seat => (seat === 0 ? 1 : 0);
 
 const just = (view: MatchView, reply: Reduced["reply"] = null, mismatch = false): Reduced => ({ view, reply, mismatch });
 
-const freshControl = (player: PlayerView, elevation: number): LocalControl => ({
+const freshControl = (player: PlayerView, elevation: number, slot: WeaponSlot): LocalControl => ({
   x: player.x,
   facing: player.facing,
   elevation: Math.min(ELEVATION_MAX, Math.max(ELEVATION_MIN, elevation)),
+  slot,
   stepsLeft: STEPS_PER_TURN,
   fell: false,
 });
@@ -49,7 +50,7 @@ const fromMatchState = (view: MatchView, match: MatchState, seat: Seat | null, o
     deadlineAt: match.deadlineAt,
     result: match.result,
     phase: match.phase === "finished" ? "finished" : match.phase === "loading" ? "loading" : match.phase === "replaying" ? "waiting" : acting ? "acting" : "waiting",
-    control: acting ? freshControl(players[match.currentSeat], view.lastElevation) : null,
+    control: acting ? freshControl(players[match.currentSeat], view.lastElevation, view.lastSlot) : null,
     replay: null,
     // 送り直される turn.result は再生せず、確定状態に直行する（設計書 05 の 5.3）
     skipNextResult: match.phase === "replaying",
@@ -123,7 +124,7 @@ export const reduce = (view: MatchView, message: ServerMessage, options: ReduceO
         turnNumber: message.turnNumber,
         wind: message.wind,
         deadlineAt: message.deadlineAt,
-        control: acting ? freshControl(settled.players[message.seat], settled.lastElevation) : null,
+        control: acting ? freshControl(settled.players[message.seat], settled.lastElevation, settled.lastSlot) : null,
         skipNextResult: false,
       });
     }
