@@ -33,6 +33,12 @@ export const GOLDEN_CASES: readonly GoldenCase[] = [
   { name: "壁の中で爆発 自爆", mask: () => wallMask(104, 130), players: two(100, 300), input: shot({ x: 100, elevation: 10, power: 50, wind: 0 }) },
   { name: "浮島 奈落へ 消失", mask: islandMask, players: two(60, 340), input: shot({ x: 118, elevation: 10, power: 30, wind: 0 }) },
   { name: "浮島 相手の足元を狙う", mask: islandMask, players: two(80, 300), input: shot({ x: 80, elevation: 50, power: 88, wind: -2 }) },
+  // 武器ごとの弾道（設計書 10）。標準砲と同じ入力で撃ち、初速、重力、風、爆風、ダメージの違いを記録する
+  { name: "重砲 谷 基本の直接射撃", mask: valleyMask, players: two(60, 340), input: shot({ weapon: "heavy", x: 60, elevation: 45, power: 72, wind: 0 }) },
+  { name: "長砲 谷 追い風 10", mask: valleyMask, players: two(60, 340), input: shot({ weapon: "sniper", x: 60, elevation: 45, power: 72, wind: 10 }) },
+  { name: "掘削弾 平地 直撃", mask: flatMask, players: two(60, 72), input: shot({ weapon: "digger", x: 60, elevation: 10, power: 40, wind: 0 }) },
+  { name: "浮遊弾 谷 向かい風 10", mask: valleyMask, players: two(60, 340), input: shot({ weapon: "floater", x: 60, elevation: 45, power: 72, wind: -10 }) },
+  { name: "針弾 平地 直撃", mask: flatMask, players: two(60, 72), input: shot({ weapon: "stinger", x: 60, elevation: 10, power: 40, wind: 0 }) },
 ];
 
 export type GoldenRecord = {

@@ -2,7 +2,7 @@ import { describe, expect, it } from "vitest";
 import { parseClientMessage, roomCodeSchema } from "../src/index.js";
 
 const fire = (over: Record<string, unknown> = {}): string =>
-  JSON.stringify({ type: "turn.fire", facing: 1, elevation: 45, power: 60, x: 100, ...over });
+  JSON.stringify({ type: "turn.fire", slot: "main", facing: 1, elevation: 45, power: 60, x: 100, ...over });
 
 describe("parseClientMessage", () => {
   it("正しい turn.fire を受け付ける", () => {
@@ -19,6 +19,8 @@ describe("parseClientMessage", () => {
     ["パワーの上限超過", fire({ power: 101 })],
     ["向きが 0", fire({ facing: 0 })],
     ["x がマップ外", fire({ x: 400 })],
+    ["スロットが候補にない", fire({ slot: "tertiary" })],
+    ["スロットがない", fire({ slot: undefined })],
   ])("%s は拒否する", (_name, raw) => {
     expect(parseClientMessage(raw).ok).toBe(false);
   });
@@ -29,7 +31,9 @@ describe("parseClientMessage", () => {
 
   it("プレイヤー名の前後の空白は落とし、制御文字は拒否する", () => {
     const join = (nickname: string) =>
-      parseClientMessage(JSON.stringify({ type: "room.join", code: "ABCDEF", playerId: "player-0001", nickname, colors: { primary: "red", secondary: "red" } }));
+      parseClientMessage(
+        JSON.stringify({ type: "room.join", code: "ABCDEF", playerId: "player-0001", nickname, colors: { primary: "red", secondary: "red" }, loadout: { main: "cannon", sub: "digger" } }),
+      );
     const ok = join("  bob ");
     expect(ok.ok && ok.message.type === "room.join" && ok.message.nickname).toBe("bob");
     expect(join("a\u0007b").ok).toBe(false);
@@ -51,6 +55,7 @@ describe("parseClientMessage", () => {
       playerId: "player-0001",
       nickname: "   ",
       colors: { primary: "red", secondary: "red" },
+      loadout: { main: "cannon", sub: "digger" },
     });
     expect(parseClientMessage(raw).ok).toBe(false);
   });

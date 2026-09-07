@@ -56,6 +56,7 @@ export const slabMask = (ranges: readonly (readonly [number, number])[], top: nu
 
 export const shot = (over: Partial<TrajectoryInput> = {}): TrajectoryInput => ({
   seat: 0,
+  weapon: "cannon",
   x: 60,
   facing: 1,
   elevation: 45,

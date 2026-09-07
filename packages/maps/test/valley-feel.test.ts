@@ -14,7 +14,7 @@ const hitting = (wind: number): Set<string> => {
   const out = new Set<string>();
   for (let elevation = 20; elevation <= 80; elevation++) {
     for (let power = 40; power <= 100; power++) {
-      const r = simulateShot(mask, [{ x: x0, hp: 100 }, { x: x1, hp: 100 }], { seat: 0, x: x0, facing: 1, elevation, power, wind }).result;
+      const r = simulateShot(mask, [{ x: x0, hp: 100 }, { x: x1, hp: 100 }], { seat: 0, weapon: "cannon", x: x0, facing: 1, elevation, power, wind }).result;
       if (r.damage[1] > 0) out.add(`${elevation}/${power}`);
     }
   }
@@ -47,7 +47,7 @@ describe("谷の手触り", () => {
     // 当たる照準の中に、相手の真下の地表を下げるものがある
     const lowers = [...calm].some((k) => {
       const [elevation, power] = k.split("/").map(Number) as [number, number];
-      const r = simulateShot(mask, [{ x: x0, hp: 100 }, { x: x1, hp: 100 }], { seat: 0, x: x0, facing: 1, elevation, power, wind: 0 });
+      const r = simulateShot(mask, [{ x: x0, hp: 100 }, { x: x1, hp: 100 }], { seat: 0, weapon: "cannon", x: x0, facing: 1, elevation, power, wind: 0 });
       return surfaceAt(r.mask, x1) > surfaceAt(mask, x1);
     });
     expect(lowers).toBe(true);

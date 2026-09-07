@@ -1,4 +1,5 @@
 import type { MatchResult, Seat, ShotResult, TankColors, Wind } from "./match.js";
+import type { Loadout } from "./weapons.js";
 import type {
   LobbyRoom,
   MapName,
@@ -16,6 +17,7 @@ export type MatchSetupPlayer = {
   readonly seat: Seat;
   readonly nickname: string;
   readonly colors: TankColors;
+  readonly loadout: Loadout;
   readonly x: number;
 };
 
