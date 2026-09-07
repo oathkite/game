@@ -36,7 +36,7 @@ export const GOLDEN_CASES: readonly GoldenCase[] = [
   // 武器ごとの弾道（設計書 10）。標準砲と同じ入力で撃ち、初速、重力、風、爆風、ダメージの違いを記録する
   { name: "トリプル弾 谷 基本の直接射撃", mask: valleyMask, players: two(60, 340), input: shot({ weapon: "triple", x: 60, elevation: 45, power: 72, wind: 0 }) },
   { name: "トリプル弾 平地 至近で 3 発をまとめて当てる", mask: flatMask, players: two(60, 72), input: shot({ weapon: "triple", x: 60, elevation: 10, power: 40, wind: 0 }) },
-  { name: "マルチプル弾 谷 追い風 10", mask: valleyMask, players: two(60, 340), input: shot({ weapon: "multiple", x: 60, elevation: 45, power: 72, wind: 10 }) },
+  { name: "マルチ弾 谷 追い風 10", mask: valleyMask, players: two(60, 340), input: shot({ weapon: "multiple", x: 60, elevation: 45, power: 72, wind: 10 }) },
   { name: "貫通弾 谷 基本の直接射撃", mask: valleyMask, players: two(60, 340), input: shot({ weapon: "drill", x: 60, elevation: 45, power: 72, wind: 0 }) },
   { name: "貫通弾 平地 直撃", mask: flatMask, players: two(60, 72), input: shot({ weapon: "drill", x: 60, elevation: 10, power: 40, wind: 0 }) },
   { name: "貫通弾 壁の中で爆発 自爆", mask: () => wallMask(104, 130), players: two(100, 300), input: shot({ weapon: "drill", x: 100, elevation: 10, power: 50, wind: 0 }) },

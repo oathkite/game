@@ -23,7 +23,7 @@ export type FanSpec = {
 export type WeaponSpec = {
   /** 弾道ごとのずれ。長さが弾道の本数で、順に発射する。1 発の武器は [{ deg: 0, speedPercent: 100 }] */
   readonly fan: readonly FanSpec[];
-  /** 同じ角度を時間差で辿る発数。マルチプル弾は 3 */
+  /** 同じ角度を時間差で辿る発数。マルチ弾は 3 */
   readonly volleys: number;
   /** 着弾の段。着弾のたびに次の段へ進み、最後の段で止まる */
   readonly stages: readonly StageSpec[];

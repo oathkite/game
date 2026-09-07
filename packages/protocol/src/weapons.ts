@@ -17,7 +17,7 @@ export const DEFAULT_LOADOUT: Loadout = ["cannon", "digger"];
 export const WEAPON_LABELS: Readonly<Record<WeaponId, string>> = {
   cannon: "標準砲",
   triple: "トリプル弾",
-  multiple: "マルチプル弾",
+  multiple: "マルチ弾",
   drill: "貫通弾",
   laser: "レーザー弾",
   digger: "掘削弾",

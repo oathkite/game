@@ -204,7 +204,7 @@ exports[`golden replay > トリプル弾 谷 基本の直接射撃 1`] = `
 }
 `;
 
-exports[`golden replay > マルチプル弾 谷 追い風 10 1`] = `
+exports[`golden replay > マルチ弾 谷 追い風 10 1`] = `
 {
   "paths": [
     {

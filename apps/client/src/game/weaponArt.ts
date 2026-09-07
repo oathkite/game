@@ -5,7 +5,7 @@ import type { WeaponId } from "@game/protocol";
 
 export type BulletSize = { readonly w: number; readonly h: number };
 
-/** 弾の見た目の大きさ（セル）。重い弾ほど大きく、針弾やマルチプル弾の粒は小さい。物理の弾は常に 1 セル */
+/** 弾の見た目の大きさ（セル）。重い弾ほど大きく、針弾やマルチ弾の粒は小さい。物理の弾は常に 1 セル */
 export const bulletSize = (weapon: WeaponId): BulletSize => {
   switch (weapon) {
     case "cannon":

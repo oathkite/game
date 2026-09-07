@@ -79,7 +79,7 @@ describe("武器の数値", () => {
     }
   });
 
-  it("全弾直撃の合計は 針弾 > トリプル = マルチプル > 貫通 > レーザー > 標準砲 > 浮遊弾 > 掘削弾", () => {
+  it("全弾直撃の合計は 針弾 > トリプル = マルチ > 貫通 > レーザー > 標準砲 > 浮遊弾 > 掘削弾", () => {
     const full = (w: WeaponId) => fullHitDamage(weaponSpec(w));
     expect(full("stinger")).toBeGreaterThan(full("triple"));
     expect(full("triple")).toBe(full("multiple"));
@@ -138,7 +138,7 @@ describe("扇に広がる武器", () => {
     expect(dealtTo(r, 1)).toBeGreaterThan(firstStage("cannon").damageMax * 0.8);
   });
 
-  it("マルチプル弾は 9 発で、同じ角度の 3 発は同じ線を辿って数セル以内に落ちる", () => {
+  it("マルチ弾は 9 発で、同じ角度の 3 発は同じ線を辿って数セル以内に落ちる", () => {
     const r = spread("multiple");
     expect(r.impacts).toHaveLength(9);
     expect(r.impacts.map((i) => i.projectile)).toEqual([0, 1, 2, 3, 4, 5, 6, 7, 8]);
@@ -148,7 +148,7 @@ describe("扇に広がる武器", () => {
     }
   });
 
-  it("マルチプル弾の削る半径はトリプル弾より小さい", () => {
+  it("マルチ弾の削る半径はトリプル弾より小さい", () => {
     expect(firstStage("multiple").blastRadius).toBeLessThan(firstStage("triple").blastRadius);
   });
 });
