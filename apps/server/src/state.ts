@@ -1,5 +1,5 @@
 import type { EngineState } from "@game/engine";
-import type { ClientMessage, LobbyPhaseFilter, MapName, RoomPhase, Seat, ServerMessage, TankColors } from "@game/protocol";
+import type { ClientMessage, LobbyPhaseFilter, Loadout, MapName, RoomPhase, Seat, ServerMessage, TankColors } from "@game/protocol";
 
 // サーバーの状態と、外から入る命令、外へ出る効果。設計書 09 の部屋と 05 のプロトコル。
 // 時刻は now として渡され、乱数は config.rng から引く。Date.now と Math.random は使わない。
@@ -12,6 +12,7 @@ export type Member = {
   readonly token: string;
   readonly nickname: string;
   readonly colors: TankColors;
+  readonly loadout: Loadout;
   readonly ready: boolean;
   readonly joinOrder: number;
   /** 接続中の接続 ID。切断中は null */

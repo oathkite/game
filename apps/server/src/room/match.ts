@@ -27,8 +27,8 @@ export const startMatch = (state: ServerState, room: RoomRecord, now: number): R
       roomCode: room.code,
       mapName: room.mapName,
       players: [
-        { nickname: seat0.nickname, colors: seat0.colors },
-        { nickname: seat1.nickname, colors: seat1.colors },
+        { nickname: seat0.nickname, colors: seat0.colors, loadout: seat0.loadout },
+        { nickname: seat1.nickname, colors: seat1.colors, loadout: seat1.loadout },
       ],
     },
   );

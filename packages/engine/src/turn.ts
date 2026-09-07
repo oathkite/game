@@ -1,5 +1,5 @@
-import type { ClientMessageOf, FinishReason, MatchResult, PassReason, Seat, ServerMessageOf } from "@game/protocol";
-import { DAMAGE_MAX, initialWind, nextWind, simulateShot, validateMove, WIND_DELTA_MAX, WIND_MAX } from "@game/sim";
+import { weaponOf, type ClientMessageOf, type FinishReason, type MatchResult, type PassReason, type Seat, type ServerMessageOf } from "@game/protocol";
+import { initialWind, nextWind, simulateShot, validateMove, weaponSpec, WIND_DELTA_MAX, WIND_MAX } from "@game/sim";
 import { otherSeat, type Effect, type EngineState, type Step } from "./types.js";
 
 // ターンの開始、射撃の解決、パス、決着。engine.ts から呼ばれる純関数。
@@ -60,19 +60,21 @@ export const pass = (state: EngineState, reason: PassReason, now: number): Step 
   return { ...started, effects: [effect, ...started.effects] };
 };
 
-/** 射撃確定を解決する。移動の検証に失敗すればパスにする */
+/** 射撃確定を解決する。移動の検証に失敗すればパスにする。武器は手番側の装備からスロットで選ぶ（設計書 10） */
 export const resolveFire = (state: EngineState, seat: Seat, fire: ClientMessageOf<"turn.fire">, now: number): Step => {
   const player = state.match.players[seat];
   if (!validateMove(state.mask, player.x, fire.x)) return pass(state, "invalidFire", now);
-  const input = { seat, x: fire.x, facing: fire.facing, elevation: fire.elevation, power: fire.power, wind: state.match.wind.value };
+  const weapon = weaponOf(player.loadout, fire.slot);
+  const input = { seat, weapon, x: fire.x, facing: fire.facing, elevation: fire.elevation, power: fire.power, wind: state.match.wind.value };
   const [p0, p1] = state.match.players;
   const outcome = simulateShot(state.mask, [{ x: p0.x, hp: p0.hp }, { x: p1.x, hp: p1.hp }], input);
   const r = outcome.result;
   const opp = otherSeat(seat);
   const stat = state.stats[seat];
-  const stats: EngineState["stats"] = seat === 0
-    ? [{ damageDealt: stat.damageDealt + r.damage[opp], directHits: stat.directHits + (r.damage[opp] === DAMAGE_MAX ? 1 : 0) }, state.stats[1]]
-    : [state.stats[0], { damageDealt: stat.damageDealt + r.damage[opp], directHits: stat.directHits + (r.damage[opp] === DAMAGE_MAX ? 1 : 0) }];
+  // 直撃は着弾距離 0、つまりその武器の最大ダメージが出た回数
+  const direct = r.damage[opp] === weaponSpec(weapon).damageMax ? 1 : 0;
+  const dealt = { damageDealt: stat.damageDealt + r.damage[opp], directHits: stat.directHits + direct };
+  const stats: EngineState["stats"] = seat === 0 ? [dealt, state.stats[1]] : [state.stats[0], dealt];
   const players: EngineState["match"]["players"] = [
     { ...p0, hp: r.hpAfter[0], x: r.xAfter[0], facing: seat === 0 ? fire.facing : p0.facing },
     { ...p1, hp: r.hpAfter[1], x: r.xAfter[1], facing: seat === 1 ? fire.facing : p1.facing },

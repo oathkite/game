@@ -41,6 +41,16 @@ describe("Acting と Resolving", () => {
     expect(done1.state.match.currentSeat).toBe(1);
   });
 
+  it("スロットは手番側の装備から武器に解決され、結果の入力に残る（設計書 10）", () => {
+    const s = started();
+    const main = handle(s.state, { type: "fire", seat: 0, fire: fireMsg(s.state, 0, { slot: "main" }) }, T0 + 5000);
+    expect(find(main.effects, "turn.result")?.shot.input.weapon).toBe("cannon");
+    const sub = handle(s.state, { type: "fire", seat: 0, fire: fireMsg(s.state, 0, { slot: "sub" }) }, T0 + 5000);
+    expect(find(sub.effects, "turn.result")?.shot.input.weapon).toBe("digger");
+    // 掘削弾は標準砲より広く削る
+    expect(find(sub.effects, "turn.result")?.shot.terrainOp?.radius ?? 0).toBeGreaterThan(find(main.effects, "turn.result")?.shot.terrainOp?.radius ?? 0);
+  });
+
   it("手番でない席の射撃は無視する", () => {
     const s = started();
     const r = handle(s.state, { type: "fire", seat: 1, fire: fireMsg(s.state, 1) }, T0 + 1000);

@@ -1,4 +1,4 @@
-import type { ClientMessage, ServerMessage, TankColors } from "@game/protocol";
+import { DEFAULT_LOADOUT, type ClientMessage, type ServerMessage, type TankColors } from "@game/protocol";
 import { handleCommand } from "../src/server.js";
 import { createServerState, DEFAULT_SERVER_TIMING, type Outgoing, type ServerState } from "../src/state.js";
 
@@ -72,6 +72,7 @@ export const createMsg = (nickname: string, colors: TankColors, over: Partial<Ex
   playerId: `player-${nickname}`,
   nickname,
   colors,
+  loadout: DEFAULT_LOADOUT,
   title: `${nickname} room`,
   isPublic: true,
   mapName: "valley",
@@ -84,6 +85,7 @@ export const joinMsg = (code: string, nickname: string, colors: TankColors): Cli
   playerId: `player-${nickname}`,
   nickname,
   colors,
+  loadout: DEFAULT_LOADOUT,
 });
 
 export const types = (messages: readonly ServerMessage[]): string[] => messages.map((m) => m.type);
