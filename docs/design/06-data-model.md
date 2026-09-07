@@ -17,6 +17,7 @@ type RoomMember = {
   readonly playerId: string;        // 端末ごとの匿名 ID
   readonly nickname: string;
   readonly colors: TankColors;
+  readonly loadout: Loadout;        // メインとサブの武器（10 章）
   readonly ready: boolean;
   readonly colorConflict: boolean;  // 先にいる参加者と主色が重なっている
   readonly joinOrder: number;       // 入室の順番。オーナーの引き継ぎに使う
@@ -85,6 +86,7 @@ type PlayerState = {
   readonly seat: Seat;
   readonly nickname: string;
   readonly colors: TankColors;
+  readonly loadout: Loadout;          // メインとサブの武器。対戦中は固定
   readonly hp: number;
   readonly x: number;                 // 機体中心の x（整数セル）
   readonly facing: Facing;            // 最後に動いた方向。対戦開始時は相手側を向く
@@ -133,6 +135,7 @@ type Wind = {
 ```ts
 type TrajectoryInput = {
   readonly seat: Seat;
+  readonly weapon: WeaponId; // 使った武器（10 章）。爆風半径、ダメージ、初速と重力と風の倍率を決める
   readonly x: number;        // 移動後の機体 x
   readonly facing: Facing;   // 向き
   readonly elevation: number;// 10 から 90 の整数（度）。車体基準の仰角
@@ -160,6 +163,7 @@ type ShotResult = {
 ```
 
 `TrajectoryInput` は弾道を再計算するのに必要なものをすべて含み、それ以外を含まない。
+武器はスロット（メインかサブか）ではなく武器そのもので持つ。装備を知らない観戦者や再接続後のクライアントも、この入力だけで同じ結果を出せるようにするためである。
 地形は `terrainOps` から復元する前提なので、入力には含めない。
 車体の傾きも地形と x から求まるので含めない。
 発射角は「傾き + 仰角」を向きに応じて鏡像にした値で、物理コードの中で求める。
@@ -224,6 +228,7 @@ type SeatStats = {
 
 定数は固定小数点の整数で定義し、小数の表記は目安として添える。
 小数から変換すると丸めの方向が実装者ごとに変わるためである。
+武器ごとの違いはこの定数に百分率の整数の倍率を掛けて切り捨てた値で表す（[武器](./10-weapons.md) の 10.2）。標準砲は倍率 100% で、表の値そのままになる。
 
 重力、風、初速の 3 つは互いに依存し、マップの大きさと合わせて「最大パワーで画面の 8 割を飛ぶ」「風 10 で着弾が 25 セル程度ずれる」という感触を目標に調整した。
 平地で 45 度、パワー 100 で撃つと、初速 3 セル/step では到達距離が 232 セル（幅の 6 割弱）にとどまった。
@@ -241,8 +246,8 @@ type SeatStats = {
 機体との接触は、弾のセルと機体中心のセルの差 (dx, dy) について `dx*dx + dy*dy <= 9` が成り立つこととする（判定半径 3 セル）。
 
 ダメージの着弾距離は、爆心と機体中心の距離の 2 乗を整数の平方根（切り捨て）で開き、判定半径 3 を引いた値とする。負なら 0 にする。
-ダメージは 35 − 3 × 着弾距離で、着弾距離が 10 を超えれば 0 とする。
-直撃数は、着弾距離が 0 だった回数とする。
+ダメージは 35 − 3 × 着弾距離で、着弾距離が 10 を超えれば 0 とする。これは標準砲の値で、他の武器は同じ式で数値だけが変わり、負になれば 0 とする。
+直撃数は、着弾距離が 0 だった回数、つまりその武器の最大ダメージが出た回数とする。
 
 1 発の処理順は、弾道、着弾、地形の削り、ダメージ（落下前の位置で判定）、両機体の落下、リングアウト、勝敗判定の順とする。
 
@@ -297,7 +302,7 @@ type SeatStats = {
 
 契約が守られていることは、テストで固定する。
 
-- **golden replay**：代表的な入力（角度とパワーの組み合わせ、風の端の値、山越え、リングアウト）について `ShotResult` を記録し、コードを変えても同じ結果が出ることを確認する。記録する入力は `TrajectoryInput` に加えて、地形マスクの初期状態と適用済みの `terrainOps`、両者の x と HP を含める。これらがなければ 1 発の射撃を再現できないからである。
+- **golden replay**：代表的な入力（角度とパワーの組み合わせ、風の端の値、山越え、リングアウト、標準砲以外の武器）について `ShotResult` を記録し、コードを変えても同じ結果が出ることを確認する。記録する入力は `TrajectoryInput` に加えて、地形マスクの初期状態と適用済みの `terrainOps`、両者の x と HP を含める。これらがなければ 1 発の射撃を再現できないからである。
 - **クロス環境**：同じテストを Node とブラウザ（Playwright）で実行し、結果を比較する。
 - **不整合の記録**：本番でクライアントの再計算がサーバーの `turn.result` と食い違ったら、その `TrajectoryInput` を記録する。これが契約違反の発見手段になる。
 

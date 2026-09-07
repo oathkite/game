@@ -12,6 +12,6 @@ test("golden replay は Node とブラウザで同じ結果になる", async ({ 
   await page.waitForFunction(() => typeof (window as Window & { __golden?: string }).__golden === "string");
   const fromBrowser = await page.evaluate(() => (window as Window & { __golden?: string }).__golden ?? "");
   const nodeCases = JSON.parse(fromNode) as unknown[];
-  expect(nodeCases.length).toBe(14);
+  expect(nodeCases.length).toBe(19);
   expect(fromBrowser).toBe(fromNode);
 });
