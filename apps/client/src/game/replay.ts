@@ -114,7 +114,7 @@ const computeFalls = (job: ReplayJob): Fall[] => {
 
 /** 弾道ごとの発射の遅れと、着弾ごとの時刻。弾道の位置列はクライアントの再計算から得る */
 const timeline = (job: ReplayJob): { launchAt: number[]; impacts: ImpactRun[] } => {
-  const fanCount = weaponSpec(job.shot.input.weapon).fanDeg.length;
+  const fanCount = weaponSpec(job.shot.input.weapon).fan.length;
   const launchAt = job.paths.map((_, p) => launchDelayMs(p, fanCount));
   const impacts = job.shot.impacts.map((impact) => {
     const path = job.paths[impact.projectile];

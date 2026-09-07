@@ -28,8 +28,8 @@ export const WEAPON_LABELS: Readonly<Record<WeaponId, string>> = {
 /** 設定画面に出す一行の説明。数値は出さず、性格だけを伝える */
 export const WEAPON_DESCRIPTIONS: Readonly<Record<WeaponId, string>> = {
   cannon: "癖のない基準の砲",
-  triple: "3 発が扇に広がる。近くでまとめて当てれば大ダメージ",
-  multiple: "小さな 9 発。3 発ずつ同じ線を辿り、細かく削る",
+  triple: "3 発が前後に散る。高く撃ち上げれば 1 か所に集まる",
+  multiple: "小さな 9 発。3 本の線を 3 発ずつ辿り、細かく削る",
   drill: "着弾しても止まらず、3 段掘り進む。直撃なら重い",
   laser: "軽く伸びる弾が 5 段抜けて線のように削る。風には流される",
   digger: "地形を大きく削る。機体にはほとんど効かない",

@@ -14,9 +14,15 @@ export type StageSpec = {
   readonly damagePerCell: number;
 };
 
+/** 扇の 1 本。仰角のずれ（度、砲を上げる向きが正）と初速の倍率（%）。角度と初速を同じ向きにずらすと、低い仰角では前後に広がり、高い仰角（背面打ち）では 1 か所に集まる */
+export type FanSpec = {
+  readonly deg: number;
+  readonly speedPercent: number;
+};
+
 export type WeaponSpec = {
-  /** 弾道ごとの発射角のずれ（度）。長さが弾道の本数。1 発の武器は [0] */
-  readonly fanDeg: readonly number[];
+  /** 弾道ごとのずれ。長さが弾道の本数で、順に発射する。1 発の武器は [{ deg: 0, speedPercent: 100 }] */
+  readonly fan: readonly FanSpec[];
   /** 同じ角度を時間差で辿る発数。マルチプル弾は 3 */
   readonly volleys: number;
   /** 着弾の段。着弾のたびに次の段へ進み、最後の段で止まる */
@@ -31,15 +37,26 @@ export type WeaponSpec = {
 
 const single = (blastRadius: number, damageMax: number, damagePerCell: number): readonly StageSpec[] => [{ blastRadius, damageMax, damagePerCell }];
 
-const ONE_SHOT = { fanDeg: [0], volleys: 1 } as const;
+const STRAIGHT: FanSpec = { deg: 0, speedPercent: 100 };
+const ONE_SHOT = { fan: [STRAIGHT], volleys: 1 } as const;
+/**
+ * 3 本の扇。1 本目は砲を上げて速く（遠く）、3 本目は下げて遅く（手前）。
+ * 到達距離は初速の 2 乗と sin(2θ) に比例するので、θ が 45 度未満では角度と初速の効果が足し合わされて前後に広がり、
+ * 45 度を超えると打ち消し合う。±4 度・±5% では連続の式で約 63 度、離散の物理では仰角 60 度前後で 3 本が最も集まる。背面打ちで 1 か所に集める技になる
+ */
+const TRIPLE_FAN: readonly FanSpec[] = [
+  { deg: 4, speedPercent: 105 },
+  STRAIGHT,
+  { deg: -4, speedPercent: 95 },
+];
 const STANDARD_FLIGHT = { speedPercent: 100, gravityPercent: 100, windPercent: 100 } as const;
 
 export const WEAPON_SPECS: Readonly<Record<WeaponId, WeaponSpec>> = {
   cannon: { ...ONE_SHOT, stages: single(BLAST_RADIUS, DAMAGE_MAX, DAMAGE_PER_CELL), ...STANDARD_FLIGHT },
-  // 3 発が扇に広がる。1 発は標準砲の 3 等分より少し強く、揃えば標準砲を超える
-  triple: { fanDeg: [-6, 0, 6], volleys: 1, stages: single(6, 15, 3), ...STANDARD_FLIGHT },
+  // 3 発が前後に散る。1 発は標準砲の 3 等分より少し強く、至近か背面打ちで揃えば標準砲を超える
+  triple: { fan: TRIPLE_FAN, volleys: 1, stages: single(6, 15, 3), ...STANDARD_FLIGHT },
   // 小さな 9 発。3 本の線を 3 発ずつが時間差で辿る。1 本命中で 15 とトリプル弾と同じ期待値
-  multiple: { fanDeg: [-8, 0, 8], volleys: 3, stages: single(3, 5, 2), ...STANDARD_FLIGHT },
+  multiple: { fan: TRIPLE_FAN, volleys: 3, stages: single(3, 5, 2), ...STANDARD_FLIGHT },
   // 着弾しても止まらず 3 段掘り進む。段ごとに半径とダメージが小さくなる
   drill: {
     ...ONE_SHOT,
@@ -64,7 +81,7 @@ export const weaponSpec = (weapon: WeaponId): WeaponSpec => WEAPON_SPECS[weapon]
 export const firstStage = (weapon: WeaponId): StageSpec => WEAPON_SPECS[weapon].stages[0] as StageSpec;
 
 /** 1 発の射撃で飛ぶ弾道の本数（扇の本数 × 発数） */
-export const projectileCount = (spec: WeaponSpec): number => spec.fanDeg.length * spec.volleys;
+export const projectileCount = (spec: WeaponSpec): number => spec.fan.length * spec.volleys;
 
 /** 全弾が全段で直撃したときのダメージの合計。バランスの目安 */
 export const fullHitDamage = (spec: WeaponSpec): number => projectileCount(spec) * spec.stages.reduce((sum, s) => sum + s.damageMax, 0);

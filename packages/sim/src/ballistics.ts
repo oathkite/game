@@ -14,7 +14,7 @@ import {
 import { cellOf, cosFixed, isqrt, mulFixed, sinFixed } from "./fixed.js";
 import { isRingOut, tankCenterY, tiltOf } from "./tank.js";
 import { carve, isSolid, surfaceY, type TerrainMask } from "./terrain.js";
-import { firstStage, scalePercent, weaponSpec, type StageSpec, type WeaponSpec } from "./weapons.js";
+import { firstStage, scalePercent, weaponSpec, type FanSpec, type StageSpec, type WeaponSpec } from "./weapons.js";
 
 // 弾道と着弾の処理。設計書 06 の 6.7 決定論の契約に従い、整数と固定小数点だけを使う。
 // 爆風半径、ダメージ、初速と重力と風の倍率、弾道の本数と着弾の段数は武器ごとに違う（設計書 10）。入力の weapon から引く。
@@ -129,9 +129,10 @@ const motionOf = (spec: WeaponSpec, wind: number): Motion => ({
   windAccel: scalePercent(WIND_ACCEL_PER_UNIT, spec.windPercent) * wind,
 });
 
-const launch = (muzzle: Muzzle, spec: WeaponSpec, input: TrajectoryInput, fanDeg: number): Flight => {
-  const speed = Math.trunc((scalePercent(MAX_SPEED, spec.speedPercent) * input.power) / POWER_MAX);
-  const angle = muzzle.angle + fanDeg;
+/** 扇のずれを掛けて撃ち出す。角度のずれは砲を上げる向きが正で、左向きなら鏡像にする */
+const launch = (muzzle: Muzzle, spec: WeaponSpec, input: TrajectoryInput, fan: FanSpec): Flight => {
+  const speed = Math.trunc((scalePercent(scalePercent(MAX_SPEED, spec.speedPercent), fan.speedPercent) * input.power) / POWER_MAX);
+  const angle = muzzle.angle + fan.deg * input.facing;
   const px = muzzle.position.x;
   const py = muzzle.position.y;
   return { px, py, vx: mulFixed(speed, cosFixed(angle)), vy: -mulFixed(speed, sinFixed(angle)), prev: { x: cellOf(px), y: cellOf(py) }, steps: 0 };
@@ -288,7 +289,7 @@ export const simulateShot = (
   const muzzle = muzzleOf(mask, input.x, input.facing, input.elevation);
   const m = motionOf(spec, input.wind);
   for (let volley = 0; volley < spec.volleys; volley++) {
-    spec.fanDeg.forEach((deg, fan) => flyProjectile(v, volley * spec.fanDeg.length + fan, launch(muzzle, spec, input, deg), m, spec));
+    spec.fan.forEach((f, fan) => flyProjectile(v, volley * spec.fan.length + fan, launch(muzzle, spec, input, f), m, spec));
   }
   const ringOut = ringOuts(v.mask, xs);
   return {

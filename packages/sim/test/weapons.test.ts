@@ -50,7 +50,7 @@ const spread = (weapon: WeaponId, power = 60): ShotResult => simulateShot(flatMa
 describe("武器の数値", () => {
   it("標準砲は設計書 01 と 06 の初期値そのままで、1 発 1 段、倍率はすべて 100%", () => {
     expect(weaponSpec("cannon")).toEqual({
-      fanDeg: [0],
+      fan: [{ deg: 0, speedPercent: 100 }],
       volleys: 1,
       stages: [{ blastRadius: BLAST_RADIUS, damageMax: DAMAGE_MAX, damagePerCell: DAMAGE_PER_CELL }],
       speedPercent: 100,
@@ -99,13 +99,36 @@ describe("武器の数値", () => {
 });
 
 describe("扇に広がる武器", () => {
-  it("トリプル弾は 3 本の弾道が別々の場所に落ち、外側ほど遠い", () => {
+  it("トリプル弾は低い仰角では 1 発目が遠く、2 発目が中央、3 発目が手前に、前後へ広がる", () => {
     const r = spread("triple");
     expect(r.impacts.map((i) => i.projectile)).toEqual([0, 1, 2]);
     expect(r.impacts.every((i) => i.stage === 0)).toBe(true);
     const xs = r.impacts.map((i) => i.cell.x);
-    expect(xs[0]).toBeLessThan(xs[1]!);
-    expect(xs[1]).toBeLessThan(xs[2]!);
+    expect(xs[0]).toBeGreaterThan(xs[1]!);
+    expect(xs[1]).toBeGreaterThan(xs[2]!);
+    // 中央の射程の 1 割以上は離れる。狭いと扇に見えない
+    const center = xs[1]! - 20;
+    expect(xs[0]! - xs[1]!).toBeGreaterThan(center * 0.1);
+    expect(xs[1]! - xs[2]!).toBeGreaterThan(center * 0.1);
+  });
+
+  it("トリプル弾は仰角 60 度前後（背面打ちの実効角度）で 3 発が数セル以内に集まる", () => {
+    const at = (elevation: number) => simulateShot(flatMask(200), [{ x: 20, hp: 100 }, { x: 399, hp: 100 }], shot({ weapon: "triple", x: 20, elevation, power: 60 })).result;
+    const width = (elevation: number) => {
+      const xs = at(elevation).impacts.map((i) => i.cell.x);
+      return Math.max(...xs) - Math.min(...xs);
+    };
+    expect(width(60)).toBeLessThanOrEqual(6);
+    // 低い角度では広がり、集まるのは高い角度だけ
+    expect(width(30)).toBeGreaterThan(width(60) * 3);
+  });
+
+  it("扇のずれは撃つ側の向きに合わせて鏡像になり、左向きでも 1 発目が遠い", () => {
+    const r = simulateShot(flatMask(200), [{ x: 379, hp: 100 }, { x: 0, hp: 100 }], shot({ weapon: "triple", x: 379, facing: -1, elevation: 30, power: 60 })).result;
+    const ranges = r.impacts.map((i) => 379 - i.cell.x);
+    expect(ranges[0]).toBeGreaterThan(ranges[1]!);
+    expect(ranges[1]).toBeGreaterThan(ranges[2]!);
+    expect(ranges).toEqual(spread("triple").impacts.map((i) => i.cell.x - 20));
   });
 
   it("トリプル弾は至近なら複数の弾が直撃し、合計で標準砲の直撃を上回れる", () => {
