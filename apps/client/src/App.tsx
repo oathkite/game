@@ -53,7 +53,7 @@ export const App = () => {
           onSolo={(mapName) => setRoute({ kind: "solo", mapName })}
         />
       )}
-      {route.kind === "solo" && <SoloMatch profile={profile} mapName={route.mapName} onExit={toSetup} />}
+      {route.kind === "solo" && <SoloMatch profile={profile} onProfileChange={setProfile} mapName={route.mapName} onExit={toSetup} />}
       {route.kind === "online" && <OnlineFlow profile={profile} onProfileChange={setProfile} inviteCode={inviteCode} onExit={toSetup} />}
     </>
   );

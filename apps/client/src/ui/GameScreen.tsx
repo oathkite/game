@@ -1,8 +1,10 @@
 import { useEffect, useMemo, useState, useSyncExternalStore } from "react";
+import type { Profile } from "@/app/profile";
 import { GameCanvas } from "@/game/GameCanvas";
 import { computeLayout } from "@/game/scale";
 import type { MatchStore } from "@/match/matchStore";
 import { LeftPanel } from "./LeftPanel";
+import { OptionsMenu } from "./OptionsMenu";
 import { RightPanel } from "./RightPanel";
 import { Timer } from "./Timer";
 import { TurnBanner, TurnLabel } from "./TurnIndicator";
@@ -16,7 +18,8 @@ import { useSwipeAim } from "./useSwipeAim";
 type Props = {
   readonly store: MatchStore;
   readonly clockOffset: number;
-  readonly swapPanels: boolean;
+  readonly profile: Profile;
+  readonly onProfileChange: (profile: Profile) => void;
   readonly onSurrender: () => void;
   readonly onLeave: () => void;
 };
@@ -31,12 +34,12 @@ const useViewport = () => {
   return size;
 };
 
-export const GameScreen = ({ store, clockOffset, swapPanels, onSurrender, onLeave }: Props) => {
+export const GameScreen = ({ store, clockOffset, profile, onProfileChange, onSurrender, onLeave }: Props) => {
   const view = useSyncExternalStore(store.subscribe, store.getView, store.getView);
   const { w, h } = useViewport();
   const layout = useMemo(() => computeLayout(w, h), [w, h]);
   const acting = view.phase === "acting" && view.control !== null;
-  const [confirmSurrender, setConfirmSurrender] = useState(false);
+  const [optionsOpen, setOptionsOpen] = useState(false);
 
   const holds = {
     up: useHold(() => store.changeElevation(1), 50, acting),
@@ -48,33 +51,39 @@ export const GameScreen = ({ store, clockOffset, swapPanels, onSurrender, onLeav
   // マップをなぞっても移動と仰角を変えられる。十字キーが押しにくい小さな画面のため
   const swipe = useSwipeAim(acting, { moveStep: store.moveStep, changeElevation: store.changeElevation });
 
+  const slot = view.control?.slot ?? view.lastSlot;
   useKeyboardInput(holds, gauge, () => store.selectSlot(slot === "main" ? "sub" : "main"));
 
-  const left = <LeftPanel view={view} store={store} width={layout.panelWidth} height={h} cell={layout.panelCell} holds={holds} />;
-  // 離脱のボタンは右パネルの上端に置く。対戦中は降参、観戦なら退出
-  const exitLabel = view.spectator ? "退出" : view.phase === "finished" ? null : "降参";
-  const onExit = view.spectator ? onLeave : () => setConfirmSurrender(true);
+  // 左右を入れ替えても同じ要素を動かすだけにするため key を付ける。マップ（PixiJS）を作り直さない
+  const left = <LeftPanel key="left" view={view} store={store} width={layout.panelWidth} height={h} cell={layout.panelCell} holds={holds} />;
   const me = view.mySeat !== null && !view.spectator && view.players ? view.players[view.mySeat] : null;
-  const slot = view.control?.slot ?? view.lastSlot;
   const right = (
     <RightPanel
+      key="right"
       width={layout.panelWidth}
       height={h}
       enabled={acting}
       gauge={gauge}
-      exitLabel={exitLabel}
-      onExit={onExit}
+      onOpenOptions={() => setOptionsOpen(true)}
       loadout={me?.loadout ?? null}
       slot={slot}
       onSelectSlot={store.selectSlot}
     />
   );
+  // 離脱は設定メニューの中に置く。対戦中は降参、観戦なら退出。決着後は要らない
+  const exitLabel = view.spectator ? "退出する" : view.phase === "finished" ? null : "降参する";
+  const onExit = (): void => {
+    setOptionsOpen(false);
+    if (view.spectator) onLeave();
+    else onSurrender();
+  };
   const myTurn = view.mySeat !== null && view.currentSeat === view.mySeat && !view.spectator;
+  const swapPanels = profile.swapPanels;
 
   return (
     <div className="game-root" onContextMenu={(e) => e.preventDefault()}>
       {swapPanels ? right : left}
-      <div className="map-area">
+      <div className="map-area" key="map">
         <div className="map-frame" style={{ width: layout.mapWidth, height: layout.mapHeight }}>
           <div className="map-topline" />
           <div className="hud-top">
@@ -94,26 +103,8 @@ export const GameScreen = ({ store, clockOffset, swapPanels, onSurrender, onLeav
             </div>
           )}
         </div>
-        {confirmSurrender && (
-          <div className="overlay">
-            <div className="box column" style={{ width: 320 }}>
-              <div>降参しますか</div>
-              <div className="row">
-                <button
-                  type="button"
-                  onClick={() => {
-                    setConfirmSurrender(false);
-                    onSurrender();
-                  }}
-                >
-                  降参する
-                </button>
-                <button type="button" onClick={() => setConfirmSurrender(false)}>
-                  戻る
-                </button>
-              </div>
-            </div>
-          </div>
+        {optionsOpen && (
+          <OptionsMenu profile={profile} onProfileChange={onProfileChange} exitLabel={exitLabel} onExit={onExit} onClose={() => setOptionsOpen(false)} />
         )}
       </div>
       {swapPanels ? left : right}

@@ -56,7 +56,8 @@ export const OnlineFlow = ({ profile, onProfileChange, inviteCode, onExit }: Pro
       <MatchStage
         store={s.store}
         clockOffset={s.clockOffset}
-        swapPanels={profile.swapPanels}
+        profile={profile}
+        onProfileChange={onProfileChange}
         closeLabel={spectator ? "閉じる" : "部屋に戻る"}
         onClose={() => {
           setResultDismissed(true);

@@ -94,26 +94,6 @@ export const SetupScreen = ({ profile, onChange, onEnterLobby, onSolo, inviteCod
         <ColorPicker label="副色" value={profile.colors.secondary} onPick={(c) => onChange({ ...profile, colors: { ...profile.colors, secondary: c } })} />
         <WeaponPicker label="メインウェポン" ids={MAIN_WEAPON_IDS} value={profile.loadout.main} onPick={(w) => onChange({ ...profile, loadout: { ...profile.loadout, main: w } })} />
         <WeaponPicker label="サブウェポン" ids={SUB_WEAPON_IDS} value={profile.loadout.sub} onPick={(w) => onChange({ ...profile, loadout: { ...profile.loadout, sub: w } })} />
-        <div className="row">
-          <label className="row" style={{ flex: 1 }}>
-            <input
-              type="checkbox"
-              checked={profile.muted}
-              style={{ flex: "none", width: 24, height: 24 }}
-              onChange={(e) => onChange({ ...profile, muted: e.target.checked })}
-            />
-            <span>消音</span>
-          </label>
-          <label className="row" style={{ flex: 1 }}>
-            <input
-              type="checkbox"
-              checked={profile.swapPanels}
-              style={{ flex: "none", width: 24, height: 24 }}
-              onChange={(e) => onChange({ ...profile, swapPanels: e.target.checked })}
-            />
-            <span>左右を入れ替える</span>
-          </label>
-        </div>
         <button type="button" disabled={!valid} onClick={onEnterLobby} data-testid="enter-lobby">
           {inviteCode ? `部屋 ${inviteCode} に入る` : "ロビーへ"}
         </button>
