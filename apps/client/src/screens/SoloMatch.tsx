@@ -2,7 +2,7 @@ import type { MapName } from "@game/protocol";
 import { useEffect, useState } from "react";
 import type { Profile } from "@/app/profile";
 import { createMatchStore, type MatchStore } from "@/match/matchStore";
-import { createLocalConnection, defaultOpponentColors } from "@/net/localConnection";
+import { createLocalConnection, defaultOpponentColors, defaultOpponentLoadout } from "@/net/localConnection";
 import { MatchStage } from "./MatchStage";
 
 // solo モード。サーバーなしでひとりで撃つ。両席を交互に自分が操作する。
@@ -22,7 +22,9 @@ export const SoloMatch = ({ profile, mapName, onExit }: Props) => {
       mapName,
       nickname: profile.nickname,
       colors: profile.colors,
+      loadout: profile.loadout,
       opponentColors: defaultOpponentColors(profile.colors),
+      opponentLoadout: defaultOpponentLoadout(profile.loadout),
     });
     const created = createMatchStore(connection, { followCurrentSeat: true, mySeat: 0, spectator: false });
     setStore(created);

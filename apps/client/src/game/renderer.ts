@@ -1,4 +1,4 @@
-import { COLOR_HEX, type Seat, type TankColors } from "@game/protocol";
+import { COLOR_HEX, type Loadout, type Seat, type TankColors, type WeaponId } from "@game/protocol";
 import type { TerrainMask } from "@game/sim";
 import { Application, Container } from "pixi.js";
 import { spawnDamageLabel } from "./damageLabel";
@@ -16,7 +16,8 @@ export type Renderer = {
   readonly setLayout: (layout: Layout) => void;
   readonly setTerrain: (mask: TerrainMask) => void;
   readonly setTank: (seat: Seat, pose: TankPose) => void;
-  readonly projectile: (color: TankColors["primary"]) => ProjectileView;
+  /** 弾の層を作り直す。色は撃つ側の主色、大きさは武器で決まる */
+  readonly projectile: (color: TankColors["primary"], weapon: WeaponId) => ProjectileView;
   readonly onFrame: (fn: (deltaMs: number) => void) => () => void;
   /** 画面全体を整数セルだけずらす。着弾の揺れに使う */
   readonly setShake: (offset: Offset) => void;
@@ -29,7 +30,10 @@ export type RendererInit = {
   readonly host: HTMLElement;
   readonly layout: Layout;
   readonly mask: TerrainMask;
-  readonly players: readonly [{ colors: TankColors; nickname: string }, { colors: TankColors; nickname: string }];
+  readonly players: readonly [
+    { colors: TankColors; nickname: string; loadout: Loadout },
+    { colors: TankColors; nickname: string; loadout: Loadout },
+  ];
 };
 
 const safely = (fn: () => void): void => {
@@ -67,8 +71,8 @@ export const createRenderer = async (init: RendererInit): Promise<Renderer> => {
   let projectile: ProjectileView | null = null;
 
   const tanks: readonly [TankView, TankView] = [
-    createTankView(init.players[0].colors, init.players[0].nickname),
-    createTankView(init.players[1].colors, init.players[1].nickname),
+    createTankView(init.players[0].colors, init.players[0].nickname, init.players[0].loadout),
+    createTankView(init.players[1].colors, init.players[1].nickname, init.players[1].loadout),
   ];
   for (const t of tanks) {
     world.addChild(t.world);
@@ -96,9 +100,9 @@ export const createRenderer = async (init: RendererInit): Promise<Renderer> => {
       poses[seat] = pose;
       applyPose(seat);
     },
-    projectile: (color) => {
+    projectile: (color, weapon) => {
       if (projectile) projectile.destroy();
-      projectile = createProjectileView(Number.parseInt(COLOR_HEX[color].slice(1), 16));
+      projectile = createProjectileView(Number.parseInt(COLOR_HEX[color].slice(1), 16), weapon);
       projectileLayer.addChild(projectile.container);
       return projectile;
     },

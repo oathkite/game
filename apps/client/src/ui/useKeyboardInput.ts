@@ -3,7 +3,7 @@ import type { Hold } from "./useHold";
 import type { PowerGauge } from "./usePowerGauge";
 
 // キーボード。設計書 03 の 3.3。keydown で開始、keyup で停止し、オートリピートの keydown は無視する。
-// listener は 1 回だけ登録し、最新の hold と gauge は ref で参照する。
+// シフトはメインとサブの切り替え（設計書 10 の 10.3）。listener は 1 回だけ登録し、最新の hold と gauge は ref で参照する。
 
 export type Holds = {
   readonly up: Hold;
@@ -27,17 +27,20 @@ const holdFor = (holds: Holds, code: string): Hold | null => {
   }
 };
 
-export const useKeyboardInput = (holds: Holds, gauge: PowerGauge): void => {
-  const inputRef = useRef({ holds, gauge });
-  inputRef.current = { holds, gauge };
+const isShift = (code: string): boolean => code === "ShiftLeft" || code === "ShiftRight";
+
+export const useKeyboardInput = (holds: Holds, gauge: PowerGauge, toggleWeapon: () => void): void => {
+  const inputRef = useRef({ holds, gauge, toggleWeapon });
+  inputRef.current = { holds, gauge, toggleWeapon };
 
   useEffect(() => {
     const down = (e: KeyboardEvent): void => {
       if (e.repeat || e.target instanceof HTMLInputElement) return;
-      const { holds: h, gauge: g } = inputRef.current;
+      const { holds: h, gauge: g, toggleWeapon: toggle } = inputRef.current;
       const hold = holdFor(h, e.code);
       if (hold) hold.start();
       else if (e.code === "Space") g.begin("key");
+      else if (isShift(e.code)) toggle();
       else return;
       e.preventDefault();
     };

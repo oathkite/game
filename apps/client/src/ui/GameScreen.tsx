@@ -48,13 +48,27 @@ export const GameScreen = ({ store, clockOffset, swapPanels, onSurrender, onLeav
   // マップをなぞっても移動と仰角を変えられる。十字キーが押しにくい小さな画面のため
   const swipe = useSwipeAim(acting, { moveStep: store.moveStep, changeElevation: store.changeElevation });
 
-  useKeyboardInput(holds, gauge);
+  useKeyboardInput(holds, gauge, () => store.selectSlot(slot === "main" ? "sub" : "main"));
 
   const left = <LeftPanel view={view} store={store} width={layout.panelWidth} height={h} cell={layout.panelCell} holds={holds} />;
   // 離脱のボタンは右パネルの上端に置く。対戦中は降参、観戦なら退出
   const exitLabel = view.spectator ? "退出" : view.phase === "finished" ? null : "降参";
   const onExit = view.spectator ? onLeave : () => setConfirmSurrender(true);
-  const right = <RightPanel width={layout.panelWidth} height={h} enabled={acting} gauge={gauge} exitLabel={exitLabel} onExit={onExit} />;
+  const me = view.mySeat !== null && !view.spectator && view.players ? view.players[view.mySeat] : null;
+  const slot = view.control?.slot ?? view.lastSlot;
+  const right = (
+    <RightPanel
+      width={layout.panelWidth}
+      height={h}
+      enabled={acting}
+      gauge={gauge}
+      exitLabel={exitLabel}
+      onExit={onExit}
+      loadout={me?.loadout ?? null}
+      slot={slot}
+      onSelectSlot={store.selectSlot}
+    />
+  );
   const myTurn = view.mySeat !== null && view.currentSeat === view.mySeat && !view.spectator;
 
   return (

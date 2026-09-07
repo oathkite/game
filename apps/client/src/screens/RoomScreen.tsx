@@ -1,4 +1,4 @@
-import { COLOR_HEX, MAP_LABELS, MAP_NAMES, type MapName, type RoomState, type Seat, type TankColors } from "@game/protocol";
+import { COLOR_HEX, MAP_LABELS, MAP_NAMES, WEAPON_LABELS, type MapName, type RoomState, type Seat, type TankColors } from "@game/protocol";
 import { useState } from "react";
 
 // 部屋。設計書 09 の 9.5。参加者の一覧、観戦者数、マップ、入室コードと招待リンク、オーナーの操作。
@@ -60,6 +60,10 @@ export const RoomScreen = ({ room, mySeat, onReady, onSetMap, onKick, onStart, o
                   <span className="swatch" style={{ background: COLOR_HEX[m.colors.secondary] }} />
                 </span>
                 {m.nickname}
+                <span className="dim" data-testid={`loadout-${m.seat}`}>
+                  {" "}
+                  {WEAPON_LABELS[m.loadout.main]} / {WEAPON_LABELS[m.loadout.sub]}
+                </span>
                 {!m.connected && <span className="dim"> 切断中</span>}
                 {m.colorConflict && <span className="blink"> 主色が重なっています</span>}
               </span>
@@ -107,7 +111,7 @@ export const RoomScreen = ({ room, mySeat, onReady, onSetMap, onKick, onStart, o
         )}
         {room.phase !== "inMatch" && (
           <button type="button" onClick={onEditProfile}>
-            名前と色を変える
+            名前、色、武器を変える
           </button>
         )}
         <div className="row">
