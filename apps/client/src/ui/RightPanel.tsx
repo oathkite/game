@@ -3,12 +3,12 @@ import { useState } from "react";
 import { GAUGE_BORDER, markerBottom, powerAtOffset, toggleMarker } from "./powerMarker";
 import type { PowerGauge } from "./usePowerGauge";
 
-// 右パネル。設計書 03 の 3.5、10 の 10.3。上端に設定のボタン、下端に武器の切り替え、パワーゲージ、射撃ボタン。
-// ゲージは射撃ボタンの上端から武器の切り替えの下端までを 100 段に区切る。
+// 右パネル。設計書 03 の 3.5、10 の 10.3。上端に設定のボタン、下端にパワーゲージ、武器の切り替え、射撃ボタン。
+// ゲージは武器の切り替えの上端から設定のボタンの下端までを 100 段に区切る。
 
 const OPTIONS_HEIGHT = 36;
-/** 武器の切り替えの高さ。2 つのボタンと隙間 */
-const WEAPON_SWITCH_HEIGHT = 36 * 2 + 4;
+/** 武器の切り替えの高さ。2 つのボタンを横に並べた 1 段 */
+const WEAPON_SWITCH_HEIGHT = 36;
 
 type Props = {
   readonly width: number;
@@ -30,7 +30,7 @@ type SwitchProps = {
   readonly onSelectSlot: (slot: WeaponSlot) => void;
 };
 
-/** 2 つの武器の切り替え。選んでいる側を明るい緑で塗り、手番の間だけ押せる */
+/** 2 つの武器の切り替え。射撃ボタンの直上に横に並べ、選んでいる側を明るい緑で塗り、手番の間だけ押せる */
 const WeaponSwitch = ({ loadout, slot, enabled, onSelectSlot }: SwitchProps) => (
   <div className="weapon-switch" data-testid="weapon-switch" data-slot={slot}>
     {WEAPON_SLOTS.map((s) => (
@@ -51,7 +51,7 @@ const WeaponSwitch = ({ loadout, slot, enabled, onSelectSlot }: SwitchProps) => 
 
 type Heights = { readonly fire: number; readonly gauge: number; readonly inner: number };
 
-/** 上端の設定ボタン、武器の切り替え、ゲージ、射撃ボタンを縦に積む。切り替えが無いときはゲージがその分だけ伸びる */
+/** 上端の設定ボタン、ゲージ、武器の切り替え、射撃ボタンを縦に積む。切り替えが無いときはゲージがその分だけ伸びる */
 const heightsOf = (width: number, height: number, hasSwitch: boolean): Heights => {
   // 幅に合わせて縦に伸ばすが、画面が低いときにゲージの取り分を食わないよう高さの 3 割で止める
   const fire = Math.max(48, Math.min(Math.floor(width * 1.2), Math.floor(height * 0.3)));
@@ -97,8 +97,8 @@ export const RightPanel = ({ width, height, enabled, gauge, onOpenOptions, loado
         設定
       </button>
       <div className="panel-bottom">
-        {loadout !== null && <WeaponSwitch loadout={loadout} slot={slot} enabled={enabled} onSelectSlot={onSelectSlot} />}
         <GaugeView gauge={gauge} heights={hs} />
+        {loadout !== null && <WeaponSwitch loadout={loadout} slot={slot} enabled={enabled} onSelectSlot={onSelectSlot} />}
         <button
           type="button"
           className={`fire${gauge.charging ? " held" : ""}`}

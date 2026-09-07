@@ -39,8 +39,9 @@ export const GameScreen = ({ store, clockOffset, profile, onProfileChange, onSur
   const view = useSyncExternalStore(store.subscribe, store.getView, store.getView);
   const { w, h } = useViewport();
   const layout = useMemo(() => computeLayout(w, h), [w, h]);
-  const acting = view.phase === "acting" && view.control !== null;
   const [optionsOpen, setOptionsOpen] = useState(false);
+  // 設定メニューを開いている間は操作を無効にする。溜めていたパワーは usePowerGauge が enabled の変化で捨てる
+  const acting = view.phase === "acting" && view.control !== null && !optionsOpen;
 
   const holds = {
     up: useHold(() => store.changeElevation(1), 50, acting),
@@ -53,7 +54,11 @@ export const GameScreen = ({ store, clockOffset, profile, onProfileChange, onSur
   const swipe = useSwipeAim(acting, { moveStep: store.moveStep, changeElevation: store.changeElevation });
 
   const slot = view.control?.slot ?? view.lastSlot;
-  useKeyboardInput(holds, gauge, () => store.selectSlot(otherSlot(slot)));
+  useKeyboardInput(holds, gauge, {
+    toggleWeapon: () => store.selectSlot(otherSlot(slot)),
+    toggleOptions: () => setOptionsOpen((open) => !open),
+    menuOpen: optionsOpen,
+  });
 
   // 左右を入れ替えても同じ要素を動かすだけにするため key を付ける。マップ（PixiJS）を作り直さない
   const left = <LeftPanel key="left" view={view} store={store} width={layout.panelWidth} height={h} cell={layout.panelCell} holds={holds} />;

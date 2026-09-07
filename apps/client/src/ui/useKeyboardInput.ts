@@ -3,13 +3,22 @@ import type { Hold } from "./useHold";
 import type { PowerGauge } from "./usePowerGauge";
 
 // キーボード。設計書 03 の 3.3。keydown で開始、keyup で停止し、オートリピートの keydown は無視する。
-// シフトはメインとサブの切り替え（設計書 10 の 10.3）。listener は 1 回だけ登録し、最新の hold と gauge は ref で参照する。
+// Tab はメインとサブの切り替え（設計書 10 の 10.3）、Escape は設定メニューの開閉。
+// 設定メニューが開いている間は Escape だけを受け、Tab はフォーカス移動に任せる。
+// listener は 1 回だけ登録し、最新の hold と gauge は ref で参照する。
 
 export type Holds = {
   readonly up: Hold;
   readonly down: Hold;
   readonly left: Hold;
   readonly right: Hold;
+};
+
+export type KeyActions = {
+  readonly toggleWeapon: () => void;
+  readonly toggleOptions: () => void;
+  /** 設定メニューが開いているか。開いている間は対戦の操作を受けない */
+  readonly menuOpen: boolean;
 };
 
 const holdFor = (holds: Holds, code: string): Hold | null => {
@@ -27,20 +36,25 @@ const holdFor = (holds: Holds, code: string): Hold | null => {
   }
 };
 
-const isShift = (code: string): boolean => code === "ShiftLeft" || code === "ShiftRight";
-
-export const useKeyboardInput = (holds: Holds, gauge: PowerGauge, toggleWeapon: () => void): void => {
-  const inputRef = useRef({ holds, gauge, toggleWeapon });
-  inputRef.current = { holds, gauge, toggleWeapon };
+export const useKeyboardInput = (holds: Holds, gauge: PowerGauge, actions: KeyActions): void => {
+  const inputRef = useRef({ holds, gauge, actions });
+  inputRef.current = { holds, gauge, actions };
 
   useEffect(() => {
     const down = (e: KeyboardEvent): void => {
-      if (e.repeat || e.target instanceof HTMLInputElement) return;
-      const { holds: h, gauge: g, toggleWeapon: toggle } = inputRef.current;
+      if (e.repeat) return;
+      const { holds: h, gauge: g, actions: a } = inputRef.current;
+      // Escape はどこにフォーカスがあっても受ける。メニューの部品にフォーカスしたまま閉じられるようにするため
+      if (e.code === "Escape") {
+        a.toggleOptions();
+        e.preventDefault();
+        return;
+      }
+      if (a.menuOpen || e.target instanceof HTMLInputElement) return;
       const hold = holdFor(h, e.code);
       if (hold) hold.start();
       else if (e.code === "Space") g.begin("key");
-      else if (isShift(e.code)) toggle();
+      else if (e.code === "Tab") a.toggleWeapon();
       else return;
       e.preventDefault();
     };

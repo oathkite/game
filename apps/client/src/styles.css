@@ -94,6 +94,7 @@ a {
   align-items: center;
 }
 
+
 .row > * {
   flex: 1;
 }
@@ -206,21 +207,23 @@ a {
   opacity: 0.8;
 }
 
-/* 対戦中の武器の切り替え。右パネルのゲージの上に 2 段で置く */
+/* 対戦中の武器の切り替え。右パネルの射撃ボタンの直上に 2 つ横に並べる */
 .weapon-switch {
   display: flex;
-  flex-direction: column;
+  flex-direction: row;
   gap: 4px;
+  width: 100%;
 }
 
+/* 幅 144 px のパネルでは 1 つが約 66 px。長い名前は 2 行に折り返し、省略記号で切らない */
 .weapon-switch button {
-  padding: 4px;
+  flex: 1;
+  min-width: 0;
+  padding: 2px;
   font-size: 12px;
   line-height: 1.2;
   height: 36px;
-  white-space: nowrap;
   overflow: hidden;
-  text-overflow: ellipsis;
 }
 
 /* ゲーム画面 */
