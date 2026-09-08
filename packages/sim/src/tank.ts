@@ -27,8 +27,9 @@ export const tiltOf = (mask: TerrainMask, x: number): number => {
 export type StepOutcome = "moved" | "blocked" | "fell";
 
 /**
- * 1 歩の判定。上りは高さの差が CLIMB_MAX 以下なら進める。下りは制限なし。
- * 下りた先が判定半径より深ければ落下扱いで、その歩で移動は終わる。
+ * 1 歩の判定。高さの差が CLIMB_MAX 以下なら上りも下りも進める。
+ * それを超える上りは反り立つ壁として進めない。超える下りは落下扱いで、その歩で移動は終わる。
+ * 上りと下りで同じ閾値を使うのは、降りた先から同じ道を登って戻れるようにするためである。
  */
 export const stepOutcome = (mask: TerrainMask, x: number, dir: -1 | 1): StepOutcome => {
   const nx = x + dir;
@@ -37,7 +38,7 @@ export const stepOutcome = (mask: TerrainMask, x: number, dir: -1 | 1): StepOutc
   const there = surfaceY(mask, nx);
   const rise = here - there; // 正なら上り
   if (rise > CLIMB_MAX) return "blocked";
-  if (-rise > TANK_RADIUS) return "fell";
+  if (-rise > CLIMB_MAX) return "fell";
   return "moved";
 };
 

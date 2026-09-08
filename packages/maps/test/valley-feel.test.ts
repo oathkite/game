@@ -1,6 +1,6 @@
 import { getMap } from "../src/index.js";
 import { describe, expect, it } from "vitest";
-import { damageDealtTo, simulateShot, STEPS_PER_TURN, walk } from "@game/sim";
+import { BLAST_RADIUS, carve, damageDealtTo, simulateShot, STEPS_PER_TURN, surfaceY, walk } from "@game/sim";
 
 // 設計書 07 の開発順序 4「谷で遊び、面白さを確認する」の数値による裏付け。
 // 遊びの判断そのものは人が行うが、設計書 01 の判断基準「風を読み切って狙った場所に当てた報い」が成り立つ条件を固定する。
@@ -65,6 +65,26 @@ describe("1 ターンで動ける範囲", () => {
         for (const dir of [-1, 1] as const) {
           const r = walk(mask, x, dir, STEPS_PER_TURN);
           // どのマップのどちら向きで落ちたかが分かるよう、場所を添えて比べる
+          expect({ where: `${name} x=${x} dir=${dir}`, ...r }).toEqual({
+            where: `${name} x=${x} dir=${dir}`,
+            x: x + dir * STEPS_PER_TURN,
+            stepsUsed: STEPS_PER_TURN,
+            fell: false,
+          });
+        }
+      }
+    }
+  });
+
+  it("どのマップでも、足元に主砲のクレーターが 1 つできても縁を越えて出られる", () => {
+    for (const name of ["valley", "mountain", "island"] as const) {
+      const map = getMap(name);
+      const base = map.build();
+      for (const x of map.spawns) {
+        const mask = carve(base, { cx: x, cy: surfaceY(base, x), radius: BLAST_RADIUS });
+        for (const dir of [-1, 1] as const) {
+          const r = walk(mask, x, dir, STEPS_PER_TURN);
+          // クレーターの底から縁までは 10 列。歩数の途中で止まればハマっている
           expect({ where: `${name} x=${x} dir=${dir}`, ...r }).toEqual({
             where: `${name} x=${x} dir=${dir}`,
             x: x + dir * STEPS_PER_TURN,
