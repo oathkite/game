@@ -182,3 +182,4 @@ export const getMap = (name: MapName): MapDefinition => definitions[name];
 export const allMaps = (): readonly MapDefinition[] => MAP_NAMES.map((n) => definitions[n]);
 
 export { heightsFromProfile, merge, slabs, solidBelow, type ProfilePoint, type Slab } from "./profile.js";
+export { columnsOfMask, decodeColumns, encodeColumns, simplify, slabsFromColumns, validateDrawing, type Drawing, type Run } from "./drawing.js";
