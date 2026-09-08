@@ -1,4 +1,5 @@
-import { COLOR_HEX, MAP_CHOICE_LABELS, MAP_CHOICES, WEAPON_LABELS, type MapChoice, type RoomState, type Seat, type TankColors } from "@game/protocol";
+import { COLOR_HEX, WEAPON_LABELS, type MapChoice, type RoomState, type Seat, type TankColors } from "@game/protocol";
+import { MapDisplay, MapPicker } from "./MapPicker";
 import { useState } from "react";
 
 // 部屋。設計書 09 の 9.5。参加者の一覧、観戦者数、マップ、入室コードと招待リンク、オーナーの操作。
@@ -82,17 +83,7 @@ export const RoomScreen = ({ room, mySeat, onReady, onSetMap, onKick, onStart, o
         <div className="dim">観戦 {room.spectators.length} 人</div>
         <div className="row">
           <span className="label">マップ</span>
-          {isOwner && room.phase === "open" ? (
-            <select value={room.mapName} aria-label="room map" onChange={(e) => onSetMap(e.target.value as MapChoice)}>
-              {MAP_CHOICES.map((m) => (
-                <option key={m} value={m}>
-                  {MAP_CHOICE_LABELS[m]}
-                </option>
-              ))}
-            </select>
-          ) : (
-            <span>{MAP_CHOICE_LABELS[room.mapName]}</span>
-          )}
+          {isOwner && room.phase === "open" ? <MapPicker value={room.mapName} onChange={onSetMap} label="room map" /> : <MapDisplay value={room.mapName} />}
         </div>
         {isOwner && (
           <button type="button" disabled={!canStart} onClick={onStart} data-testid="start">

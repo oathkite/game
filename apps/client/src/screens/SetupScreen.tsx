@@ -1,7 +1,5 @@
 import {
   COLOR_HEX,
-  MAP_CHOICE_LABELS,
-  MAP_CHOICES,
   NICKNAME_MAX,
   PLAYER_COLORS,
   WEAPON_IDS,
@@ -13,6 +11,7 @@ import {
   type WeaponSlot,
 } from "@game/protocol";
 import { useState } from "react";
+import { MapPicker } from "./MapPicker";
 import type { Profile } from "@/app/profile";
 import { TankPreview, type WeaponDemo } from "./TankPreview";
 
@@ -98,13 +97,7 @@ const LoadoutPane = ({ profile, onPick, onEnterLobby, onSolo, inviteCode, valid 
           {inviteCode ? `部屋 ${inviteCode} に入る` : "ロビーへ"}
         </button>
         <div className="row">
-          <select value={soloMap} aria-label="solo map" onChange={(e) => setSoloMap(e.target.value as MapChoice)}>
-            {MAP_CHOICES.map((m) => (
-              <option key={m} value={m}>
-                {MAP_CHOICE_LABELS[m]}
-              </option>
-            ))}
-          </select>
+          <MapPicker value={soloMap} onChange={setSoloMap} label="solo map" />
           <button type="button" onClick={() => onSolo(soloMap)} data-testid="solo">
             ひとりで撃つ
           </button>

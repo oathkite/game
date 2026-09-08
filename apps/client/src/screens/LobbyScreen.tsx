@@ -1,4 +1,5 @@
 import { MAP_CHOICE_LABELS, MAP_CHOICES, ROOM_TITLE_MAX, type LobbyPhaseFilter, type MapChoice, type ServerMessageOf } from "@game/protocol";
+import { MapPicker } from "./MapPicker";
 import { useState } from "react";
 
 // ロビー。設計書 09 の 9.3 と 9.4、08 の 8.4。左のペインに部屋を作るとコードで入る、右のペインに検索と絞り込みと公開部屋の一覧。
@@ -37,14 +38,8 @@ export const LobbyScreen = ({ page, query, onQuery, onCreate, onJoin, onSpectate
         <div className="box column">
           <div className="label">部屋を作る</div>
           <input value={title} maxLength={ROOM_TITLE_MAX} placeholder="表示名（省略可）" aria-label="room title" onChange={(e) => setTitle(e.target.value)} />
+          <MapPicker value={mapName} onChange={setMapName} label="map" />
           <div className="row">
-            <select value={mapName} aria-label="map" onChange={(e) => setMapName(e.target.value as MapChoice)}>
-              {MAP_CHOICES.map((m) => (
-                <option key={m} value={m}>
-                  {MAP_CHOICE_LABELS[m]}
-                </option>
-              ))}
-            </select>
             <button type="button" className={isPublic ? "active" : ""} onClick={() => setIsPublic(true)}>
               公開
             </button>
