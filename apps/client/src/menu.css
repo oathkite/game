@@ -299,3 +299,76 @@
     grid-column: 1 / -1;
   }
 }
+
+.selection-summary {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.selected-colors,
+.selected-weapons {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.selection-summary > button {
+  flex: none;
+}
+
+.picker-dialog {
+  padding: 0;
+  width: min(720px, calc(100% - 24px));
+  max-height: calc(100dvh - 24px);
+  color: var(--ui);
+  background: var(--bg);
+  border: 2px solid var(--ui);
+  overflow: hidden;
+}
+
+.picker-dialog::backdrop {
+  background: rgb(0 0 0 / 80%);
+}
+
+.picker-inner {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  padding: 16px;
+  max-height: calc(100dvh - 28px);
+}
+
+.picker-inner > :not(.picker-content) {
+  flex: none;
+}
+
+.picker-content {
+  overflow-y: auto;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.picker-content > * {
+  flex-shrink: 0;
+}
+
+.picker-preview {
+  width: min(320px, 100%);
+  align-self: center;
+}
+
+.weapon-pickers {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 16px;
+}
+
+@media (max-width: 600px) {
+  .weapon-pickers {
+    grid-template-columns: 1fr;
+  }
+}

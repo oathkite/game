@@ -10,7 +10,7 @@ import {
   type WeaponId,
   type WeaponSlot,
 } from "@game/protocol";
-import { useState } from "react";
+import { useEffect, useRef, useState, type ReactNode } from "react";
 import { MapPicker } from "./MapPicker";
 import type { Profile } from "@/app/profile";
 import { TankPreview, type WeaponDemo } from "./TankPreview";
@@ -93,6 +93,26 @@ const SetupActions = ({ onEnterLobby, onSolo, inviteCode, valid }: SetupActionsP
   );
 };
 
+const PickerDialog = ({ title, children }: { readonly title: string; readonly children: ReactNode }) => {
+  const dialog = useRef<HTMLDialogElement>(null);
+  const [open, setOpen] = useState(false);
+  useEffect(() => { if (open) dialog.current?.showModal(); }, [open]);
+  return (
+    <>
+      <button type="button" aria-label={title} aria-haspopup="dialog" onClick={() => setOpen(true)}>変更</button>
+      <dialog ref={dialog} className="picker-dialog" aria-label={title} onClose={() => setOpen(false)} onClick={(e) => {
+        if (e.target === e.currentTarget) dialog.current?.close();
+      }}>
+        <div className="picker-inner">
+          <div className="label">{title}</div>
+          <div className="picker-content">{open && children}</div>
+          <button type="button" onClick={() => dialog.current?.close()}>完了</button>
+        </div>
+      </dialog>
+    </>
+  );
+};
+
 const ProfilePane = ({ profile, onChange, demo }: Pick<Props, "profile" | "onChange"> & { readonly demo: WeaponDemo | null }) => (
   <div className="pane">
     <div className="title">FORTRESS</div>
@@ -107,9 +127,36 @@ const ProfilePane = ({ profile, onChange, demo }: Pick<Props, "profile" | "onCha
         onChange={(e) => onChange({ ...profile, nickname: e.target.value.slice(0, NICKNAME_MAX) })}
       />
     </label>
-    {/* 絵と同じ上下の順に並べる。砲塔（副色）が上、車体（主色）が下 */}
-    <ColorPicker label="副色（砲塔）" value={profile.colors.secondary} onPick={(c) => onChange({ ...profile, colors: { ...profile.colors, secondary: c } })} />
-    <ColorPicker label="主色（車体）" value={profile.colors.primary} onPick={(c) => onChange({ ...profile, colors: { ...profile.colors, primary: c } })} />
+    <div className="selection-summary">
+      <div className="selected-colors">
+        <span>副色（砲塔） <span className="swatch" style={{ background: COLOR_HEX[profile.colors.secondary] }} /></span>
+        <span>主色（車体） <span className="swatch" style={{ background: COLOR_HEX[profile.colors.primary] }} /></span>
+      </div>
+      <PickerDialog title="色を変更">
+        <div className="picker-preview"><TankPreview colors={profile.colors} demo={null} /></div>
+        <ColorPicker label="副色（砲塔）" value={profile.colors.secondary} onPick={(c) => onChange({ ...profile, colors: { ...profile.colors, secondary: c } })} />
+        <ColorPicker label="主色（車体）" value={profile.colors.primary} onPick={(c) => onChange({ ...profile, colors: { ...profile.colors, primary: c } })} />
+      </PickerDialog>
+    </div>
+  </div>
+);
+
+const LoadoutPane = ({ profile, demo, onPick }: { readonly profile: Profile; readonly demo: WeaponDemo | null; readonly onPick: (loadout: Loadout, weapon: WeaponId) => void }) => (
+  <div className="pane">
+    <div className="selection-summary">
+      <div className="selected-weapons" data-testid="loadout-summary">
+        <span>武器 1　{WEAPON_LABELS[profile.loadout[0]]}</span>
+        <span>武器 2　{WEAPON_LABELS[profile.loadout[1]]}</span>
+      </div>
+      <PickerDialog title="武器を変更">
+        <div className="picker-preview"><TankPreview colors={profile.colors} demo={demo} /></div>
+        <div className="weapon-pickers">
+          <WeaponPicker label="武器 1" slot={0} loadout={profile.loadout} onPick={onPick} />
+          <WeaponPicker label="武器 2" slot={1} loadout={profile.loadout} onPick={onPick} />
+        </div>
+      </PickerDialog>
+    </div>
+    <p className="menu-hint">矢印キー: 上下で仰角、左右で移動。Tab: 武器切り替え。スペース: 押して溜め、離して発射。Esc: 設定。</p>
   </div>
 );
 
@@ -126,12 +173,7 @@ export const SetupScreen = ({ profile, onChange, onEnterLobby, onSolo, inviteCod
     <div className="menu-shell setup">
       <div className="screen-split menu-content">
         <ProfilePane profile={profile} onChange={onChange} demo={demo} />
-        <div className="pane">
-          <div className="label">装備を選ぶ</div>
-          <WeaponPicker label="武器 1" slot={0} loadout={profile.loadout} onPick={pickLoadout} />
-          <WeaponPicker label="武器 2" slot={1} loadout={profile.loadout} onPick={pickLoadout} />
-          <p className="menu-hint">矢印キー: 上下で仰角、左右で移動。Tab: 武器切り替え。スペース: 押して溜め、離して発射。Esc: 設定。</p>
-        </div>
+        <LoadoutPane profile={profile} demo={demo} onPick={pickLoadout} />
       </div>
       <SetupActions onEnterLobby={onEnterLobby} onSolo={onSolo} inviteCode={inviteCode} valid={valid} />
     </div>
