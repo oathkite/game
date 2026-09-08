@@ -5,7 +5,7 @@ import { createMatchStore, type MatchStore } from "@/match/matchStore";
 import { createLocalConnection, defaultOpponentColors, defaultOpponentLoadout } from "@/net/localConnection";
 import { MatchStage } from "./MatchStage";
 
-// solo モード。サーバーなしでひとりで撃つ。両席を交互に自分が操作する。
+// solo モード（画面上の名前はプラクティス）。サーバーなしでひとりで撃つ。両席を交互に自分が操作する。
 
 type Props = {
   readonly profile: Profile;
