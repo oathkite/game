@@ -1,13 +1,14 @@
 import type { WeaponId } from "@game/protocol";
 import { weaponSpec, type StageSpec } from "@game/sim";
 import { CARVE_AT_MS, FAN_DELAY_MS, HOLD_MS, IMPACT_TOTAL_MS, VOLLEY_DELAY_MS, blastFrameAt } from "@/game/hitFeedback";
-import { bulletSize, trailStep, type BulletSize } from "@/game/weaponArt";
+import { bulletSize, type BulletSize } from "@/game/weaponArt";
 
 // 設定画面の武器デモ。設計書 09 の 9.2。武器を選ぶと、プレビューの戦車がその武器を 1 発撃つ。
 // プレビューは対戦と同じ倍率のマップの切れ端で、単位は対戦と同じセル。時間は秒。
 // 見た目だけの弾道で、sim の物理とは別物。浮動小数点を使ってよい（判定に使わないため）。
-// 武器ごとの差（扇、時間差の発、初速、重力、着弾の段、弾の大きさ、尾）は sim の数値と weaponArt から引き、
+// 武器ごとの差（扇、時間差の発、初速、重力、着弾の段、弾の大きさ）は sim の数値と weaponArt から引き、
 // 着弾の演出（静止、膨張、削り、明滅、消失、破片）は対戦の再生と同じ hitFeedback の時間割を使う（設計書 03 の 3.9）。
+// 尾は残さない。マルチ弾の 9 発が何発あるか数えにくくなるためである。
 // 武器ごとに変わらない値は prepareDemo で 1 回だけ用意し、フレームごとには t を進めるだけにする。
 
 /** 地面の厚み（セル）。掘削弾の爆風（半径 16）と貫通弾の 3 段が収まる */
@@ -23,9 +24,6 @@ const RANGE_SHARE = 0.6;
 const GRAVITY = 200;
 /** 発射角（度） */
 const LAUNCH_DEG = 45;
-/** 尾を残す 1 段あたりの時間（秒）と本数 */
-const TRAIL_UNIT_SEC = 0.04;
-const TRAIL_COUNT = 10;
 /** 破片が飛ぶ時間（秒）と初速（セル/秒）。設計書 03 の 3.9 の表 */
 const DEBRIS_SEC = 0.4;
 const DEBRIS_SPEED = 40;
@@ -79,8 +77,6 @@ export type Demo = {
   readonly field: Field;
   readonly shots: readonly Shot[];
   readonly size: BulletSize;
-  /** 尾の間隔（ステップ）。0 なら残さない */
-  readonly trail: number;
 };
 
 export type Blast = Point & { readonly radius: number; readonly ring: boolean };
@@ -88,7 +84,6 @@ export type Crater = Point & { readonly radius: number };
 
 export type DemoFrame = {
   readonly bullets: readonly (Point & BulletSize)[];
-  readonly trails: readonly Point[];
   /** 爆風。明滅の消灯側は含めない */
   readonly blasts: readonly Blast[];
   /** 削れた地形。着弾の順 */
@@ -162,7 +157,6 @@ export const prepareDemo = (weapon: WeaponId, field: Field): Demo => ({
   field,
   shots: demoShots(weapon, field),
   size: bulletSize(weapon),
-  trail: trailStep(weapon),
 });
 
 /** 弾道上の現在の時刻と、着弾点で止まっているか。t は発射からの秒。飛び終えたら null */
@@ -174,14 +168,6 @@ export const bulletTimeAt = (shot: Shot, t: number): { readonly flightAt: number
   if (current && t < current.at + HOLD_SEC) return { flightAt: current.flightAt, holding: true };
   return { flightAt: t - passed.length * HOLD_SEC, holding: false };
 };
-
-/** 尾。飛んでいる間の過去の位置。1 段の間隔は武器の尾の間隔に比例させる */
-const trailsOf = (field: Field, f: Flight, flightAt: number, step: number): readonly Point[] =>
-  step === 0
-    ? []
-    : Array.from({ length: TRAIL_COUNT }, (_, k) => flightAt - (k + 1) * step * TRAIL_UNIT_SEC)
-        .filter((past) => past >= 0)
-        .map((past) => positionAt(field, f, past));
 
 /** 破片の数。設計書 03 の 3.9 の表 */
 export const debrisCount = (radius: number): number => (radius >= 10 ? 8 : radius >= 6 ? 6 : radius >= 3 ? 4 : 2);
@@ -213,7 +199,6 @@ export const demoFrame = (demo: Demo, t: number): DemoFrame => {
   const carved = stages.filter(({ e }) => e >= CARVE_SEC);
   return {
     bullets: flying.map(({ shot, flightAt }) => ({ ...positionAt(field, shot.flight, flightAt), ...demo.size })),
-    trails: flying.filter((b) => !b.holding).flatMap(({ shot, flightAt }) => trailsOf(field, shot.flight, flightAt, demo.trail)),
     blasts,
     craters: carved.map(({ stage }) => ({ x: stage.x, y: stage.y, radius: stage.radius })),
     debris: carved.filter(({ e }) => e - CARVE_SEC < DEBRIS_SEC).flatMap(({ stage, e }) => debrisOf(stage, e - CARVE_SEC)),

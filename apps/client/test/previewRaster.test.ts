@@ -8,7 +8,7 @@ import { demoFrame, demoShots, fieldFor, prepareDemo, type DemoFrame } from "@/s
 
 const FIELD = fieldFor(160);
 const COLORS: TankColors = { primary: "red", secondary: "yellow" };
-const EMPTY: DemoFrame = { bullets: [], trails: [], blasts: [], craters: [], debris: [], done: true };
+const EMPTY: DemoFrame = { bullets: [], blasts: [], craters: [], debris: [], done: true };
 
 const pixel = (r: ReturnType<typeof rasterize>, x: number, y: number): readonly number[] => {
   const o = (y * r.width + x) * 4;

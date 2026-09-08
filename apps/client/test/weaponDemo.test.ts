@@ -95,12 +95,11 @@ describe("bulletTimeAt", () => {
 });
 
 describe("demoFrame", () => {
-  it("発射直後は主砲の先端に 1 発があり、尾も爆風も削りも無い", () => {
+  it("発射直後は主砲の先端に 1 発があり、爆風も削りも無い", () => {
     const f = frameOf("cannon", 0);
     expect(f.bullets).toHaveLength(1);
     expect(first(f.bullets).x).toBeCloseTo(FIELD.muzzle.x);
     expect(first(f.bullets).y).toBeCloseTo(FIELD.muzzle.y);
-    expect(f.trails).toHaveLength(0);
     expect(f.blasts).toHaveLength(0);
     expect(f.craters).toHaveLength(0);
     expect(f.done).toBe(false);
@@ -117,11 +116,6 @@ describe("demoFrame", () => {
         }
       }
     }
-  });
-
-  it("針弾は尾を残さず、レーザー弾は残す", () => {
-    expect(frameOf("stinger", 0.5).trails).toHaveLength(0);
-    expect(frameOf("laser", 0.5).trails.length).toBeGreaterThan(0);
   });
 
   it("着弾の演出は対戦と同じ時間割で、静止、膨張、削り、輪の順に進む", () => {

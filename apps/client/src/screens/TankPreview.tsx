@@ -23,7 +23,7 @@ const CELL_MIN = 2;
 /** 切れ端の幅の下限（セル）。これより狭いとレーザー弾が右端から出る */
 const COLS_MIN = 80;
 
-const EMPTY_FRAME: DemoFrame = { bullets: [], trails: [], blasts: [], craters: [], debris: [], done: true };
+const EMPTY_FRAME: DemoFrame = { bullets: [], blasts: [], craters: [], debris: [], done: true };
 
 type Geometry = { readonly cell: number; readonly field: Field };
 

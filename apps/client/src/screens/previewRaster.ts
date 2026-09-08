@@ -4,7 +4,7 @@ import { blastCells } from "@/game/weaponArt";
 import type { DemoFrame, Field } from "./weaponDemo";
 
 // 設定画面のプレビューを 1 セル 1 ピクセルのラスターに描く。設計書 08 の 8.2、8.6。
-// 対戦画面と同じく、地形は sim の carve でセル単位に削り、爆風は projectileView と同じセルの円、弾と尾と破片はセルの正方形で描く。
+// 対戦画面と同じく、地形は sim の carve でセル単位に削り、爆風は projectileView と同じセルの円、弾と破片はセルの正方形で描く。
 // DOM を触らない純関数なので、TankPreview が ImageData に流し込み、最近傍で整数倍に拡大する。
 
 export type Rgb = readonly [number, number, number];
@@ -55,9 +55,8 @@ export const bulletCells = (b: CellPoint & { readonly w: number; readonly h: num
   return cells;
 };
 
-/** 主色で塗るセル。尾、弾、爆風、破片の順（後が上に乗る） */
+/** 主色で塗るセル。弾、爆風、破片の順（後が上に乗る） */
 export const effectCells = (frame: DemoFrame): readonly CellPoint[] => [
-  ...frame.trails.map((p) => ({ x: Math.floor(p.x), y: Math.floor(p.y) })),
   ...frame.bullets.flatMap(bulletCells),
   ...frame.blasts.flatMap((b) => blastCells(Math.floor(b.x), Math.floor(b.y), b.radius, b.ring)),
   ...frame.debris,
