@@ -31,8 +31,12 @@ export const MAX_SPEED = 229376;
 export const MAX_STEPS = 4000;
 
 export const STEPS_PER_TURN = 30;
-/** 1 歩で登れる高さの上限（セル） */
-export const CLIMB_MAX = 1;
+/**
+ * 1 歩で乗り越えられる高さの上限（セル）。車体の直径と同じ。
+ * これ以下の段差は上りも下りも進め、これを超える上りは壁、下りは落下になる。
+ * 主砲のクレーターの縁は平地で 4 セル、斜面では 8 セルほどの段差になり、これを越えられる値。同じ場所に 2 発重なった縁（13 セル）は越えられない。
+ */
+export const CLIMB_MAX = TANK_RADIUS * 2;
 /** 傾きを測る幅。中心から左右にこのセル数 */
 export const TILT_HALF_WIDTH = 3;
 export const TILT_DIFF_MAX = 6;
