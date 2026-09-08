@@ -123,4 +123,4 @@ type Impact = {
 - `RoomMember`、`PlayerState`、`match.setup` の各プレイヤーに `loadout` を持たせる。
 - `turn.fire` に `slot` を持たせる。サーバーは手番側の `loadout` から武器を解決し、`TrajectoryInput.weapon` に入れる。クライアントは `turn.result` の `input.weapon` から再計算するので、装備を知らない観戦者や再接続後のクライアントも同じ結果を出せる。
 - `ShotResult` は着弾の列 `impacts` を持つ。`MatchState.terrainOps` には着弾ごとの円をすべて足す。
-- 武器の数値（弾道の角度、発数、段、倍率）は `packages/sim/src/weapons.ts` に、名前と説明は `packages/protocol/src/weapons.ts` に置く。`protocol` は語彙だけを持ち、物理の数値を持たない。
+- 武器の数値（弾道の角度、発数、段、倍率）は `packages/sim/src/weapons.ts` に、名前は `packages/protocol/src/weapons.ts` に置く。`protocol` は語彙だけを持ち、物理の数値を持たない。
