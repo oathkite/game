@@ -48,11 +48,11 @@ describe("demoShots", () => {
     expect(d3 ?? 0).toBeGreaterThan(d2 ?? 0);
   });
 
-  it("着弾の段は武器の段数で、貫通弾は 3 段、レーザー弾は 5 段が前の段より深く進む", () => {
+  it("着弾の段は武器の段数で、貫通弾は 3 段、レーザー弾は 7 段が前の段より深く進む", () => {
     expect(firstShot("cannon").stages).toHaveLength(1);
     const drill = firstShot("drill").stages;
     expect(drill).toHaveLength(3);
-    expect(firstShot("laser").stages).toHaveLength(5);
+    expect(firstShot("laser").stages).toHaveLength(7);
     for (let k = 1; k < drill.length; k++) {
       const prev = drill[k - 1];
       const cur = drill[k];

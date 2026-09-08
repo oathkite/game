@@ -79,13 +79,13 @@ describe("武器の数値", () => {
     }
   });
 
-  it("全弾直撃の合計は 針弾 > トリプル = マルチ > 貫通 > レーザー > 標準砲 > 浮遊弾 > 掘削弾", () => {
+  it("全弾直撃の合計は 針弾 > レーザー > トリプル = マルチ > 貫通 > 標準砲 > 浮遊弾 > 掘削弾", () => {
     const full = (w: WeaponId) => fullHitDamage(weaponSpec(w));
-    expect(full("stinger")).toBeGreaterThan(full("triple"));
+    expect(full("stinger")).toBeGreaterThan(full("laser"));
+    expect(full("laser")).toBeGreaterThan(full("triple"));
     expect(full("triple")).toBe(full("multiple"));
     expect(full("multiple")).toBeGreaterThan(full("drill"));
-    expect(full("drill")).toBeGreaterThan(full("laser"));
-    expect(full("laser")).toBeGreaterThan(full("cannon"));
+    expect(full("drill")).toBeGreaterThan(full("cannon"));
     expect(full("cannon")).toBeGreaterThan(full("floater"));
     expect(full("floater")).toBeGreaterThan(full("digger"));
   });
@@ -181,12 +181,12 @@ describe("貫通する武器", () => {
     expect(dealtTo(r, 1)).toBe(fullHitDamage(weaponSpec("drill")));
   });
 
-  it("レーザー弾は 5 段が同じ数値で、地形では線のように並んで削る", () => {
+  it("レーザー弾は 7 段が同じ数値で、地形では線のように並んで削る", () => {
     const stages = weaponSpec("laser").stages;
-    expect(stages).toHaveLength(5);
+    expect(stages).toHaveLength(7);
     expect(new Set(stages.map((s) => JSON.stringify(s))).size).toBe(1);
     const r = spread("laser");
-    expect(r.impacts).toHaveLength(5);
+    expect(r.impacts).toHaveLength(7);
     // 隣の段との距離は爆風半径の 2 倍以内。離れていると線に見えない
     for (let i = 1; i < r.impacts.length; i++) {
       const a = r.impacts[i - 1]!.cell;
@@ -229,7 +229,7 @@ describe("1 発 1 段の武器の性格", () => {
     for (const w of WEAPONS) if (w !== "stinger") expect(stinger.damageMax).toBeGreaterThan(firstStage(w).damageMax);
     const center = { x: 100, y: 147 };
     expect(damageAt({ x: 100, y: 144 }, center, stinger)).toBe(stinger.damageMax);
-    expect(damageAt({ x: 106, y: 147 }, center, stinger)).toBe(10);
+    expect(damageAt({ x: 106, y: 147 }, center, stinger)).toBe(7);
     expect(damageAt({ x: 107, y: 147 }, center, stinger)).toBe(0);
   });
 
