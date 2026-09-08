@@ -256,7 +256,7 @@ a {
   border-color: var(--ui);
 }
 
-/* 武器の選択。設計書 10 の 10.4。名前と一行の説明を縦に積む */
+/* 武器の選択。設計書 09 の 9.2。名前だけを出し、説明はプレビューのデモに任せる */
 .weapon-grid {
   display: grid;
   grid-template-columns: repeat(4, 1fr);
@@ -269,18 +269,8 @@ a {
 }
 
 .weapon-cell {
-  display: flex;
-  flex-direction: column;
-  align-items: flex-start;
-  gap: 6px;
   padding: 8px;
-  text-align: left;
   line-height: 1.3;
-}
-
-.weapon-desc {
-  font-size: 12px;
-  opacity: 0.8;
 }
 
 /* 対戦中の武器の切り替え。右パネルの射撃ボタンの直上に 2 つ横に並べる */

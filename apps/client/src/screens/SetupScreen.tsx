@@ -4,7 +4,6 @@ import {
   MAP_NAMES,
   NICKNAME_MAX,
   PLAYER_COLORS,
-  WEAPON_DESCRIPTIONS,
   WEAPON_IDS,
   WEAPON_LABELS,
   type MapName,
@@ -56,7 +55,7 @@ export const pickWeapon = (loadout: Loadout, slot: WeaponSlot, w: WeaponId): Loa
   return next;
 };
 
-/** 装備の 1 スロット。8 つの候補から 1 つ選ぶ。もう一方のスロットで選んでいる武器には印を付ける。選んだ武器も返し、呼び出し側がデモを撃つ */
+/** 装備の 1 スロット。8 つの候補から 1 つ選ぶ。名前だけを出し、性格はプレビューのデモで伝える。もう一方のスロットで選んでいる武器には印を付ける。選んだ武器も返し、呼び出し側がデモを撃つ */
 const WeaponPicker = ({ label, slot, loadout, onPick }: { label: string; slot: WeaponSlot; loadout: Loadout; onPick: (l: Loadout, w: WeaponId) => void }) => (
   <div className="column" style={{ gap: 8 }}>
     <div className="label">{label}</div>
@@ -71,8 +70,7 @@ const WeaponPicker = ({ label, slot, loadout, onPick }: { label: string; slot: W
           className={`weapon-cell${loadout[slot] === w ? " active" : ""}${loadout[slot === 0 ? 1 : 0] === w ? " other" : ""}`}
           onClick={() => onPick(pickWeapon(loadout, slot, w), w)}
         >
-          <span>{WEAPON_LABELS[w]}</span>
-          <span className="weapon-desc">{WEAPON_DESCRIPTIONS[w]}</span>
+          {WEAPON_LABELS[w]}
         </button>
       ))}
     </div>
