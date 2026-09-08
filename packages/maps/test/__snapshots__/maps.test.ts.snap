@@ -4,7 +4,7 @@ exports[`maps > bridge > 同じ結果を返す（決定論） 1`] = `732502978`;
 
 exports[`maps > cave > 同じ結果を返す（決定論） 1`] = `295707824`;
 
-exports[`maps > island > 同じ結果を返す（決定論） 1`] = `21768238`;
+exports[`maps > island > 同じ結果を返す（決定論） 1`] = `214345726`;
 
 exports[`maps > mountain > 同じ結果を返す（決定論） 1`] = `303358865`;
 

@@ -54,11 +54,15 @@ describe("maps", () => {
     expect(surfaceY(mask, 200)).toBeLessThan(surfaceY(mask, 60) - 80);
   });
 
-  it("浮島は島の外が奈落", () => {
+  it("浮島は島の外と中央が奈落で、島の縁の下に浮き石がある", () => {
     const mask = getMap("island").build();
+    const map = getMap("island");
     expect(isRingOut(mask, 5)).toBe(true);
-    expect(isRingOut(mask, 150)).toBe(true);
-    expect(isRingOut(mask, 200)).toBe(false);
+    expect(isRingOut(mask, 200)).toBe(true);
+    for (const x of map.spawns) expect(isRingOut(mask, x)).toBe(false);
+    // 左の島の右端の下（x 120 付近、y 165 前後）に浮き石がある
+    expect(mask.cells[170 * MAP_WIDTH + 120]).toBe(1);
+    expect(mask.cells[155 * MAP_WIDTH + 120]).toBe(0);
   });
 
   it("平原は端から端まで地表の高低差が 5 セル以内", () => {
