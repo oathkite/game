@@ -11,6 +11,7 @@ const player = (seat: 0 | 1, nickname: string): PlayerView => ({
   loadout: ["cannon", "digger"],
   hp: 100,
   x: 100,
+  y: 150,
   facing: 1,
   connected: true,
 });

@@ -63,11 +63,13 @@ export const pass = (state: EngineState, reason: PassReason, now: number): Step 
 /** 射撃確定を解決する。移動の検証に失敗すればパスにする。武器は手番側の装備からスロットで選ぶ（設計書 10） */
 export const resolveFire = (state: EngineState, seat: Seat, fire: ClientMessageOf<"turn.fire">, now: number): Step => {
   const player = state.match.players[seat];
-  if (!validateMove(state.mask, player.x, fire.x)) return pass(state, "invalidFire", now);
+  // 移動の検証が移動後の位置（y を含む）を決める。クライアントは x しか送らない
+  const moved = validateMove(state.mask, player, fire.x);
+  if (!moved) return pass(state, "invalidFire", now);
   const weapon = weaponOf(player.loadout, fire.slot);
-  const input = { seat, weapon, x: fire.x, facing: fire.facing, elevation: fire.elevation, power: fire.power, wind: state.match.wind.value };
+  const input = { seat, weapon, x: moved.x, y: moved.y, facing: fire.facing, elevation: fire.elevation, power: fire.power, wind: state.match.wind.value };
   const [p0, p1] = state.match.players;
-  const outcome = simulateShot(state.mask, [{ x: p0.x, hp: p0.hp }, { x: p1.x, hp: p1.hp }], input);
+  const outcome = simulateShot(state.mask, [{ x: p0.x, y: p0.y, hp: p0.hp }, { x: p1.x, y: p1.y, hp: p1.hp }], input);
   const r = outcome.result;
   const opp = otherSeat(seat);
   const stat = state.stats[seat];
@@ -77,8 +79,8 @@ export const resolveFire = (state: EngineState, seat: Seat, fire: ClientMessageO
   const dealt = { damageDealt: stat.damageDealt + damageDealtTo(r, opp), directHits: stat.directHits + direct };
   const stats: EngineState["stats"] = seat === 0 ? [dealt, state.stats[1]] : [state.stats[0], dealt];
   const players: EngineState["match"]["players"] = [
-    { ...p0, hp: r.hpAfter[0], x: r.xAfter[0], facing: seat === 0 ? fire.facing : p0.facing },
-    { ...p1, hp: r.hpAfter[1], x: r.xAfter[1], facing: seat === 1 ? fire.facing : p1.facing },
+    { ...p0, hp: r.hpAfter[0], x: r.xAfter[0], y: r.yAfter[0], facing: seat === 0 ? fire.facing : p0.facing },
+    { ...p1, hp: r.hpAfter[1], x: r.xAfter[1], y: r.yAfter[1], facing: seat === 1 ? fire.facing : p1.facing },
   ];
   const finished: MatchResult | null = r.finished
     ? { winner: r.finished.winner, reason: r.finished.reason, turns: state.match.turnNumber, stats }

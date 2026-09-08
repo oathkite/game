@@ -13,10 +13,11 @@ import {
   ONE,
   projectileCount,
   shot,
-  simulateShot,
+
   WEAPON_SPECS,
   weaponSpec,
 } from "../src/index.js";
+import { fire } from "./helpers.js";
 
 // 武器の手触りを数値で固定する。設計書 10 の 10.2 と 10.3。
 // 数値そのものではなく「どちらが遠くへ飛ぶか」「どちらが風に流されるか」という関係を固定し、調整の余地を残す。
@@ -30,7 +31,7 @@ type Flight = { readonly range: number; readonly apex: number; readonly steps: n
 /** 平地の左端から仰角 45 度で撃ったときの最初の弾道の到達距離、最高点の高さ、飛行ステップ数 */
 const flight = (weapon: WeaponId, power: number, wind: number): Flight => {
   const surface = 200;
-  const out = simulateShot(flatMask(surface), [{ x: 20, hp: 100 }, { x: 399, hp: 100 }], shot({ weapon, x: 20, elevation: 45, power, wind }));
+  const out = fire(flatMask(surface), [{ x: 20, hp: 100 }, { x: 399, hp: 100 }], shot({ weapon, x: 20, elevation: 45, power, wind }));
   const impactX = out.result.impacts[0]?.cell.x ?? 399;
   const points = out.paths[0]?.points ?? [];
   const apex = surface - Math.min(...points.map((p) => p.y)) / ONE;
@@ -42,10 +43,10 @@ const drift = (weapon: WeaponId, power: number): number => flight(weapon, power,
 const dealtTo = damageDealtTo;
 
 /** 平地で相手を至近（12 セル）に置き、低い仰角で直撃させる。標準砲なら 35 が出る */
-const pointBlank = (weapon: WeaponId): ShotResult => simulateShot(flatMask(150), [{ x: 60, hp: 100 }, { x: 72, hp: 100 }], shot({ weapon, elevation: 10, power: 40 })).result;
+const pointBlank = (weapon: WeaponId): ShotResult => fire(flatMask(150), [{ x: 60, hp: 100 }, { x: 72, hp: 100 }], shot({ weapon, elevation: 10, power: 40 })).result;
 
 /** 平地を仰角 30 度で撃つ。扇と貫通の着弾の並びを見る */
-const spread = (weapon: WeaponId, power = 60): ShotResult => simulateShot(flatMask(200), [{ x: 20, hp: 100 }, { x: 399, hp: 100 }], shot({ weapon, x: 20, elevation: 30, power })).result;
+const spread = (weapon: WeaponId, power = 60): ShotResult => fire(flatMask(200), [{ x: 20, hp: 100 }, { x: 399, hp: 100 }], shot({ weapon, x: 20, elevation: 30, power })).result;
 
 describe("武器の数値", () => {
   it("標準砲は設計書 01 と 06 の初期値そのままで、1 発 1 段、倍率はすべて 100%", () => {
@@ -118,7 +119,7 @@ describe("扇に広がる武器", () => {
   });
 
   it("トリプル弾は仰角 60 度前後（背面打ちの実効角度）で 3 発が数セル以内に集まる", () => {
-    const at = (elevation: number) => simulateShot(flatMask(200), [{ x: 20, hp: 100 }, { x: 399, hp: 100 }], shot({ weapon: "triple", x: 20, elevation, power: 60 })).result;
+    const at = (elevation: number) => fire(flatMask(200), [{ x: 20, hp: 100 }, { x: 399, hp: 100 }], shot({ weapon: "triple", x: 20, elevation, power: 60 })).result;
     const width = (elevation: number) => {
       const xs = at(elevation).impacts.map((i) => i.cell.x);
       return Math.max(...xs) - Math.min(...xs);
@@ -129,7 +130,7 @@ describe("扇に広がる武器", () => {
   });
 
   it("扇のずれは撃つ側の向きに合わせて鏡像になり、左向きでも 1 発目が遠い", () => {
-    const r = simulateShot(flatMask(200), [{ x: 379, hp: 100 }, { x: 0, hp: 100 }], shot({ weapon: "triple", x: 379, facing: -1, elevation: 30, power: 60 })).result;
+    const r = fire(flatMask(200), [{ x: 379, hp: 100 }, { x: 0, hp: 100 }], shot({ weapon: "triple", x: 379, facing: -1, elevation: 30, power: 60 })).result;
     const ranges = r.impacts.map((i) => 379 - i.cell.x);
     expect(ranges[0]).toBeGreaterThan(ranges[1]!);
     expect(ranges[1]).toBeGreaterThan(ranges[2]!);

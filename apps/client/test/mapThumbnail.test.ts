@@ -29,9 +29,10 @@ describe("mapThumbnail", () => {
     expect(at(t, 40, THUMB_HEIGHT - 1)).toBe(0);
   });
 
-  it("洞窟の天井が上空に出る", () => {
+  it("洞窟は上端が天井、中ほどが空洞、下端が床", () => {
     const t = mapThumbnail("cave");
-    expect(at(t, 40, 13)).toBe(1);
-    expect(at(t, 40, 20)).toBe(0);
+    expect(at(t, 40, 0)).toBe(1);
+    expect(at(t, 40, 30)).toBe(0);
+    expect(at(t, 40, THUMB_HEIGHT - 1)).toBe(1);
   });
 });

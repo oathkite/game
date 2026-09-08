@@ -89,6 +89,7 @@ type PlayerState = {
   readonly loadout: Loadout;          // 装備する 2 つの武器。対戦中は固定
   readonly hp: number;
   readonly x: number;                 // 機体中心の x（整数セル）
+  readonly y: number;                 // 接地している地表の y（整数セル）。機体中心は y − 判定半径
   readonly facing: Facing;            // 最後に動いた方向。対戦開始時は相手側を向く
   readonly connected: boolean;
 };
@@ -96,8 +97,9 @@ type PlayerState = {
 type Facing = -1 | 1;                 // -1 が左、1 が右
 ```
 
-y 座標と車体の傾きは持たない。
-どちらも x と現在の地形から一意に決まるので、持つと不整合の元になる。
+y はサーバーが移動の検証と落下で決める（[マップ仕様](./02-map.md) の 2.5）。
+当初は「x と地形から一意に決まる」として持たなかったが、天井の下に機体を置く洞窟では上から見た地表と区別できないので持つことにした。
+車体の傾きは x、y と地形から決まるので持たない。
 描画のたびに地表の高さと傾きの対応表から求める。
 
 色は主色と副色の 2 つで、候補は [グラフィックの方向性](./08-visual-direction.md) の 7 色を名前で持つ。
@@ -137,6 +139,7 @@ type TrajectoryInput = {
   readonly seat: Seat;
   readonly weapon: WeaponId; // 使った武器（10 章）。爆風半径、ダメージ、初速と重力と風の倍率を決める
   readonly x: number;        // 移動後の機体 x
+  readonly y: number;        // 移動後に接地している地表の y。サーバーが移動の検証から求める
   readonly facing: Facing;   // 向き
   readonly elevation: number;// 10 から 90 の整数（度）。車体基準の仰角
   readonly power: number;    // 0 から 100 の整数
@@ -163,6 +166,7 @@ type ShotResult = {
   readonly impacts: readonly Impact[];      // 着弾の列。空なら全弾が消失した。適用は列の順
   readonly hpAfter: readonly [number, number];
   readonly xAfter: readonly [number, number];
+  readonly yAfter: readonly [number, number];  // 落下後の地表の y。奈落なら MAP_HEIGHT
   readonly ringOut: readonly Seat[];
   /** 決着していれば勝者と理由。ターン数と成績は対戦全体の状態から埋めるので、ここでは持たない */
   readonly finished: { readonly winner: Seat | null; readonly reason: "hp" | "ringOut" } | null;

@@ -94,7 +94,7 @@ export const createMatchStore = (connection: Connection, initialOptions: ReduceO
     const acting = seat !== null && !spectator && view.currentSeat === seat && view.deadlineAt !== null && (view.phase === "waiting" || view.phase === "acting");
     const player = view.players?.[seat ?? 0];
     const control: LocalControl | null =
-      acting && player ? { x: player.x, facing: player.facing, elevation: view.lastElevation, slot: view.lastSlot, stepsLeft: STEPS_PER_TURN, fell: false } : null;
+      acting && player ? { x: player.x, y: player.y, facing: player.facing, elevation: view.lastElevation, slot: view.lastSlot, stepsLeft: STEPS_PER_TURN, fell: false } : null;
     set({ ...view, mySeat: seat, spectator, phase: acting ? "acting" : view.phase === "acting" ? "waiting" : view.phase, control: acting ? control : view.phase === "acting" ? null : view.control });
   };
 

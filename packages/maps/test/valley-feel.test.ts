@@ -1,6 +1,6 @@
-import { getMap } from "../src/index.js";
+import { getMap, spawnAt } from "../src/index.js";
 import { describe, expect, it } from "vitest";
-import { damageDealtTo, isRingOut, simulateShot, STEPS_PER_TURN, surfaceY, walk, type TerrainMask } from "@game/sim";
+import { damageDealtTo, groundBelow, isRingOut, simulateShot, spawnPos, STEPS_PER_TURN, surfaceY, walk, type TankPos, type TerrainMask } from "@game/sim";
 import { MAP_NAMES, type MapName } from "@game/protocol";
 
 // 設計書 07 の開発順序 4「谷で遊び、面白さを確認する」の数値による裏付け。
@@ -25,9 +25,13 @@ const maskOf = (name: MapName) => {
   return built;
 };
 
+/** スポーンに立つ 2 機 */
+const standing = (name: MapName): readonly [TankPos, TankPos] => [spawnAt(getMap(name), maskOf(name), 0), spawnAt(getMap(name), maskOf(name), 1)];
+
 const shotFrom = (name: MapName, from: 0 | 1, aim: Aim, weapon: "cannon" | "digger" = "cannon", wind = 0) => {
-  const [x0, x1] = getMap(name).spawns;
-  return simulateShot(maskOf(name), [{ x: x0, hp: 100 }, { x: x1, hp: 100 }], { seat: from, weapon, x: from === 0 ? x0 : x1, facing: from === 0 ? 1 : -1, elevation: aim.elevation, power: aim.power, wind });
+  const [p0, p1] = standing(name);
+  const me = from === 0 ? p0 : p1;
+  return simulateShot(maskOf(name), [{ ...p0, hp: 100 }, { ...p1, hp: 100 }], { seat: from, weapon, x: me.x, y: me.y, facing: from === 0 ? 1 : -1, elevation: aim.elevation, power: aim.power, wind });
 };
 
 const hittingFrom = (name: MapName, from: 0 | 1, wind = 0): readonly Aim[] => aims.filter((a) => damageDealtTo(shotFrom(name, from, a, "cannon", wind).result, from === 0 ? 1 : 0) > 0);
@@ -62,7 +66,8 @@ describe("谷の手触り", () => {
     // 当たる照準の中に、相手の真下の地表を下げるものがある
     const lowers = [...calm].some((k) => {
       const [elevation, power] = k.split("/").map(Number) as [number, number];
-      const r = simulateShot(mask, [{ x: x0, hp: 100 }, { x: x1, hp: 100 }], { seat: 0, weapon: "cannon", x: x0, facing: 1, elevation, power, wind: 0 });
+      const [p0, p1] = standing("valley");
+      const r = simulateShot(mask, [{ ...p0, hp: 100 }, { ...p1, hp: 100 }], { seat: 0, weapon: "cannon", x: x0, y: p0.y, facing: 1, elevation, power, wind: 0 });
       return surfaceAt(r.mask, x1) > surfaceAt(mask, x1);
     });
     expect(lowers).toBe(true);
@@ -77,9 +82,10 @@ describe("1 ターンで動ける範囲", () => {
     for (const name of MAP_NAMES.filter((n) => n !== "towers")) {
       const map = getMap(name);
       const mask = map.build();
-      for (const x of map.spawns) {
+      for (const side of [0, 1] as const) {
+        const x = map.spawns[side];
         for (const dir of [-1, 1] as const) {
-          const r = walk(mask, x, dir, STEPS_PER_TURN);
+          const { y: _y, ...r } = walk(mask, spawnAt(map, mask, side), dir, STEPS_PER_TURN);
           // どのマップのどちら向きで落ちたかが分かるよう、場所を添えて比べる
           expect({ where: `${name} x=${x} dir=${dir}`, ...r }).toEqual({
             where: `${name} x=${x} dir=${dir}`,
@@ -128,28 +134,31 @@ describe("橋の手触り", () => {
 
   it("橋の上は端から端まで落ちずに歩ける", () => {
     const mask = bridge.build();
-    let x = bridge.spawns[0];
+    let pos = spawnAt(bridge, mask, 0);
     for (let turn = 0; turn < 8; turn++) {
-      const r = walk(mask, x, 1, STEPS_PER_TURN);
+      const r = walk(mask, pos, 1, STEPS_PER_TURN);
       expect(r.fell).toBe(false);
-      x = r.x;
+      pos = { x: r.x, y: r.y };
     }
-    expect(x).toBeGreaterThan(bridge.spawns[1]);
+    expect(pos.x).toBeGreaterThan(bridge.spawns[1]);
   });
 
   it("標準砲 1 発で橋が切れ、切れた所を歩くと落ちる", () => {
-    const cut = aims.map((a) => shotFrom("bridge", 0, a)).find((r) => isRingOut(r.mask, 200));
+    const cut = aims.map((a) => shotFrom("bridge", 0, a)).find((r) => isRingOut(r.mask, spawnPos(r.mask, 200)));
     expect(cut).toBeDefined();
     if (!cut) return;
-    expect(isRingOut(bridge.build(), 200)).toBe(false);
-    expect(walk(cut.mask, 170, 1, STEPS_PER_TURN).fell).toBe(true);
+    expect(isRingOut(bridge.build(), spawnPos(bridge.build(), 200))).toBe(false);
+    expect(walk(cut.mask, spawnPos(cut.mask, 170), 1, STEPS_PER_TURN).fell).toBe(true);
   });
 });
 
 describe("洞窟の手触り", () => {
   it("高い弾道は天井に当たり、低い弾道なら相手に届く", () => {
+    const mask = maskOf("cave");
+    // 床の地表。天井の下（y 120）から下へ見る
+    const floorAt = (x: number) => groundBelow(mask, x, 120);
     const high = aims.filter((a) => a.elevation >= 60 && a.power >= 80).map((a) => shotFrom("cave", 0, a).result);
-    const onCeiling = high.filter((r) => r.impacts.some((i) => i.cell.y <= 72 && i.cell.x >= 140 && i.cell.x <= 260));
+    const onCeiling = high.filter((r) => r.impacts.some((i) => i.cell.y < floorAt(i.cell.x) - 10));
     expect(onCeiling.length).toBeGreaterThan(high.length / 2);
     expect(hittingFrom("cave", 0).length).toBeGreaterThan(20);
   });
@@ -160,12 +169,13 @@ describe("双塔の手触り", () => {
 
   it("頂上は狭く、左右に 5 歩で縁に達する。外側へ踏み外すと奈落、内側へ踏み外すと斜面に落ちる", () => {
     const mask = towers.build();
-    const [x0, x1] = towers.spawns;
-    expect(walk(mask, x0, -1, STEPS_PER_TURN)).toMatchObject({ stepsUsed: 6, fell: true });
-    expect(isRingOut(mask, walk(mask, x0, -1, STEPS_PER_TURN).x)).toBe(true);
-    expect(walk(mask, x0, 1, STEPS_PER_TURN)).toMatchObject({ stepsUsed: 6, fell: true });
-    expect(isRingOut(mask, walk(mask, x0, 1, STEPS_PER_TURN).x)).toBe(false);
-    expect(walk(mask, x1, 1, STEPS_PER_TURN)).toMatchObject({ stepsUsed: 6, fell: true });
+    const p0 = spawnAt(towers, mask, 0);
+    const p1 = spawnAt(towers, mask, 1);
+    expect(walk(mask, p0, -1, STEPS_PER_TURN)).toMatchObject({ stepsUsed: 6, fell: true });
+    expect(isRingOut(mask, walk(mask, p0, -1, STEPS_PER_TURN))).toBe(true);
+    expect(walk(mask, p0, 1, STEPS_PER_TURN)).toMatchObject({ stepsUsed: 6, fell: true });
+    expect(isRingOut(mask, walk(mask, p0, 1, STEPS_PER_TURN))).toBe(false);
+    expect(walk(mask, p1, 1, STEPS_PER_TURN)).toMatchObject({ stepsUsed: 6, fell: true });
   });
 
   it("掘削弾で相手の頂上を削ると相手は低くなるが、塔は残りリングアウトにはならない", () => {
@@ -175,6 +185,6 @@ describe("双塔の手触り", () => {
     expect(hit).toBeDefined();
     if (!hit) return;
     expect(surfaceY(hit.mask, x1) - before).toBeGreaterThanOrEqual(10);
-    expect(isRingOut(hit.mask, x1)).toBe(false);
+    expect(isRingOut(hit.mask, spawnPos(hit.mask, x1))).toBe(false);
   });
 });

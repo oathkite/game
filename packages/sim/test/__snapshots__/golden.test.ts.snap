@@ -92,11 +92,16 @@ exports[`golden replay > トリプル弾 平地 至近で 3 発をまとめて�
       "weapon": "triple",
       "wind": 0,
       "x": 60,
+      "y": 150,
     },
     "ringOut": [],
     "xAfter": [
       60,
       72,
+    ],
+    "yAfter": [
+      150,
+      151,
     ],
   },
 }
@@ -194,11 +199,16 @@ exports[`golden replay > トリプル弾 谷 基本の直接射撃 1`] = `
       "weapon": "triple",
       "wind": 0,
       "x": 60,
+      "y": 140,
     },
     "ringOut": [],
     "xAfter": [
       60,
       340,
+    ],
+    "yAfter": [
+      140,
+      140,
     ],
   },
 }
@@ -440,11 +450,16 @@ exports[`golden replay > マルチ弾 谷 追い風 10 1`] = `
       "weapon": "multiple",
       "wind": 10,
       "x": 60,
+      "y": 140,
     },
     "ringOut": [],
     "xAfter": [
       60,
       340,
+    ],
+    "yAfter": [
+      140,
+      140,
     ],
   },
 }
@@ -596,11 +611,16 @@ exports[`golden replay > レーザー弾 平地 直撃 1`] = `
       "weapon": "laser",
       "wind": 0,
       "x": 60,
+      "y": 150,
     },
     "ringOut": [],
     "xAfter": [
       60,
       72,
+    ],
+    "yAfter": [
+      150,
+      150,
     ],
   },
 }
@@ -752,11 +772,16 @@ exports[`golden replay > レーザー弾 谷 向かい風 10 1`] = `
       "weapon": "laser",
       "wind": -10,
       "x": 60,
+      "y": 140,
     },
     "ringOut": [],
     "xAfter": [
       60,
       340,
+    ],
+    "yAfter": [
+      140,
+      140,
     ],
   },
 }
@@ -806,11 +831,16 @@ exports[`golden replay > 上り坂 +45 度 1`] = `
       "weapon": "cannon",
       "wind": 0,
       "x": 100,
+      "y": 150,
     },
     "ringOut": [],
     "xAfter": [
       100,
       300,
+    ],
+    "yAfter": [
+      150,
+      110,
     ],
   },
 }
@@ -860,11 +890,16 @@ exports[`golden replay > 下り坂 -45 度 1`] = `
       "weapon": "cannon",
       "wind": 0,
       "x": 100,
+      "y": 150,
     },
     "ringOut": [],
     "xAfter": [
       100,
       300,
+    ],
+    "yAfter": [
+      150,
+      190,
     ],
   },
 }
@@ -914,11 +949,16 @@ exports[`golden replay > 壁の中で爆発 自爆 1`] = `
       "weapon": "cannon",
       "wind": 0,
       "x": 100,
+      "y": 150,
     },
     "ringOut": [],
     "xAfter": [
       100,
       300,
+    ],
+    "yAfter": [
+      155,
+      130,
     ],
   },
 }
@@ -950,11 +990,16 @@ exports[`golden replay > 平地 右端から右へ 消失 1`] = `
       "weapon": "cannon",
       "wind": 0,
       "x": 390,
+      "y": 150,
     },
     "ringOut": [],
     "xAfter": [
       390,
       60,
+    ],
+    "yAfter": [
+      150,
+      150,
     ],
   },
 }
@@ -1004,11 +1049,16 @@ exports[`golden replay > 平地 最小仰角 最小パワー 1`] = `
       "weapon": "cannon",
       "wind": 0,
       "x": 60,
+      "y": 150,
     },
     "ringOut": [],
     "xAfter": [
       60,
       340,
+    ],
+    "yAfter": [
+      160,
+      150,
     ],
   },
 }
@@ -1058,11 +1108,16 @@ exports[`golden replay > 平地 直撃 1`] = `
       "weapon": "cannon",
       "wind": 0,
       "x": 60,
+      "y": 150,
     },
     "ringOut": [],
     "xAfter": [
       60,
       72,
+    ],
+    "yAfter": [
+      150,
+      155,
     ],
   },
 }
@@ -1112,11 +1167,16 @@ exports[`golden replay > 平地 真上 最大パワー 1`] = `
       "weapon": "cannon",
       "wind": 0,
       "x": 200,
+      "y": 150,
     },
     "ringOut": [],
     "xAfter": [
       200,
       340,
+    ],
+    "yAfter": [
+      155,
+      150,
     ],
   },
 }
@@ -1166,11 +1226,16 @@ exports[`golden replay > 掘削弾 平地 直撃 1`] = `
       "weapon": "digger",
       "wind": 0,
       "x": 60,
+      "y": 150,
     },
     "ringOut": [],
     "xAfter": [
       60,
       72,
+    ],
+    "yAfter": [
+      158,
+      163,
     ],
   },
 }
@@ -1202,11 +1267,16 @@ exports[`golden replay > 浮島 奈落へ 消失 1`] = `
       "weapon": "cannon",
       "wind": 0,
       "x": 118,
+      "y": 150,
     },
     "ringOut": [],
     "xAfter": [
       118,
       340,
+    ],
+    "yAfter": [
+      150,
+      150,
     ],
   },
 }
@@ -1256,11 +1326,16 @@ exports[`golden replay > 浮島 相手の足元を狙う 1`] = `
       "weapon": "cannon",
       "wind": -2,
       "x": 80,
+      "y": 150,
     },
     "ringOut": [],
     "xAfter": [
       80,
       300,
+    ],
+    "yAfter": [
+      150,
+      150,
     ],
   },
 }
@@ -1310,11 +1385,16 @@ exports[`golden replay > 浮遊弾 谷 向かい風 10 1`] = `
       "weapon": "floater",
       "wind": -10,
       "x": 60,
+      "y": 140,
     },
     "ringOut": [],
     "xAfter": [
       60,
       340,
+    ],
+    "yAfter": [
+      140,
+      140,
     ],
   },
 }
@@ -1364,11 +1444,16 @@ exports[`golden replay > 谷 向かい風 10 1`] = `
       "weapon": "cannon",
       "wind": -10,
       "x": 60,
+      "y": 140,
     },
     "ringOut": [],
     "xAfter": [
       60,
       340,
+    ],
+    "yAfter": [
+      140,
+      140,
     ],
   },
 }
@@ -1418,11 +1503,16 @@ exports[`golden replay > 谷 基本の直接射撃 1`] = `
       "weapon": "cannon",
       "wind": 0,
       "x": 60,
+      "y": 140,
     },
     "ringOut": [],
     "xAfter": [
       60,
       340,
+    ],
+    "yAfter": [
+      140,
+      140,
     ],
   },
 }
@@ -1472,11 +1562,16 @@ exports[`golden replay > 谷 山越えの高角度 1`] = `
       "weapon": "cannon",
       "wind": 3,
       "x": 60,
+      "y": 140,
     },
     "ringOut": [],
     "xAfter": [
       60,
       340,
+    ],
+    "yAfter": [
+      140,
+      140,
     ],
   },
 }
@@ -1526,11 +1621,16 @@ exports[`golden replay > 谷 左向きから 1`] = `
       "weapon": "cannon",
       "wind": 0,
       "x": 340,
+      "y": 140,
     },
     "ringOut": [],
     "xAfter": [
       340,
       60,
+    ],
+    "yAfter": [
+      140,
+      140,
     ],
   },
 }
@@ -1580,11 +1680,16 @@ exports[`golden replay > 谷 追い風 10 1`] = `
       "weapon": "cannon",
       "wind": 10,
       "x": 60,
+      "y": 140,
     },
     "ringOut": [],
     "xAfter": [
       60,
       340,
+    ],
+    "yAfter": [
+      140,
+      140,
     ],
   },
 }
@@ -1668,11 +1773,16 @@ exports[`golden replay > 貫通弾 壁の中で爆発 自爆 1`] = `
       "weapon": "drill",
       "wind": 0,
       "x": 100,
+      "y": 150,
     },
     "ringOut": [],
     "xAfter": [
       100,
       300,
+    ],
+    "yAfter": [
+      152,
+      130,
     ],
   },
 }
@@ -1756,11 +1866,16 @@ exports[`golden replay > 貫通弾 平地 直撃 1`] = `
       "weapon": "drill",
       "wind": 0,
       "x": 60,
+      "y": 150,
     },
     "ringOut": [],
     "xAfter": [
       60,
       72,
+    ],
+    "yAfter": [
+      150,
+      153,
     ],
   },
 }
@@ -1844,11 +1959,16 @@ exports[`golden replay > 貫通弾 谷 基本の直接射撃 1`] = `
       "weapon": "drill",
       "wind": 0,
       "x": 60,
+      "y": 140,
     },
     "ringOut": [],
     "xAfter": [
       60,
       340,
+    ],
+    "yAfter": [
+      140,
+      140,
     ],
   },
 }
@@ -1898,11 +2018,16 @@ exports[`golden replay > 針弾 平地 直撃 1`] = `
       "weapon": "stinger",
       "wind": 0,
       "x": 60,
+      "y": 150,
     },
     "ringOut": [],
     "xAfter": [
       60,
       72,
+    ],
+    "yAfter": [
+      150,
+      150,
     ],
   },
 }

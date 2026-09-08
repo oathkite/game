@@ -1,5 +1,5 @@
 import type { CellPoint, Impact, Seat } from "@game/protocol";
-import { carve, isRingOut, MAP_HEIGHT, ONE, surfaceY, tiltOf, weaponSpec, type ProjectilePath, type TerrainMask } from "@game/sim";
+import { carve, isRingOut, MAP_HEIGHT, ONE, tiltOf, weaponSpec, type ProjectilePath, type TerrainMask } from "@game/sim";
 import type { SoundName } from "@/app/audio";
 import type { PlayerView, ReplayJob } from "@/match/types";
 import {
@@ -86,12 +86,12 @@ type Run = {
 
 const poseOf = (p: PlayerView, mask: TerrainMask, elevation: number, over: Partial<TankPose> = {}): TankPose => ({
   x: p.x,
-  y: surfaceY(mask, p.x),
-  tilt: tiltOf(mask, p.x),
+  y: p.y,
+  tilt: tiltOf(mask, p),
   facing: p.facing,
   elevation,
   hp: p.hp,
-  visible: !isRingOut(mask, p.x),
+  visible: !isRingOut(mask, p),
   flash: false,
   // 再生の間は狙いを付ける時間ではないので線を出さない
   aiming: false,
@@ -100,13 +100,16 @@ const poseOf = (p: PlayerView, mask: TerrainMask, elevation: number, over: Parti
 
 const elevationOf = (run: Run, seat: Seat): number => (seat === run.job.shot.input.seat ? run.job.shot.input.elevation : run.elevations[seat]);
 
-/** 着弾で地面を失った機体の落下。着弾前と後の地表の差から求める */
+/** 落下前の地表。撃った側は移動後の位置（input.y）、相手はターン開始時の位置 */
+const groundBeforeFall = (job: ReplayJob, seat: Seat): number => (seat === job.shot.input.seat ? job.shot.input.y : job.playersBefore[seat].y);
+
+/** 着弾で地面を失った機体の落下。落下前の地表と、サーバーが決めた落下後の地表の差から求める */
 const computeFalls = (job: ReplayJob): Fall[] => {
   const falls: Fall[] = [];
   for (const seat of [0, 1] as const) {
-    const p = job.playersAfter[seat];
-    const from = surfaceY(job.maskBefore, p.x);
-    const to = isRingOut(job.maskAfter, p.x) ? MAP_HEIGHT + 12 : surfaceY(job.maskAfter, p.x);
+    const from = groundBeforeFall(job, seat);
+    const after = job.playersAfter[seat];
+    const to = isRingOut(job.maskAfter, after) ? MAP_HEIGHT + 12 : after.y;
     if (to > from) falls.push({ seat, from, to });
   }
   return falls;
@@ -130,7 +133,8 @@ const poseAfterHit = (run: Run, seat: Seat, flash: boolean): TankPose => {
   const after = run.job.playersAfter[seat];
   const drain = run.drains[seat];
   const bar = drain ? hpBarAt(run.elapsed - drain.at, drain.before, drain.after) : { hp: run.hp[seat], hpGhost: run.hp[seat], ghostOn: false };
-  return poseOf({ ...before, hp: bar.hp, x: after.x, facing: after.facing }, run.job.maskBefore, elevationOf(run, seat), {
+  // 落下前なので、撃った側は移動後の地表、相手はターン開始時の地表に立つ
+  return poseOf({ ...before, hp: bar.hp, x: after.x, y: groundBeforeFall(run.job, seat), facing: after.facing }, run.job.maskBefore, elevationOf(run, seat), {
     flash,
     hpGhost: bar.hpGhost,
     ghostOn: bar.ghostOn,

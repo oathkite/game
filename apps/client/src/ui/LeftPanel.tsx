@@ -34,10 +34,11 @@ export const LeftPanel = ({ view, store, width, height, cell, holds }: Props) =>
   const mask = view.mask;
   const me = view.mySeat !== null && view.players ? view.players[view.mySeat] : null;
   const x = control ? control.x : me?.x ?? 0;
+  const y = control ? control.y : me?.y ?? 0;
   const facing: Facing = control ? control.facing : me?.facing ?? 1;
   // 手番でない間も最後に決めた仰角を出す。control が消えるたびに 45 に戻ると、維持されていないように見えるため
   const elevation = control ? control.elevation : view.lastElevation;
-  const tilt = mask ? tiltOf(mask, x) : 0;
+  const tilt = mask ? tiltOf(mask, { x, y }) : 0;
   const stepsLeft = control ? control.stepsLeft : STEPS_PER_TURN;
   // 角度計は幅と、パネルの高さのうち操作部品を除いた分に収める
   const gaugeSize = Math.min(width - 8, 22 * cell, Math.max(48, Math.floor(height * 0.35)));

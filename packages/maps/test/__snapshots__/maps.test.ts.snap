@@ -2,7 +2,7 @@
 
 exports[`maps > bridge > 同じ結果を返す（決定論） 1`] = `536669345`;
 
-exports[`maps > cave > 同じ結果を返す（決定論） 1`] = `295707824`;
+exports[`maps > cave > 同じ結果を返す（決定論） 1`] = `239097475`;
 
 exports[`maps > island > 同じ結果を返す（決定論） 1`] = `214345726`;
 

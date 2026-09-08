@@ -10,6 +10,8 @@ export type PlayerView = {
   readonly loadout: Loadout;
   readonly hp: number;
   readonly x: number;
+  /** 接地している地表の y。サーバーの値をそのまま持つ */
+  readonly y: number;
   readonly facing: Facing;
   readonly connected: boolean;
 };
@@ -29,6 +31,8 @@ export type ClientPhase =
 /** 手番側がクライアント内で持つ操作中の値。射撃確定時にまとめて送る */
 export type LocalControl = {
   readonly x: number;
+  /** 移動先の地表の y。歩くたびに stepOutcome が更新する */
+  readonly y: number;
   readonly facing: Facing;
   readonly elevation: number;
   /** このターンに撃つ武器のスロット（設計書 10） */

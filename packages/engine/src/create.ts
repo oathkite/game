@@ -1,4 +1,4 @@
-import { getMap } from "@game/maps";
+import { getMap, spawnAt } from "@game/maps";
 import type { Loadout, MapName, PlayerState, Seat, ServerMessageOf, TankColors } from "@game/protocol";
 import { HP_MAX } from "@game/sim";
 import type { EngineConfig, EngineState } from "./types.js";
@@ -20,18 +20,21 @@ const roll = (rng: () => number): boolean => rng() < 0.5;
 /** 対戦を Loading 状態で作る。左右の配置と先攻は rng で決める */
 export const createEngine = (config: EngineConfig, params: CreateParams): EngineState => {
   const map = getMap(params.mapName);
+  const mask = map.build();
   const swap = roll(config.rng);
   const firstSeat: Seat = roll(config.rng) ? 1 : 0;
-  const spawnOf = (seat: Seat): number => map.spawns[(seat === 0) !== swap ? 0 : 1];
+  const side = (seat: Seat): 0 | 1 => ((seat === 0) !== swap ? 0 : 1);
+  const spawnOf = (seat: Seat) => spawnAt(map, mask, side(seat));
   const player = (seat: Seat): PlayerState => ({
     seat,
     nickname: params.players[seat].nickname,
     colors: params.players[seat].colors,
     loadout: params.players[seat].loadout,
     hp: HP_MAX,
-    x: spawnOf(seat),
+    x: spawnOf(seat).x,
+    y: spawnOf(seat).y,
     // 対戦開始時は相手側を向く
-    facing: spawnOf(seat) < spawnOf(seat === 0 ? 1 : 0) ? 1 : -1,
+    facing: spawnOf(seat).x < spawnOf(seat === 0 ? 1 : 0).x ? 1 : -1,
     connected: true,
   });
   return {
@@ -50,7 +53,7 @@ export const createEngine = (config: EngineConfig, params: CreateParams): Engine
       terrainOps: [],
       result: null,
     },
-    mask: map.build(),
+    mask,
     loaded: [false, false],
     replayDone: [false, false],
     fired: false,
@@ -70,7 +73,7 @@ export const createEngine = (config: EngineConfig, params: CreateParams): Engine
 /** match.setup の内容。createEngine の直後に両席へ送る */
 export const setupMessage = (state: EngineState): ServerMessageOf<"match.setup"> => {
   const [p0, p1] = state.match.players;
-  const spec = (p: PlayerState) => ({ seat: p.seat, nickname: p.nickname, colors: p.colors, loadout: p.loadout, x: p.x });
+  const spec = (p: PlayerState) => ({ seat: p.seat, nickname: p.nickname, colors: p.colors, loadout: p.loadout, x: p.x, y: p.y });
   return {
     type: "match.setup",
     mapName: state.match.mapName,

@@ -1,5 +1,6 @@
 import type { ShotResult, TrajectoryInput } from "@game/protocol";
 import { simulateShot, type Combatant, type FixedPoint } from "./ballistics.js";
+import { spawnPos } from "./tank.js";
 import { flatMask, islandMask, shot, slopedMask, valleyMask, wallMask } from "./fixtures.js";
 import type { TerrainMask } from "./terrain.js";
 
@@ -9,11 +10,12 @@ import type { TerrainMask } from "./terrain.js";
 export type GoldenCase = {
   readonly name: string;
   readonly mask: () => TerrainMask;
-  readonly players: readonly [Combatant, Combatant];
+  /** 射撃前の機体。y は実行時にマスクの上から見た地表で埋める */
+  readonly players: readonly [Omit<Combatant, "y">, Omit<Combatant, "y">];
   readonly input: TrajectoryInput;
 };
 
-const two = (x0: number, x1: number, hp0 = 100, hp1 = 100): readonly [Combatant, Combatant] => [
+const two = (x0: number, x1: number, hp0 = 100, hp1 = 100): readonly [Omit<Combatant, "y">, Omit<Combatant, "y">] => [
   { x: x0, hp: hp0 },
   { x: x1, hp: hp1 },
 ];
@@ -55,7 +57,11 @@ export type GoldenRecord = {
 };
 
 export const runGolden = (c: GoldenCase): GoldenRecord => {
-  const out = simulateShot(c.mask(), c.players, c.input);
+  const mask = c.mask();
+  const at = (p: Omit<Combatant, "y">): Combatant => ({ ...p, ...spawnPos(mask, p.x) });
+  const players: readonly [Combatant, Combatant] = [at(c.players[0]), at(c.players[1])];
+  const input = { ...c.input, y: spawnPos(mask, c.input.x).y };
+  const out = simulateShot(mask, players, input);
   return { name: c.name, result: out.result, paths: out.paths.map((p) => ({ steps: p.points.length, last: p.points[p.points.length - 1] })) };
 };
 

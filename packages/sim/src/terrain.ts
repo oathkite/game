@@ -33,6 +33,18 @@ export const surfaceY = (mask: TerrainMask, x: number): number => {
   return mask.height;
 };
 
+/**
+ * x 列を fromY から下へ見て最初に地面があるセルの y。fromY より上の地面（天井）は見ない。
+ * 地面がなければ height を返す（奈落）。fromY が負なら 0 から見る
+ */
+export const groundBelow = (mask: TerrainMask, x: number, fromY: number): number => {
+  if (x < 0 || x >= mask.width) return mask.height;
+  for (let y = Math.max(0, fromY); y < mask.height; y++) {
+    if (mask.cells[y * mask.width + x] === 1) return y;
+  }
+  return mask.height;
+};
+
 /** 円形に削った新しいマスクを返す。元のマスクは変えない */
 export const carve = (mask: TerrainMask, op: TerrainOp): TerrainMask => {
   const cells = new Uint8Array(mask.cells);

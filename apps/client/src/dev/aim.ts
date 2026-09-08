@@ -20,10 +20,10 @@ export const findRobustAim = (view: MatchView, tolerance = 2): Aim | null => {
   const me = view.mySeat;
   const opp = me === 0 ? 1 : 0;
   const [p0, p1] = view.players;
-  const players = [{ x: p0.x, hp: p0.hp }, { x: p1.x, hp: p1.hp }] as const;
+  const players = [{ x: p0.x, y: p0.y, hp: p0.hp }, { x: p1.x, y: p1.y, hp: p1.hp }] as const;
   const weapon = weaponOf((me === 0 ? p0 : p1).loadout, c.slot);
   const damageOf = (elevation: number, power: number): number => {
-    const input = { seat: me, weapon, x: c.x, facing: c.facing, elevation, power, wind: view.wind.value };
+    const input = { seat: me, weapon, x: c.x, y: c.y, facing: c.facing, elevation, power, wind: view.wind.value };
     const r = simulateShot(view.mask as NonNullable<MatchView["mask"]>, players, input).result;
     return damageDealtTo(r, opp) - damageDealtTo(r, me);
   };

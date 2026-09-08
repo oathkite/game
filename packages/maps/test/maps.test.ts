@@ -1,7 +1,7 @@
 import { MAP_NAMES } from "@game/protocol";
-import { MAP_HEIGHT, MAP_WIDTH, isRingOut, surfaceY, tiltOf } from "@game/sim";
+import { MAP_HEIGHT, MAP_WIDTH, isRingOut, spawnPos, surfaceY, tiltOf } from "@game/sim";
 import { describe, expect, it } from "vitest";
-import { allMaps, getMap, heightsFromProfile, merge, resolveMapChoice, solidBelow } from "../src/index.js";
+import { allMaps, getMap, heightsFromProfile, merge, resolveMapChoice, solidBelow, spawnAt } from "../src/index.js";
 
 const checksum = (cells: Uint8Array): number => {
   let h = 0;
@@ -25,10 +25,11 @@ describe("maps", () => {
       });
 
       it("スポーンは地面の上で、傾きが小さい", () => {
-        for (const x of map.spawns) {
-          expect(isRingOut(mask, x)).toBe(false);
-          expect(surfaceY(mask, x)).toBeLessThan(MAP_HEIGHT - 10);
-          expect(Math.abs(tiltOf(mask, x))).toBeLessThanOrEqual(10);
+        for (const side of [0, 1] as const) {
+          const pos = spawnAt(map, mask, side);
+          expect(isRingOut(mask, pos)).toBe(false);
+          expect(pos.y).toBeLessThan(MAP_HEIGHT - 10);
+          expect(Math.abs(tiltOf(mask, pos))).toBeLessThanOrEqual(10);
         }
       });
 
@@ -57,9 +58,9 @@ describe("maps", () => {
   it("浮島は島の外と中央が奈落で、島の縁の下に浮き石がある", () => {
     const mask = getMap("island").build();
     const map = getMap("island");
-    expect(isRingOut(mask, 5)).toBe(true);
-    expect(isRingOut(mask, 200)).toBe(true);
-    for (const x of map.spawns) expect(isRingOut(mask, x)).toBe(false);
+    expect(isRingOut(mask, spawnPos(mask, 5))).toBe(true);
+    expect(isRingOut(mask, spawnPos(mask, 200))).toBe(true);
+    for (const side of [0, 1] as const) expect(isRingOut(mask, spawnAt(map, mask, side))).toBe(false);
     // 左の島の右端の下（x 120 付近、y 165 前後）に浮き石がある
     expect(mask.cells[170 * MAP_WIDTH + 120]).toBe(1);
     expect(mask.cells[155 * MAP_WIDTH + 120]).toBe(0);
@@ -82,18 +83,23 @@ describe("maps", () => {
 
   it("橋は 1 枚の板で、その下は奈落", () => {
     const mask = getMap("bridge").build();
-    expect(isRingOut(mask, 200)).toBe(false);
+    expect(isRingOut(mask, spawnPos(mask, 200))).toBe(false);
     expect(surfaceY(mask, 200)).toBe(surfaceY(mask, 90));
     // 橋の直下は空
     expect(mask.cells[130 * MAP_WIDTH + 200]).toBe(0);
     expect(mask.cells[200 * MAP_WIDTH + 200]).toBe(0);
   });
 
-  it("洞窟は中央の上空に天井があり、スポーンの上空は開いている", () => {
-    const mask = getMap("cave").build();
-    expect(mask.cells[65 * MAP_WIDTH + 200]).toBe(1);
-    expect(mask.cells[100 * MAP_WIDTH + 200]).toBe(0);
-    for (const x of getMap("cave").spawns) for (let y = 0; y < surfaceY(mask, x); y++) expect(mask.cells[y * MAP_WIDTH + x]).toBe(0);
+  it("洞窟は機体が天井と床の間に立ち、頭上に機体の高さ以上の空きがある", () => {
+    const map = getMap("cave");
+    const mask = map.build();
+    for (const side of [0, 1] as const) {
+      const pos = spawnAt(map, mask, side);
+      // 上から見た地表（天井の上）より下に立っている
+      expect(pos.y).toBeGreaterThan(surfaceY(mask, pos.x) + 6);
+      for (let y = pos.y - 6; y < pos.y; y++) expect(mask.cells[y * MAP_WIDTH + pos.x]).toBe(0);
+      expect(mask.cells[pos.y * MAP_WIDTH + pos.x]).toBe(1);
+    }
   });
 
   it("双塔はスポーンが塔の頂上で、塔は底まで詰まり、間は深い盆地、外側は奈落", () => {
@@ -103,8 +109,8 @@ describe("maps", () => {
       for (let y = top; y < MAP_HEIGHT; y++) expect(mask.cells[y * MAP_WIDTH + x]).toBe(1);
       expect(top).toBeLessThan(surfaceY(mask, 200) - 100);
     }
-    expect(isRingOut(mask, 10)).toBe(true);
-    expect(isRingOut(mask, 200)).toBe(false);
+    expect(isRingOut(mask, spawnPos(mask, 10))).toBe(true);
+    expect(isRingOut(mask, spawnPos(mask, 200))).toBe(false);
   });
 });
 

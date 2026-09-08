@@ -12,16 +12,18 @@ import {
   WIND_ACCEL_PER_UNIT,
 } from "./constants.js";
 import { cellOf, cosFixed, isqrt, mulFixed, sinFixed } from "./fixed.js";
-import { isRingOut, tankCenterY, tiltOf } from "./tank.js";
-import { carve, isSolid, surfaceY, type TerrainMask } from "./terrain.js";
+import { isRingOut, settle as settleTank, tankCenterY, tiltOf, type TankPos } from "./tank.js";
+import { carve, isSolid, type TerrainMask } from "./terrain.js";
 import { firstStage, scalePercent, weaponSpec, type FanSpec, type StageSpec, type WeaponSpec } from "./weapons.js";
 
 // 弾道と着弾の処理。設計書 06 の 6.7 決定論の契約に従い、整数と固定小数点だけを使う。
 // 爆風半径、ダメージ、初速と重力と風の倍率、弾道の本数と着弾の段数は武器ごとに違う（設計書 10）。入力の weapon から引く。
 // 1 発の射撃は「弾道が N 本、弾道ごとに着弾が最大 K 段」で、結果は着弾の列（Impact[]）として返す。
 
+/** 射撃前の機体。x と接地している地表の y（設計書 02 の 2.5）と HP */
 export type Combatant = {
   readonly x: number;
+  readonly y: number;
   readonly hp: number;
 };
 
@@ -43,10 +45,10 @@ export type Muzzle = {
  * 主砲の先端（固定小数点）。付け根は接地点から車体基準で真上 4 セルの点を傾きで回したもの。
  * 上向きの単位ベクトルを傾き t で回すと、画面座標（y 下向き）で (−sin t, −cos t) になる。
  */
-export const muzzleOf = (mask: TerrainMask, x: number, facing: Facing, elevation: number): Muzzle => {
-  const tilt = tiltOf(mask, x);
-  const contactX = x * ONE + ONE / 2;
-  const contactY = surfaceY(mask, x) * ONE;
+export const muzzleOf = (mask: TerrainMask, pos: TankPos, facing: Facing, elevation: number): Muzzle => {
+  const tilt = tiltOf(mask, pos);
+  const contactX = pos.x * ONE + ONE / 2;
+  const contactY = pos.y * ONE;
   const up = BARREL_BASE_UP * ONE;
   const baseX = contactX - mulFixed(up, sinFixed(tilt));
   const baseY = contactY - mulFixed(up, cosFixed(tilt));
@@ -212,10 +214,10 @@ export type ShotOutcome = {
   readonly paths: readonly ProjectilePath[];
 };
 
-const ringOuts = (mask: TerrainMask, xs: readonly [number, number]): Seat[] => {
+const ringOuts = (mask: TerrainMask, ps: readonly [TankPos, TankPos]): Seat[] => {
   const out: Seat[] = [];
-  if (isRingOut(mask, xs[0])) out.push(0);
-  if (isRingOut(mask, xs[1])) out.push(1);
+  if (isRingOut(mask, ps[0])) out.push(0);
+  if (isRingOut(mask, ps[1])) out.push(1);
   return out;
 };
 
@@ -279,22 +281,26 @@ export const simulateShot = (
   players: readonly [Combatant, Combatant],
   input: TrajectoryInput,
 ): ShotOutcome => {
-  // 撃つ側の位置は入力（移動後の x）を正とする。players には移動前の x が入っていてもよい
-  const xs: readonly [number, number] = input.seat === 0 ? [input.x, players[1].x] : [players[0].x, input.x];
+  // 撃つ側の位置は入力（移動後の x と y）を正とする。players には移動前の位置が入っていてもよい
+  const shooter: TankPos = { x: input.x, y: input.y };
+  const other: TankPos = input.seat === 0 ? players[1] : players[0];
+  const before: readonly [TankPos, TankPos] = input.seat === 0 ? [shooter, other] : [other, shooter];
   // 奈落に落ちている機体は当たり判定を持たず、ダメージも受けない
-  const centerOf = (seat: Seat): CellPoint | null => (isRingOut(mask, xs[seat]) ? null : { x: xs[seat], y: tankCenterY(mask, xs[seat]) });
+  const centerOf = (seat: Seat): CellPoint | null => (isRingOut(mask, before[seat]) ? null : { x: before[seat].x, y: tankCenterY(before[seat]) });
   const centers = [centerOf(0), centerOf(1)];
   const v: Volley = { mask, hp: [players[0].hp, players[1].hp], impacts: [], paths: [], centers, hitCenters: centers.filter((c): c is CellPoint => c !== null) };
   const spec = weaponSpec(input.weapon);
-  const muzzle = muzzleOf(mask, input.x, input.facing, input.elevation);
+  const muzzle = muzzleOf(mask, shooter, input.facing, input.elevation);
   const m = motionOf(spec, input.wind);
   for (let volley = 0; volley < spec.volleys; volley++) {
     spec.fan.forEach((f, fan) => flyProjectile(v, volley * spec.fan.length + fan, launch(muzzle, spec, input, f), m, spec));
   }
-  const ringOut = ringOuts(v.mask, xs);
+  // 落下は削り終わった地形に対して、真下の次の地面まで。地面がなければ奈落
+  const after: readonly [TankPos, TankPos] = [settleTank(v.mask, before[0]), settleTank(v.mask, before[1])];
+  const ringOut = ringOuts(v.mask, after);
   return {
     mask: v.mask,
     paths: v.paths,
-    result: { input, impacts: v.impacts, hpAfter: v.hp, xAfter: xs, ringOut, finished: judge(v.hp, ringOut) },
+    result: { input, impacts: v.impacts, hpAfter: v.hp, xAfter: [after[0].x, after[1].x], yAfter: [after[0].y, after[1].y], ringOut, finished: judge(v.hp, ringOut) },
   };
 };

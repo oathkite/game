@@ -11,6 +11,8 @@ export type Run = readonly [top: number, bottom: number];
 export type Drawing = {
   readonly name: string;
   readonly spawns: readonly [number, number];
+  /** スポーンの探索開始 y。省略は 0 */
+  readonly spawnFromY?: readonly [number, number];
   readonly columns: readonly (readonly Run[])[];
 };
 
@@ -125,5 +127,6 @@ export const validateDrawing = (d: Drawing): string[] => {
     }
   });
   for (const s of d.spawns) if (!Number.isInteger(s) || s < 0 || s >= MAP_WIDTH) errors.push(`スポーン x=${s} が範囲外`);
+  for (const y of d.spawnFromY ?? []) if (!Number.isInteger(y) || y < 0 || y >= MAP_HEIGHT) errors.push(`スポーンの探索開始 y=${y} が範囲外`);
   return errors;
 };

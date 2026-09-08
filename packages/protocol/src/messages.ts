@@ -19,6 +19,8 @@ export type MatchSetupPlayer = {
   readonly colors: TankColors;
   readonly loadout: Loadout;
   readonly x: number;
+  /** スポーンで接地している地表の y */
+  readonly y: number;
 };
 
 export type ServerMessage =

@@ -50,6 +50,8 @@ export type PlayerState = {
   readonly loadout: Loadout;
   readonly hp: number;
   readonly x: number;
+  /** 接地している地表の y（設計書 02 の 2.5）。天井の下の機体を表せるように x と地形だけから求めない */
+  readonly y: number;
   readonly facing: Facing;
   readonly connected: boolean;
 };

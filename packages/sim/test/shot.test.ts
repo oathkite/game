@@ -11,16 +11,15 @@ import {
   maskFromHeights,
   muzzleOf,
   ONE,
-  simulateShot,
+  spawnPos,
   surfaceY,
   TANK_RADIUS,
   tankCenterY,
-  type Combatant,
   type ShotOutcome,
 } from "../src/index.js";
-import { flatMask, islandMask, mirrorMask, mirrorX, shot, slabMask, slopedMask, valleyMask, wallMask } from "./helpers.js";
+import { fire, flatMask, islandMask, mirrorMask, mirrorX, shot, slabMask, slopedMask, valleyMask, wallMask, type Standing } from "./helpers.js";
 
-const two = (x0: number, x1: number, hp0 = 100, hp1 = 100): readonly [Combatant, Combatant] => [
+const two = (x0: number, x1: number, hp0 = 100, hp1 = 100): readonly [Standing, Standing] => [
   { x: x0, hp: hp0 },
   { x: x1, hp: hp1 },
 ];
@@ -44,7 +43,7 @@ describe("発射角と発射位置", () => {
 
   it("平坦なら付け根は接地点の真上 4 セル、先端は仰角の方向に 4 セル", () => {
     const mask = flatMask(150);
-    const m = muzzleOf(mask, 100, 1, 90);
+    const m = muzzleOf(mask, spawnPos(mask, 100), 1, 90);
     expect(m.angle).toBe(90);
     expect(m.position.x).toBe(100 * ONE + ONE / 2);
     expect(m.position.y).toBe((150 - 8) * ONE);
@@ -52,10 +51,10 @@ describe("発射角と発射位置", () => {
 
   it("上り坂に向くと発射角が上がり、発射位置は判定円の外に出る", () => {
     const mask = slopedMask(6);
-    const m = muzzleOf(mask, 100, 1, 30);
+    const m = muzzleOf(mask, spawnPos(mask, 100), 1, 30);
     expect(m.angle).toBe(75);
     const cx = 100;
-    const cy = tankCenterY(mask, 100);
+    const cy = tankCenterY(spawnPos(mask, 100));
     const dx = Math.floor(m.position.x / ONE) - cx;
     const dy = Math.floor(m.position.y / ONE) - cy;
     expect(dx * dx + dy * dy).toBeGreaterThan(TANK_RADIUS * TANK_RADIUS);
@@ -87,15 +86,15 @@ describe("ダメージ", () => {
 describe("1 発の処理", () => {
   it("同じ入力からは同じ結果が出る", () => {
     const mask = valleyMask();
-    const a = simulateShot(mask, two(60, 340), shot({ power: 70, wind: -4 }));
-    const b = simulateShot(mask, two(60, 340), shot({ power: 70, wind: -4 }));
+    const a = fire(mask, two(60, 340), shot({ power: 70, wind: -4 }));
+    const b = fire(mask, two(60, 340), shot({ power: 70, wind: -4 }));
     expect(a.result).toEqual(b.result);
     expect(a.paths).toEqual(b.paths);
   });
 
   it("平地で前方に撃てば地面に当たり、地形が削れる", () => {
     const mask = flatMask(150);
-    const out = simulateShot(mask, two(60, 340), shot({ power: 50 }));
+    const out = fire(mask, two(60, 340), shot({ power: 50 }));
     expect(out.result.impacts).toHaveLength(1);
     const impact = impactOf(out.result)!;
     expect(impact.y).toBe(150);
@@ -109,9 +108,9 @@ describe("1 発の処理", () => {
 
   it("風は着弾を横にずらす", () => {
     const mask = flatMask(150);
-    const calm = impactOf(simulateShot(mask, two(60, 340), shot({ power: 60, wind: 0 })).result)!;
-    const tail = impactOf(simulateShot(mask, two(60, 340), shot({ power: 60, wind: 10 })).result)!;
-    const head = impactOf(simulateShot(mask, two(60, 340), shot({ power: 60, wind: -10 })).result)!;
+    const calm = impactOf(fire(mask, two(60, 340), shot({ power: 60, wind: 0 })).result)!;
+    const tail = impactOf(fire(mask, two(60, 340), shot({ power: 60, wind: 10 })).result)!;
+    const head = impactOf(fire(mask, two(60, 340), shot({ power: 60, wind: -10 })).result)!;
     expect(tail.x).toBeGreaterThan(calm.x);
     expect(head.x).toBeLessThan(calm.x);
   });
@@ -119,7 +118,7 @@ describe("1 発の処理", () => {
   it("相手に直撃すれば 35 ダメージで直撃と判定できる", () => {
     const mask = flatMask(150);
     // 相手を近くに置き、低い仰角で撃つ
-    const out = simulateShot(mask, two(60, 72), shot({ elevation: 10, power: 40 }));
+    const out = fire(mask, two(60, 72), shot({ elevation: 10, power: 40 }));
     expect(damageOf(out.result)[1]).toBe(35);
     expect(out.result.hpAfter[1]).toBe(65);
     expect(out.result.finished).toBeNull();
@@ -127,7 +126,7 @@ describe("1 発の処理", () => {
 
   it("HP が 0 以下になれば決着し、理由は hp", () => {
     const mask = flatMask(150);
-    const out = simulateShot(mask, two(60, 72, 100, 20), shot({ elevation: 10, power: 40 }));
+    const out = fire(mask, two(60, 72, 100, 20), shot({ elevation: 10, power: 40 }));
     expect(out.result.hpAfter[1]).toBeLessThanOrEqual(0);
     expect(out.result.finished).toEqual({ winner: 0, reason: "hp" });
   });
@@ -135,7 +134,7 @@ describe("1 発の処理", () => {
   it("足元を削られて地面がなくなればリングアウト", () => {
     // 薄い板の島。自機は広い島、相手は幅 3 セルの島に立つ。至近で直撃させ、爆風で島ごと消す
     const mask = slabMask([[150, 190], [199, 201]], 150, 3);
-    const out = simulateShot(mask, two(187, 200), shot({ x: 187, elevation: 10, power: 40 }));
+    const out = fire(mask, two(187, 200), shot({ x: 187, elevation: 10, power: 40 }));
     expect(impactOf(out.result)).not.toBeNull();
     expect(damageOf(out.result)[1]).toBe(35);
     expect(surfaceY(out.mask, 200)).toBe(MAP_HEIGHT);
@@ -147,11 +146,11 @@ describe("1 発の処理", () => {
   it("両者が同時に落ちたら HP の多い側が勝ち、同じなら引き分け", () => {
     // 幅 3 の島が 2 つ隣り合い、両者とも爆風の中に入る
     const mask = slabMask([[195, 197], [203, 205]], 150, 3);
-    const draw = simulateShot(mask, two(196, 204, 100, 100), shot({ x: 196, elevation: 10, power: 20 }));
+    const draw = fire(mask, two(196, 204, 100, 100), shot({ x: 196, elevation: 10, power: 20 }));
     expect(draw.result.ringOut).toEqual([0, 1]);
     expect(draw.result.finished?.reason).toBe("ringOut");
     expect(draw.result.finished?.winner).toBe(draw.result.hpAfter[0] === draw.result.hpAfter[1] ? null : draw.result.hpAfter[0] > draw.result.hpAfter[1] ? 0 : 1);
-    const uneven = simulateShot(mask, two(196, 204, 100, 40), shot({ x: 196, elevation: 10, power: 20 }));
+    const uneven = fire(mask, two(196, 204, 100, 40), shot({ x: 196, elevation: 10, power: 20 }));
     expect(uneven.result.ringOut).toEqual([0, 1]);
     expect(uneven.result.finished).toEqual({ winner: 0, reason: "ringOut" });
   });
@@ -159,24 +158,24 @@ describe("1 発の処理", () => {
   it("マップの左右や下に出た弾は消え、何も変わらない", () => {
     const mask = islandMask();
     // 奈落に向かって強く撃つ。下端を越えて消える
-    const out = simulateShot(mask, two(60, 340), shot({ x: 118, elevation: 10, power: 30 }));
+    const out = fire(mask, two(60, 340), shot({ x: 118, elevation: 10, power: 30 }));
     expect(out.result.impacts).toEqual([]);
     expect(out.mask).toBe(mask);
-    const right = simulateShot(flatMask(), two(390, 60), shot({ x: 390, elevation: 10, power: 100 }));
+    const right = fire(flatMask(), two(390, 60), shot({ x: 390, elevation: 10, power: 100 }));
     expect(right.result.impacts).toEqual([]);
   });
 
   it("発射位置が地形の中なら、その場で爆発して自機にダメージが入る", () => {
     // 目の前に壁がある。低い仰角で撃つと先端が壁の中に入る
     const mask = wallMask(104, 130);
-    const out = simulateShot(mask, two(100, 300), shot({ x: 100, facing: 1, elevation: 10, power: 50 }));
+    const out = fire(mask, two(100, 300), shot({ x: 100, facing: 1, elevation: 10, power: 50 }));
     expect(impactOf(out.result)).not.toBeNull();
     expect(damageOf(out.result)[0]).toBeGreaterThan(0);
     expect(pathOf(out)).toHaveLength(1);
   });
 
   it("真上に撃つと落ちてきて自分の近くに着弾する", () => {
-    const out = simulateShot(flatMask(150), two(200, 340), shot({ x: 200, elevation: 90, power: 100 }));
+    const out = fire(flatMask(150), two(200, 340), shot({ x: 200, elevation: 90, power: 100 }));
     expect(impactOf(out.result)).not.toBeNull();
     expect(Math.abs(impactOf(out.result)!.x - 200)).toBeLessThanOrEqual(1);
     expect(damageOf(out.result)[0]).toBe(35);
@@ -185,7 +184,7 @@ describe("1 発の処理", () => {
   it("上端を越えた弾は消えず、落ちてきて着弾する", () => {
     // 最大パワーの上昇は約 112 セルで 225 セルのマップの上端には届かないので、背の低いマスクで確かめる
     const small = maskFromHeights(Array.from({ length: 100 }, () => 30), 40);
-    const out = simulateShot(small, two(50, 90), shot({ x: 50, elevation: 90, power: 100 }));
+    const out = fire(small, two(50, 90), shot({ x: 50, elevation: 90, power: 100 }));
     expect(pathOf(out).some((p) => p.y < 0)).toBe(true);
     expect(impactOf(out.result)).not.toBeNull();
     expect(impactOf(out.result)!.y).toBeGreaterThanOrEqual(0);
@@ -193,13 +192,13 @@ describe("1 発の処理", () => {
 
   it("ステップ数の上限で必ず終わる（範囲外のパワーでも止まる）", () => {
     // 検証前の不正な入力を想定する。真上に極端な初速で撃つと落ちてこない
-    const out = simulateShot(flatMask(150), two(200, 340), shot({ x: 200, elevation: 90, power: 100000, wind: 0 }));
+    const out = fire(flatMask(150), two(200, 340), shot({ x: 200, elevation: 90, power: 100000, wind: 0 }));
     expect(impactOf(out.result)).toBeNull();
     expect(pathOf(out)).toHaveLength(MAX_STEPS + 1);
   });
 
   it("着弾したら path の最後は着弾セルの中心", () => {
-    const out = simulateShot(flatMask(150), two(60, 340), shot({ power: 100, elevation: 45 }));
+    const out = fire(flatMask(150), two(60, 340), shot({ power: 100, elevation: 45 }));
     const last = pathOf(out)[pathOf(out).length - 1]!;
     expect(Math.floor(last.x / ONE)).toBe(impactOf(out.result)!.x);
     expect(Math.floor(last.y / ONE)).toBe(impactOf(out.result)!.y);
@@ -207,7 +206,7 @@ describe("1 発の処理", () => {
 
   it("撃つ側の位置は入力の x を正とし、players の x が古くても発射位置と判定が一致する", () => {
     const mask = flatMask(150);
-    const moved = simulateShot(mask, two(60, 340), shot({ x: 75, elevation: 90, power: 100 }));
+    const moved = fire(mask, two(60, 340), shot({ x: 75, elevation: 90, power: 100 }));
     expect(moved.result.xAfter).toEqual([75, 340]);
     expect(Math.abs(impactOf(moved.result)!.x - 75)).toBeLessThanOrEqual(1);
     expect(damageOf(moved.result)[0]).toBe(35);
@@ -216,7 +215,7 @@ describe("1 発の処理", () => {
   it("奈落に立つ機体は当たり判定を持たず、外れた弾の経路でもリングアウトになる", () => {
     const mask = islandMask();
     // x=121 は地面がない列。移動の落下でここに来る
-    const out = simulateShot(mask, two(121, 340), shot({ x: 121, elevation: 10, power: 30 }));
+    const out = fire(mask, two(121, 340), shot({ x: 121, elevation: 10, power: 30 }));
     expect(impactOf(out.result)).toBeNull();
     expect(out.result.ringOut).toEqual([0]);
     expect(out.result.finished).toEqual({ winner: 1, reason: "ringOut" });
@@ -227,7 +226,7 @@ describe("1 発の処理", () => {
     const cells = new Uint8Array(mask.cells);
     for (let k = 0; k <= 40; k++) cells[(100 + k) * mask.width + (80 + k)] = 1;
     const walled = { ...mask, cells };
-    const out = simulateShot(walled, two(40, 340), shot({ x: 40, elevation: 24, power: 93 }));
+    const out = fire(walled, two(40, 340), shot({ x: 40, elevation: 24, power: 93 }));
     expect(impactOf(out.result)).not.toBeNull();
     expect(impactOf(out.result)!.x).toBeLessThan(130);
   });
@@ -252,13 +251,13 @@ describe("鏡像の対称性", () => {
       { mask: valleyMask(), players: two(60, 340), input: shot({ weapon: "multiple", x: 60, facing: 1, elevation: 50, power: 70, wind: -5 }) },
     ];
     for (const c of cases) {
-      const a = simulateShot(c.mask, c.players, c.input);
+      const a = fire(c.mask, c.players, c.input);
       const m = mirrorMask(c.mask);
-      const players: readonly [Combatant, Combatant] = [
+      const players: readonly [Standing, Standing] = [
         { x: mirrorX(c.mask, c.players[0].x), hp: c.players[0].hp },
         { x: mirrorX(c.mask, c.players[1].x), hp: c.players[1].hp },
       ];
-      const b = simulateShot(m, players, {
+      const b = fire(m, players, {
         ...c.input,
         x: mirrorX(c.mask, c.input.x),
         facing: c.input.facing === 1 ? -1 : 1,
