@@ -71,8 +71,10 @@ export const WEAPON_SPECS: Readonly<Record<WeaponId, WeaponSpec>> = {
   // 爆風は当初 2 だったが、遠くまで飛ぶぶん当てにくいので 3 に広げた（針弾と同じ）。
   // 到達距離は初速の 2 乗を重力で割った値に比例するので、重力 70% で標準砲の 1.4 倍ほど伸びる。初速も上げると届きすぎる
   laser: { ...ONE_SHOT, stages: Array.from({ length: 5 }, () => ({ blastRadius: 3, damageMax: 8, damagePerCell: 4 })), speedPercent: 100, gravityPercent: 70, windPercent: 100 },
-  digger: { ...ONE_SHOT, stages: single(16, 16, 1), speedPercent: 90, gravityPercent: 100, windPercent: 100 },
-  floater: { ...ONE_SHOT, stages: single(8, 25, 2), speedPercent: 70, gravityPercent: 50, windPercent: 200 },
+  // 地形を崩す道具。爆風は当初 16 だったが、個性を強めるため 18 に広げた。ダメージは据え置き
+  digger: { ...ONE_SHOT, stages: single(18, 16, 1), speedPercent: 90, gravityPercent: 100, windPercent: 100 },
+  // 風 200% で最も当てにくいので、当初の 25 / 半径 8 から 30 / 半径 10 に上げた。標準砲の 35 は超えない
+  floater: { ...ONE_SHOT, stages: single(10, 30, 2), speedPercent: 70, gravityPercent: 50, windPercent: 200 },
   stinger: { ...ONE_SHOT, stages: single(3, 55, 15), speedPercent: 105, gravityPercent: 100, windPercent: 100 },
 };
 

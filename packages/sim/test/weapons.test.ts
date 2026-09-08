@@ -90,6 +90,11 @@ describe("武器の数値", () => {
     expect(full("floater")).toBeGreaterThan(full("digger"));
   });
 
+  it("浮遊弾は最も当てにくいぶん、直撃は標準砲の 8 割以上で爆風は標準砲と同じ", () => {
+    expect(firstStage("floater").damageMax).toBeGreaterThanOrEqual(firstStage("cannon").damageMax * 0.8);
+    expect(firstStage("floater").blastRadius).toBe(firstStage("cannon").blastRadius);
+  });
+
   it("弾数が多い武器は 1 発が小さく、爆風も狭い", () => {
     expect(firstStage("triple").damageMax).toBeLessThan(firstStage("cannon").damageMax / 2);
     expect(firstStage("multiple").damageMax).toBeLessThan(firstStage("triple").damageMax / 2);

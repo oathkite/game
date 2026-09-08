@@ -1086,7 +1086,7 @@ exports[`golden replay > 掘削弾 平地 直撃 1`] = `
         "terrainOp": {
           "cx": 72,
           "cy": 144,
-          "radius": 16,
+          "radius": 18,
         },
       },
     ],
@@ -1230,7 +1230,7 @@ exports[`golden replay > 浮遊弾 谷 向かい風 10 1`] = `
         "terrainOp": {
           "cx": 184,
           "cy": 189,
-          "radius": 8,
+          "radius": 10,
         },
       },
     ],
