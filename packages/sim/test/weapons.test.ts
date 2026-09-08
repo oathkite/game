@@ -79,10 +79,10 @@ describe("武器の数値", () => {
     }
   });
 
-  it("全弾直撃の合計は レーザー > 針弾 > トリプル = マルチ > 貫通 > 標準砲 > 浮遊弾 > 掘削弾", () => {
+  it("全弾直撃の合計は 針弾 > レーザー > トリプル = マルチ > 貫通 > 標準砲 > 浮遊弾 > 掘削弾", () => {
     const full = (w: WeaponId) => fullHitDamage(weaponSpec(w));
-    expect(full("laser")).toBeGreaterThan(full("stinger"));
-    expect(full("stinger")).toBeGreaterThan(full("triple"));
+    expect(full("stinger")).toBeGreaterThan(full("laser"));
+    expect(full("laser")).toBeGreaterThan(full("triple"));
     expect(full("triple")).toBe(full("multiple"));
     expect(full("multiple")).toBeGreaterThan(full("drill"));
     expect(full("drill")).toBeGreaterThan(full("cannon"));
@@ -229,7 +229,7 @@ describe("1 発 1 段の武器の性格", () => {
     for (const w of WEAPONS) if (w !== "stinger") expect(stinger.damageMax).toBeGreaterThan(firstStage(w).damageMax);
     const center = { x: 100, y: 147 };
     expect(damageAt({ x: 100, y: 144 }, center, stinger)).toBe(stinger.damageMax);
-    expect(damageAt({ x: 106, y: 147 }, center, stinger)).toBe(10);
+    expect(damageAt({ x: 106, y: 147 }, center, stinger)).toBe(7);
     expect(damageAt({ x: 107, y: 147 }, center, stinger)).toBe(0);
   });
 

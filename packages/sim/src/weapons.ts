@@ -67,7 +67,7 @@ export const WEAPON_SPECS: Readonly<Record<WeaponId, WeaponSpec>> = {
     ],
     ...STANDARD_FLIGHT,
   },
-  // 重力が軽く伸びる弾が 7 段抜けて線のように削る。当初 5 段（合計 40）だったが、貫通弾（44）との差が薄かったので 7 段（合計 56）に増やした。風の作用は標準のまま（風を読む遊びから外さない）。
+  // 重力が軽く伸びる弾が 7 段抜けて線のように削る。当初 5 段（合計 40）だったが、貫通弾（44）との差が薄かったので 7 段（合計 56）に増やした。全弾直撃の最大は針弾（70）に残す。風の作用は標準のまま（風を読む遊びから外さない）。
   // 爆風は当初 2 だったが、遠くまで飛ぶぶん当てにくいので 3 に広げた（針弾と同じ）。
   // 到達距離は初速の 2 乗を重力で割った値に比例するので、重力 70% で標準砲の 1.4 倍ほど伸びる。初速も上げると届きすぎる
   laser: { ...ONE_SHOT, stages: Array.from({ length: 7 }, () => ({ blastRadius: 3, damageMax: 8, damagePerCell: 4 })), speedPercent: 100, gravityPercent: 70, windPercent: 100 },
@@ -75,7 +75,8 @@ export const WEAPON_SPECS: Readonly<Record<WeaponId, WeaponSpec>> = {
   digger: { ...ONE_SHOT, stages: single(18, 16, 1), speedPercent: 90, gravityPercent: 100, windPercent: 100 },
   // 風 200% で最も当てにくいので、当初の 25 / 半径 8 から 30 / 半径 10 に上げた。標準砲の 35 は超えない
   floater: { ...ONE_SHOT, stages: single(10, 30, 2), speedPercent: 70, gravityPercent: 50, windPercent: 200 },
-  stinger: { ...ONE_SHOT, stages: single(3, 55, 15), speedPercent: 105, gravityPercent: 100, windPercent: 100 },
+  // 直撃は全武器で最大。当初 55 / 減衰 15 だったが、レーザー弾を 7 段（合計 56）にしたので 70 / 減衰 21 に上げて最大を保った（標準砲の 2 倍）。3 セルで 1 割、4 セルで 0 は変えていない
+  stinger: { ...ONE_SHOT, stages: single(3, 70, 21), speedPercent: 105, gravityPercent: 100, windPercent: 100 },
 };
 
 export const weaponSpec = (weapon: WeaponId): WeaponSpec => WEAPON_SPECS[weapon];

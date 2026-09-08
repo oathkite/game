@@ -1869,7 +1869,7 @@ exports[`golden replay > 針弾 平地 直撃 1`] = `
     "finished": null,
     "hpAfter": [
       100,
-      45,
+      30,
     ],
     "impacts": [
       {
@@ -1879,7 +1879,7 @@ exports[`golden replay > 針弾 平地 直撃 1`] = `
         },
         "damage": [
           0,
-          55,
+          70,
         ],
         "projectile": 0,
         "stage": 0,
