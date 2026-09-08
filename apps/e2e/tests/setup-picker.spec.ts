@@ -27,13 +27,18 @@ for (const viewport of [{ width: 360, height: 640 }, { width: 667, height: 375 }
     await page.screenshot({ path: `test-results/weapon-picker-${viewport.width}.png` });
     await weapons.getByRole("radio", { name: "武器 1 digger", exact: true }).click();
     await expect(weapons.getByRole("radio", { name: "武器 2 cannon", exact: true })).toBeChecked();
+    await weapons.getByRole("radio", { name: "武器 1 triple", exact: true }).click();
+    await weapons.getByRole("radio", { name: "武器 2 laser", exact: true }).click();
     await page.keyboard.press("Escape");
     await expect(page.getByRole("button", { name: "武器を変更" })).toBeFocused();
-    await expect(page.getByTestId("loadout-summary")).toContainText("掘削弾");
+    await expect(page.getByTestId("loadout-summary")).toContainText("トリプル弾 / レーザー弾");
     await expect(page.getByRole("radio")).toHaveCount(0);
     await page.getByRole("button", { name: "色を変更" }).click();
     await expect(colors.getByRole("radio", { name: "カラー2 cyan", exact: true })).toBeChecked();
     await colors.getByRole("button", { name: "完了" }).click();
+    const summary = page.getByTestId("loadout-summary");
+    expect((await summary.boundingBox())!.height).toBeLessThan(24);
+    expect(await summary.locator("..").evaluate((el) => el.scrollWidth <= el.clientWidth)).toBe(true);
     await page.screenshot({ path: `test-results/setup-compact-${viewport.width}.png` });
   });
 }

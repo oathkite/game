@@ -127,8 +127,9 @@ const ProfileSettings = ({ profile, onChange }: Pick<Props, "profile" | "onChang
     </label>
     <div className="selection-summary">
       <div className="selected-colors">
-        <span>カラー1 <span className="swatch" style={{ background: COLOR_HEX[profile.colors.secondary] }} /></span>
-        <span>カラー2 <span className="swatch" style={{ background: COLOR_HEX[profile.colors.primary] }} /></span>
+        <span>カラー</span>
+        <span className="swatch" aria-label="カラー1" style={{ background: COLOR_HEX[profile.colors.secondary] }} />
+        <span className="swatch" aria-label="カラー2" style={{ background: COLOR_HEX[profile.colors.primary] }} />
       </div>
       <PickerDialog title="色を変更">
         <div className="picker-preview"><TankPreview colors={profile.colors} demo={null} /></div>
@@ -143,8 +144,8 @@ const LoadoutSettings = ({ profile, demo, onPick }: { readonly profile: Profile;
   <div className="loadout-settings">
     <div className="selection-summary">
       <div className="selected-weapons" data-testid="loadout-summary">
-        <span>武器 1　{WEAPON_LABELS[profile.loadout[0]]}</span>
-        <span>武器 2　{WEAPON_LABELS[profile.loadout[1]]}</span>
+        <span>武器</span>
+        <span>{WEAPON_LABELS[profile.loadout[0]]} / {WEAPON_LABELS[profile.loadout[1]]}</span>
       </div>
       <PickerDialog title="武器を変更">
         <div className="picker-preview"><TankPreview colors={profile.colors} demo={demo} /></div>

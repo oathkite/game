@@ -310,8 +310,9 @@
 .selected-colors,
 .selected-weapons {
   display: flex;
-  flex-direction: column;
+  align-items: center;
   gap: 8px;
+  white-space: nowrap;
 }
 
 .selection-summary > button {
@@ -389,5 +390,11 @@
   .menu-shell .setup-preview-pane {
     height: 32dvh;
     min-height: 240px;
+  }
+}
+
+@media (max-width: 900px) {
+  .selected-weapons {
+    font-size: 14px;
   }
 }
