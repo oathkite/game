@@ -1,7 +1,7 @@
 import { WEAPON_IDS, type WeaponId } from "@game/protocol";
 import { describe, expect, it } from "vitest";
 import { CARVE_AT_MS, HOLD_MS, IMPACT_TOTAL_MS } from "@/game/hitFeedback";
-import { GROUND_ROWS, bulletTimeAt, debrisCount, demoFrame, demoShots, fieldFor, prepareDemo } from "@/screens/weaponDemo";
+import { FIELD_COLS_MIN, GROUND_ROWS, bulletTimeAt, debrisCount, demoFrame, demoShots, fieldFor, prepareDemo } from "@/screens/weaponDemo";
 
 // 設定画面の武器デモの弾道と着弾の演出。見た目だけだが、全武器が切れ端の中に落ちて終わることと、
 // 着弾の演出が対戦の再生と同じ時間割で出ることを固定する。
@@ -21,6 +21,11 @@ const firstShot = (w: WeaponId, field = FIELD) => first(demoShots(w, field));
 const landAt = (w: WeaponId) => first(firstShot(w).stages).at;
 
 describe("fieldFor", () => {
+  it("下限より狭い幅は下限に丸める", () => {
+    expect(fieldFor(10).cols).toBe(FIELD_COLS_MIN);
+    expect(fieldFor(160.7).cols).toBe(160);
+  });
+
   it("地面の上に戦車が載り、主砲の先端は戦車の右上にある", () => {
     expect(FIELD.ground).toBe(FIELD.rows - GROUND_ROWS);
     expect(FIELD.tank.y + 5).toBe(FIELD.ground);
@@ -60,8 +65,7 @@ describe("demoShots", () => {
   });
 
   it("全武器の全弾が 3 秒以内に、右端より手前の地面に落ちる", () => {
-    // 80 は TankPreview の COLS_MIN
-    for (const cols of [80, 160, 260, 400]) {
+    for (const cols of [FIELD_COLS_MIN, 160, 260, 400]) {
       const field = fieldFor(cols);
       for (const w of WEAPON_IDS) {
         for (const s of demoShots(w, field)) {

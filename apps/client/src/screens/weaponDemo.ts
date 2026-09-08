@@ -11,6 +11,8 @@ import { bulletSize, type BulletSize } from "@/game/weaponArt";
 // 尾は残さない。マルチ弾の 9 発が何発あるか数えにくくなるためである。
 // 武器ごとに変わらない値は prepareDemo で 1 回だけ用意し、フレームごとには t を進めるだけにする。
 
+/** 切れ端の幅の下限（セル）。これより狭いとレーザー弾が右端から出る */
+export const FIELD_COLS_MIN = 80;
 /** 地面の厚み（セル）。掘削弾の爆風（半径 16）と貫通弾の 3 段が収まる */
 export const GROUND_ROWS = 20;
 /** 戦車の左端のセル */
@@ -49,8 +51,9 @@ export type Field = {
   readonly muzzle: Point;
 };
 
-/** 幅（セル）から切れ端を決める。高さは最も高く飛ぶレーザー弾の頂点が収まる分だけ取る */
-export const fieldFor = (cols: number): Field => {
+/** 幅（セル）から切れ端を決める。下限より狭い幅は下限に丸める。高さは最も高く飛ぶレーザー弾の頂点が収まる分だけ取る */
+export const fieldFor = (requested: number): Field => {
+  const cols = Math.max(FIELD_COLS_MIN, Math.floor(requested));
   // 到達距離 R の 45 度の弾の頂点は R / 4。レーザー弾は重力 70% で R も頂点も 1 / 0.7 倍になる
   const apex = Math.ceil((RANGE_SHARE * cols) / 4 / 0.7);
   const rows = apex + TANK_ROWS + BARREL_CELLS + GROUND_ROWS + 4;
@@ -107,7 +110,8 @@ export const landingTime = (field: Field, f: Flight): number => {
   };
   let lo = 0;
   let hi = 1;
-  while (!out(hi)) hi *= 2;
+  // 重力が正なら必ず落ちる。念のため上限を置き、万一届かなければ上限の時刻で打ち切る
+  for (let i = 0; i < 20 && !out(hi); i++) hi *= 2;
   for (let i = 0; i < 30; i++) {
     const mid = (lo + hi) / 2;
     if (out(mid)) hi = mid;

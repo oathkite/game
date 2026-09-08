@@ -2,7 +2,7 @@ import type { TankColors, WeaponId } from "@game/protocol";
 import { useEffect, useRef, useState } from "react";
 import { computeLayout } from "@/game/scale";
 import { rasterize } from "./previewRaster";
-import { demoFrame, fieldFor, prepareDemo, type DemoFrame, type Field } from "./weaponDemo";
+import { FIELD_COLS_MIN, demoFrame, fieldFor, prepareDemo, type DemoFrame, type Field } from "./weaponDemo";
 
 // 設定画面の戦車プレビュー。設計書 08 の 8.2、09 の 9.2。
 // 対戦と同じ倍率のマップの切れ端（黒地に白い地面）に戦車を置き、実際の大きさで見せる。
@@ -20,8 +20,6 @@ type Props = {
 
 /** 1 セルの px の下限。対戦の倍率が 1 px 台でも絵が読めるようにする */
 const CELL_MIN = 2;
-/** 切れ端の幅の下限（セル）。これより狭いとレーザー弾が右端から出る */
-const COLS_MIN = 80;
 
 const EMPTY_FRAME: DemoFrame = { bullets: [], blasts: [], craters: [], debris: [], done: true };
 
@@ -35,7 +33,7 @@ const useGeometry = (ref: React.RefObject<HTMLDivElement | null>): Geometry | nu
     if (!el) return;
     const measure = (): void => {
       const cell = Math.max(CELL_MIN, Math.round(computeLayout(window.innerWidth, window.innerHeight).cell));
-      const cols = Math.max(COLS_MIN, Math.floor(el.clientWidth / cell));
+      const cols = fieldFor(el.clientWidth / cell).cols;
       // 値が同じなら作り直さない。field が変わるとデモが最初からになるため
       setGeometry((prev) => (prev && prev.cell === cell && prev.field.cols === cols ? prev : { cell, field: fieldFor(cols) }));
     };
@@ -93,7 +91,7 @@ export const TankPreview = ({ colors, demo }: Props) => {
   const geometry = useGeometry(ref);
   const frame = useDemoFrame(demo, geometry?.field ?? null);
   const cell = geometry?.cell ?? CELL_MIN;
-  const field = geometry?.field ?? fieldFor(COLS_MIN);
+  const field = geometry?.field ?? fieldFor(FIELD_COLS_MIN);
 
   useEffect(() => {
     if (!canvasRef.current || !geometry) return;
