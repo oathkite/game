@@ -1,5 +1,5 @@
 import type { WeaponId } from "@game/protocol";
-import { weaponSpec, type StageSpec } from "@game/sim";
+import { carve, createMask, isSolid, weaponSpec, type StageSpec, type TerrainMask } from "@game/sim";
 import { CARVE_AT_MS, FAN_DELAY_MS, HOLD_MS, IMPACT_TOTAL_MS, VOLLEY_DELAY_MS, blastFrameAt } from "@/game/hitFeedback";
 import { bulletSize, type BulletSize } from "@/game/weaponArt";
 
@@ -29,9 +29,9 @@ const LAUNCH_DEG = 45;
 /** 破片が飛ぶ時間（秒）と初速（セル/秒）。設計書 03 の 3.9 の表 */
 const DEBRIS_SEC = 0.4;
 const DEBRIS_SPEED = 40;
-/** 貫通の次の段を探す刻み（秒）と上限（秒） */
-const STAGE_SEARCH_STEP = 0.002;
-const STAGE_SEARCH_MAX = 1;
+/** 地形に当たる時刻を探す刻み（秒）と、1 発が飛べる上限（秒）。刻みは最速の弾でも 1 セル未満 */
+const SEARCH_STEP = 0.002;
+const FLIGHT_MAX_SEC = 4;
 
 const HOLD_SEC = HOLD_MS / 1000;
 const CARVE_SEC = CARVE_AT_MS / 1000;
@@ -72,7 +72,7 @@ export type Shot = {
   /** 発射の遅れ（秒）。扇の 2 本目以降と時間差の次の発は遅れて出る */
   readonly delay: number;
   readonly flight: Flight;
-  /** 着弾の段。右端から出た外れなら空 */
+  /** 着弾の段。切れ端の外へ出た外れなら空 */
   readonly stages: readonly Stage[];
 };
 
@@ -102,58 +102,72 @@ const positionAt = (field: Field, f: Flight, t: number): Point => ({
   y: field.muzzle.y - f.vy * t + (f.gravity * t * t) / 2,
 });
 
-/** 地面か右端に届く時刻。二分法で求める */
-export const landingTime = (field: Field, f: Flight): number => {
-  const out = (t: number): boolean => {
+/** 切れ端の地形。地面の行から下を埋める */
+export const groundMask = (field: Field): TerrainMask => {
+  const mask = createMask(field.cols, field.rows);
+  mask.cells.fill(1, field.ground * field.cols);
+  return mask;
+};
+
+/** 切れ端の外へ出たか。右端か下端。左と上は戻ってこないので見ない */
+const isOut = (field: Field, p: Point): boolean => p.x >= field.cols || p.y >= field.rows;
+
+/** from 以降で最初に地形へ当たる弾道上の時刻。外へ出たら null */
+export const hitTime = (field: Field, mask: TerrainMask, f: Flight, from: number): number | null => {
+  for (let t = from; t < FLIGHT_MAX_SEC; t += SEARCH_STEP) {
     const p = positionAt(field, f, t);
-    return p.y >= field.ground || p.x >= field.cols;
-  };
-  let lo = 0;
-  let hi = 1;
-  // 重力が正なら必ず落ちる。念のため上限を置き、万一届かなければ上限の時刻で打ち切る
-  for (let i = 0; i < 20 && !out(hi); i++) hi *= 2;
-  for (let i = 0; i < 30; i++) {
-    const mid = (lo + hi) / 2;
-    if (out(mid)) hi = mid;
-    else lo = mid;
+    if (isOut(field, p)) return null;
+    if (isSolid(mask, Math.floor(p.x), Math.floor(p.y))) return t;
   }
-  return hi;
+  return null;
 };
 
-const distance = (a: Point, b: Point): number => Math.hypot(a.x - b.x, a.y - b.y);
-
-/** 前の段の爆風の穴を抜けて次に地形へ当たる時刻。穴の縁までの距離が半径に達した時点とする */
-const nextStageTime = (field: Field, f: Flight, prev: Stage): number => {
-  for (let t = prev.flightAt + STAGE_SEARCH_STEP; t < prev.flightAt + STAGE_SEARCH_MAX; t += STAGE_SEARCH_STEP) {
-    if (distance(positionAt(field, f, t), prev) >= prev.radius) return t;
-  }
-  return prev.flightAt + STAGE_SEARCH_MAX;
+/** 外へ出る時刻。当たらない弾がいつ消えるかに使う */
+export const exitTime = (field: Field, f: Flight): number => {
+  for (let t = 0; t < FLIGHT_MAX_SEC; t += SEARCH_STEP) if (isOut(field, positionAt(field, f, t))) return t;
+  return FLIGHT_MAX_SEC;
 };
 
-/** 着弾の段を並べる。1 段目は地面、以降は前の段の穴を抜けた先。各段の前で HOLD_MS ずつ止まるぶんを at に足す */
-const stagesOf = (field: Field, f: Flight, specs: readonly StageSpec[]): readonly Stage[] => {
-  const first = landingTime(field, f);
-  if (positionAt(field, f, first).x >= field.cols) return [];
-  return specs.reduce<Stage[]>((acc, spec, k) => {
-    const prev = acc[k - 1];
-    const flightAt = prev ? nextStageTime(field, f, prev) : first;
-    return [...acc, { ...positionAt(field, f, flightAt), at: flightAt + k * HOLD_SEC, flightAt, radius: spec.blastRadius }];
-  }, []);
-};
+type Stages = { readonly stages: readonly Stage[]; readonly mask: TerrainMask };
+
+/**
+ * 着弾の段を並べ、削った地形を返す。対戦の物理と同じく、前の着弾が削った地形の上で次の着弾を判定する（設計書 10 の 10.2）。
+ * 続きの段は穴を抜けて次に地形へ当たる所。各段の前で HOLD_MS ずつ止まるぶんを at に足す
+ */
+const stagesOf = (field: Field, mask: TerrainMask, f: Flight, specs: readonly StageSpec[]): Stages =>
+  specs.reduce<Stages>(
+    (acc, spec, k) => {
+      const prev = acc.stages[k - 1];
+      if (k > 0 && !prev) return acc;
+      const flightAt = hitTime(field, acc.mask, f, prev ? prev.flightAt + SEARCH_STEP : 0);
+      if (flightAt === null) return acc;
+      const p = positionAt(field, f, flightAt);
+      const stage = { x: p.x, y: p.y, at: flightAt + k * HOLD_SEC, flightAt, radius: spec.blastRadius };
+      return { stages: [...acc.stages, stage], mask: carve(acc.mask, { cx: Math.floor(p.x), cy: Math.floor(p.y), radius: spec.blastRadius }) };
+    },
+    { stages: [], mask },
+  );
 
 /** 武器の弾道を並べる。扇の本数 × 時間差の発数。標準砲の初速は、先端から右端までの RANGE_SHARE に落ちる値から決める */
 export const demoShots = (weapon: WeaponId, field: Field): readonly Shot[] => {
   const spec = weaponSpec(weapon);
   const gravity = (GRAVITY * spec.gravityPercent) / 100;
   const base = Math.sqrt(GRAVITY * RANGE_SHARE * (field.cols - field.muzzle.x));
-  return Array.from({ length: spec.volleys }, (_, v) =>
+  const flights = Array.from({ length: spec.volleys }, (_, v) =>
     spec.fan.map((fan, i) => {
       const speed = (base * spec.speedPercent * fan.speedPercent) / 10000;
       const rad = ((LAUNCH_DEG + fan.deg) * Math.PI) / 180;
-      const flight = { vx: speed * Math.cos(rad), vy: speed * Math.sin(rad), gravity };
-      return { delay: (v * VOLLEY_DELAY_MS + i * FAN_DELAY_MS) / 1000, flight, stages: stagesOf(field, flight, spec.stages) };
+      return { delay: (v * VOLLEY_DELAY_MS + i * FAN_DELAY_MS) / 1000, flight: { vx: speed * Math.cos(rad), vy: speed * Math.sin(rad), gravity } };
     }),
   ).flat();
+  // 弾道の番号順に地形を削りながら着弾を決める。後の発は前の発の穴の奥に落ちる
+  return flights.reduce<{ readonly shots: readonly Shot[]; readonly mask: TerrainMask }>(
+    (acc, { delay, flight }) => {
+      const r = stagesOf(field, acc.mask, flight, spec.stages);
+      return { shots: [...acc.shots, { delay, flight, stages: r.stages }], mask: r.mask };
+    },
+    { shots: [], mask: groundMask(field) },
+  ).shots;
 };
 
 /** 武器ごとに変わらない値をまとめる。デモを撃ち始めるときに 1 回だけ呼ぶ */
@@ -208,7 +222,7 @@ export const demoFrame = (demo: Demo, t: number): DemoFrame => {
     debris: carved.filter(({ e }) => e - CARVE_SEC < DEBRIS_SEC).flatMap(({ stage, e }) => debrisOf(stage, e - CARVE_SEC)),
     done: demo.shots.every((s) => {
       const last = s.stages[s.stages.length - 1];
-      return t - s.delay >= (last ? last.at + IMPACT_TOTAL_SEC : landingTime(field, s.flight));
+      return t - s.delay >= (last ? last.at + IMPACT_TOTAL_SEC : exitTime(field, s.flight));
     }),
   };
 };

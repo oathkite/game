@@ -64,7 +64,16 @@ describe("demoShots", () => {
     }
   });
 
-  it("全武器の全弾が 3 秒以内に、右端より手前の地面に落ちる", () => {
+  it("マルチ弾の 2 発目以降は前の発の穴の奥に落ち、同じ線の 3 発は後ほど深い", () => {
+    const shots = demoShots("multiple", FIELD);
+    for (const fan of [0, 1, 2]) {
+      const ys = [0, 1, 2].map((volley) => first(shots[volley * 3 + fan]?.stages ?? []).y);
+      expect(ys[1] ?? 0).toBeGreaterThan(ys[0] ?? 0);
+      expect(ys[2] ?? 0).toBeGreaterThan(ys[1] ?? 0);
+    }
+  });
+
+  it("全武器の全弾が 3 秒以内に、右端より手前の地面か穴に落ちる", () => {
     for (const cols of [FIELD_COLS_MIN, 160, 260, 400]) {
       const field = fieldFor(cols);
       for (const w of WEAPON_IDS) {
@@ -72,7 +81,8 @@ describe("demoShots", () => {
           const hit = first(s.stages);
           expect(hit.at).toBeLessThan(3);
           expect(hit.x).toBeLessThan(field.cols);
-          expect(hit.y).toBeCloseTo(field.ground, 0);
+          expect(hit.y).toBeGreaterThanOrEqual(field.ground - 1);
+          expect(hit.y).toBeLessThan(field.rows);
         }
       }
     }

@@ -1,7 +1,7 @@
 import { COLOR_HEX, type CellPoint, type TankColors } from "@game/protocol";
-import { applyOps, createMask, type TerrainMask } from "@game/sim";
+import { applyOps, type TerrainMask } from "@game/sim";
 import { blastCells } from "@/game/weaponArt";
-import type { DemoFrame, Field } from "./weaponDemo";
+import { groundMask, type DemoFrame, type Field } from "./weaponDemo";
 
 // 設定画面のプレビューを 1 セル 1 ピクセルのラスターに描く。設計書 08 の 8.2、8.6。
 // 対戦画面と同じく、地形は sim の carve でセル単位に削り、爆風は projectileView と同じセルの円、弾と破片はセルの正方形で描く。
@@ -33,14 +33,11 @@ export const tankCells = (field: Field, colors: TankColors): readonly Painted[] 
 };
 
 /** 切れ端の地形。地面の行から下を埋め、削れた穴を sim と同じ規則で抜く */
-export const terrainOf = (field: Field, frame: DemoFrame): TerrainMask => {
-  const base = createMask(field.cols, field.rows);
-  base.cells.fill(1, field.ground * field.cols);
-  return applyOps(
-    base,
+export const terrainOf = (field: Field, frame: DemoFrame): TerrainMask =>
+  applyOps(
+    groundMask(field),
     frame.craters.map((c) => ({ cx: Math.floor(c.x), cy: Math.floor(c.y), radius: c.radius })),
   );
-};
 
 /** 弾が占めるセル。中心 (x, y) の w × h の矩形に中心が入るセル。小さな弾でも中心のセルは塗る */
 export const bulletCells = (b: CellPoint & { readonly w: number; readonly h: number }): readonly CellPoint[] => {
