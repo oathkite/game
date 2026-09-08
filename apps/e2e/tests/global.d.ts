@@ -18,4 +18,6 @@ type FortressView = {
 interface Window {
   __fortress?: { readonly getView: () => FortressView; readonly aim: () => FortressAim | null };
   __golden?: string;
+  /** battle.spec が置く。Space を押した瞬間の performance.now() */
+  __e2eSpaceDownAt?: number;
 }

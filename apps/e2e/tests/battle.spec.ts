@@ -16,6 +16,43 @@ const setup = async (page: Page, nickname: string, colorIndex: number): Promise<
   await page.getByRole("radio", { name: /^主色/ }).nth(colorIndex).click();
   await page.getByTestId("enter-lobby").click();
   await expect(page.getByTestId("lobby")).toBeVisible();
+  // Space を押した瞬間をページ内の時計で残す。holdSpace が押している時間をこの値から測る
+  await page.evaluate(() => {
+    window.addEventListener(
+      "keydown",
+      (e) => {
+        if (e.code === "Space" && !e.repeat) window.__e2eSpaceDownAt = performance.now();
+      },
+      true,
+    );
+  });
+};
+
+/**
+ * Space を ms だけ押す。押下は Playwright の実キーで行い、解放だけをページ内の時計で行う。
+ * Playwright の keyup はページに届くまで 50〜85 ms かかり、パワーにして 4〜6 ずれる。
+ * 標準砲が相手に届く幅はパワー ±2 ほどしかないので、この遅延を挟むと外れる
+ */
+const holdSpace = async (page: Page, ms: number): Promise<void> => {
+  await page.keyboard.down("Space");
+  await page.evaluate(
+    (hold) =>
+      new Promise<void>((resolve) => {
+        const downAt = window.__e2eSpaceDownAt ?? performance.now();
+        const release = (): void => {
+          // setTimeout は描画で 1、2 フレーム遅れることがあるので、最後は時計を見て待つ
+          while (performance.now() - downAt < hold) {
+            /* spin */
+          }
+          window.dispatchEvent(new KeyboardEvent("keyup", { code: "Space", key: " " }));
+          resolve();
+        };
+        window.setTimeout(release, Math.max(0, hold - (performance.now() - downAt) - 20));
+      }),
+    ms,
+  );
+  // Playwright 側の押下状態を戻す。ゲージは解放済みなので、この keyup では撃たない
+  await page.keyboard.up("Space");
 };
 
 /** 手番側が、相手にダメージが入る照準を探して撃つ。仰角は矢印キー、パワーは押している時間で作る */
@@ -29,9 +66,7 @@ const fireBest = async (page: Page): Promise<boolean> => {
     await page.keyboard.press(key);
     await page.waitForTimeout(20);
   }
-  await page.keyboard.down("Space");
-  await page.waitForTimeout(aim.power * 15);
-  await page.keyboard.up("Space");
+  await holdSpace(page, aim.power * 15);
   return true;
 };
 
