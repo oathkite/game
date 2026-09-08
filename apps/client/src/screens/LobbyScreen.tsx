@@ -31,106 +31,106 @@ export const LobbyScreen = ({ page, query, onQuery, onCreate, onJoin, onSpectate
   const totalPages = page ? Math.max(1, Math.ceil(page.total / page.pageSize)) : 1;
 
   return (
-    <div className="screen-split lobby" data-testid="lobby">
-      <div className="pane">
-        <div className="title">LOBBY</div>
-        {error && <div className="box blink">{error}</div>}
-        <div className="box column">
-          <div className="label">部屋を作る</div>
-          <input value={title} maxLength={ROOM_TITLE_MAX} placeholder="表示名（省略可）" aria-label="room title" onChange={(e) => setTitle(e.target.value)} />
-          <MapPicker value={mapName} onChange={setMapName} label="map" />
-          <div className="row">
-            <button type="button" className={isPublic ? "active" : ""} onClick={() => setIsPublic(true)}>
-              公開
-            </button>
-            <button type="button" className={!isPublic ? "active" : ""} onClick={() => setIsPublic(false)}>
-              非公開
-            </button>
-          </div>
-          <button type="button" data-testid="create-room" onClick={() => onCreate(title, isPublic, mapName)}>
-            作る
-          </button>
-        </div>
-        <div className="box column">
-          <div className="label">コードで入る</div>
-          <div className="row">
-            <input
-              value={code}
-              maxLength={6}
-              placeholder="6 文字のコード"
-              aria-label="room code"
-              style={{ textTransform: "uppercase" }}
-              onChange={(e) => setCode(e.target.value.toUpperCase())}
-            />
-            <button type="button" data-testid="join-code" disabled={code.length !== 6} onClick={() => onJoin(code)}>
-              入る
-            </button>
-          </div>
-        </div>
-        <div className="pane-bottom">
-          <button type="button" onClick={onBack}>
-            設定へ戻る
-          </button>
-        </div>
-      </div>
-      <div className="pane">
-        <div className="row">
-          <div className="label">公開部屋</div>
-          <span className={connected ? "" : "dim blink"} style={{ textAlign: "right" }}>
-            {connected ? "接続中" : "再接続しています"}
-          </span>
-        </div>
-        <div className="row">
-          <input value={query.search} maxLength={ROOM_TITLE_MAX} placeholder="検索" aria-label="search" onChange={(e) => onQuery({ ...query, search: e.target.value, page: 0 })} />
-          <select value={query.phase} aria-label="phase filter" onChange={(e) => onQuery({ ...query, phase: e.target.value as LobbyPhaseFilter, page: 0 })}>
-            <option value="all">すべて</option>
-            <option value="open">募集中</option>
-            <option value="inMatch">対戦中</option>
-          </select>
-          <select value={query.mapName ?? ""} aria-label="map filter" onChange={(e) => onQuery({ ...query, mapName: (e.target.value || null) as MapChoice | null, page: 0 })}>
-            <option value="">全マップ</option>
-            {MAP_CHOICES.map((m) => (
-              <option key={m} value={m}>
-                {MAP_CHOICE_LABELS[m]}
-              </option>
-            ))}
-          </select>
-        </div>
-        <div className="list" data-testid="room-list">
-          {page && page.rooms.length === 0 && <div className="dim">部屋がありません</div>}
-          {page?.rooms.map((r) => (
-            <div key={r.code} className={`list-row${r.phase === "open" ? "" : " dim"}`}>
-              <span>{r.title}</span>
-              <span>{MAP_CHOICE_LABELS[r.mapName]}</span>
-              <span>
-                {r.players} / {r.maxPlayers}
-              </span>
-              <span>観戦 {r.spectators}</span>
-              <span>{r.phase === "open" ? "募集中" : r.phase === "inMatch" ? "対戦中" : "リザルト"}</span>
-              {r.phase === "open" ? (
-                <button type="button" onClick={() => onJoin(r.code)}>
-                  入る
-                </button>
-              ) : (
-                <button type="button" onClick={() => onSpectate(r.code)}>
-                  観戦
-                </button>
-              )}
+    <div className="menu-shell lobby-shell" data-testid="lobby">
+      <div className="screen-split lobby menu-content">
+        <div className="pane">
+          <div className="title">LOBBY</div>
+          {error && <div className="box blink">{error}</div>}
+          <div className="box column">
+            <div className="label">部屋を作る</div>
+            <input value={title} maxLength={ROOM_TITLE_MAX} placeholder="表示名（省略可）" aria-label="room title" onChange={(e) => setTitle(e.target.value)} />
+            <div className="row">
+              <MapPicker value={mapName} onChange={setMapName} label="map" />
+              <button type="button" className={isPublic ? "active" : ""} onClick={() => setIsPublic(true)}>
+                公開
+              </button>
+              <button type="button" className={!isPublic ? "active" : ""} onClick={() => setIsPublic(false)}>
+                非公開
+              </button>
             </div>
-          ))}
+            <button type="button" className="primary-action" data-testid="create-room" onClick={() => onCreate(title, isPublic, mapName)}>
+              作る
+            </button>
+          </div>
+          <div className="box column">
+            <div className="label">コードで入る</div>
+            <div className="row">
+              <input
+                value={code}
+                maxLength={6}
+                placeholder="6 文字のコード"
+                aria-label="room code"
+                style={{ textTransform: "uppercase" }}
+                onChange={(e) => setCode(e.target.value.toUpperCase())}
+              />
+              <button type="button" data-testid="join-code" disabled={code.length !== 6} onClick={() => onJoin(code)}>
+                入る
+              </button>
+            </div>
+          </div>
         </div>
-        <div className="row pager">
-          <button type="button" disabled={query.page <= 0} onClick={() => onQuery({ ...query, page: query.page - 1 })}>
-            前へ
-          </button>
-          <span style={{ textAlign: "center" }}>
-            {query.page + 1} / {totalPages}
-          </span>
-          <button type="button" disabled={query.page + 1 >= totalPages} onClick={() => onQuery({ ...query, page: query.page + 1 })}>
-            次へ
-          </button>
+        <div className="pane">
+          <div className="row">
+            <div className="label">公開部屋</div>
+            <span className={connected ? "" : "dim blink"} style={{ textAlign: "right" }}>
+              {connected ? "接続中" : "再接続しています"}
+            </span>
+          </div>
+          <div className="row lobby-filters">
+            <input value={query.search} maxLength={ROOM_TITLE_MAX} placeholder="検索" aria-label="search" onChange={(e) => onQuery({ ...query, search: e.target.value, page: 0 })} />
+            <select value={query.phase} aria-label="phase filter" onChange={(e) => onQuery({ ...query, phase: e.target.value as LobbyPhaseFilter, page: 0 })}>
+              <option value="all">すべて</option>
+              <option value="open">募集中</option>
+              <option value="inMatch">対戦中</option>
+            </select>
+            <select value={query.mapName ?? ""} aria-label="map filter" onChange={(e) => onQuery({ ...query, mapName: (e.target.value || null) as MapChoice | null, page: 0 })}>
+              <option value="">全マップ</option>
+              {MAP_CHOICES.map((m) => (
+                <option key={m} value={m}>
+                  {MAP_CHOICE_LABELS[m]}
+                </option>
+              ))}
+            </select>
+          </div>
+          <div className="list" data-testid="room-list">
+            {page && page.rooms.length === 0 && <div className="dim">部屋がありません</div>}
+            {page?.rooms.map((r) => (
+              <div key={r.code} className={`list-row${r.phase === "open" ? "" : " dim"}`}>
+                <span>{r.title}</span>
+                <span>{MAP_CHOICE_LABELS[r.mapName]}</span>
+                <span>
+                  {r.players} / {r.maxPlayers}
+                </span>
+                <span>観戦 {r.spectators}</span>
+                <span>{r.phase === "open" ? "募集中" : r.phase === "inMatch" ? "対戦中" : "リザルト"}</span>
+                {r.phase === "open" ? (
+                  <button type="button" onClick={() => onJoin(r.code)}>
+                    入る
+                  </button>
+                ) : (
+                  <button type="button" onClick={() => onSpectate(r.code)}>
+                    観戦
+                  </button>
+                )}
+              </div>
+            ))}
+          </div>
+          <div className="row pager">
+            <button type="button" disabled={query.page <= 0} onClick={() => onQuery({ ...query, page: query.page - 1 })}>
+              前へ
+            </button>
+            <span style={{ textAlign: "center" }}>
+              {query.page + 1} / {totalPages}
+            </span>
+            <button type="button" disabled={query.page + 1 >= totalPages} onClick={() => onQuery({ ...query, page: query.page + 1 })}>
+              次へ
+            </button>
+          </div>
         </div>
       </div>
+      <footer className="menu-actions">
+        <button type="button" onClick={onBack}>設定へ戻る</button>
+      </footer>
     </div>
   );
 };

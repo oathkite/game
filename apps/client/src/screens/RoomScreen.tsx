@@ -39,12 +39,12 @@ export const RoomScreen = ({ room, mySeat, onReady, onSetMap, onKick, onStart, o
   };
 
   return (
-    <div className="screen" data-testid="room">
-      <div className="column">
+    <div className="menu-shell room-screen" data-testid="room">
+      <div className="menu-content room-content">
         <div className="title">{room.title}</div>
         {error && <div className="box blink">{error}</div>}
         {room.phase === "result" && <div className="dim">リザルト表示中。全員が閉じると募集中に戻ります</div>}
-        <div className="box row" style={{ justifyContent: "space-between" }}>
+        <div className="box row room-invite">
           <span>
             CODE <span data-testid="room-code">{room.code}</span>
           </span>
@@ -85,13 +85,15 @@ export const RoomScreen = ({ room, mySeat, onReady, onSetMap, onKick, onStart, o
           <span className="label">マップ</span>
           {isOwner && room.phase === "open" ? <MapPicker value={room.mapName} onChange={onSetMap} label="room map" /> : <MapDisplay value={room.mapName} />}
         </div>
+      </div>
+      <footer className="menu-actions room-actions">
         {isOwner && (
-          <button type="button" disabled={!canStart} onClick={onStart} data-testid="start">
+          <button type="button" className="primary-action" disabled={!canStart} onClick={onStart} data-testid="start">
             対戦を開始
           </button>
         )}
         {me && !isOwner && room.phase === "open" && (
-          <button type="button" className={me.ready ? "active" : ""} disabled={me.colorConflict} onClick={() => onReady(!me.ready)} data-testid="ready">
+          <button type="button" className={me.ready ? "active" : "primary-action"} disabled={me.colorConflict} onClick={() => onReady(!me.ready)} data-testid="ready">
             {me.ready ? "READY を解除" : "READY"}
           </button>
         )}
@@ -115,7 +117,7 @@ export const RoomScreen = ({ room, mySeat, onReady, onSetMap, onKick, onStart, o
             </button>
           )}
         </div>
-      </div>
+      </footer>
     </div>
   );
 };
