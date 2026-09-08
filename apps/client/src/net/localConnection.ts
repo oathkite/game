@@ -1,12 +1,14 @@
 import { createEngine, createMatchHost, DEFAULT_ENGINE_TIMING, realClock, setupMessage, type MatchHost } from "@game/engine";
-import type { ClientMessage, Loadout, MapName, ServerMessage, TankColors, WeaponId } from "@game/protocol";
+import { resolveMapChoice } from "@game/maps";
+import type { ClientMessage, Loadout, MapChoice, ServerMessage, TankColors, WeaponId } from "@game/protocol";
 import { createListeners, type Connection, type ConnectionStatus } from "./connection";
 
 // solo モード。サーバーなしでエンジンをブラウザ内に置き、両席をひとりで操作する。
 // 設計書 07 の開発順序 2「サーバーなしで 1 人で撃って、地形が削れる様子を見る」のための接続。
 
 export type LocalMatchOptions = {
-  readonly mapName: MapName;
+  /** ランダムなら対戦を作るたび（再戦を含む）に抽選する */
+  readonly mapName: MapChoice;
   readonly nickname: string;
   readonly colors: TankColors;
   readonly loadout: Loadout;
@@ -42,7 +44,7 @@ export const createLocalConnection = (options: LocalMatchOptions): Connection =>
       { ...DEFAULT_ENGINE_TIMING, rng: Math.random },
       {
         roomCode: "SOLO00",
-        mapName: options.mapName,
+        mapName: resolveMapChoice(options.mapName, Math.random),
         players: [
           { nickname: options.nickname || "P1", colors: options.colors, loadout: options.loadout },
           { nickname: "P2", colors: options.opponentColors, loadout: options.opponentLoadout },

@@ -1,4 +1,4 @@
-import { DEFAULT_LOADOUT } from "@game/protocol";
+import { DEFAULT_LOADOUT, MAP_NAMES } from "@game/protocol";
 import { describe, expect, it } from "vitest";
 import { BLUE, createMsg, harness, joinMsg, last, RED, sequenceRng, T0, types } from "./helpers.js";
 
@@ -143,6 +143,19 @@ describe("ready の解除と開始条件", () => {
     expect(last(h.inbox("a"), "match.setup")).toBeDefined();
     expect(last(h.inbox("b"), "match.setup")).toBeDefined();
     expect(last(h.inbox("b"), "room.state")?.room.phase).toBe("inMatch");
+  });
+
+  it("マップをランダムにした部屋は、開始時に rng で 8 枚から抽選し、部屋の設定はランダムのまま残る", () => {
+    // rng が 0.5 の harness では抽選は 8 枚の 5 番目（添字 4）になる
+    const { h } = setup();
+    h.send("a", { type: "room.setMap", mapName: "random" });
+    expect(last(h.inbox("b"), "room.state")?.room.mapName).toBe("random");
+    h.send("b", { type: "room.ready", ready: true });
+    h.send("a", { type: "room.start" });
+    const setup1 = last(h.inbox("b"), "match.setup");
+    expect(setup1?.mapName).toBe(MAP_NAMES[Math.floor(0.5 * MAP_NAMES.length)]);
+    expect(MAP_NAMES).toContain(setup1?.mapName);
+    expect(last(h.inbox("b"), "room.state")?.room.mapName).toBe("random");
   });
 
   it("オーナー以外は setMap、kick、dissolve できない", () => {

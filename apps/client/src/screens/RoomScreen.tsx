@@ -1,4 +1,4 @@
-import { COLOR_HEX, MAP_LABELS, MAP_NAMES, WEAPON_LABELS, type MapName, type RoomState, type Seat, type TankColors } from "@game/protocol";
+import { COLOR_HEX, MAP_CHOICE_LABELS, MAP_CHOICES, WEAPON_LABELS, type MapChoice, type RoomState, type Seat, type TankColors } from "@game/protocol";
 import { useState } from "react";
 
 // 部屋。設計書 09 の 9.5。参加者の一覧、観戦者数、マップ、入室コードと招待リンク、オーナーの操作。
@@ -8,7 +8,7 @@ type Props = {
   readonly mySeat: Seat | null;
   readonly myColors: TankColors;
   readonly onReady: (ready: boolean) => void;
-  readonly onSetMap: (mapName: MapName) => void;
+  readonly onSetMap: (mapName: MapChoice) => void;
   readonly onKick: (seat: Seat) => void;
   readonly onStart: () => void;
   readonly onLeave: () => void;
@@ -83,15 +83,15 @@ export const RoomScreen = ({ room, mySeat, onReady, onSetMap, onKick, onStart, o
         <div className="row">
           <span className="label">マップ</span>
           {isOwner && room.phase === "open" ? (
-            <select value={room.mapName} aria-label="room map" onChange={(e) => onSetMap(e.target.value as MapName)}>
-              {MAP_NAMES.map((m) => (
+            <select value={room.mapName} aria-label="room map" onChange={(e) => onSetMap(e.target.value as MapChoice)}>
+              {MAP_CHOICES.map((m) => (
                 <option key={m} value={m}>
-                  {MAP_LABELS[m]}
+                  {MAP_CHOICE_LABELS[m]}
                 </option>
               ))}
             </select>
           ) : (
-            <span>{MAP_LABELS[room.mapName]}</span>
+            <span>{MAP_CHOICE_LABELS[room.mapName]}</span>
           )}
         </div>
         {isOwner && (

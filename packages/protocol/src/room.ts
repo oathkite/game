@@ -1,10 +1,13 @@
-import type { MAP_NAMES } from "./constants.js";
+import type { MAP_CHOICES, MAP_NAMES } from "./constants.js";
 import type { Facing, MatchResult, Seat, TankColors, TerrainOp, Wind } from "./match.js";
 import type { Loadout } from "./weapons.js";
 
 // 設計書 06 の 6.1 から 6.3。部屋と対戦の状態。
 
 export type MapName = (typeof MAP_NAMES)[number];
+
+/** 部屋のマップ設定。"random" は開始時に抽選する */
+export type MapChoice = (typeof MAP_CHOICES)[number];
 
 export type RoomPhase = "open" | "inMatch" | "result";
 
@@ -29,7 +32,7 @@ export type RoomState = {
   readonly code: string;
   readonly title: string;
   readonly isPublic: boolean;
-  readonly mapName: MapName;
+  readonly mapName: MapChoice;
   readonly maxPlayers: number;
   readonly ownerSeat: Seat;
   readonly phase: RoomPhase;
@@ -69,7 +72,7 @@ export type MatchState = {
 export type LobbyRoom = {
   readonly code: string;
   readonly title: string;
-  readonly mapName: MapName;
+  readonly mapName: MapChoice;
   readonly players: number;
   readonly maxPlayers: number;
   readonly spectators: number;

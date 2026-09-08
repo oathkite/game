@@ -1,12 +1,12 @@
 import {
   COLOR_HEX,
-  MAP_LABELS,
-  MAP_NAMES,
+  MAP_CHOICE_LABELS,
+  MAP_CHOICES,
   NICKNAME_MAX,
   PLAYER_COLORS,
   WEAPON_IDS,
   WEAPON_LABELS,
-  type MapName,
+  type MapChoice,
   type PlayerColor,
   type Loadout,
   type WeaponId,
@@ -22,7 +22,7 @@ type Props = {
   readonly profile: Profile;
   readonly onChange: (profile: Profile) => void;
   readonly onEnterLobby: () => void;
-  readonly onSolo: (mapName: MapName) => void;
+  readonly onSolo: (mapName: MapChoice) => void;
   readonly inviteCode: string | null;
 };
 
@@ -81,14 +81,14 @@ type LoadoutPaneProps = {
   readonly profile: Profile;
   readonly onPick: (loadout: Loadout, weapon: WeaponId) => void;
   readonly onEnterLobby: () => void;
-  readonly onSolo: (mapName: MapName) => void;
+  readonly onSolo: (mapName: MapChoice) => void;
   readonly inviteCode: string | null;
   readonly valid: boolean;
 };
 
 /** 右のペイン。武器 1 と武器 2、下端にロビーへ、ひとりで撃つ、キーの案内 */
 const LoadoutPane = ({ profile, onPick, onEnterLobby, onSolo, inviteCode, valid }: LoadoutPaneProps) => {
-  const [soloMap, setSoloMap] = useState<MapName>("valley");
+  const [soloMap, setSoloMap] = useState<MapChoice>("valley");
   return (
     <div className="pane">
       <WeaponPicker label="武器 1" slot={0} loadout={profile.loadout} onPick={onPick} />
@@ -98,10 +98,10 @@ const LoadoutPane = ({ profile, onPick, onEnterLobby, onSolo, inviteCode, valid 
           {inviteCode ? `部屋 ${inviteCode} に入る` : "ロビーへ"}
         </button>
         <div className="row">
-          <select value={soloMap} aria-label="solo map" onChange={(e) => setSoloMap(e.target.value as MapName)}>
-            {MAP_NAMES.map((m) => (
+          <select value={soloMap} aria-label="solo map" onChange={(e) => setSoloMap(e.target.value as MapChoice)}>
+            {MAP_CHOICES.map((m) => (
               <option key={m} value={m}>
-                {MAP_LABELS[m]}
+                {MAP_CHOICE_LABELS[m]}
               </option>
             ))}
           </select>

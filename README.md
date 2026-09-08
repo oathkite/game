@@ -16,7 +16,7 @@ https://github.com/user-attachments/assets/95a2c021-a18d-4035-a9db-abe4163ebb62
 |---|---|
 | `packages/sim` | 決定論的な物理、地形、風、ダメージ。golden replay のケースもここに置く |
 | `packages/protocol` | メッセージの型と Zod スキーマ、部屋と対戦のデータモデル |
-| `packages/maps` | 3 枚のマップ。整数演算で地形マスクを生成する |
+| `packages/maps` | 8 枚のマップ。整数演算で地形マスクを生成する |
 | `packages/engine` | 対戦の状態遷移。時刻と乱数を注入する純関数と、時計につなぐ host |
 | `apps/server` | Node.js + ws。部屋、ロビー、再接続、engine の橋渡し |
 | `apps/client` | Vite + React + PixiJS。solo モードと、オンライン対戦の画面 |

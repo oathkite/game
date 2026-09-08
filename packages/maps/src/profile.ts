@@ -51,3 +51,12 @@ export const slabs = (list: readonly Slab[]): TerrainMask => {
   }
   return mask;
 };
+
+/** 複数のマスクを重ねる。どれかが地面ならそのセルは地面。地表の折れ線と板を組み合わせる（洞窟の天井、双塔の台）ために使う */
+export const merge = (masks: readonly TerrainMask[]): TerrainMask => {
+  const out = createMask(MAP_WIDTH, MAP_HEIGHT);
+  for (const m of masks) {
+    for (let i = 0; i < out.cells.length; i++) if (m.cells[i] === 1) out.cells[i] = 1;
+  }
+  return out;
+};

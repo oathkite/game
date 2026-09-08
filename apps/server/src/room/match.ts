@@ -1,3 +1,4 @@
+import { resolveMapChoice } from "@game/maps";
 import { computeWakeAt, createEngine, DEFAULT_ENGINE_TIMING, handle, setupMessage, type Effect, type EngineEvent } from "@game/engine";
 import type { Outgoing, RoomRecord, ServerState } from "../state.js";
 import { broadcast, broadcastState, connIdsOf, memberBySeat, send } from "./view.js";
@@ -16,7 +17,7 @@ const route = (room: RoomRecord, effects: readonly Effect[]): Outgoing[] =>
     return connId ? [send(connId, e.message)] : [];
   });
 
-/** オーナーの開始を受理し、Loading で対戦を作る。呼び出し側が開始条件を検査済みであること */
+/** オーナーの開始を受理し、Loading で対戦を作る。呼び出し側が開始条件を検査済みであること。マップがランダムならここで抽選する */
 export const startMatch = (state: ServerState, room: RoomRecord, now: number): RoomStep => {
   const seat0 = memberBySeat(room, 0);
   const seat1 = memberBySeat(room, 1);
@@ -25,7 +26,7 @@ export const startMatch = (state: ServerState, room: RoomRecord, now: number): R
     { ...DEFAULT_ENGINE_TIMING, rng: state.config.rng },
     {
       roomCode: room.code,
-      mapName: room.mapName,
+      mapName: resolveMapChoice(room.mapName, state.config.rng),
       players: [
         { nickname: seat0.nickname, colors: seat0.colors, loadout: seat0.loadout },
         { nickname: seat1.nickname, colors: seat1.colors, loadout: seat1.loadout },

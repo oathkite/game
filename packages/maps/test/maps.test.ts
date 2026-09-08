@@ -1,7 +1,7 @@
 import { MAP_NAMES } from "@game/protocol";
 import { MAP_HEIGHT, MAP_WIDTH, isRingOut, surfaceY, tiltOf } from "@game/sim";
 import { describe, expect, it } from "vitest";
-import { allMaps, getMap, heightsFromProfile } from "../src/index.js";
+import { allMaps, getMap, heightsFromProfile, merge, resolveMapChoice, solidBelow } from "../src/index.js";
 
 const checksum = (cells: Uint8Array): number => {
   let h = 0;
@@ -10,7 +10,7 @@ const checksum = (cells: Uint8Array): number => {
 };
 
 describe("maps", () => {
-  it("3 枚すべてが定義されている", () => {
+  it("8 枚すべてが定義されている", () => {
     expect(allMaps().map((m) => m.name)).toEqual([...MAP_NAMES]);
   });
 
@@ -59,6 +59,71 @@ describe("maps", () => {
     expect(isRingOut(mask, 5)).toBe(true);
     expect(isRingOut(mask, 150)).toBe(true);
     expect(isRingOut(mask, 200)).toBe(false);
+  });
+
+  it("平原は端から端まで地表の高低差が 5 セル以内", () => {
+    const mask = getMap("plain").build();
+    const ys = Array.from({ length: MAP_WIDTH }, (_, x) => surfaceY(mask, x));
+    expect(Math.max(...ys) - Math.min(...ys)).toBeLessThanOrEqual(5);
+  });
+
+  it("段丘は左が高く右が低く、間に踊り場がある", () => {
+    const mask = getMap("terrace").build();
+    const map = getMap("terrace");
+    expect(surfaceY(mask, map.spawns[0])).toBeLessThan(surfaceY(mask, map.spawns[1]) - 20);
+    const landing = surfaceY(mask, 155);
+    expect(landing).toBeGreaterThan(surfaceY(mask, map.spawns[0]));
+    expect(landing).toBeLessThan(surfaceY(mask, map.spawns[1]));
+  });
+
+  it("橋は崖の間の橋の下が奈落で、橋の上は立てる", () => {
+    const mask = getMap("bridge").build();
+    expect(isRingOut(mask, 200)).toBe(false);
+    expect(surfaceY(mask, 200)).toBe(surfaceY(mask, 90));
+    // 橋の直下は空
+    expect(mask.cells[130 * MAP_WIDTH + 200]).toBe(0);
+    expect(mask.cells[200 * MAP_WIDTH + 200]).toBe(0);
+  });
+
+  it("洞窟は中央の上空に天井があり、スポーンの上空は開いている", () => {
+    const mask = getMap("cave").build();
+    expect(mask.cells[65 * MAP_WIDTH + 200]).toBe(1);
+    expect(mask.cells[100 * MAP_WIDTH + 200]).toBe(0);
+    for (const x of getMap("cave").spawns) for (let y = 0; y < surfaceY(mask, x); y++) expect(mask.cells[y * MAP_WIDTH + x]).toBe(0);
+  });
+
+  it("双塔はスポーンが薄い台の上で、台の下と外は地面まで空いている", () => {
+    const mask = getMap("towers").build();
+    for (const x of getMap("towers").spawns) {
+      const top = surfaceY(mask, x);
+      expect(mask.cells[(top + 9) * MAP_WIDTH + x]).toBe(1);
+      expect(mask.cells[(top + 10) * MAP_WIDTH + x]).toBe(0);
+      expect(surfaceY(mask, x)).toBeLessThan(surfaceY(mask, 200) - 40);
+    }
+  });
+});
+
+describe("resolveMapChoice", () => {
+  it("マップ名ならそのまま返す", () => {
+    for (const name of MAP_NAMES) expect(resolveMapChoice(name, () => 0.99)).toBe(name);
+  });
+
+  it("ランダムは rng の値で 8 枚のどれかを等間隔に選び、1 に近い値でも範囲を出ない", () => {
+    const picked = MAP_NAMES.map((_, i) => resolveMapChoice("random", () => i / MAP_NAMES.length));
+    expect(picked).toEqual([...MAP_NAMES]);
+    expect(MAP_NAMES).toContain(resolveMapChoice("random", () => 0.999999));
+    expect(resolveMapChoice("random", () => 0)).toBe(MAP_NAMES[0]);
+  });
+});
+
+describe("merge", () => {
+  it("どれかのマスクが地面ならそのセルは地面", () => {
+    const a = solidBelow(heightsFromProfile([[0, 200], [399, 200]]));
+    const b = solidBelow(heightsFromProfile([[0, 100], [399, 100]]));
+    const m = merge([a, b]);
+    expect(m.cells[150 * MAP_WIDTH + 10]).toBe(1);
+    expect(m.cells[50 * MAP_WIDTH + 10]).toBe(0);
+    expect(surfaceY(m, 10)).toBe(100);
   });
 });
 

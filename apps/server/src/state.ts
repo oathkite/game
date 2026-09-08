@@ -1,5 +1,5 @@
 import type { EngineState } from "@game/engine";
-import type { ClientMessage, LobbyPhaseFilter, Loadout, MapName, RoomPhase, Seat, ServerMessage, TankColors } from "@game/protocol";
+import type { ClientMessage, LobbyPhaseFilter, Loadout, MapChoice, RoomPhase, Seat, ServerMessage, TankColors } from "@game/protocol";
 
 // サーバーの状態と、外から入る命令、外へ出る効果。設計書 09 の部屋と 05 のプロトコル。
 // 時刻は now として渡され、乱数は config.rng から引く。Date.now と Math.random は使わない。
@@ -31,7 +31,8 @@ export type RoomRecord = {
   readonly code: string;
   readonly title: string;
   readonly isPublic: boolean;
-  readonly mapName: MapName;
+  /** 部屋の設定。"random" なら開始時に抽選し、対戦（engine）は具体的なマップ名を持つ */
+  readonly mapName: MapChoice;
   readonly createdAt: number;
   readonly lastActivityAt: number;
   readonly ownerSeat: Seat;
@@ -52,7 +53,7 @@ export type ConnectionRecord = {
 export type LobbyQuery = {
   readonly search: string;
   readonly phase: LobbyPhaseFilter;
-  readonly mapName: MapName | null;
+  readonly mapName: MapChoice | null;
   readonly page: number;
 };
 

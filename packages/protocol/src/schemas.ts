@@ -1,5 +1,5 @@
 import { z } from "zod";
-import { MAP_NAMES, MAP_WIDTH, MAX_MESSAGE_BYTES, NICKNAME_MAX, PLAYER_COLORS, ROOM_CODE_ALPHABET, ROOM_CODE_LENGTH, ROOM_TITLE_MAX } from "./constants.js";
+import { MAP_CHOICES, MAP_NAMES, MAP_WIDTH, MAX_MESSAGE_BYTES, NICKNAME_MAX, PLAYER_COLORS, ROOM_CODE_ALPHABET, ROOM_CODE_LENGTH, ROOM_TITLE_MAX } from "./constants.js";
 import { isValidLoadout, WEAPON_IDS } from "./weapons.js";
 
 // クライアントからサーバーへ届くメッセージの Zod スキーマ。設計書 05 の 5.2。
@@ -9,6 +9,7 @@ export const seatSchema = z.union([z.literal(0), z.literal(1)]);
 export const facingSchema = z.union([z.literal(-1), z.literal(1)]);
 export const playerColorSchema = z.enum(PLAYER_COLORS);
 export const mapNameSchema = z.enum(MAP_NAMES);
+export const mapChoiceSchema = z.enum(MAP_CHOICES);
 
 export const tankColorsSchema = z.object({
   primary: playerColorSchema,
@@ -44,7 +45,7 @@ export const lobbyQuerySchema = z.object({
   type: z.literal("lobby.query"),
   search: z.string().max(ROOM_TITLE_MAX),
   phase: z.enum(["all", "open", "inMatch"]),
-  mapName: mapNameSchema.nullable(),
+  mapName: mapChoiceSchema.nullable(),
   page: z.number().int().min(0),
 });
 
@@ -56,7 +57,7 @@ export const roomCreateSchema = z.object({
   loadout: loadoutSchema,
   title: roomTitleSchema,
   isPublic: z.boolean(),
-  mapName: mapNameSchema,
+  mapName: mapChoiceSchema,
 });
 
 export const roomJoinSchema = z.object({
@@ -94,7 +95,7 @@ export const clientMessageSchema = z.discriminatedUnion("type", [
   z.object({ type: z.literal("room.takeSeat"), colors: tankColorsSchema, loadout: loadoutSchema }),
   z.object({ type: z.literal("room.ready"), ready: z.boolean() }),
   z.object({ type: z.literal("room.profile"), nickname: nicknameSchema, colors: tankColorsSchema, loadout: loadoutSchema }),
-  z.object({ type: z.literal("room.setMap"), mapName: mapNameSchema }),
+  z.object({ type: z.literal("room.setMap"), mapName: mapChoiceSchema }),
   z.object({ type: z.literal("room.kick"), seat: seatSchema }),
   z.object({ type: z.literal("room.start") }),
   z.object({ type: z.literal("room.leave") }),
