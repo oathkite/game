@@ -1,4 +1,4 @@
-import type { MapName } from "@game/protocol";
+import type { MapChoice } from "@game/protocol";
 import { useEffect, useState } from "react";
 import type { Profile } from "@/app/profile";
 import { createMatchStore, type MatchStore } from "@/match/matchStore";
@@ -10,7 +10,7 @@ import { MatchStage } from "./MatchStage";
 type Props = {
   readonly profile: Profile;
   readonly onProfileChange: (profile: Profile) => void;
-  readonly mapName: MapName;
+  readonly mapName: MapChoice;
   readonly onExit: () => void;
 };
 

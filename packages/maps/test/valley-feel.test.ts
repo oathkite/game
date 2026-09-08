@@ -1,6 +1,7 @@
-import { getMap } from "../src/index.js";
+import { getMap, spawnAt } from "../src/index.js";
 import { describe, expect, it } from "vitest";
-import { BLAST_RADIUS, carve, damageDealtTo, simulateShot, STEPS_PER_TURN, surfaceY, walk } from "@game/sim";
+import { BLAST_RADIUS, carve, damageDealtTo, groundBelow, isRingOut, simulateShot, spawnPos, STEPS_PER_TURN, surfaceY, walk, type TankPos, type TerrainMask } from "@game/sim";
+import { MAP_NAMES, type MapName } from "@game/protocol";
 
 // 設計書 07 の開発順序 4「谷で遊び、面白さを確認する」の数値による裏付け。
 // 遊びの判断そのものは人が行うが、設計書 01 の判断基準「風を読み切って狙った場所に当てた報い」が成り立つ条件を固定する。
@@ -8,18 +9,36 @@ import { BLAST_RADIUS, carve, damageDealtTo, simulateShot, STEPS_PER_TURN, surfa
 
 const valley = getMap("valley");
 
-const hitting = (wind: number): Set<string> => {
-  const mask = valley.build();
-  const [x0, x1] = valley.spawns;
-  const out = new Set<string>();
-  for (let elevation = 20; elevation <= 80; elevation++) {
-    for (let power = 40; power <= 100; power++) {
-      const r = simulateShot(mask, [{ x: x0, hp: 100 }, { x: x1, hp: 100 }], { seat: 0, weapon: "cannon", x: x0, facing: 1, elevation, power, wind }).result;
-      if (damageDealtTo(r, 1) > 0) out.add(`${elevation}/${power}`);
-    }
-  }
-  return out;
+// 照準の格子（仰角 20 から 80、パワー 40 から 100）で、スポーンから相手に届く数を数える。谷も追加した 5 枚も同じ格子で測る。
+
+type Aim = { readonly elevation: number; readonly power: number };
+
+const aims: readonly Aim[] = Array.from({ length: 61 * 61 }, (_, i) => ({ elevation: 20 + Math.floor(i / 61), power: 40 + (i % 61) }));
+
+// simulateShot は入力のマスクを変えないので、マップごとに 1 回だけ作って使い回す
+const masks = new Map<MapName, TerrainMask>();
+const maskOf = (name: MapName) => {
+  const cached = masks.get(name);
+  if (cached) return cached;
+  const built = getMap(name).build();
+  masks.set(name, built);
+  return built;
 };
+
+/** スポーンに立つ 2 機 */
+const standing = (name: MapName): readonly [TankPos, TankPos] => [spawnAt(getMap(name), maskOf(name), 0), spawnAt(getMap(name), maskOf(name), 1)];
+
+const shotFrom = (name: MapName, from: 0 | 1, aim: Aim, weapon: "cannon" | "digger" = "cannon", wind = 0) => {
+  const [p0, p1] = standing(name);
+  const me = from === 0 ? p0 : p1;
+  return simulateShot(maskOf(name), [{ ...p0, hp: 100 }, { ...p1, hp: 100 }], { seat: from, weapon, x: me.x, y: me.y, facing: from === 0 ? 1 : -1, elevation: aim.elevation, power: aim.power, wind });
+};
+
+const hittingFrom = (name: MapName, from: 0 | 1, wind = 0): readonly Aim[] => aims.filter((a) => damageDealtTo(shotFrom(name, from, a, "cannon", wind).result, from === 0 ? 1 : 0) > 0);
+
+const key = (a: Aim): string => `${a.elevation}/${a.power}`;
+
+const hitting = (wind: number): Set<string> => new Set(hittingFrom("valley", 0, wind).map(key));
 
 describe("谷の手触り", () => {
   const calm = hitting(0);
@@ -47,7 +66,8 @@ describe("谷の手触り", () => {
     // 当たる照準の中に、相手の真下の地表を下げるものがある
     const lowers = [...calm].some((k) => {
       const [elevation, power] = k.split("/").map(Number) as [number, number];
-      const r = simulateShot(mask, [{ x: x0, hp: 100 }, { x: x1, hp: 100 }], { seat: 0, weapon: "cannon", x: x0, facing: 1, elevation, power, wind: 0 });
+      const [p0, p1] = standing("valley");
+      const r = simulateShot(mask, [{ ...p0, hp: 100 }, { ...p1, hp: 100 }], { seat: 0, weapon: "cannon", x: x0, y: p0.y, facing: 1, elevation, power, wind: 0 });
       return surfaceAt(r.mask, x1) > surfaceAt(mask, x1);
     });
     expect(lowers).toBe(true);
@@ -57,13 +77,15 @@ describe("谷の手触り", () => {
 // 1 ターンの移動が、地形に阻まれずに歩数どおり届くことを固定する。
 // 歩数を増やしても崖や急斜面で頭打ちになるなら「移動を広げた」ことにならないためである。
 describe("1 ターンで動ける範囲", () => {
-  it("どのマップでも、スポーンから左右に歩数のぶんだけ地形に阻まれず歩ける", () => {
-    for (const name of ["valley", "mountain", "island"] as const) {
+  // 双塔は頂上が 11 セルしかなく、動けないこと自体が性格なので除く（設計書 02 の 2.9、TBD-13）
+  it("双塔を除くどのマップでも、スポーンから左右に歩数のぶんだけ地形に阻まれず歩ける", () => {
+    for (const name of MAP_NAMES.filter((n) => n !== "towers")) {
       const map = getMap(name);
       const mask = map.build();
-      for (const x of map.spawns) {
+      for (const side of [0, 1] as const) {
+        const x = map.spawns[side];
         for (const dir of [-1, 1] as const) {
-          const r = walk(mask, x, dir, STEPS_PER_TURN);
+          const { y: _y, ...r } = walk(mask, spawnAt(map, mask, side), dir, STEPS_PER_TURN);
           // どのマップのどちら向きで落ちたかが分かるよう、場所を添えて比べる
           expect({ where: `${name} x=${x} dir=${dir}`, ...r }).toEqual({
             where: `${name} x=${x} dir=${dir}`,
@@ -76,14 +98,16 @@ describe("1 ターンで動ける範囲", () => {
     }
   });
 
-  it("どのマップでも、足元に主砲のクレーターが 1 つできても縁を越えて出られる", () => {
-    for (const name of ["valley", "mountain", "island"] as const) {
+  it("双塔を除くどのマップでも、足元に主砲のクレーターが 1 つできても縁を越えて出られる", () => {
+    for (const name of MAP_NAMES.filter((n) => n !== "towers")) {
       const map = getMap(name);
       const base = map.build();
-      for (const x of map.spawns) {
-        const mask = carve(base, { cx: x, cy: surfaceY(base, x), radius: BLAST_RADIUS });
+      for (const side of [0, 1] as const) {
+        const pos = spawnAt(map, base, side);
+        const x = pos.x;
+        const mask = carve(base, { cx: x, cy: pos.y, radius: BLAST_RADIUS });
         for (const dir of [-1, 1] as const) {
-          const r = walk(mask, x, dir, STEPS_PER_TURN);
+          const { y: _y, ...r } = walk(mask, { x, y: groundBelow(mask, x, pos.y) }, dir, STEPS_PER_TURN);
           // クレーターの底から縁までは 10 列。歩数の途中で止まればハマっている
           expect({ where: `${name} x=${x} dir=${dir}`, ...r }).toEqual({
             where: `${name} x=${x} dir=${dir}`,
@@ -100,5 +124,89 @@ describe("1 ターンで動ける範囲", () => {
     const [x0, x1] = valley.spawns;
     // 間合いの半分を超えて動けると、相手の真上へ回り込めてしまい撃ち合いにならない
     expect(STEPS_PER_TURN).toBeLessThan((x1 - x0) / 2);
+  });
+});
+
+describe("平原の手触り", () => {
+  const calm = hittingFrom("plain", 0);
+
+  it("遮蔽がなくても間合いが遠いので、当たる照準は谷と同じく全体の 1 割未満", () => {
+    expect(calm.length).toBeGreaterThan(20);
+    expect(calm.length / aims.length).toBeLessThan(0.1);
+  });
+
+  it("風 10 では無風の照準の大半が外れる", () => {
+    const gusty = new Set(hittingFrom("plain", 0, 10).map(key));
+    const survived = calm.filter((a) => gusty.has(key(a))).length;
+    expect(survived / calm.length).toBeLessThan(0.5);
+  });
+});
+
+describe("段丘の手触り", () => {
+  it("高台側が有利だが、低地側からも高台側の半分以上の照準が届く", () => {
+    const high = hittingFrom("terrace", 0).length;
+    const low = hittingFrom("terrace", 1).length;
+    expect(high).toBeGreaterThan(low);
+    expect(low).toBeGreaterThanOrEqual(high / 2);
+  });
+});
+
+describe("橋の手触り", () => {
+  const bridge = getMap("bridge");
+
+  it("橋の上は端から端まで落ちずに歩ける", () => {
+    const mask = bridge.build();
+    let pos = spawnAt(bridge, mask, 0);
+    for (let turn = 0; turn < 8; turn++) {
+      const r = walk(mask, pos, 1, STEPS_PER_TURN);
+      expect(r.fell).toBe(false);
+      pos = { x: r.x, y: r.y };
+    }
+    expect(pos.x).toBeGreaterThan(bridge.spawns[1]);
+  });
+
+  it("標準砲 1 発で橋が切れ、切れた所を歩くと落ちる", () => {
+    const cut = aims.map((a) => shotFrom("bridge", 0, a)).find((r) => isRingOut(r.mask, spawnPos(r.mask, 200)));
+    expect(cut).toBeDefined();
+    if (!cut) return;
+    expect(isRingOut(bridge.build(), spawnPos(bridge.build(), 200))).toBe(false);
+    expect(walk(cut.mask, spawnPos(cut.mask, 170), 1, STEPS_PER_TURN).fell).toBe(true);
+  });
+});
+
+describe("洞窟の手触り", () => {
+  it("高い弾道は天井に当たり、低い弾道なら相手に届く", () => {
+    const mask = maskOf("cave");
+    // 床の地表。天井の下（y 120）から下へ見る
+    const floorAt = (x: number) => groundBelow(mask, x, 120);
+    const high = aims.filter((a) => a.elevation >= 60 && a.power >= 80).map((a) => shotFrom("cave", 0, a).result);
+    const onCeiling = high.filter((r) => r.impacts.some((i) => i.cell.y < floorAt(i.cell.x) - 10));
+    expect(onCeiling.length).toBeGreaterThan(high.length / 2);
+    expect(hittingFrom("cave", 0).length).toBeGreaterThan(20);
+  });
+});
+
+describe("双塔の手触り", () => {
+  const towers = getMap("towers");
+
+  it("頂上は狭く、左右に 5 歩で縁に達する。外側へ踏み外すと奈落、内側へ踏み外すと斜面に落ちる", () => {
+    const mask = towers.build();
+    const p0 = spawnAt(towers, mask, 0);
+    const p1 = spawnAt(towers, mask, 1);
+    expect(walk(mask, p0, -1, STEPS_PER_TURN)).toMatchObject({ stepsUsed: 6, fell: true });
+    expect(isRingOut(mask, walk(mask, p0, -1, STEPS_PER_TURN))).toBe(true);
+    expect(walk(mask, p0, 1, STEPS_PER_TURN)).toMatchObject({ stepsUsed: 6, fell: true });
+    expect(isRingOut(mask, walk(mask, p0, 1, STEPS_PER_TURN))).toBe(false);
+    expect(walk(mask, p1, 1, STEPS_PER_TURN)).toMatchObject({ stepsUsed: 6, fell: true });
+  });
+
+  it("掘削弾で相手の頂上を削ると相手は低くなるが、塔は残りリングアウトにはならない", () => {
+    const [, x1] = towers.spawns;
+    const before = surfaceY(towers.build(), x1);
+    const hit = aims.map((a) => shotFrom("towers", 0, a, "digger")).find((r) => surfaceY(r.mask, x1) > before);
+    expect(hit).toBeDefined();
+    if (!hit) return;
+    expect(surfaceY(hit.mask, x1) - before).toBeGreaterThanOrEqual(10);
+    expect(isRingOut(hit.mask, spawnPos(hit.mask, x1))).toBe(false);
   });
 });

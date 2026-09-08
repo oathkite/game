@@ -58,6 +58,8 @@ export const shot = (over: Partial<TrajectoryInput> = {}): TrajectoryInput => ({
   seat: 0,
   weapon: "cannon",
   x: 60,
+  // 平地の地表。マスクが違うケースは runGolden やテストが上書きする
+  y: 150,
   facing: 1,
   elevation: 45,
   power: 60,

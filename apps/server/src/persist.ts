@@ -1,6 +1,6 @@
 import type { EngineState } from "@game/engine";
 import { DEFAULT_LOADOUT, parseLoadout, type Loadout } from "@game/protocol";
-import type { TerrainMask } from "@game/sim";
+import { spawnPos, type TerrainMask } from "@game/sim";
 import { createServerState, type RoomRecord, type ServerConfig, type ServerState } from "./state.js";
 
 // サーバーの状態を JSON に落とし、戻す。Durable Object のように実行単位がメモリから退避される環境で使う。
@@ -52,12 +52,22 @@ const withLoadout = <T extends { readonly loadout?: unknown }>(p: T): T & { read
   loadout: parseLoadout(p.loadout) ?? DEFAULT_LOADOUT,
 });
 
-const engineFromJson = (j: EngineJson, engineConfig: EngineState["config"]): EngineState => ({
-  ...j,
-  config: engineConfig,
-  mask: maskFromJson(j.mask),
-  match: { ...j.match, players: [withLoadout(j.match.players[0]), withLoadout(j.match.players[1])] },
+/** 地表の y（設計書 02 の 2.5）を持たない保存には、上から見た地表を補う。y を持つ前の保存を壊さないため */
+const withY = <T extends { readonly x: number; readonly y?: unknown }>(p: T, mask: TerrainMask): T & { readonly y: number } => ({
+  ...p,
+  y: typeof p.y === "number" ? p.y : spawnPos(mask, p.x).y,
 });
+
+const engineFromJson = (j: EngineJson, engineConfig: EngineState["config"]): EngineState => {
+  const mask = maskFromJson(j.mask);
+  const player = (p: EngineJson["match"]["players"][number]) => withY(withLoadout(p), mask);
+  return {
+    ...j,
+    config: engineConfig,
+    mask,
+    match: { ...j.match, players: [player(j.match.players[0]), player(j.match.players[1])] },
+  };
+};
 
 /** 保存した状態を戻す。config（乱数と時間）は保存しないので、呼び出し側が渡す */
 export const deserializeState = (json: ServerStateJson, config: ServerConfig, engineConfig: EngineState["config"]): ServerState => {

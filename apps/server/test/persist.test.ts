@@ -43,6 +43,28 @@ describe("serializeState / deserializeState", () => {
     expect([...restored.rooms.values()][0]?.members.map((m) => m.loadout)).toEqual([["cannon", "stinger"], DEFAULT_LOADOUT]);
   });
 
+  it("地表の y を持たない古い保存を戻すと、上から見た地表が補われ、そのまま撃てる", () => {
+    const h = harness();
+    startedMatch(h);
+    const json = JSON.parse(JSON.stringify(serializeState(h.state))) as ReturnType<typeof serializeState>;
+    const strip = <T extends object>(o: T): T => {
+      const { y: _y, ...rest } = o as T & { y?: unknown };
+      return rest as T;
+    };
+    const old = {
+      ...json,
+      rooms: json.rooms.map((room) => ({
+        ...room,
+        engine: room.engine ? { ...room.engine, match: { ...room.engine.match, players: room.engine.match.players.map(strip) } } : null,
+      })),
+    } as unknown as ReturnType<typeof serializeState>;
+    const restored = deserializeState(old, { ...DEFAULT_SERVER_TIMING, rng: () => 0.5 }, { ...DEFAULT_ENGINE_TIMING, rng: () => 0.5 });
+    const players = [...restored.rooms.values()][0]?.engine?.match.players;
+    expect(players?.map((p) => p.y)).toEqual([...h.state.rooms.values()][0]?.engine?.match.players.map((p) => p.y));
+    const r = handleCommand(restored, { type: "message", connId: "a", message: { type: "turn.fire", slot: 0, facing: 1, elevation: 45, power: 60, x: 75 } }, T0 + 1000);
+    expect(last(r.effects.filter((e) => e.connId === "a").map((e) => e.message), "turn.result")?.shot.input.y).toBe(players?.[0]?.y);
+  });
+
   it("武器を持たない古い保存を戻すと、参加者と対戦の両方に既定の装備が入る", () => {
     const h = harness();
     startedMatch(h);

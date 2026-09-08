@@ -1,4 +1,4 @@
-import type { MapName } from "@game/protocol";
+import type { MapChoice } from "@game/protocol";
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { setAudioSettings, unlockAudio } from "./app/audio";
 import { loadProfile, saveProfile, type Profile } from "./app/profile";
@@ -9,7 +9,7 @@ import { OnlineFlow } from "./screens/OnlineFlow";
 
 // 画面の切り替え。設定 → ロビー → 部屋 → 対戦 → リザルト、または設定 → solo。
 
-type Route = { readonly kind: "setup" } | { readonly kind: "solo"; readonly mapName: MapName } | { readonly kind: "online" };
+type Route = { readonly kind: "setup" } | { readonly kind: "solo"; readonly mapName: MapChoice } | { readonly kind: "online" };
 
 const inviteCodeFromUrl = (): string | null => {
   const params = new URLSearchParams(window.location.search);

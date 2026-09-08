@@ -1,4 +1,5 @@
-import { MAP_LABELS, MAP_NAMES, ROOM_TITLE_MAX, type LobbyPhaseFilter, type MapName, type ServerMessageOf } from "@game/protocol";
+import { MAP_CHOICE_LABELS, MAP_CHOICES, ROOM_TITLE_MAX, type LobbyPhaseFilter, type MapChoice, type ServerMessageOf } from "@game/protocol";
+import { MapPicker } from "./MapPicker";
 import { useState } from "react";
 
 // ロビー。設計書 09 の 9.3 と 9.4、08 の 8.4。左のペインに部屋を作るとコードで入る、右のペインに検索と絞り込みと公開部屋の一覧。
@@ -6,7 +7,7 @@ import { useState } from "react";
 export type LobbyQueryState = {
   readonly search: string;
   readonly phase: LobbyPhaseFilter;
-  readonly mapName: MapName | null;
+  readonly mapName: MapChoice | null;
   readonly page: number;
 };
 
@@ -14,7 +15,7 @@ type Props = {
   readonly page: ServerMessageOf<"lobby.page"> | null;
   readonly query: LobbyQueryState;
   readonly onQuery: (query: LobbyQueryState) => void;
-  readonly onCreate: (title: string, isPublic: boolean, mapName: MapName) => void;
+  readonly onCreate: (title: string, isPublic: boolean, mapName: MapChoice) => void;
   readonly onJoin: (code: string) => void;
   readonly onSpectate: (code: string) => void;
   readonly onBack: () => void;
@@ -25,7 +26,7 @@ type Props = {
 export const LobbyScreen = ({ page, query, onQuery, onCreate, onJoin, onSpectate, onBack, error, connected }: Props) => {
   const [title, setTitle] = useState("");
   const [isPublic, setIsPublic] = useState(true);
-  const [mapName, setMapName] = useState<MapName>("valley");
+  const [mapName, setMapName] = useState<MapChoice>("valley");
   const [code, setCode] = useState("");
   const totalPages = page ? Math.max(1, Math.ceil(page.total / page.pageSize)) : 1;
 
@@ -37,14 +38,8 @@ export const LobbyScreen = ({ page, query, onQuery, onCreate, onJoin, onSpectate
         <div className="box column">
           <div className="label">部屋を作る</div>
           <input value={title} maxLength={ROOM_TITLE_MAX} placeholder="表示名（省略可）" aria-label="room title" onChange={(e) => setTitle(e.target.value)} />
+          <MapPicker value={mapName} onChange={setMapName} label="map" />
           <div className="row">
-            <select value={mapName} aria-label="map" onChange={(e) => setMapName(e.target.value as MapName)}>
-              {MAP_NAMES.map((m) => (
-                <option key={m} value={m}>
-                  {MAP_LABELS[m]}
-                </option>
-              ))}
-            </select>
             <button type="button" className={isPublic ? "active" : ""} onClick={() => setIsPublic(true)}>
               公開
             </button>
@@ -92,11 +87,11 @@ export const LobbyScreen = ({ page, query, onQuery, onCreate, onJoin, onSpectate
             <option value="open">募集中</option>
             <option value="inMatch">対戦中</option>
           </select>
-          <select value={query.mapName ?? ""} aria-label="map filter" onChange={(e) => onQuery({ ...query, mapName: (e.target.value || null) as MapName | null, page: 0 })}>
+          <select value={query.mapName ?? ""} aria-label="map filter" onChange={(e) => onQuery({ ...query, mapName: (e.target.value || null) as MapChoice | null, page: 0 })}>
             <option value="">全マップ</option>
-            {MAP_NAMES.map((m) => (
+            {MAP_CHOICES.map((m) => (
               <option key={m} value={m}>
-                {MAP_LABELS[m]}
+                {MAP_CHOICE_LABELS[m]}
               </option>
             ))}
           </select>
@@ -106,7 +101,7 @@ export const LobbyScreen = ({ page, query, onQuery, onCreate, onJoin, onSpectate
           {page?.rooms.map((r) => (
             <div key={r.code} className={`list-row${r.phase === "open" ? "" : " dim"}`}>
               <span>{r.title}</span>
-              <span>{MAP_LABELS[r.mapName]}</span>
+              <span>{MAP_CHOICE_LABELS[r.mapName]}</span>
               <span>
                 {r.players} / {r.maxPlayers}
               </span>

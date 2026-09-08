@@ -32,6 +32,8 @@ export type TrajectoryInput = {
   readonly weapon: WeaponId;
   /** 移動後の機体中心 x（整数セル） */
   readonly x: number;
+  /** 移動後に接地している地表の y（整数セル）。サーバーが移動の検証から求める。天井の下の機体を上から見た地表と区別するために持つ（設計書 02 の 2.5） */
+  readonly y: number;
   readonly facing: Facing;
   /** 10 から 90 の整数（度）。車体基準の仰角 */
   readonly elevation: number;
@@ -92,6 +94,8 @@ export type ShotResult = {
   readonly impacts: readonly Impact[];
   readonly hpAfter: readonly [number, number];
   readonly xAfter: readonly [number, number];
+  /** 落下後に接地している地表の y。奈落なら MAP_HEIGHT */
+  readonly yAfter: readonly [number, number];
   readonly ringOut: readonly Seat[];
   /** 決着していれば勝者と理由。ターン数と成績は対戦全体の状態から埋めるので、ここでは持たない */
   readonly finished: { readonly winner: Seat | null; readonly reason: "hp" | "ringOut" } | null;

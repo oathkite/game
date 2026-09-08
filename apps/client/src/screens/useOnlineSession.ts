@@ -1,4 +1,4 @@
-import type { MapName, Seat, ServerMessageOf } from "@game/protocol";
+import type { MapChoice, Seat, ServerMessageOf } from "@game/protocol";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { measureClockOffset } from "@/app/clockSync";
 import type { Profile } from "@/app/profile";
@@ -100,13 +100,13 @@ export const useOnlineSession = (profile: Profile, inviteCode: string | null) =>
   );
 
   const actions = {
-    createRoom: (title: string, isPublic: boolean, mapName: MapName) =>
+    createRoom: (title: string, isPublic: boolean, mapName: MapChoice) =>
       send({ type: "room.create", playerId: profile.playerId, nickname: profile.nickname, colors: profile.colors, loadout: profile.loadout, title, isPublic, mapName }),
     joinCode: (code: string) =>
       send({ type: "room.join", code, playerId: profile.playerId, nickname: profile.nickname, colors: profile.colors, loadout: profile.loadout }),
     spectate: (code: string) => send({ type: "room.spectate", code, playerId: profile.playerId, nickname: profile.nickname }),
     ready: (ready: boolean) => send({ type: "room.ready", ready }),
-    setMap: (mapName: MapName) => send({ type: "room.setMap", mapName }),
+    setMap: (mapName: MapChoice) => send({ type: "room.setMap", mapName }),
     kick: (seat: Seat) => send({ type: "room.kick", seat }),
     start: () => send({ type: "room.start" }),
     takeSeat: () => send({ type: "room.takeSeat", colors: profile.colors, loadout: profile.loadout }),

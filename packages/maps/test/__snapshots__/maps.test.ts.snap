@@ -1,7 +1,17 @@
 // Vitest Snapshot v1, https://vitest.dev/guide/snapshot.html
 
-exports[`maps > island > 同じ結果を返す（決定論） 1`] = `21768238`;
+exports[`maps > bridge > 同じ結果を返す（決定論） 1`] = `536669345`;
+
+exports[`maps > cave > 同じ結果を返す（決定論） 1`] = `239097475`;
+
+exports[`maps > island > 同じ結果を返す（決定論） 1`] = `214345726`;
 
 exports[`maps > mountain > 同じ結果を返す（決定論） 1`] = `303358865`;
+
+exports[`maps > plain > 同じ結果を返す（決定論） 1`] = `629684714`;
+
+exports[`maps > terrace > 同じ結果を返す（決定論） 1`] = `234411737`;
+
+exports[`maps > towers > 同じ結果を返す（決定論） 1`] = `244261906`;
 
 exports[`maps > valley > 同じ結果を返す（決定論） 1`] = `205157919`;

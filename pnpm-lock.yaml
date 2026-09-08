@@ -127,6 +127,13 @@ importers:
       '@game/sim':
         specifier: workspace:*
         version: link:../sim
+      zod:
+        specifier: ^4.5.4
+        version: 4.5.4
+    devDependencies:
+      tsx:
+        specifier: 4.23.13
+        version: 4.23.13
 
   packages/protocol:
     dependencies:
