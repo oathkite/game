@@ -72,8 +72,9 @@ describe("谷の手触り", () => {
 // 1 ターンの移動が、地形に阻まれずに歩数どおり届くことを固定する。
 // 歩数を増やしても崖や急斜面で頭打ちになるなら「移動を広げた」ことにならないためである。
 describe("1 ターンで動ける範囲", () => {
-  it("どのマップでも、スポーンから左右に歩数のぶんだけ地形に阻まれず歩ける", () => {
-    for (const name of MAP_NAMES) {
+  // 双塔は頂上が 11 セルしかなく、動けないこと自体が性格なので除く（設計書 02 の 2.9、TBD-13）
+  it("双塔を除くどのマップでも、スポーンから左右に歩数のぶんだけ地形に阻まれず歩ける", () => {
+    for (const name of MAP_NAMES.filter((n) => n !== "towers")) {
       const map = getMap(name);
       const mask = map.build();
       for (const x of map.spawns) {
@@ -155,13 +156,25 @@ describe("洞窟の手触り", () => {
 });
 
 describe("双塔の手触り", () => {
-  it("掘削弾で相手の台を抜くと相手は地面に落ちるが、リングアウトにはならない", () => {
-    const towers = getMap("towers");
+  const towers = getMap("towers");
+
+  it("頂上は狭く、左右に 5 歩で縁に達する。外側へ踏み外すと奈落、内側へ踏み外すと斜面に落ちる", () => {
+    const mask = towers.build();
+    const [x0, x1] = towers.spawns;
+    expect(walk(mask, x0, -1, STEPS_PER_TURN)).toMatchObject({ stepsUsed: 6, fell: true });
+    expect(isRingOut(mask, walk(mask, x0, -1, STEPS_PER_TURN).x)).toBe(true);
+    expect(walk(mask, x0, 1, STEPS_PER_TURN)).toMatchObject({ stepsUsed: 6, fell: true });
+    expect(isRingOut(mask, walk(mask, x0, 1, STEPS_PER_TURN).x)).toBe(false);
+    expect(walk(mask, x1, 1, STEPS_PER_TURN)).toMatchObject({ stepsUsed: 6, fell: true });
+  });
+
+  it("掘削弾で相手の頂上を削ると相手は低くなるが、塔は残りリングアウトにはならない", () => {
     const [, x1] = towers.spawns;
-    const ground = surfaceY(towers.build(), 200);
-    const dropped = aims.map((a) => shotFrom("towers", 0, a, "digger")).find((r) => surfaceY(r.mask, x1) >= ground - 1);
-    expect(dropped).toBeDefined();
-    if (!dropped) return;
-    expect(isRingOut(dropped.mask, x1)).toBe(false);
+    const before = surfaceY(towers.build(), x1);
+    const hit = aims.map((a) => shotFrom("towers", 0, a, "digger")).find((r) => surfaceY(r.mask, x1) > before);
+    expect(hit).toBeDefined();
+    if (!hit) return;
+    expect(surfaceY(hit.mask, x1) - before).toBeGreaterThanOrEqual(10);
+    expect(isRingOut(hit.mask, x1)).toBe(false);
   });
 });

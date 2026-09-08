@@ -12,6 +12,6 @@ exports[`maps > plain > 同じ結果を返す（決定論） 1`] = `629684714`;
 
 exports[`maps > terrace > 同じ結果を返す（決定論） 1`] = `234411737`;
 
-exports[`maps > towers > 同じ結果を返す（決定論） 1`] = `26628430`;
+exports[`maps > towers > 同じ結果を返す（決定論） 1`] = `244261906`;
 
 exports[`maps > valley > 同じ結果を返す（決定論） 1`] = `205157919`;

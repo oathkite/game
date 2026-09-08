@@ -96,14 +96,15 @@ describe("maps", () => {
     for (const x of getMap("cave").spawns) for (let y = 0; y < surfaceY(mask, x); y++) expect(mask.cells[y * MAP_WIDTH + x]).toBe(0);
   });
 
-  it("双塔はスポーンが薄い台の上で、台の下と外は地面まで空いている", () => {
+  it("双塔はスポーンが塔の頂上で、塔は底まで詰まり、間は深い盆地、外側は奈落", () => {
     const mask = getMap("towers").build();
     for (const x of getMap("towers").spawns) {
       const top = surfaceY(mask, x);
-      expect(mask.cells[(top + 9) * MAP_WIDTH + x]).toBe(1);
-      expect(mask.cells[(top + 10) * MAP_WIDTH + x]).toBe(0);
-      expect(surfaceY(mask, x)).toBeLessThan(surfaceY(mask, 200) - 40);
+      for (let y = top; y < MAP_HEIGHT; y++) expect(mask.cells[y * MAP_WIDTH + x]).toBe(1);
+      expect(top).toBeLessThan(surfaceY(mask, 200) - 100);
     }
+    expect(isRingOut(mask, 10)).toBe(true);
+    expect(isRingOut(mask, 200)).toBe(false);
   });
 });
 
