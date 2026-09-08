@@ -125,12 +125,15 @@ describe("段丘の手触り", () => {
 describe("橋の手触り", () => {
   const bridge = getMap("bridge");
 
-  it("スポーンから 2 ターン歩けば橋の上に出て、橋の上は落ちない", () => {
+  it("橋の上は端から端まで落ちずに歩ける", () => {
     const mask = bridge.build();
-    const first = walk(mask, bridge.spawns[0], 1, STEPS_PER_TURN);
-    const second = walk(mask, first.x, 1, STEPS_PER_TURN);
-    expect(second.fell).toBe(false);
-    expect(second.x).toBeGreaterThanOrEqual(150);
+    let x = bridge.spawns[0];
+    for (let turn = 0; turn < 8; turn++) {
+      const r = walk(mask, x, 1, STEPS_PER_TURN);
+      expect(r.fell).toBe(false);
+      x = r.x;
+    }
+    expect(x).toBeGreaterThan(bridge.spawns[1]);
   });
 
   it("標準砲 1 発で橋が切れ、切れた所を歩くと落ちる", () => {

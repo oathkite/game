@@ -1,6 +1,6 @@
 // Vitest Snapshot v1, https://vitest.dev/guide/snapshot.html
 
-exports[`maps > bridge > 同じ結果を返す（決定論） 1`] = `732502978`;
+exports[`maps > bridge > 同じ結果を返す（決定論） 1`] = `536669345`;
 
 exports[`maps > cave > 同じ結果を返す（決定論） 1`] = `295707824`;
 

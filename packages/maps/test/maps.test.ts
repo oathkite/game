@@ -80,7 +80,7 @@ describe("maps", () => {
     expect(landing).toBeLessThan(surfaceY(mask, map.spawns[1]));
   });
 
-  it("橋は崖の間の橋の下が奈落で、橋の上は立てる", () => {
+  it("橋は 1 枚の板で、その下は奈落", () => {
     const mask = getMap("bridge").build();
     expect(isRingOut(mask, 200)).toBe(false);
     expect(surfaceY(mask, 200)).toBe(surfaceY(mask, 90));
