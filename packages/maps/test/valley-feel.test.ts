@@ -1,6 +1,6 @@
 import { getMap, spawnAt } from "../src/index.js";
 import { describe, expect, it } from "vitest";
-import { damageDealtTo, groundBelow, isRingOut, simulateShot, spawnPos, STEPS_PER_TURN, surfaceY, walk, type TankPos, type TerrainMask } from "@game/sim";
+import { BLAST_RADIUS, carve, damageDealtTo, groundBelow, isRingOut, simulateShot, spawnPos, STEPS_PER_TURN, surfaceY, walk, type TankPos, type TerrainMask } from "@game/sim";
 import { MAP_NAMES, type MapName } from "@game/protocol";
 
 // 設計書 07 の開発順序 4「谷で遊び、面白さを確認する」の数値による裏付け。
@@ -87,6 +87,28 @@ describe("1 ターンで動ける範囲", () => {
         for (const dir of [-1, 1] as const) {
           const { y: _y, ...r } = walk(mask, spawnAt(map, mask, side), dir, STEPS_PER_TURN);
           // どのマップのどちら向きで落ちたかが分かるよう、場所を添えて比べる
+          expect({ where: `${name} x=${x} dir=${dir}`, ...r }).toEqual({
+            where: `${name} x=${x} dir=${dir}`,
+            x: x + dir * STEPS_PER_TURN,
+            stepsUsed: STEPS_PER_TURN,
+            fell: false,
+          });
+        }
+      }
+    }
+  });
+
+  it("双塔を除くどのマップでも、足元に主砲のクレーターが 1 つできても縁を越えて出られる", () => {
+    for (const name of MAP_NAMES.filter((n) => n !== "towers")) {
+      const map = getMap(name);
+      const base = map.build();
+      for (const side of [0, 1] as const) {
+        const pos = spawnAt(map, base, side);
+        const x = pos.x;
+        const mask = carve(base, { cx: x, cy: pos.y, radius: BLAST_RADIUS });
+        for (const dir of [-1, 1] as const) {
+          const { y: _y, ...r } = walk(mask, { x, y: groundBelow(mask, x, pos.y) }, dir, STEPS_PER_TURN);
+          // クレーターの底から縁までは 10 列。歩数の途中で止まればハマっている
           expect({ where: `${name} x=${x} dir=${dir}`, ...r }).toEqual({
             where: `${name} x=${x} dir=${dir}`,
             x: x + dir * STEPS_PER_TURN,

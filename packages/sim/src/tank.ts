@@ -64,9 +64,10 @@ export type StepOutcome = {
 };
 
 /**
- * 1 歩の判定。移動先の地表は今より CLIMB_MAX 上から下へ見て最初の地面なので、それより高い上りは見つからず、
- * 機体の高さぶんの空きがない（壁や低い天井）ときは進めない。下りは制限なし。
- * 下りた先が判定半径より深ければ落下扱いで、その歩で移動は終わる。落下先は真下の次の地面（なければ奈落）
+ * 1 歩の判定。移動先の地表は今より CLIMB_MAX 上から下へ見て最初の地面なので、それより高い上りは地表として見つからず、
+ * 機体の高さぶんの空きがない（反り立つ壁や低い天井）ときは進めない。CLIMB_MAX 以下の下りは進める。
+ * それを超える下りは落下扱いで、その歩で移動は終わる。落下先は真下の次の地面（なければ奈落）。
+ * 上りと下りで同じ閾値を使うのは、降りた先から同じ道を登って戻れるようにするためである。
  */
 export const stepOutcome = (mask: TerrainMask, pos: TankPos, dir: -1 | 1): StepOutcome => {
   const nx = pos.x + dir;
@@ -74,7 +75,7 @@ export const stepOutcome = (mask: TerrainMask, pos: TankPos, dir: -1 | 1): StepO
   const there = neighborGround(mask, nx, pos.y, CLIMB_MAX);
   if (!hasClearance(mask, nx, there)) return { kind: "blocked", y: pos.y };
   const drop = there - pos.y;
-  return { kind: drop > TANK_RADIUS ? "fell" : "moved", y: there };
+  return { kind: drop > CLIMB_MAX ? "fell" : "moved", y: there };
 };
 
 export type WalkResult = {
