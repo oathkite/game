@@ -2,6 +2,14 @@
 
 ブラウザで遊ぶ 1 対 1 のターン制砲撃対戦ゲーム。設計は [docs/design](./docs/design/README.md) に、開発の進め方は [CLAUDE.md](./CLAUDE.md) にある。
 
+## プロモーション動画
+
+その一発が、地形を変える。実際の対戦映像で紹介する 30 秒の動画（音声あり）。
+
+https://github.com/user-attachments/assets/95a2c021-a18d-4035-a9db-abe4163ebb62
+
+[ブラウザで遊ぶ](https://fortress-9hj.pages.dev)
+
 ## 構成
 
 | パス | 内容 |
