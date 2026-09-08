@@ -39,8 +39,32 @@ export const terrainOf = (field: Field, frame: DemoFrame): TerrainMask =>
     frame.craters.map((c) => ({ cx: Math.floor(c.x), cy: Math.floor(c.y), radius: c.radius })),
   );
 
-/** 弾が占めるセル。中心 (x, y) の w × h の矩形に中心が入るセル。小さな弾でも中心のセルは塗る */
-export const bulletCells = (b: CellPoint & { readonly w: number; readonly h: number }): readonly CellPoint[] => {
+/** 進む向きに沿って描く弾の長さの下限（セル）。これより短い弾は向きを無視した矩形で足りる */
+const LINE_MIN = 2;
+/** 線分に沿って調べる刻み（セル）。セルを飛ばさない値 */
+const LINE_STEP = 0.5;
+
+type BulletBox = CellPoint & { readonly w: number; readonly h: number; readonly angle?: number };
+
+/** 長い弾のセル。中心から前後に w / 2 だけ angle の向きへ伸びる線分が通るセル。矩形と同じく両端を半セル内側で見るので、水平なら長さ w でちょうど w 個になる。太さ 1 セル未満は 1 セルに切り上げる */
+const lineCells = (b: BulletBox & { readonly angle: number }): readonly CellPoint[] => {
+  const dx = Math.cos(b.angle);
+  const dy = Math.sin(b.angle);
+  const cells: CellPoint[] = [];
+  const half = b.w / 2 - 0.5;
+  for (let s = -half; s <= half; s += LINE_STEP) {
+    const c = { x: Math.floor(b.x + dx * s), y: Math.floor(b.y + dy * s) };
+    // 直線に沿って進むので、重なるのは直前のセルだけ
+    const prev = cells[cells.length - 1];
+    if (prev && prev.x === c.x && prev.y === c.y) continue;
+    cells.push(c);
+  }
+  return cells;
+};
+
+/** 弾が占めるセル。中心 (x, y) の w × h の矩形に中心が入るセル。小さな弾でも中心のセルは塗る。向きのある長い弾は線分として塗る */
+export const bulletCells = (b: BulletBox): readonly CellPoint[] => {
+  if (b.angle !== undefined && b.w >= LINE_MIN) return lineCells({ ...b, angle: b.angle });
   const x0 = Math.floor(b.x - b.w / 2 + 0.5);
   const x1 = Math.floor(b.x + b.w / 2 - 0.5);
   const y0 = Math.floor(b.y - b.h / 2 + 0.5);

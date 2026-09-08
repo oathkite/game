@@ -43,6 +43,20 @@ describe("bulletCells", () => {
       { x: 11, y: 5 },
     ]);
   });
+
+  it("向きのある長い弾は、中心から前後へ向きに沿った線分のセルを塗る", () => {
+    const flat = bulletCells({ x: 10.5, y: 5.5, w: 8, h: 0.5, angle: 0 });
+    expect(flat.every((c) => c.y === 5)).toBe(true);
+    expect(flat.map((c) => c.x)).toEqual([7, 8, 9, 10, 11, 12, 13, 14]);
+    // 右上へ 45 度（y は下向きが正）。x が増えるほど y が減る対角線
+    const diagonal = bulletCells({ x: 10.5, y: 10.5, w: 8, h: 0.5, angle: -Math.PI / 4 });
+    // 格子に丸めるので x + y は 20 か 21 の帯に収まる
+    expect(diagonal.every((c) => c.x + c.y === 20 || c.x + c.y === 21)).toBe(true);
+    expect(diagonal[0]?.x ?? 0).toBeLessThan(diagonal[diagonal.length - 1]?.x ?? 0);
+    expect(diagonal.length).toBeGreaterThanOrEqual(5);
+    // 向きがあっても短い弾は矩形のまま
+    expect(bulletCells({ x: 10.5, y: 5.5, w: 1, h: 1, angle: -Math.PI / 4 })).toEqual([{ x: 10, y: 5 }]);
+  });
 });
 
 describe("rasterize", () => {

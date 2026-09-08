@@ -100,12 +100,11 @@ export const TankPreview = ({ colors, demo }: Props) => {
   }, [geometry, frame, colors]);
 
   return (
-    <div ref={ref} style={{ width: "100%" }}>
+    <div ref={ref} className="preview-frame">
       <canvas
         ref={canvasRef}
         width={field.cols * cell}
         height={field.rows * cell}
-        style={{ display: "block", imageRendering: "pixelated" }}
         data-testid="tank-preview"
         data-demo={demo?.weapon ?? ""}
       />
