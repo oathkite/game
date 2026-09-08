@@ -204,7 +204,7 @@ exports[`golden replay > トリプル弾 谷 基本の直接射撃 1`] = `
 }
 `;
 
-exports[`golden replay > マルチプル弾 谷 追い風 10 1`] = `
+exports[`golden replay > マルチ弾 谷 追い風 10 1`] = `
 {
   "paths": [
     {
@@ -482,7 +482,7 @@ exports[`golden replay > レーザー弾 平地 直撃 1`] = `
         "terrainOp": {
           "cx": 72,
           "cy": 144,
-          "radius": 2,
+          "radius": 3,
         },
       },
       {
@@ -499,7 +499,7 @@ exports[`golden replay > レーザー弾 平地 直撃 1`] = `
         "terrainOp": {
           "cx": 72,
           "cy": 144,
-          "radius": 2,
+          "radius": 3,
         },
       },
       {
@@ -516,7 +516,7 @@ exports[`golden replay > レーザー弾 平地 直撃 1`] = `
         "terrainOp": {
           "cx": 72,
           "cy": 144,
-          "radius": 2,
+          "radius": 3,
         },
       },
       {
@@ -533,7 +533,7 @@ exports[`golden replay > レーザー弾 平地 直撃 1`] = `
         "terrainOp": {
           "cx": 72,
           "cy": 144,
-          "radius": 2,
+          "radius": 3,
         },
       },
       {
@@ -550,7 +550,7 @@ exports[`golden replay > レーザー弾 平地 直撃 1`] = `
         "terrainOp": {
           "cx": 72,
           "cy": 144,
-          "radius": 2,
+          "radius": 3,
         },
       },
     ],
@@ -578,9 +578,9 @@ exports[`golden replay > レーザー弾 谷 向かい風 10 1`] = `
     {
       "last": {
         "x": 18317312,
-        "y": 10387456,
+        "y": 10649600,
       },
-      "steps": 141,
+      "steps": 145,
     },
   ],
   "result": {
@@ -604,13 +604,13 @@ exports[`golden replay > レーザー弾 谷 向かい風 10 1`] = `
         "terrainOp": {
           "cx": 275,
           "cy": 150,
-          "radius": 2,
+          "radius": 3,
         },
       },
       {
         "cell": {
           "x": 276,
-          "y": 152,
+          "y": 153,
         },
         "damage": [
           0,
@@ -620,14 +620,14 @@ exports[`golden replay > レーザー弾 谷 向かい風 10 1`] = `
         "stage": 1,
         "terrainOp": {
           "cx": 276,
-          "cy": 152,
-          "radius": 2,
+          "cy": 153,
+          "radius": 3,
         },
       },
       {
         "cell": {
           "x": 277,
-          "y": 154,
+          "y": 156,
         },
         "damage": [
           0,
@@ -637,14 +637,14 @@ exports[`golden replay > レーザー弾 谷 向かい風 10 1`] = `
         "stage": 2,
         "terrainOp": {
           "cx": 277,
-          "cy": 154,
-          "radius": 2,
+          "cy": 156,
+          "radius": 3,
         },
       },
       {
         "cell": {
           "x": 278,
-          "y": 156,
+          "y": 159,
         },
         "damage": [
           0,
@@ -654,14 +654,14 @@ exports[`golden replay > レーザー弾 谷 向かい風 10 1`] = `
         "stage": 3,
         "terrainOp": {
           "cx": 278,
-          "cy": 156,
-          "radius": 2,
+          "cy": 159,
+          "radius": 3,
         },
       },
       {
         "cell": {
           "x": 279,
-          "y": 158,
+          "y": 162,
         },
         "damage": [
           0,
@@ -671,8 +671,8 @@ exports[`golden replay > レーザー弾 谷 向かい風 10 1`] = `
         "stage": 4,
         "terrainOp": {
           "cx": 279,
-          "cy": 158,
-          "radius": 2,
+          "cy": 162,
+          "radius": 3,
         },
       },
     ],
@@ -1086,7 +1086,7 @@ exports[`golden replay > 掘削弾 平地 直撃 1`] = `
         "terrainOp": {
           "cx": 72,
           "cy": 144,
-          "radius": 16,
+          "radius": 18,
         },
       },
     ],
@@ -1230,7 +1230,7 @@ exports[`golden replay > 浮遊弾 谷 向かい風 10 1`] = `
         "terrainOp": {
           "cx": 184,
           "cy": 189,
-          "radius": 8,
+          "radius": 10,
         },
       },
     ],

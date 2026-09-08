@@ -17,7 +17,7 @@ export const DEFAULT_LOADOUT: Loadout = ["cannon", "digger"];
 export const WEAPON_LABELS: Readonly<Record<WeaponId, string>> = {
   cannon: "標準砲",
   triple: "トリプル弾",
-  multiple: "マルチプル弾",
+  multiple: "マルチ弾",
   drill: "貫通弾",
   laser: "レーザー弾",
   digger: "掘削弾",
@@ -31,7 +31,7 @@ export const WEAPON_DESCRIPTIONS: Readonly<Record<WeaponId, string>> = {
   triple: "3 発が前後に散る。高く撃ち上げれば 1 か所に集まる",
   multiple: "小さな 9 発。3 本の線を 3 発ずつ辿り、細かく削る",
   drill: "着弾しても止まらず、3 段掘り進む。直撃なら重い",
-  laser: "軽く伸びる弾が 5 段抜けて線のように削る。風には流される",
+  laser: "軽く伸びる弾が 5 段抜けて線のように削る",
   digger: "地形を大きく削る。機体にはほとんど効かない",
   floater: "ゆっくり飛び、風に強く流される",
   stinger: "爆風は針の穴ほど。直撃なら最大の一撃",

@@ -1,11 +1,11 @@
-import type { WeaponId } from "@game/protocol";
+import type { CellPoint, WeaponId } from "@game/protocol";
 
 // 武器の見た目。設計書 10 の 10.5 と 08 の 8.6。単位はセル。
 // 戦車の絵は武器で変えない（形の整合が取れないため）。武器の違いは弾、尾、着弾の演出で出す。
 
 export type BulletSize = { readonly w: number; readonly h: number };
 
-/** 弾の見た目の大きさ（セル）。重い弾ほど大きく、針弾やマルチプル弾の粒は小さい。物理の弾は常に 1 セル */
+/** 弾の見た目の大きさ（セル）。重い弾ほど大きく、針弾やマルチ弾の粒は小さい。物理の弾は常に 1 セル */
 export const bulletSize = (weapon: WeaponId): BulletSize => {
   switch (weapon) {
     case "cannon":
@@ -41,4 +41,18 @@ export const trailStep = (weapon: WeaponId): number => {
     default:
       return 2;
   }
+};
+
+/** 爆風のセル。中心から半径 r の円をセルで塗る。ring なら縁の 1 セルの輪だけ（設計書 03 の 3.9 の消失） */
+export const blastCells = (cx: number, cy: number, r: number, ring: boolean): readonly CellPoint[] => {
+  const r2 = r * r;
+  const inner = ring ? (r - 1) * (r - 1) : -1;
+  const cells: CellPoint[] = [];
+  for (let dy = -r; dy <= r; dy++) {
+    for (let dx = -r; dx <= r; dx++) {
+      const d2 = dx * dx + dy * dy;
+      if (d2 <= r2 && d2 > inner) cells.push({ x: cx + dx, y: cy + dy });
+    }
+  }
+  return cells;
 };

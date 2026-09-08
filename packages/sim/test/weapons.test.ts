@@ -79,7 +79,7 @@ describe("武器の数値", () => {
     }
   });
 
-  it("全弾直撃の合計は 針弾 > トリプル = マルチプル > 貫通 > レーザー > 標準砲 > 浮遊弾 > 掘削弾", () => {
+  it("全弾直撃の合計は 針弾 > トリプル = マルチ > 貫通 > レーザー > 標準砲 > 浮遊弾 > 掘削弾", () => {
     const full = (w: WeaponId) => fullHitDamage(weaponSpec(w));
     expect(full("stinger")).toBeGreaterThan(full("triple"));
     expect(full("triple")).toBe(full("multiple"));
@@ -88,6 +88,11 @@ describe("武器の数値", () => {
     expect(full("laser")).toBeGreaterThan(full("cannon"));
     expect(full("cannon")).toBeGreaterThan(full("floater"));
     expect(full("floater")).toBeGreaterThan(full("digger"));
+  });
+
+  it("浮遊弾は最も当てにくいぶん、直撃は標準砲の 8 割以上で爆風は標準砲と同じ", () => {
+    expect(firstStage("floater").damageMax).toBeGreaterThanOrEqual(firstStage("cannon").damageMax * 0.8);
+    expect(firstStage("floater").blastRadius).toBe(firstStage("cannon").blastRadius);
   });
 
   it("弾数が多い武器は 1 発が小さく、爆風も狭い", () => {
@@ -138,7 +143,7 @@ describe("扇に広がる武器", () => {
     expect(dealtTo(r, 1)).toBeGreaterThan(firstStage("cannon").damageMax * 0.8);
   });
 
-  it("マルチプル弾は 9 発で、同じ角度の 3 発は同じ線を辿って数セル以内に落ちる", () => {
+  it("マルチ弾は 9 発で、同じ角度の 3 発は同じ線を辿って数セル以内に落ちる", () => {
     const r = spread("multiple");
     expect(r.impacts).toHaveLength(9);
     expect(r.impacts.map((i) => i.projectile)).toEqual([0, 1, 2, 3, 4, 5, 6, 7, 8]);
@@ -148,7 +153,7 @@ describe("扇に広がる武器", () => {
     }
   });
 
-  it("マルチプル弾の削る半径はトリプル弾より小さい", () => {
+  it("マルチ弾の削る半径はトリプル弾より小さい", () => {
     expect(firstStage("multiple").blastRadius).toBeLessThan(firstStage("triple").blastRadius);
   });
 });

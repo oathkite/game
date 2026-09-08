@@ -1,6 +1,6 @@
 import type { CellPoint, WeaponId } from "@game/protocol";
 import { Container, Graphics } from "pixi.js";
-import { bulletSize, type BulletSize } from "./weaponArt";
+import { blastCells, bulletSize, type BulletSize } from "./weaponArt";
 
 // 弾、飛行中の尾、爆風、破片、外れの印。設計書 08 の 8.6、10 の 10.5。単位はセル。
 // 1 発の射撃に弾は複数（扇）、爆風も複数（弾道 × 段）ありうるので、弾は添字で、爆風と破片と印は鍵で持つ。
@@ -39,14 +39,7 @@ const keyedLayer = (parent: Container) => {
 };
 
 const drawBlast = (g: Graphics, color: number, cx: number, cy: number, r: number, ring: boolean): void => {
-  const r2 = r * r;
-  const inner = ring ? (r - 1) * (r - 1) : -1;
-  for (let dy = -r; dy <= r; dy++) {
-    for (let dx = -r; dx <= r; dx++) {
-      const d2 = dx * dx + dy * dy;
-      if (d2 <= r2 && d2 > inner) g.rect(cx + dx, cy + dy, 1, 1);
-    }
-  }
+  for (const c of blastCells(cx, cy, r, ring)) g.rect(c.x, c.y, 1, 1);
   g.fill(color);
 };
 

@@ -90,7 +90,7 @@ export const damageSounds = (
 export const STEP_MS = 1000 / 60;
 /** 扇の中で次の弾道を撃つまでの間隔。遠い弾から順に出て、着弾も前から後ろへ流れる */
 export const FAN_DELAY_MS = 50;
-/** 同じ扇を時間差で辿る発（マルチプル弾）の間隔。扇 3 本ぶん（150 ms）より長くして発が重ならないようにする */
+/** 同じ扇を時間差で辿る発（マルチ弾）の間隔。扇 3 本ぶん（150 ms）より長くして発が重ならないようにする */
 export const VOLLEY_DELAY_MS = 180;
 
 /** 弾道 p の発射の遅れ。扇の番号ごとに FAN_DELAY_MS、発ごとに VOLLEY_DELAY_MS（弾道の添字は 発 × 扇の本数 + 扇の番号） */
