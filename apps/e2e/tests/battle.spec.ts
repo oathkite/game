@@ -14,7 +14,7 @@ const setup = async (page: Page, nickname: string, colorIndex: number): Promise<
   await page.goto("/");
   await page.getByLabel("nickname").fill(nickname);
   await page.getByRole("button", { name: "色を変更" }).click();
-  await page.getByRole("radio", { name: /^主色/ }).nth(colorIndex).click();
+  await page.getByRole("radio", { name: /^カラー2/ }).nth(colorIndex).click();
   await page.getByRole("dialog", { name: "色を変更" }).getByRole("button", { name: "完了" }).click();
   await page.getByTestId("enter-lobby").click();
   await expect(page.getByTestId("lobby")).toBeVisible();

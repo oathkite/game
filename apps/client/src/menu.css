@@ -372,3 +372,22 @@
     grid-template-columns: 1fr;
   }
 }
+
+.profile-settings {
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+}
+
+.menu-shell .setup-preview-pane > .preview-frame {
+  flex: 1;
+  min-height: 0;
+  overflow: hidden;
+}
+
+@media (max-width: 900px) and (orientation: portrait), (max-width: 640px) {
+  .menu-shell .setup-preview-pane {
+    height: 32dvh;
+    min-height: 240px;
+  }
+}

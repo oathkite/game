@@ -64,7 +64,7 @@ for (const viewport of viewports) {
     await inView(guest.getByTestId("leave"));
     await guest.getByRole("button", { name: "名前、色、武器を変える" }).click();
     await guest.getByRole("button", { name: "色を変更" }).click();
-    await guest.getByRole("radio", { name: /^主色/ }).nth(4).click();
+    await guest.getByRole("radio", { name: /^カラー2/ }).nth(4).click();
     await guest.getByRole("dialog", { name: "色を変更" }).getByRole("button", { name: "完了" }).click();
     await guest.getByTestId("enter-lobby").click();
     await guest.getByTestId("ready").click();
