@@ -18,8 +18,8 @@ export const bulletSize = (weapon: WeaponId): BulletSize => {
       // 進む向きに長い。回転して見せる
       return { w: 1.6, h: 0.8 };
     case "laser":
-      // 細く長い線分
-      return { w: 3, h: 0.4 };
+      // 細く長い線分。飛んでいる間に線として見える長さにする。太さは 1 セル 2 px でも 1 px 残る値
+      return { w: 8, h: 0.5 };
     case "digger":
       return { w: 1.4, h: 1.4 };
     case "floater":

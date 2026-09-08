@@ -85,8 +85,11 @@ export type Demo = {
 export type Blast = Point & { readonly radius: number; readonly ring: boolean };
 export type Crater = Point & { readonly radius: number };
 
+/** 飛んでいる弾。angle は進む向き（ラジアン、y は下向きが正）。長い弾はこの向きに沿って描く */
+export type Bullet = Point & BulletSize & { readonly angle: number };
+
 export type DemoFrame = {
-  readonly bullets: readonly (Point & BulletSize)[];
+  readonly bullets: readonly Bullet[];
   /** 爆風。明滅の消灯側は含めない */
   readonly blasts: readonly Blast[];
   /** 削れた地形。着弾の順 */
@@ -101,6 +104,9 @@ const positionAt = (field: Field, f: Flight, t: number): Point => ({
   x: field.muzzle.x + f.vx * t,
   y: field.muzzle.y - f.vy * t + (f.gravity * t * t) / 2,
 });
+
+/** 弾道上の時刻 t での進む向き。対戦の再生と同じく、着弾で止まっている弾も飛んできた向きのまま */
+const angleAt = (f: Flight, t: number): number => Math.atan2(-f.vy + f.gravity * t, f.vx);
 
 /** 切れ端の地形。地面の行から下を埋める */
 export const groundMask = (field: Field): TerrainMask => {
@@ -216,7 +222,7 @@ export const demoFrame = (demo: Demo, t: number): DemoFrame => {
   });
   const carved = stages.filter(({ e }) => e >= CARVE_SEC);
   return {
-    bullets: flying.map(({ shot, flightAt }) => ({ ...positionAt(field, shot.flight, flightAt), ...demo.size })),
+    bullets: flying.map(({ shot, flightAt }) => ({ ...positionAt(field, shot.flight, flightAt), ...demo.size, angle: angleAt(shot.flight, flightAt) })),
     blasts,
     craters: carved.map(({ stage }) => ({ x: stage.x, y: stage.y, radius: stage.radius })),
     debris: carved.filter(({ e }) => e - CARVE_SEC < DEBRIS_SEC).flatMap(({ stage, e }) => debrisOf(stage, e - CARVE_SEC)),

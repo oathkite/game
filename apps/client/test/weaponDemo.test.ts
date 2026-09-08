@@ -119,6 +119,14 @@ describe("demoFrame", () => {
     expect(f.done).toBe(false);
   });
 
+  it("弾は進む向きを持つ。発射直後は 45 度で右上、頂点を過ぎると右下を向く", () => {
+    const launch = first(frameOf("laser", 0).bullets);
+    expect(launch.angle).toBeCloseTo(-Math.PI / 4);
+    expect(first(frameOf("laser", 0.01).bullets).angle).toBeGreaterThan(launch.angle);
+    // 発射から 1 秒。頂点（初速 sin45 / 重力の 70% で 1 秒より手前）を過ぎている
+    expect(first(frameOf("laser", 1).bullets).angle).toBeGreaterThan(0);
+  });
+
   it("飛んでいる間の弾は切れ端の中にある", () => {
     for (const w of WEAPON_IDS) {
       for (let t = 0; t < 3; t += 0.05) {
