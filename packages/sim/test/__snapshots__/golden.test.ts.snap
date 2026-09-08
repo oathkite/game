@@ -465,7 +465,7 @@ exports[`golden replay > レーザー弾 平地 直撃 1`] = `
     "finished": null,
     "hpAfter": [
       100,
-      60,
+      44,
     ],
     "impacts": [
       {
@@ -553,6 +553,40 @@ exports[`golden replay > レーザー弾 平地 直撃 1`] = `
           "radius": 3,
         },
       },
+      {
+        "cell": {
+          "x": 72,
+          "y": 144,
+        },
+        "damage": [
+          0,
+          8,
+        ],
+        "projectile": 0,
+        "stage": 5,
+        "terrainOp": {
+          "cx": 72,
+          "cy": 144,
+          "radius": 3,
+        },
+      },
+      {
+        "cell": {
+          "x": 72,
+          "y": 144,
+        },
+        "damage": [
+          0,
+          8,
+        ],
+        "projectile": 0,
+        "stage": 6,
+        "terrainOp": {
+          "cx": 72,
+          "cy": 144,
+          "radius": 3,
+        },
+      },
     ],
     "input": {
       "elevation": 10,
@@ -577,10 +611,10 @@ exports[`golden replay > レーザー弾 谷 向かい風 10 1`] = `
   "paths": [
     {
       "last": {
-        "x": 18317312,
-        "y": 10649600,
+        "x": 18448384,
+        "y": 11042816,
       },
-      "steps": 145,
+      "steps": 149,
     },
   ],
   "result": {
@@ -672,6 +706,40 @@ exports[`golden replay > レーザー弾 谷 向かい風 10 1`] = `
         "terrainOp": {
           "cx": 279,
           "cy": 162,
+          "radius": 3,
+        },
+      },
+      {
+        "cell": {
+          "x": 280,
+          "y": 165,
+        },
+        "damage": [
+          0,
+          0,
+        ],
+        "projectile": 0,
+        "stage": 5,
+        "terrainOp": {
+          "cx": 280,
+          "cy": 165,
+          "radius": 3,
+        },
+      },
+      {
+        "cell": {
+          "x": 281,
+          "y": 168,
+        },
+        "damage": [
+          0,
+          0,
+        ],
+        "projectile": 0,
+        "stage": 6,
+        "terrainOp": {
+          "cx": 281,
+          "cy": 168,
           "radius": 3,
         },
       },
