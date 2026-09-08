@@ -15,7 +15,7 @@ import { MapPicker } from "./MapPicker";
 import type { Profile } from "@/app/profile";
 import { TankPreview, type WeaponDemo } from "./TankPreview";
 
-// プレイヤー設定。設計書 09 の 9.2、10 の 10.4、08 の 8.4。左のペインに名前と色とプレビュー、右のペインに武器と出発の操作。
+// プレイヤー設定。設計書 09 の 9.2、10 の 10.4、08 の 8.4。左に名前と色とプレビュー、右に武器、スクロール領域の外に出発の操作。
 
 type Props = {
   readonly profile: Profile;
@@ -76,39 +76,42 @@ const WeaponPicker = ({ label, slot, loadout, onPick }: { label: string; slot: W
   </div>
 );
 
-type LoadoutPaneProps = {
-  readonly profile: Profile;
-  readonly onPick: (loadout: Loadout, weapon: WeaponId) => void;
-  readonly onEnterLobby: () => void;
-  readonly onSolo: (mapName: MapChoice) => void;
-  readonly inviteCode: string | null;
-  readonly valid: boolean;
-};
+type SetupActionsProps = Pick<Props, "onEnterLobby" | "onSolo" | "inviteCode"> & { readonly valid: boolean };
 
-/** 右のペイン。武器 1 と武器 2、下端にロビーへ、プラクティス、キーの案内 */
-const LoadoutPane = ({ profile, onPick, onEnterLobby, onSolo, inviteCode, valid }: LoadoutPaneProps) => {
+const SetupActions = ({ onEnterLobby, onSolo, inviteCode, valid }: SetupActionsProps) => {
   const [soloMap, setSoloMap] = useState<MapChoice>("valley");
   return (
-    <div className="pane">
-      <WeaponPicker label="武器 1" slot={0} loadout={profile.loadout} onPick={onPick} />
-      <WeaponPicker label="武器 2" slot={1} loadout={profile.loadout} onPick={onPick} />
-      <div className="pane-bottom">
-        <button type="button" disabled={!valid} onClick={onEnterLobby} data-testid="enter-lobby">
-          {inviteCode ? `部屋 ${inviteCode} に入る` : "ロビーへ"}
-        </button>
-        <div className="row solo-row">
-          <MapPicker value={soloMap} onChange={setSoloMap} label="solo map" />
-          <button type="button" onClick={() => onSolo(soloMap)} data-testid="solo">
-            プラクティス
-          </button>
-        </div>
-        <div className="dim" style={{ fontSize: 16, lineHeight: 1.5 }}>
-          矢印キー: 上下で仰角、左右で移動。Tab: メインとサブの切り替え。スペース: 押して溜め、離して発射。Esc: 設定。
-        </div>
+    <footer className="menu-actions setup-actions">
+      <button className="primary-action" type="button" disabled={!valid} onClick={onEnterLobby} data-testid="enter-lobby">
+        {inviteCode ? `部屋 ${inviteCode} に入る` : "ロビーへ"}
+      </button>
+      <div className="row solo-row">
+        <MapPicker value={soloMap} onChange={setSoloMap} label="solo map" />
+        <button type="button" onClick={() => onSolo(soloMap)} data-testid="solo">プラクティス</button>
       </div>
-    </div>
+    </footer>
   );
 };
+
+const ProfilePane = ({ profile, onChange, demo }: Pick<Props, "profile" | "onChange"> & { readonly demo: WeaponDemo | null }) => (
+  <div className="pane">
+    <div className="title">FORTRESS</div>
+    <TankPreview colors={profile.colors} demo={demo} />
+    <label className="column" style={{ gap: 8 }}>
+      <span className="label">プレイヤー名</span>
+      <input
+        value={profile.nickname}
+        maxLength={NICKNAME_MAX}
+        placeholder="1 から 12 文字"
+        aria-label="nickname"
+        onChange={(e) => onChange({ ...profile, nickname: e.target.value.slice(0, NICKNAME_MAX) })}
+      />
+    </label>
+    {/* 絵と同じ上下の順に並べる。砲塔（副色）が上、車体（主色）が下 */}
+    <ColorPicker label="副色（砲塔）" value={profile.colors.secondary} onPick={(c) => onChange({ ...profile, colors: { ...profile.colors, secondary: c } })} />
+    <ColorPicker label="主色（車体）" value={profile.colors.primary} onPick={(c) => onChange({ ...profile, colors: { ...profile.colors, primary: c } })} />
+  </div>
+);
 
 export const SetupScreen = ({ profile, onChange, onEnterLobby, onSolo, inviteCode }: Props) => {
   const [demo, setDemo] = useState<WeaponDemo | null>(null);
@@ -120,25 +123,17 @@ export const SetupScreen = ({ profile, onChange, onEnterLobby, onSolo, inviteCod
   };
 
   return (
-    <div className="screen-split">
-      <div className="pane">
-        <div className="title">FORTRESS</div>
-        <TankPreview colors={profile.colors} demo={demo} />
-        <label className="column" style={{ gap: 8 }}>
-          <span className="label">プレイヤー名</span>
-          <input
-            value={profile.nickname}
-            maxLength={NICKNAME_MAX}
-            placeholder="1 から 12 文字"
-            aria-label="nickname"
-            onChange={(e) => onChange({ ...profile, nickname: e.target.value.slice(0, NICKNAME_MAX) })}
-          />
-        </label>
-        {/* 絵と同じ上下の順に並べる。砲塔（副色）が上、車体（主色）が下 */}
-        <ColorPicker label="副色（砲塔）" value={profile.colors.secondary} onPick={(c) => onChange({ ...profile, colors: { ...profile.colors, secondary: c } })} />
-        <ColorPicker label="主色（車体）" value={profile.colors.primary} onPick={(c) => onChange({ ...profile, colors: { ...profile.colors, primary: c } })} />
+    <div className="menu-shell setup">
+      <div className="screen-split menu-content">
+        <ProfilePane profile={profile} onChange={onChange} demo={demo} />
+        <div className="pane">
+          <div className="label">装備を選ぶ</div>
+          <WeaponPicker label="武器 1" slot={0} loadout={profile.loadout} onPick={pickLoadout} />
+          <WeaponPicker label="武器 2" slot={1} loadout={profile.loadout} onPick={pickLoadout} />
+          <p className="menu-hint">矢印キー: 上下で仰角、左右で移動。Tab: 武器切り替え。スペース: 押して溜め、離して発射。Esc: 設定。</p>
+        </div>
       </div>
-      <LoadoutPane profile={profile} onPick={pickLoadout} onEnterLobby={onEnterLobby} onSolo={onSolo} inviteCode={inviteCode} valid={valid} />
+      <SetupActions onEnterLobby={onEnterLobby} onSolo={onSolo} inviteCode={inviteCode} valid={valid} />
     </div>
   );
 };
