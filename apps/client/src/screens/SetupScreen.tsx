@@ -143,8 +143,9 @@ export const SetupScreen = ({ profile, onChange, onEnterLobby, onSolo, inviteCod
             onChange={(e) => onChange({ ...profile, nickname: e.target.value.slice(0, NICKNAME_MAX) })}
           />
         </label>
-        <ColorPicker label="主色" value={profile.colors.primary} onPick={(c) => onChange({ ...profile, colors: { ...profile.colors, primary: c } })} />
-        <ColorPicker label="副色" value={profile.colors.secondary} onPick={(c) => onChange({ ...profile, colors: { ...profile.colors, secondary: c } })} />
+        {/* 絵と同じ上下の順に並べる。砲塔（副色）が上、車体（主色）が下 */}
+        <ColorPicker label="副色（砲塔）" value={profile.colors.secondary} onPick={(c) => onChange({ ...profile, colors: { ...profile.colors, secondary: c } })} />
+        <ColorPicker label="主色（車体）" value={profile.colors.primary} onPick={(c) => onChange({ ...profile, colors: { ...profile.colors, primary: c } })} />
       </div>
       <LoadoutPane profile={profile} onPick={pickLoadout} onEnterLobby={onEnterLobby} onSolo={onSolo} inviteCode={inviteCode} valid={valid} />
     </div>

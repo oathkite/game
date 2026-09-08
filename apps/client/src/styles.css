@@ -60,6 +60,15 @@ input {
   cursor: text;
 }
 
+/* select は OS の見た目を外し、button と同じ高さにする。矢印は右端の余白 12 px の内側に置く */
+select {
+  appearance: none;
+  padding-right: 32px;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8' viewBox='0 0 12 8'%3E%3Cpath d='M0 0h12L6 8z' fill='%2333ff66'/%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: right 12px center;
+}
+
 input::placeholder {
   color: var(--ui-dim);
 }
@@ -131,13 +140,12 @@ a {
   gap: 16px;
 }
 
-/* 狭い画面では 1 列に戻し、画面全体でスクロールする */
-@media (max-width: 900px) {
+/* 横向きのスマートフォン（幅 640 px 超）では 2 ペインを保つ。縦向きは幅 900 px まで回転の案内で覆われるので、この分岐に届くのは幅 640 px 以下の横向きの小さな端末だけ */
+@media (max-width: 640px) {
+  /* 1 列に戻し、画面いっぱいのこの要素の中でスクロールする。#root が overflow: hidden なので、height: auto にすると溢れた分に届かなくなる */
   .screen-split,
   .screen-split.lobby {
     grid-template-columns: 1fr;
-    height: auto;
-    min-height: 100%;
     overflow-y: auto;
   }
 
@@ -219,6 +227,17 @@ a {
   display: inline-flex;
   gap: 4px;
   margin-right: 8px;
+}
+
+/* 戦車のプレビューの枠。中身の幅は clientWidth で測るので、枠は測る幅に入らない。余りは左右に等分する */
+.preview-frame {
+  border: 2px solid var(--ui);
+}
+
+.preview-frame canvas {
+  display: block;
+  margin: 0 auto;
+  image-rendering: pixelated;
 }
 
 .color-grid {
