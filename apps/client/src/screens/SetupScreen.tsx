@@ -85,7 +85,7 @@ type LoadoutPaneProps = {
   readonly valid: boolean;
 };
 
-/** 右のペイン。武器 1 と武器 2、下端にロビーへ、ひとりで撃つ、キーの案内 */
+/** 右のペイン。武器 1 と武器 2、下端にロビーへ、プラクティス、キーの案内 */
 const LoadoutPane = ({ profile, onPick, onEnterLobby, onSolo, inviteCode, valid }: LoadoutPaneProps) => {
   const [soloMap, setSoloMap] = useState<MapChoice>("valley");
   return (
@@ -96,10 +96,10 @@ const LoadoutPane = ({ profile, onPick, onEnterLobby, onSolo, inviteCode, valid 
         <button type="button" disabled={!valid} onClick={onEnterLobby} data-testid="enter-lobby">
           {inviteCode ? `部屋 ${inviteCode} に入る` : "ロビーへ"}
         </button>
-        <div className="row">
+        <div className="row solo-row">
           <MapPicker value={soloMap} onChange={setSoloMap} label="solo map" />
           <button type="button" onClick={() => onSolo(soloMap)} data-testid="solo">
-            ひとりで撃つ
+            プラクティス
           </button>
         </div>
         <div className="dim" style={{ fontSize: 16, lineHeight: 1.5 }}>
