@@ -1,0 +1,8 @@
+Use case: precise-object-edit production animation sheet.
+Input is previous generated effect sheet. Preserve the exact pixel-art forms/colors but correct the layout and flash artifacts.
+Output1024x1024 transparent PNG, exact4 columns4 rows of256x256 cells. Each frame MUST stay within its own cell local x32..224,y32..224, leaving32px totally transparent gutters. Shrink the ENTIRE sheet's artwork to 70% of current scale per group while preserving relative sizes. Every row keeps same scale across its4phases. No object may cross x256,x512,x768 or y256,y512,y768. No haze, soft bloom, shadows or colored glow outside sharp sprite pixels.
+Row1 explosion ignition→expanding orange flame→largest hot blast→sparse dissipating gray wisps. Register each at center128,148; largest frame must fit192x192.
+Row2 smoke tiny low puff→larger raised puff→highest full plume→separated wisps leaving center empty. Origin128,210.
+Row3 muzzle flash ONLY, absolutely REMOVE the black/steel barrel stubs visible at left of the first3frames. Only cream/yellow/orange emissive flame/sparks. Origin64,128 for every frame. First tiny, second longcone reaches220, third breaks into tongues, final sparse distant sparks near190 with EMPTY emission center, no re-ignition small fireball.
+Row4 same four hit spark phases, registered center128,128; last frame leaves center empty.
+Nothing else, no labels, background, lines, checkerboard or numbers.

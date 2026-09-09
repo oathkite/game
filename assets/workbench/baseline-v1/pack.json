@@ -1,0 +1,3246 @@
+{
+  "version": 1,
+  "id": "baseline-v1",
+  "productionMethod": "imagegen",
+  "metricsStatus": "draft",
+  "artPixelsPerCell": 8,
+  "assets": [
+    {
+      "id": "pilot-frog",
+      "kind": "pilot",
+      "file": "pilot-frog.png",
+      "source": "pilot-frog.ora",
+      "frameSize": [
+        128,
+        128
+      ],
+      "paletteRoles": [
+        "transparent",
+        "fixed",
+        "fixed",
+        "fixed",
+        "fixed",
+        "fixed",
+        "fixed",
+        "fixed",
+        "pilot",
+        "pilot",
+        "pilot",
+        "fixed",
+        "fixed",
+        "fixed",
+        "fixed",
+        "fixed",
+        "fixed",
+        "fixed",
+        "fixed",
+        "fixed",
+        "fixed",
+        "fixed",
+        "fixed",
+        "fixed",
+        "fixed",
+        "fixed",
+        "fixed"
+      ],
+      "anchors": {
+        "pilotSeat": [
+          64,
+          76
+        ],
+        "headAnchor": [
+          41,
+          37
+        ],
+        "neckAnchor": [
+          41,
+          49
+        ]
+      },
+      "clips": {
+        "idle": {
+          "frames": [
+            0,
+            1,
+            2,
+            0
+          ],
+          "durationsMs": [
+            500,
+            500,
+            100,
+            100
+          ],
+          "loop": true
+        },
+        "move": {
+          "frames": [
+            3,
+            4
+          ],
+          "durationsMs": [
+            100,
+            100
+          ],
+          "loop": true
+        },
+        "fire": {
+          "frames": [
+            5,
+            6,
+            0
+          ],
+          "durationsMs": [
+            60,
+            100,
+            20
+          ],
+          "loop": false
+        },
+        "hit": {
+          "frames": [
+            7,
+            8,
+            0
+          ],
+          "durationsMs": [
+            100,
+            100,
+            200
+          ],
+          "loop": false
+        },
+        "low-hp": {
+          "frames": [
+            9,
+            10,
+            9
+          ],
+          "durationsMs": [
+            600,
+            300,
+            700
+          ],
+          "loop": true
+        },
+        "fall": {
+          "frames": [
+            11
+          ],
+          "durationsMs": [
+            1000
+          ],
+          "loop": true
+        },
+        "land": {
+          "frames": [
+            12,
+            0
+          ],
+          "durationsMs": [
+            150,
+            30
+          ],
+          "loop": false
+        },
+        "destroy": {
+          "frames": [
+            7,
+            13,
+            14
+          ],
+          "durationsMs": [
+            120,
+            330,
+            150
+          ],
+          "loop": false
+        },
+        "wreck": {
+          "frames": [
+            15
+          ],
+          "durationsMs": [
+            1000
+          ],
+          "loop": true
+        }
+      },
+      "exportMetrics": [
+        {
+          "sourceSheet": "pilot",
+          "sourceFrame": 0,
+          "sourceSize": [
+            194,
+            250
+          ],
+          "sourceOrigin": [
+            80,
+            56
+          ],
+          "outputSize": [
+            25,
+            32
+          ],
+          "outputOrigin": [
+            27,
+            36
+          ],
+          "scale": 0.12857142857142856,
+          "group": "pilot-0-1-2-3-4-5-6-7-8-9-10-11-12-13-14-15"
+        },
+        {
+          "sourceSheet": "pilot",
+          "sourceFrame": 1,
+          "sourceSize": [
+            198,
+            250
+          ],
+          "sourceOrigin": [
+            383,
+            56
+          ],
+          "outputSize": [
+            25,
+            32
+          ],
+          "outputOrigin": [
+            27,
+            36
+          ],
+          "scale": 0.12857142857142856,
+          "group": "pilot-0-1-2-3-4-5-6-7-8-9-10-11-12-13-14-15"
+        },
+        {
+          "sourceSheet": "pilot",
+          "sourceFrame": 2,
+          "sourceSize": [
+            196,
+            250
+          ],
+          "sourceOrigin": [
+            696,
+            56
+          ],
+          "outputSize": [
+            25,
+            32
+          ],
+          "outputOrigin": [
+            27,
+            36
+          ],
+          "scale": 0.12857142857142856,
+          "group": "pilot-0-1-2-3-4-5-6-7-8-9-10-11-12-13-14-15"
+        },
+        {
+          "sourceSheet": "pilot",
+          "sourceFrame": 3,
+          "sourceSize": [
+            201,
+            233
+          ],
+          "sourceOrigin": [
+            1004,
+            73
+          ],
+          "outputSize": [
+            26,
+            30
+          ],
+          "outputOrigin": [
+            26,
+            38
+          ],
+          "scale": 0.12857142857142856,
+          "group": "pilot-0-1-2-3-4-5-6-7-8-9-10-11-12-13-14-15"
+        },
+        {
+          "sourceSheet": "pilot",
+          "sourceFrame": 4,
+          "sourceSize": [
+            209,
+            244
+          ],
+          "sourceOrigin": [
+            76,
+            361
+          ],
+          "outputSize": [
+            27,
+            31
+          ],
+          "outputOrigin": [
+            26,
+            37
+          ],
+          "scale": 0.12857142857142856,
+          "group": "pilot-0-1-2-3-4-5-6-7-8-9-10-11-12-13-14-15"
+        },
+        {
+          "sourceSheet": "pilot",
+          "sourceFrame": 5,
+          "sourceSize": [
+            206,
+            241
+          ],
+          "sourceOrigin": [
+            383,
+            364
+          ],
+          "outputSize": [
+            26,
+            31
+          ],
+          "outputOrigin": [
+            26,
+            37
+          ],
+          "scale": 0.12857142857142856,
+          "group": "pilot-0-1-2-3-4-5-6-7-8-9-10-11-12-13-14-15"
+        },
+        {
+          "sourceSheet": "pilot",
+          "sourceFrame": 6,
+          "sourceSize": [
+            203,
+            245
+          ],
+          "sourceOrigin": [
+            702,
+            360
+          ],
+          "outputSize": [
+            26,
+            31
+          ],
+          "outputOrigin": [
+            33,
+            37
+          ],
+          "scale": 0.12857142857142856,
+          "group": "pilot-0-1-2-3-4-5-6-7-8-9-10-11-12-13-14-15"
+        },
+        {
+          "sourceSheet": "pilot",
+          "sourceFrame": 7,
+          "sourceSize": [
+            194,
+            250
+          ],
+          "sourceOrigin": [
+            1004,
+            355
+          ],
+          "outputSize": [
+            25,
+            32
+          ],
+          "outputOrigin": [
+            27,
+            36
+          ],
+          "scale": 0.12857142857142856,
+          "group": "pilot-0-1-2-3-4-5-6-7-8-9-10-11-12-13-14-15"
+        },
+        {
+          "sourceSheet": "pilot",
+          "sourceFrame": 8,
+          "sourceSize": [
+            199,
+            243
+          ],
+          "sourceOrigin": [
+            70,
+            656
+          ],
+          "outputSize": [
+            26,
+            31
+          ],
+          "outputOrigin": [
+            26,
+            37
+          ],
+          "scale": 0.12857142857142856,
+          "group": "pilot-0-1-2-3-4-5-6-7-8-9-10-11-12-13-14-15"
+        },
+        {
+          "sourceSheet": "pilot",
+          "sourceFrame": 9,
+          "sourceSize": [
+            197,
+            241
+          ],
+          "sourceOrigin": [
+            383,
+            658
+          ],
+          "outputSize": [
+            25,
+            31
+          ],
+          "outputOrigin": [
+            27,
+            37
+          ],
+          "scale": 0.12857142857142856,
+          "group": "pilot-0-1-2-3-4-5-6-7-8-9-10-11-12-13-14-15"
+        },
+        {
+          "sourceSheet": "pilot",
+          "sourceFrame": 10,
+          "sourceSize": [
+            199,
+            241
+          ],
+          "sourceOrigin": [
+            694,
+            658
+          ],
+          "outputSize": [
+            26,
+            31
+          ],
+          "outputOrigin": [
+            26,
+            37
+          ],
+          "scale": 0.12857142857142856,
+          "group": "pilot-0-1-2-3-4-5-6-7-8-9-10-11-12-13-14-15"
+        },
+        {
+          "sourceSheet": "pilot",
+          "sourceFrame": 11,
+          "sourceSize": [
+            208,
+            232
+          ],
+          "sourceOrigin": [
+            998,
+            667
+          ],
+          "outputSize": [
+            27,
+            30
+          ],
+          "outputOrigin": [
+            26,
+            38
+          ],
+          "scale": 0.12857142857142856,
+          "group": "pilot-0-1-2-3-4-5-6-7-8-9-10-11-12-13-14-15"
+        },
+        {
+          "sourceSheet": "pilot",
+          "sourceFrame": 12,
+          "sourceSize": [
+            210,
+            225
+          ],
+          "sourceOrigin": [
+            74,
+            966
+          ],
+          "outputSize": [
+            27,
+            29
+          ],
+          "outputOrigin": [
+            26,
+            39
+          ],
+          "scale": 0.12857142857142856,
+          "group": "pilot-0-1-2-3-4-5-6-7-8-9-10-11-12-13-14-15"
+        },
+        {
+          "sourceSheet": "pilot",
+          "sourceFrame": 13,
+          "sourceSize": [
+            206,
+            225
+          ],
+          "sourceOrigin": [
+            378,
+            966
+          ],
+          "outputSize": [
+            26,
+            29
+          ],
+          "outputOrigin": [
+            26,
+            39
+          ],
+          "scale": 0.12857142857142856,
+          "group": "pilot-0-1-2-3-4-5-6-7-8-9-10-11-12-13-14-15"
+        },
+        {
+          "sourceSheet": "pilot",
+          "sourceFrame": 14,
+          "sourceSize": [
+            205,
+            235
+          ],
+          "sourceOrigin": [
+            689,
+            956
+          ],
+          "outputSize": [
+            26,
+            30
+          ],
+          "outputOrigin": [
+            26,
+            38
+          ],
+          "scale": 0.12857142857142856,
+          "group": "pilot-0-1-2-3-4-5-6-7-8-9-10-11-12-13-14-15"
+        },
+        {
+          "sourceSheet": "pilot",
+          "sourceFrame": 15,
+          "sourceSize": [
+            202,
+            212
+          ],
+          "sourceOrigin": [
+            1004,
+            979
+          ],
+          "outputSize": [
+            26,
+            27
+          ],
+          "outputOrigin": [
+            26,
+            41
+          ],
+          "scale": 0.12857142857142856,
+          "group": "pilot-0-1-2-3-4-5-6-7-8-9-10-11-12-13-14-15"
+        }
+      ],
+      "frameAnchors": {
+        "0": {
+          "headAnchor": [
+            41,
+            37
+          ],
+          "neckAnchor": [
+            41,
+            49
+          ]
+        },
+        "1": {
+          "headAnchor": [
+            41,
+            37
+          ],
+          "neckAnchor": [
+            42,
+            49
+          ]
+        },
+        "2": {
+          "headAnchor": [
+            40,
+            37
+          ],
+          "neckAnchor": [
+            42,
+            48
+          ]
+        },
+        "3": {
+          "headAnchor": [
+            43,
+            39
+          ],
+          "neckAnchor": [
+            46,
+            48
+          ]
+        },
+        "4": {
+          "headAnchor": [
+            43,
+            38
+          ],
+          "neckAnchor": [
+            45,
+            51
+          ]
+        },
+        "5": {
+          "headAnchor": [
+            41,
+            38
+          ],
+          "neckAnchor": [
+            43,
+            51
+          ]
+        },
+        "6": {
+          "headAnchor": [
+            39,
+            37
+          ],
+          "neckAnchor": [
+            44,
+            52
+          ]
+        },
+        "7": {
+          "headAnchor": [
+            44,
+            37
+          ],
+          "neckAnchor": [
+            46,
+            51
+          ]
+        },
+        "8": {
+          "headAnchor": [
+            42,
+            37
+          ],
+          "neckAnchor": [
+            44,
+            50
+          ]
+        },
+        "9": {
+          "headAnchor": [
+            42,
+            37
+          ],
+          "neckAnchor": [
+            44,
+            51
+          ]
+        },
+        "10": {
+          "headAnchor": [
+            41,
+            38
+          ],
+          "neckAnchor": [
+            44,
+            51
+          ]
+        },
+        "11": {
+          "headAnchor": [
+            45,
+            39
+          ],
+          "neckAnchor": [
+            49,
+            53
+          ]
+        },
+        "12": {
+          "headAnchor": [
+            42,
+            41
+          ],
+          "neckAnchor": [
+            45,
+            49
+          ]
+        },
+        "13": {
+          "headAnchor": [
+            42,
+            40
+          ],
+          "neckAnchor": [
+            44,
+            50
+          ]
+        },
+        "14": {
+          "headAnchor": [
+            44,
+            39
+          ],
+          "neckAnchor": [
+            46,
+            50
+          ]
+        },
+        "15": {
+          "headAnchor": [
+            48,
+            47
+          ],
+          "neckAnchor": [
+            47,
+            54
+          ]
+        }
+      },
+      "frameFaceAreas": {
+        "0": [
+          41,
+          39,
+          4,
+          6
+        ],
+        "1": [
+          41,
+          39,
+          4,
+          6
+        ],
+        "2": [
+          40,
+          39,
+          4,
+          6
+        ],
+        "3": [
+          43,
+          41,
+          4,
+          6
+        ],
+        "4": [
+          43,
+          40,
+          4,
+          6
+        ],
+        "5": [
+          41,
+          40,
+          4,
+          6
+        ],
+        "6": [
+          39,
+          39,
+          4,
+          6
+        ],
+        "7": [
+          44,
+          39,
+          4,
+          6
+        ],
+        "8": [
+          42,
+          39,
+          4,
+          6
+        ],
+        "9": [
+          42,
+          39,
+          4,
+          6
+        ],
+        "10": [
+          41,
+          40,
+          4,
+          6
+        ],
+        "11": [
+          45,
+          41,
+          4,
+          6
+        ],
+        "12": [
+          42,
+          43,
+          4,
+          6
+        ],
+        "13": [
+          42,
+          42,
+          4,
+          6
+        ],
+        "14": [
+          44,
+          41,
+          4,
+          6
+        ],
+        "15": [
+          48,
+          49,
+          4,
+          6
+        ]
+      }
+    },
+    {
+      "id": "cabin-standard",
+      "kind": "cabin",
+      "file": "cabin-standard.png",
+      "source": "cabin-standard.ora",
+      "frameSize": [
+        128,
+        128
+      ],
+      "paletteRoles": [
+        "transparent",
+        "fixed",
+        "fixed",
+        "fixed",
+        "fixed",
+        "fixed",
+        "fixed",
+        "fixed",
+        "fixed",
+        "fixed",
+        "fixed",
+        "primary-light",
+        "primary-mid",
+        "primary-dark",
+        "secondary-light",
+        "secondary-mid",
+        "secondary-dark",
+        "fixed",
+        "fixed",
+        "fixed",
+        "fixed",
+        "fixed",
+        "fixed",
+        "fixed",
+        "fixed",
+        "fixed",
+        "fixed",
+        "fixed",
+        "fixed"
+      ],
+      "anchors": {
+        "ground": [
+          64,
+          104
+        ],
+        "pilotSeat": [
+          64,
+          76
+        ],
+        "weaponPivot": [
+          64,
+          72
+        ],
+        "damageSmoke": [
+          33,
+          73
+        ]
+      },
+      "clips": {
+        "idle": {
+          "frames": [
+            0
+          ],
+          "durationsMs": [
+            1000
+          ],
+          "loop": true
+        },
+        "wreck": {
+          "frames": [
+            0
+          ],
+          "durationsMs": [
+            1000
+          ],
+          "loop": true
+        },
+        "idle-front": {
+          "frames": [
+            1
+          ],
+          "durationsMs": [
+            1000
+          ],
+          "loop": true
+        },
+        "wreck-front": {
+          "frames": [
+            1
+          ],
+          "durationsMs": [
+            1000
+          ],
+          "loop": true
+        },
+        "idle-glass": {
+          "frames": [
+            2
+          ],
+          "durationsMs": [
+            1000
+          ],
+          "loop": true
+        }
+      },
+      "exportMetrics": [
+        {
+          "sourceSheet": "modules",
+          "sourceFrame": 0,
+          "sourceSize": [
+            289,
+            154
+          ],
+          "sourceOrigin": [
+            27,
+            181
+          ],
+          "outputSize": [
+            83,
+            44
+          ],
+          "outputOrigin": [
+            14,
+            40
+          ],
+          "scale": 0.2857142857142857,
+          "group": null
+        },
+        {
+          "sourceSheet": "modules",
+          "sourceFrame": 1,
+          "sourceSize": [
+            244,
+            157
+          ],
+          "sourceOrigin": [
+            349,
+            181
+          ],
+          "outputSize": [
+            84,
+            54
+          ],
+          "outputOrigin": [
+            12,
+            12
+          ],
+          "scale": 0.3442622950819672,
+          "group": null
+        },
+        {
+          "sourceSheet": "modules-gloss",
+          "sourceFrame": 1,
+          "sourceSize": [
+            241,
+            150
+          ],
+          "sourceOrigin": [
+            349,
+            183
+          ],
+          "outputSize": [
+            84,
+            52
+          ],
+          "outputOrigin": [
+            12,
+            14
+          ],
+          "scale": 0.34854771784232363,
+          "group": null
+        }
+      ],
+      "alphaMode": "glass",
+      "faceSafeArea": [
+        38,
+        34,
+        13,
+        18
+      ]
+    },
+    {
+      "id": "tracks-standard",
+      "kind": "undercarriage",
+      "file": "tracks-standard.png",
+      "source": "tracks-standard.ora",
+      "frameSize": [
+        128,
+        128
+      ],
+      "paletteRoles": [
+        "transparent",
+        "fixed",
+        "fixed",
+        "fixed",
+        "fixed",
+        "fixed",
+        "fixed",
+        "fixed",
+        "fixed",
+        "fixed",
+        "fixed",
+        "primary-light",
+        "primary-mid",
+        "primary-dark",
+        "secondary-light",
+        "secondary-mid",
+        "secondary-dark",
+        "fixed",
+        "fixed",
+        "fixed",
+        "fixed",
+        "fixed",
+        "fixed",
+        "fixed",
+        "fixed",
+        "fixed",
+        "fixed"
+      ],
+      "anchors": {
+        "ground": [
+          64,
+          104
+        ],
+        "cabinMount": [
+          64,
+          78
+        ],
+        "exhaust": [
+          28,
+          87
+        ]
+      },
+      "clips": {
+        "idle": {
+          "frames": [
+            0
+          ],
+          "durationsMs": [
+            1000
+          ],
+          "loop": true
+        },
+        "move": {
+          "frames": [
+            0,
+            1
+          ],
+          "durationsMs": [
+            90,
+            90
+          ],
+          "loop": true
+        },
+        "wreck": {
+          "frames": [
+            2
+          ],
+          "durationsMs": [
+            1000
+          ],
+          "loop": true
+        }
+      },
+      "exportMetrics": [
+        {
+          "sourceSheet": "modules",
+          "sourceFrame": 2,
+          "sourceSize": [
+            286,
+            118
+          ],
+          "sourceOrigin": [
+            636,
+            229
+          ],
+          "outputSize": [
+            78,
+            32
+          ],
+          "outputOrigin": [
+            23,
+            72
+          ],
+          "scale": 0.2716049382716049,
+          "group": "modules-2-3-14"
+        },
+        {
+          "sourceSheet": "modules",
+          "sourceFrame": 3,
+          "sourceSize": [
+            286,
+            118
+          ],
+          "sourceOrigin": [
+            949,
+            229
+          ],
+          "outputSize": [
+            78,
+            32
+          ],
+          "outputOrigin": [
+            23,
+            72
+          ],
+          "scale": 0.2716049382716049,
+          "group": "modules-2-3-14"
+        },
+        {
+          "sourceSheet": "modules",
+          "sourceFrame": 14,
+          "sourceSize": [
+            286,
+            162
+          ],
+          "sourceOrigin": [
+            636,
+            1011
+          ],
+          "outputSize": [
+            78,
+            44
+          ],
+          "outputOrigin": [
+            23,
+            60
+          ],
+          "scale": 0.2716049382716049,
+          "group": "modules-2-3-14"
+        }
+      ]
+    },
+    {
+      "id": "weapon-cannon",
+      "kind": "weapon",
+      "file": "weapon-cannon.png",
+      "source": "weapon-cannon.ora",
+      "frameSize": [
+        128,
+        128
+      ],
+      "paletteRoles": [
+        "transparent",
+        "fixed",
+        "fixed",
+        "fixed",
+        "fixed",
+        "fixed",
+        "fixed",
+        "fixed",
+        "fixed",
+        "fixed",
+        "fixed",
+        "primary-light",
+        "primary-mid",
+        "primary-dark",
+        "secondary-light",
+        "secondary-mid",
+        "secondary-dark",
+        "fixed",
+        "fixed",
+        "fixed",
+        "fixed",
+        "fixed",
+        "fixed",
+        "fixed",
+        "fixed",
+        "fixed",
+        "fixed"
+      ],
+      "anchors": {
+        "weaponPivot": [
+          64,
+          72
+        ],
+        "muzzle": [
+          96,
+          72
+        ]
+      },
+      "clips": {
+        "idle": {
+          "frames": [
+            0
+          ],
+          "durationsMs": [
+            1000
+          ],
+          "loop": true
+        },
+        "fire": {
+          "frames": [
+            0
+          ],
+          "durationsMs": [
+            180
+          ],
+          "loop": false
+        },
+        "wreck": {
+          "frames": [
+            0
+          ],
+          "durationsMs": [
+            1000
+          ],
+          "loop": true
+        }
+      },
+      "exportMetrics": [
+        {
+          "sourceSheet": "modules",
+          "sourceFrame": 4,
+          "sourceSize": [
+            257,
+            112
+          ],
+          "sourceOrigin": [
+            37,
+            490
+          ],
+          "outputSize": [
+            42,
+            18
+          ],
+          "outputOrigin": [
+            54,
+            63
+          ],
+          "scale": 0.16342412451361868,
+          "group": null
+        }
+      ]
+    },
+    {
+      "id": "weapon-triple",
+      "kind": "weapon",
+      "file": "weapon-triple.png",
+      "source": "weapon-triple.ora",
+      "frameSize": [
+        128,
+        128
+      ],
+      "paletteRoles": [
+        "transparent",
+        "fixed",
+        "fixed",
+        "fixed",
+        "fixed",
+        "fixed",
+        "fixed",
+        "fixed",
+        "fixed",
+        "fixed",
+        "fixed",
+        "primary-light",
+        "primary-mid",
+        "primary-dark",
+        "secondary-light",
+        "secondary-mid",
+        "secondary-dark",
+        "fixed",
+        "fixed",
+        "fixed",
+        "fixed",
+        "fixed",
+        "fixed",
+        "fixed",
+        "fixed",
+        "fixed",
+        "fixed"
+      ],
+      "anchors": {
+        "weaponPivot": [
+          64,
+          72
+        ],
+        "muzzle": [
+          96,
+          72
+        ]
+      },
+      "clips": {
+        "idle": {
+          "frames": [
+            0
+          ],
+          "durationsMs": [
+            1000
+          ],
+          "loop": true
+        },
+        "fire": {
+          "frames": [
+            0
+          ],
+          "durationsMs": [
+            180
+          ],
+          "loop": false
+        },
+        "wreck": {
+          "frames": [
+            0
+          ],
+          "durationsMs": [
+            1000
+          ],
+          "loop": true
+        }
+      },
+      "exportMetrics": [
+        {
+          "sourceSheet": "modules",
+          "sourceFrame": 5,
+          "sourceSize": [
+            234,
+            118
+          ],
+          "sourceOrigin": [
+            342,
+            490
+          ],
+          "outputSize": [
+            42,
+            21
+          ],
+          "outputOrigin": [
+            54,
+            61
+          ],
+          "scale": 0.1794871794871795,
+          "group": null
+        }
+      ]
+    },
+    {
+      "id": "weapon-multiple",
+      "kind": "weapon",
+      "file": "weapon-multiple.png",
+      "source": "weapon-multiple.ora",
+      "frameSize": [
+        128,
+        128
+      ],
+      "paletteRoles": [
+        "transparent",
+        "fixed",
+        "fixed",
+        "fixed",
+        "fixed",
+        "fixed",
+        "fixed",
+        "fixed",
+        "fixed",
+        "fixed",
+        "fixed",
+        "primary-light",
+        "primary-mid",
+        "primary-dark",
+        "secondary-light",
+        "secondary-mid",
+        "secondary-dark",
+        "fixed",
+        "fixed",
+        "fixed",
+        "fixed",
+        "fixed",
+        "fixed",
+        "fixed",
+        "fixed",
+        "fixed",
+        "fixed"
+      ],
+      "anchors": {
+        "weaponPivot": [
+          64,
+          72
+        ],
+        "muzzle": [
+          96,
+          72
+        ]
+      },
+      "clips": {
+        "idle": {
+          "frames": [
+            0
+          ],
+          "durationsMs": [
+            1000
+          ],
+          "loop": true
+        },
+        "fire": {
+          "frames": [
+            0
+          ],
+          "durationsMs": [
+            180
+          ],
+          "loop": false
+        },
+        "wreck": {
+          "frames": [
+            0
+          ],
+          "durationsMs": [
+            1000
+          ],
+          "loop": true
+        }
+      },
+      "exportMetrics": [
+        {
+          "sourceSheet": "modules",
+          "sourceFrame": 6,
+          "sourceSize": [
+            242,
+            119
+          ],
+          "sourceOrigin": [
+            657,
+            490
+          ],
+          "outputSize": [
+            42,
+            21
+          ],
+          "outputOrigin": [
+            54,
+            61
+          ],
+          "scale": 0.17355371900826447,
+          "group": null
+        }
+      ]
+    },
+    {
+      "id": "weapon-drill",
+      "kind": "weapon",
+      "file": "weapon-drill.png",
+      "source": "weapon-drill.ora",
+      "frameSize": [
+        128,
+        128
+      ],
+      "paletteRoles": [
+        "transparent",
+        "fixed",
+        "fixed",
+        "fixed",
+        "fixed",
+        "fixed",
+        "fixed",
+        "fixed",
+        "fixed",
+        "fixed",
+        "fixed",
+        "primary-light",
+        "primary-mid",
+        "primary-dark",
+        "secondary-light",
+        "secondary-mid",
+        "secondary-dark",
+        "fixed",
+        "fixed",
+        "fixed",
+        "fixed",
+        "fixed",
+        "fixed",
+        "fixed",
+        "fixed",
+        "fixed",
+        "fixed"
+      ],
+      "anchors": {
+        "weaponPivot": [
+          64,
+          72
+        ],
+        "muzzle": [
+          96,
+          72
+        ]
+      },
+      "clips": {
+        "idle": {
+          "frames": [
+            0
+          ],
+          "durationsMs": [
+            1000
+          ],
+          "loop": true
+        },
+        "fire": {
+          "frames": [
+            0
+          ],
+          "durationsMs": [
+            180
+          ],
+          "loop": false
+        },
+        "wreck": {
+          "frames": [
+            0
+          ],
+          "durationsMs": [
+            1000
+          ],
+          "loop": true
+        }
+      },
+      "exportMetrics": [
+        {
+          "sourceSheet": "modules",
+          "sourceFrame": 7,
+          "sourceSize": [
+            256,
+            119
+          ],
+          "sourceOrigin": [
+            971,
+            489
+          ],
+          "outputSize": [
+            42,
+            20
+          ],
+          "outputOrigin": [
+            54,
+            62
+          ],
+          "scale": 0.1640625,
+          "group": null
+        }
+      ]
+    },
+    {
+      "id": "weapon-laser",
+      "kind": "weapon",
+      "file": "weapon-laser.png",
+      "source": "weapon-laser.ora",
+      "frameSize": [
+        128,
+        128
+      ],
+      "paletteRoles": [
+        "transparent",
+        "fixed",
+        "fixed",
+        "fixed",
+        "fixed",
+        "fixed",
+        "fixed",
+        "fixed",
+        "fixed",
+        "fixed",
+        "fixed",
+        "primary-light",
+        "primary-mid",
+        "primary-dark",
+        "secondary-light",
+        "secondary-mid",
+        "secondary-dark",
+        "fixed",
+        "fixed",
+        "fixed",
+        "fixed",
+        "fixed",
+        "fixed",
+        "fixed",
+        "fixed",
+        "fixed",
+        "fixed"
+      ],
+      "anchors": {
+        "weaponPivot": [
+          64,
+          72
+        ],
+        "muzzle": [
+          96,
+          72
+        ]
+      },
+      "clips": {
+        "idle": {
+          "frames": [
+            0
+          ],
+          "durationsMs": [
+            1000
+          ],
+          "loop": true
+        },
+        "fire": {
+          "frames": [
+            0
+          ],
+          "durationsMs": [
+            180
+          ],
+          "loop": false
+        },
+        "wreck": {
+          "frames": [
+            0
+          ],
+          "durationsMs": [
+            1000
+          ],
+          "loop": true
+        }
+      },
+      "exportMetrics": [
+        {
+          "sourceSheet": "modules",
+          "sourceFrame": 8,
+          "sourceSize": [
+            238,
+            97
+          ],
+          "sourceOrigin": [
+            45,
+            758
+          ],
+          "outputSize": [
+            42,
+            17
+          ],
+          "outputOrigin": [
+            54,
+            63
+          ],
+          "scale": 0.17647058823529413,
+          "group": null
+        }
+      ]
+    },
+    {
+      "id": "weapon-digger",
+      "kind": "weapon",
+      "file": "weapon-digger.png",
+      "source": "weapon-digger.ora",
+      "frameSize": [
+        128,
+        128
+      ],
+      "paletteRoles": [
+        "transparent",
+        "fixed",
+        "fixed",
+        "fixed",
+        "fixed",
+        "fixed",
+        "fixed",
+        "fixed",
+        "fixed",
+        "fixed",
+        "fixed",
+        "primary-light",
+        "primary-mid",
+        "primary-dark",
+        "secondary-light",
+        "secondary-mid",
+        "secondary-dark",
+        "fixed",
+        "fixed",
+        "fixed",
+        "fixed",
+        "fixed",
+        "fixed",
+        "fixed",
+        "fixed",
+        "fixed",
+        "fixed"
+      ],
+      "anchors": {
+        "weaponPivot": [
+          64,
+          72
+        ],
+        "muzzle": [
+          96,
+          72
+        ]
+      },
+      "clips": {
+        "idle": {
+          "frames": [
+            0
+          ],
+          "durationsMs": [
+            1000
+          ],
+          "loop": true
+        },
+        "fire": {
+          "frames": [
+            0
+          ],
+          "durationsMs": [
+            180
+          ],
+          "loop": false
+        },
+        "wreck": {
+          "frames": [
+            0
+          ],
+          "durationsMs": [
+            1000
+          ],
+          "loop": true
+        }
+      },
+      "exportMetrics": [
+        {
+          "sourceSheet": "modules",
+          "sourceFrame": 9,
+          "sourceSize": [
+            257,
+            144
+          ],
+          "sourceOrigin": [
+            342,
+            735
+          ],
+          "outputSize": [
+            42,
+            24
+          ],
+          "outputOrigin": [
+            54,
+            60
+          ],
+          "scale": 0.16342412451361868,
+          "group": null
+        }
+      ]
+    },
+    {
+      "id": "weapon-floater",
+      "kind": "weapon",
+      "file": "weapon-floater.png",
+      "source": "weapon-floater.ora",
+      "frameSize": [
+        128,
+        128
+      ],
+      "paletteRoles": [
+        "transparent",
+        "fixed",
+        "fixed",
+        "fixed",
+        "fixed",
+        "fixed",
+        "fixed",
+        "fixed",
+        "fixed",
+        "fixed",
+        "fixed",
+        "primary-light",
+        "primary-mid",
+        "primary-dark",
+        "secondary-light",
+        "secondary-mid",
+        "secondary-dark",
+        "fixed",
+        "fixed",
+        "fixed",
+        "fixed",
+        "fixed",
+        "fixed",
+        "fixed",
+        "fixed",
+        "fixed",
+        "fixed"
+      ],
+      "anchors": {
+        "weaponPivot": [
+          64,
+          72
+        ],
+        "muzzle": [
+          96,
+          72
+        ]
+      },
+      "clips": {
+        "idle": {
+          "frames": [
+            0
+          ],
+          "durationsMs": [
+            1000
+          ],
+          "loop": true
+        },
+        "fire": {
+          "frames": [
+            0
+          ],
+          "durationsMs": [
+            180
+          ],
+          "loop": false
+        },
+        "wreck": {
+          "frames": [
+            0
+          ],
+          "durationsMs": [
+            1000
+          ],
+          "loop": true
+        }
+      },
+      "exportMetrics": [
+        {
+          "sourceSheet": "modules",
+          "sourceFrame": 10,
+          "sourceSize": [
+            263,
+            132
+          ],
+          "sourceOrigin": [
+            653,
+            741
+          ],
+          "outputSize": [
+            42,
+            21
+          ],
+          "outputOrigin": [
+            54,
+            61
+          ],
+          "scale": 0.1596958174904943,
+          "group": null
+        }
+      ]
+    },
+    {
+      "id": "weapon-stinger",
+      "kind": "weapon",
+      "file": "weapon-stinger.png",
+      "source": "weapon-stinger.ora",
+      "frameSize": [
+        128,
+        128
+      ],
+      "paletteRoles": [
+        "transparent",
+        "fixed",
+        "fixed",
+        "fixed",
+        "fixed",
+        "fixed",
+        "fixed",
+        "fixed",
+        "fixed",
+        "fixed",
+        "fixed",
+        "primary-light",
+        "primary-mid",
+        "primary-dark",
+        "secondary-light",
+        "secondary-mid",
+        "secondary-dark",
+        "fixed",
+        "fixed",
+        "fixed",
+        "fixed",
+        "fixed",
+        "fixed",
+        "fixed",
+        "fixed",
+        "fixed",
+        "fixed"
+      ],
+      "anchors": {
+        "weaponPivot": [
+          64,
+          72
+        ],
+        "muzzle": [
+          96,
+          72
+        ]
+      },
+      "clips": {
+        "idle": {
+          "frames": [
+            0
+          ],
+          "durationsMs": [
+            1000
+          ],
+          "loop": true
+        },
+        "fire": {
+          "frames": [
+            0
+          ],
+          "durationsMs": [
+            180
+          ],
+          "loop": false
+        },
+        "wreck": {
+          "frames": [
+            0
+          ],
+          "durationsMs": [
+            1000
+          ],
+          "loop": true
+        }
+      },
+      "exportMetrics": [
+        {
+          "sourceSheet": "modules",
+          "sourceFrame": 11,
+          "sourceSize": [
+            250,
+            88
+          ],
+          "sourceOrigin": [
+            971,
+            767
+          ],
+          "outputSize": [
+            42,
+            15
+          ],
+          "outputOrigin": [
+            54,
+            64
+          ],
+          "scale": 0.168,
+          "group": null
+        }
+      ]
+    },
+    {
+      "id": "glasses-blue",
+      "kind": "accessory",
+      "file": "glasses-blue.png",
+      "source": "glasses-blue.ora",
+      "frameSize": [
+        128,
+        128
+      ],
+      "paletteRoles": [
+        "transparent",
+        "fixed",
+        "fixed",
+        "fixed",
+        "fixed",
+        "fixed",
+        "fixed",
+        "fixed",
+        "fixed",
+        "fixed",
+        "fixed",
+        "fixed",
+        "fixed",
+        "fixed",
+        "fixed",
+        "fixed",
+        "fixed",
+        "accessory",
+        "accessory",
+        "accessory",
+        "accessory",
+        "accessory",
+        "accessory",
+        "accessory",
+        "accessory",
+        "accessory",
+        "accessory"
+      ],
+      "anchors": {
+        "attach": [
+          46,
+          39
+        ]
+      },
+      "clips": {
+        "idle": {
+          "frames": [
+            0
+          ],
+          "durationsMs": [
+            1000
+          ],
+          "loop": true
+        }
+      },
+      "exportMetrics": [
+        {
+          "sourceSheet": "modules",
+          "sourceFrame": 12,
+          "sourceSize": [
+            209,
+            79
+          ],
+          "sourceOrigin": [
+            53,
+            1025
+          ],
+          "outputSize": [
+            14,
+            5
+          ],
+          "outputOrigin": [
+            39,
+            34
+          ],
+          "scale": 0.06698564593301436,
+          "group": null
+        }
+      ]
+    },
+    {
+      "id": "scarf-orange",
+      "kind": "accessory",
+      "file": "scarf-orange.png",
+      "source": "scarf-orange.ora",
+      "frameSize": [
+        128,
+        128
+      ],
+      "paletteRoles": [
+        "transparent",
+        "fixed",
+        "fixed",
+        "fixed",
+        "fixed",
+        "fixed",
+        "fixed",
+        "fixed",
+        "fixed",
+        "fixed",
+        "fixed",
+        "fixed",
+        "fixed",
+        "fixed",
+        "fixed",
+        "fixed",
+        "fixed",
+        "accessory",
+        "accessory",
+        "accessory",
+        "accessory",
+        "accessory",
+        "accessory",
+        "accessory",
+        "accessory",
+        "accessory",
+        "accessory"
+      ],
+      "anchors": {
+        "attach": [
+          47,
+          53
+        ]
+      },
+      "clips": {
+        "idle": {
+          "frames": [
+            0
+          ],
+          "durationsMs": [
+            1000
+          ],
+          "loop": true
+        }
+      },
+      "exportMetrics": [
+        {
+          "sourceSheet": "modules",
+          "sourceFrame": 13,
+          "sourceSize": [
+            227,
+            146
+          ],
+          "sourceOrigin": [
+            349,
+            1009
+          ],
+          "outputSize": [
+            19,
+            12
+          ],
+          "outputOrigin": [
+            36,
+            49
+          ],
+          "scale": 0.0821917808219178,
+          "group": null
+        }
+      ]
+    },
+    {
+      "id": "effect-explosion",
+      "kind": "effect",
+      "file": "effect-explosion.png",
+      "source": "effect-explosion.ora",
+      "frameSize": [
+        128,
+        128
+      ],
+      "paletteRoles": [
+        "transparent",
+        "fixed",
+        "fixed",
+        "fixed",
+        "fixed",
+        "fixed",
+        "fixed",
+        "fixed",
+        "fixed",
+        "fixed",
+        "fixed",
+        "primary-light",
+        "primary-mid",
+        "primary-dark",
+        "secondary-light",
+        "secondary-mid",
+        "secondary-dark",
+        "fixed",
+        "fixed",
+        "fixed",
+        "fixed",
+        "fixed",
+        "fixed",
+        "fixed",
+        "fixed",
+        "fixed",
+        "fixed"
+      ],
+      "anchors": {
+        "origin": [
+          64,
+          64
+        ]
+      },
+      "clips": {
+        "play": {
+          "frames": [
+            0,
+            1,
+            2,
+            3
+          ],
+          "durationsMs": [
+            70,
+            120,
+            300,
+            100
+          ],
+          "loop": false
+        }
+      },
+      "exportMetrics": [
+        {
+          "sourceSheet": "effects",
+          "sourceFrame": 0,
+          "sourceSize": [
+            140,
+            135
+          ],
+          "sourceOrigin": [
+            97,
+            171
+          ],
+          "outputSize": [
+            26,
+            26
+          ],
+          "outputOrigin": [
+            51,
+            51
+          ],
+          "scale": 0.1891891891891892,
+          "group": "effects-0-1-2-3"
+        },
+        {
+          "sourceSheet": "effects",
+          "sourceFrame": 1,
+          "sourceSize": [
+            235,
+            225
+          ],
+          "sourceOrigin": [
+            343,
+            121
+          ],
+          "outputSize": [
+            44,
+            43
+          ],
+          "outputOrigin": [
+            42,
+            42
+          ],
+          "scale": 0.1891891891891892,
+          "group": "effects-0-1-2-3"
+        },
+        {
+          "sourceSheet": "effects",
+          "sourceFrame": 2,
+          "sourceSize": [
+            296,
+            294
+          ],
+          "sourceOrigin": [
+            627,
+            75
+          ],
+          "outputSize": [
+            56,
+            56
+          ],
+          "outputOrigin": [
+            36,
+            36
+          ],
+          "scale": 0.1891891891891892,
+          "group": "effects-0-1-2-3"
+        },
+        {
+          "sourceSheet": "effects",
+          "sourceFrame": 3,
+          "sourceSize": [
+            245,
+            269
+          ],
+          "sourceOrigin": [
+            960,
+            87
+          ],
+          "outputSize": [
+            46,
+            51
+          ],
+          "outputOrigin": [
+            41,
+            38
+          ],
+          "scale": 0.1891891891891892,
+          "group": "effects-0-1-2-3"
+        }
+      ]
+    },
+    {
+      "id": "effect-smoke",
+      "kind": "effect",
+      "file": "effect-smoke.png",
+      "source": "effect-smoke.ora",
+      "frameSize": [
+        128,
+        128
+      ],
+      "paletteRoles": [
+        "transparent",
+        "fixed",
+        "fixed",
+        "fixed",
+        "fixed",
+        "fixed",
+        "fixed",
+        "fixed",
+        "fixed",
+        "fixed",
+        "fixed",
+        "primary-light",
+        "primary-mid",
+        "primary-dark",
+        "secondary-light",
+        "secondary-mid",
+        "secondary-dark",
+        "fixed",
+        "fixed",
+        "fixed",
+        "fixed",
+        "fixed",
+        "fixed",
+        "fixed",
+        "fixed",
+        "fixed",
+        "fixed"
+      ],
+      "anchors": {
+        "origin": [
+          64,
+          64
+        ]
+      },
+      "clips": {
+        "play": {
+          "frames": [
+            0,
+            1,
+            2,
+            3
+          ],
+          "durationsMs": [
+            150,
+            200,
+            250,
+            300
+          ],
+          "loop": true
+        }
+      },
+      "exportMetrics": [
+        {
+          "sourceSheet": "effects",
+          "sourceFrame": 4,
+          "sourceSize": [
+            118,
+            101
+          ],
+          "sourceOrigin": [
+            114,
+            514
+          ],
+          "outputSize": [
+            12,
+            10
+          ],
+          "outputOrigin": [
+            58,
+            49
+          ],
+          "scale": 0.10294117647058823,
+          "group": "effects-4-5-6-7"
+        },
+        {
+          "sourceSheet": "effects",
+          "sourceFrame": 5,
+          "sourceSize": [
+            193,
+            176
+          ],
+          "sourceOrigin": [
+            360,
+            476
+          ],
+          "outputSize": [
+            20,
+            18
+          ],
+          "outputOrigin": [
+            54,
+            45
+          ],
+          "scale": 0.10294117647058823,
+          "group": "effects-4-5-6-7"
+        },
+        {
+          "sourceSheet": "effects",
+          "sourceFrame": 6,
+          "sourceSize": [
+            272,
+            261
+          ],
+          "sourceOrigin": [
+            637,
+            421
+          ],
+          "outputSize": [
+            28,
+            27
+          ],
+          "outputOrigin": [
+            50,
+            40
+          ],
+          "scale": 0.10294117647058823,
+          "group": "effects-4-5-6-7"
+        },
+        {
+          "sourceSheet": "effects",
+          "sourceFrame": 7,
+          "sourceSize": [
+            231,
+            225
+          ],
+          "sourceOrigin": [
+            974,
+            452
+          ],
+          "outputSize": [
+            24,
+            23
+          ],
+          "outputOrigin": [
+            52,
+            42
+          ],
+          "scale": 0.10294117647058823,
+          "group": "effects-4-5-6-7"
+        }
+      ]
+    },
+    {
+      "id": "effect-muzzle",
+      "kind": "effect",
+      "file": "effect-muzzle.png",
+      "source": "effect-muzzle.ora",
+      "frameSize": [
+        128,
+        128
+      ],
+      "paletteRoles": [
+        "transparent",
+        "fixed",
+        "fixed",
+        "fixed",
+        "fixed",
+        "fixed",
+        "fixed",
+        "fixed",
+        "fixed",
+        "fixed",
+        "fixed",
+        "primary-light",
+        "primary-mid",
+        "primary-dark",
+        "secondary-light",
+        "secondary-mid",
+        "secondary-dark",
+        "fixed",
+        "fixed",
+        "fixed",
+        "fixed",
+        "fixed",
+        "fixed",
+        "fixed",
+        "fixed",
+        "fixed",
+        "fixed"
+      ],
+      "anchors": {
+        "origin": [
+          64,
+          64
+        ]
+      },
+      "clips": {
+        "play": {
+          "frames": [
+            0,
+            1,
+            2
+          ],
+          "durationsMs": [
+            30,
+            30,
+            30
+          ],
+          "loop": false
+        }
+      },
+      "exportMetrics": [
+        {
+          "sourceSheet": "effects",
+          "sourceFrame": 8,
+          "sourceSize": [
+            180,
+            138
+          ],
+          "sourceOrigin": [
+            72,
+            792
+          ],
+          "outputSize": [
+            17,
+            13
+          ],
+          "outputOrigin": [
+            66,
+            57
+          ],
+          "scale": 0.09328358208955224,
+          "group": "effects-8-9-10"
+        },
+        {
+          "sourceSheet": "effects",
+          "sourceFrame": 9,
+          "sourceSize": [
+            268,
+            153
+          ],
+          "sourceOrigin": [
+            330,
+            785
+          ],
+          "outputSize": [
+            25,
+            14
+          ],
+          "outputOrigin": [
+            62,
+            57
+          ],
+          "scale": 0.09328358208955224,
+          "group": "effects-8-9-10"
+        },
+        {
+          "sourceSheet": "effects",
+          "sourceFrame": 10,
+          "sourceSize": [
+            198,
+            128
+          ],
+          "sourceOrigin": [
+            685,
+            800
+          ],
+          "outputSize": [
+            18,
+            12
+          ],
+          "outputOrigin": [
+            65,
+            58
+          ],
+          "scale": 0.09328358208955224,
+          "group": "effects-8-9-10"
+        }
+      ]
+    },
+    {
+      "id": "effect-spark",
+      "kind": "effect",
+      "file": "effect-spark.png",
+      "source": "effect-spark.ora",
+      "frameSize": [
+        128,
+        128
+      ],
+      "paletteRoles": [
+        "transparent",
+        "fixed",
+        "fixed",
+        "fixed",
+        "fixed",
+        "fixed",
+        "fixed",
+        "fixed",
+        "fixed",
+        "fixed",
+        "fixed",
+        "primary-light",
+        "primary-mid",
+        "primary-dark",
+        "secondary-light",
+        "secondary-mid",
+        "secondary-dark",
+        "fixed",
+        "fixed",
+        "fixed",
+        "fixed",
+        "fixed",
+        "fixed",
+        "fixed",
+        "fixed",
+        "fixed",
+        "fixed"
+      ],
+      "anchors": {
+        "origin": [
+          64,
+          64
+        ]
+      },
+      "clips": {
+        "play": {
+          "frames": [
+            0
+          ],
+          "durationsMs": [
+            120
+          ],
+          "loop": false
+        }
+      },
+      "exportMetrics": [
+        {
+          "sourceSheet": "effects",
+          "sourceFrame": 11,
+          "sourceSize": [
+            177,
+            193
+          ],
+          "sourceOrigin": [
+            988,
+            763
+          ],
+          "outputSize": [
+            18,
+            20
+          ],
+          "outputOrigin": [
+            55,
+            54
+          ],
+          "scale": 0.10362694300518134,
+          "group": "effects-11"
+        }
+      ]
+    },
+    {
+      "id": "projectile-cannon",
+      "kind": "projectile",
+      "file": "projectile-cannon.png",
+      "source": "projectile-cannon.ora",
+      "frameSize": [
+        128,
+        128
+      ],
+      "paletteRoles": [
+        "transparent",
+        "fixed",
+        "fixed",
+        "fixed",
+        "fixed",
+        "fixed",
+        "fixed",
+        "fixed",
+        "fixed",
+        "fixed",
+        "fixed",
+        "primary-light",
+        "primary-mid",
+        "primary-dark",
+        "secondary-light",
+        "secondary-mid",
+        "secondary-dark",
+        "fixed",
+        "fixed",
+        "fixed",
+        "fixed",
+        "fixed",
+        "fixed",
+        "fixed",
+        "fixed",
+        "fixed",
+        "fixed"
+      ],
+      "anchors": {
+        "origin": [
+          64,
+          64
+        ]
+      },
+      "clips": {
+        "fly": {
+          "frames": [
+            0
+          ],
+          "durationsMs": [
+            1000
+          ],
+          "loop": true
+        }
+      },
+      "exportMetrics": [
+        {
+          "sourceSheet": "effects",
+          "sourceFrame": 12,
+          "sourceSize": [
+            118,
+            67
+          ],
+          "sourceOrigin": [
+            109,
+            1078
+          ],
+          "outputSize": [
+            7,
+            4
+          ],
+          "outputOrigin": [
+            65,
+            62
+          ],
+          "scale": 0.05970149253731343,
+          "group": null
+        }
+      ]
+    },
+    {
+      "id": "projectile-triple",
+      "kind": "projectile",
+      "file": "projectile-triple.png",
+      "source": "projectile-triple.ora",
+      "frameSize": [
+        128,
+        128
+      ],
+      "paletteRoles": [
+        "transparent",
+        "fixed",
+        "fixed",
+        "fixed",
+        "fixed",
+        "fixed",
+        "fixed",
+        "fixed",
+        "fixed",
+        "fixed",
+        "fixed",
+        "primary-light",
+        "primary-mid",
+        "primary-dark",
+        "secondary-light",
+        "secondary-mid",
+        "secondary-dark",
+        "fixed",
+        "fixed",
+        "fixed",
+        "fixed",
+        "fixed",
+        "fixed",
+        "fixed",
+        "fixed",
+        "fixed",
+        "fixed"
+      ],
+      "anchors": {
+        "origin": [
+          64,
+          64
+        ]
+      },
+      "clips": {
+        "fly": {
+          "frames": [
+            0
+          ],
+          "durationsMs": [
+            1000
+          ],
+          "loop": true
+        }
+      },
+      "exportMetrics": [
+        {
+          "sourceSheet": "effects",
+          "sourceFrame": 12,
+          "sourceSize": [
+            118,
+            67
+          ],
+          "sourceOrigin": [
+            109,
+            1078
+          ],
+          "outputSize": [
+            7,
+            4
+          ],
+          "outputOrigin": [
+            64,
+            62
+          ],
+          "scale": 0.059322033898305086,
+          "group": null
+        }
+      ]
+    },
+    {
+      "id": "projectile-multiple",
+      "kind": "projectile",
+      "file": "projectile-multiple.png",
+      "source": "projectile-multiple.ora",
+      "frameSize": [
+        128,
+        128
+      ],
+      "paletteRoles": [
+        "transparent",
+        "fixed",
+        "fixed",
+        "fixed",
+        "fixed",
+        "fixed",
+        "fixed",
+        "fixed",
+        "fixed",
+        "fixed",
+        "fixed",
+        "primary-light",
+        "primary-mid",
+        "primary-dark",
+        "secondary-light",
+        "secondary-mid",
+        "secondary-dark",
+        "fixed",
+        "fixed",
+        "fixed",
+        "fixed",
+        "fixed",
+        "fixed",
+        "fixed",
+        "fixed",
+        "fixed",
+        "fixed"
+      ],
+      "anchors": {
+        "origin": [
+          64,
+          64
+        ]
+      },
+      "clips": {
+        "fly": {
+          "frames": [
+            0
+          ],
+          "durationsMs": [
+            1000
+          ],
+          "loop": true
+        }
+      },
+      "exportMetrics": [
+        {
+          "sourceSheet": "effects",
+          "sourceFrame": 12,
+          "sourceSize": [
+            118,
+            67
+          ],
+          "sourceOrigin": [
+            109,
+            1078
+          ],
+          "outputSize": [
+            5,
+            3
+          ],
+          "outputOrigin": [
+            64,
+            63
+          ],
+          "scale": 0.0423728813559322,
+          "group": null
+        }
+      ]
+    },
+    {
+      "id": "projectile-drill",
+      "kind": "projectile",
+      "file": "projectile-drill.png",
+      "source": "projectile-drill.ora",
+      "frameSize": [
+        128,
+        128
+      ],
+      "paletteRoles": [
+        "transparent",
+        "fixed",
+        "fixed",
+        "fixed",
+        "fixed",
+        "fixed",
+        "fixed",
+        "fixed",
+        "fixed",
+        "fixed",
+        "fixed",
+        "primary-light",
+        "primary-mid",
+        "primary-dark",
+        "secondary-light",
+        "secondary-mid",
+        "secondary-dark",
+        "fixed",
+        "fixed",
+        "fixed",
+        "fixed",
+        "fixed",
+        "fixed",
+        "fixed",
+        "fixed",
+        "fixed",
+        "fixed"
+      ],
+      "anchors": {
+        "origin": [
+          64,
+          64
+        ]
+      },
+      "clips": {
+        "fly": {
+          "frames": [
+            0
+          ],
+          "durationsMs": [
+            1000
+          ],
+          "loop": true
+        }
+      },
+      "exportMetrics": [
+        {
+          "sourceSheet": "effects",
+          "sourceFrame": 13,
+          "sourceSize": [
+            186,
+            84
+          ],
+          "sourceOrigin": [
+            369,
+            1071
+          ],
+          "outputSize": [
+            9,
+            4
+          ],
+          "outputOrigin": [
+            65,
+            62
+          ],
+          "scale": 0.047619047619047616,
+          "group": null
+        }
+      ]
+    },
+    {
+      "id": "projectile-laser",
+      "kind": "projectile",
+      "file": "projectile-laser.png",
+      "source": "projectile-laser.ora",
+      "frameSize": [
+        128,
+        128
+      ],
+      "paletteRoles": [
+        "transparent",
+        "fixed",
+        "fixed",
+        "fixed",
+        "fixed",
+        "fixed",
+        "fixed",
+        "fixed",
+        "fixed",
+        "fixed",
+        "fixed",
+        "primary-light",
+        "primary-mid",
+        "primary-dark",
+        "secondary-light",
+        "secondary-mid",
+        "secondary-dark",
+        "fixed",
+        "fixed",
+        "fixed",
+        "fixed",
+        "fixed",
+        "fixed",
+        "fixed",
+        "fixed",
+        "fixed",
+        "fixed"
+      ],
+      "anchors": {
+        "origin": [
+          64,
+          64
+        ]
+      },
+      "clips": {
+        "fly": {
+          "frames": [
+            0
+          ],
+          "durationsMs": [
+            1000
+          ],
+          "loop": true
+        }
+      },
+      "exportMetrics": [
+        {
+          "sourceSheet": "effects",
+          "sourceFrame": 14,
+          "sourceSize": [
+            191,
+            50
+          ],
+          "sourceOrigin": [
+            684,
+            1087
+          ],
+          "outputSize": [
+            15,
+            4
+          ],
+          "outputOrigin": [
+            64,
+            62
+          ],
+          "scale": 0.08,
+          "group": null
+        }
+      ]
+    },
+    {
+      "id": "projectile-digger",
+      "kind": "projectile",
+      "file": "projectile-digger.png",
+      "source": "projectile-digger.ora",
+      "frameSize": [
+        128,
+        128
+      ],
+      "paletteRoles": [
+        "transparent",
+        "fixed",
+        "fixed",
+        "fixed",
+        "fixed",
+        "fixed",
+        "fixed",
+        "fixed",
+        "fixed",
+        "fixed",
+        "fixed",
+        "primary-light",
+        "primary-mid",
+        "primary-dark",
+        "secondary-light",
+        "secondary-mid",
+        "secondary-dark",
+        "fixed",
+        "fixed",
+        "fixed",
+        "fixed",
+        "fixed",
+        "fixed",
+        "fixed",
+        "fixed",
+        "fixed",
+        "fixed"
+      ],
+      "anchors": {
+        "origin": [
+          64,
+          64
+        ]
+      },
+      "clips": {
+        "fly": {
+          "frames": [
+            0
+          ],
+          "durationsMs": [
+            1000
+          ],
+          "loop": true
+        }
+      },
+      "exportMetrics": [
+        {
+          "sourceSheet": "effects",
+          "sourceFrame": 12,
+          "sourceSize": [
+            118,
+            67
+          ],
+          "sourceOrigin": [
+            109,
+            1078
+          ],
+          "outputSize": [
+            7,
+            4
+          ],
+          "outputOrigin": [
+            66,
+            62
+          ],
+          "scale": 0.05970149253731343,
+          "group": null
+        }
+      ]
+    },
+    {
+      "id": "projectile-floater",
+      "kind": "projectile",
+      "file": "projectile-floater.png",
+      "source": "projectile-floater.ora",
+      "frameSize": [
+        128,
+        128
+      ],
+      "paletteRoles": [
+        "transparent",
+        "fixed",
+        "fixed",
+        "fixed",
+        "fixed",
+        "fixed",
+        "fixed",
+        "fixed",
+        "fixed",
+        "fixed",
+        "fixed",
+        "primary-light",
+        "primary-mid",
+        "primary-dark",
+        "secondary-light",
+        "secondary-mid",
+        "secondary-dark",
+        "fixed",
+        "fixed",
+        "fixed",
+        "fixed",
+        "fixed",
+        "fixed",
+        "fixed",
+        "fixed",
+        "fixed",
+        "fixed"
+      ],
+      "anchors": {
+        "origin": [
+          64,
+          64
+        ]
+      },
+      "clips": {
+        "fly": {
+          "frames": [
+            0
+          ],
+          "durationsMs": [
+            1000
+          ],
+          "loop": true
+        }
+      },
+      "exportMetrics": [
+        {
+          "sourceSheet": "effects",
+          "sourceFrame": 12,
+          "sourceSize": [
+            118,
+            67
+          ],
+          "sourceOrigin": [
+            109,
+            1078
+          ],
+          "outputSize": [
+            7,
+            4
+          ],
+          "outputOrigin": [
+            65,
+            62
+          ],
+          "scale": 0.05970149253731343,
+          "group": null
+        }
+      ]
+    },
+    {
+      "id": "projectile-stinger",
+      "kind": "projectile",
+      "file": "projectile-stinger.png",
+      "source": "projectile-stinger.ora",
+      "frameSize": [
+        128,
+        128
+      ],
+      "paletteRoles": [
+        "transparent",
+        "fixed",
+        "fixed",
+        "fixed",
+        "fixed",
+        "fixed",
+        "fixed",
+        "fixed",
+        "fixed",
+        "fixed",
+        "fixed",
+        "primary-light",
+        "primary-mid",
+        "primary-dark",
+        "secondary-light",
+        "secondary-mid",
+        "secondary-dark",
+        "fixed",
+        "fixed",
+        "fixed",
+        "fixed",
+        "fixed",
+        "fixed",
+        "fixed",
+        "fixed",
+        "fixed",
+        "fixed"
+      ],
+      "anchors": {
+        "origin": [
+          64,
+          64
+        ]
+      },
+      "clips": {
+        "fly": {
+          "frames": [
+            0
+          ],
+          "durationsMs": [
+            1000
+          ],
+          "loop": true
+        }
+      },
+      "exportMetrics": [
+        {
+          "sourceSheet": "effects",
+          "sourceFrame": 15,
+          "sourceSize": [
+            146,
+            32
+          ],
+          "sourceOrigin": [
+            1015,
+            1099
+          ],
+          "outputSize": [
+            13,
+            3
+          ],
+          "outputOrigin": [
+            64,
+            63
+          ],
+          "scale": 0.08904109589041095,
+          "group": null
+        }
+      ]
+    }
+  ]
+}

@@ -1,0 +1,5714 @@
+{
+  "version": 1,
+  "id": "baseline-v2",
+  "productionMethod": "imagegen",
+  "metricsStatus": "draft",
+  "artPixelsPerCell": 12,
+  "generationModel": "gpt-image-2.5-sunburst",
+  "qaProfile": "modular-pilot-v2",
+  "assets": [
+    {
+      "id": "pilot-frog",
+      "kind": "pilot",
+      "file": "pilot-frog.png",
+      "source": "pilot-frog.ora",
+      "frameSize": [
+        192,
+        160
+      ],
+      "paletteRoles": [
+        "transparent",
+        "fixed",
+        "fixed",
+        "fixed",
+        "fixed",
+        "fixed",
+        "fixed",
+        "fixed",
+        "fixed",
+        "fixed",
+        "fixed",
+        "fixed",
+        "fixed",
+        "fixed",
+        "fixed",
+        "fixed",
+        "fixed",
+        "fixed",
+        "fixed",
+        "fixed",
+        "fixed",
+        "fixed",
+        "fixed",
+        "fixed",
+        "fixed",
+        "fixed",
+        "fixed",
+        "fixed",
+        "fixed",
+        "fixed",
+        "fixed",
+        "fixed"
+      ],
+      "paletteTones": [
+        0,
+        0,
+        0,
+        0,
+        0,
+        0.35,
+        0.65,
+        0.85,
+        0.35,
+        0,
+        -0.3,
+        -0.55,
+        0.55,
+        -0.15,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0.35,
+        0,
+        -0.3,
+        -0.55,
+        0.2,
+        -0.12,
+        0.65,
+        -0.25,
+        0,
+        0
+      ],
+      "anchors": {
+        "pilotSeat": [
+          55,
+          97
+        ],
+        "headAnchor": [
+          62,
+          66
+        ],
+        "neckAnchor": [
+          62,
+          81
+        ]
+      },
+      "clips": {
+        "idle": {
+          "frames": [
+            0,
+            1,
+            2,
+            0
+          ],
+          "durationsMs": [
+            500,
+            500,
+            100,
+            100
+          ],
+          "loop": true
+        },
+        "move": {
+          "frames": [
+            3,
+            4
+          ],
+          "durationsMs": [
+            100,
+            100
+          ],
+          "loop": true
+        },
+        "fire": {
+          "frames": [
+            0
+          ],
+          "durationsMs": [
+            180
+          ],
+          "loop": false
+        },
+        "hit": {
+          "frames": [
+            7,
+            8,
+            0
+          ],
+          "durationsMs": [
+            100,
+            100,
+            200
+          ],
+          "loop": false
+        },
+        "low-hp": {
+          "frames": [
+            9,
+            10,
+            9
+          ],
+          "durationsMs": [
+            600,
+            300,
+            700
+          ],
+          "loop": true
+        },
+        "fall": {
+          "frames": [
+            11
+          ],
+          "durationsMs": [
+            1000
+          ],
+          "loop": true
+        },
+        "land": {
+          "frames": [
+            12,
+            0
+          ],
+          "durationsMs": [
+            150,
+            30
+          ],
+          "loop": false
+        },
+        "destroy": {
+          "frames": [
+            7,
+            13,
+            14
+          ],
+          "durationsMs": [
+            120,
+            330,
+            150
+          ],
+          "loop": false
+        },
+        "wreck": {
+          "frames": [
+            15
+          ],
+          "durationsMs": [
+            1000
+          ],
+          "loop": true
+        }
+      },
+      "exportMetrics": [
+        {
+          "sourceSheet": "pilot",
+          "sourceFrame": 0,
+          "sourceSize": [
+            156,
+            188
+          ],
+          "sourceOrigin": [
+            61,
+            49
+          ],
+          "sourceRegion": [
+            0,
+            0,
+            256,
+            256
+          ],
+          "sourceHash": "1301073e18e604a04f08ad4cf83270f4e6efb1f4ccafafe1ea41bb03c35e8f3f",
+          "outputSize": [
+            30,
+            36
+          ],
+          "outputOrigin": [
+            46,
+            65
+          ],
+          "scale": 0.19,
+          "group": "pilot"
+        },
+        {
+          "sourceSheet": "pilot",
+          "sourceFrame": 1,
+          "sourceSize": [
+            156,
+            188
+          ],
+          "sourceOrigin": [
+            317,
+            49
+          ],
+          "sourceRegion": [
+            256,
+            0,
+            256,
+            256
+          ],
+          "sourceHash": "1301073e18e604a04f08ad4cf83270f4e6efb1f4ccafafe1ea41bb03c35e8f3f",
+          "outputSize": [
+            30,
+            36
+          ],
+          "outputOrigin": [
+            46,
+            65
+          ],
+          "scale": 0.19,
+          "group": "pilot"
+        },
+        {
+          "sourceSheet": "pilot",
+          "sourceFrame": 2,
+          "sourceSize": [
+            156,
+            188
+          ],
+          "sourceOrigin": [
+            573,
+            49
+          ],
+          "sourceRegion": [
+            512,
+            0,
+            256,
+            256
+          ],
+          "sourceHash": "1301073e18e604a04f08ad4cf83270f4e6efb1f4ccafafe1ea41bb03c35e8f3f",
+          "outputSize": [
+            30,
+            36
+          ],
+          "outputOrigin": [
+            46,
+            65
+          ],
+          "scale": 0.19,
+          "group": "pilot"
+        },
+        {
+          "sourceSheet": "pilot",
+          "sourceFrame": 3,
+          "sourceSize": [
+            156,
+            175
+          ],
+          "sourceOrigin": [
+            829,
+            62
+          ],
+          "sourceRegion": [
+            768,
+            0,
+            256,
+            256
+          ],
+          "sourceHash": "1301073e18e604a04f08ad4cf83270f4e6efb1f4ccafafe1ea41bb03c35e8f3f",
+          "outputSize": [
+            30,
+            33
+          ],
+          "outputOrigin": [
+            46,
+            67
+          ],
+          "scale": 0.19,
+          "group": "pilot"
+        },
+        {
+          "sourceSheet": "pilot",
+          "sourceFrame": 4,
+          "sourceSize": [
+            156,
+            190
+          ],
+          "sourceOrigin": [
+            61,
+            303
+          ],
+          "sourceRegion": [
+            0,
+            256,
+            256,
+            256
+          ],
+          "sourceHash": "1301073e18e604a04f08ad4cf83270f4e6efb1f4ccafafe1ea41bb03c35e8f3f",
+          "outputSize": [
+            30,
+            36
+          ],
+          "outputOrigin": [
+            46,
+            64
+          ],
+          "scale": 0.19,
+          "group": "pilot"
+        },
+        {
+          "sourceSheet": "pilot",
+          "sourceFrame": 5,
+          "sourceSize": [
+            156,
+            188
+          ],
+          "sourceOrigin": [
+            317,
+            305
+          ],
+          "sourceRegion": [
+            256,
+            256,
+            256,
+            256
+          ],
+          "sourceHash": "1301073e18e604a04f08ad4cf83270f4e6efb1f4ccafafe1ea41bb03c35e8f3f",
+          "outputSize": [
+            30,
+            36
+          ],
+          "outputOrigin": [
+            46,
+            65
+          ],
+          "scale": 0.19,
+          "group": "pilot"
+        },
+        {
+          "sourceSheet": "pilot",
+          "sourceFrame": 6,
+          "sourceSize": [
+            172,
+            190
+          ],
+          "sourceOrigin": [
+            557,
+            303
+          ],
+          "sourceRegion": [
+            512,
+            256,
+            256,
+            256
+          ],
+          "sourceHash": "1301073e18e604a04f08ad4cf83270f4e6efb1f4ccafafe1ea41bb03c35e8f3f",
+          "outputSize": [
+            33,
+            36
+          ],
+          "outputOrigin": [
+            43,
+            64
+          ],
+          "scale": 0.19,
+          "group": "pilot"
+        },
+        {
+          "sourceSheet": "pilot",
+          "sourceFrame": 7,
+          "sourceSize": [
+            156,
+            195
+          ],
+          "sourceOrigin": [
+            829,
+            298
+          ],
+          "sourceRegion": [
+            768,
+            256,
+            256,
+            256
+          ],
+          "sourceHash": "1301073e18e604a04f08ad4cf83270f4e6efb1f4ccafafe1ea41bb03c35e8f3f",
+          "outputSize": [
+            30,
+            37
+          ],
+          "outputOrigin": [
+            46,
+            63
+          ],
+          "scale": 0.19,
+          "group": "pilot"
+        },
+        {
+          "sourceSheet": "pilot",
+          "sourceFrame": 8,
+          "sourceSize": [
+            156,
+            187
+          ],
+          "sourceOrigin": [
+            61,
+            562
+          ],
+          "sourceRegion": [
+            0,
+            512,
+            256,
+            256
+          ],
+          "sourceHash": "1301073e18e604a04f08ad4cf83270f4e6efb1f4ccafafe1ea41bb03c35e8f3f",
+          "outputSize": [
+            30,
+            36
+          ],
+          "outputOrigin": [
+            46,
+            65
+          ],
+          "scale": 0.19,
+          "group": "pilot"
+        },
+        {
+          "sourceSheet": "pilot",
+          "sourceFrame": 9,
+          "sourceSize": [
+            156,
+            175
+          ],
+          "sourceOrigin": [
+            317,
+            574
+          ],
+          "sourceRegion": [
+            256,
+            512,
+            256,
+            256
+          ],
+          "sourceHash": "1301073e18e604a04f08ad4cf83270f4e6efb1f4ccafafe1ea41bb03c35e8f3f",
+          "outputSize": [
+            30,
+            33
+          ],
+          "outputOrigin": [
+            46,
+            67
+          ],
+          "scale": 0.19,
+          "group": "pilot"
+        },
+        {
+          "sourceSheet": "pilot",
+          "sourceFrame": 10,
+          "sourceSize": [
+            156,
+            180
+          ],
+          "sourceOrigin": [
+            573,
+            569
+          ],
+          "sourceRegion": [
+            512,
+            512,
+            256,
+            256
+          ],
+          "sourceHash": "1301073e18e604a04f08ad4cf83270f4e6efb1f4ccafafe1ea41bb03c35e8f3f",
+          "outputSize": [
+            30,
+            34
+          ],
+          "outputOrigin": [
+            46,
+            66
+          ],
+          "scale": 0.19,
+          "group": "pilot"
+        },
+        {
+          "sourceSheet": "pilot",
+          "sourceFrame": 11,
+          "sourceSize": [
+            161,
+            198
+          ],
+          "sourceOrigin": [
+            824,
+            551
+          ],
+          "sourceRegion": [
+            768,
+            512,
+            256,
+            256
+          ],
+          "sourceHash": "1301073e18e604a04f08ad4cf83270f4e6efb1f4ccafafe1ea41bb03c35e8f3f",
+          "outputSize": [
+            31,
+            38
+          ],
+          "outputOrigin": [
+            45,
+            63
+          ],
+          "scale": 0.19,
+          "group": "pilot"
+        },
+        {
+          "sourceSheet": "pilot",
+          "sourceFrame": 12,
+          "sourceSize": [
+            161,
+            147
+          ],
+          "sourceOrigin": [
+            64,
+            838
+          ],
+          "sourceRegion": [
+            0,
+            768,
+            256,
+            256
+          ],
+          "sourceHash": "1301073e18e604a04f08ad4cf83270f4e6efb1f4ccafafe1ea41bb03c35e8f3f",
+          "outputSize": [
+            31,
+            28
+          ],
+          "outputOrigin": [
+            47,
+            72
+          ],
+          "scale": 0.19,
+          "group": "pilot"
+        },
+        {
+          "sourceSheet": "pilot",
+          "sourceFrame": 13,
+          "sourceSize": [
+            155,
+            150
+          ],
+          "sourceOrigin": [
+            319,
+            834
+          ],
+          "sourceRegion": [
+            256,
+            768,
+            256,
+            256
+          ],
+          "sourceHash": "1301073e18e604a04f08ad4cf83270f4e6efb1f4ccafafe1ea41bb03c35e8f3f",
+          "outputSize": [
+            29,
+            29
+          ],
+          "outputOrigin": [
+            46,
+            72
+          ],
+          "scale": 0.19,
+          "group": "pilot"
+        },
+        {
+          "sourceSheet": "pilot",
+          "sourceFrame": 14,
+          "sourceSize": [
+            156,
+            158
+          ],
+          "sourceOrigin": [
+            575,
+            826
+          ],
+          "sourceRegion": [
+            512,
+            768,
+            256,
+            256
+          ],
+          "sourceHash": "1301073e18e604a04f08ad4cf83270f4e6efb1f4ccafafe1ea41bb03c35e8f3f",
+          "outputSize": [
+            30,
+            30
+          ],
+          "outputOrigin": [
+            46,
+            70
+          ],
+          "scale": 0.19,
+          "group": "pilot"
+        },
+        {
+          "sourceSheet": "pilot",
+          "sourceFrame": 15,
+          "sourceSize": [
+            156,
+            152
+          ],
+          "sourceOrigin": [
+            829,
+            832
+          ],
+          "sourceRegion": [
+            768,
+            768,
+            256,
+            256
+          ],
+          "sourceHash": "1301073e18e604a04f08ad4cf83270f4e6efb1f4ccafafe1ea41bb03c35e8f3f",
+          "outputSize": [
+            30,
+            29
+          ],
+          "outputOrigin": [
+            46,
+            71
+          ],
+          "scale": 0.19,
+          "group": "pilot"
+        }
+      ],
+      "frameAnchors": {
+        "0": {
+          "headAnchor": [
+            62,
+            66
+          ],
+          "neckAnchor": [
+            62,
+            81
+          ]
+        },
+        "1": {
+          "headAnchor": [
+            62,
+            66
+          ],
+          "neckAnchor": [
+            62,
+            81
+          ]
+        },
+        "2": {
+          "headAnchor": [
+            62,
+            67
+          ],
+          "neckAnchor": [
+            62,
+            82
+          ]
+        },
+        "3": {
+          "headAnchor": [
+            66,
+            68
+          ],
+          "neckAnchor": [
+            66,
+            83
+          ]
+        },
+        "4": {
+          "headAnchor": [
+            63,
+            66
+          ],
+          "neckAnchor": [
+            63,
+            81
+          ]
+        },
+        "5": {
+          "headAnchor": [
+            63,
+            67
+          ],
+          "neckAnchor": [
+            63,
+            82
+          ]
+        },
+        "6": {
+          "headAnchor": [
+            53,
+            65
+          ],
+          "neckAnchor": [
+            53,
+            80
+          ]
+        },
+        "7": {
+          "headAnchor": [
+            62,
+            65
+          ],
+          "neckAnchor": [
+            62,
+            80
+          ]
+        },
+        "8": {
+          "headAnchor": [
+            62,
+            67
+          ],
+          "neckAnchor": [
+            62,
+            82
+          ]
+        },
+        "9": {
+          "headAnchor": [
+            66,
+            70
+          ],
+          "neckAnchor": [
+            66,
+            85
+          ]
+        },
+        "10": {
+          "headAnchor": [
+            63,
+            68
+          ],
+          "neckAnchor": [
+            63,
+            83
+          ]
+        },
+        "11": {
+          "headAnchor": [
+            55,
+            64
+          ],
+          "neckAnchor": [
+            55,
+            79
+          ]
+        },
+        "12": {
+          "headAnchor": [
+            69,
+            74
+          ],
+          "neckAnchor": [
+            69,
+            89
+          ]
+        },
+        "13": {
+          "headAnchor": [
+            66,
+            77
+          ],
+          "neckAnchor": [
+            66,
+            92
+          ]
+        },
+        "14": {
+          "headAnchor": [
+            66,
+            74
+          ],
+          "neckAnchor": [
+            66,
+            89
+          ]
+        },
+        "15": {
+          "headAnchor": [
+            67,
+            77
+          ],
+          "neckAnchor": [
+            67,
+            92
+          ]
+        }
+      },
+      "frameFaceAreas": {
+        "0": [
+          61,
+          68,
+          4,
+          5
+        ],
+        "1": [
+          61,
+          68,
+          4,
+          5
+        ],
+        "2": [
+          61,
+          69,
+          4,
+          5
+        ],
+        "3": [
+          65,
+          70,
+          4,
+          5
+        ],
+        "4": [
+          62,
+          68,
+          4,
+          5
+        ],
+        "5": [
+          62,
+          69,
+          4,
+          5
+        ],
+        "6": [
+          52,
+          67,
+          4,
+          5
+        ],
+        "7": [
+          61,
+          67,
+          4,
+          5
+        ],
+        "8": [
+          61,
+          69,
+          4,
+          5
+        ],
+        "9": [
+          65,
+          72,
+          4,
+          5
+        ],
+        "10": [
+          62,
+          70,
+          4,
+          5
+        ],
+        "11": [
+          54,
+          66,
+          4,
+          5
+        ],
+        "12": [
+          68,
+          76,
+          4,
+          5
+        ],
+        "13": [
+          65,
+          79,
+          4,
+          5
+        ],
+        "14": [
+          65,
+          76,
+          4,
+          5
+        ],
+        "15": [
+          66,
+          79,
+          4,
+          5
+        ]
+      }
+    },
+    {
+      "id": "cabin-standard",
+      "kind": "cabin",
+      "file": "cabin-standard.png",
+      "source": "cabin-standard.ora",
+      "frameSize": [
+        192,
+        160
+      ],
+      "paletteRoles": [
+        "transparent",
+        "fixed",
+        "fixed",
+        "fixed",
+        "fixed",
+        "primary-light",
+        "primary-light",
+        "primary-light",
+        "primary-light",
+        "primary-mid",
+        "primary-dark",
+        "primary-dark",
+        "primary-light",
+        "primary-dark",
+        "fixed",
+        "fixed",
+        "fixed",
+        "fixed",
+        "fixed",
+        "fixed",
+        "fixed",
+        "fixed",
+        "secondary-light",
+        "secondary-mid",
+        "secondary-dark",
+        "secondary-dark",
+        "primary-light",
+        "primary-dark",
+        "primary-light",
+        "primary-dark",
+        "fixed",
+        "fixed"
+      ],
+      "paletteTones": [
+        0,
+        0,
+        0,
+        0,
+        0,
+        0.35,
+        0.65,
+        0.85,
+        0.35,
+        0,
+        -0.3,
+        -0.55,
+        0.55,
+        -0.15,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0.35,
+        0,
+        -0.3,
+        -0.55,
+        0.2,
+        -0.12,
+        0.65,
+        -0.25,
+        0,
+        0
+      ],
+      "anchors": {
+        "ground": [
+          96,
+          144
+        ],
+        "pilotSeat": [
+          55,
+          97
+        ],
+        "weaponPivot": [
+          96,
+          96
+        ],
+        "damageSmoke": [
+          30,
+          95
+        ]
+      },
+      "clips": {
+        "idle": {
+          "frames": [
+            1
+          ],
+          "durationsMs": [
+            1000
+          ],
+          "loop": true
+        },
+        "wreck": {
+          "frames": [
+            1
+          ],
+          "durationsMs": [
+            1000
+          ],
+          "loop": true
+        },
+        "idle-back": {
+          "frames": [
+            0
+          ],
+          "durationsMs": [
+            1000
+          ],
+          "loop": true
+        },
+        "idle-glass": {
+          "frames": [
+            2
+          ],
+          "durationsMs": [
+            1000
+          ],
+          "loop": true
+        },
+        "idle-front": {
+          "frames": [
+            3
+          ],
+          "durationsMs": [
+            1000
+          ],
+          "loop": true
+        }
+      },
+      "exportMetrics": [
+        {
+          "sourceSheet": "interior",
+          "sourceFrame": 0,
+          "sourceSize": [
+            718,
+            568
+          ],
+          "sourceOrigin": [
+            170,
+            278
+          ],
+          "sourceRegion": [
+            0,
+            0,
+            1024,
+            1024
+          ],
+          "sourceHash": "cbf4318750d6ee848b1bce65b39e99436034c7dfcf78a862948b383dce450d0a",
+          "outputSize": [
+            39,
+            31
+          ],
+          "outputOrigin": [
+            40,
+            70
+          ],
+          "scale": 0.055,
+          "group": null
+        },
+        {
+          "sourceSheet": "body-v2",
+          "sourceFrame": 1,
+          "sourceSize": [
+            464,
+            196
+          ],
+          "sourceOrigin": [
+            525,
+            302
+          ],
+          "sourceRegion": [
+            512,
+            0,
+            512,
+            512
+          ],
+          "sourceHash": "9c0c0873b9e46c37ed27161447b61f4df71804d7d57dbfc99a761dbd98b73439",
+          "outputSize": [
+            100,
+            42
+          ],
+          "outputOrigin": [
+            24,
+            80
+          ],
+          "scale": 0.215,
+          "group": null
+        },
+        {
+          "sourceSheet": "glass",
+          "sourceFrame": 0,
+          "sourceSize": [
+            777,
+            447
+          ],
+          "sourceOrigin": [
+            137,
+            305
+          ],
+          "sourceRegion": [
+            0,
+            0,
+            1024,
+            1024
+          ],
+          "sourceHash": "ae4f02cd891932e2e78a748bfd3de3b0741b394ec84ff1702464b5c1771fd7e9",
+          "outputSize": [
+            70,
+            40
+          ],
+          "outputOrigin": [
+            29,
+            57
+          ],
+          "scale": 0.09,
+          "group": null,
+          "alphaMaskFrame": 3
+        },
+        {
+          "sourceSheet": "body-v2",
+          "sourceFrame": 3,
+          "sourceSize": [
+            394,
+            208
+          ],
+          "sourceOrigin": [
+            576,
+            660
+          ],
+          "sourceRegion": [
+            512,
+            512,
+            512,
+            512
+          ],
+          "sourceHash": "9c0c0873b9e46c37ed27161447b61f4df71804d7d57dbfc99a761dbd98b73439",
+          "outputSize": [
+            75,
+            40
+          ],
+          "outputOrigin": [
+            24,
+            57
+          ],
+          "scale": 0.19,
+          "group": null
+        }
+      ],
+      "alphaMode": "glass",
+      "glassFrame": 2,
+      "faceSafeArea": [
+        59,
+        63,
+        5,
+        8
+      ],
+      "layers": [
+        "idle-back",
+        "pilot",
+        "idle",
+        "idle-glass",
+        "idle-front"
+      ]
+    },
+    {
+      "id": "tracks-standard",
+      "kind": "undercarriage",
+      "file": "tracks-standard.png",
+      "source": "tracks-standard.ora",
+      "frameSize": [
+        192,
+        160
+      ],
+      "paletteRoles": [
+        "transparent",
+        "fixed",
+        "fixed",
+        "fixed",
+        "fixed",
+        "fixed",
+        "fixed",
+        "fixed",
+        "fixed",
+        "fixed",
+        "fixed",
+        "fixed",
+        "fixed",
+        "fixed",
+        "fixed",
+        "fixed",
+        "fixed",
+        "fixed",
+        "fixed",
+        "fixed",
+        "fixed",
+        "fixed",
+        "secondary-light",
+        "secondary-mid",
+        "secondary-dark",
+        "secondary-dark",
+        "fixed",
+        "fixed",
+        "fixed",
+        "fixed",
+        "fixed",
+        "fixed"
+      ],
+      "paletteTones": [
+        0,
+        0,
+        0,
+        0,
+        0,
+        0.35,
+        0.65,
+        0.85,
+        0.35,
+        0,
+        -0.3,
+        -0.55,
+        0.55,
+        -0.15,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0.35,
+        0,
+        -0.3,
+        -0.55,
+        0.2,
+        -0.12,
+        0.65,
+        -0.25,
+        0,
+        0
+      ],
+      "anchors": {
+        "ground": [
+          96,
+          144
+        ],
+        "cabinMount": [
+          76,
+          112
+        ],
+        "exhaust": [
+          28,
+          114
+        ]
+      },
+      "clips": {
+        "idle": {
+          "frames": [
+            0
+          ],
+          "durationsMs": [
+            1000
+          ],
+          "loop": true
+        },
+        "move": {
+          "frames": [
+            0,
+            1,
+            2
+          ],
+          "durationsMs": [
+            90,
+            90,
+            90
+          ],
+          "loop": true
+        },
+        "wreck": {
+          "frames": [
+            3
+          ],
+          "durationsMs": [
+            1000
+          ],
+          "loop": true
+        }
+      },
+      "exportMetrics": [
+        {
+          "sourceSheet": "tracks",
+          "sourceFrame": 0,
+          "sourceSize": [
+            476,
+            164
+          ],
+          "sourceOrigin": [
+            18,
+            270
+          ],
+          "sourceRegion": [
+            0,
+            0,
+            512,
+            512
+          ],
+          "sourceHash": "c077f1a4520b2f6ecc3c0ceb55e4d76e7aaf985ade6acba63348982f34caf117",
+          "outputSize": [
+            108,
+            37
+          ],
+          "outputOrigin": [
+            24,
+            107
+          ],
+          "scale": 0.226890756302521,
+          "group": "tracks"
+        },
+        {
+          "sourceSheet": "tracks",
+          "sourceFrame": 1,
+          "sourceSize": [
+            476,
+            164
+          ],
+          "sourceOrigin": [
+            530,
+            270
+          ],
+          "sourceRegion": [
+            512,
+            0,
+            512,
+            512
+          ],
+          "sourceHash": "c077f1a4520b2f6ecc3c0ceb55e4d76e7aaf985ade6acba63348982f34caf117",
+          "outputSize": [
+            108,
+            37
+          ],
+          "outputOrigin": [
+            24,
+            107
+          ],
+          "scale": 0.226890756302521,
+          "group": "tracks"
+        },
+        {
+          "sourceSheet": "tracks",
+          "sourceFrame": 2,
+          "sourceSize": [
+            476,
+            164
+          ],
+          "sourceOrigin": [
+            18,
+            739
+          ],
+          "sourceRegion": [
+            0,
+            512,
+            512,
+            512
+          ],
+          "sourceHash": "c077f1a4520b2f6ecc3c0ceb55e4d76e7aaf985ade6acba63348982f34caf117",
+          "outputSize": [
+            108,
+            37
+          ],
+          "outputOrigin": [
+            24,
+            107
+          ],
+          "scale": 0.226890756302521,
+          "group": "tracks"
+        },
+        {
+          "sourceSheet": "tracks",
+          "sourceFrame": 3,
+          "sourceSize": [
+            476,
+            173
+          ],
+          "sourceOrigin": [
+            530,
+            730
+          ],
+          "sourceRegion": [
+            512,
+            512,
+            512,
+            512
+          ],
+          "sourceHash": "c077f1a4520b2f6ecc3c0ceb55e4d76e7aaf985ade6acba63348982f34caf117",
+          "outputSize": [
+            108,
+            39
+          ],
+          "outputOrigin": [
+            24,
+            105
+          ],
+          "scale": 0.226890756302521,
+          "group": "tracks"
+        }
+      ]
+    },
+    {
+      "id": "weapon-cannon",
+      "kind": "weapon",
+      "file": "weapon-cannon.png",
+      "source": "weapon-cannon.ora",
+      "frameSize": [
+        192,
+        160
+      ],
+      "paletteRoles": [
+        "transparent",
+        "fixed",
+        "fixed",
+        "fixed",
+        "fixed",
+        "primary-light",
+        "primary-light",
+        "primary-light",
+        "primary-light",
+        "primary-mid",
+        "primary-dark",
+        "primary-dark",
+        "primary-light",
+        "primary-dark",
+        "fixed",
+        "fixed",
+        "fixed",
+        "fixed",
+        "fixed",
+        "fixed",
+        "fixed",
+        "fixed",
+        "secondary-light",
+        "secondary-mid",
+        "secondary-dark",
+        "secondary-dark",
+        "primary-light",
+        "primary-dark",
+        "primary-light",
+        "primary-dark",
+        "fixed",
+        "fixed"
+      ],
+      "paletteTones": [
+        0,
+        0,
+        0,
+        0,
+        0,
+        0.35,
+        0.65,
+        0.85,
+        0.35,
+        0,
+        -0.3,
+        -0.55,
+        0.55,
+        -0.15,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0.35,
+        0,
+        -0.3,
+        -0.55,
+        0.2,
+        -0.12,
+        0.65,
+        -0.25,
+        0,
+        0
+      ],
+      "anchors": {
+        "weaponPivot": [
+          96,
+          96
+        ],
+        "muzzle": [
+          144,
+          96
+        ]
+      },
+      "clips": {
+        "idle": {
+          "frames": [
+            0
+          ],
+          "durationsMs": [
+            1000
+          ],
+          "loop": true
+        },
+        "fire": {
+          "frames": [
+            0
+          ],
+          "durationsMs": [
+            180
+          ],
+          "loop": false
+        },
+        "wreck": {
+          "frames": [
+            0
+          ],
+          "durationsMs": [
+            1000
+          ],
+          "loop": true
+        }
+      },
+      "exportMetrics": [
+        {
+          "sourceSheet": "weapons",
+          "sourceFrame": 0,
+          "sourceSize": [
+            340,
+            170
+          ],
+          "sourceOrigin": [
+            32,
+            247
+          ],
+          "sourceRegion": [
+            0,
+            0,
+            390,
+            512
+          ],
+          "sourceHash": "439a207ed12a9d9df334f8b05897b8f6af0fcad6a1376deae7fc6c26a9dda8b6",
+          "outputSize": [
+            60,
+            30
+          ],
+          "outputOrigin": [
+            84,
+            83
+          ],
+          "scale": 0.17647058823529413,
+          "group": null
+        }
+      ],
+      "emissionPorts": [
+        [
+          144,
+          96
+        ]
+      ]
+    },
+    {
+      "id": "weapon-triple",
+      "kind": "weapon",
+      "file": "weapon-triple.png",
+      "source": "weapon-triple.ora",
+      "frameSize": [
+        192,
+        160
+      ],
+      "paletteRoles": [
+        "transparent",
+        "fixed",
+        "fixed",
+        "fixed",
+        "fixed",
+        "primary-light",
+        "primary-light",
+        "primary-light",
+        "primary-light",
+        "primary-mid",
+        "primary-dark",
+        "primary-dark",
+        "primary-light",
+        "primary-dark",
+        "fixed",
+        "fixed",
+        "fixed",
+        "fixed",
+        "fixed",
+        "fixed",
+        "fixed",
+        "fixed",
+        "secondary-light",
+        "secondary-mid",
+        "secondary-dark",
+        "secondary-dark",
+        "primary-light",
+        "primary-dark",
+        "primary-light",
+        "primary-dark",
+        "fixed",
+        "fixed"
+      ],
+      "paletteTones": [
+        0,
+        0,
+        0,
+        0,
+        0,
+        0.35,
+        0.65,
+        0.85,
+        0.35,
+        0,
+        -0.3,
+        -0.55,
+        0.55,
+        -0.15,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0.35,
+        0,
+        -0.3,
+        -0.55,
+        0.2,
+        -0.12,
+        0.65,
+        -0.25,
+        0,
+        0
+      ],
+      "anchors": {
+        "weaponPivot": [
+          96,
+          96
+        ],
+        "muzzle": [
+          144,
+          96
+        ]
+      },
+      "clips": {
+        "idle": {
+          "frames": [
+            0
+          ],
+          "durationsMs": [
+            1000
+          ],
+          "loop": true
+        },
+        "fire": {
+          "frames": [
+            0
+          ],
+          "durationsMs": [
+            180
+          ],
+          "loop": false
+        },
+        "wreck": {
+          "frames": [
+            0
+          ],
+          "durationsMs": [
+            1000
+          ],
+          "loop": true
+        }
+      },
+      "exportMetrics": [
+        {
+          "sourceSheet": "weapons",
+          "sourceFrame": 1,
+          "sourceSize": [
+            341,
+            178
+          ],
+          "sourceOrigin": [
+            410,
+            240
+          ],
+          "sourceRegion": [
+            390,
+            0,
+            390,
+            512
+          ],
+          "sourceHash": "439a207ed12a9d9df334f8b05897b8f6af0fcad6a1376deae7fc6c26a9dda8b6",
+          "outputSize": [
+            60,
+            31
+          ],
+          "outputOrigin": [
+            84,
+            81
+          ],
+          "scale": 0.17595307917888564,
+          "group": null
+        }
+      ],
+      "emissionPorts": [
+        [
+          144,
+          89
+        ],
+        [
+          144,
+          96
+        ],
+        [
+          144,
+          103
+        ]
+      ]
+    },
+    {
+      "id": "weapon-multiple",
+      "kind": "weapon",
+      "file": "weapon-multiple.png",
+      "source": "weapon-multiple.ora",
+      "frameSize": [
+        192,
+        160
+      ],
+      "paletteRoles": [
+        "transparent",
+        "fixed",
+        "fixed",
+        "fixed",
+        "fixed",
+        "primary-light",
+        "primary-light",
+        "primary-light",
+        "primary-light",
+        "primary-mid",
+        "primary-dark",
+        "primary-dark",
+        "primary-light",
+        "primary-dark",
+        "fixed",
+        "fixed",
+        "fixed",
+        "fixed",
+        "fixed",
+        "fixed",
+        "fixed",
+        "fixed",
+        "secondary-light",
+        "secondary-mid",
+        "secondary-dark",
+        "secondary-dark",
+        "primary-light",
+        "primary-dark",
+        "primary-light",
+        "primary-dark",
+        "fixed",
+        "fixed"
+      ],
+      "paletteTones": [
+        0,
+        0,
+        0,
+        0,
+        0,
+        0.35,
+        0.65,
+        0.85,
+        0.35,
+        0,
+        -0.3,
+        -0.55,
+        0.55,
+        -0.15,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0.35,
+        0,
+        -0.3,
+        -0.55,
+        0.2,
+        -0.12,
+        0.65,
+        -0.25,
+        0,
+        0
+      ],
+      "anchors": {
+        "weaponPivot": [
+          96,
+          96
+        ],
+        "muzzle": [
+          144,
+          96
+        ]
+      },
+      "clips": {
+        "idle": {
+          "frames": [
+            0
+          ],
+          "durationsMs": [
+            1000
+          ],
+          "loop": true
+        },
+        "fire": {
+          "frames": [
+            0
+          ],
+          "durationsMs": [
+            180
+          ],
+          "loop": false
+        },
+        "wreck": {
+          "frames": [
+            0
+          ],
+          "durationsMs": [
+            1000
+          ],
+          "loop": true
+        }
+      },
+      "exportMetrics": [
+        {
+          "sourceSheet": "weapons",
+          "sourceFrame": 2,
+          "sourceSize": [
+            317,
+            187
+          ],
+          "sourceOrigin": [
+            786,
+            231
+          ],
+          "sourceRegion": [
+            780,
+            0,
+            340,
+            512
+          ],
+          "sourceHash": "439a207ed12a9d9df334f8b05897b8f6af0fcad6a1376deae7fc6c26a9dda8b6",
+          "outputSize": [
+            60,
+            35
+          ],
+          "outputOrigin": [
+            84,
+            81
+          ],
+          "scale": 0.1892744479495268,
+          "group": null
+        }
+      ],
+      "emissionPorts": [
+        [
+          144,
+          86
+        ],
+        [
+          144,
+          96
+        ],
+        [
+          144,
+          105
+        ]
+      ]
+    },
+    {
+      "id": "weapon-drill",
+      "kind": "weapon",
+      "file": "weapon-drill.png",
+      "source": "weapon-drill.ora",
+      "frameSize": [
+        192,
+        160
+      ],
+      "paletteRoles": [
+        "transparent",
+        "fixed",
+        "fixed",
+        "fixed",
+        "fixed",
+        "primary-light",
+        "primary-light",
+        "primary-light",
+        "primary-light",
+        "primary-mid",
+        "primary-dark",
+        "primary-dark",
+        "primary-light",
+        "primary-dark",
+        "fixed",
+        "fixed",
+        "fixed",
+        "fixed",
+        "fixed",
+        "fixed",
+        "fixed",
+        "fixed",
+        "secondary-light",
+        "secondary-mid",
+        "secondary-dark",
+        "secondary-dark",
+        "primary-light",
+        "primary-dark",
+        "primary-light",
+        "primary-dark",
+        "fixed",
+        "fixed"
+      ],
+      "paletteTones": [
+        0,
+        0,
+        0,
+        0,
+        0,
+        0.35,
+        0.65,
+        0.85,
+        0.35,
+        0,
+        -0.3,
+        -0.55,
+        0.55,
+        -0.15,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0.35,
+        0,
+        -0.3,
+        -0.55,
+        0.2,
+        -0.12,
+        0.65,
+        -0.25,
+        0,
+        0
+      ],
+      "anchors": {
+        "weaponPivot": [
+          96,
+          96
+        ],
+        "muzzle": [
+          144,
+          96
+        ]
+      },
+      "clips": {
+        "idle": {
+          "frames": [
+            0
+          ],
+          "durationsMs": [
+            1000
+          ],
+          "loop": true
+        },
+        "fire": {
+          "frames": [
+            0
+          ],
+          "durationsMs": [
+            180
+          ],
+          "loop": false
+        },
+        "wreck": {
+          "frames": [
+            0
+          ],
+          "durationsMs": [
+            1000
+          ],
+          "loop": true
+        }
+      },
+      "exportMetrics": [
+        {
+          "sourceSheet": "weapons",
+          "sourceFrame": 3,
+          "sourceSize": [
+            370,
+            173
+          ],
+          "sourceOrigin": [
+            1138,
+            246
+          ],
+          "sourceRegion": [
+            1120,
+            0,
+            416,
+            512
+          ],
+          "sourceHash": "439a207ed12a9d9df334f8b05897b8f6af0fcad6a1376deae7fc6c26a9dda8b6",
+          "outputSize": [
+            60,
+            28
+          ],
+          "outputOrigin": [
+            84,
+            83
+          ],
+          "scale": 0.16216216216216217,
+          "group": null
+        }
+      ],
+      "emissionPorts": [
+        [
+          144,
+          96
+        ]
+      ]
+    },
+    {
+      "id": "weapon-laser",
+      "kind": "weapon",
+      "file": "weapon-laser.png",
+      "source": "weapon-laser.ora",
+      "frameSize": [
+        192,
+        160
+      ],
+      "paletteRoles": [
+        "transparent",
+        "fixed",
+        "fixed",
+        "fixed",
+        "fixed",
+        "primary-light",
+        "primary-light",
+        "primary-light",
+        "primary-light",
+        "primary-mid",
+        "primary-dark",
+        "primary-dark",
+        "primary-light",
+        "primary-dark",
+        "fixed",
+        "fixed",
+        "fixed",
+        "fixed",
+        "fixed",
+        "fixed",
+        "fixed",
+        "fixed",
+        "secondary-light",
+        "secondary-mid",
+        "secondary-dark",
+        "secondary-dark",
+        "primary-light",
+        "primary-dark",
+        "primary-light",
+        "primary-dark",
+        "fixed",
+        "fixed"
+      ],
+      "paletteTones": [
+        0,
+        0,
+        0,
+        0,
+        0,
+        0.35,
+        0.65,
+        0.85,
+        0.35,
+        0,
+        -0.3,
+        -0.55,
+        0.55,
+        -0.15,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0.35,
+        0,
+        -0.3,
+        -0.55,
+        0.2,
+        -0.12,
+        0.65,
+        -0.25,
+        0,
+        0
+      ],
+      "anchors": {
+        "weaponPivot": [
+          96,
+          96
+        ],
+        "muzzle": [
+          144,
+          96
+        ]
+      },
+      "clips": {
+        "idle": {
+          "frames": [
+            0
+          ],
+          "durationsMs": [
+            1000
+          ],
+          "loop": true
+        },
+        "fire": {
+          "frames": [
+            0
+          ],
+          "durationsMs": [
+            180
+          ],
+          "loop": false
+        },
+        "wreck": {
+          "frames": [
+            0
+          ],
+          "durationsMs": [
+            1000
+          ],
+          "loop": true
+        }
+      },
+      "exportMetrics": [
+        {
+          "sourceSheet": "weapons",
+          "sourceFrame": 4,
+          "sourceSize": [
+            343,
+            186
+          ],
+          "sourceOrigin": [
+            29,
+            617
+          ],
+          "sourceRegion": [
+            0,
+            512,
+            390,
+            512
+          ],
+          "sourceHash": "439a207ed12a9d9df334f8b05897b8f6af0fcad6a1376deae7fc6c26a9dda8b6",
+          "outputSize": [
+            60,
+            33
+          ],
+          "outputOrigin": [
+            84,
+            82
+          ],
+          "scale": 0.1749271137026239,
+          "group": null
+        }
+      ],
+      "emissionPorts": [
+        [
+          144,
+          96
+        ]
+      ]
+    },
+    {
+      "id": "weapon-digger",
+      "kind": "weapon",
+      "file": "weapon-digger.png",
+      "source": "weapon-digger.ora",
+      "frameSize": [
+        192,
+        160
+      ],
+      "paletteRoles": [
+        "transparent",
+        "fixed",
+        "fixed",
+        "fixed",
+        "fixed",
+        "primary-light",
+        "primary-light",
+        "primary-light",
+        "primary-light",
+        "primary-mid",
+        "primary-dark",
+        "primary-dark",
+        "primary-light",
+        "primary-dark",
+        "fixed",
+        "fixed",
+        "fixed",
+        "fixed",
+        "fixed",
+        "fixed",
+        "fixed",
+        "fixed",
+        "secondary-light",
+        "secondary-mid",
+        "secondary-dark",
+        "secondary-dark",
+        "primary-light",
+        "primary-dark",
+        "primary-light",
+        "primary-dark",
+        "fixed",
+        "fixed"
+      ],
+      "paletteTones": [
+        0,
+        0,
+        0,
+        0,
+        0,
+        0.35,
+        0.65,
+        0.85,
+        0.35,
+        0,
+        -0.3,
+        -0.55,
+        0.55,
+        -0.15,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0.35,
+        0,
+        -0.3,
+        -0.55,
+        0.2,
+        -0.12,
+        0.65,
+        -0.25,
+        0,
+        0
+      ],
+      "anchors": {
+        "weaponPivot": [
+          96,
+          96
+        ],
+        "muzzle": [
+          144,
+          96
+        ]
+      },
+      "clips": {
+        "idle": {
+          "frames": [
+            0
+          ],
+          "durationsMs": [
+            1000
+          ],
+          "loop": true
+        },
+        "fire": {
+          "frames": [
+            0
+          ],
+          "durationsMs": [
+            180
+          ],
+          "loop": false
+        },
+        "wreck": {
+          "frames": [
+            0
+          ],
+          "durationsMs": [
+            1000
+          ],
+          "loop": true
+        }
+      },
+      "exportMetrics": [
+        {
+          "sourceSheet": "weapons",
+          "sourceFrame": 5,
+          "sourceSize": [
+            340,
+            189
+          ],
+          "sourceOrigin": [
+            411,
+            614
+          ],
+          "sourceRegion": [
+            390,
+            512,
+            390,
+            512
+          ],
+          "sourceHash": "439a207ed12a9d9df334f8b05897b8f6af0fcad6a1376deae7fc6c26a9dda8b6",
+          "outputSize": [
+            60,
+            33
+          ],
+          "outputOrigin": [
+            84,
+            81
+          ],
+          "scale": 0.17647058823529413,
+          "group": null
+        }
+      ],
+      "emissionPorts": [
+        [
+          144,
+          96
+        ]
+      ]
+    },
+    {
+      "id": "weapon-floater",
+      "kind": "weapon",
+      "file": "weapon-floater.png",
+      "source": "weapon-floater.ora",
+      "frameSize": [
+        192,
+        160
+      ],
+      "paletteRoles": [
+        "transparent",
+        "fixed",
+        "fixed",
+        "fixed",
+        "fixed",
+        "primary-light",
+        "primary-light",
+        "primary-light",
+        "primary-light",
+        "primary-mid",
+        "primary-dark",
+        "primary-dark",
+        "primary-light",
+        "primary-dark",
+        "fixed",
+        "fixed",
+        "fixed",
+        "fixed",
+        "fixed",
+        "fixed",
+        "fixed",
+        "fixed",
+        "secondary-light",
+        "secondary-mid",
+        "secondary-dark",
+        "secondary-dark",
+        "primary-light",
+        "primary-dark",
+        "primary-light",
+        "primary-dark",
+        "fixed",
+        "fixed"
+      ],
+      "paletteTones": [
+        0,
+        0,
+        0,
+        0,
+        0,
+        0.35,
+        0.65,
+        0.85,
+        0.35,
+        0,
+        -0.3,
+        -0.55,
+        0.55,
+        -0.15,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0.35,
+        0,
+        -0.3,
+        -0.55,
+        0.2,
+        -0.12,
+        0.65,
+        -0.25,
+        0,
+        0
+      ],
+      "anchors": {
+        "weaponPivot": [
+          96,
+          96
+        ],
+        "muzzle": [
+          144,
+          96
+        ]
+      },
+      "clips": {
+        "idle": {
+          "frames": [
+            0
+          ],
+          "durationsMs": [
+            1000
+          ],
+          "loop": true
+        },
+        "fire": {
+          "frames": [
+            0
+          ],
+          "durationsMs": [
+            180
+          ],
+          "loop": false
+        },
+        "wreck": {
+          "frames": [
+            0
+          ],
+          "durationsMs": [
+            1000
+          ],
+          "loop": true
+        }
+      },
+      "exportMetrics": [
+        {
+          "sourceSheet": "weapons",
+          "sourceFrame": 6,
+          "sourceSize": [
+            272,
+            189
+          ],
+          "sourceOrigin": [
+            804,
+            613
+          ],
+          "sourceRegion": [
+            780,
+            512,
+            340,
+            512
+          ],
+          "sourceHash": "439a207ed12a9d9df334f8b05897b8f6af0fcad6a1376deae7fc6c26a9dda8b6",
+          "outputSize": [
+            60,
+            42
+          ],
+          "outputOrigin": [
+            84,
+            78
+          ],
+          "scale": 0.22058823529411764,
+          "group": null
+        }
+      ],
+      "emissionPorts": [
+        [
+          144,
+          96
+        ]
+      ]
+    },
+    {
+      "id": "weapon-stinger",
+      "kind": "weapon",
+      "file": "weapon-stinger.png",
+      "source": "weapon-stinger.ora",
+      "frameSize": [
+        192,
+        160
+      ],
+      "paletteRoles": [
+        "transparent",
+        "fixed",
+        "fixed",
+        "fixed",
+        "fixed",
+        "primary-light",
+        "primary-light",
+        "primary-light",
+        "primary-light",
+        "primary-mid",
+        "primary-dark",
+        "primary-dark",
+        "primary-light",
+        "primary-dark",
+        "fixed",
+        "fixed",
+        "fixed",
+        "fixed",
+        "fixed",
+        "fixed",
+        "fixed",
+        "fixed",
+        "secondary-light",
+        "secondary-mid",
+        "secondary-dark",
+        "secondary-dark",
+        "primary-light",
+        "primary-dark",
+        "primary-light",
+        "primary-dark",
+        "fixed",
+        "fixed"
+      ],
+      "paletteTones": [
+        0,
+        0,
+        0,
+        0,
+        0,
+        0.35,
+        0.65,
+        0.85,
+        0.35,
+        0,
+        -0.3,
+        -0.55,
+        0.55,
+        -0.15,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0.35,
+        0,
+        -0.3,
+        -0.55,
+        0.2,
+        -0.12,
+        0.65,
+        -0.25,
+        0,
+        0
+      ],
+      "anchors": {
+        "weaponPivot": [
+          96,
+          96
+        ],
+        "muzzle": [
+          144,
+          96
+        ]
+      },
+      "clips": {
+        "idle": {
+          "frames": [
+            0
+          ],
+          "durationsMs": [
+            1000
+          ],
+          "loop": true
+        },
+        "fire": {
+          "frames": [
+            0
+          ],
+          "durationsMs": [
+            180
+          ],
+          "loop": false
+        },
+        "wreck": {
+          "frames": [
+            0
+          ],
+          "durationsMs": [
+            1000
+          ],
+          "loop": true
+        }
+      },
+      "exportMetrics": [
+        {
+          "sourceSheet": "weapons",
+          "sourceFrame": 7,
+          "sourceSize": [
+            375,
+            144
+          ],
+          "sourceOrigin": [
+            1134,
+            658
+          ],
+          "sourceRegion": [
+            1120,
+            512,
+            416,
+            512
+          ],
+          "sourceHash": "439a207ed12a9d9df334f8b05897b8f6af0fcad6a1376deae7fc6c26a9dda8b6",
+          "outputSize": [
+            60,
+            23
+          ],
+          "outputOrigin": [
+            84,
+            89
+          ],
+          "scale": 0.16,
+          "group": null
+        }
+      ],
+      "emissionPorts": [
+        [
+          144,
+          96
+        ]
+      ]
+    },
+    {
+      "id": "glasses-blue",
+      "kind": "accessory",
+      "file": "glasses-blue.png",
+      "source": "glasses-blue.ora",
+      "frameSize": [
+        192,
+        160
+      ],
+      "paletteRoles": [
+        "transparent",
+        "fixed",
+        "fixed",
+        "fixed",
+        "fixed",
+        "fixed",
+        "fixed",
+        "fixed",
+        "fixed",
+        "fixed",
+        "fixed",
+        "fixed",
+        "fixed",
+        "fixed",
+        "fixed",
+        "fixed",
+        "fixed",
+        "fixed",
+        "fixed",
+        "fixed",
+        "fixed",
+        "fixed",
+        "fixed",
+        "fixed",
+        "fixed",
+        "fixed",
+        "fixed",
+        "fixed",
+        "fixed",
+        "fixed",
+        "fixed",
+        "fixed"
+      ],
+      "paletteTones": [
+        0,
+        0,
+        0,
+        0,
+        0,
+        0.35,
+        0.65,
+        0.85,
+        0.35,
+        0,
+        -0.3,
+        -0.55,
+        0.55,
+        -0.15,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0.35,
+        0,
+        -0.3,
+        -0.55,
+        0.2,
+        -0.12,
+        0.65,
+        -0.25,
+        0,
+        0
+      ],
+      "anchors": {
+        "attach": [
+          62,
+          57
+        ]
+      },
+      "clips": {
+        "idle": {
+          "frames": [
+            0
+          ],
+          "durationsMs": [
+            1000
+          ],
+          "loop": true
+        }
+      },
+      "exportMetrics": [
+        {
+          "sourceSheet": "accessories",
+          "sourceFrame": 0,
+          "sourceSize": [
+            368,
+            204
+          ],
+          "sourceOrigin": [
+            87,
+            193
+          ],
+          "sourceRegion": [
+            0,
+            0,
+            512,
+            512
+          ],
+          "sourceHash": "375777b302f4c95d462dd79b667700d7fad48c246aa2274c5e7faa509579474d",
+          "outputSize": [
+            13,
+            7
+          ],
+          "outputOrigin": [
+            53,
+            52
+          ],
+          "scale": 0.035,
+          "group": null
+        }
+      ]
+    },
+    {
+      "id": "scarf-orange",
+      "kind": "accessory",
+      "file": "scarf-orange.png",
+      "source": "scarf-orange.ora",
+      "frameSize": [
+        192,
+        160
+      ],
+      "paletteRoles": [
+        "transparent",
+        "fixed",
+        "fixed",
+        "fixed",
+        "fixed",
+        "fixed",
+        "fixed",
+        "fixed",
+        "fixed",
+        "fixed",
+        "fixed",
+        "fixed",
+        "fixed",
+        "fixed",
+        "fixed",
+        "fixed",
+        "fixed",
+        "fixed",
+        "fixed",
+        "fixed",
+        "fixed",
+        "fixed",
+        "fixed",
+        "fixed",
+        "fixed",
+        "fixed",
+        "fixed",
+        "fixed",
+        "fixed",
+        "fixed",
+        "fixed",
+        "fixed"
+      ],
+      "paletteTones": [
+        0,
+        0,
+        0,
+        0,
+        0,
+        0.35,
+        0.65,
+        0.85,
+        0.35,
+        0,
+        -0.3,
+        -0.55,
+        0.55,
+        -0.15,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0.35,
+        0,
+        -0.3,
+        -0.55,
+        0.2,
+        -0.12,
+        0.65,
+        -0.25,
+        0,
+        0
+      ],
+      "anchors": {
+        "attach": [
+          63,
+          74
+        ]
+      },
+      "clips": {
+        "idle": {
+          "frames": [
+            0
+          ],
+          "durationsMs": [
+            1000
+          ],
+          "loop": true
+        }
+      },
+      "exportMetrics": [
+        {
+          "sourceSheet": "accessories",
+          "sourceFrame": 2,
+          "sourceSize": [
+            340,
+            148
+          ],
+          "sourceOrigin": [
+            107,
+            690
+          ],
+          "sourceRegion": [
+            0,
+            512,
+            512,
+            512
+          ],
+          "sourceHash": "375777b302f4c95d462dd79b667700d7fad48c246aa2274c5e7faa509579474d",
+          "outputSize": [
+            15,
+            7
+          ],
+          "outputOrigin": [
+            53,
+            71
+          ],
+          "scale": 0.045,
+          "group": null
+        }
+      ]
+    },
+    {
+      "id": "projectile-cannon",
+      "kind": "projectile",
+      "file": "projectile-cannon.png",
+      "source": "projectile-cannon.ora",
+      "frameSize": [
+        192,
+        160
+      ],
+      "paletteRoles": [
+        "transparent",
+        "fixed",
+        "fixed",
+        "fixed",
+        "fixed",
+        "fixed",
+        "fixed",
+        "fixed",
+        "fixed",
+        "fixed",
+        "fixed",
+        "fixed",
+        "fixed",
+        "fixed",
+        "fixed",
+        "fixed",
+        "fixed",
+        "fixed",
+        "fixed",
+        "fixed",
+        "fixed",
+        "fixed",
+        "fixed",
+        "fixed",
+        "fixed",
+        "fixed",
+        "fixed",
+        "fixed",
+        "fixed",
+        "fixed",
+        "fixed",
+        "fixed"
+      ],
+      "paletteTones": [
+        0,
+        0,
+        0,
+        0,
+        0,
+        0.35,
+        0.65,
+        0.85,
+        0.35,
+        0,
+        -0.3,
+        -0.55,
+        0.55,
+        -0.15,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0.35,
+        0,
+        -0.3,
+        -0.55,
+        0.2,
+        -0.12,
+        0.65,
+        -0.25,
+        0,
+        0
+      ],
+      "anchors": {
+        "origin": [
+          96,
+          96
+        ]
+      },
+      "clips": {
+        "fly": {
+          "frames": [
+            0
+          ],
+          "durationsMs": [
+            1000
+          ],
+          "loop": true
+        }
+      },
+      "exportMetrics": [
+        {
+          "sourceSheet": "projectiles",
+          "sourceFrame": 0,
+          "sourceSize": [
+            201,
+            93
+          ],
+          "sourceOrigin": [
+            36,
+            273
+          ],
+          "sourceRegion": [
+            0,
+            0,
+            256,
+            512
+          ],
+          "sourceHash": "04ef7eab664ef6fa33bb219b72b3a52f955882e61f93200bb46c253d5603c60c",
+          "outputSize": [
+            24,
+            11
+          ],
+          "outputOrigin": [
+            84,
+            90
+          ],
+          "scale": 0.11940298507462686,
+          "group": null
+        }
+      ]
+    },
+    {
+      "id": "projectile-triple",
+      "kind": "projectile",
+      "file": "projectile-triple.png",
+      "source": "projectile-triple.ora",
+      "frameSize": [
+        192,
+        160
+      ],
+      "paletteRoles": [
+        "transparent",
+        "fixed",
+        "fixed",
+        "fixed",
+        "fixed",
+        "fixed",
+        "fixed",
+        "fixed",
+        "fixed",
+        "fixed",
+        "fixed",
+        "fixed",
+        "fixed",
+        "fixed",
+        "fixed",
+        "fixed",
+        "fixed",
+        "fixed",
+        "fixed",
+        "fixed",
+        "fixed",
+        "fixed",
+        "fixed",
+        "fixed",
+        "fixed",
+        "fixed",
+        "fixed",
+        "fixed",
+        "fixed",
+        "fixed",
+        "fixed",
+        "fixed"
+      ],
+      "paletteTones": [
+        0,
+        0,
+        0,
+        0,
+        0,
+        0.35,
+        0.65,
+        0.85,
+        0.35,
+        0,
+        -0.3,
+        -0.55,
+        0.55,
+        -0.15,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0.35,
+        0,
+        -0.3,
+        -0.55,
+        0.2,
+        -0.12,
+        0.65,
+        -0.25,
+        0,
+        0
+      ],
+      "anchors": {
+        "origin": [
+          96,
+          96
+        ]
+      },
+      "clips": {
+        "fly": {
+          "frames": [
+            0
+          ],
+          "durationsMs": [
+            1000
+          ],
+          "loop": true
+        }
+      },
+      "exportMetrics": [
+        {
+          "sourceSheet": "projectiles",
+          "sourceFrame": 1,
+          "sourceSize": [
+            169,
+            74
+          ],
+          "sourceOrigin": [
+            304,
+            285
+          ],
+          "sourceRegion": [
+            256,
+            0,
+            256,
+            512
+          ],
+          "sourceHash": "04ef7eab664ef6fa33bb219b72b3a52f955882e61f93200bb46c253d5603c60c",
+          "outputSize": [
+            9,
+            4
+          ],
+          "outputOrigin": [
+            92,
+            94
+          ],
+          "scale": 0.05325443786982249,
+          "group": null
+        }
+      ]
+    },
+    {
+      "id": "projectile-multiple",
+      "kind": "projectile",
+      "file": "projectile-multiple.png",
+      "source": "projectile-multiple.ora",
+      "frameSize": [
+        192,
+        160
+      ],
+      "paletteRoles": [
+        "transparent",
+        "fixed",
+        "fixed",
+        "fixed",
+        "fixed",
+        "fixed",
+        "fixed",
+        "fixed",
+        "fixed",
+        "fixed",
+        "fixed",
+        "fixed",
+        "fixed",
+        "fixed",
+        "fixed",
+        "fixed",
+        "fixed",
+        "fixed",
+        "fixed",
+        "fixed",
+        "fixed",
+        "fixed",
+        "fixed",
+        "fixed",
+        "fixed",
+        "fixed",
+        "fixed",
+        "fixed",
+        "fixed",
+        "fixed",
+        "fixed",
+        "fixed"
+      ],
+      "paletteTones": [
+        0,
+        0,
+        0,
+        0,
+        0,
+        0.35,
+        0.65,
+        0.85,
+        0.35,
+        0,
+        -0.3,
+        -0.55,
+        0.55,
+        -0.15,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0.35,
+        0,
+        -0.3,
+        -0.55,
+        0.2,
+        -0.12,
+        0.65,
+        -0.25,
+        0,
+        0
+      ],
+      "anchors": {
+        "origin": [
+          96,
+          96
+        ]
+      },
+      "clips": {
+        "fly": {
+          "frames": [
+            0
+          ],
+          "durationsMs": [
+            1000
+          ],
+          "loop": true
+        }
+      },
+      "exportMetrics": [
+        {
+          "sourceSheet": "projectiles",
+          "sourceFrame": 2,
+          "sourceSize": [
+            83,
+            78
+          ],
+          "sourceOrigin": [
+            594,
+            288
+          ],
+          "sourceRegion": [
+            512,
+            0,
+            238,
+            512
+          ],
+          "sourceHash": "04ef7eab664ef6fa33bb219b72b3a52f955882e61f93200bb46c253d5603c60c",
+          "outputSize": [
+            6,
+            6
+          ],
+          "outputOrigin": [
+            93,
+            93
+          ],
+          "scale": 0.07228915662650602,
+          "group": null
+        }
+      ]
+    },
+    {
+      "id": "projectile-drill",
+      "kind": "projectile",
+      "file": "projectile-drill.png",
+      "source": "projectile-drill.ora",
+      "frameSize": [
+        192,
+        160
+      ],
+      "paletteRoles": [
+        "transparent",
+        "fixed",
+        "fixed",
+        "fixed",
+        "fixed",
+        "fixed",
+        "fixed",
+        "fixed",
+        "fixed",
+        "fixed",
+        "fixed",
+        "fixed",
+        "fixed",
+        "fixed",
+        "fixed",
+        "fixed",
+        "fixed",
+        "fixed",
+        "fixed",
+        "fixed",
+        "fixed",
+        "fixed",
+        "fixed",
+        "fixed",
+        "fixed",
+        "fixed",
+        "fixed",
+        "fixed",
+        "fixed",
+        "fixed",
+        "fixed",
+        "fixed"
+      ],
+      "paletteTones": [
+        0,
+        0,
+        0,
+        0,
+        0,
+        0.35,
+        0.65,
+        0.85,
+        0.35,
+        0,
+        -0.3,
+        -0.55,
+        0.55,
+        -0.15,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0.35,
+        0,
+        -0.3,
+        -0.55,
+        0.2,
+        -0.12,
+        0.65,
+        -0.25,
+        0,
+        0
+      ],
+      "anchors": {
+        "origin": [
+          96,
+          96
+        ]
+      },
+      "clips": {
+        "fly": {
+          "frames": [
+            0
+          ],
+          "durationsMs": [
+            1000
+          ],
+          "loop": true
+        }
+      },
+      "exportMetrics": [
+        {
+          "sourceSheet": "projectiles",
+          "sourceFrame": 3,
+          "sourceSize": [
+            201,
+            107
+          ],
+          "sourceOrigin": [
+            792,
+            268
+          ],
+          "sourceRegion": [
+            750,
+            0,
+            274,
+            512
+          ],
+          "sourceHash": "04ef7eab664ef6fa33bb219b72b3a52f955882e61f93200bb46c253d5603c60c",
+          "outputSize": [
+            24,
+            13
+          ],
+          "outputOrigin": [
+            84,
+            90
+          ],
+          "scale": 0.11940298507462686,
+          "group": null
+        }
+      ]
+    },
+    {
+      "id": "projectile-laser",
+      "kind": "projectile",
+      "file": "projectile-laser.png",
+      "source": "projectile-laser.ora",
+      "frameSize": [
+        192,
+        160
+      ],
+      "paletteRoles": [
+        "transparent",
+        "fixed",
+        "fixed",
+        "fixed",
+        "fixed",
+        "fixed",
+        "fixed",
+        "fixed",
+        "fixed",
+        "fixed",
+        "fixed",
+        "fixed",
+        "fixed",
+        "fixed",
+        "fixed",
+        "fixed",
+        "fixed",
+        "fixed",
+        "fixed",
+        "fixed",
+        "fixed",
+        "fixed",
+        "fixed",
+        "fixed",
+        "fixed",
+        "fixed",
+        "fixed",
+        "fixed",
+        "fixed",
+        "fixed",
+        "fixed",
+        "fixed"
+      ],
+      "paletteTones": [
+        0,
+        0,
+        0,
+        0,
+        0,
+        0.35,
+        0.65,
+        0.85,
+        0.35,
+        0,
+        -0.3,
+        -0.55,
+        0.55,
+        -0.15,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0.35,
+        0,
+        -0.3,
+        -0.55,
+        0.2,
+        -0.12,
+        0.65,
+        -0.25,
+        0,
+        0
+      ],
+      "anchors": {
+        "origin": [
+          96,
+          96
+        ]
+      },
+      "clips": {
+        "fly": {
+          "frames": [
+            0
+          ],
+          "durationsMs": [
+            1000
+          ],
+          "loop": true
+        }
+      },
+      "exportMetrics": [
+        {
+          "sourceSheet": "ammo-revised",
+          "sourceFrame": 1,
+          "sourceSize": [
+            830,
+            119
+          ],
+          "sourceOrigin": [
+            97,
+            768
+          ],
+          "sourceRegion": [
+            0,
+            650,
+            1024,
+            374
+          ],
+          "sourceHash": "c317a1d64b9e2a79b9fe2a9a4fffc6c5458f7495e5892138de7483ccfb8e3ac2",
+          "outputSize": [
+            36,
+            5
+          ],
+          "outputOrigin": [
+            78,
+            93
+          ],
+          "scale": 0.043373493975903614,
+          "group": null
+        }
+      ]
+    },
+    {
+      "id": "projectile-digger",
+      "kind": "projectile",
+      "file": "projectile-digger.png",
+      "source": "projectile-digger.ora",
+      "frameSize": [
+        192,
+        160
+      ],
+      "paletteRoles": [
+        "transparent",
+        "fixed",
+        "fixed",
+        "fixed",
+        "fixed",
+        "fixed",
+        "fixed",
+        "fixed",
+        "fixed",
+        "fixed",
+        "fixed",
+        "fixed",
+        "fixed",
+        "fixed",
+        "fixed",
+        "fixed",
+        "fixed",
+        "fixed",
+        "fixed",
+        "fixed",
+        "fixed",
+        "fixed",
+        "fixed",
+        "fixed",
+        "fixed",
+        "fixed",
+        "fixed",
+        "fixed",
+        "fixed",
+        "fixed",
+        "fixed",
+        "fixed"
+      ],
+      "paletteTones": [
+        0,
+        0,
+        0,
+        0,
+        0,
+        0.35,
+        0.65,
+        0.85,
+        0.35,
+        0,
+        -0.3,
+        -0.55,
+        0.55,
+        -0.15,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0.35,
+        0,
+        -0.3,
+        -0.55,
+        0.2,
+        -0.12,
+        0.65,
+        -0.25,
+        0,
+        0
+      ],
+      "anchors": {
+        "origin": [
+          96,
+          96
+        ]
+      },
+      "clips": {
+        "fly": {
+          "frames": [
+            0
+          ],
+          "durationsMs": [
+            1000
+          ],
+          "loop": true
+        }
+      },
+      "exportMetrics": [
+        {
+          "sourceSheet": "ammo-revised",
+          "sourceFrame": 0,
+          "sourceSize": [
+            443,
+            489
+          ],
+          "sourceOrigin": [
+            327,
+            101
+          ],
+          "sourceRegion": [
+            0,
+            0,
+            1024,
+            650
+          ],
+          "sourceHash": "c317a1d64b9e2a79b9fe2a9a4fffc6c5458f7495e5892138de7483ccfb8e3ac2",
+          "outputSize": [
+            26,
+            29
+          ],
+          "outputOrigin": [
+            86,
+            78
+          ],
+          "scale": 0.05869074492099323,
+          "group": null
+        }
+      ]
+    },
+    {
+      "id": "projectile-floater",
+      "kind": "projectile",
+      "file": "projectile-floater.png",
+      "source": "projectile-floater.ora",
+      "frameSize": [
+        192,
+        160
+      ],
+      "paletteRoles": [
+        "transparent",
+        "fixed",
+        "fixed",
+        "fixed",
+        "fixed",
+        "fixed",
+        "fixed",
+        "fixed",
+        "fixed",
+        "fixed",
+        "fixed",
+        "fixed",
+        "fixed",
+        "fixed",
+        "fixed",
+        "fixed",
+        "fixed",
+        "fixed",
+        "fixed",
+        "fixed",
+        "fixed",
+        "fixed",
+        "fixed",
+        "fixed",
+        "fixed",
+        "fixed",
+        "fixed",
+        "fixed",
+        "fixed",
+        "fixed",
+        "fixed",
+        "fixed"
+      ],
+      "paletteTones": [
+        0,
+        0,
+        0,
+        0,
+        0,
+        0.35,
+        0.65,
+        0.85,
+        0.35,
+        0,
+        -0.3,
+        -0.55,
+        0.55,
+        -0.15,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0.35,
+        0,
+        -0.3,
+        -0.55,
+        0.2,
+        -0.12,
+        0.65,
+        -0.25,
+        0,
+        0
+      ],
+      "anchors": {
+        "origin": [
+          96,
+          96
+        ]
+      },
+      "clips": {
+        "fly": {
+          "frames": [
+            0
+          ],
+          "durationsMs": [
+            1000
+          ],
+          "loop": true
+        }
+      },
+      "exportMetrics": [
+        {
+          "sourceSheet": "projectiles",
+          "sourceFrame": 6,
+          "sourceSize": [
+            127,
+            123
+          ],
+          "sourceOrigin": [
+            572,
+            692
+          ],
+          "sourceRegion": [
+            512,
+            512,
+            238,
+            512
+          ],
+          "sourceHash": "04ef7eab664ef6fa33bb219b72b3a52f955882e61f93200bb46c253d5603c60c",
+          "outputSize": [
+            18,
+            17
+          ],
+          "outputOrigin": [
+            87,
+            87
+          ],
+          "scale": 0.14173228346456693,
+          "group": null
+        }
+      ]
+    },
+    {
+      "id": "projectile-stinger",
+      "kind": "projectile",
+      "file": "projectile-stinger.png",
+      "source": "projectile-stinger.ora",
+      "frameSize": [
+        192,
+        160
+      ],
+      "paletteRoles": [
+        "transparent",
+        "fixed",
+        "fixed",
+        "fixed",
+        "fixed",
+        "fixed",
+        "fixed",
+        "fixed",
+        "fixed",
+        "fixed",
+        "fixed",
+        "fixed",
+        "fixed",
+        "fixed",
+        "fixed",
+        "fixed",
+        "fixed",
+        "fixed",
+        "fixed",
+        "fixed",
+        "fixed",
+        "fixed",
+        "fixed",
+        "fixed",
+        "fixed",
+        "fixed",
+        "fixed",
+        "fixed",
+        "fixed",
+        "fixed",
+        "fixed",
+        "fixed"
+      ],
+      "paletteTones": [
+        0,
+        0,
+        0,
+        0,
+        0,
+        0.35,
+        0.65,
+        0.85,
+        0.35,
+        0,
+        -0.3,
+        -0.55,
+        0.55,
+        -0.15,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0.35,
+        0,
+        -0.3,
+        -0.55,
+        0.2,
+        -0.12,
+        0.65,
+        -0.25,
+        0,
+        0
+      ],
+      "anchors": {
+        "origin": [
+          96,
+          96
+        ]
+      },
+      "clips": {
+        "fly": {
+          "frames": [
+            0
+          ],
+          "durationsMs": [
+            1000
+          ],
+          "loop": true
+        }
+      },
+      "exportMetrics": [
+        {
+          "sourceSheet": "projectiles",
+          "sourceFrame": 7,
+          "sourceSize": [
+            237,
+            54
+          ],
+          "sourceOrigin": [
+            766,
+            726
+          ],
+          "sourceRegion": [
+            750,
+            512,
+            274,
+            512
+          ],
+          "sourceHash": "04ef7eab664ef6fa33bb219b72b3a52f955882e61f93200bb46c253d5603c60c",
+          "outputSize": [
+            32,
+            7
+          ],
+          "outputOrigin": [
+            80,
+            92
+          ],
+          "scale": 0.1350210970464135,
+          "group": null
+        }
+      ]
+    },
+    {
+      "id": "effect-explosion",
+      "kind": "effect",
+      "file": "effect-explosion.png",
+      "source": "effect-explosion.ora",
+      "frameSize": [
+        192,
+        160
+      ],
+      "paletteRoles": [
+        "transparent",
+        "fixed",
+        "fixed",
+        "fixed",
+        "fixed",
+        "fixed",
+        "fixed",
+        "fixed",
+        "fixed",
+        "fixed",
+        "fixed",
+        "fixed",
+        "fixed",
+        "fixed",
+        "fixed",
+        "fixed",
+        "fixed",
+        "fixed",
+        "fixed",
+        "fixed",
+        "fixed",
+        "fixed",
+        "fixed",
+        "fixed",
+        "fixed",
+        "fixed",
+        "fixed",
+        "fixed",
+        "fixed",
+        "fixed",
+        "fixed",
+        "fixed"
+      ],
+      "paletteTones": [
+        0,
+        0,
+        0,
+        0,
+        0,
+        0.35,
+        0.65,
+        0.85,
+        0.35,
+        0,
+        -0.3,
+        -0.55,
+        0.55,
+        -0.15,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0.35,
+        0,
+        -0.3,
+        -0.55,
+        0.2,
+        -0.12,
+        0.65,
+        -0.25,
+        0,
+        0
+      ],
+      "anchors": {
+        "origin": [
+          96,
+          96
+        ]
+      },
+      "clips": {
+        "play": {
+          "frames": [
+            0,
+            1,
+            2,
+            3
+          ],
+          "durationsMs": [
+            70,
+            120,
+            220,
+            180
+          ],
+          "loop": false
+        }
+      },
+      "exportMetrics": [
+        {
+          "sourceSheet": "effects-v2",
+          "sourceFrame": 0,
+          "sourceSize": [
+            82,
+            78
+          ],
+          "sourceOrigin": [
+            92,
+            158
+          ],
+          "sourceRegion": [
+            0,
+            0,
+            256,
+            320
+          ],
+          "sourceHash": "29c206abe6dc4bbdc962f930dc02a351fccfc7a9daba65d758d4738060c6393d",
+          "outputSize": [
+            41,
+            39
+          ],
+          "outputOrigin": [
+            78,
+            73
+          ],
+          "scale": 0.5,
+          "group": "explosion"
+        },
+        {
+          "sourceSheet": "effects-v2",
+          "sourceFrame": 1,
+          "sourceSize": [
+            156,
+            122
+          ],
+          "sourceOrigin": [
+            295,
+            137
+          ],
+          "sourceRegion": [
+            256,
+            0,
+            256,
+            320
+          ],
+          "sourceHash": "29c206abe6dc4bbdc962f930dc02a351fccfc7a9daba65d758d4738060c6393d",
+          "outputSize": [
+            78,
+            61
+          ],
+          "outputOrigin": [
+            52,
+            62
+          ],
+          "scale": 0.5,
+          "group": "explosion"
+        },
+        {
+          "sourceSheet": "effects-v2",
+          "sourceFrame": 2,
+          "sourceSize": [
+            204,
+            170
+          ],
+          "sourceOrigin": [
+            528,
+            99
+          ],
+          "sourceRegion": [
+            512,
+            0,
+            256,
+            320
+          ],
+          "sourceHash": "29c206abe6dc4bbdc962f930dc02a351fccfc7a9daba65d758d4738060c6393d",
+          "outputSize": [
+            102,
+            85
+          ],
+          "outputOrigin": [
+            40,
+            43
+          ],
+          "scale": 0.5,
+          "group": "explosion"
+        },
+        {
+          "sourceSheet": "effects-v2",
+          "sourceFrame": 3,
+          "sourceSize": [
+            169,
+            139
+          ],
+          "sourceOrigin": [
+            817,
+            126
+          ],
+          "sourceRegion": [
+            768,
+            0,
+            256,
+            320
+          ],
+          "sourceHash": "29c206abe6dc4bbdc962f930dc02a351fccfc7a9daba65d758d4738060c6393d",
+          "outputSize": [
+            85,
+            70
+          ],
+          "outputOrigin": [
+            57,
+            57
+          ],
+          "scale": 0.5,
+          "group": "explosion"
+        }
+      ]
+    },
+    {
+      "id": "effect-smoke",
+      "kind": "effect",
+      "file": "effect-smoke.png",
+      "source": "effect-smoke.ora",
+      "frameSize": [
+        192,
+        160
+      ],
+      "paletteRoles": [
+        "transparent",
+        "fixed",
+        "fixed",
+        "fixed",
+        "fixed",
+        "fixed",
+        "fixed",
+        "fixed",
+        "fixed",
+        "fixed",
+        "fixed",
+        "fixed",
+        "fixed",
+        "fixed",
+        "fixed",
+        "fixed",
+        "fixed",
+        "fixed",
+        "fixed",
+        "fixed",
+        "fixed",
+        "fixed",
+        "fixed",
+        "fixed",
+        "fixed",
+        "fixed",
+        "fixed",
+        "fixed",
+        "fixed",
+        "fixed",
+        "fixed",
+        "fixed"
+      ],
+      "paletteTones": [
+        0,
+        0,
+        0,
+        0,
+        0,
+        0.35,
+        0.65,
+        0.85,
+        0.35,
+        0,
+        -0.3,
+        -0.55,
+        0.55,
+        -0.15,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0.35,
+        0,
+        -0.3,
+        -0.55,
+        0.2,
+        -0.12,
+        0.65,
+        -0.25,
+        0,
+        0
+      ],
+      "anchors": {
+        "origin": [
+          96,
+          96
+        ]
+      },
+      "clips": {
+        "play": {
+          "frames": [
+            0,
+            1,
+            2,
+            3
+          ],
+          "durationsMs": [
+            150,
+            200,
+            250,
+            300
+          ],
+          "loop": true
+        }
+      },
+      "exportMetrics": [
+        {
+          "sourceSheet": "effects-v2",
+          "sourceFrame": 4,
+          "sourceSize": [
+            78,
+            48
+          ],
+          "sourceOrigin": [
+            92,
+            462
+          ],
+          "sourceRegion": [
+            0,
+            320,
+            256,
+            230
+          ],
+          "sourceHash": "29c206abe6dc4bbdc962f930dc02a351fccfc7a9daba65d758d4738060c6393d",
+          "outputSize": [
+            23,
+            14
+          ],
+          "outputOrigin": [
+            85,
+            85
+          ],
+          "scale": 0.3,
+          "group": "smoke"
+        },
+        {
+          "sourceSheet": "effects-v2",
+          "sourceFrame": 5,
+          "sourceSize": [
+            139,
+            85
+          ],
+          "sourceOrigin": [
+            295,
+            428
+          ],
+          "sourceRegion": [
+            256,
+            320,
+            256,
+            230
+          ],
+          "sourceHash": "29c206abe6dc4bbdc962f930dc02a351fccfc7a9daba65d758d4738060c6393d",
+          "outputSize": [
+            42,
+            26
+          ],
+          "outputOrigin": [
+            69,
+            74
+          ],
+          "scale": 0.3,
+          "group": "smoke"
+        },
+        {
+          "sourceSheet": "effects-v2",
+          "sourceFrame": 6,
+          "sourceSize": [
+            208,
+            126
+          ],
+          "sourceOrigin": [
+            526,
+            391
+          ],
+          "sourceRegion": [
+            512,
+            320,
+            256,
+            230
+          ],
+          "sourceHash": "29c206abe6dc4bbdc962f930dc02a351fccfc7a9daba65d758d4738060c6393d",
+          "outputSize": [
+            62,
+            38
+          ],
+          "outputOrigin": [
+            62,
+            63
+          ],
+          "scale": 0.3,
+          "group": "smoke"
+        },
+        {
+          "sourceSheet": "effects-v2",
+          "sourceFrame": 7,
+          "sourceSize": [
+            172,
+            100
+          ],
+          "sourceOrigin": [
+            813,
+            384
+          ],
+          "sourceRegion": [
+            768,
+            320,
+            256,
+            230
+          ],
+          "sourceHash": "29c206abe6dc4bbdc962f930dc02a351fccfc7a9daba65d758d4738060c6393d",
+          "outputSize": [
+            52,
+            30
+          ],
+          "outputOrigin": [
+            71,
+            61
+          ],
+          "scale": 0.3,
+          "group": "smoke"
+        }
+      ]
+    },
+    {
+      "id": "effect-muzzle",
+      "kind": "effect",
+      "file": "effect-muzzle.png",
+      "source": "effect-muzzle.ora",
+      "frameSize": [
+        192,
+        160
+      ],
+      "paletteRoles": [
+        "transparent",
+        "fixed",
+        "fixed",
+        "fixed",
+        "fixed",
+        "fixed",
+        "fixed",
+        "fixed",
+        "fixed",
+        "fixed",
+        "fixed",
+        "fixed",
+        "fixed",
+        "fixed",
+        "fixed",
+        "fixed",
+        "fixed",
+        "fixed",
+        "fixed",
+        "fixed",
+        "fixed",
+        "fixed",
+        "fixed",
+        "fixed",
+        "fixed",
+        "fixed",
+        "fixed",
+        "fixed",
+        "fixed",
+        "fixed",
+        "fixed",
+        "fixed"
+      ],
+      "paletteTones": [
+        0,
+        0,
+        0,
+        0,
+        0,
+        0.35,
+        0.65,
+        0.85,
+        0.35,
+        0,
+        -0.3,
+        -0.55,
+        0.55,
+        -0.15,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0.35,
+        0,
+        -0.3,
+        -0.55,
+        0.2,
+        -0.12,
+        0.65,
+        -0.25,
+        0,
+        0
+      ],
+      "anchors": {
+        "origin": [
+          96,
+          96
+        ]
+      },
+      "clips": {
+        "play": {
+          "frames": [
+            0,
+            1,
+            2,
+            3
+          ],
+          "durationsMs": [
+            25,
+            35,
+            40,
+            40
+          ],
+          "loop": false
+        }
+      },
+      "exportMetrics": [
+        {
+          "sourceSheet": "effects-v2",
+          "sourceFrame": 8,
+          "sourceSize": [
+            81,
+            64
+          ],
+          "sourceOrigin": [
+            88,
+            623
+          ],
+          "sourceRegion": [
+            0,
+            550,
+            256,
+            200
+          ],
+          "sourceHash": "29c206abe6dc4bbdc962f930dc02a351fccfc7a9daba65d758d4738060c6393d",
+          "outputSize": [
+            14,
+            11
+          ],
+          "outputOrigin": [
+            96,
+            90
+          ],
+          "scale": 0.17,
+          "group": "muzzle"
+        },
+        {
+          "sourceSheet": "effects-v2",
+          "sourceFrame": 9,
+          "sourceSize": [
+            203,
+            62
+          ],
+          "sourceOrigin": [
+            288,
+            625
+          ],
+          "sourceRegion": [
+            256,
+            550,
+            256,
+            200
+          ],
+          "sourceHash": "29c206abe6dc4bbdc962f930dc02a351fccfc7a9daba65d758d4738060c6393d",
+          "outputSize": [
+            35,
+            11
+          ],
+          "outputOrigin": [
+            96,
+            91
+          ],
+          "scale": 0.17,
+          "group": "muzzle"
+        },
+        {
+          "sourceSheet": "effects-v2",
+          "sourceFrame": 10,
+          "sourceSize": [
+            179,
+            54
+          ],
+          "sourceOrigin": [
+            568,
+            633
+          ],
+          "sourceRegion": [
+            512,
+            550,
+            256,
+            200
+          ],
+          "sourceHash": "29c206abe6dc4bbdc962f930dc02a351fccfc7a9daba65d758d4738060c6393d",
+          "outputSize": [
+            30,
+            9
+          ],
+          "outputOrigin": [
+            96,
+            92
+          ],
+          "scale": 0.17,
+          "group": "muzzle"
+        },
+        {
+          "sourceSheet": "effects-v2",
+          "sourceFrame": 11,
+          "sourceSize": [
+            82,
+            65
+          ],
+          "sourceOrigin": [
+            862,
+            631
+          ],
+          "sourceRegion": [
+            768,
+            550,
+            256,
+            200
+          ],
+          "sourceHash": "29c206abe6dc4bbdc962f930dc02a351fccfc7a9daba65d758d4738060c6393d",
+          "outputSize": [
+            14,
+            11
+          ],
+          "outputOrigin": [
+            107,
+            92
+          ],
+          "scale": 0.17,
+          "group": "muzzle"
+        }
+      ]
+    },
+    {
+      "id": "effect-spark",
+      "kind": "effect",
+      "file": "effect-spark.png",
+      "source": "effect-spark.ora",
+      "frameSize": [
+        192,
+        160
+      ],
+      "paletteRoles": [
+        "transparent",
+        "fixed",
+        "fixed",
+        "fixed",
+        "fixed",
+        "fixed",
+        "fixed",
+        "fixed",
+        "fixed",
+        "fixed",
+        "fixed",
+        "fixed",
+        "fixed",
+        "fixed",
+        "fixed",
+        "fixed",
+        "fixed",
+        "fixed",
+        "fixed",
+        "fixed",
+        "fixed",
+        "fixed",
+        "fixed",
+        "fixed",
+        "fixed",
+        "fixed",
+        "fixed",
+        "fixed",
+        "fixed",
+        "fixed",
+        "fixed",
+        "fixed"
+      ],
+      "paletteTones": [
+        0,
+        0,
+        0,
+        0,
+        0,
+        0.35,
+        0.65,
+        0.85,
+        0.35,
+        0,
+        -0.3,
+        -0.55,
+        0.55,
+        -0.15,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0.35,
+        0,
+        -0.3,
+        -0.55,
+        0.2,
+        -0.12,
+        0.65,
+        -0.25,
+        0,
+        0
+      ],
+      "anchors": {
+        "origin": [
+          96,
+          96
+        ]
+      },
+      "clips": {
+        "play": {
+          "frames": [
+            0,
+            1,
+            2,
+            3
+          ],
+          "durationsMs": [
+            40,
+            60,
+            80,
+            120
+          ],
+          "loop": false
+        }
+      },
+      "exportMetrics": [
+        {
+          "sourceSheet": "effects-v2",
+          "sourceFrame": 12,
+          "sourceSize": [
+            77,
+            75
+          ],
+          "sourceOrigin": [
+            92,
+            833
+          ],
+          "sourceRegion": [
+            0,
+            750,
+            256,
+            274
+          ],
+          "sourceHash": "29c206abe6dc4bbdc962f930dc02a351fccfc7a9daba65d758d4738060c6393d",
+          "outputSize": [
+            13,
+            13
+          ],
+          "outputOrigin": [
+            90,
+            90
+          ],
+          "scale": 0.17,
+          "group": "spark"
+        },
+        {
+          "sourceSheet": "effects-v2",
+          "sourceFrame": 13,
+          "sourceSize": [
+            147,
+            115
+          ],
+          "sourceOrigin": [
+            305,
+            812
+          ],
+          "sourceRegion": [
+            256,
+            750,
+            256,
+            274
+          ],
+          "sourceHash": "29c206abe6dc4bbdc962f930dc02a351fccfc7a9daba65d758d4738060c6393d",
+          "outputSize": [
+            25,
+            20
+          ],
+          "outputOrigin": [
+            83,
+            86
+          ],
+          "scale": 0.17,
+          "group": "spark"
+        },
+        {
+          "sourceSheet": "effects-v2",
+          "sourceFrame": 14,
+          "sourceSize": [
+            166,
+            118
+          ],
+          "sourceOrigin": [
+            563,
+            812
+          ],
+          "sourceRegion": [
+            512,
+            750,
+            256,
+            274
+          ],
+          "sourceHash": "29c206abe6dc4bbdc962f930dc02a351fccfc7a9daba65d758d4738060c6393d",
+          "outputSize": [
+            28,
+            20
+          ],
+          "outputOrigin": [
+            83,
+            86
+          ],
+          "scale": 0.17,
+          "group": "spark"
+        },
+        {
+          "sourceSheet": "effects-v2",
+          "sourceFrame": 15,
+          "sourceSize": [
+            108,
+            76
+          ],
+          "sourceOrigin": [
+            850,
+            832
+          ],
+          "sourceRegion": [
+            768,
+            750,
+            256,
+            274
+          ],
+          "sourceHash": "29c206abe6dc4bbdc962f930dc02a351fccfc7a9daba65d758d4738060c6393d",
+          "outputSize": [
+            18,
+            13
+          ],
+          "outputOrigin": [
+            88,
+            90
+          ],
+          "scale": 0.17,
+          "group": "spark"
+        }
+      ]
+    },
+    {
+      "id": "effect-dust",
+      "kind": "effect",
+      "file": "effect-dust.png",
+      "source": "effect-dust.ora",
+      "frameSize": [
+        192,
+        160
+      ],
+      "paletteRoles": [
+        "transparent",
+        "fixed",
+        "fixed",
+        "fixed",
+        "fixed",
+        "fixed",
+        "fixed",
+        "fixed",
+        "fixed",
+        "fixed",
+        "fixed",
+        "fixed",
+        "fixed",
+        "fixed",
+        "fixed",
+        "fixed",
+        "fixed",
+        "fixed",
+        "fixed",
+        "fixed",
+        "fixed",
+        "fixed",
+        "fixed",
+        "fixed",
+        "fixed",
+        "fixed",
+        "fixed",
+        "fixed",
+        "fixed",
+        "fixed",
+        "fixed",
+        "fixed"
+      ],
+      "paletteTones": [
+        0,
+        0,
+        0,
+        0,
+        0,
+        0.35,
+        0.65,
+        0.85,
+        0.35,
+        0,
+        -0.3,
+        -0.55,
+        0.55,
+        -0.15,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0.35,
+        0,
+        -0.3,
+        -0.55,
+        0.2,
+        -0.12,
+        0.65,
+        -0.25,
+        0,
+        0
+      ],
+      "anchors": {
+        "origin": [
+          96,
+          96
+        ]
+      },
+      "clips": {
+        "play": {
+          "frames": [
+            0,
+            1,
+            2,
+            3
+          ],
+          "durationsMs": [
+            60,
+            100,
+            130,
+            160
+          ],
+          "loop": false
+        }
+      },
+      "exportMetrics": [
+        {
+          "sourceSheet": "effects-extra",
+          "sourceFrame": 0,
+          "sourceSize": [
+            124,
+            50
+          ],
+          "sourceOrigin": [
+            57,
+            198
+          ],
+          "sourceRegion": [
+            0,
+            0,
+            256,
+            256
+          ],
+          "sourceHash": "5379373c35ff1051e64f60e2b6e10c63d78ab06288b6e940471111d34d07689e",
+          "outputSize": [
+            43,
+            18
+          ],
+          "outputOrigin": [
+            71,
+            80
+          ],
+          "scale": 0.35,
+          "group": "dust"
+        },
+        {
+          "sourceSheet": "effects-extra",
+          "sourceFrame": 1,
+          "sourceSize": [
+            205,
+            82
+          ],
+          "sourceOrigin": [
+            287,
+            166
+          ],
+          "sourceRegion": [
+            256,
+            0,
+            256,
+            256
+          ],
+          "sourceHash": "5379373c35ff1051e64f60e2b6e10c63d78ab06288b6e940471111d34d07689e",
+          "outputSize": [
+            72,
+            29
+          ],
+          "outputOrigin": [
+            62,
+            68
+          ],
+          "scale": 0.35,
+          "group": "dust"
+        },
+        {
+          "sourceSheet": "effects-extra",
+          "sourceFrame": 2,
+          "sourceSize": [
+            209,
+            133
+          ],
+          "sourceOrigin": [
+            534,
+            115
+          ],
+          "sourceRegion": [
+            512,
+            0,
+            256,
+            256
+          ],
+          "sourceHash": "5379373c35ff1051e64f60e2b6e10c63d78ab06288b6e940471111d34d07689e",
+          "outputSize": [
+            73,
+            47
+          ],
+          "outputOrigin": [
+            59,
+            51
+          ],
+          "scale": 0.35,
+          "group": "dust"
+        },
+        {
+          "sourceSheet": "effects-extra",
+          "sourceFrame": 3,
+          "sourceSize": [
+            178,
+            112
+          ],
+          "sourceOrigin": [
+            804,
+            135
+          ],
+          "sourceRegion": [
+            768,
+            0,
+            256,
+            256
+          ],
+          "sourceHash": "5379373c35ff1051e64f60e2b6e10c63d78ab06288b6e940471111d34d07689e",
+          "outputSize": [
+            62,
+            39
+          ],
+          "outputOrigin": [
+            64,
+            58
+          ],
+          "scale": 0.35,
+          "group": "dust"
+        }
+      ]
+    },
+    {
+      "id": "effect-energy",
+      "kind": "effect",
+      "file": "effect-energy.png",
+      "source": "effect-energy.ora",
+      "frameSize": [
+        192,
+        160
+      ],
+      "paletteRoles": [
+        "transparent",
+        "fixed",
+        "fixed",
+        "fixed",
+        "fixed",
+        "fixed",
+        "fixed",
+        "fixed",
+        "fixed",
+        "fixed",
+        "fixed",
+        "fixed",
+        "fixed",
+        "fixed",
+        "fixed",
+        "fixed",
+        "fixed",
+        "fixed",
+        "fixed",
+        "fixed",
+        "fixed",
+        "fixed",
+        "fixed",
+        "fixed",
+        "fixed",
+        "fixed",
+        "fixed",
+        "fixed",
+        "fixed",
+        "fixed",
+        "fixed",
+        "fixed"
+      ],
+      "paletteTones": [
+        0,
+        0,
+        0,
+        0,
+        0,
+        0.35,
+        0.65,
+        0.85,
+        0.35,
+        0,
+        -0.3,
+        -0.55,
+        0.55,
+        -0.15,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0.35,
+        0,
+        -0.3,
+        -0.55,
+        0.2,
+        -0.12,
+        0.65,
+        -0.25,
+        0,
+        0
+      ],
+      "anchors": {
+        "origin": [
+          96,
+          96
+        ]
+      },
+      "clips": {
+        "play": {
+          "frames": [
+            0,
+            1,
+            2,
+            3
+          ],
+          "durationsMs": [
+            50,
+            90,
+            150,
+            220
+          ],
+          "loop": false
+        }
+      },
+      "exportMetrics": [
+        {
+          "sourceSheet": "effects-extra",
+          "sourceFrame": 4,
+          "sourceSize": [
+            80,
+            69
+          ],
+          "sourceOrigin": [
+            87,
+            392
+          ],
+          "sourceRegion": [
+            0,
+            256,
+            256,
+            256
+          ],
+          "sourceHash": "5379373c35ff1051e64f60e2b6e10c63d78ab06288b6e940471111d34d07689e",
+          "outputSize": [
+            20,
+            17
+          ],
+          "outputOrigin": [
+            86,
+            87
+          ],
+          "scale": 0.25,
+          "group": "energy"
+        },
+        {
+          "sourceSheet": "effects-extra",
+          "sourceFrame": 5,
+          "sourceSize": [
+            157,
+            146
+          ],
+          "sourceOrigin": [
+            306,
+            354
+          ],
+          "sourceRegion": [
+            256,
+            256,
+            256,
+            256
+          ],
+          "sourceHash": "5379373c35ff1051e64f60e2b6e10c63d78ab06288b6e940471111d34d07689e",
+          "outputSize": [
+            39,
+            37
+          ],
+          "outputOrigin": [
+            77,
+            77
+          ],
+          "scale": 0.25,
+          "group": "energy"
+        },
+        {
+          "sourceSheet": "effects-extra",
+          "sourceFrame": 6,
+          "sourceSize": [
+            217,
+            191
+          ],
+          "sourceOrigin": [
+            529,
+            316
+          ],
+          "sourceRegion": [
+            512,
+            256,
+            256,
+            256
+          ],
+          "sourceHash": "5379373c35ff1051e64f60e2b6e10c63d78ab06288b6e940471111d34d07689e",
+          "outputSize": [
+            54,
+            48
+          ],
+          "outputOrigin": [
+            68,
+            68
+          ],
+          "scale": 0.25,
+          "group": "energy"
+        },
+        {
+          "sourceSheet": "effects-extra",
+          "sourceFrame": 7,
+          "sourceSize": [
+            195,
+            188
+          ],
+          "sourceOrigin": [
+            795,
+            322
+          ],
+          "sourceRegion": [
+            768,
+            256,
+            256,
+            256
+          ],
+          "sourceHash": "5379373c35ff1051e64f60e2b6e10c63d78ab06288b6e940471111d34d07689e",
+          "outputSize": [
+            49,
+            47
+          ],
+          "outputOrigin": [
+            71,
+            69
+          ],
+          "scale": 0.25,
+          "group": "energy"
+        }
+      ]
+    },
+    {
+      "id": "effect-drill",
+      "kind": "effect",
+      "file": "effect-drill.png",
+      "source": "effect-drill.ora",
+      "frameSize": [
+        192,
+        160
+      ],
+      "paletteRoles": [
+        "transparent",
+        "fixed",
+        "fixed",
+        "fixed",
+        "fixed",
+        "fixed",
+        "fixed",
+        "fixed",
+        "fixed",
+        "fixed",
+        "fixed",
+        "fixed",
+        "fixed",
+        "fixed",
+        "fixed",
+        "fixed",
+        "fixed",
+        "fixed",
+        "fixed",
+        "fixed",
+        "fixed",
+        "fixed",
+        "fixed",
+        "fixed",
+        "fixed",
+        "fixed",
+        "fixed",
+        "fixed",
+        "fixed",
+        "fixed",
+        "fixed",
+        "fixed"
+      ],
+      "paletteTones": [
+        0,
+        0,
+        0,
+        0,
+        0,
+        0.35,
+        0.65,
+        0.85,
+        0.35,
+        0,
+        -0.3,
+        -0.55,
+        0.55,
+        -0.15,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0.35,
+        0,
+        -0.3,
+        -0.55,
+        0.2,
+        -0.12,
+        0.65,
+        -0.25,
+        0,
+        0
+      ],
+      "anchors": {
+        "origin": [
+          96,
+          96
+        ]
+      },
+      "clips": {
+        "play": {
+          "frames": [
+            0,
+            1,
+            2,
+            3
+          ],
+          "durationsMs": [
+            50,
+            90,
+            150,
+            220
+          ],
+          "loop": false
+        }
+      },
+      "exportMetrics": [
+        {
+          "sourceSheet": "effects-extra",
+          "sourceFrame": 8,
+          "sourceSize": [
+            74,
+            85
+          ],
+          "sourceOrigin": [
+            86,
+            637
+          ],
+          "sourceRegion": [
+            0,
+            550,
+            256,
+            218
+          ],
+          "sourceHash": "5379373c35ff1051e64f60e2b6e10c63d78ab06288b6e940471111d34d07689e",
+          "outputSize": [
+            16,
+            19
+          ],
+          "outputOrigin": [
+            87,
+            85
+          ],
+          "scale": 0.22,
+          "group": "drill"
+        },
+        {
+          "sourceSheet": "effects-extra",
+          "sourceFrame": 9,
+          "sourceSize": [
+            172,
+            154
+          ],
+          "sourceOrigin": [
+            301,
+            594
+          ],
+          "sourceRegion": [
+            256,
+            550,
+            256,
+            218
+          ],
+          "sourceHash": "5379373c35ff1051e64f60e2b6e10c63d78ab06288b6e940471111d34d07689e",
+          "outputSize": [
+            38,
+            34
+          ],
+          "outputOrigin": [
+            78,
+            76
+          ],
+          "scale": 0.22,
+          "group": "drill"
+        },
+        {
+          "sourceSheet": "effects-extra",
+          "sourceFrame": 10,
+          "sourceSize": [
+            207,
+            173
+          ],
+          "sourceOrigin": [
+            534,
+            582
+          ],
+          "sourceRegion": [
+            512,
+            550,
+            256,
+            218
+          ],
+          "sourceHash": "5379373c35ff1051e64f60e2b6e10c63d78ab06288b6e940471111d34d07689e",
+          "outputSize": [
+            46,
+            38
+          ],
+          "outputOrigin": [
+            73,
+            73
+          ],
+          "scale": 0.22,
+          "group": "drill"
+        },
+        {
+          "sourceSheet": "effects-extra",
+          "sourceFrame": 11,
+          "sourceSize": [
+            170,
+            116
+          ],
+          "sourceOrigin": [
+            817,
+            605
+          ],
+          "sourceRegion": [
+            768,
+            550,
+            256,
+            218
+          ],
+          "sourceHash": "5379373c35ff1051e64f60e2b6e10c63d78ab06288b6e940471111d34d07689e",
+          "outputSize": [
+            37,
+            26
+          ],
+          "outputOrigin": [
+            79,
+            78
+          ],
+          "scale": 0.22,
+          "group": "drill"
+        }
+      ]
+    },
+    {
+      "id": "effect-dig",
+      "kind": "effect",
+      "file": "effect-dig.png",
+      "source": "effect-dig.ora",
+      "frameSize": [
+        192,
+        160
+      ],
+      "paletteRoles": [
+        "transparent",
+        "fixed",
+        "fixed",
+        "fixed",
+        "fixed",
+        "fixed",
+        "fixed",
+        "fixed",
+        "fixed",
+        "fixed",
+        "fixed",
+        "fixed",
+        "fixed",
+        "fixed",
+        "fixed",
+        "fixed",
+        "fixed",
+        "fixed",
+        "fixed",
+        "fixed",
+        "fixed",
+        "fixed",
+        "fixed",
+        "fixed",
+        "fixed",
+        "fixed",
+        "fixed",
+        "fixed",
+        "fixed",
+        "fixed",
+        "fixed",
+        "fixed"
+      ],
+      "paletteTones": [
+        0,
+        0,
+        0,
+        0,
+        0,
+        0.35,
+        0.65,
+        0.85,
+        0.35,
+        0,
+        -0.3,
+        -0.55,
+        0.55,
+        -0.15,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0.35,
+        0,
+        -0.3,
+        -0.55,
+        0.2,
+        -0.12,
+        0.65,
+        -0.25,
+        0,
+        0
+      ],
+      "anchors": {
+        "origin": [
+          96,
+          96
+        ]
+      },
+      "clips": {
+        "play": {
+          "frames": [
+            0,
+            1,
+            2,
+            3
+          ],
+          "durationsMs": [
+            50,
+            90,
+            150,
+            220
+          ],
+          "loop": false
+        }
+      },
+      "exportMetrics": [
+        {
+          "sourceSheet": "effects-extra",
+          "sourceFrame": 12,
+          "sourceSize": [
+            127,
+            79
+          ],
+          "sourceOrigin": [
+            65,
+            903
+          ],
+          "sourceRegion": [
+            0,
+            768,
+            256,
+            256
+          ],
+          "sourceHash": "5379373c35ff1051e64f60e2b6e10c63d78ab06288b6e940471111d34d07689e",
+          "outputSize": [
+            32,
+            20
+          ],
+          "outputOrigin": [
+            80,
+            77
+          ],
+          "scale": 0.25,
+          "group": "dig"
+        },
+        {
+          "sourceSheet": "effects-extra",
+          "sourceFrame": 13,
+          "sourceSize": [
+            200,
+            177
+          ],
+          "sourceOrigin": [
+            287,
+            805
+          ],
+          "sourceRegion": [
+            256,
+            768,
+            256,
+            256
+          ],
+          "sourceHash": "5379373c35ff1051e64f60e2b6e10c63d78ab06288b6e940471111d34d07689e",
+          "outputSize": [
+            50,
+            44
+          ],
+          "outputOrigin": [
+            72,
+            52
+          ],
+          "scale": 0.25,
+          "group": "dig"
+        },
+        {
+          "sourceSheet": "effects-extra",
+          "sourceFrame": 14,
+          "sourceSize": [
+            211,
+            180
+          ],
+          "sourceOrigin": [
+            527,
+            801
+          ],
+          "sourceRegion": [
+            512,
+            768,
+            256,
+            256
+          ],
+          "sourceHash": "5379373c35ff1051e64f60e2b6e10c63d78ab06288b6e940471111d34d07689e",
+          "outputSize": [
+            53,
+            45
+          ],
+          "outputOrigin": [
+            68,
+            51
+          ],
+          "scale": 0.25,
+          "group": "dig"
+        },
+        {
+          "sourceSheet": "effects-extra",
+          "sourceFrame": 15,
+          "sourceSize": [
+            160,
+            99
+          ],
+          "sourceOrigin": [
+            811,
+            882
+          ],
+          "sourceRegion": [
+            768,
+            768,
+            256,
+            256
+          ],
+          "sourceHash": "5379373c35ff1051e64f60e2b6e10c63d78ab06288b6e940471111d34d07689e",
+          "outputSize": [
+            40,
+            25
+          ],
+          "outputOrigin": [
+            75,
+            71
+          ],
+          "scale": 0.25,
+          "group": "dig"
+        }
+      ]
+    }
+  ]
+}

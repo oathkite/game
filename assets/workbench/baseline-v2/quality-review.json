@@ -1,0 +1,57 @@
+{
+  "date": "2026-09-09",
+  "pack": "baseline-v2",
+  "status": "automated-and-agent-visual-review-complete",
+  "humanReview": "pending",
+  "checks": 41,
+  "renderSamples": 352,
+  "browserTests": 16,
+  "paintCombinations": 49,
+  "poses": 16,
+  "weaponVariants": 8,
+  "effectFrames": 32,
+  "typecheck": "passed before projectile size revision",
+  "repositoryTests": "passed before projectile size revision",
+  "deterministicExport": {
+    "twoRunsMatched": false,
+    "status": "not rerun after paint cleanup",
+    "digest": "bd60c4a513ec2a7ecdfdc5e1e01ef2c6b83db6839eadbee304a6cf5022ef4276"
+  },
+  "visualPasses": [
+    "initial source sheets: found cell intrusion and barrel remnants",
+    "initial composite: found excessive cabin height and missing glass fill",
+    "pose/effect/contact sheets: found duplicate canopy, cyan fragment and glass halo",
+    "fire boundary sheet: fixed flash registration, per-barrel emission and energy colors",
+    "final same-condition sweep: no additional actionable composition contradictions found"
+  ],
+  "evidence": [
+    "assets/previews/asset-lab-v2/desktop.png",
+    "assets/previews/asset-lab-v2/mobile.png",
+    "assets/previews/asset-lab-v2/poses.png",
+    "assets/previews/asset-lab-v2/weapons.png",
+    "assets/previews/asset-lab-v2/effects.png",
+    "assets/previews/asset-lab-v2/fire.png",
+    "assets/previews/asset-lab-v2/automatic-report.json",
+    "assets/previews/asset-lab-v2/paint-black.png",
+    "assets/previews/asset-lab-v2/paint-pink.png",
+    "assets/previews/asset-lab-v2/paint-blue.png",
+    "assets/previews/asset-lab-v2/damage.png",
+    "assets/previews/asset-lab-v2/paint.png"
+  ],
+  "limitations": [
+    "Game renderer integration and actual physics/replay synchronization are not implemented.",
+    "Final minimum in-match display scale is not approved.",
+    "Additional species/undercarriages and environment/HUD sprites are outside this produced pack.",
+    "Pixel checks rely on manually registered anatomy landmarks; artistic quality still requires visual review."
+  ],
+  "assetUnitTests": 73,
+  "paintRevision": "All yellow/beige paint shades and chassis panels follow primary; glass alpha remains fixed; black, magenta and blue pixel regression passed.",
+  "projectileRevision": "GPT Image 2.5 revised digger to black spherical fuse bomb and laser to casing-free light rod. Other ammunition unchanged. All eight firing previews visually inspected.",
+  "vfxRevision": "Enlarged explosion/smoke/dust exports; three staggered destruction bursts, three landing emitters, three low-HP/four wreck plumes. Timing, fade and size regression tests pass; damage contact sheet visually inspected after adjusting emitter placement.",
+  "diggerImpactRevision": "Digger uses the standard explosion; actual impact pixels match cannon at 450ms. All 14 browser tests passed.",
+  "wreckRevision": "Wreck renders tank, pilot, accessories and smoke with grayscale filter after destruction transition. Background and stored paint remain unchanged. Visual capture, 15 browser tests and e2e typecheck passed.",
+  "wreckPostureRevision": "Wreck body assembly sinks 8 art pixels over fixed tracks; barrel droops 18 degrees regardless of stored aim; smoke follows body. Visual capture, 68 unit tests, 16 browser tests and e2e typecheck passed.",
+  "bodyRecoilRevision": "Body assembly recoils up to 2 art pixels while tracks stay grounded; shared shot timing follows triple/multiple bursts. Firing sheet visually reviewed; 69 unit and 16 browser tests passed.",
+  "pilotFireRevision": "Fire clip holds seated frame 0; no individual leaning reaction. Body recoil remains. All eight firing previews reviewed; 69 asset tests passed. 15 browser tests passed in full run; inspection expectation updated from 368 to 352 samples and its targeted rerun passed.",
+  "paintCleanupRevision": "Isolated primary paint shades cleaned; broad hull panel mottling flattened while protecting material boundaries and details. Blue/black/pink visual capture checked; 73 unit tests and 16 browser tests passed."
+}

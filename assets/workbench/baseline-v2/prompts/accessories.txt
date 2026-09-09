@@ -1,0 +1,6 @@
+Use case: production pixel-art modular accessories.
+Image is the approved frog and machine design. Create 1024x1024 transparent PNG, exactly 2x2 equal512px cells, no text, labels, lines, background or checkerboard. NO CHARACTERS OR VEHICLES. Crisp pixel art only.
+Top left: the blue round goggles as a STRICT RIGHT SIDE VIEW wearable, one near round blue lens and a small partly occluded far lens; dark blue temple extends backward LEFT and bends down to contact the forehead. Lower rim and temple rest directly on the frog head when fitted, no floating gap. It sits just ABOVE the natural eye, never replacing it. Overall accessory x130..370 y185..280. Modest-sized lens, short snug temple, not a front-facing pair of giant circles.
+Top right: same goggles side profile tipped forward 12 degrees, to follow bowed head.
+Bottom left: orange scarf in strict RIGHT SIDE view, narrow curved neck wrap, tiny front knot at right, two short tails at left, fitting x110..390 y185..310. No head or neck drawn.
+Bottom right: same scarf small flutter variant, same neck ring location, short moving tail. All items isolated, no stray lines. Blue/steel goggles and warm orange scarf match reference; no other props.

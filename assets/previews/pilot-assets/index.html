@@ -1,0 +1,68 @@
+<!doctype html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>FORTRESS — アセットプレビュー</title>
+<style>
+*{box-sizing:border-box}html{scroll-behavior:smooth;scroll-padding-top:24px}
+body{margin:0;background:#0a1424;color:#eef3f8;font:16px/1.8 system-ui,sans-serif}
+main{max-width:1280px;margin:auto;padding:48px 24px 80px}a{color:#99e6ce}
+h1{font-size:clamp(28px,5vw,54px);line-height:1.15;margin:12px 0 24px;letter-spacing:-.03em}
+h2{font-size:26px;line-height:1.4;margin:0}p{max-width:80ch;color:#bdcbd9}
+.eyebrow{letter-spacing:.16em;font-size:12px;color:#99e6ce}.meta{display:flex;gap:12px;flex-wrap:wrap}
+.meta span{background:#19283a;padding:5px 12px;border-radius:4px;font-size:13px}
+nav{display:flex;gap:10px;flex-wrap:wrap;margin:28px 0 48px}nav a{padding:8px 14px;border:1px solid #36465a;text-decoration:none;border-radius:5px}
+section{margin:0 0 60px}.heading{display:flex;justify-content:space-between;align-items:baseline;gap:16px;flex-wrap:wrap}
+figure{margin:22px 0;background:#08111d}figure a{display:block}img{display:block;width:100%;height:auto;image-rendering:pixelated}
+figcaption{font-size:13px;padding:10px 16px;color:#adbccf}.note{border-left:3px solid #e3be73;padding:10px 18px;background:#172333}
+.table-wrap{overflow-x:auto}table{border-collapse:collapse;width:100%;min-width:560px}th,td{text-align:left;vertical-align:top;padding:12px;border-bottom:1px solid #29384c}th{color:#99e6ce;font-size:13px}td{font-size:14px}
+details{border-top:1px solid #36465a;padding:14px 0}summary{cursor:pointer;color:#99e6ce}summary:focus-visible,a:focus-visible{outline:3px solid #e3be73;outline-offset:4px}
+footer{color:#92a4b9;font-size:13px;border-top:1px solid #29384c;padding-top:20px}
+@media(max-width:600px){main{padding:28px 16px}h2{font-size:22px}nav{gap:8px}nav a{font-size:14px}section{margin-bottom:40px}}
+@media(prefers-reduced-motion:reduce){html{scroll-behavior:auto}}
+</style>
+</head>
+<body><main>
+<header><div class="eyebrow">FORTRESS / ART PREVIEW</div>
+<h1>ひとつの本体に、<br>キャラクターと装備の個性を。</h1>
+<p>真横のマシンを基準に、必要なパーツ・姿勢・エフェクトを4枚で確認するプレビュー。画像を押すと原寸で開きます。</p>
+<div class="meta"><span>本体の形状は固定</span><span>キャラクター種を追加可能</span><span>足回り・武器を追加可能</span></div>
+<p class="note">静止画のデザイン見本です。各コマを切り抜くだけで再生できる完成スプライトではありません。透過・レイヤー分離・接続位置・実際の対戦サイズは、素材化の段階で揃えます。</p>
+</header>
+<nav aria-label="プレビューの分類"><a href="#modules">01 本体・パーツ</a><a href="#pilot">02 キャラクター</a><a href="#motion">03 モーション</a><a href="#weapons">04 砲弾・VFX</a><a href="#coverage">制作範囲</a></nav>
+<section id="modules"><div class="heading"><h2>01 / 固定本体と交換パーツ</h2><span>共通 × 差し替え</span></div>
+<p>キャノピー・台座・座席は共通。本体の形状は一つに固定し、足回り・武器・搭乗者を独立して組み合わせます。車輪と機械脚は追加候補です。</p>
+<figure><a href="01-modules.png" target="_blank" rel="noopener"><img src="01-modules.png" width="1536" height="1024" alt="固定キャビン、搭乗者、3種類の足回りと8種類の武器の見本"></a><figcaption>追加パーツは共通の取付位置に合わせる。本体画像を組み合わせごとに描き直さない。</figcaption></figure>
+</section>
+<section id="pilot"><div class="heading"><h2>02 / キャラクターとオプション</h2><span>初期種：カエル</span></div>
+<p>素体・メガネ・スカーフを別々に扱います。別の種には、その種の素体・表情・搭乗姿勢・装備接続点を用意し、共通キャノピーに収めます。</p>
+<figure><a href="02-pilot.png" target="_blank" rel="noopener"><img src="02-pilot.png" width="1536" height="1024" alt="カエルの装備4通り、四方向、搭乗姿勢とメガネ・スカーフ単体の見本" loading="lazy"></a><figcaption>装備なし／メガネのみ／スカーフのみ／両方。課金・スキン・ペイントの方式は未定。</figcaption></figure>
+</section>
+<section id="motion"><div class="heading"><h2>03 / モーションの使い分け</h2><span>行＝状態、列＝動きの流れ</span></div>
+<p>1〜5は動きの要所です。均等な時間で5枚を再生する指定ではありません。固定本体を共通にし、足回り・砲身・キャラクター・VFXを別々に動かします。</p>
+<figure><a href="03-motion-reactions.png" target="_blank" rel="noopener"><img src="03-motion-reactions.png" width="1536" height="1024" alt="低HPの不安、大破の驚きと頭をかばう動作、残骸の落胆を加えた8行のキーポーズ" loading="lazy"></a><figcaption>本体の微妙な形の差は採用しない。実装では同じ本体を剛体として動かす。</figcaption></figure>
+<div class="table-wrap"><table><thead><tr><th>行</th><th>使う場面</th><th>再生・終了</th></tr></thead><tbody>
+<tr><td>IDLE / 待機</td><td>停止中</td><td>瞬き・小さい上下動を繰り返す。</td></tr>
+<tr><td>MOVE / 移動</td><td>地上移動中</td><td>駆動部を移動距離に同期。停止時は止める。</td></tr>
+<tr><td>FIRE / 発射</td><td>各弾の発射時刻</td><td>発射光→反動→復帰を1回。連射でも変位を積み上げない。</td></tr>
+<tr><td>HIT / 被弾</td><td>実際にダメージを受けた時</td><td>フラッシュ→振動→復帰を1回。</td></tr>
+<tr><td>LOW HP / 低HP</td><td>HPが残り少ない間</td><td>不安な目・煙へ視線・肩をすくめる。煙と火花は移動・発射にも重ねる。</td></tr>
+<tr><td>LAND / 着地</td><td>落下して接地した時</td><td>接地→沈み→揺り戻し→通常姿勢を1回。</td></tr>
+<tr><td>DESTROY / 大破</td><td>HPが0になった時</td><td>驚く→目を閉じて頭をかばう→様子を見る。機体の大破と同期し1回だけ。</td></tr>
+<tr><td>WRECK / 残骸</td><td>大破後</td><td>頭と肩を落としてしょんぼり。ため息の後は落胆した姿勢を維持する。</td></tr>
+</tbody></table></div>
+<p class="note">大破後もキャラクターが座っている表現は仮案です。脱出などの退場方式は未決定。LOW HPの仮境界はHP25%以下です。</p>
+</section>
+<section id="weapons"><div class="heading"><h2>04 / 砲弾と発射・着弾エフェクト</h2><span>既存8武器</span></div>
+<p>左から「砲弾」「尾」「発射光」「着弾」です。通常弾・連射・貫通・レーザー・掘削・浮遊・針弾の見え方を揃えています。</p>
+<figure><a href="04-weapons.png" target="_blank" rel="noopener"><img src="04-weapons.png" width="1536" height="1024" alt="8武器の砲弾、尾、発射光、着弾エフェクトの一覧" loading="lazy"></a><figcaption>大きさと個数は比較用。実際の弾道・発射間隔・爆風半径に従って表示する。</figcaption></figure>
+<p>針弾は尾なし。レーザーは瞬時に届く線ではなく飛行する光弾。見本のミント色は、実装では撃ったプレイヤーの主色へ対応させます。</p>
+</section>
+<section id="coverage"><h2>制作範囲と、次の仕上げ</h2>
+<details open><summary>今回の見本で確認するもの</summary><p>固定本体、足回り候補、8武器、カエル素体と四方向、オプション、搭乗姿勢、待機・移動・発射・被弾・低HP・着地・大破・残骸、砲弾・尾・発射光・着弾、煙・土煙・火花。</p></details>
+<details><summary>素材化で補うもの</summary><p>透過とpalette、共通本体の厳密な形の統一、左右・姿勢別の装備、歩行の中間コマ、単体の煙や破片、外れの印、車輪・脚固有の駆動ループ、色替え全組み合わせ。見本画像の文字や背景はゲーム素材に含めません。</p></details>
+<details><summary>将来の追加単位</summary><p>キャラクター種＝素体・姿勢・表情・装備位置。足回り＝駆動部・移動ループ・残骸。武器＝本体・砲弾・発射・着弾。本体はどの追加でも共通です。新武器のゲームルールや課金方式は別途設計します。</p></details>
+</section>
+<footer>FORTRESS · 2026-09-09 · デザイン確認用 / ゲームへの組み込みは未実施</footer>
+</main></body></html>

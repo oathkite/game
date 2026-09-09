@@ -1,0 +1,5 @@
+Use case: production pixel-art sprite sheet. Reference is the eight approved weapon/ammunition designs.
+1024x1024 transparent PNG, EXACT 4 columns x2 rows of256x512 cells. ONLY eight ammunition sprites, no weapons or labels, no background, shadows, floor, grid or checkerboard. Each projectile travels right and is centered at local128,256, stays inside x40..216 y196..316. Crisp right-side pixel art, graphite, cream, terracotta, cyan and yellow limited colors.
+Row1: cannon pointed orange-nose chunky grey shell; triple short cream cartridge; multiple compact round orange pellet; drill steel spiral cone tip.
+Row2: laser elongated cyan energy bolt with brilliant white center; digger flared steel boring slug with orange collar; floater cream round orb with cyan equatorial glow ring; stinger slender dark steel dart with terracotta tail fins.
+Eight visually DISTINCT ammunition forms exactly matching reference. No motion streaks attached to bullets. No perspective. Single isolated object in each cell, generous transparent margins.

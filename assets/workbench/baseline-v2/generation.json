@@ -1,0 +1,184 @@
+{
+  "date": "2026-09-09",
+  "model": "gpt-image-2.5-sunburst",
+  "api": "images.edit",
+  "tool": "bundled imagegen CLI",
+  "quality": "high",
+  "background": "transparent",
+  "referencePolicy": "Only the frog uses the original 3D photograph; all other assets refer only to the approved original-v1 new family.",
+  "images": [
+    {
+      "file": "generated/accessories.png",
+      "prompt": "prompts/accessories.txt",
+      "sha256": "375777b302f4c95d462dd79b667700d7fad48c246aa2274c5e7faa509579474d",
+      "usedByPack": true,
+      "inputs": [
+        {
+          "path": "assets/concepts/original-v1/03-direction-refined.png",
+          "sha256": "3c5a2490bef3e174434883bdf0389d63be5b3ee8557297aebf8ede10b5971167"
+        }
+      ],
+      "promptSha256": "f558b3742d840cabbad0302f1ae76d53cbaf1795f28d8087de6a2c1c3bf84451"
+    },
+    {
+      "file": "generated/body-v2.png",
+      "prompt": "prompts/body-v2.txt",
+      "sha256": "9c0c0873b9e46c37ed27161447b61f4df71804d7d57dbfc99a761dbd98b73439",
+      "usedByPack": true,
+      "inputs": [
+        {
+          "path": "assets/concepts/original-v1/03-direction-refined.png",
+          "sha256": "3c5a2490bef3e174434883bdf0389d63be5b3ee8557297aebf8ede10b5971167"
+        }
+      ],
+      "promptSha256": "4ab05862fbed0f3bf820509999d0a622cdab7fc72517cbecdc4f8a6a055730f6"
+    },
+    {
+      "file": "generated/body.png",
+      "prompt": "prompts/body.txt",
+      "sha256": "22fdf8f991b9fea54e355fc449e4ea8cf25f772c2c87fd2076520cbdc71a8280",
+      "usedByPack": false,
+      "inputs": [
+        {
+          "path": "assets/concepts/original-v1/03-direction-refined.png",
+          "sha256": "3c5a2490bef3e174434883bdf0389d63be5b3ee8557297aebf8ede10b5971167"
+        }
+      ],
+      "promptSha256": "b5e003435e1d2b4448db6f251e80326798299064f68e68d2e2d0e0fcecfcb841"
+    },
+    {
+      "file": "generated/effects-extra.png",
+      "prompt": "prompts/effects-extra.txt",
+      "sha256": "5379373c35ff1051e64f60e2b6e10c63d78ab06288b6e940471111d34d07689e",
+      "usedByPack": true,
+      "inputs": [
+        {
+          "path": "assets/concepts/original-v1/06-effects-board.png",
+          "sha256": "0de59b18d72ca2c2c94255bd7f1e9d89e4347d6b8f644c27e9fdc95fe2233563"
+        }
+      ],
+      "promptSha256": "a2bc9d017e4324e8b9ca2267304bdbd7704badf7907ac038492bf467f22d27e4"
+    },
+    {
+      "file": "generated/effects-v2.png",
+      "prompt": "prompts/effects-v2.txt",
+      "sha256": "29c206abe6dc4bbdc962f930dc02a351fccfc7a9daba65d758d4738060c6393d",
+      "usedByPack": true,
+      "inputs": [
+        {
+          "path": "assets/workbench/baseline-v2/generated/effects.png",
+          "sha256": "b9691db31606c54da24fe3e0c0560ac62a14f930c320bbf816a0ef73b30774a8"
+        }
+      ],
+      "promptSha256": "885a448fe053471376f1023bfaa40b165fcddeefbf6a0696901bcc8f139b338a"
+    },
+    {
+      "file": "generated/effects.png",
+      "prompt": "prompts/effects.txt",
+      "sha256": "b9691db31606c54da24fe3e0c0560ac62a14f930c320bbf816a0ef73b30774a8",
+      "usedByPack": false,
+      "inputs": [
+        {
+          "path": "assets/concepts/original-v1/06-effects-board.png",
+          "sha256": "0de59b18d72ca2c2c94255bd7f1e9d89e4347d6b8f644c27e9fdc95fe2233563"
+        }
+      ],
+      "promptSha256": "3b12c32fd5cfe7133138cfa7be8f48992e754081a4f44234a0a1bcfefd5f4a02"
+    },
+    {
+      "file": "generated/glass.png",
+      "prompt": "prompts/glass.txt",
+      "sha256": "ae4f02cd891932e2e78a748bfd3de3b0741b394ec84ff1702464b5c1771fd7e9",
+      "usedByPack": true,
+      "inputs": [
+        {
+          "path": "assets/concepts/original-v1/03-direction-refined.png",
+          "sha256": "3c5a2490bef3e174434883bdf0389d63be5b3ee8557297aebf8ede10b5971167"
+        }
+      ],
+      "promptSha256": "9a55a4ce2822314a63a726bb5d57e3c446d457f1d2f214185263c5d704d14cea"
+    },
+    {
+      "file": "generated/interior.png",
+      "prompt": "prompts/interior.txt",
+      "sha256": "cbf4318750d6ee848b1bce65b39e99436034c7dfcf78a862948b383dce450d0a",
+      "usedByPack": true,
+      "inputs": [
+        {
+          "path": "assets/concepts/original-v1/03-direction-refined.png",
+          "sha256": "3c5a2490bef3e174434883bdf0389d63be5b3ee8557297aebf8ede10b5971167"
+        }
+      ],
+      "promptSha256": "f6069927d50ba844aef5a3637136ea0ce0212cb209393aa4fc18da97bec0b65f"
+    },
+    {
+      "file": "generated/pilot.png",
+      "prompt": "prompts/pilot.txt",
+      "sha256": "1301073e18e604a04f08ad4cf83270f4e6efb1f4ccafafe1ea41bb03c35e8f3f",
+      "usedByPack": true,
+      "inputs": [
+        {
+          "path": "assets/concepts/original-v1/03-direction-refined.png",
+          "sha256": "3c5a2490bef3e174434883bdf0389d63be5b3ee8557297aebf8ede10b5971167"
+        },
+        {
+          "path": "assets/concepts/pixel-pilot-v3/references/right.png",
+          "sha256": "f48bedef54314a7f8029a15ea05b385393ce23404de9c9c47635bfcf37a68bd8"
+        }
+      ],
+      "promptSha256": "b61c76c9adeb0183d8db5b6f93ad1be136e966ef8ae6e3bf7d7dfbebac816612"
+    },
+    {
+      "file": "generated/projectiles.png",
+      "prompt": "prompts/projectiles.txt",
+      "sha256": "04ef7eab664ef6fa33bb219b72b3a52f955882e61f93200bb46c253d5603c60c",
+      "usedByPack": true,
+      "inputs": [
+        {
+          "path": "assets/concepts/original-v1/07-weapons-refined.png",
+          "sha256": "40ef62df0cbaa0066fb017dd7bb840b9c1ba5ae2553bf1472a1f540d02529af7"
+        }
+      ],
+      "promptSha256": "9fdf7b49c41d7e8d5c805bbc7f08d388091451a6dcfb39693f96324d03594614"
+    },
+    {
+      "file": "generated/tracks.png",
+      "prompt": "prompts/tracks.txt",
+      "sha256": "c077f1a4520b2f6ecc3c0ceb55e4d76e7aaf985ade6acba63348982f34caf117",
+      "usedByPack": true,
+      "inputs": [
+        {
+          "path": "assets/concepts/original-v1/03-direction-refined.png",
+          "sha256": "3c5a2490bef3e174434883bdf0389d63be5b3ee8557297aebf8ede10b5971167"
+        }
+      ],
+      "promptSha256": "432c21ef5c2eef39af35c5ac480dd76821f47886a424888e3397b7938ff4a843"
+    },
+    {
+      "file": "generated/weapons.png",
+      "prompt": "prompts/weapons.txt",
+      "sha256": "439a207ed12a9d9df334f8b05897b8f6af0fcad6a1376deae7fc6c26a9dda8b6",
+      "usedByPack": true,
+      "inputs": [
+        {
+          "path": "assets/concepts/original-v1/07-weapons-refined.png",
+          "sha256": "40ef62df0cbaa0066fb017dd7bb840b9c1ba5ae2553bf1472a1f540d02529af7"
+        }
+      ],
+      "promptSha256": "88d075d2c8bf96fce3676f929793bc512b3d5fa87950422e78107af8ae3fa6a6"
+    },
+    {
+      "file": "generated/ammo-revised.png",
+      "prompt": "prompts/ammo-revised.txt",
+      "sha256": "c317a1d64b9e2a79b9fe2a9a4fffc6c5458f7495e5892138de7483ccfb8e3ac2",
+      "promptSha256": "3423896167d03ed8ca26b73df388f64798251eb1e6b63096d8334fbfd747dd0a",
+      "usedByPack": true,
+      "inputs": [
+        {
+          "path": "assets/workbench/baseline-v2/generated/projectiles.png",
+          "sha256": "04ef7eab664ef6fa33bb219b72b3a52f955882e61f93200bb46c253d5603c60c"
+        }
+      ]
+    }
+  ]
+}

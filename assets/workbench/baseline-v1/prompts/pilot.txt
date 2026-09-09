@@ -1,0 +1,13 @@
+Use case: stylized-concept. Create a production sprite sheet for the attached FORTRESS frog pilot reference, NOT a presentation board. Exactly square canvas, 4 columns x 4 rows of equal square cells, total 16 sprites. Transparent background. No labels, text, borders, floor or shadows. Every cell has the SAME character, identical size and seat origin, sitting in side profile facing RIGHT, alone WITHOUT machine, glasses or scarf. Pixel art, crisp uniform square pixels, deliberately limited palette yellow, ochre shadow, warm ivory throat, dark navy outlines. Character is the elongated yellow frog from reference: its one visible natural white eye with black pupil protrudes at TOP of head, above the snout. Large white throat and belly is a PLAIN white patch, NEVER contains eyes, mouth, smile or face. Do not turn it into a round yellow emoji. Arms reaching toward invisible controls; bent short legs. Sprite occupies central 65% width and 75% height of each cell, aligned seat at 75% height.
+Cells in row-major order:
+0 neutral seated eyes open; 1 same tiny inhale; 2 same blinking natural TOP eye closed;
+3 leaning forward for driving; 4 same driving small bounce;
+5 firing: braced torso, natural eye narrowed; 6 recoil: leaning slightly back;
+7 hit: natural TOP eye wide and shoulders raised; 8 hit recovery: blink, tense shoulders;
+9 low HP: anxious TOP eye glancing backward, shoulders hunched; 10 low HP: same with a SINGLE tiny sweat drop beside top eye;
+11 falling: gripping forward with startled TOP eye;
+12 landing: body compressed slightly, TOP eye squint;
+13 destruction: both hands covering top of head, actual natural eye shut;
+14 destruction recovering: one hand down, natural TOP eye peeking;
+15 wreck: head bowed and shoulders slumped, natural TOP eye downcast, plain white belly.
+Keep anatomy correct and exact character identity. Transparent pixels in all empty cell areas. No perspective, no fake transparency checkerboard.

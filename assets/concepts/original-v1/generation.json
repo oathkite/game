@@ -1,0 +1,84 @@
+{
+  "stage": "concept",
+  "model": "gpt-image-2.5-sunburst",
+  "api": "images.edit",
+  "quality": "high",
+  "size": "1536x1024",
+  "tool": "bundled imagegen CLI",
+  "referencePolicy": "Original 3D-model photographs for frog only. Machine and VFX start from new text direction; newly generated boards guide subsequent refinements.",
+  "productionReady": false,
+  "images": [
+    {
+      "file": "02-frog-and-new-world.png",
+      "prompt": "prompts/02-frog-and-new-world.txt",
+      "inputs": [
+        "../pixel-pilot-v3/references/kita.png",
+        "../pixel-pilot-v3/references/right.png",
+        "../pixel-pilot-v3/references/front.png",
+        "../pixel-pilot-v3/references/back.png"
+      ],
+      "current": false,
+      "width": 1536,
+      "height": 1024,
+      "sha256": "91ee7f1670dbf8fdaf9cd9926ad2f960bb4436f42c49c15148aac01c9957a4b2"
+    },
+    {
+      "file": "03-direction-refined.png",
+      "prompt": "prompts/03-direction-correction.txt",
+      "inputs": [
+        "02-frog-and-new-world.png",
+        "../pixel-pilot-v3/references/kita.png"
+      ],
+      "current": true,
+      "width": 1536,
+      "height": 1024,
+      "sha256": "3c5a2490bef3e174434883bdf0389d63be5b3ee8557297aebf8ede10b5971167"
+    },
+    {
+      "file": "04-weapons-and-ammunition.png",
+      "prompt": "prompts/04-weapons-and-ammunition.txt",
+      "inputs": [
+        "02-frog-and-new-world.png"
+      ],
+      "current": false,
+      "width": 1536,
+      "height": 1024,
+      "sha256": "8eaabd68b3b0d9d13ba55e314d82315d8ba470f183b7b2498406ba1132e748c2"
+    },
+    {
+      "file": "07-weapons-refined.png",
+      "prompt": "prompts/07-weapon-profile-correction.txt",
+      "inputs": [
+        "04-weapons-and-ammunition.png",
+        "03-direction-refined.png"
+      ],
+      "current": true,
+      "width": 1536,
+      "height": 1024,
+      "sha256": "40ef62df0cbaa0066fb017dd7bb840b9c1ba5ae2553bf1472a1f540d02529af7"
+    },
+    {
+      "file": "05-motion-board.png",
+      "prompt": "prompts/05-motion-board.txt",
+      "inputs": [
+        "03-direction-refined.png",
+        "../pixel-pilot-v3/references/kita.png"
+      ],
+      "current": true,
+      "width": 1536,
+      "height": 1024,
+      "sha256": "ece3b30db072b0f4aa3724a5b46431f07c692fe80fb67b4cff277b5078349554"
+    },
+    {
+      "file": "06-effects-board.png",
+      "prompt": "prompts/06-effects-board.txt",
+      "inputs": [
+        "03-direction-refined.png"
+      ],
+      "current": true,
+      "width": 1536,
+      "height": 1024,
+      "sha256": "0de59b18d72ca2c2c94255bd7f1e9d89e4347d6b8f644c27e9fdc95fe2233563"
+    }
+  ]
+}

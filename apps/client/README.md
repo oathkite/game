@@ -1,9 +1,9 @@
+# FORTRESS client
 
-## デプロイ
+React、Vite、PixiJS で設定、ロビー、部屋、対戦、リザルトを描く。
+起動、サーバー接続、テスト、本番の Cloudflare 配信は [ルート README](../../README.md) を参照する。
 
-client は静的サイトなので Vercel に置く。Root Directory を `apps/client` にし、環境変数 `VITE_SERVER_URL` に server の WebSocket の URL（例 `wss://example.up.railway.app`）を入れる。
-`apps/client/vercel.json` にビルドの設定がある。
-
-server は WebSocket を対戦中ずっと保持し、部屋の状態をメモリに持つので、常駐プロセスが動くサービス（Railway、Render、Fly.io）に置く。
-`apps/server/Dockerfile` をリポジトリのルートからビルドする。
-待ち受けポートは環境変数 `PORT`、生存確認は `/health` で行う。
+新しい世界観と画面は [設計目次](../../docs/design/README.md) を基準にする。
+キャラクターが見える固定キャノピーの真横スプライトと、ガレージを中心にした UI は制作目標であり、実装済みとは扱わない。
+PNG と素材定義を追加する前に [制作規約](../../docs/design/14-asset-pipeline.md) の検証を通す。
+物理セルと原画の art px を分け、絵の変更で sim の判定や再生時刻を変更しない。

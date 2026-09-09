@@ -1,10 +1,24 @@
 # FORTRESS
 
-ブラウザで遊ぶ 1 対 1 のターン制砲撃対戦ゲーム。設計は [docs/design](./docs/design/README.md) に、開発の進め方は [CLAUDE.md](./CLAUDE.md) にある。
+自分のキャラクターが共通キャノピーのマシンに乗り、風と地形を読んで一発を競う、2D ドット絵の砲撃対戦ゲームを目指す。
+現在は 1 対 1 の対戦機能を実装済みで、新しいアートと UI は制作段階。設計は [docs/design](./docs/design/README.md) に、開発の進め方は [CLAUDE.md](./CLAUDE.md) にある。
+
+## アートと UI の制作
+
+[世界観](./docs/design/00-world-and-experience.md)、[UI の方向性](./docs/design/08-visual-direction.md)、[素材一覧](./docs/design/13-asset-preview.md)、[制作規約と検証](./docs/design/14-asset-pipeline.md) を基準にする。
+機体は真横で本体形状を固定し、搭乗者、足回り、武器を独立させる。
+生成プレビューは完成 atlas と区別する。
+
+```sh
+pnpm assets:test
+pnpm assets:check
+pnpm assets:lab          # http://127.0.0.1:4178 で動作試験台を開く
+pnpm assets:test:browser # 試験台の操作と描画を検証
+```
 
 ## プロモーション動画
 
-その一発が、地形を変える。実際の対戦映像で紹介する 30 秒の動画（音声あり）。
+その一発が、地形を変える。実際の対戦映像で紹介する 30 秒の動画（音声あり）。新アート導入前の実装映像。
 
 https://github.com/user-attachments/assets/95a2c021-a18d-4035-a9db-abe4163ebb62
 
@@ -70,3 +84,9 @@ server は 1 つの Durable Object が全部屋を持ち、WebSocket Hibernation
 
 Node で動かす場合は `apps/server/Dockerfile` をリポジトリのルートからビルドする。
 待ち受けポートは環境変数 `PORT`、生存確認は `/health` で行う。
+
+ローカルの [動作試験台](./tools/asset-lab/README.md) は新デザインの [baseline-v2](./assets/workbench/baseline-v2/README.md) を表示する。`pnpm assets:lab` で起動し、`pnpm assets:test:browser` と `pnpm assets:capture` で再確認できる。ゲーム本体へのスプライト統合は未実施。
+
+## 2Dアップデートの開発
+
+総合ブランチは `codex/2d-update`。今後の2D関連の実装・アセット・仕様変更は、このブランチから作業ブランチを切って進める。[ブランチ運用](docs/2d-update-workflow.md)を参照。

@@ -1,0 +1,5 @@
+Pilot edit:
+Edit this sprite sheet: remove the gray and white checkerboard BACKGROUND and replace it with genuine alpha transparency. Do not draw a checkerboard. Preserve every frog pixel, especially white natural eyes and solid white throat patches. Keep all 16 poses in their same exact 4x4 positions and identical image dimensions. Only background extraction. Transparent PNG output.
+
+Module edit after canopy correction:
+Background extraction ONLY. Remove the checkerboard backdrop of this 4x4 sprite sheet and make it genuinely TRANSPARENT (alpha=0). Preserve all colored parts exactly. In particular the thin blue canopy arch in row1 col2 has an EMPTY TRANSPARENT interior, no white reflection patch. No checkerboard pixels anywhere in exported PNG. Keep 16 parts and exact layout. Output transparent PNG.

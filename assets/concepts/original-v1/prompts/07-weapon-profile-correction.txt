@@ -1,0 +1,7 @@
+Precise edit. Input 1 is the weapons board to fix. Input 2 is the CORRECTED side-profile art-direction board that defines the projection.
+Keep all eight designs, colors, layout, labels, projectiles, pivot positions and pixel style of input 1. Correct only the side-view projection of gun muzzles. These are technical RIGHT SIDE ELEVATIONS, with the viewing direction perpendicular to the gun's axis. No front opening can be seen at all.
+01 CANNON: match the horizontal side-profile cannon in input 2. The cream barrel's upper and lower long edges are horizontal and parallel. The orange muzzle band is a RECTANGLE in profile, ending in a thin VERTICAL dark line; completely remove the elliptical visible front bore. Do not taper or angle the barrel toward the viewer.
+02 TRIPLE and 03 MULTIPLE: each right end is a thin vertical side-profile line, no visible circular or oval frontal holes. Keep three stacked parallel barrels.
+06 DIGGER: preserve its flared side silhouette, but its broad right muzzle ends in a thin vertical lip; erase the visible dark oval interior/front face. This is the side outline of a flared barrel, not a funnel viewed diagonally.
+05 LASER: the far-right ring likewise has a narrow vertical side lip, not an elliptical front.
+04 DRILL, 07 FLOATER, 08 STINGER can retain their current side silhouettes. Do not change the ammunition designs or any other part. No new objects or text. Clean pixel clusters, no antialiased vector shapes.

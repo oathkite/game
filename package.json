@@ -4,8 +4,15 @@
   "packageManager": "pnpm@11.1.1",
   "scripts": {
     "dev": "pnpm -r --parallel --filter @game/client --filter @game/server dev",
-    "test": "pnpm -r test",
-    "typecheck": "pnpm -r typecheck"
+    "test": "pnpm assets:test && pnpm assets:check && pnpm -r test",
+    "typecheck": "pnpm -r typecheck",
+    "assets:validate": "node scripts/assets/validate.mjs",
+    "assets:test": "node --test scripts/assets/*.test.mjs tools/asset-lab/*.test.mjs",
+    "assets:check": "node scripts/assets/check.mjs",
+    "assets:lab": "node tools/asset-lab/server.mjs",
+    "assets:test:browser": "pnpm --filter @game/e2e exec playwright test --config asset-lab.config.ts",
+    "assets:export:v2": "node scripts/assets/import-baseline-v2.mjs",
+    "assets:capture": "node scripts/assets/capture-lab.mjs"
   },
   "devDependencies": {
     "typescript": "^5.9.2",

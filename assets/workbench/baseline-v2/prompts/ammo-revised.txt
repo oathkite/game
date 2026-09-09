@@ -1,0 +1,6 @@
+Use case: stylized-concept
+Asset type: two replacement projectile sprites for a side-view pixel-art tank game.
+Input image: style reference only for crisp pixel clusters and palette. Do NOT reproduce its ammunition designs.
+Create EXACTLY TWO isolated sprites on genuinely transparent background, one centered in each half of a 1024x1024 image. Top half: a classic cartoon spherical BLACK BOMB with a short bent rope fuse at the top-right and tiny orange burning spark. Near-black charcoal body, restrained gray highlight, no face, no skull, no fins, no drill, no capsule. Bomb body diameter about 240 pixels, centered x512 y270; fuse above it; generous transparent gutter.
+Bottom half: a pure luminous horizontal LASER BOLT, thin long rod of light, white-hot central core and cyan edges tapering at each end. About 480 pixels wide and 110 pixels tall, centered x512 y770. It is made ONLY of light: absolutely NO casing, NO metal, NO caps, NO bands, NO black outline, NO shell. White core runs continuously from tip to tip. Sharp pixelated stepped silhouette, no blurry ambient halo.
+Match reference 2D side-view game pixel-art technique. Limited flat palette, hard pixel edges, readable at tiny scale, no text, no grid, no other objects. Clear transparent margins around each sprite and between rows. No background, ground or drop shadow.

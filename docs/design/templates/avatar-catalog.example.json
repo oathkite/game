@@ -1,0 +1,63 @@
+{
+  "avatarCatalogVersion": 1,
+  "publicDefaultPresetId": null,
+  "skins": [
+    {
+      "id": "frog-kita-personal",
+      "pilotAssetId": "pilot-frog",
+      "blockedSlots": [],
+      "paintChannels": {},
+      "availability": {
+        "scope": "owner-only",
+        "grantKey": "kita-personal"
+      },
+      "speciesId": "frog"
+    }
+  ],
+  "accessories": [
+    {
+      "id": "kita-glasses-blue",
+      "slot": "face",
+      "fits": {
+        "frog-kita-personal": "glasses-blue"
+      },
+      "availability": {
+        "scope": "owner-only",
+        "grantKey": "kita-personal"
+      }
+    },
+    {
+      "id": "kita-scarf-orange",
+      "slot": "neck",
+      "fits": {
+        "frog-kita-personal": "scarf-orange"
+      },
+      "availability": {
+        "scope": "owner-only",
+        "grantKey": "kita-personal"
+      }
+    }
+  ],
+  "paints": [],
+  "presets": [
+    {
+      "id": "kita-personal",
+      "skinId": "frog-kita-personal",
+      "paint": {},
+      "accessories": {
+        "face": "kita-glasses-blue",
+        "neck": "kita-scarf-orange"
+      },
+      "availability": {
+        "scope": "owner-only",
+        "grantKey": "kita-personal"
+      }
+    }
+  ],
+  "species": [
+    {
+      "id": "frog",
+      "displayName": "カエル"
+    }
+  ]
+}

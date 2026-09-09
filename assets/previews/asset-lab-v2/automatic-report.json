@@ -1,0 +1,198 @@
+{
+  "pack": "baseline-v2",
+  "at": "2026-09-09T05:04:46.764Z",
+  "configuration": {
+    "state": "idle",
+    "weapon": "cannon",
+    "primary": "#ffc345",
+    "secondary": "#ed8244",
+    "glasses": true,
+    "scarf": true,
+    "hp": 100,
+    "angle": 10,
+    "facing": 1,
+    "zoom": 1,
+    "slope": 0,
+    "anchors": false,
+    "pilotOnly": false
+  },
+  "checks": [
+    {
+      "name": "待機：フレーム境界",
+      "pass": true
+    },
+    {
+      "name": "移動：フレーム境界",
+      "pass": true
+    },
+    {
+      "name": "発射：フレーム境界",
+      "pass": true
+    },
+    {
+      "name": "被弾：フレーム境界",
+      "pass": true
+    },
+    {
+      "name": "低 HP：フレーム境界",
+      "pass": true
+    },
+    {
+      "name": "落下：フレーム境界",
+      "pass": true
+    },
+    {
+      "name": "着地：フレーム境界",
+      "pass": true
+    },
+    {
+      "name": "大破：フレーム境界",
+      "pass": true
+    },
+    {
+      "name": "残骸：フレーム境界",
+      "pass": true
+    },
+    {
+      "name": "大破は残骸に遷移し、爆発を繰り返さない",
+      "pass": true
+    },
+    {
+      "name": "低 HP 中の被弾後は不安状態に戻る",
+      "pass": true
+    },
+    {
+      "name": "低 HP 中の発射でも煙を維持",
+      "pass": true
+    },
+    {
+      "name": "HP 0 では通常待機に戻らない",
+      "pass": true
+    },
+    {
+      "name": "落下は下降して着地し、待機へ戻る",
+      "pass": true
+    },
+    {
+      "name": "遷移先のアニメーションを先頭から再生",
+      "pass": true
+    },
+    {
+      "name": "全状態・時刻の変位に不正な数値がない",
+      "pass": true
+    },
+    {
+      "name": "塗装：黄色・ベージュの全階調と固定色を定義",
+      "pass": true
+    },
+    {
+      "name": "書き出し：全コマの縦横比と配置を保持",
+      "pass": true
+    },
+    {
+      "name": "書き出し：ポーズ・履帯・連続効果は共通倍率",
+      "pass": true
+    },
+    {
+      "name": "書き出し：全ポーズの頭・首の接続点を指定",
+      "pass": true
+    },
+    {
+      "name": "画素：全ポーズでメガネが頭に接触",
+      "pass": true,
+      "details": []
+    },
+    {
+      "name": "画素：メガネが自然の目を遮らない",
+      "pass": true,
+      "details": []
+    },
+    {
+      "name": "画素：ガラス越しに全ポーズの目が見える",
+      "pass": true,
+      "details": []
+    },
+    {
+      "name": "画素：腰を車体前面で隠して搭乗を表現",
+      "pass": true,
+      "details": []
+    },
+    {
+      "name": "画素：履帯の厚み・車体幅・接地を整合",
+      "pass": true
+    },
+    {
+      "name": "画素：8武器の砲口と発射位置を整合",
+      "pass": true,
+      "details": []
+    },
+    {
+      "name": "画素：演出が拡張して最後に消散する",
+      "pass": true
+    },
+    {
+      "name": "画素：暖色の演出に隣のエネルギー片が混入しない",
+      "pass": true
+    },
+    {
+      "name": "画素：ガラスが枠の外へはみ出さない",
+      "pass": true
+    },
+    {
+      "name": "画素：発射光の根元を砲口に固定",
+      "pass": true
+    },
+    {
+      "name": "8 武器・全仰角で顔の保護領域を確保",
+      "pass": true
+    },
+    {
+      "name": "キャノピーの反射が顔を隠さない",
+      "pass": true
+    },
+    {
+      "name": "待機：左右・角度の描画",
+      "pass": true
+    },
+    {
+      "name": "移動：左右・角度の描画",
+      "pass": true
+    },
+    {
+      "name": "発射：左右・角度の描画",
+      "pass": true
+    },
+    {
+      "name": "被弾：左右・角度の描画",
+      "pass": true
+    },
+    {
+      "name": "低 HP：左右・角度の描画",
+      "pass": true
+    },
+    {
+      "name": "落下：左右・角度の描画",
+      "pass": true
+    },
+    {
+      "name": "着地：左右・角度の描画",
+      "pass": true
+    },
+    {
+      "name": "大破：左右・角度の描画",
+      "pass": true
+    },
+    {
+      "name": "残骸：左右・角度の描画",
+      "pass": true
+    }
+  ],
+  "renderSamples": 352,
+  "faceClearance": {
+    "pass": true,
+    "failures": [],
+    "canopyClear": true
+  },
+  "humanReview": "pending",
+  "scope": "asset-lab animation only; not game physics"
+}

@@ -1,0 +1,34 @@
+<!doctype html>
+<html lang="ja"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>FORTRESS ガレージ | 動作試験</title><link rel="stylesheet" href="./style.css"></head>
+<body>
+<header><a class="brand" href="/" aria-label="FORTRESS ガレージ"><span class="brand-mark">F</span><span>FORTRESS <small>ガレージ</small></span></a><span class="build-tag">基準機 v2 <i></i> 制作中</span></header>
+<main>
+<div class="heading"><div><p class="eyebrow">マシンを整えて、フィールドへ。</p><h1>動作試験台</h1></div><button id="run-checks" class="primary">全アニメーションを検査</button></div>
+<div id="error" role="alert" hidden></div>
+<div class="workbench">
+<section class="viewer" aria-label="マシンのプレビュー">
+<div class="viewer-top"><span><b id="state-name">待機</b><small id="state-note">呼吸とまばたき</small></span><span id="live-state" class="status">素材を読み込み中</span></div>
+<div class="stage"><canvas id="stage" width="1000" height="520" aria-label="合成したマシンのアニメーション"></canvas><span class="stage-label">試験台 A <small>固定キャノピー / カエル</small></span><div class="floor-stripe"></div></div>
+<div class="transport"><button id="play" aria-label="一時停止">一時停止</button><button id="restart">先頭へ</button><button id="step">1 コマ進む</button><label>速度 <select id="speed"><option value="0.25">0.25×</option><option value="0.5">0.5×</option><option value="1" selected>1×</option><option value="2">2×</option></select></label><output id="time">0 ms</output></div>
+<label class="transport"><input id="repeat" type="checkbox" checked>繰り返し確認する（大破は残骸まで再生して先頭へ）</label>
+<label class="timeline"><span>再生位置</span><input id="scrub" type="range" min="0" max="1600" value="0" step="1"></label>
+<div class="state-buttons" id="states" aria-label="アニメーション選択"></div>
+<div class="transport" id="frame-strip" aria-label="絵の切り替わりへ移動"></div>
+</section>
+<aside class="settings" aria-label="試験条件">
+<h2>試験条件</h2>
+<label>武器<select id="weapon"></select></label>
+<div class="two"><label>車体カラー<input id="primary" type="color" value="#ffc345"></label><label>アクセント<input id="secondary" type="color" value="#ed8244"></label></div>
+<fieldset><legend>パイロットのオプション</legend><label class="check"><input id="glasses" type="checkbox">メガネ</label><label class="check"><input id="scarf" type="checkbox">スカーフ</label></fieldset>
+<label>HP <output id="hp-value">100</output><input id="hp" type="range" min="0" max="100" value="100"></label>
+<label>砲身の仰角 <output id="angle-value">10°</output><input id="angle" type="range" min="10" max="90" value="10"></label>
+<div class="two"><label>向き<select id="facing"><option value="1">右向き</option><option value="-1">左向き</option></select></label><label>表示倍率<select id="zoom"><option value="0.5">0.5×</option><option value="1" selected>1×</option><option value="1.4">1.4×</option></select></label></div>
+<label>地面の傾き <output id="slope-value">0°</output><input id="slope" type="range" min="-30" max="30" value="0"></label>
+<label class="check"><input id="anchors" type="checkbox">接続点と顔の保護領域</label>
+<label class="check"><input id="pilot-only" type="checkbox">パイロットだけを表示</label>
+<p class="hint">色や装備を替えても、本体は同じ素材を使います。</p>
+</aside></div>
+<section class="overview"><div class="section-heading"><div><h2>動きの一覧</h2><p>同じ条件で、すべての状態を見比べる。</p></div><span>9 状態</span></div><div class="gallery" id="gallery"></div></section>
+<section class="inspection"><div><h2>検査記録</h2><p id="check-summary" role="status">まだ実行していません</p><button id="export" disabled>検査結果を保存</button></div><div><ul id="check-results"></ul><p class="review-note">目の位置・本体の形・実寸の読みやすさは目視確認が必要です。自動検査は目視承認を行いません。</p></div></section>
+<footer><span>FORTRESS ガレージ</span><span id="pack-status">基準アセットを読み込み中</span><span>試射は演出確認用。対戦の物理検証とは別です。</span></footer>
+</main><script type="module" src="./app.mjs"></script></body></html>

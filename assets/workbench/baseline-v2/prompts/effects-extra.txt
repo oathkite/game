@@ -1,0 +1,7 @@
+Use case: production pixel-art animation sheet matching approved effects style.
+1024x1024 transparent PNG EXACT4x4 equal256px cells, no labels numbers grid checkerboard floor shadows or background. Same scale and origin throughout each row, at least24px transparent gutter. Crisp pixel clusters, limited palette; no character or vehicle.
+Row1 landing DUST animation, ground contact origin128,200: small horizontal tan puff, expanding two low dust clouds to left/right, rising thinning beige dust, sparse dissipated dust bits leaving center empty. Never tall vertical explosion.
+Row2 ENERGY HIT cyan animation centered128,128: small blue-white spark, expanding cyan ring, larger broken ring, scattered distant cyan particles with empty center.
+Row3 DRILL IMPACT orange/steel particles centered128,160: small sparks, spray of steel chips, dispersed chips flying outward, few tiny fading chips. No weapon drawn.
+Row4 DIG IMPACT earth brown animation origin128,200: small ground spurt, fan of brown earth chunks, higher scattered earth crumbs, tiny separated particles. No ground line.
+Each row grows then dissipates continuously; last frame sparse. Do not fill every cell equally. Truly alpha-transparent background, no full colored rectangles.
