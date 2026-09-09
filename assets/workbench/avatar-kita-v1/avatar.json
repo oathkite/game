@@ -103,127 +103,23 @@
           512
         ],
         "sourceBounds": [
-          337,
-          47,
-          284,
-          448
-        ],
-        "outputSize": [
-          57,
-          90
-        ],
-        "outputOrigin": [
-          17,
-          14
-        ],
-        "footLift": 0,
-        "scale": 0.2,
-        "sourceSheet": "idle-final",
-        "sourceHash": "7b98fd95192eccf649f47aec5f0220182f8b66a5437d14eeaca00b9f6b1781bc"
-      },
-      {
-        "region": [
-          768,
-          0,
-          768,
-          512
-        ],
-        "sourceBounds": [
-          945,
-          47,
-          284,
-          448
-        ],
-        "outputSize": [
-          57,
-          90
-        ],
-        "outputOrigin": [
-          17,
-          14
-        ],
-        "footLift": 0,
-        "scale": 0.2,
-        "sourceSheet": "idle-final",
-        "sourceHash": "7b98fd95192eccf649f47aec5f0220182f8b66a5437d14eeaca00b9f6b1781bc"
-      },
-      {
-        "region": [
-          0,
-          512,
-          768,
-          512
-        ],
-        "sourceBounds": [
-          337,
-          535,
-          284,
-          449
-        ],
-        "outputSize": [
-          57,
-          90
-        ],
-        "outputOrigin": [
-          17,
-          14
-        ],
-        "footLift": 0,
-        "scale": 0.2,
-        "sourceSheet": "idle-final",
-        "sourceHash": "7b98fd95192eccf649f47aec5f0220182f8b66a5437d14eeaca00b9f6b1781bc"
-      },
-      {
-        "region": [
-          768,
-          512,
-          768,
-          512
-        ],
-        "sourceBounds": [
-          945,
-          535,
-          284,
-          449
-        ],
-        "outputSize": [
-          57,
-          90
-        ],
-        "outputOrigin": [
-          17,
-          14
-        ],
-        "footLift": 0,
-        "scale": 0.2,
-        "sourceSheet": "idle-final",
-        "sourceHash": "7b98fd95192eccf649f47aec5f0220182f8b66a5437d14eeaca00b9f6b1781bc"
-      },
-      {
-        "region": [
-          0,
-          0,
-          768,
-          512
-        ],
-        "sourceBounds": [
-          349,
-          109,
+          343,
+          55,
           271,
-          382
+          433
         ],
         "outputSize": [
           54,
-          76
+          87
         ],
         "outputOrigin": [
-          20,
-          28
+          19,
+          17
         ],
         "footLift": 0,
         "scale": 0.2,
-        "sourceSheet": "happy-final",
-        "sourceHash": "f8bff442a9127adeaebe1cc8c93ad038854b0b3087357e573916707d59c19936"
+        "sourceSheet": "idle-tank-style",
+        "sourceHash": "6682e24f624d83ca8b5b92fc84e40df9bbbb1beaa137f60af948cd76c80dd005"
       },
       {
         "region": [
@@ -233,23 +129,23 @@
           512
         ],
         "sourceBounds": [
-          926,
-          56,
-          325,
-          419
+          955,
+          54,
+          274,
+          434
         ],
         "outputSize": [
-          65,
-          84
+          55,
+          87
         ],
         "outputOrigin": [
           18,
-          12
+          17
         ],
-        "footLift": 8,
+        "footLift": 0,
         "scale": 0.2,
-        "sourceSheet": "happy-final",
-        "sourceHash": "f8bff442a9127adeaebe1cc8c93ad038854b0b3087357e573916707d59c19936"
+        "sourceSheet": "idle-tank-style",
+        "sourceHash": "6682e24f624d83ca8b5b92fc84e40df9bbbb1beaa137f60af948cd76c80dd005"
       },
       {
         "region": [
@@ -259,153 +155,257 @@
           512
         ],
         "sourceBounds": [
-          308,
-          540,
-          340,
-          380
+          343,
+          544,
+          271,
+          433
         ],
         "outputSize": [
-          68,
-          76
+          54,
+          87
         ],
         "outputOrigin": [
-          14,
-          12
+          18,
+          17
         ],
-        "footLift": 16,
+        "footLift": 0,
         "scale": 0.2,
-        "sourceSheet": "happy-final",
-        "sourceHash": "f8bff442a9127adeaebe1cc8c93ad038854b0b3087357e573916707d59c19936"
+        "sourceSheet": "idle-tank-style",
+        "sourceHash": "6682e24f624d83ca8b5b92fc84e40df9bbbb1beaa137f60af948cd76c80dd005"
       },
       {
         "region": [
           768,
           512,
+          768,
+          512
+        ],
+        "sourceBounds": [
+          959,
+          544,
+          270,
+          433
+        ],
+        "outputSize": [
+          54,
+          87
+        ],
+        "outputOrigin": [
+          19,
+          17
+        ],
+        "footLift": 0,
+        "scale": 0.2,
+        "sourceSheet": "idle-tank-style",
+        "sourceHash": "6682e24f624d83ca8b5b92fc84e40df9bbbb1beaa137f60af948cd76c80dd005"
+      },
+      {
+        "region": [
+          0,
+          0,
+          768,
+          512
+        ],
+        "sourceBounds": [
+          354,
+          115,
+          257,
+          369
+        ],
+        "outputSize": [
+          51,
+          74
+        ],
+        "outputOrigin": [
+          21,
+          30
+        ],
+        "footLift": 0,
+        "scale": 0.2,
+        "sourceSheet": "happy-tank-style",
+        "sourceHash": "a2437a93e480260052992631256b8df784e6dc072b46e41cf18f72e7845cf089"
+      },
+      {
+        "region": [
+          768,
+          0,
           768,
           512
         ],
         "sourceBounds": [
           931,
-          599,
-          330,
-          373
+          63,
+          313,
+          404
         ],
         "outputSize": [
-          66,
-          75
+          63,
+          81
         ],
         "outputOrigin": [
-          14,
-          29
+          19,
+          15
         ],
-        "footLift": 0,
+        "footLift": 8,
         "scale": 0.2,
-        "sourceSheet": "happy-final",
-        "sourceHash": "f8bff442a9127adeaebe1cc8c93ad038854b0b3087357e573916707d59c19936"
+        "sourceSheet": "happy-tank-style",
+        "sourceHash": "a2437a93e480260052992631256b8df784e6dc072b46e41cf18f72e7845cf089"
       },
       {
         "region": [
           0,
-          0,
+          512,
           768,
-          540
+          512
         ],
         "sourceBounds": [
-          273,
-          111,
-          415,
-          406
+          315,
+          547,
+          325,
+          366
         ],
         "outputSize": [
-          75,
+          65,
           73
         ],
         "outputOrigin": [
-          4,
-          31
+          15,
+          15
         ],
-        "footLift": 0,
-        "scale": 0.18,
-        "sourceSheet": "sad-final",
-        "sourceHash": "72ab226f12ff924d4b75432476282eed08d3c6c58b6cd7e0678a638a8bcd3137"
+        "footLift": 16,
+        "scale": 0.2,
+        "sourceSheet": "happy-tank-style",
+        "sourceHash": "a2437a93e480260052992631256b8df784e6dc072b46e41cf18f72e7845cf089"
       },
       {
         "region": [
           768,
+          512,
+          768,
+          512
+        ],
+        "sourceBounds": [
+          939,
+          606,
+          314,
+          357
+        ],
+        "outputSize": [
+          63,
+          71
+        ],
+        "outputOrigin": [
+          15,
+          33
+        ],
+        "footLift": 0,
+        "scale": 0.2,
+        "sourceSheet": "happy-tank-style",
+        "sourceHash": "a2437a93e480260052992631256b8df784e6dc072b46e41cf18f72e7845cf089"
+      },
+      {
+        "region": [
+          0,
           0,
           768,
           540
         ],
         "sourceBounds": [
-          930,
-          161,
-          415,
-          356
-        ],
-        "outputSize": [
-          75,
-          64
-        ],
-        "outputOrigin": [
-          4,
-          40
-        ],
-        "footLift": 0,
-        "scale": 0.18,
-        "sourceSheet": "sad-final",
-        "sourceHash": "72ab226f12ff924d4b75432476282eed08d3c6c58b6cd7e0678a638a8bcd3137"
-      },
-      {
-        "region": [
-          0,
-          540,
-          768,
-          484
-        ],
-        "sourceBounds": [
-          273,
-          643,
-          414,
-          354
-        ],
-        "outputSize": [
-          75,
-          64
-        ],
-        "outputOrigin": [
-          4,
-          40
-        ],
-        "footLift": 0,
-        "scale": 0.18,
-        "sourceSheet": "sad-final",
-        "sourceHash": "72ab226f12ff924d4b75432476282eed08d3c6c58b6cd7e0678a638a8bcd3137"
-      },
-      {
-        "region": [
-          768,
-          540,
-          768,
-          484
-        ],
-        "sourceBounds": [
-          950,
-          600,
-          411,
+          276,
+          115,
+          404,
           397
         ],
         "outputSize": [
-          74,
+          73,
           71
         ],
         "outputOrigin": [
-          4,
+          5,
           33
         ],
         "footLift": 0,
         "scale": 0.18,
-        "sourceSheet": "sad-final",
-        "sourceHash": "72ab226f12ff924d4b75432476282eed08d3c6c58b6cd7e0678a638a8bcd3137"
+        "sourceSheet": "sad-tank-style",
+        "sourceHash": "709254a6eddffaf370a427a09ef939d78d1b0746fa3c4234d6a875a1f62cf360"
+      },
+      {
+        "region": [
+          768,
+          0,
+          768,
+          540
+        ],
+        "sourceBounds": [
+          934,
+          165,
+          405,
+          347
+        ],
+        "outputSize": [
+          73,
+          62
+        ],
+        "outputOrigin": [
+          5,
+          42
+        ],
+        "footLift": 0,
+        "scale": 0.18,
+        "sourceSheet": "sad-tank-style",
+        "sourceHash": "709254a6eddffaf370a427a09ef939d78d1b0746fa3c4234d6a875a1f62cf360"
+      },
+      {
+        "region": [
+          0,
+          540,
+          768,
+          484
+        ],
+        "sourceBounds": [
+          277,
+          648,
+          403,
+          344
+        ],
+        "outputSize": [
+          73,
+          62
+        ],
+        "outputOrigin": [
+          5,
+          42
+        ],
+        "footLift": 0,
+        "scale": 0.18,
+        "sourceSheet": "sad-tank-style",
+        "sourceHash": "709254a6eddffaf370a427a09ef939d78d1b0746fa3c4234d6a875a1f62cf360"
+      },
+      {
+        "region": [
+          768,
+          540,
+          768,
+          484
+        ],
+        "sourceBounds": [
+          954,
+          605,
+          401,
+          387
+        ],
+        "outputSize": [
+          72,
+          70
+        ],
+        "outputOrigin": [
+          5,
+          34
+        ],
+        "footLift": 0,
+        "scale": 0.18,
+        "sourceSheet": "sad-tank-style",
+        "sourceHash": "709254a6eddffaf370a427a09ef939d78d1b0746fa3c4234d6a875a1f62cf360"
       }
     ]
   },

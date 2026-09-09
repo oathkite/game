@@ -20,7 +20,7 @@
 - 再送された3D原画kita.pngを唯一のキャラクター参照にする。長い白い喉・横寄りの自然の目・細い腕・メガネと小さい結び目を保つ。以前の汎用的なカエル案へ戻さない。
 - 白い喉・腹は体の模様。目・顔として扱わない。
 - メガネは頭に接し、スカーフは首を巻く。生成原画の段階で浮き・貫通を直す。
-- 粗めのドットと大きな色面でデフォルメする。輪郭は純黒の細い1〜2ドットを目安とする。太いステッカー状の縁取りにしない。微細な陰影・粒状ノイズ・ditheringは避ける。
+- 粗めのドットと大きな色面でデフォルメする。輪郭は純黒の細い基本1ドットを目安とする。太いステッカー状の縁取りにしない。微細な陰影・粒状ノイズ・ditheringは避ける。
 - frameSize=96×112 artpx、foot=[48,104]。
 - character.pngは1152×112、横12コマ。neutral=0〜3、happy=4〜7、sad=8〜11。
 - 16エントリ以内のindexed PNG（透明を含む）。透明index0、その他は不透明。character.oraを併納。
@@ -34,7 +34,7 @@ layersはcharacterの1件のみ。これは画像読み込み形式の名称で�
 posesにはid・label・代表frame・clip（frames / durations / loop）、metrics.characterには原画領域・縮尺・出力位置・SHA256を記録する。
 availability=owner-only、grantKey=kita-personal。animationStatus=animated-loop-clips、humanReview=pending。
 
-生成原画はgenerated/{idle,happy,sad}-final.png、プロンプトはprompts/{idle,happy,sad}-tank-style.txtとprompts/black-contour.txt。参照はgenerated/kita-reference.png。
+生成原画はgenerated/{idle,happy,sad}-tank-style.png、プロンプトはprompts/{idle,happy,sad}-tank-style.txt。参照はgenerated/kita-reference.png。
 generation.jsonへmodel・参照・SHA256を記録する。過去の分離原画は制作履歴としてのみ保存し、現行出力へ使わない。
 registration.jsonは一体画像のcrop・足元・原画別縮尺・footLiftを登録する。ジャンプのfootLiftは0/8/16/0 artpx。空中コマを地面へ戻さない。頭・首のパーツ接続点は不要。
 
@@ -51,7 +51,7 @@ registration.jsonは一体画像のcrop・足元・原画別縮尺・footLiftを
 
 コマンドはassets:export:avatar、assets:validate:avatar、assets:capture:avatar、assets:test、assets:test:browser。
 待機の各コマ時間は1100/240/100/240ms、喜びは200/150/220/230ms、悲しみは600/300/360/340ms。最終コマから先頭へ戻る。時間判定は共通のportraitFrameで行い、状態切り替え時は経過時間を0に戻す。
-パレットは全12コマ共通16エントリ以内（透明index0、純黒index1）。黄色がオレンジへ崩れないよう専用の黄系・白系を含める。原画ごとの固定縮尺で再出力する。接地・座位は基準線へ、空中コマはfootLift分だけ上へ配置する。外周画素の98%以上が純黒、paletteが16以内であることをPNGから検査する。残りの角画素もコンタクトシートで目視確認する。
+パレットは全12コマ共通16エントリ以内（透明index0、純黒index1）。黄色がオレンジへ崩れないよう専用の黄系・白系を含める。原画ごとの固定縮尺で再出力する。接地・座位は基準線へ、空中コマはfootLift分だけ上へ配置する。paletteが16以内、各コマの不透明画素に占める純黒が3〜12%であることをPNGから検査する。これは現KITAの太線再発防止用の上限・下限で、他のキャラへ一般化しない。黒い画素の割合だけで線幅1ドットを保証せず、実寸と整数倍率で目視確認する。
 
 
 ## タンクとの画風統一
@@ -64,3 +64,5 @@ registration.jsonは一体画像のcrop・足元・原画別縮尺・footLiftを
 assets:capture:avatarはタンクの実rendererと立ち絵を同じ2倍ドット倍率で並べ、tank-comparison.pngを出力する。
 工房にもこの比較を表示する。原画・palette・登録を変えたら比較画像も再出力する。
 この比較は画風確認であり、プロフィール画像と搭乗キャラのゲーム世界内の実寸比較ではない。
+
+輪郭修正：外周98%を黒にする旧検査は撤回。黒の面積が約26%となり、太い縁取りを誘発した。太線加工前のGPT Image 2.5原画へ戻し、頭・メガネ・腕・スカーフの線を細く保つ。現在の各コマの黒面積は約6〜9%。8 source pxの輪郭追加プロンプトは履歴のみとし、再適用しない。

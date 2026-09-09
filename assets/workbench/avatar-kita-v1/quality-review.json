@@ -1,14 +1,14 @@
 {
   "status": "draft",
   "humanReview": "pending",
-  "avatarDigest": "2e6edea87c4b43e566f9f087f29f9af10a5fe83405d2aa487ff4394ff76030b3",
+  "avatarDigest": "97d209e6b22aad0961e05e3039c0051f0862e6636fd060020c4fe8f275ae8121",
   "assetUnitTests": 81,
   "browserTests": 20,
   "typecheck": "passed",
   "portraitChecks": 33,
   "renderFrames": 12,
   "animationStatus": "animated-loop-clips",
-  "revision": "tank-matched-16-color-jump-seated",
+  "revision": "tank-style-thin-outline",
   "evidence": [
     "assets/previews/avatar-kita-v1/poses.png",
     "assets/previews/avatar-kita-v1/frames.png",
@@ -17,12 +17,12 @@
     "assets/previews/avatar-kita-v1/inspection.json",
     "assets/previews/avatar-kita-v1/tank-comparison.png"
   ],
-  "visualReview": "Compared with live baseline-v2 tank at same art-pixel zoom. Muted ochre/ivory/blue-gray palette, black 1-2 pixel contour. Banzai jump lifts8/16 artpx; disappointment is seated. Source scales calibrated per animation, constant within clip.",
+  "visualReview": "Reused GPT Image 2.5 tank-style originals before thick contour edit. Pure black area is 5.9-8.9 percent per frame instead of 26 percent overall. Reviewed head, glasses, arm and scarf contours alongside live tank. Pixel-level line width remains a visual review item.",
   "limitations": [
     "Human review of likeness and animation quality remains pending.",
     "Four-frame loops; dedicated transitions between emotions, wave and battle sprites are not produced.",
     "No game profile/result integration or server ownership enforcement.",
     "Existing tank workshop still uses legacy pilot layers until battle sprite migration."
   ],
-  "comparisonDigest": "a8010a1929c0b19381afc23b21e0438cbb24dd420ba814c937feacd792e4bf2a"
+  "comparisonDigest": "c54c81419fbfc2bcdf9624bb50294d55948af533a339511b47e926ef8bd0eedc"
 }

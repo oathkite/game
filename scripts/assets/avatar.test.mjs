@@ -24,15 +24,20 @@ test('portrait keeps coarse pixel density and black outline with visible eyes in
  assert.deepEqual(manifest.layers.map(l=>l.id),['character']);
 });
 
-test('exported PNG uses at most 16 palette entries and a black silhouette',async()=>{
+test('exported PNG keeps 16 colors and restrained black area in every frame',async()=>{
  const {readFileSync}=await import('node:fs'),{inspectPng}=await import('./png.mjs');
  const image=inspectPng(readFileSync('assets/workbench/avatar-kita-v1/character.png'),{pixels:true});
+ const manifest=JSON.parse(readFileSync('assets/workbench/avatar-kita-v1/avatar.json'));
  assert.ok(image.colors<=16);
- let boundary=0,black=0;
- for(let y=1;y<image.height-1;y++)for(let x=1;x<image.width-1;x++){
-  const i=(y*image.width+x)*4;if(!image.rgba[i+3])continue;
-  const edge=[[1,0],[-1,0],[0,1],[0,-1]].some(([dx,dy])=>!image.rgba[((y+dy)*image.width+x+dx)*4+3]);
-  if(edge){boundary++;if(image.rgba[i]===0&&image.rgba[i+1]===0&&image.rgba[i+2]===0)black++;}
+ const [w,h]=manifest.frameSize;
+ for(let frame=0;frame<manifest.frameCount;frame++){
+  let opaque=0,black=0;
+  for(let y=0;y<h;y++)for(let x=frame*w;x<(frame+1)*w;x++){
+   const i=(y*image.width+x)*4;if(!image.rgba[i+3])continue;
+   opaque++;
+   if(image.rgba[i]===0&&image.rgba[i+1]===0&&image.rgba[i+2]===0)black++;
+  }
+  assert.ok(opaque>0&&black/opaque>=.03&&black/opaque<=.12,
+   'KITA frame '+frame+' must retain black detail without the previous heavy outline');
  }
- assert.ok(boundary>0&&black/boundary>=.98,'at least 98% of silhouette boundary must be pure black');
 });

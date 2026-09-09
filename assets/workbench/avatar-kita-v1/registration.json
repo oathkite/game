@@ -1,7 +1,7 @@
 {
   "frames": [
     {
-      "sheet": "idle-final",
+      "sheet": "idle-tank-style",
       "region": [
         0,
         0,
@@ -9,13 +9,13 @@
         512
       ],
       "sourceFoot": [
-        491,
-        495
+        490,
+        488
       ],
       "footLift": 0
     },
     {
-      "sheet": "idle-final",
+      "sheet": "idle-tank-style",
       "region": [
         768,
         0,
@@ -23,13 +23,13 @@
         512
       ],
       "sourceFoot": [
-        1098,
-        495
+        1103,
+        488
       ],
       "footLift": 0
     },
     {
-      "sheet": "idle-final",
+      "sheet": "idle-tank-style",
       "region": [
         0,
         512,
@@ -37,13 +37,13 @@
         512
       ],
       "sourceFoot": [
-        491,
-        984
+        492,
+        977
       ],
       "footLift": 0
     },
     {
-      "sheet": "idle-final",
+      "sheet": "idle-tank-style",
       "region": [
         768,
         512,
@@ -51,13 +51,13 @@
         512
       ],
       "sourceFoot": [
-        1099,
-        984
+        1105,
+        977
       ],
       "footLift": 0
     },
     {
-      "sheet": "happy-final",
+      "sheet": "happy-tank-style",
       "region": [
         0,
         0,
@@ -65,13 +65,13 @@
         512
       ],
       "sourceFoot": [
-        489,
-        491
+        488,
+        484
       ],
       "footLift": 0
     },
     {
-      "sheet": "happy-final",
+      "sheet": "happy-tank-style",
       "region": [
         768,
         0,
@@ -79,13 +79,13 @@
         512
       ],
       "sourceFoot": [
-        1077,
-        475
+        1078,
+        467
       ],
       "footLift": 8
     },
     {
-      "sheet": "happy-final",
+      "sheet": "happy-tank-style",
       "region": [
         0,
         512,
@@ -94,12 +94,12 @@
       ],
       "sourceFoot": [
         479,
-        920
+        913
       ],
       "footLift": 16
     },
     {
-      "sheet": "happy-final",
+      "sheet": "happy-tank-style",
       "region": [
         768,
         512,
@@ -107,13 +107,13 @@
         512
       ],
       "sourceFoot": [
-        1103,
-        972
+        1102,
+        963
       ],
       "footLift": 0
     },
     {
-      "sheet": "sad-final",
+      "sheet": "sad-tank-style",
       "region": [
         0,
         0,
@@ -121,13 +121,13 @@
         540
       ],
       "sourceFoot": [
-        517,
-        517
+        516,
+        512
       ],
       "footLift": 0
     },
     {
-      "sheet": "sad-final",
+      "sheet": "sad-tank-style",
       "region": [
         768,
         0,
@@ -135,13 +135,13 @@
         540
       ],
       "sourceFoot": [
-        1175,
-        517
+        1173,
+        512
       ],
       "footLift": 0
     },
     {
-      "sheet": "sad-final",
+      "sheet": "sad-tank-style",
       "region": [
         0,
         540,
@@ -149,13 +149,13 @@
         484
       ],
       "sourceFoot": [
-        517,
-        997
+        516,
+        992
       ],
       "footLift": 0
     },
     {
-      "sheet": "sad-final",
+      "sheet": "sad-tank-style",
       "region": [
         768,
         540,
@@ -163,8 +163,8 @@
         484
       ],
       "sourceFoot": [
-        1193,
-        997
+        1191,
+        992
       ],
       "footLift": 0
     }
@@ -235,8 +235,8 @@
     }
   ],
   "sourceScales": {
-    "idle-final": 0.2,
-    "happy-final": 0.2,
-    "sad-final": 0.18
+    "idle-tank-style": 0.2,
+    "happy-tank-style": 0.2,
+    "sad-tank-style": 0.18
   }
 }

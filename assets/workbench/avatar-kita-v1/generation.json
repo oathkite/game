@@ -183,7 +183,7 @@
       "prompt": "prompts/idle-tank-style.txt",
       "sha256": "6682e24f624d83ca8b5b92fc84e40df9bbbb1beaa137f60af948cd76c80dd005",
       "promptSha256": "f955b12b5792b8fe2bc9b10c0a8af09a268888012252f9a9ab28fc01d5bd544c",
-      "usedInCurrentExport": false,
+      "usedInCurrentExport": true,
       "inputs": [
         {
           "path": "assets/workbench/avatar-kita-v1/generated/kita-reference.png",
@@ -200,7 +200,7 @@
       "prompt": "prompts/black-contour.txt",
       "sha256": "7b98fd95192eccf649f47aec5f0220182f8b66a5437d14eeaca00b9f6b1781bc",
       "promptSha256": "6d4d65cfbf9b38851b0d4a09a10e03cd24b84d125315e299a422c307425ef194",
-      "usedInCurrentExport": true,
+      "usedInCurrentExport": false,
       "inputs": [
         {
           "path": "assets/workbench/avatar-kita-v1/generated/idle-tank-style.png",
@@ -226,7 +226,7 @@
       "prompt": "prompts/happy-tank-style.txt",
       "sha256": "a2437a93e480260052992631256b8df784e6dc072b46e41cf18f72e7845cf089",
       "promptSha256": "bc5b1d89ed1e22b143f0795e65837c7f266206f13ab4865ae58f026f10df9a35",
-      "usedInCurrentExport": false,
+      "usedInCurrentExport": true,
       "inputs": [
         {
           "path": "assets/workbench/avatar-kita-v1/generated/kita-reference.png",
@@ -243,7 +243,7 @@
       "prompt": "prompts/black-contour.txt",
       "sha256": "f8bff442a9127adeaebe1cc8c93ad038854b0b3087357e573916707d59c19936",
       "promptSha256": "6d4d65cfbf9b38851b0d4a09a10e03cd24b84d125315e299a422c307425ef194",
-      "usedInCurrentExport": true,
+      "usedInCurrentExport": false,
       "inputs": [
         {
           "path": "assets/workbench/avatar-kita-v1/generated/happy-tank-style.png",
@@ -269,7 +269,7 @@
       "prompt": "prompts/sad-tank-style.txt",
       "sha256": "709254a6eddffaf370a427a09ef939d78d1b0746fa3c4234d6a875a1f62cf360",
       "promptSha256": "6d5a71591abc9f4d0216e4dc51262c818a00a854ad5250a3ff5fa488baaad011",
-      "usedInCurrentExport": false,
+      "usedInCurrentExport": true,
       "inputs": [
         {
           "path": "assets/workbench/avatar-kita-v1/generated/kita-reference.png",
@@ -286,7 +286,7 @@
       "prompt": "prompts/black-contour.txt",
       "sha256": "72ab226f12ff924d4b75432476282eed08d3c6c58b6cd7e0678a638a8bcd3137",
       "promptSha256": "6d4d65cfbf9b38851b0d4a09a10e03cd24b84d125315e299a422c307425ef194",
-      "usedInCurrentExport": true,
+      "usedInCurrentExport": false,
       "inputs": [
         {
           "path": "assets/workbench/avatar-kita-v1/generated/sad-tank-style.png",
