@@ -1,0 +1,119 @@
+{
+  "pack": "kita-personal-portraits",
+  "checks": [
+    {
+      "name": "本人専用の利用区分",
+      "pass": true,
+      "details": []
+    },
+    {
+      "name": "基本・喜び・悲しみの3ポーズ",
+      "pass": true,
+      "details": []
+    },
+    {
+      "name": "全ポーズの素体縮尺が共通",
+      "pass": true,
+      "details": []
+    },
+    {
+      "name": "静止ポーズとアニメーションを区別",
+      "pass": true,
+      "details": []
+    },
+    {
+      "name": "neutral：足元が共通基準",
+      "pass": true,
+      "details": [
+        207
+      ]
+    },
+    {
+      "name": "neutral：キャンバス端で切れない",
+      "pass": true,
+      "details": []
+    },
+    {
+      "name": "neutral：メガネとスカーフが素体に接触",
+      "pass": true,
+      "details": [
+        {
+          "glasses": 10,
+          "scarf": 734
+        }
+      ]
+    },
+    {
+      "name": "neutral：自然の目を装備が隠さない",
+      "pass": true,
+      "details": [
+        0
+      ]
+    },
+    {
+      "name": "happy：足元が共通基準",
+      "pass": true,
+      "details": [
+        208
+      ]
+    },
+    {
+      "name": "happy：キャンバス端で切れない",
+      "pass": true,
+      "details": []
+    },
+    {
+      "name": "happy：メガネとスカーフが素体に接触",
+      "pass": true,
+      "details": [
+        {
+          "glasses": 9,
+          "scarf": 853
+        }
+      ]
+    },
+    {
+      "name": "happy：自然の目を装備が隠さない",
+      "pass": true,
+      "details": [
+        0
+      ]
+    },
+    {
+      "name": "sad：足元が共通基準",
+      "pass": true,
+      "details": [
+        207
+      ]
+    },
+    {
+      "name": "sad：キャンバス端で切れない",
+      "pass": true,
+      "details": []
+    },
+    {
+      "name": "sad：メガネとスカーフが素体に接触",
+      "pass": true,
+      "details": [
+        {
+          "glasses": 59,
+          "scarf": 743
+        }
+      ]
+    },
+    {
+      "name": "sad：自然の目を装備が隠さない",
+      "pass": true,
+      "details": [
+        0
+      ]
+    },
+    {
+      "name": "3ポーズ×装備4通りを描画",
+      "pass": true
+    }
+  ],
+  "combinations": 12,
+  "scope": "3 static poses × 4 accessory combinations; no animation playback certification",
+  "humanReview": "pending"
+}

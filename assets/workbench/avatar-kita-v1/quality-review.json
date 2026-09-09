@@ -1,0 +1,22 @@
+{
+  "status": "draft",
+  "humanReview": "pending",
+  "avatarDigest": "374e15d00026246b596318a636b9b8f25ef4b51df5c46f9428336a08774e21ad",
+  "assetUnitTests": 76,
+  "browserTests": 19,
+  "typecheck": "passed",
+  "portraitChecks": 17,
+  "renderCombinations": 12,
+  "animationStatus": "representative-still-poses-only",
+  "evidence": [
+    "assets/previews/avatar-kita-v1/poses.png",
+    "assets/previews/avatar-kita-v1/desktop.png",
+    "assets/previews/avatar-kita-v1/mobile.png",
+    "assets/previews/avatar-kita-v1/inspection.json"
+  ],
+  "limitations": [
+    "Static neutral/happy/sad only; motion in-betweens, face icon and wave are not produced.",
+    "No game profile/result integration or avatar ownership enforcement is implemented.",
+    "Eye areas are manually registered; human review of likeness and accessory fit remains pending."
+  ]
+}

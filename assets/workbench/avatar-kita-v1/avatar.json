@@ -1,0 +1,363 @@
+{
+  "avatarPortraitVersion": 1,
+  "id": "kita-personal-portraits",
+  "status": "draft",
+  "availability": {
+    "scope": "owner-only",
+    "grantKey": "kita-personal"
+  },
+  "model": "gpt-image-2.5-sunburst",
+  "frameSize": [
+    192,
+    224
+  ],
+  "foot": [
+    96,
+    208
+  ],
+  "scale": 0.21,
+  "poses": [
+    {
+      "id": "neutral",
+      "label": "基本の立ち絵",
+      "frame": 0,
+      "faceArea": [
+        84,
+        49,
+        38,
+        17
+      ],
+      "eyeAreas": [
+        [
+          76,
+          48,
+          14,
+          16
+        ],
+        [
+          109,
+          51,
+          10,
+          10
+        ]
+      ],
+      "headAnchor": [
+        99,
+        48
+      ],
+      "neckAnchor": [
+        96,
+        100
+      ]
+    },
+    {
+      "id": "happy",
+      "label": "喜ぶ",
+      "frame": 1,
+      "faceArea": [
+        81,
+        51,
+        40,
+        11
+      ],
+      "eyeAreas": [
+        [
+          82,
+          52,
+          11,
+          5
+        ],
+        [
+          108,
+          54,
+          10,
+          5
+        ]
+      ],
+      "headAnchor": [
+        99,
+        47
+      ],
+      "neckAnchor": [
+        96,
+        100
+      ]
+    },
+    {
+      "id": "sad",
+      "label": "悲しむ",
+      "frame": 2,
+      "faceArea": [
+        96,
+        74,
+        36,
+        21
+      ],
+      "eyeAreas": [
+        [
+          95,
+          72,
+          16,
+          11
+        ],
+        [
+          125,
+          80,
+          7,
+          8
+        ]
+      ],
+      "headAnchor": [
+        113,
+        69
+      ],
+      "neckAnchor": [
+        96,
+        112
+      ]
+    }
+  ],
+  "layers": [
+    {
+      "id": "body",
+      "file": "body.png",
+      "source": "body.ora"
+    },
+    {
+      "id": "scarf",
+      "file": "scarf.png",
+      "source": "scarf.ora"
+    },
+    {
+      "id": "glasses",
+      "file": "glasses.png",
+      "source": "glasses.ora"
+    }
+  ],
+  "metrics": {
+    "body": [
+      {
+        "region": [
+          0,
+          0,
+          480,
+          1024
+        ],
+        "sourceBounds": [
+          57,
+          142,
+          404,
+          783
+        ],
+        "outputSize": [
+          85,
+          164
+        ],
+        "outputOrigin": [
+          50,
+          44
+        ],
+        "scale": 0.21,
+        "sourceHash": "036172495235ce25576fa3f69cb5b822bd916a06c43807b9d6cdcf3a2a2a3488"
+      },
+      {
+        "region": [
+          480,
+          0,
+          610,
+          1024
+        ],
+        "sourceBounds": [
+          504,
+          142,
+          559,
+          786
+        ],
+        "outputSize": [
+          117,
+          165
+        ],
+        "outputOrigin": [
+          36,
+          44
+        ],
+        "scale": 0.21,
+        "sourceHash": "036172495235ce25576fa3f69cb5b822bd916a06c43807b9d6cdcf3a2a2a3488"
+      },
+      {
+        "region": [
+          1090,
+          0,
+          446,
+          1024
+        ],
+        "sourceBounds": [
+          1105,
+          216,
+          367,
+          711
+        ],
+        "outputSize": [
+          77,
+          149
+        ],
+        "outputOrigin": [
+          56,
+          59
+        ],
+        "scale": 0.21,
+        "sourceHash": "036172495235ce25576fa3f69cb5b822bd916a06c43807b9d6cdcf3a2a2a3488"
+      }
+    ],
+    "glasses": [
+      {
+        "region": [
+          0,
+          0,
+          480,
+          1024
+        ],
+        "sourceBounds": [
+          155,
+          174,
+          260,
+          101
+        ],
+        "outputSize": [
+          36,
+          14
+        ],
+        "outputOrigin": [
+          83,
+          36
+        ],
+        "scale": 0.14,
+        "sourceHash": "f2b464c1fc7ae91e9955d4debd363df882350fb096e45d8e93eaf8d0170c2b10"
+      },
+      {
+        "region": [
+          480,
+          0,
+          610,
+          1024
+        ],
+        "sourceBounds": [
+          664,
+          158,
+          267,
+          113
+        ],
+        "outputSize": [
+          37,
+          16
+        ],
+        "outputOrigin": [
+          83,
+          36
+        ],
+        "scale": 0.14,
+        "sourceHash": "f2b464c1fc7ae91e9955d4debd363df882350fb096e45d8e93eaf8d0170c2b10"
+      },
+      {
+        "region": [
+          1090,
+          0,
+          446,
+          1024
+        ],
+        "sourceBounds": [
+          1238,
+          274,
+          242,
+          136
+        ],
+        "outputSize": [
+          34,
+          19
+        ],
+        "outputOrigin": [
+          100,
+          56
+        ],
+        "scale": 0.14,
+        "sourceHash": "f2b464c1fc7ae91e9955d4debd363df882350fb096e45d8e93eaf8d0170c2b10"
+      }
+    ],
+    "scarf": [
+      {
+        "region": [
+          0,
+          0,
+          480,
+          1024
+        ],
+        "sourceBounds": [
+          106,
+          323,
+          297,
+          157
+        ],
+        "outputSize": [
+          62,
+          33
+        ],
+        "outputOrigin": [
+          60,
+          82
+        ],
+        "scale": 0.21,
+        "sourceHash": "e5518b515309c02998285fb5f6bc7a916c917e7e28e75606dcfcf9011fae0ebc"
+      },
+      {
+        "region": [
+          480,
+          0,
+          610,
+          1024
+        ],
+        "sourceBounds": [
+          593,
+          340,
+          318,
+          150
+        ],
+        "outputSize": [
+          67,
+          32
+        ],
+        "outputOrigin": [
+          55,
+          85
+        ],
+        "scale": 0.21,
+        "sourceHash": "e5518b515309c02998285fb5f6bc7a916c917e7e28e75606dcfcf9011fae0ebc"
+      },
+      {
+        "region": [
+          1090,
+          0,
+          446,
+          1024
+        ],
+        "sourceBounds": [
+          1143,
+          385,
+          306,
+          174
+        ],
+        "outputSize": [
+          64,
+          37
+        ],
+        "outputOrigin": [
+          64,
+          95
+        ],
+        "scale": 0.21,
+        "sourceHash": "e5518b515309c02998285fb5f6bc7a916c917e7e28e75606dcfcf9011fae0ebc"
+      }
+    ]
+  },
+  "animationStatus": "representative-still-poses-only",
+  "humanReview": "pending"
+}

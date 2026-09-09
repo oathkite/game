@@ -1,0 +1,58 @@
+{
+  "model": "gpt-image-2.5-sunburst",
+  "api": "images.edit",
+  "tool": "bundled imagegen CLI",
+  "quality": "high",
+  "size": "1536x1024",
+  "background": "transparent",
+  "images": [
+    {
+      "file": "generated/poses.png",
+      "prompt": "prompts/poses.txt",
+      "sha256": "036172495235ce25576fa3f69cb5b822bd916a06c43807b9d6cdcf3a2a2a3488",
+      "promptSha256": "be21dbc5788479be162dd7a2da1ac92934161493c5aac0a00ffcfe36a3439b2b",
+      "inputs": [
+        {
+          "path": "assets/concepts/pixel-pilot-v3/references/kita.png",
+          "sha256": "4bb9b6080d1868e272b8835645e6b840f713a9b838b03589dcf515c1b6ee48f4"
+        },
+        {
+          "path": "assets/workbench/baseline-v2/generated/pilot.png",
+          "sha256": "1301073e18e604a04f08ad4cf83270f4e6efb1f4ccafafe1ea41bb03c35e8f3f"
+        }
+      ]
+    },
+    {
+      "file": "generated/glasses.png",
+      "prompt": "prompts/glasses.txt",
+      "sha256": "f2b464c1fc7ae91e9955d4debd363df882350fb096e45d8e93eaf8d0170c2b10",
+      "promptSha256": "cd3b4c88745a68af698cfb970f5a419ea9f48c471b41c4522779ff060b79939c",
+      "inputs": [
+        {
+          "path": "assets/workbench/avatar-kita-v1/generated/poses.png",
+          "sha256": "036172495235ce25576fa3f69cb5b822bd916a06c43807b9d6cdcf3a2a2a3488"
+        },
+        {
+          "path": "assets/concepts/pixel-pilot-v3/references/kita.png",
+          "sha256": "4bb9b6080d1868e272b8835645e6b840f713a9b838b03589dcf515c1b6ee48f4"
+        }
+      ]
+    },
+    {
+      "file": "generated/scarf.png",
+      "prompt": "prompts/scarf.txt",
+      "sha256": "e5518b515309c02998285fb5f6bc7a916c917e7e28e75606dcfcf9011fae0ebc",
+      "promptSha256": "45fec42449f78bc6068b28f708a592551ab2b7b5bdf58104e97432f1fa45013a",
+      "inputs": [
+        {
+          "path": "assets/workbench/avatar-kita-v1/generated/poses.png",
+          "sha256": "036172495235ce25576fa3f69cb5b822bd916a06c43807b9d6cdcf3a2a2a3488"
+        },
+        {
+          "path": "assets/concepts/pixel-pilot-v3/references/kita.png",
+          "sha256": "4bb9b6080d1868e272b8835645e6b840f713a9b838b03589dcf515c1b6ee48f4"
+        }
+      ]
+    }
+  ]
+}

@@ -52,3 +52,7 @@ assets/workbench/baseline-v2 を初期 pack として読む。
 最新パックは29アセット・74フレーム。41項目の検査には、PNG実画素を使ったメガネの接触と目の非遮蔽、透過面、腰の遮蔽、履帯支持と接地、砲口、VFX消散・異色片混入、ガラスの枠外チェックも含む。Node側のvalidateと同じ関数を使用する。
 
 `pnpm assets:export:v2` は生成元から機械的に再出力する（sharpが必要）。`pnpm assets:capture` は起動中のこのツールから比較画像と検査JSONを `assets/previews/asset-lab-v2/` へ保存する。保存画像は実レンダラーの結果であり、別の見本用描画ではない。
+
+## アバター工房
+
+`/avatar.html`で本人用立ち絵の3ポーズと独立装備を確認する。プロフィール／勝敗リザルトのモックアップ、背景切替、接続ガイド、検査reportを備える。現在は静止画のみで、アニメーション完成とは扱わない。制作規約はdocs/design/18-avatar-portraits.md。
