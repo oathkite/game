@@ -1,4 +1,5 @@
 import { z } from "zod";
+import { WEAPON_IDS } from "./weapons.js";
 import { fireCommandSchema, moveCommandSchema, moveSnapshotSchema } from "./v2.js";
 
 // 開発用の8接続移動試験。公開ロビー用のjoin/ready契約とは分離する。
@@ -15,7 +16,10 @@ export const labFrameSchema = z.object({
   phase: z.enum(["acting", "replaying", "finished"]),
   result: z.union([z.object({ type: z.literal("ongoing") }), z.object({ type: z.literal("draw") }), z.object({ type: z.literal("win"), teamId: z.string() })]),
   terrainOps: z.array(z.object({ cx: z.number(), cy: z.number(), radius: z.number() })),
-  replay: z.object({ startsAt: z.number(), endsAt: z.number(), terrainOpsBefore: z.number().int().nonnegative(), playersBefore: z.array(labPlayerSchema).length(8), paths: z.array(z.array(z.object({ x: z.number(), y: z.number() }))) }).nullable(),
+  replay: z.object({ startsAt: z.number(), endsAt: z.number(), terrainOpsBefore: z.number().int().nonnegative(), playersBefore: z.array(labPlayerSchema).length(8), ticks: z.number().int().nonnegative(),
+    shooter: z.object({ playerId: z.string(), facing: z.union([z.literal(-1), z.literal(1)]), elevation: z.number(), weapon: z.enum(WEAPON_IDS) }),
+    impacts: z.array(z.object({ tick: z.number().int().nonnegative(), damage: z.array(z.object({ playerId: z.string(), amount: z.number() })) })),
+    paths: z.array(z.object({ launchTick: z.number().int().nonnegative(), endTick: z.number().int().nonnegative(), points: z.array(z.object({ x: z.number(), y: z.number(), tick: z.number().int().nonnegative() })) })) }).nullable(),
 });
 export const labOutputSchema = z.union([
   labFrameSchema,

@@ -41,7 +41,7 @@ UI共通素材を9sliceで使い、角の変形と押しにくい小さなボタ
 - 横向き3サイズでプラクティスの主要ボタンが44px以上、画面内に収まることを検証。
 - 実エンジンの降参による勝敗から結果画面へ進み、再戦で新しい試合を作れることを確認。
 - 地形textureの透過が全collision cellと一致し、穴を削った後にも古い塗りが残らないことをCanvasのpixel値で検証。
-- client164テスト、workspace typecheck、production build成功。既存の大きなJS chunk警告は残る。
+- client165テスト、workspace typecheck、production build成功。既存の大きなJS chunk警告は残る。
 - 生成素材はproduction buildに含まれないことを出力一覧で確認。元PNGは約15MBあり公開前には配信サイズを最適化する。
 - 背景v1の白飛びを画面で確認し、v2の抑えた青緑へ差し替え。地形は1セル4texelで細部を維持する。
 - 狭い横画面の設定はpanel内だけscrollし、戻る操作を画面内に固定。
@@ -61,5 +61,10 @@ UI共通素材を9sliceで使い、角の変形と押しにくい小さなボタ
 - world E2E 5件、world-network E2E 1件、camera E2E 11件、workspace typecheck、production build成功。
 - localhostのlab serverは8794。許可Originはlocalhost/127.0.0.1の5185・5186のみ。
 - server起動はこのUI worktreeで `pnpm --filter @game/server exec tsx src/lab/main.ts`。
-- 固定map・8席・風0の試験。相手の照準角度の同期、全武器のimpact tick再生、正式ロビーは次工程。
+- 固定map・8席・風0の試験。射撃時の角度・向き・武器は同期。操作中の照準の逐次同期、任意loadout、正式ロビーは次工程。
 - PC/mobileの保存画像は `docs/design/previews/world-ui/online-desktop.png` と `online-mobile.png`。
+
+射撃再生は各pathのlaunch/end tick、時刻付き座標、impact tickとdamageを使用する。
+先の着弾でHPと地形を更新し、後続弾は発射tickから表示。最終300msで落下を補間する。
+射撃時は確定した角度・向き・武器でタンクと弾を表示。貫通の停止区間を座標の間引き後にも保持する。
+固定loadout以外の武器選択は正式ロビー接続後。client165/server45とworld-network E2Eを検証。

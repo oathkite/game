@@ -1,10 +1,10 @@
 import { randomUUID } from "node:crypto";
 import { createBattle, createBattleSession, fireInSession, forfeitInSession, moveInSession, movementSnapshot, surrenderInSession, tickSession } from "@game/engine/multiplayer";
 import { TEST_ARENA } from "@game/maps";
-import { ONE } from "@game/sim";
 import { labInputSchema, type LabFrame, type LabOutput } from "@game/protocol/v2-lab";
 import type { WebSocket, WebSocketServer } from "ws";
 import { createLabSessions, type LabSession } from "./sessions.js";
+import { replayFrame } from "./replay.js";
 
 /** localhost限定の縦断試験。固定8席、固定loadout。 */
 export const attachMovementLab = (wss: WebSocketServer) => {
@@ -21,10 +21,7 @@ export const attachMovementLab = (wss: WebSocketServer) => {
     matchId: state.matchId, turnId: state.roster.turnId, actorId: state.movement.playerId, deadlineAt: state.movement.deadlineAt,
     players: state.players.map(p => ({ ...p, teamId: members.find(m => m.playerId === p.playerId)!.teamId, eliminated: state.roster.eliminated.includes(p.playerId) })),
     movement: movementSnapshot(state.movement, Date.now()), phase: state.phase, result: state.result, terrainOps: [...state.terrainOps],
-    replay: state.replay ? { startsAt: state.replay.startsAt, endsAt: state.replay.endsAt,
-      terrainOpsBefore: state.terrainOps.length - state.replay.shot.impacts.length,
-      playersBefore: state.replay.playersBefore.map(p => ({ ...p, teamId: members.find(m => m.playerId === p.playerId)!.teamId, eliminated: state.replay!.eliminatedBefore.includes(p.playerId) })),
-      paths: state.replay.shot.paths.map(p => p.points.filter((_, i) => i % 4 === 0 || i === p.points.length - 1).map(point => ({ x: point.x / ONE, y: point.y / ONE }))) } : null });
+    replay: replayFrame(state) });
   const timer = setInterval(() => {
     const before = state;
     state = forfeitInSession(state, sessions.expiredPlayerIds(), Date.now());

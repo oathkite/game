@@ -31,7 +31,7 @@ export const NetworkField = (props: Props) => {
       renderer = await createRenderer({ host: element, layout: layout(), mask, terrainArt, backgroundAlpha: 0, tankFactory: art.create,
         players: latest.current.frame.players.map(p => ({ nickname: `${p.teamId === "t0" ? "A" : "B"} ${p.playerId}${p.playerId === latest.current.ownId ? " / YOU" : ""}`, colors: { primary: p.teamId === "t0" ? "yellow" : "cyan", secondary: "blue" } })) });
       if (disposed) { renderer.destroy(); art.destroy(); return; }
-      const r = renderer; const bullet = r.projectile("yellow", "cannon");
+      const r = renderer; let bullet = r.projectile("yellow", "cannon");
       stop = r.onFrame(dt => {
         const { frame, players, presentation, elevation, ownId } = latest.current;
         const size = layout(), key = `${size.mapWidth}/${size.mapHeight}`;
@@ -41,10 +41,12 @@ export const NetworkField = (props: Props) => {
         const nextTurn = `${frame.matchId}/${frame.turnId}`;
         if (nextTurn !== turnKey) { turnKey = nextTurn; focus(); }
         facing.set(frame.actorId, frame.movement.facing);
+        const shot = frame.phase === "replaying" ? frame.replay?.shooter : null;
+        if (shot) facing.set(shot.playerId, shot.facing);
         players.forEach((p, i) => r.setTank(i, { x: p.x, y: p.y, tilt: tiltOf(mask, { x: Math.round(p.x), y: Math.round(p.y) }), facing: facing.get(p.playerId) ?? 1,
-          elevation: p.playerId === ownId ? elevation : 45, hp: p.eliminated ? 0 : p.hp, visible: !p.eliminated && p.y < 225, aiming: frame.phase === "acting" && p.playerId === ownId && p.playerId === frame.actorId, flash: false }));
+          elevation: p.playerId === shot?.playerId ? shot.elevation : p.playerId === ownId ? elevation : 45, hp: p.eliminated ? 0 : p.hp, visible: !p.eliminated && p.y < 225, aiming: frame.phase === "acting" && p.playerId === ownId && p.playerId === frame.actorId, flash: false }));
         const actor = players.find(p => p.playerId === frame.actorId); if (actor && frame.phase === "acting") rig.actor({ x: actor.x, y: actor.y - 6 });
-        if (frame.replay && replayKey !== frame.replay.startsAt) { replayKey = frame.replay.startsAt; bullet.clear(); const p = presentation.bullets[0]; if (p) rig.focus(p, "shot"); }
+        if (frame.replay && replayKey !== frame.replay.startsAt) { replayKey = frame.replay.startsAt; bullet = r.projectile("yellow", frame.replay.shooter.weapon); art!.setWeapon(frame.players.findIndex(p => p.playerId === frame.replay!.shooter.playerId), frame.replay.shooter.weapon); const p = presentation.bullets[0]; if (p) rig.focus(p, "shot"); }
         for (let i = 0; i < 9; i++) { const p = presentation.bullets[i]; bullet.setBullet(i, p?.x ?? null, p?.y ?? 0, 0); }
         const first = presentation.bullets[0]; if (first) rig.shot(first);
         const center = rig.tick(dt, performance.now(), matchMedia("(prefers-reduced-motion: reduce)").matches);

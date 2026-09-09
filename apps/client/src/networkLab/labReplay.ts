@@ -1,20 +1,29 @@
 import type { LabFrame } from "@game/protocol/v2-lab";
 const smooth = (t: number) => t * t * t * (t * (t * 6 - 15) + 10);
-/** The lab's fixed cannon/digger loadout has one flight and one impact. */
+type Replay = NonNullable<LabFrame["replay"]>;
+const projectileAt = (path: Replay["paths"][number], tick: number) => {
+  if (tick < path.launchTick || tick >= path.endTick || !path.points.length) return [];
+  const right = path.points.findIndex(p => p.tick > tick);
+  const a = path.points[right < 0 ? path.points.length - 1 : Math.max(0, right - 1)]!;
+  const b = right < 0 ? a : path.points[right]!;
+  const t = b.tick === a.tick ? 0 : Math.max(0, (tick - a.tick) / (b.tick - a.tick));
+  return [{ x: a.x + (b.x - a.x) * t, y: a.y + (b.y - a.y) * t }];
+};
+/** Replay server ticks at a shared pace, retaining a final 300ms settling window. */
 export const presentLabReplay = (frame: LabFrame, now: number) => {
   const replay = frame.replay;
   if (frame.phase !== "replaying" || !replay || now >= replay.endsAt) return { players: frame.players, terrainOps: frame.terrainOps, bullets: [] };
-  const impactAt = replay.endsAt - 300;
-  const t = Math.max(0, Math.min(1, (now - replay.startsAt) / Math.max(1, impactAt - replay.startsAt)));
-  const fall = smooth(Math.max(0, Math.min(1, (now - impactAt) / 300)));
+  const settleAt = replay.endsAt - 300;
+  const t = Math.max(0, Math.min(1, (now - replay.startsAt) / Math.max(1, settleAt - replay.startsAt)));
+  const tick = t * replay.ticks;
+  const impacts = replay.impacts.filter(i => i.tick <= tick);
+  const fall = smooth(Math.max(0, Math.min(1, (now - settleAt) / 300)));
   const players = replay.playersBefore.map(before => {
     const after = frame.players.find(p => p.playerId === before.playerId)!;
-    return now < impactAt ? before : { ...after, x: before.x + (after.x - before.x) * fall, y: before.y + (after.y - before.y) * fall };
+    if (now >= settleAt) return { ...after, x: before.x + (after.x - before.x) * fall, y: before.y + (after.y - before.y) * fall };
+    const hp = before.hp - impacts.reduce((sum, impact) => sum + (impact.damage.find(d => d.playerId === before.playerId)?.amount ?? 0), 0);
+    return { ...before, hp, eliminated: before.eliminated || hp <= 0 };
   });
-  const bullets = now >= impactAt ? [] : replay.paths.flatMap(path => {
-    if (!path.length) return [];
-    const index = t * (path.length - 1), left = Math.floor(index), a = path[left]!, b = path[Math.min(left + 1, path.length - 1)]!;
-    return [{ x: a.x + (b.x - a.x) * (index - left), y: a.y + (b.y - a.y) * (index - left) }];
-  });
-  return { players, bullets, terrainOps: now < impactAt ? frame.terrainOps.slice(0, replay.terrainOpsBefore) : frame.terrainOps };
+  return { players, bullets: now >= settleAt ? [] : replay.paths.flatMap(path => projectileAt(path, tick)),
+    terrainOps: frame.terrainOps.slice(0, replay.terrainOpsBefore + impacts.length) };
 };

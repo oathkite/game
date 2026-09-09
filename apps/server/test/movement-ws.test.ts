@@ -41,6 +41,12 @@ it("broadcasts an authenticated move to 8 sockets and resumes without repeating 
     resumed.ws.send(JSON.stringify({ version: 2, type: "turn.fire", matchId: frame.matchId, turnId: frame.turnId,
       commandId: "fire1", ackMoveSeq: 1, slot: 0, facing: 1, elevation: 45, power: 50 }));
     await expect.poll(() => resumed.inbox.some(m => m.type === "lab.frame" && m.phase === "replaying")).toBe(true);
+    const replayFrame = resumed.inbox.find(m => m.type === "lab.frame" && m.replay);
+    if (replayFrame?.type !== "lab.frame" || !replayFrame.replay) throw new Error("replay");
+    expect(replayFrame.replay.shooter).toEqual({ playerId: welcome.playerId, facing: 1, elevation: 45, weapon: "cannon" });
+    expect(replayFrame.replay.ticks).toBeGreaterThan(0);
+    expect(replayFrame.replay.paths.every(p => p.points.every(point => point.tick >= p.launchTick && point.tick <= p.endTick))).toBe(true);
+    expect(replayFrame.replay.impacts).toHaveLength(replayFrame.terrainOps.length - replayFrame.replay.terrainOpsBefore);
     await expect.poll(() => resumed.inbox.some(m => m.type === "lab.frame" && m.turnId === 2), { timeout: 10000 }).toBe(true);
     for (let i = 1; i < 8; i++) sockets[i]!.send(JSON.stringify({ type: "lab.surrender", matchId: frame.matchId }));
     await expect.poll(() => resumed.inbox.some(m => m.type === "lab.frame" && m.phase === "finished")).toBe(true);
