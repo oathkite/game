@@ -192,5 +192,9 @@
   ],
   "frames": 12,
   "scope": "3 animated loop clips; integrated sprites",
+  "colors": {
+    "skinColor": "#e4be61",
+    "scarfColor": "#c47746"
+  },
   "humanReview": "pending"
 }

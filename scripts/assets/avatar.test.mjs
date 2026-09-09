@@ -31,13 +31,35 @@ test('exported PNG keeps 16 colors and restrained black area in every frame',asy
  assert.ok(image.colors<=16);
  const [w,h]=manifest.frameSize;
  for(let frame=0;frame<manifest.frameCount;frame++){
-  let opaque=0,black=0;
+  let opaque=0,black=0,boundary=0;
   for(let y=0;y<h;y++)for(let x=frame*w;x<(frame+1)*w;x++){
    const i=(y*image.width+x)*4;if(!image.rgba[i+3])continue;
    opaque++;
+   if([i-4,i+4,i-image.width*4,i+image.width*4].some(j=>!image.rgba[j+3]))boundary++;
    if(image.rgba[i]===0&&image.rgba[i+1]===0&&image.rgba[i+2]===0)black++;
   }
-  assert.ok(opaque>0&&black/opaque>=.03&&black/opaque<=.12,
+  // Area shrinks with a slimmer body; also normalize black detail by silhouette length.
+  assert.ok(opaque>0&&black/opaque>=.03&&black/opaque<=.18&&black/boundary<=1.8,
    'KITA frame '+frame+' must retain black detail without the previous heavy outline');
+ }
+});
+
+test('scarf palette stays inside its registered cloth region in every frame',async()=>{
+ const {readFileSync}=await import('node:fs'),{inspectPng}=await import('./png.mjs');
+ const {insidePolygon}=await import('./avatar-regions.mjs');
+ const manifest=JSON.parse(readFileSync('assets/workbench/avatar-kita-v1/avatar.json'));
+ const image=inspectPng(readFileSync('assets/workbench/avatar-kita-v1/character.png'),{pixels:true});
+ const scarf=new Set(['237,153,91','196,119,70','118,76,56']);
+ for(let f=0;f<12;f++){
+  const polygon=manifest.metrics.character[f].scarfPolygon;
+  assert.ok(polygon?.length>=3,'scarf region required for frame '+f);
+  let count=0;
+  for(let y=0;y<112;y++)for(let x=0;x<96;x++){
+   const i=(y*image.width+f*96+x)*4;
+   if(image.rgba[i+3]&&scarf.has([...image.rgba.slice(i,i+3)].join(','))){
+    assert.ok(insidePolygon(x+.5,y+.5,polygon),'scarf leaked outside cloth in frame '+f);count++;
+   }
+  }
+  assert.ok(count>10,'scarf must not be erased to pass isolation');
  }
 });

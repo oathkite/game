@@ -183,7 +183,7 @@
       "prompt": "prompts/idle-tank-style.txt",
       "sha256": "6682e24f624d83ca8b5b92fc84e40df9bbbb1beaa137f60af948cd76c80dd005",
       "promptSha256": "f955b12b5792b8fe2bc9b10c0a8af09a268888012252f9a9ab28fc01d5bd544c",
-      "usedInCurrentExport": true,
+      "usedInCurrentExport": false,
       "inputs": [
         {
           "path": "assets/workbench/avatar-kita-v1/generated/kita-reference.png",
@@ -226,7 +226,7 @@
       "prompt": "prompts/happy-tank-style.txt",
       "sha256": "a2437a93e480260052992631256b8df784e6dc072b46e41cf18f72e7845cf089",
       "promptSha256": "bc5b1d89ed1e22b143f0795e65837c7f266206f13ab4865ae58f026f10df9a35",
-      "usedInCurrentExport": true,
+      "usedInCurrentExport": false,
       "inputs": [
         {
           "path": "assets/workbench/avatar-kita-v1/generated/kita-reference.png",
@@ -269,7 +269,7 @@
       "prompt": "prompts/sad-tank-style.txt",
       "sha256": "709254a6eddffaf370a427a09ef939d78d1b0746fa3c4234d6a875a1f62cf360",
       "promptSha256": "6d5a71591abc9f4d0216e4dc51262c818a00a854ad5250a3ff5fa488baaad011",
-      "usedInCurrentExport": true,
+      "usedInCurrentExport": false,
       "inputs": [
         {
           "path": "assets/workbench/avatar-kita-v1/generated/kita-reference.png",
@@ -293,6 +293,235 @@
           "sha256": "709254a6eddffaf370a427a09ef939d78d1b0746fa3c4234d6a875a1f62cf360"
         }
       ]
+    },
+    {
+      "file": "generated/idle-no-glasses.png",
+      "prompt": "prompts/no-glasses.txt",
+      "sha256": "0839dc48f70bf96553cbbfc133a5a0c7d96e32499d8470607a1f4796c50ed91a",
+      "promptSha256": "ee659a75a7dfd1a52ac7860bd51ce1e421fa9c170ea5fe4d0dd65f7838805d1d",
+      "usedInCurrentExport": false,
+      "inputs": [
+        {
+          "path": "assets/workbench/avatar-kita-v1/generated/idle-tank-style.png",
+          "sha256": "6682e24f624d83ca8b5b92fc84e40df9bbbb1beaa137f60af948cd76c80dd005"
+        }
+      ],
+      "rejectedReason": "Far-side eye mound was flattened when removing glasses."
+    },
+    {
+      "file": "generated/happy-no-glasses.png",
+      "prompt": "prompts/no-glasses.txt",
+      "sha256": "8a1219f93695ec3a6996857662d14ad9b18593a9a52918cf1da692b8e88d364d",
+      "promptSha256": "ee659a75a7dfd1a52ac7860bd51ce1e421fa9c170ea5fe4d0dd65f7838805d1d",
+      "usedInCurrentExport": false,
+      "inputs": [
+        {
+          "path": "assets/workbench/avatar-kita-v1/generated/happy-tank-style.png",
+          "sha256": "a2437a93e480260052992631256b8df784e6dc072b46e41cf18f72e7845cf089"
+        }
+      ],
+      "rejectedReason": "Far-side eye mound was flattened when removing glasses."
+    },
+    {
+      "file": "generated/sad-no-glasses.png",
+      "prompt": "prompts/no-glasses.txt",
+      "sha256": "8dd1fa7cd11ce3a27e11c191711278058ab5b203262c7a518d2f9cbe6c880e4a",
+      "promptSha256": "ee659a75a7dfd1a52ac7860bd51ce1e421fa9c170ea5fe4d0dd65f7838805d1d",
+      "usedInCurrentExport": false,
+      "inputs": [
+        {
+          "path": "assets/workbench/avatar-kita-v1/generated/sad-tank-style.png",
+          "sha256": "709254a6eddffaf370a427a09ef939d78d1b0746fa3c4234d6a875a1f62cf360"
+        }
+      ]
+    },
+    {
+      "file": "generated/idle-no-glasses-local.png",
+      "prompt": "prompts/no-glasses-local.txt",
+      "sha256": "c2bfa1a35a73fca7ef203cd69623cd79c9761f632f5eb2196f87490929dab353",
+      "promptSha256": "b01bcebd64cc505cc3764a0b541830c6bd25d4ca990dcd107c8fd3cb6cbc2fb3",
+      "usedInCurrentExport": false,
+      "rejectedReason": "Masked edit changed pose and removed the far eye mound; do not reuse.",
+      "mask": {
+        "path": "assets/workbench/avatar-kita-v1/generated/idle-glasses-mask.png",
+        "sha256": "e6cf07d3211c5f1c5072f6711de236c5c80558dfa26d222555b10ab1660ff571"
+      },
+      "inputs": [
+        {
+          "path": "assets/workbench/avatar-kita-v1/generated/idle-tank-style.png",
+          "sha256": "6682e24f624d83ca8b5b92fc84e40df9bbbb1beaa137f60af948cd76c80dd005"
+        }
+      ]
+    },
+    {
+      "file": "generated/happy-no-glasses-local.png",
+      "prompt": "prompts/no-glasses-local.txt",
+      "sha256": "296cb839ddaa3968c01c534e175ba2272c0b7c5e9845971f8c40710d794c31fa",
+      "promptSha256": "b01bcebd64cc505cc3764a0b541830c6bd25d4ca990dcd107c8fd3cb6cbc2fb3",
+      "usedInCurrentExport": false,
+      "rejectedReason": "Masked edit changed pose and removed the far eye mound; do not reuse.",
+      "mask": {
+        "path": "assets/workbench/avatar-kita-v1/generated/happy-glasses-mask.png",
+        "sha256": "1724593843e5f692faa26ef82576c26d38aa861b1730751c2f5cba85411ce0b5"
+      },
+      "inputs": [
+        {
+          "path": "assets/workbench/avatar-kita-v1/generated/happy-tank-style.png",
+          "sha256": "a2437a93e480260052992631256b8df784e6dc072b46e41cf18f72e7845cf089"
+        }
+      ]
+    },
+    {
+      "file": "generated/sad-no-glasses-local.png",
+      "prompt": "prompts/no-glasses-local.txt",
+      "sha256": "8cd8527e961f7767f65d6da39a53b9534468cae084459dcf2e3c14df9736b1c4",
+      "promptSha256": "b01bcebd64cc505cc3764a0b541830c6bd25d4ca990dcd107c8fd3cb6cbc2fb3",
+      "usedInCurrentExport": false,
+      "rejectedReason": "Masked edit changed pose and removed the far eye mound; do not reuse.",
+      "mask": {
+        "path": "assets/workbench/avatar-kita-v1/generated/sad-glasses-mask.png",
+        "sha256": "d40059a59201a245455f586e49e44dc8910b5cb6057565020f1e0663decbc4bb"
+      },
+      "inputs": [
+        {
+          "path": "assets/workbench/avatar-kita-v1/generated/sad-tank-style.png",
+          "sha256": "709254a6eddffaf370a427a09ef939d78d1b0746fa3c4234d6a875a1f62cf360"
+        }
+      ]
+    },
+    {
+      "file": "generated/sad-eye-fix.png",
+      "prompt": "prompts/sad-eye-fix.txt",
+      "sha256": "61a50ec9c7269fe43ddc7701421ae2cc9a72bc636cd9986efab29029338cb6f6",
+      "promptSha256": "ce2b56a79f5d5f9d70e7b728784fb1d07bd42897d47432bd3c8a746fb9dc9c14",
+      "usedInCurrentExport": false,
+      "rejectedReason": "Wrong interpretation of feedback. User requires the hidden left eye mound to be restored, not removed.",
+      "inputs": [
+        {
+          "path": "assets/workbench/avatar-kita-v1/generated/sad-no-glasses.png",
+          "sha256": "8dd1fa7cd11ce3a27e11c191711278058ab5b203262c7a518d2f9cbe6c880e4a"
+        }
+      ]
+    },
+    {
+      "file": "generated/idle-eye-mounds.png",
+      "prompt": "prompts/frog-eye-mounds.txt",
+      "sha256": "9b80ad2dafb89c168c581db81463043c4a33dbbc743ee8673e00cb10a6cd0c5a",
+      "promptSha256": "04a150aa6059b2ea58a928340f06cdb046a4b43e0167a7694ba9bc32418c9dd9",
+      "usedInCurrentExport": false,
+      "inputs": [
+        {
+          "path": "assets/workbench/avatar-kita-v1/generated/idle-tank-style.png",
+          "sha256": "6682e24f624d83ca8b5b92fc84e40df9bbbb1beaa137f60af948cd76c80dd005"
+        },
+        {
+          "path": "assets/workbench/avatar-kita-v1/generated/kita-reference.png",
+          "sha256": "4bb9b6080d1868e272b8835645e6b840f713a9b838b03589dcf515c1b6ee48f4"
+        }
+      ]
+    },
+    {
+      "file": "generated/happy-eye-mounds.png",
+      "prompt": "prompts/frog-eye-mounds.txt",
+      "sha256": "904dcfa1dad0f70574a96b6df07012594567efc4e8af927b6fe96d4c5a7d43a5",
+      "promptSha256": "04a150aa6059b2ea58a928340f06cdb046a4b43e0167a7694ba9bc32418c9dd9",
+      "usedInCurrentExport": false,
+      "inputs": [
+        {
+          "path": "assets/workbench/avatar-kita-v1/generated/happy-tank-style.png",
+          "sha256": "a2437a93e480260052992631256b8df784e6dc072b46e41cf18f72e7845cf089"
+        },
+        {
+          "path": "assets/workbench/avatar-kita-v1/generated/kita-reference.png",
+          "sha256": "4bb9b6080d1868e272b8835645e6b840f713a9b838b03589dcf515c1b6ee48f4"
+        }
+      ]
+    },
+    {
+      "file": "generated/idle-concept.png",
+      "prompt": "prompts/idle-concept.txt",
+      "sha256": "44a87d71de92aef03739ed4fbc035c6353922f1b8c7af1f67777f3bc448bdb1a",
+      "promptSha256": "bce4cde83e97d122300b3eed2b741a81f10c9627892d9b71881109f09911b38e",
+      "usedInCurrentExport": false,
+      "inputs": [
+        {
+          "path": "assets/workbench/avatar-kita-v1/generated/concept-reference.png",
+          "sha256": "3c5a2490bef3e174434883bdf0389d63be5b3ee8557297aebf8ede10b5971167"
+        }
+      ]
+    },
+    {
+      "file": "generated/happy-concept.png",
+      "prompt": "prompts/happy-concept.txt",
+      "sha256": "377142b54af9ecf422fce40258c646a07136c1e8839342e4711d8696c50d0841",
+      "promptSha256": "377d6afcba1e4ec37212fa434ed507e2eec42bfb21248fe0a00336691b0d6f8a",
+      "usedInCurrentExport": false,
+      "inputs": [
+        {
+          "path": "assets/workbench/avatar-kita-v1/generated/concept-reference.png",
+          "sha256": "3c5a2490bef3e174434883bdf0389d63be5b3ee8557297aebf8ede10b5971167"
+        },
+        {
+          "path": "assets/workbench/avatar-kita-v1/generated/idle-concept.png",
+          "sha256": "44a87d71de92aef03739ed4fbc035c6353922f1b8c7af1f67777f3bc448bdb1a"
+        }
+      ]
+    },
+    {
+      "file": "generated/sad-concept.png",
+      "prompt": "prompts/sad-concept.txt",
+      "sha256": "90360f489c3f48d00ad95dd780e7c8961bf47f7bd0e896fdf12422fca2c8bedb",
+      "promptSha256": "f8cefe3b5c7e86fb6dfe51e5e44b3a9173fa8dc31a71e2c9480a7ba606b4696d",
+      "usedInCurrentExport": false,
+      "inputs": [
+        {
+          "path": "assets/workbench/avatar-kita-v1/generated/concept-reference.png",
+          "sha256": "3c5a2490bef3e174434883bdf0389d63be5b3ee8557297aebf8ede10b5971167"
+        },
+        {
+          "path": "assets/workbench/avatar-kita-v1/generated/idle-concept.png",
+          "sha256": "44a87d71de92aef03739ed4fbc035c6353922f1b8c7af1f67777f3bc448bdb1a"
+        }
+      ]
+    },
+    {
+      "file": "generated/idle-slim.png",
+      "prompt": "prompts/slim-concept.txt",
+      "sha256": "3764709c5d14a205432986ad51f1151e9ffddc28362e5c43580bef55243b0789",
+      "promptSha256": "9541df270f3cf0a8a328a6ce375beeb00b9c6986e7493168e617573b789e2127",
+      "usedInCurrentExport": true,
+      "inputs": [
+        {
+          "path": "assets/workbench/avatar-kita-v1/generated/idle-concept.png",
+          "sha256": "44a87d71de92aef03739ed4fbc035c6353922f1b8c7af1f67777f3bc448bdb1a"
+        }
+      ]
+    },
+    {
+      "file": "generated/happy-slim.png",
+      "prompt": "prompts/slim-concept.txt",
+      "sha256": "d7af660d17533c3baf48d4ced0ffda4cecd4b07323700a11e50b03d5b265da03",
+      "promptSha256": "9541df270f3cf0a8a328a6ce375beeb00b9c6986e7493168e617573b789e2127",
+      "usedInCurrentExport": true,
+      "inputs": [
+        {
+          "path": "assets/workbench/avatar-kita-v1/generated/happy-concept.png",
+          "sha256": "377142b54af9ecf422fce40258c646a07136c1e8839342e4711d8696c50d0841"
+        }
+      ]
+    },
+    {
+      "file": "generated/sad-slim.png",
+      "prompt": "prompts/slim-concept.txt",
+      "sha256": "c412fa1d0936a4402424ed4d8ae100254c02c91b3dbbb6aa0daae1ded6c80e69",
+      "promptSha256": "9541df270f3cf0a8a328a6ce375beeb00b9c6986e7493168e617573b789e2127",
+      "usedInCurrentExport": true,
+      "inputs": [
+        {
+          "path": "assets/workbench/avatar-kita-v1/generated/sad-concept.png",
+          "sha256": "90360f489c3f48d00ad95dd780e7c8961bf47f7bd0e896fdf12422fca2c8bedb"
+        }
+      ]
     }
   ],
   "reusedSources": [
@@ -308,5 +537,10 @@
     "file": "generated/tank-reference.png",
     "source": "live baseline-v2 asset-lab renderer",
     "sha256": "9de235f016333cccf2f5d71e54ac12d33bbb4da87638aa1f107f417a3f6b0919"
+  },
+  "characterReference": {
+    "file": "generated/concept-reference.png",
+    "sha256": "3c5a2490bef3e174434883bdf0389d63be5b3ee8557297aebf8ede10b5971167",
+    "source": "User supplied FORTRESS / NEW DIRECTION 01 concept board; latest authoritative design"
   }
 }

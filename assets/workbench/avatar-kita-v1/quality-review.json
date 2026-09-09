@@ -1,28 +1,48 @@
 {
   "status": "draft",
   "humanReview": "pending",
-  "avatarDigest": "97d209e6b22aad0961e05e3039c0051f0862e6636fd060020c4fe8f275ae8121",
-  "assetUnitTests": 81,
-  "browserTests": 20,
+  "avatarDigest": "16459463e2099812aa79ffed15e90d72237bfc1b264aad10d9eca389e0237b4a",
+  "assetUnitTests": 86,
+  "browserTests": 22,
   "typecheck": "passed",
   "portraitChecks": 33,
   "renderFrames": 12,
   "animationStatus": "animated-loop-clips",
-  "revision": "tank-style-thin-outline",
+  "revision": "slim-frog-cloth-region-isolation",
   "evidence": [
     "assets/previews/avatar-kita-v1/poses.png",
     "assets/previews/avatar-kita-v1/frames.png",
     "assets/previews/avatar-kita-v1/desktop.png",
     "assets/previews/avatar-kita-v1/mobile.png",
     "assets/previews/avatar-kita-v1/inspection.json",
-    "assets/previews/avatar-kita-v1/tank-comparison.png"
+    "assets/previews/avatar-kita-v1/tank-comparison.png",
+    "assets/previews/avatar-kita-v1/custom-colors.png"
   ],
-  "visualReview": "Reused GPT Image 2.5 tank-style originals before thick contour edit. Pure black area is 5.9-8.9 percent per frame instead of 26 percent overall. Reviewed head, glasses, arm and scarf contours alongside live tank. Pixel-level line width remains a visual review item.",
+  "visualReview": "Reviewed GPT Image 2.5 slim edits against concept originals: modest narrower torso, preserved eye mounds, head, limb lengths and animation poses. Reviewed all 12 exported frames and green skin / blue scarf preview. Registered cloth polygons prohibit scarf palette outside the neck and knot. Skin-only palette cleanup preserves outlines and cloth. Black detail is checked against both opaque area and silhouette boundary length rather than per-pose area exceptions.",
   "limitations": [
-    "Human review of likeness and animation quality remains pending.",
     "Four-frame loops; dedicated transitions between emotions, wave and battle sprites are not produced.",
     "No game profile/result integration or server ownership enforcement.",
     "Existing tank workshop still uses legacy pilot layers until battle sprite migration."
   ],
-  "comparisonDigest": "c54c81419fbfc2bcdf9624bb50294d55948af533a339511b47e926ef8bd0eedc"
+  "comparisonDigest": "b101cc6b28fa1a125ccbec1b1f6569f995895fc791595fea1baedf28594e613c",
+  "colorReview": "All 12 frames have zero scarf-colored pixels outside their registered cloth polygons. Cloth remains present. Independent skin/scarf recoloring, alpha/fixed colors, reset and animation behavior pass.",
+  "artApproval": {
+    "status": "approved",
+    "scope": [
+      "neutral",
+      "happy",
+      "sad"
+    ],
+    "approvedBy": "user",
+    "date": "2026-09-09",
+    "evidence": [
+      "キャラの立ち絵、喜び絵これでOK",
+      "悲しみもOK。コミットしてプッシュしてPR作成"
+    ],
+    "files": {
+      "avatar.json": "16459463e2099812aa79ffed15e90d72237bfc1b264aad10d9eca389e0237b4a",
+      "character.png": "5ceb0aa926f8f51000fb18b0ed0c4f33ccf2de9b4aa4fb34384017af1d8b6040",
+      "character.ora": "8311b4b9a54df6424a26f8d1c611ad4ee73badc23b97d8664ee0223023dec453"
+    }
+  }
 }

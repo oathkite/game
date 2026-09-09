@@ -1,18 +1,22 @@
-import {loadPortrait,drawPortrait} from './avatar-renderer.mjs';
+import {defaultSkinColor,defaultScarfColor} from './avatar-paint.mjs';
+import {loadPortrait} from './avatar-renderer.mjs';
 import {portraitChecks} from './avatar-checks.mjs';
+import {loadPack} from './renderer.mjs';
+import {drawAvatarScene} from './avatar-scene.mjs';
 import {portraitFrame} from './avatar-timing.mjs';
 const $=id=>document.getElementById(id);
 try{
- const library=await loadPortrait();let pose='neutral',report=null,elapsed=0,last=null,signature='';
+ const [library,tank]=await Promise.all([loadPortrait(),loadPack()]);let pose='neutral',report=null,elapsed=0,last=null,signature='';
  let playing=!matchMedia('(prefers-reduced-motion: reduce)').matches;
+ const colors=()=>({skinColor:$('skin-color').value,scarfColor:$('scarf-color').value});
  const selected=()=>library.manifest.poses.find(p=>p.id===pose);
  const render=(force=false)=>{
   const state=library.manifest.poses.map(p=>portraitFrame(p.clip,elapsed)),key=pose+state.join(',');
   if(!force&&key===signature)return;signature=key;
-  const options={guides:$('guides').checked},frame=portraitFrame(selected().clip,elapsed);
-  drawPortrait(library,$('portrait'),pose,{...options,frame,sizeRatio:.8,backdrop:$('backdrop').value});
+  const options={guides:$('guides').checked,...colors()},frame=portraitFrame(selected().clip,elapsed);
+  drawAvatarScene(library,tank,$('portrait'),pose,{...options,frame,backdrop:$('backdrop').value});
   $('portrait').dataset.frame=String(frame);
-  for(const [id,index]of [['profile-art',0],['win-art',1],['lose-art',2]])drawPortrait(library,$(id),library.manifest.poses[index].id,{...options,frame:state[index]});
+  for(const [id,index]of [['profile-art',0],['win-art',1],['lose-art',2]])drawAvatarScene(library,tank,$(id),library.manifest.poses[index].id,{...options,frame:state[index]});
   $('pose-title').textContent=selected().label;
   $('play').textContent=playing?'一時停止':'再生';
   $('play').setAttribute('aria-pressed',String(playing));
@@ -24,6 +28,8 @@ try{
   render(true);
  });
  for(const id of ['guides','backdrop'])$(id).addEventListener('change',()=>render(true));
+ for(const id of ['skin-color','scarf-color'])$(id).addEventListener('input',()=>render(true));
+ $('reset-colors').addEventListener('click',()=>{$('skin-color').value=defaultSkinColor;$('scarf-color').value=defaultScarfColor;render(true);});
  $('play').addEventListener('click',()=>{playing=!playing;render(true);});
  $('step').addEventListener('click',()=>{
   playing=false;const clip=selected().clip,index=(clip.frames.indexOf(portraitFrame(clip,elapsed))+1)%clip.frames.length;
@@ -33,10 +39,10 @@ try{
  const inspect=()=>{
   const checks=portraitChecks(library.manifest,library.images),samples=new Set();
   for(const p of library.manifest.poses)for(const frame of p.clip.frames){
-   drawPortrait(library,$('portrait'),p.id,{frame,sizeRatio:.8,backdrop:'dark'});samples.add($('portrait').toDataURL());
+   drawAvatarScene(library,tank,$('portrait'),p.id,{frame,backdrop:'dark',...colors()});samples.add($('portrait').toDataURL());
   }
   checks.push({name:'全12コマの絵が異なる',pass:samples.size===library.manifest.frameCount});render(true);
-  report={pack:library.manifest.id,checks,frames:samples.size,scope:'3 animated loop clips; integrated sprites',humanReview:'pending'};
+  report={pack:library.manifest.id,checks,frames:samples.size,scope:'3 animated loop clips; integrated sprites',colors:colors(),humanReview:'pending'};
   $('report').textContent=checks.filter(c=>c.pass).length+' / '+checks.length+' 項目通過\n3アニメーション・12コマ\n人のレビュー待ち'+checks.filter(c=>!c.pass).map(c=>'\n要確認：'+c.name).join('');
   $('download').disabled=false;
  };

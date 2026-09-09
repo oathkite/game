@@ -5,6 +5,7 @@ import {resolve,join} from 'node:path';
 import {tmpdir} from 'node:os';
 import {execFileSync} from 'node:child_process';
 import {deflateSync} from 'node:zlib';
+import {insidePolygon,cleanSkinRows} from './avatar-regions.mjs';
 import {crc32} from './png.mjs';
 import {validateCrop,sourceDigest} from './production.mjs';
 const sharp=createRequire(import.meta.url)(process.env.ASSET_SHARP_PATH||'sharp');
@@ -18,10 +19,13 @@ function indexed(raw,w,h){
  for(let y=0;y<h;y++)for(let x=0;x<w;x++){
   const at=(y*w+x)*4;if(raw[at+3]<200)continue;
   let best=1,distance=Infinity;
-  for(let k=1;k<rgb.length;k++){const d=rgb[k].reduce((sum,c,j)=>sum+(c-raw[at+j])**2,0);if(d<distance){best=k;distance=d;}}
+  // Keep yellow skin shades from alternating with the scarf's orange palette.
+  const [r,g,b]=raw.subarray(at,at+3),yellow=r>g*1.05&&r<g*1.45&&g>b*1.3;
+  const cloth=insidePolygon(x%size[0]+.5,y+.5,metrics.character[Math.floor(x/size[0])].scarfPolygon);
+  for(let k=1;k<rgb.length;k++){if(!cloth&&k>=11&&k<=13)continue;if(yellow&&![2,3,4].includes(k))continue;const d=rgb[k].reduce((sum,c,j)=>sum+(c-raw[at+j])**2,0);if(d<distance){best=k;distance=d;}}
   rows[y*(w+1)+1+x]=best;
  }
- return Buffer.concat([Buffer.from('89504e470d0a1a0a','hex'),chunk('IHDR',head),chunk('PLTE',Buffer.from(rgb.flat())),chunk('tRNS',Buffer.from([0,...Array(palette.length-1).fill(255)])),chunk('IDAT',deflateSync(rows)),chunk('IEND',Buffer.alloc(0))]);
+ return Buffer.concat([Buffer.from('89504e470d0a1a0a','hex'),chunk('IHDR',head),chunk('PLTE',Buffer.from(rgb.flat())),chunk('tRNS',Buffer.from([0,...Array(palette.length-1).fill(255)])),chunk('IDAT',deflateSync(cleanSkinRows(cleanSkinRows(rows,w,h),w,h))),chunk('IEND',Buffer.alloc(0))]);
 }
 function ora(layer,png,atlasWidth){
  const dir=mkdtempSync(join(tmpdir(),'avatar-'));mkdirSync(join(dir,'data'));writeFileSync(join(dir,'mimetype'),'image/openraster');writeFileSync(join(dir,'data/layer.png'),png);writeFileSync(join(dir,'mergedimage.png'),png);
@@ -41,7 +45,9 @@ for(const entry of registration.frames){
  if(origin.some((v,j)=>v<0||v+outSize[j]>size[j]))throw new Error(entry.sheet+' outside frame');
  const input=await sharp(data,{raw:info}).extract({left:x,top:y,width:w,height:h}).resize(...outSize,{kernel:'nearest'}).png().toBuffer();
  frames.push({input,left:(frames.length)*size[0]+origin[0],top:origin[1]});
- metrics.character.push({region:entry.region,sourceBounds:[left+x,top+y,w,h],outputSize:outSize,outputOrigin:origin,footLift:entry.footLift??0,scale:frameScale,sourceSheet:entry.sheet,sourceHash:sourceDigest(bytes)});
+ if(!entry.sourceScarf?.length)throw new Error('Missing scarf polygon: '+entry.sheet);
+ const scarfPolygon=entry.sourceScarf.map(([px,py])=>[origin[0]+(px-left-x)*outSize[0]/w,origin[1]+(py-top-y)*outSize[1]/h]);
+ metrics.character.push({scarfPolygon,region:entry.region,sourceBounds:[left+x,top+y,w,h],outputSize:outSize,outputOrigin:origin,footLift:entry.footLift??0,scale:frameScale,sourceSheet:entry.sheet,sourceHash:sourceDigest(bytes)});
 }
 const atlasWidth=size[0]*frames.length;
 const raw=await sharp({create:{width:atlasWidth,height:size[1],channels:4,background:'#00000000'}}).composite(frames).raw().toBuffer();

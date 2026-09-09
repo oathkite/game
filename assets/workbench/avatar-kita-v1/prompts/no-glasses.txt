@@ -1,0 +1,3 @@
+Use case: precise-object-edit
+Asset type: four-frame transparent pixel art animation sprite sheet.
+Input image: edit target. Remove ONLY the blue glasses, lenses, bridge and straps from the frog in ALL FOUR frames. Restore the natural yellow forehead and far-side natural frog eye where appropriate. Keep the existing visible natural eye and its expression. Keep every pose, silhouette except removed glasses, body proportion, scarf, palette, thin black pixel contour, pixel density, frame location, feet coordinates, and 1536x1024 sheet layout unchanged. Do not enlarge or move any character. Keep the long white throat and separate white belly; neither is a face. Transparent background, no halo or shadows. No other changes. Maintain all four distinct animation poses exactly.
