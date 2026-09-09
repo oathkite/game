@@ -64,3 +64,34 @@ seedはサーバーが生成・保存し、次の再戦では別seedにする。
 spawnは開発用の人数別固定候補であり、チーム対称配置・全編成の競技バランス・最大逆風での
 全8武器の到達性の承認はまだない。公開用汎用マップの完成ではない。
 protocol v2、移動command、再接続snapshot、射撃重複排除とmatch lifecycle、対戦画面への組み込みは次工程。
+
+## 第3段階：protocol v2の移動契約と確定処理（2026-09-10）
+
+`@game/protocol/v2`にmove.commandとmove.snapshotのstrict schemaを追加。
+commandはmatchId・turnId・commandId・moveSeq・direction・stepsのみを受け、
+clientの座標・時刻・本人申告は受け取らない。本人はhostが認証済みsessionから渡す。
+
+`handleMove`は既存walkを使い、初期2cell・上限2cellのcreditをサーバー時刻で
+100msごとに1cell補充する。1手番30cell、1commandは1〜2歩。壁では移動予算を消費しない。
+credit不足は部分成功または拒否。落下後は移動を止め、ring outなら即座に脱落する。
+開始時刻以上・deadline未満だけ受け付け、順序飛びは同期要求、古い手番や別人の入力は拒否。
+同じseqまたはcommandIdで内容を変えた再送は拒否する。
+処理済みcommandの結果とsnapshotは保存し、完全一致の再送には元の結果を返す。
+通常20秒×10Hzを収める256件でreceiptを制限し、過剰入力で無制限にメモリを使わせない。
+
+`moveBattle`は確定位置をBattlePlayerへ戻し、致死落下をrosterとチーム決着へ即時反映する。
+射撃前の移動が確定stateに残るため、後続の射撃原点もこの位置を使用できる。
+`MovementState`はJSON保存可能で、位置・残量・credit時刻・seq・receiptを復元できる。
+公開snapshotには位置・向き・残量・ackMoveSeq・eventSeq・serverTime・落下状態のみを含める。
+
+検証：protocolの22テスト、engineの91テスト、全パッケージtypecheckが成功。
+重複・順序飛び・なりすまし・旧手番・予算超過・部分受理・壁・落下・締切・保存復元を検査。
+
+### 次に接続するもの
+
+現時点ではWebSocketのv2メッセージ受付や10Hz配信、client予測・相手の補間は未配線。
+ここで提供したsnapshotは移動用で、地形を含む対戦全体の再接続snapshotではない。
+fireの最終moveSeq検証・commandId重複排除、turn遷移時のcreateMovement、match全体の
+単調なeventSeq管理、60秒再接続期限・alarm処理はhost側の後続実装。
+致死落下時の結果を通知して、必要なら次手番へ進める責務もhostが持つ。
+従来のv1エンドポイントと対戦画面には変更を加えていない。
