@@ -18,7 +18,7 @@ export const replayFrame = (state: BattleSession): LabFrame["replay"] => {
   return { startsAt: replay.startsAt, endsAt: replay.endsAt, ticks: shot.ticks,
     terrainOpsBefore: state.terrainOps.length - shot.impacts.length,
     playersBefore: replay.playersBefore.map(p => ({ ...p, teamId: state.roster.members.find(m => m.playerId === p.playerId)!.teamId, eliminated: replay.eliminatedBefore.includes(p.playerId) })),
-    shooter: { playerId: fire.playerId, facing: fire.command.facing, elevation: fire.command.elevation, weapon: fire.command.slot === 0 ? "cannon" : "digger" },
+    shooter: { playerId: fire.playerId, facing: fire.command.facing, elevation: fire.command.elevation, weapon: shot.weapon },
     impacts: shot.impacts.map(i => ({ tick: i.tick, damage: i.damage })),
     paths: shot.paths.map((p, index) => ({ launchTick: p.launchTick,
       endTick: Math.max(p.pointTicks.at(-1) ?? p.launchTick, ...shot.impacts.filter(i => i.projectile === index).map(i => i.tick)),

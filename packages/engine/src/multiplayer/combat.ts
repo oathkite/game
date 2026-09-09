@@ -21,7 +21,7 @@ export const resolveBattleShot = (roster: RosterState, mask: TerrainMask, player
     { ...input, x: shooter.x, y: shooter.y });
   const after = ordered.map((p, i) => ({ ...p, ...result.positions[i]!, hp: result.hpAfter[i]! }));
   const resolved = eliminatePlayers(roster, after.filter((p, i) => p.hp <= 0 || result.ringOut.includes(i)).map(p => p.playerId));
-  return { roster: resolved, players: after, mask: result.mask, paths: result.paths, outcome: outcome(resolved),
+  return { weapon: input.weapon, roster: resolved, players: after, mask: result.mask, paths: result.paths, outcome: outcome(resolved),
     ticks: result.ticks, impacts: result.impacts.map(impact => ({ ...impact,
       damage: ordered.map((p, i) => ({ playerId: p.playerId, amount: impact.damage[i]! })) })) };
 };

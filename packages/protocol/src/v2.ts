@@ -1,4 +1,5 @@
 import { z } from "zod";
+import { WEAPON_IDS } from "./weapons.js";
 
 const id = z.string().trim().min(1).max(128);
 const sequence = z.number().int().min(0).max(Number.MAX_SAFE_INTEGER);
@@ -23,3 +24,14 @@ export const fireCommandSchema = z.object({
   facing: z.union([z.literal(-1), z.literal(1)]), elevation: z.number().int().min(10).max(90), power: z.number().int().min(0).max(100),
 }).strict();
 export type FireCommand = z.infer<typeof fireCommandSchema>;
+
+// Match preparation commands carry the composition revision acknowledged by the member.
+const lobbyBase = { version: z.literal(2), roomId: id, revision: sequence.min(1) };
+const lobbyLoadout = z.tuple([z.enum(WEAPON_IDS), z.enum(WEAPON_IDS)]).refine(pair => pair[0] !== pair[1]);
+export const lobbyProfileSchema = z.object({ nickname: z.string().trim().min(1).max(12), loadout: lobbyLoadout }).strict();
+export const lobbyCommandSchema = z.discriminatedUnion("type", [
+  z.object({ ...lobbyBase, type: z.literal("room.ready"), ready: z.boolean() }).strict(),
+  z.object({ ...lobbyBase, type: z.literal("room.assignTeam"), playerId: id, teamId: z.enum(["t0", "t1", "t2", "t3", "t4", "t5", "t6", "t7"]).nullable() }).strict(),
+  z.object({ ...lobbyBase, type: z.literal("room.profile"), nickname: z.string().trim().min(1).max(12) }).strict(),
+  z.object({ ...lobbyBase, type: z.literal("room.loadout"), loadout: lobbyLoadout }).strict(),
+]);

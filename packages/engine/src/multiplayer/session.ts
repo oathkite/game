@@ -1,5 +1,6 @@
 import { fireCommandSchema, type FireCommand } from "@game/protocol/v2";
-import type { TerrainOp } from "@game/protocol";
+import { DEFAULT_LOADOUT, parseLoadout, type Loadout, type TerrainOp } from "@game/protocol";
+import { RULE_SET_VERSION } from "./lobby.js";
 import { COMBAT_TICK_MS, type TerrainMask } from "@game/sim";
 import { resolveBattleShot, type BattlePlayer } from "./combat.js";
 import type { createBattle } from "./create.js";
@@ -9,6 +10,7 @@ import { eliminatePlayers, nextTurn, outcome, type RosterState, type TeamOutcome
 
 type ResolvedShot = ReturnType<typeof resolveBattleShot>;
 export type BattleSession = {
+  readonly loadouts: Readonly<Record<string, Loadout>>; readonly ruleSetVersion: typeof RULE_SET_VERSION;
   readonly matchId: string; readonly roster: RosterState; readonly players: readonly BattlePlayer[];
   readonly mask: TerrainMask; readonly movement: MovementState; readonly startedAt: number;
   readonly phase: "acting" | "replaying" | "finished"; readonly result: TeamOutcome;
@@ -20,7 +22,14 @@ const movementFor = (state: Pick<BattleSession, "matchId" | "roster" | "players"
   const player = state.players.find(p => p.playerId === state.roster.turnRing[state.roster.cursor])!;
   return createMovement({ matchId: state.matchId, turnId: state.roster.turnId, ...player, facing: 1, startsAt: now, deadlineAt: now + 20000 }, eventSeq);
 };
-export const createBattleSession = (battle: ReturnType<typeof createBattle>, matchId: string, now: number): BattleSession => ({
+const copyLoadouts = (battle: ReturnType<typeof createBattle>, supplied?: Readonly<Record<string, Loadout>>): Readonly<Record<string, Loadout>> =>
+  Object.fromEntries(battle.roster.members.map(p => {
+    const loadout = supplied ? parseLoadout(supplied[p.playerId]) : DEFAULT_LOADOUT;
+    if (!loadout) throw new Error("every member must have a valid loadout");
+    return [p.playerId, [...loadout]];
+  }));
+export const createBattleSession = (battle: ReturnType<typeof createBattle>, matchId: string, now: number, loadouts?: Readonly<Record<string, Loadout>>): BattleSession => ({
+  loadouts: copyLoadouts(battle, loadouts), ruleSetVersion: RULE_SET_VERSION,
   ...battle, matchId, startedAt: now, phase: "acting", result: { type: "ongoing" }, terrainOps: [], replay: null, lastFire: null,
   movement: movementFor({ ...battle, matchId }, now, 1),
 });
@@ -58,8 +67,7 @@ export const fireInSession = (state: BattleSession, playerId: string, raw: unkno
   if (state.phase !== "acting") return reject("not-acting");
   if (now < state.movement.startsAt || now >= state.movement.deadlineAt) return reject("outside-turn");
   if (command.ackMoveSeq !== state.movement.ackMoveSeq) return reject("move-sync-required");
-  // 試験用固定loadout。正式ロビー接続時は開始時に固定した各人のloadoutを参照する。
-  const weapon = command.slot === 0 ? "cannon" : "digger";
+  const weapon = state.loadouts[playerId]![command.slot];
   const shot = resolveBattleShot(state.roster, state.mask, state.players, { playerId, weapon, wind: 0,
     facing: command.facing, elevation: command.elevation, power: command.power });
   const duration = Math.min(8000, Math.max(1000, shot.ticks * COMBAT_TICK_MS + 300));
