@@ -99,3 +99,11 @@
 @media (prefers-reduced-motion: reduce) {
   .kp-root *, .kp-root .blink { animation: none !important; transition: none !important; }
 }
+
+.kp-camera-settings { border: 0; padding: 0; margin: 24px 0 0; min-width: 0; }
+.kp-camera-settings legend { font-weight: 800; margin-bottom: 14px; }
+.kp-camera-settings label { display: flex; justify-content: space-between; align-items: center; font-size: 14px; margin-top: 14px; }
+.kp-camera-settings output { font-variant-numeric: tabular-nums; font-weight: 700; }
+.kp-camera-settings input[type="range"] { display: block; width: 100%; min-height: 44px; padding: 0; border: 0; background: transparent; accent-color: #304659; cursor: pointer; touch-action: pan-y; }
+.kp-camera-settings input:focus-visible { outline: 2px solid #304659; outline-offset: 2px; }
+.kp-camera-settings small { display: block; font-size: 11px; line-height: 1.6; margin-top: 4px; }

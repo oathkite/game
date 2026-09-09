@@ -148,3 +148,34 @@ test('released drag coasts briefly and settles without changing the tank', async
   expect(await world.getAttribute('data-camera-x')).toBe(settled);
   expect(await state(page)).toEqual(before);
 });
+
+test('camera parameters apply immediately, persist and reset on mobile', async ({ page }) => {
+  await open(page);
+  await page.getByRole('button', { name: '設定を開く' }).click();
+  const speed = page.locator('#camera-speed'), inertia = page.locator('#camera-inertia');
+  await speed.focus(); await page.keyboard.press('Home');
+  for (let i = 0; i < 35; i++) await page.keyboard.press('ArrowRight');
+  await inertia.focus(); await page.keyboard.press('Home');
+  await expect(speed).toHaveValue('2'); await expect(inertia).toHaveValue('0');
+  await page.getByRole('button', { name: '対戦に戻る' }).click();
+  await page.clock.install(); await page.clock.pauseAt(new Date());
+  const world = page.getByTestId('camera-world');
+  const x = Number(await world.getAttribute('data-camera-x')), direction = x > 200 ? 1 : -1;
+  await page.mouse.move(650, 350); await page.mouse.down();
+  await page.mouse.move(650 + direction * 90, 350); await page.clock.runFor(16);
+  await page.mouse.up(); await page.clock.runFor(500);
+  expect(Math.abs(Number(await world.getAttribute('data-camera-x')) - x)).toBeCloseTo(20, 0);
+  await page.clock.resume();
+  await page.setViewportSize({ width: 844, height: 390 });
+  await page.reload();
+  await expect(world).toHaveAttribute('data-loaded', 'true');
+  await page.getByRole('button', { name: '設定を開く' }).click();
+  await expect(speed).toHaveValue('2'); await expect(inertia).toHaveValue('0');
+  await page.getByRole('button', { name: 'カメラを初期値に戻す' }).click();
+  await expect(speed).toHaveValue('1'); await expect(inertia).toHaveValue('320');
+  await speed.scrollIntoViewIfNeeded();
+  expect((await speed.boundingBox())!.height).toBeGreaterThanOrEqual(44);
+  await page.screenshot({ path: 'test-results/camera-settings-mobile.png' });
+  await page.getByRole('button', { name: '対戦に戻る' }).click();
+  await expect(page.getByRole('dialog')).not.toBeVisible();
+});

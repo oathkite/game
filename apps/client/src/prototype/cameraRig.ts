@@ -1,3 +1,4 @@
+import { DEFAULT_CAMERA_SETTINGS, normalizeCameraSettings, type CameraSettings } from "./cameraSettings";
 import { clampCamera, edgeVelocity, followCamera, panCamera, type Bounds, type Point, type Viewport } from "./camera";
 
 export type CameraMode = "actor" | "manual" | "shot";
@@ -8,22 +9,25 @@ export const createCameraRig = () => {
   let mode: CameraMode = "actor";
   let edge: Point | null = null, edgeSince = 0;
   let remaining = 0;
+  let settings = DEFAULT_CAMERA_SETTINGS;
   // CSS px/ms。短い余韻に抑え、画面倍率にかかわらず同じ距離感にする。
   let velocity: Point = { x: 0, y: 0 }, coast = false, sampledAt = 0, coastMs = 0;
   const stop = (): void => { edge = null; coast = false; velocity = { x: 0, y: 0 }; };
   const drift = (elapsed: number): void => {
-    const decay = Math.exp(-elapsed / 80);
-    const next = { x: center.x + velocity.x * 80 * (1 - decay) / viewport.scale, y: center.y + velocity.y * 80 * (1 - decay) / viewport.scale };
+    const tau = settings.inertiaMs / 4;
+    const decay = Math.exp(-elapsed / tau);
+    const next = { x: center.x + velocity.x * tau * (1 - decay) / viewport.scale, y: center.y + velocity.y * tau * (1 - decay) / viewport.scale };
     center = clampCamera(next, viewport, bounds); target = center;
     velocity = { x: center.x === next.x ? velocity.x * decay : 0, y: center.y === next.y ? velocity.y * decay : 0 };
     coastMs += elapsed;
-    if (coastMs >= 320 || Math.hypot(velocity.x, velocity.y) < 0.01) stop();
+    if (coastMs >= settings.inertiaMs || Math.hypot(velocity.x, velocity.y) < 0.01) stop();
   };
   const setTarget = (point: Point, duration: number): void => {
     target = clampCamera(point, viewport, bounds);
     remaining = duration;
   };
   return {
+    configure: (next: CameraSettings) => { stop(); settings = normalizeCameraSettings(next); },
     get: () => ({ center, viewport, bounds, mode }),
     resize: (v: Viewport, b: Bounds) => { stop(); viewport = v; bounds = b; center = clampCamera(center, v, b); target = clampCamera(target, v, b); },
     focus: (point: Point, next: CameraMode = "actor", reduced = false) => { stop(); mode = next; setTarget(point, reduced ? 0 : 300); if (reduced) center = target; edge = null; },
@@ -31,19 +35,20 @@ export const createCameraRig = () => {
     shot: (point: Point) => { if (mode === "shot") setTarget(point, 80); },
     pan: (delta: Point, sampleMs?: number, now = 0) => {
       stop(); mode = "manual"; remaining = 0;
-      center = panCamera(center, delta, viewport, bounds); target = center;
+      const movement = { x: delta.x * settings.speed, y: delta.y * settings.speed };
+      center = panCamera(center, movement, viewport, bounds); target = center;
       if (sampleMs !== undefined) {
         const length = Math.max(1, Math.hypot(delta.x, delta.y) / Math.max(8, sampleMs) / 0.48);
-        velocity = { x: -delta.x / Math.max(8, sampleMs) / length, y: -delta.y / Math.max(8, sampleMs) / length };
+        velocity = { x: -movement.x / Math.max(8, sampleMs) / length, y: -movement.y / Math.max(8, sampleMs) / length };
         sampledAt = now;
       }
     },
-    releasePan: (now: number) => { coast = now - sampledAt <= 80; coastMs = 0; },
+    releasePan: (now: number) => { coast = settings.inertiaMs > 0 && now - sampledAt <= 80; coastMs = 0; },
     edge: (point: Point | null, now: number) => {
       const velocity = point ? edgeVelocity(point, viewport) : null;
       if (!velocity || (velocity.x === 0 && velocity.y === 0)) { edge = null; return; }
       if (!edge) edgeSince = now;
-      edge = velocity;
+      edge = { x: velocity.x * settings.speed, y: velocity.y * settings.speed };
     },
     stop,
     tick: (dt: number, now: number, reduced: boolean) => {
@@ -53,7 +58,7 @@ export const createCameraRig = () => {
         mode = "manual"; remaining = 0;
         center = clampCamera({ x: center.x + edge.x * elapsed / 1000 / viewport.scale, y: center.y + edge.y * elapsed / 1000 / viewport.scale }, viewport, bounds);
         target = center;
-        velocity = { x: edge.x / 1000, y: edge.y / 1000 }; coast = !reduced; coastMs = 0;
+        velocity = { x: edge.x / 1000, y: edge.y / 1000 }; coast = !reduced && settings.inertiaMs > 0; coastMs = 0;
       } else if (coast && mode === "manual") {
         drift(elapsed);
       } else if (mode !== "manual" || remaining > 0) {

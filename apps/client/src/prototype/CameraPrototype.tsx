@@ -5,6 +5,7 @@ import { setAudioSettings, unlockAudio } from "@/app/audio";
 import { createLocalConnection, defaultOpponentColors, defaultOpponentLoadout } from "@/net/localConnection";
 import { createMatchStore, type MatchStore } from "@/match/matchStore";
 import { Timer } from "@/ui/Timer";
+import { CameraSettingsPanel } from "./CameraSettingsPanel";
 import { cameraLayout } from "./camera";
 import { createCameraRig } from "./cameraRig";
 import { actorPoint, PrototypeCanvas } from "./PrototypeCanvas";
@@ -77,6 +78,7 @@ const Battle = ({ store }: { readonly store: MatchStore }) => {
     <dialog ref={dialog} className="kp-dialog" onCancel={(e) => { e.preventDefault(); setMenu(false); }}>
       <h2>ひと息つこう</h2><p>プラクティスは進行中です。</p>
       <button aria-pressed={muted} onClick={toggleMute}>サウンド {muted ? "OFF" : "ON"}</button>
+      <CameraSettingsPanel rig={rig} />
       <p className="kp-shortcuts">A / D：移動<br />↑ / ↓：角度　Space：発射<br />Shift + 矢印：見回す　C：手番へ</p>
       <button onClick={() => setMenu(false)}>対戦に戻る</button><a href="/">ガレージへ戻る</a>
     </dialog>
