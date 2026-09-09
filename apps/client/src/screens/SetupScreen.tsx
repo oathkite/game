@@ -11,7 +11,6 @@ import {
   type WeaponSlot,
 } from "@game/protocol";
 import { useEffect, useRef, useState, type ReactNode } from "react";
-import { MapPicker } from "./MapPicker";
 import type { Profile } from "@/app/profile";
 import { TankPreview, type WeaponDemo } from "./TankPreview";
 
@@ -79,16 +78,12 @@ const WeaponPicker = ({ label, slot, loadout, onPick }: { label: string; slot: W
 type SetupActionsProps = Pick<Props, "onEnterLobby" | "onSolo" | "inviteCode"> & { readonly valid: boolean };
 
 const SetupActions = ({ onEnterLobby, onSolo, inviteCode, valid }: SetupActionsProps) => {
-  const [soloMap, setSoloMap] = useState<MapChoice>("valley");
   return (
     <footer className="menu-actions setup-actions">
       <button className="primary-action" type="button" disabled={!valid} onClick={onEnterLobby} data-testid="enter-lobby">
         {inviteCode ? `部屋 ${inviteCode} に入る` : "ロビーへ"}
       </button>
-      <div className="row solo-row">
-        <MapPicker value={soloMap} onChange={setSoloMap} label="solo map" />
-        <button type="button" onClick={() => onSolo(soloMap)} data-testid="solo">プラクティス</button>
-      </div>
+      <button type="button" onClick={() => onSolo("valley")} data-testid="solo">プラクティス</button>
     </footer>
   );
 };
@@ -172,7 +167,7 @@ export const SetupScreen = ({ profile, onChange, onEnterLobby, onSolo, inviteCod
       <div className="screen-split menu-content">
         <div className="pane setup-preview-pane">
           <div className="title">FORTRESS</div>
-          <TankPreview colors={profile.colors} demo={demo} fill />
+          <TankPreview colors={profile.colors} demo={null} fill closeup />
         </div>
         <div className="pane">
           <ProfileSettings profile={profile} onChange={onChange} />

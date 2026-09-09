@@ -17,6 +17,7 @@ type Props = {
   readonly colors: TankColors;
   readonly demo: WeaponDemo | null;
   readonly fill?: boolean;
+  readonly closeup?: boolean;
 };
 
 /** 1 セルの px の下限。対戦の倍率が 1 px 台でも絵が読めるようにする */
@@ -72,7 +73,7 @@ const useDemoFrame = (demo: WeaponDemo | null, field: Field | null): DemoFrame =
 };
 
 /** ラスターを 1 セル 1 ピクセルで作り、見える canvas へ最近傍で拡大して写す。source は 1 セル 1 ピクセルの作業用 canvas で、毎フレーム使い回す */
-const paint = (canvas: HTMLCanvasElement, source: HTMLCanvasElement, geometry: Geometry, frame: DemoFrame, colors: TankColors): void => {
+const paint = (canvas: HTMLCanvasElement, source: HTMLCanvasElement, geometry: Geometry, frame: DemoFrame, colors: TankColors, closeup: boolean): void => {
   const raster = rasterize(geometry.field, frame, colors);
   if (source.width !== raster.width) source.width = raster.width;
   if (source.height !== raster.height) source.height = raster.height;
@@ -84,13 +85,21 @@ const paint = (canvas: HTMLCanvasElement, source: HTMLCanvasElement, geometry: G
   sctx.putImageData(image, 0, 0);
   ctx.imageSmoothingEnabled = false;
   ctx.clearRect(0, 0, canvas.width, canvas.height);
+  if (closeup) {
+    const size = 9;
+    const scale = Math.max(1, Math.floor(Math.min(canvas.width, canvas.height) / (size * 2)));
+    const width = size * scale;
+    ctx.drawImage(source, geometry.field.tank.x, geometry.field.tank.y - 4, size, size,
+      Math.floor((canvas.width - width) / 2), Math.floor((canvas.height - width) / 2), width, width);
+    return;
+  }
   const scale = Math.max(1, Math.min(geometry.cell, Math.floor(canvas.height / raster.height)));
   const width = raster.width * scale;
   const height = raster.height * scale;
   ctx.drawImage(source, Math.floor((canvas.width - width) / 2), canvas.height - height, width, height);
 };
 
-export const TankPreview = ({ colors, demo, fill = false }: Props) => {
+export const TankPreview = ({ colors, demo, fill = false, closeup = false }: Props) => {
   const ref = useRef<HTMLDivElement>(null);
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const sourceRef = useRef<HTMLCanvasElement | null>(null);
@@ -102,8 +111,8 @@ export const TankPreview = ({ colors, demo, fill = false }: Props) => {
   useEffect(() => {
     if (!canvasRef.current || !geometry) return;
     sourceRef.current ??= document.createElement("canvas");
-    paint(canvasRef.current, sourceRef.current, geometry, frame, colors);
-  }, [geometry, frame, colors]);
+    paint(canvasRef.current, sourceRef.current, geometry, frame, colors, closeup);
+  }, [geometry, frame, colors, closeup]);
 
   return (
     <div ref={ref} className="preview-frame">
@@ -113,6 +122,7 @@ export const TankPreview = ({ colors, demo, fill = false }: Props) => {
         height={geometry?.height ?? field.rows * cell}
         data-testid="tank-preview"
         data-demo={demo?.weapon ?? ""}
+        data-closeup={closeup}
       />
     </div>
   );

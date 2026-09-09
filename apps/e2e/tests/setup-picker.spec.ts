@@ -12,6 +12,9 @@ for (const viewport of [{ width: 360, height: 640 }, { width: 667, height: 375 }
       const pane = await panes.first().boundingBox();
       expect(preview!.height).toBeGreaterThan(pane!.height * 0.65);
     }
+    await expect(page.locator(".setup-preview-pane canvas")).toHaveAttribute("data-closeup", "true");
+    await expect(page.getByLabel("solo map")).toHaveCount(0);
+    await expect(page.locator(".setup-preview-pane canvas")).toHaveAttribute("data-demo", "");
     await expect(page.getByRole("radio")).toHaveCount(0);
     await page.getByRole("button", { name: "色を変更" }).click();
     const colors = page.getByRole("dialog", { name: "色を変更" });
@@ -32,6 +35,9 @@ for (const viewport of [{ width: 360, height: 640 }, { width: 667, height: 375 }
     await page.keyboard.press("Escape");
     await expect(page.getByRole("button", { name: "武器を変更" })).toBeFocused();
     await expect(page.getByTestId("loadout-summary")).toContainText("トリプル弾 / レーザー弾");
+    await expect(page.locator(".setup-preview-pane canvas")).toHaveAttribute("data-closeup", "true");
+    await expect(page.getByLabel("solo map")).toHaveCount(0);
+    await expect(page.locator(".setup-preview-pane canvas")).toHaveAttribute("data-demo", "");
     await expect(page.getByRole("radio")).toHaveCount(0);
     await page.getByRole("button", { name: "色を変更" }).click();
     await expect(colors.getByRole("radio", { name: "カラー2 cyan", exact: true })).toBeChecked();
@@ -42,3 +48,11 @@ for (const viewport of [{ width: 360, height: 640 }, { width: 667, height: 375 }
     await page.screenshot({ path: `test-results/setup-compact-${viewport.width}.png` });
   });
 }
+
+test("プラクティスは谷マップの独立画面で開く", async ({ page }) => {
+  await page.goto("/");
+  await page.getByTestId("solo").click();
+  await expect(page.locator(".game-root .map-area canvas")).toBeVisible();
+  await expect(page.locator(".setup")).toHaveCount(0);
+  await expect.poll(() => page.evaluate(() => window.__fortress?.getView().phase)).toBe("acting");
+});
