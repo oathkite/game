@@ -10,11 +10,11 @@ export async function loadPortrait(){
  }
  return {manifest,images};
 }
-export function drawPortrait(library,canvas,poseId,{guides=false,backdrop=null,frame=null}={}){
+export function drawPortrait(library,canvas,poseId,{guides=false,backdrop=null,frame=null,sizeRatio=1}={}){
  const rect=canvas.getBoundingClientRect(),dpr=window.devicePixelRatio||1;
  canvas.width=Math.round(rect.width*dpr);canvas.height=Math.round(rect.height*dpr);
  const ctx=canvas.getContext('2d'),[w,h]=library.manifest.frameSize,pose=library.manifest.poses.find(p=>p.id===poseId);
- const scale=Math.max(1,Math.floor(Math.min(canvas.width/w,canvas.height/h))),x=Math.round((canvas.width-w*scale)/2),y=Math.round((canvas.height-h*scale)/2);
+ const scale=Math.max(1,Math.floor(Math.min(canvas.width/w,canvas.height/h)*sizeRatio)),x=Math.round((canvas.width-w*scale)/2),y=Math.round((canvas.height-h*scale)/2);
  ctx.imageSmoothingEnabled=false;
  if(backdrop){ctx.fillStyle=backdrop==='dark'?'#203746':'#f4efdf';ctx.fillRect(0,0,canvas.width,canvas.height);}
  ctx.save();ctx.translate(x,y);ctx.scale(scale,scale);

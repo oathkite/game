@@ -10,7 +10,7 @@ try{
   const state=library.manifest.poses.map(p=>portraitFrame(p.clip,elapsed)),key=pose+state.join(',');
   if(!force&&key===signature)return;signature=key;
   const options={guides:$('guides').checked},frame=portraitFrame(selected().clip,elapsed);
-  drawPortrait(library,$('portrait'),pose,{...options,frame,backdrop:$('backdrop').value});
+  drawPortrait(library,$('portrait'),pose,{...options,frame,sizeRatio:.8,backdrop:$('backdrop').value});
   $('portrait').dataset.frame=String(frame);
   for(const [id,index]of [['profile-art',0],['win-art',1],['lose-art',2]])drawPortrait(library,$(id),library.manifest.poses[index].id,{...options,frame:state[index]});
   $('pose-title').textContent=selected().label;
@@ -33,7 +33,7 @@ try{
  const inspect=()=>{
   const checks=portraitChecks(library.manifest,library.images),samples=new Set();
   for(const p of library.manifest.poses)for(const frame of p.clip.frames){
-   drawPortrait(library,$('portrait'),p.id,{frame,backdrop:'dark'});samples.add($('portrait').toDataURL());
+   drawPortrait(library,$('portrait'),p.id,{frame,sizeRatio:.8,backdrop:'dark'});samples.add($('portrait').toDataURL());
   }
   checks.push({name:'全12コマの絵が異なる',pass:samples.size===library.manifest.frameCount});render(true);
   report={pack:library.manifest.id,checks,frames:samples.size,scope:'3 animated loop clips; integrated sprites',humanReview:'pending'};
