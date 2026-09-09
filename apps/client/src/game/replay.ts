@@ -318,9 +318,14 @@ export const playReplay = (
     shake: null,
     stopFrames: () => {},
   };
-  for (const seat of [0, 1] as const) renderer.setTank(seat, poseOf(job.playersBefore[seat], job.maskBefore, elevationOf(run, seat)));
-  // 撃つ側の位置は移動後の x で描く
-  renderer.setTank(job.shot.input.seat, poseOf({ ...shooter, x: job.shot.input.x, facing: job.shot.input.facing }, job.maskBefore, job.shot.input.elevation));
+  // 再生初期化から移動後のx/yを使用し、ターン開始位置を一瞬描画しない。
+  for (const seat of [0, 1] as const) {
+    const before = job.playersBefore[seat];
+    const position = seat === job.shot.input.seat
+      ? { ...before, x: job.shot.input.x, y: job.shot.input.y, facing: job.shot.input.facing }
+      : before;
+    renderer.setTank(seat, poseOf(position, job.maskBefore, elevationOf(run, seat)));
+  }
   cb.sound("fire");
   run.stopFrames = renderer.onFrame((deltaMs) => stepFrame(run, deltaMs));
   return () => {
