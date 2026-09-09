@@ -1,7 +1,9 @@
 import { DEFAULT_CAMERA_SETTINGS, normalizeCameraSettings, type CameraSettings } from "./cameraSettings";
 import { clampCamera, edgeVelocity, followCamera, panCamera, type Bounds, type Point, type Viewport } from "./camera";
 
-const smoothstep = (t: number): number => t * t * (3 - 2 * t);
+const smootherstep = (t: number): number => t * t * t * (t * (t * 6 - 15) + 10);
+// Integral of 1 - smootherstep: frame-rate independent coast displacement.
+const coastIntegral = (t: number): number => t - 2.5 * t ** 4 + 3 * t ** 5 - t ** 6;
 
 export type CameraMode = "actor" | "manual" | "shot";
 export const createCameraRig = () => {
@@ -17,13 +19,14 @@ export const createCameraRig = () => {
   let velocity: Point = { x: 0, y: 0 }, coast = false, sampledAt = 0, coastMs = 0;
   const stop = (): void => { edge = null; edgeElapsed = 0; coast = false; velocity = { x: 0, y: 0 }; };
   const drift = (elapsed: number): void => {
-    const tau = settings.inertiaMs / 4;
-    const decay = Math.exp(-elapsed / tau);
-    const next = { x: center.x + velocity.x * tau * (1 - decay) / viewport.scale, y: center.y + velocity.y * tau * (1 - decay) / viewport.scale };
+    const from = coastMs / settings.inertiaMs;
+    coastMs = Math.min(settings.inertiaMs, coastMs + elapsed);
+    const to = coastMs / settings.inertiaMs;
+    const distance = settings.inertiaMs * (coastIntegral(to) - coastIntegral(from)) / viewport.scale;
+    const next = { x: center.x + velocity.x * distance, y: center.y + velocity.y * distance };
     center = clampCamera(next, viewport, bounds); target = center;
-    velocity = { x: center.x === next.x ? velocity.x * decay : 0, y: center.y === next.y ? velocity.y * decay : 0 };
-    coastMs += elapsed;
-    if (coastMs >= settings.inertiaMs || Math.hypot(velocity.x, velocity.y) < 0.01) stop();
+    velocity = { x: center.x === next.x ? velocity.x : 0, y: center.y === next.y ? velocity.y : 0 };
+    if (coastMs >= settings.inertiaMs || (velocity.x === 0 && velocity.y === 0)) stop();
   };
   const setTarget = (point: Point, milliseconds: number, eased = false): void => {
     target = clampCamera(point, viewport, bounds);
@@ -60,7 +63,7 @@ export const createCameraRig = () => {
       if (edge && now - edgeSince >= 120) {
         mode = "manual"; remaining = 0;
         edgeElapsed += elapsed;
-        const gain = reduced ? 1 : smoothstep(Math.min(1, edgeElapsed / 180));
+        const gain = reduced ? 1 : smootherstep(Math.min(1, edgeElapsed / 180));
         center = clampCamera({ x: center.x + edge.x * gain * elapsed / 1000 / viewport.scale, y: center.y + edge.y * gain * elapsed / 1000 / viewport.scale }, viewport, bounds);
         target = center;
         velocity = { x: edge.x * gain / 1000, y: edge.y * gain / 1000 }; coast = !reduced && settings.inertiaMs > 0; coastMs = 0;
@@ -68,7 +71,7 @@ export const createCameraRig = () => {
         drift(elapsed);
       } else if (mode !== "manual" || remaining > 0) {
         const ratio = reduced || remaining <= elapsed ? 1 : elapsed / remaining;
-        const progress = reduced || duration === 0 ? 1 : smoothstep(Math.min(1, (duration - remaining + elapsed) / duration));
+        const progress = reduced || duration === 0 ? 1 : smootherstep(Math.min(1, (duration - remaining + elapsed) / duration));
         center = easeFocus
           ? { x: origin.x + (target.x - origin.x) * progress, y: origin.y + (target.y - origin.y) * progress }
           : { x: center.x + (target.x - center.x) * ratio, y: center.y + (target.y - center.y) * ratio };

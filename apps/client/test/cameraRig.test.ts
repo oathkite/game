@@ -54,7 +54,7 @@ describe("manual camera inertia", () => {
     rig.tick(16, 56, false); expect(rig.get().center.x).toBeGreaterThan(held);
     for (let t = 72; t <= 456; t += 16) rig.tick(16, t, false);
     const stopped = rig.get().center.x;
-    expect(stopped - held).toBeLessThan(5);
+    expect(stopped - held).toBeLessThan(9);
     rig.tick(16, 472, false); expect(rig.get().center.x).toBe(stopped);
   });
   it("does not fling after holding still, or with reduced motion", () => {
@@ -91,6 +91,7 @@ describe("camera easing", () => {
     expect(steps[0]).toBeLessThan(steps[1]!);
     expect(steps[1]).toBeLessThan(steps[2]!);
     expect(steps[5]).toBeCloseTo(steps[0]!);
+    expect(steps[0]).toBeLessThan(10);
     expect(positions[3]).toBeCloseTo(200);
     expect(positions[6]).toBe(300);
   });
@@ -107,4 +108,16 @@ describe("camera easing", () => {
     rig.stop(); rig.edge({ x: 900, y: 200 }, 400);
     expect(rig.tick(40, 520, false).x - previous).toBeCloseTo(steps[0]!);
   });
+});
+
+it("coast uses the same gentle-ended curve with frame-independent distance", () => {
+  for (const dt of [10, 20, 40]) {
+    const rig = setup(); rig.configure({ speed: 2.8, inertiaMs: 1000 });
+    rig.pan({ x: -20, y: 0 }, 20, 20); rig.releasePan(25);
+    const start = rig.get().center.x;
+    for (let t = dt; t <= 1000; t += dt) rig.tick(dt, 25 + t, false);
+    expect(rig.get().center.x - start).toBeCloseTo(0.48 * 2.8 * 1000 / 2 / 9);
+    const end = rig.get().center.x;
+    rig.tick(20, 1045, false); expect(rig.get().center.x).toBe(end);
+  }
 });
