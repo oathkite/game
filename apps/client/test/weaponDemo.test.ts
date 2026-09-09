@@ -1,5 +1,6 @@
 import { WEAPON_IDS, type WeaponId } from "@game/protocol";
 import { describe, expect, it } from "vitest";
+import { effectCells } from "@/screens/previewRaster";
 import { CARVE_AT_MS, HOLD_MS, IMPACT_TOTAL_MS } from "@/game/hitFeedback";
 import { FIELD_COLS_MIN, GROUND_ROWS, bulletTimeAt, debrisCount, demoFrame, demoShots, fieldFor, prepareDemo } from "@/screens/weaponDemo";
 
@@ -35,6 +36,27 @@ describe("fieldFor", () => {
 });
 
 describe("demoShots", () => {
+  it("狭いモーダルでもレーザーの全7段と爆風が領域内に収まる", () => {
+    for (const cols of [80, 106, 160, 260, 400]) {
+      const field = fieldFor(cols);
+      const demo = prepareDemo("laser", field);
+      expect(first(demo.shots).stages).toHaveLength(7);
+      for (let t = 0; t < 4; t += 0.02) {
+        for (const cell of effectCells(demoFrame(demo, t))) {
+          expect(cell.x).toBeGreaterThanOrEqual(0);
+          expect(cell.x, `width=${cols}, time=${t}`).toBeLessThan(field.cols);
+          expect(cell.y).toBeGreaterThanOrEqual(0);
+          expect(cell.y).toBeLessThan(field.rows);
+        }
+      }
+      for (const stage of first(demo.shots).stages) {
+        expect(stage.x - stage.radius).toBeGreaterThanOrEqual(0);
+        expect(stage.x + stage.radius).toBeLessThan(field.cols);
+        expect(stage.y + stage.radius).toBeLessThan(field.rows);
+      }
+    }
+  });
+
   it("扇と時間差の発を掛けた数の弾道になる", () => {
     expect(demoShots("cannon", FIELD)).toHaveLength(1);
     expect(demoShots("triple", FIELD)).toHaveLength(3);

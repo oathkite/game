@@ -16,6 +16,8 @@ export type WeaponDemo = { readonly weapon: WeaponId; readonly key: number };
 type Props = {
   readonly colors: TankColors;
   readonly demo: WeaponDemo | null;
+  readonly fill?: boolean;
+  readonly closeup?: boolean;
 };
 
 /** 1 セルの px の下限。対戦の倍率が 1 px 台でも絵が読めるようにする */
@@ -23,10 +25,10 @@ const CELL_MIN = 2;
 
 const EMPTY_FRAME: DemoFrame = { bullets: [], blasts: [], craters: [], debris: [], done: true };
 
-type Geometry = { readonly cell: number; readonly field: Field };
+type Geometry = { readonly cell: number; readonly field: Field; readonly height: number };
 
 /** 対戦と同じ倍率（最も近い整数）と、置かれた要素の幅から切れ端の大きさを決める。幅が変わっても追従する */
-const useGeometry = (ref: React.RefObject<HTMLDivElement | null>): Geometry | null => {
+const useGeometry = (ref: React.RefObject<HTMLDivElement | null>, fill: boolean): Geometry | null => {
   const [geometry, setGeometry] = useState<Geometry | null>(null);
   useEffect(() => {
     const el = ref.current;
@@ -34,8 +36,10 @@ const useGeometry = (ref: React.RefObject<HTMLDivElement | null>): Geometry | nu
     const measure = (): void => {
       const cell = Math.max(CELL_MIN, Math.round(computeLayout(window.innerWidth, window.innerHeight).cell));
       const cols = fieldFor(el.clientWidth / cell).cols;
+      const field = fieldFor(cols);
+      const height = fill ? Math.max(1, el.clientHeight) : field.rows * cell;
       // 値が同じなら作り直さない。field が変わるとデモが最初からになるため
-      setGeometry((prev) => (prev && prev.cell === cell && prev.field.cols === cols ? prev : { cell, field: fieldFor(cols) }));
+      setGeometry((prev) => (prev && prev.cell === cell && prev.field.cols === cols && prev.height === height ? prev : { cell, field, height }));
     };
     measure();
     const observer = new ResizeObserver(measure);
@@ -45,7 +49,7 @@ const useGeometry = (ref: React.RefObject<HTMLDivElement | null>): Geometry | nu
       observer.disconnect();
       window.removeEventListener("resize", measure);
     };
-  }, [ref]);
+  }, [ref, fill]);
   return geometry;
 };
 
@@ -69,7 +73,7 @@ const useDemoFrame = (demo: WeaponDemo | null, field: Field | null): DemoFrame =
 };
 
 /** ラスターを 1 セル 1 ピクセルで作り、見える canvas へ最近傍で拡大して写す。source は 1 セル 1 ピクセルの作業用 canvas で、毎フレーム使い回す */
-const paint = (canvas: HTMLCanvasElement, source: HTMLCanvasElement, geometry: Geometry, frame: DemoFrame, colors: TankColors): void => {
+const paint = (canvas: HTMLCanvasElement, source: HTMLCanvasElement, geometry: Geometry, frame: DemoFrame, colors: TankColors, closeup: boolean): void => {
   const raster = rasterize(geometry.field, frame, colors);
   if (source.width !== raster.width) source.width = raster.width;
   if (source.height !== raster.height) source.height = raster.height;
@@ -81,14 +85,25 @@ const paint = (canvas: HTMLCanvasElement, source: HTMLCanvasElement, geometry: G
   sctx.putImageData(image, 0, 0);
   ctx.imageSmoothingEnabled = false;
   ctx.clearRect(0, 0, canvas.width, canvas.height);
-  ctx.drawImage(source, 0, 0, canvas.width, canvas.height);
+  if (closeup) {
+    const size = 9;
+    const scale = Math.max(1, Math.floor(Math.min(canvas.width, canvas.height) / (size * 2)));
+    const width = size * scale;
+    ctx.drawImage(source, geometry.field.tank.x, geometry.field.tank.y - 4, size, size,
+      Math.floor((canvas.width - width) / 2), Math.floor((canvas.height - width) / 2), width, width);
+    return;
+  }
+  const scale = Math.max(1, Math.min(geometry.cell, Math.floor(canvas.height / raster.height)));
+  const width = raster.width * scale;
+  const height = raster.height * scale;
+  ctx.drawImage(source, Math.floor((canvas.width - width) / 2), canvas.height - height, width, height);
 };
 
-export const TankPreview = ({ colors, demo }: Props) => {
+export const TankPreview = ({ colors, demo, fill = false, closeup = false }: Props) => {
   const ref = useRef<HTMLDivElement>(null);
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const sourceRef = useRef<HTMLCanvasElement | null>(null);
-  const geometry = useGeometry(ref);
+  const geometry = useGeometry(ref, fill);
   const frame = useDemoFrame(demo, geometry?.field ?? null);
   const cell = geometry?.cell ?? CELL_MIN;
   const field = geometry?.field ?? fieldFor(FIELD_COLS_MIN);
@@ -96,17 +111,18 @@ export const TankPreview = ({ colors, demo }: Props) => {
   useEffect(() => {
     if (!canvasRef.current || !geometry) return;
     sourceRef.current ??= document.createElement("canvas");
-    paint(canvasRef.current, sourceRef.current, geometry, frame, colors);
-  }, [geometry, frame, colors]);
+    paint(canvasRef.current, sourceRef.current, geometry, frame, colors, closeup);
+  }, [geometry, frame, colors, closeup]);
 
   return (
     <div ref={ref} className="preview-frame">
       <canvas
         ref={canvasRef}
         width={field.cols * cell}
-        height={field.rows * cell}
+        height={geometry?.height ?? field.rows * cell}
         data-testid="tank-preview"
         data-demo={demo?.weapon ?? ""}
+        data-closeup={closeup}
       />
     </div>
   );
