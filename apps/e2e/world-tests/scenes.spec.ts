@@ -5,6 +5,14 @@ for (const size of [{ width: 1440, height: 900 }, { width: 844, height: 390 }, {
     const errors: string[] = [];
     page.on("pageerror", e => errors.push(e.message));
     await page.goto("/?prototype=world");
+    const logo = page.getByRole("img", { name: "KEROPOD（ケロポッド）", exact: true });
+    await expect(logo).toBeVisible();
+    await expect.poll(() => logo.evaluate(image => (image as HTMLImageElement).naturalWidth)).toBe(1536);
+    const title = (await page.getByRole("heading", { name: "KEROPOD（ケロポッド）", exact: true }).boundingBox())!;
+    const begin = (await page.getByRole("button", { name: "はじめる", exact: true }).boundingBox())!;
+    expect(title.x).toBeGreaterThanOrEqual(0); expect(title.x + title.width).toBeLessThanOrEqual(size.width);
+    expect(title.y + title.height).toBeLessThanOrEqual(begin.y);
+    expect(begin.y + begin.height).toBeLessThanOrEqual(size.height - 32);
     await page.screenshot({ path: `test-results/world-start-${size.width}.png` });
     await page.getByRole("button", { name: "はじめる", exact: true }).click();
     await expect(page.getByRole("heading", { name: "出発の準備" })).toBeVisible();

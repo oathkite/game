@@ -6,7 +6,8 @@
 .world-ui p { line-height:1.7; }
 .world-leaves { position:absolute; inset:0; width:100%; height:100%; pointer-events:none; }
 .world-start { height:100%; display:flex; flex-direction:column; align-items:center; justify-content:center; padding:24px; gap:24px; text-align:center; background:linear-gradient(0deg,#20384a38,transparent 70%); }
-.world-start h1 { font:900 clamp(48px,10vw,132px)/1 monospace; letter-spacing:-.06em; color:#ffcf66; text-shadow:4px 0 #24344a,-4px 0 #24344a,0 -4px #24344a,0 6px #24344a,0 10px #a45d32; }
+.world-start h1 { position:relative; flex-shrink:0; width:min(880px,100%,120vh); aspect-ratio:1536/560; overflow:hidden; }
+.world-title-logo { position:absolute; left:0; top:50%; transform:translateY(-50%); display:block; width:100%; height:auto; }
 .world-start p { margin:0 0 32px; color:#fff4d9; font-weight:800; text-shadow:0 2px 3px #24344a; }
 .world-start .pixel-button { min-width:240px; font-size:22px; }
 .world-build-note { position:absolute; bottom:20px; color:#fff4d9; font-size:12px; }

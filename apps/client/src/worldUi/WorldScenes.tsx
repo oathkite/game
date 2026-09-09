@@ -35,7 +35,7 @@ export const WorldScenes = () => {
     {scene === "battle" ? <CameraPrototype worldArt onExit={exit} onResult={finish} /> : scene === "rooms" ? <RoomScreen onExit={exit} onLab={() => go("network")} /> : scene === "network" ? <NetworkLab worldArt onExit={exit} /> : <>
       {scene === "start" && <WindLeaves />}
       <div key={scene} ref={heading} tabIndex={-1} className="world-content">
-        {scene === "start" && <section className="world-start"><h1>KEROPOD</h1><p>小さな一発が、世界を変える。</p><PixelButton onClick={() => go("lobby")}>はじめる</PixelButton><span className="world-build-note">2Dプレビュー</span></section>}
+        {scene === "start" && <section className="world-start"><h1><img className="world-title-logo" src={worldArt.logo} alt="KEROPOD（ケロポッド）" width="1536" height="1024" fetchPriority="high" /></h1><p>小さな一発が、世界を変える。</p><PixelButton onClick={() => go("lobby")}>はじめる</PixelButton><span className="world-build-note">2Dプレビュー</span></section>}
         {scene === "lobby" && <Lobby go={go} />}
         {scene === "settings" && <Settings onBack={exit} />}
         {scene === "result" && <section className="world-result-screen"><h1>{result}</h1><p>いい一発だった。またここで。</p><TankPortrait /><div><PixelButton onClick={() => go("battle")}>もう一度プレイ</PixelButton><PixelButton onClick={exit}>ロビーに戻る</PixelButton></div></section>}
