@@ -81,3 +81,30 @@ describe("manual camera inertia", () => {
     rig.tick(16, 171, false); expect(rig.get().center.x).toBe(350);
   });
 });
+
+describe("camera easing", () => {
+  it("accelerates and decelerates symmetrically when focusing a new actor", () => {
+    const rig = setup(); rig.focus({ x: 300, y: 100 });
+    const positions = [100];
+    for (let t = 50; t <= 300; t += 50) positions.push(rig.tick(50, t, false).x);
+    const steps = positions.slice(1).map((x, i) => x - positions[i]!);
+    expect(steps[0]).toBeLessThan(steps[1]!);
+    expect(steps[1]).toBeLessThan(steps[2]!);
+    expect(steps[5]).toBeCloseTo(steps[0]!);
+    expect(positions[3]).toBeCloseTo(200);
+    expect(positions[6]).toBe(300);
+  });
+  it("ramps edge speed up and restarts acceleration after stopping", () => {
+    const rig = setup(); rig.edge({ x: 900, y: 200 }, 0);
+    let previous = 100;
+    const steps = [];
+    for (let t = 120; t <= 320; t += 40) {
+      const x = rig.tick(40, t, false).x; steps.push(x - previous); previous = x;
+    }
+    expect(steps[0]).toBeLessThan(steps[1]!);
+    expect(steps[1]).toBeLessThan(steps[3]!);
+    expect(steps[5]).toBeCloseTo(480 * .04 / 9);
+    rig.stop(); rig.edge({ x: 900, y: 200 }, 400);
+    expect(rig.tick(40, 520, false).x - previous).toBeCloseTo(steps[0]!);
+  });
+});

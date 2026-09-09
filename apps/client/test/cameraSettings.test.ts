@@ -16,7 +16,7 @@ describe("camera tuning", () => {
   it("changes drag and edge speed immediately", () => {
     const rig = rigAtCenter(); rig.configure({ speed: 2, inertiaMs: 320 });
     rig.pan({ x: 90, y: 0 }); expect(rig.get().center.x).toBe(180);
-    rig.edge({ x: 900, y: 200 }, 0); rig.tick(30, 120, false);
+    rig.edge({ x: 900, y: 200 }, 0); rig.tick(30, 120, true);
     expect(rig.get().center.x).toBeCloseTo(180 + 960 * .03 / 9);
   });
   it("zero inertia stops on release; longer inertia travels farther", () => {
