@@ -11,6 +11,8 @@ const mount = async (): Promise<void> => {
   // 工程Aの実アセット試作。製品buildには入口も本人用素材も含めない。
   const Screen = import.meta.env.DEV && new URLSearchParams(location.search).get("prototype") === "camera"
     ? (await import("./prototype/CameraPrototype")).CameraPrototype
+    : import.meta.env.DEV && new URLSearchParams(location.search).get("prototype") === "world"
+    ? (await import("./worldUi/WorldScenes")).WorldScenes
     : App;
   createRoot(root).render(<StrictMode><Screen /></StrictMode>);
 };

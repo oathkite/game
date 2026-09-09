@@ -35,6 +35,8 @@ export type RendererInit = {
   readonly tankFactory?: typeof createTankView;
   readonly background?: number;
   readonly terrainTint?: number;
+  readonly backgroundAlpha?: number;
+  readonly terrainArt?: CanvasImageSource;
   readonly players: readonly [{ colors: TankColors; nickname: string }, { colors: TankColors; nickname: string }];
 };
 
@@ -52,6 +54,7 @@ export const createRenderer = async (init: RendererInit): Promise<Renderer> => {
     width: init.layout.mapWidth,
     height: init.layout.mapHeight,
     background: init.background ?? 0x000000,
+    backgroundAlpha: init.backgroundAlpha ?? 1,
     antialias: false,
     resolution: 1,
     autoDensity: false,
@@ -65,7 +68,7 @@ export const createRenderer = async (init: RendererInit): Promise<Renderer> => {
   world.scale.set(cell);
   app.stage.addChild(world, labels);
 
-  const terrain: TerrainLayer = createTerrainLayer(init.mask);
+  const terrain: TerrainLayer = createTerrainLayer(init.mask, init.terrainArt);
   world.addChild(terrain.sprite);
   terrain.sprite.tint = init.terrainTint ?? 0xffffff;
 

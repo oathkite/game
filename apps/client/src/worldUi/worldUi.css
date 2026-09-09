@@ -1,0 +1,80 @@
+@import url("./pixelUi.css");
+.world-ui { --world-ink:#24344a; --world-paper:#f3dfb3; position:relative; height:100dvh; width:100%; overflow:hidden; color:var(--world-ink); background-color:#86bdba; background-size:cover; background-position:center; font-family:"Hiragino Kaku Gothic ProN","Yu Gothic",sans-serif; }
+.world-ui * { box-sizing:border-box; }
+.world-content { position:relative; height:100%; outline:none; }
+.world-ui h1 { font-size:clamp(24px,3vw,42px); line-height:1.2; margin:0; }
+.world-ui p { line-height:1.7; }
+.world-leaves { position:absolute; inset:0; width:100%; height:100%; pointer-events:none; }
+.world-start { height:100%; display:flex; flex-direction:column; align-items:center; justify-content:center; padding:24px; gap:24px; text-align:center; background:linear-gradient(0deg,#20384a38,transparent 70%); }
+.world-start h1 { font:900 clamp(48px,10vw,132px)/1 monospace; letter-spacing:-.06em; color:#ffcf66; text-shadow:4px 0 #24344a,-4px 0 #24344a,0 -4px #24344a,0 6px #24344a,0 10px #a45d32; }
+.world-start p { margin:0 0 32px; color:#fff4d9; font-weight:800; text-shadow:0 2px 3px #24344a; }
+.world-start .pixel-button { min-width:240px; font-size:22px; }
+.world-build-note { position:absolute; bottom:20px; color:#fff4d9; font-size:12px; }
+.world-lobby { max-width:1160px; height:100%; margin:auto; padding:36px; display:grid; grid-template-columns:1fr 400px; grid-template-rows:auto minmax(0,1fr) auto; gap:24px; }
+.world-lobby header { grid-column:1/-1; display:flex; align-items:center; justify-content:space-between; }
+.world-lobby h1 { color:#fff1d5; text-shadow:2px 3px #24344a; }
+.world-machine { align-self:center; text-align:center; }
+.world-machine p { background:#24344ae8; color:#fff1d5; display:inline-block; padding:5px 24px; margin:0; }
+.tank-portrait { width:min(100%,480px); aspect-ratio:320/220; margin:auto; }
+.tank-portrait canvas { width:100%; height:100%; display:block; image-rendering:pixelated; }
+.world-loadout { align-self:center; }
+.world-ui label { display:block; font-size:14px; font-weight:700; margin-bottom:12px; }
+.world-ui input:not([type=range]), .world-ui select { display:block; width:100%; height:44px; margin-top:6px; border:2px solid #657078; border-radius:0; padding:8px; color:#24344a; background:#fff3d9; font:inherit; }
+.world-ui input[type=range] { width:100%; height:44px; accent-color:#b5692c; touch-action:pan-y; }
+.world-ui input:focus-visible,.world-ui select:focus-visible { outline:3px solid #176575; outline-offset:2px; }
+.world-loadout p { font-size:12px; margin:16px 0 0; }
+.world-lobby footer { grid-column:1/-1; display:flex; justify-content:space-between; gap:16px; }
+.world-lobby footer .pixel-button:last-child { min-width:260px; }
+.world-settings { max-width:560px; height:100%; margin:auto; padding:24px; display:flex; flex-direction:column; align-items:stretch; gap:16px; }
+.world-settings h1 { text-align:center; color:#fff1d5; text-shadow:2px 3px #24344a; }
+.world-settings .pixel-panel { overflow:auto; min-height:0; }
+.world-settings .kp-camera-settings { margin:20px 0; }
+.world-settings .kp-camera-settings label { display:flex; }
+.world-settings > .pixel-button { flex-shrink:0; }
+.world-result-screen { height:100%; display:flex; flex-direction:column; align-items:center; justify-content:center; padding:24px; text-align:center; }
+.world-result-screen h1 { color:#ffcf66; text-shadow:2px 3px #24344a; font-size:clamp(32px,6vw,76px); }
+.world-result-screen p { color:#24344a; background:#fff0dccc; padding:4px 18px; }
+.world-result-screen .tank-portrait { width:min(300px,40vh); }
+.world-result-screen > div:last-child { display:flex; flex-wrap:wrap; gap:16px; justify-content:center; }
+.world-shutter { position:absolute; inset:0; pointer-events:none; z-index:20; background:repeating-linear-gradient(0deg,#24344a 0 20px,#34485d 20px 24px); clip-path:inset(0 0 100%); transition:clip-path 240ms cubic-bezier(.65,0,.35,1); }
+.world-closing .world-shutter { clip-path:inset(0); pointer-events:auto; }
+.world-ui .kp-canvas { position:relative; }
+.world-ui .kp-world-help { padding:4px 8px; background:#24344ac9; opacity:1; }
+.world-ui .kp-topbar,.world-ui .kp-controls { background:#24344a; border-bottom:3px solid #b96f3a; }
+.world-ui .kp-controls { border-top:4px solid #bf8351; border-bottom:0; }
+.world-ui .kp-brand { color:#ffcc68; font-family:monospace; }
+.world-ui .kp-power-track { border:2px solid #e6c398; border-radius:0; box-shadow:0 0 0 2px #101c2c; }
+.world-ui .kp-power-track i { background:repeating-linear-gradient(90deg,#ffbd46 0 8px,#d48b36 8px 10px); }
+.world-ui .kp-wind-window { border-radius:0; border:2px solid #bc9366; }
+.world-ui .kp-turn i { border-radius:0; }
+.world-ui .kp-root .kp-dialog { border-radius:0; border:6px solid #b77943; background:#f3dfb3; }
+@media (max-height:550px) and (orientation:landscape) {
+  .world-lobby { padding:12px 28px; grid-template-columns:1fr minmax(270px,42%); gap:8px 24px; }
+  .world-lobby header h1 { font-size:24px; }
+  .world-lobby .tank-portrait { max-height:170px; width:248px; }
+  .world-loadout { padding:10px 18px!important; }
+  .world-loadout label { display:grid; grid-template-columns:60px 1fr; align-items:center; margin:0; font-size:12px; }
+  .world-loadout input:not([type=range]),.world-loadout select { margin:0; }
+  .world-loadout p { margin:4px 0 0; line-height:1.4; font-size:10px; }
+  .world-machine p { font-size:12px; }
+  .world-lobby footer .pixel-button { min-height:44px; }
+  .world-settings { padding:12px; gap:8px; }
+  .world-settings h1 { font-size:24px; }
+  .world-start { gap:16px; }
+  .world-start p { margin-bottom:8px; }
+  .world-result-screen { gap:4px; }
+  .world-result-screen p { margin:4px; }
+}
+@media (orientation:portrait) {
+  .world-lobby { padding:16px; grid-template-columns:1fr; grid-template-rows:auto minmax(70px,1fr) auto auto; gap:12px; }
+  .world-lobby header { grid-column:1; }
+  .world-machine .tank-portrait { width:min(220px,34vh); }
+  .world-machine p { display:none; }
+  .world-loadout { padding:16px 24px!important; }
+  .world-loadout label { margin-bottom:8px; }
+  .world-lobby footer { grid-column:1; flex-direction:column-reverse; gap:6px; }
+  .world-lobby footer .pixel-button { min-width:0!important; }
+  .world-settings { padding:24px 16px; }
+}
+@media (prefers-reduced-motion:reduce) { .world-shutter { transition:none; } }
+.world-ui .kp-power-track { height:24px; padding:7px 14%; border:0; box-shadow:none; background: url("../../../../assets/workbench/world-ui-v1/meter-v1.png") center / 100% 310% no-repeat; overflow:hidden; }

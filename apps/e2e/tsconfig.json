@@ -16,6 +16,8 @@
     "asset-lab",
     "asset-lab.config.ts",
     "camera-tests",
-    "camera.config.ts"
+    "camera.config.ts",
+    "world-tests",
+    "world.config.ts"
   ]
 }

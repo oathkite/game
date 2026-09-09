@@ -8,6 +8,8 @@ import type { Layout } from "@/game/scale";
 import type { MatchStore } from "@/match/matchStore";
 import type { MatchView } from "@/match/types";
 import { playSound } from "@/app/audio";
+import { WindLeaves } from "@/worldUi/WindLeaves";
+import { loadTerrainArt, worldArt as artUrls } from "@/worldUi/assets";
 import { viewportOf, worldToScreen } from "./camera";
 import type { CameraRig } from "./cameraRig";
 import { loadSpriteTanks, type SpriteTankFactory } from "./spriteTank";
@@ -26,8 +28,8 @@ const posesOf = (v: MatchView, elevations: readonly number[]): readonly TankPose
   });
 };
 
-type Props = { readonly store: MatchStore; readonly rig: CameraRig; readonly layout: Layout; readonly handlers: HTMLAttributes<HTMLDivElement>; readonly blocked: boolean; readonly followShot: boolean; readonly onReady: (ready: boolean) => void };
-export const PrototypeCanvas = ({ store, rig, layout, handlers, blocked, followShot, onReady }: Props) => {
+type Props = { readonly worldArt?: boolean; readonly store: MatchStore; readonly rig: CameraRig; readonly layout: Layout; readonly handlers: HTMLAttributes<HTMLDivElement>; readonly blocked: boolean; readonly followShot: boolean; readonly onReady: (ready: boolean) => void };
+export const PrototypeCanvas = ({ store, rig, layout, handlers, blocked, followShot, onReady, worldArt }: Props) => {
   const hostRef = useRef<HTMLDivElement>(null), miniRef = useRef<HTMLCanvasElement>(null);
   const latest = useRef({ layout, blocked, followShot });
   latest.current = { layout, blocked, followShot };
@@ -46,7 +48,9 @@ export const PrototypeCanvas = ({ store, rig, layout, handlers, blocked, followS
       if (!view.mask || !view.players) return;
       art = await loadSpriteTanks();
       if (disposed) { art.destroy(); return; }
-      renderer = await createRenderer({ host, layout: latest.current.layout, mask: view.mask, players: [{ ...view.players[0], nickname: `A1 ${view.players[0].nickname}` }, { ...view.players[1], nickname: `B1 ${view.players[1].nickname}` }], tankFactory: art.create, background: 0x20394a, terrainTint: 0x637d71 });
+      const terrainArt = worldArt ? await loadTerrainArt() : undefined;
+      if (disposed) { art.destroy(); return; }
+      renderer = await createRenderer({ host, layout: latest.current.layout, mask: view.mask, players: [{ ...view.players[0], nickname: `A1 ${view.players[0].nickname}` }, { ...view.players[1], nickname: `B1 ${view.players[1].nickname}` }], tankFactory: art.create, background: 0x20394a, terrainTint: worldArt ? 0xffffff : 0x637d71, backgroundAlpha: worldArt ? 0 : 1, ...(terrainArt ? { terrainArt } : {}) });
       if (disposed) { renderer.destroy(); art.destroy(); return; }
       const r = renderer, sprites = art;
       rig.resize(viewportOf(latest.current.layout), { left: 0, top: -100, right: view.mask.width, bottom: view.mask.height });
@@ -86,8 +90,9 @@ export const PrototypeCanvas = ({ store, rig, layout, handlers, blocked, followS
     };
     void start().catch((e: unknown) => { console.error(e); if (!disposed) setError(true); });
     return () => { disposed = true; onReady(false); stopFrames(); stopReplay(); renderer?.destroy(); art?.destroy(); };
-  }, [store, rig, onReady]);
-  return <div className="kp-world" style={{ height: layout.mapHeight }}>
+  }, [store, rig, onReady, worldArt]);
+  return <div className="kp-world" style={{ height: layout.mapHeight, ...(worldArt ? { backgroundImage: `url(${artUrls.background})`, backgroundSize: "cover", backgroundPosition: "center" } : {}) }}>
+    {worldArt && <WindLeaves wind={store.getView().wind.value} />}
     <div ref={hostRef} className="kp-canvas" data-testid="camera-world" data-scale={layout.cell} data-loaded={loaded} {...handlers} />
     {!loaded && <div className="kp-loading" role="status">{error ? "素材を読み込めませんでした。ページを再読み込みしてください。" : "マシンを準備しています…"}</div>}
     <span className="kp-world-help">ドラッグで見回す / Cで手番へ</span>

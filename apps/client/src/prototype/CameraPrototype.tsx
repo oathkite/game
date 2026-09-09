@@ -12,7 +12,8 @@ import { actorPoint, PrototypeCanvas } from "./PrototypeCanvas";
 import { usePrototypeInput } from "./usePrototypeInput";
 import "./prototype.css";
 
-export const CameraPrototype = () => {
+type ThemeProps = { readonly worldArt?: boolean; readonly onExit?: () => void; readonly onResult?: (label: string) => void };
+export const CameraPrototype = (props: ThemeProps) => {
   const [store, setStore] = useState<MatchStore | null>(null);
   useEffect(() => {
     const p = loadProfile();
@@ -23,10 +24,10 @@ export const CameraPrototype = () => {
     setStore(created);
     return () => { created.dispose(); connection.close(); };
   }, []);
-  return store ? <Battle store={store} /> : <div>準備しています…</div>;
+  return store ? <Battle store={store} {...props} /> : <div>準備しています…</div>;
 };
 
-const Battle = ({ store }: { readonly store: MatchStore }) => {
+const Battle = ({ store, worldArt, onExit, onResult }: { readonly store: MatchStore } & ThemeProps) => {
   const view = useSyncExternalStore(store.subscribe, store.getView, store.getView);
   const [size, setSize] = useState({ width: innerWidth, height: innerHeight });
   const [sceneReady, setSceneReady] = useState(false);
@@ -53,6 +54,9 @@ const Battle = ({ store }: { readonly store: MatchStore }) => {
     window.__fortress = { store, getView: store.getView, aim: () => null };
     return () => { delete window.__fortress; };
   }, [store]);
+  useEffect(() => {
+    if (view.phase === "finished" && view.result && onResult) onResult(view.result.winner === null ? "引き分け" : `${view.result.winner === 0 ? "A1" : "B1"}の勝利`);
+  }, [view.phase, view.result, onResult]);
   const focusActor = (): void => rig.focus(actorPoint(view), "actor", matchMedia("(prefers-reduced-motion: reduce)").matches);
   const toggleMute = (): void => { setMuted(!muted); setAudioSettings(loadProfile().volume, !muted); };
   return <main className="kp-root" onContextMenu={(e) => e.preventDefault()} onPointerDown={() => unlockAudio()}>
@@ -63,7 +67,7 @@ const Battle = ({ store }: { readonly store: MatchStore }) => {
       <div className="kp-clock"><Timer deadlineAt={view.deadlineAt} clockOffset={0} myTurn={enabled} /></div>
       <button ref={menuButton} aria-label="設定を開く" onClick={() => { input.cancel(); setMenu(true); }}>設定</button>
     </header>
-    {ready ? <PrototypeCanvas store={store} rig={rig} layout={layout} handlers={input.world} blocked={menu || portrait || input.gauge.charging} followShot={followShot} onReady={setSceneReady} /> : <div style={{ height: layout.mapHeight }}>フィールドを準備しています…</div>}
+    {ready ? <PrototypeCanvas worldArt={worldArt ?? false} store={store} rig={rig} layout={layout} handlers={input.world} blocked={menu || portrait || input.gauge.charging} followShot={followShot} onReady={setSceneReady} /> : <div style={{ height: layout.mapHeight }}>フィールドを準備しています…</div>}
     <div className="kp-camera-actions" style={{ bottom: size.height - layout.mapHeight - (size.height < 500 || size.width < 1000 ? 44 : 56) + 14 }}>
       <button disabled={input.gauge.charging || menu || portrait} onClick={focusActor}>手番へ戻る <kbd>C</kbd></button>
       <button disabled={input.gauge.charging || menu || portrait} aria-pressed={followShot} onClick={() => { setFollowShot(!followShot); if (followShot) rig.focus(rig.get().center, "manual", true); }}>弾の追従 {followShot ? "ON" : "OFF"}</button>
@@ -80,9 +84,10 @@ const Battle = ({ store }: { readonly store: MatchStore }) => {
       <button aria-pressed={muted} onClick={toggleMute}>サウンド {muted ? "OFF" : "ON"}</button>
       <CameraSettingsPanel rig={rig} />
       <p className="kp-shortcuts">A / D：移動<br />↑ / ↓：角度　Space：発射<br />Shift + 矢印：見回す　C：手番へ</p>
-      <button onClick={() => setMenu(false)}>対戦に戻る</button><a href="/">ガレージへ戻る</a>
+      {onResult && <button onClick={() => store.surrender()}>降参して対戦を終える</button>}
+      <button onClick={() => setMenu(false)}>対戦に戻る</button>{onExit ? <button onClick={onExit}>ロビーに戻る</button> : <a href="/">ガレージへ戻る</a>}
     </dialog>
-    {portrait && <div className="kp-portrait"><strong>横向きでプレイしよう</strong><p>機体と照準を見やすくするため、端末を回転してください。</p><a href="/">ガレージへ戻る</a></div>}
-    {view.phase === "finished" && <div className="kp-result"><h2>{view.result?.winner === null ? "引き分け" : `${view.result?.winner === 0 ? "A1" : "B1"}の勝利`}</h2><button onClick={() => store.closeResult()}>もう一度</button><a href="/">ガレージへ戻る</a></div>}
+    {portrait && <div className="kp-portrait"><strong>横向きでプレイしよう</strong><p>機体と照準を見やすくするため、端末を回転してください。</p>{onExit ? <button onClick={onExit}>ロビーに戻る</button> : <a href="/">ガレージへ戻る</a>}</div>}
+    {view.phase === "finished" && !onResult && <div className="kp-result"><h2>{view.result?.winner === null ? "引き分け" : `${view.result?.winner === 0 ? "A1" : "B1"}の勝利`}</h2><button onClick={() => store.closeResult()}>もう一度</button>{onExit ? <button onClick={onExit}>ロビーに戻る</button> : <a href="/">ガレージへ戻る</a>}</div>}
   </main>;
 };
