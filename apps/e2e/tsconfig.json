@@ -18,6 +18,8 @@
     "camera-tests",
     "camera.config.ts",
     "world-tests",
-    "world.config.ts"
+    "world.config.ts",
+    "network-tests",
+    "network.config.ts"
   ]
 }
