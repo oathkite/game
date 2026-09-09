@@ -16,7 +16,7 @@ export const usePrototypeInput = (store: MatchStore, rig: CameraRig, enabled: bo
     down: useHold(() => store.changeElevation(-1), 50, enabled && !blocked && !gauge.charging),
   };
   const owner = useRef<Owner | null>(null);
-  const drag = useRef<{ x: number; y: number; active: boolean } | null>(null);
+  const drag = useRef<{ x: number; y: number; active: boolean; at: number } | null>(null);
   const latest = useRef({ gauge, holds, enabled, blocked, toggleMenu });
   latest.current = { gauge, holds, enabled, blocked, toggleMenu };
   const cancel = (): void => {
@@ -34,6 +34,7 @@ export const usePrototypeInput = (store: MatchStore, rig: CameraRig, enabled: bo
     if (owner.current?.id !== id) return;
     if (owner.current.action === "fire") latest.current.gauge.release(typeof id === "number" ? "pointer" : "key");
     else if (owner.current.action !== "pan") latest.current.holds[owner.current.action].stop();
+    else rig.releasePan(performance.now());
     owner.current = null; drag.current = null;
   };
   useEffect(() => { if (blocked || !enabled) cancel(); }, [blocked, enabled]);
@@ -87,7 +88,7 @@ export const usePrototypeInput = (store: MatchStore, rig: CameraRig, enabled: bo
     onPointerDown: (e: ReactPointerEvent<HTMLDivElement>) => {
       if (!e.isPrimary || e.button !== 0 || owner.current || latest.current.blocked) return;
       e.preventDefault(); owner.current = { id: e.pointerId, action: "pan" }; rig.stop();
-      drag.current = { x: e.clientX, y: e.clientY, active: false }; e.currentTarget.setPointerCapture(e.pointerId);
+      drag.current = { x: e.clientX, y: e.clientY, active: false, at: performance.now() }; e.currentTarget.setPointerCapture(e.pointerId);
     },
     onPointerMove: (e: ReactPointerEvent<HTMLDivElement>) => {
       if (latest.current.blocked) return;
@@ -95,7 +96,8 @@ export const usePrototypeInput = (store: MatchStore, rig: CameraRig, enabled: bo
       if (from && owner.current?.id === e.pointerId && owner.current.action === "pan") {
         const x = e.clientX - from.x, y = e.clientY - from.y;
         if (!from.active && Math.hypot(x, y) < 8) return;
-        rig.pan({ x, y }); drag.current = { x: e.clientX, y: e.clientY, active: true };
+        const now = performance.now();
+        rig.pan({ x, y }, now - from.at, now); drag.current = { x: e.clientX, y: e.clientY, active: true, at: now };
       } else if (!owner.current && e.pointerType === "mouse") {
         const rect = e.currentTarget.getBoundingClientRect();
         rig.edge({ x: e.clientX - rect.left, y: e.clientY - rect.top }, performance.now());

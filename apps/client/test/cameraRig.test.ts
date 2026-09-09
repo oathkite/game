@@ -43,3 +43,41 @@ describe("camera state transitions", () => {
     expect(rig.get().center).toEqual({ x: 300, y: 175 });
   });
 });
+
+describe("manual camera inertia", () => {
+  it("coasts briefly after release but never while a finger remains down", () => {
+    const rig = setup();
+    rig.pan({ x: -20, y: 0 }, 20, 20);
+    const held = rig.get().center.x;
+    rig.tick(16, 36, false); expect(rig.get().center.x).toBe(held);
+    rig.releasePan(40);
+    rig.tick(16, 56, false); expect(rig.get().center.x).toBeGreaterThan(held);
+    for (let t = 72; t <= 456; t += 16) rig.tick(16, t, false);
+    const stopped = rig.get().center.x;
+    expect(stopped - held).toBeLessThan(5);
+    rig.tick(16, 472, false); expect(rig.get().center.x).toBe(stopped);
+  });
+  it("does not fling after holding still, or with reduced motion", () => {
+    for (const [releaseAt, reduced] of [[150, false], [25, true]] as const) {
+      const rig = setup(); rig.pan({ x: -20, y: 0 }, 20, 20);
+      const x = rig.get().center.x;
+      rig.releasePan(releaseAt); rig.tick(16, releaseAt + 16, reduced);
+      expect(rig.get().center.x).toBe(x);
+    }
+  });
+  it("stops inertia on cancellation, new focus, and resize", () => {
+    for (const stop of [(r: ReturnType<typeof setup>) => r.stop(), (r: ReturnType<typeof setup>) => r.focus(r.get().center, "manual", true), (r: ReturnType<typeof setup>) => r.resize(r.get().viewport, r.get().bounds)]) {
+      const rig = setup(); rig.pan({ x: -20, y: 0 }, 20, 20); rig.releasePan(25);
+      stop(rig); const point = rig.get().center;
+      rig.tick(16, 41, false); expect(rig.get().center).toEqual(point);
+    }
+  });
+  it("coasts when leaving the edge band and clamps at map limits", () => {
+    const rig = setup(); rig.edge({ x: 900, y: 200 }, 0); rig.tick(16, 120, false);
+    rig.edge({ x: 450, y: 200 }, 121); const x = rig.get().center.x;
+    rig.tick(16, 137, false); expect(rig.get().center.x).toBeGreaterThan(x);
+    rig.focus({ x: 350, y: 100 }, "manual", true);
+    rig.pan({ x: -20, y: 0 }, 20, 150); rig.releasePan(155);
+    rig.tick(16, 171, false); expect(rig.get().center.x).toBe(350);
+  });
+});

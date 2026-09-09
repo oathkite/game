@@ -126,3 +126,25 @@ test('ordinary practice still loads the original renderer', async ({ page }) => 
   await expect(page.locator('.kp-root')).toHaveCount(0);
   expect(errors).toEqual([]);
 });
+
+test('released drag coasts briefly and settles without changing the tank', async ({ page }) => {
+  await open(page);
+  await page.clock.install();
+  await page.clock.pauseAt(new Date());
+  const world = page.getByTestId('camera-world'), before = await state(page);
+  const x = Number(await world.getAttribute('data-camera-x')), direction = x > 200 ? 1 : -1;
+  await page.mouse.move(650, 350); await page.mouse.down();
+  for (let i = 1; i <= 4; i++) {
+    await page.mouse.move(650 + direction * i * 20, 350);
+    await page.clock.runFor(16);
+  }
+  const released = Number(await world.getAttribute('data-camera-x'));
+  await page.mouse.up(); await page.clock.runFor(100);
+  const coasted = Number(await world.getAttribute('data-camera-x'));
+  expect((coasted - released) * -direction).toBeGreaterThan(0);
+  await page.clock.runFor(350);
+  const settled = await world.getAttribute('data-camera-x');
+  await page.clock.runFor(100);
+  expect(await world.getAttribute('data-camera-x')).toBe(settled);
+  expect(await state(page)).toEqual(before);
+});
