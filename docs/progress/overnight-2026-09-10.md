@@ -5,7 +5,7 @@
 ユーザー依頼：残りを順番にできるだけ進める。利用制限到達時のリセットは最大2枚。
 継続確認：30分間隔の同一タスクheartbeat `keropod` を登録。終了条件を満たしたら停止する。
 
-使用済みリセット：**0 / 2**。開始時のaccount使用率53%、05:51確認60%。利用上限に達する前にリセットしない。
+使用済みリセット：**0 / 2**。開始時のaccount使用率53%、05:55確認61%。利用上限に達する前にリセットしない。
 リセット実行時はこの文書へ日時・結果・idempotencyKeyを追記し、同じ試行の再送には同じkeyを使う。
 2枚使用後に次の上限へ達したら作業を止め、完了・未完了・検証・判断事項を報告する。
 
@@ -46,7 +46,7 @@ PRの統合先はcodex/2d-update。本番mainへの反映は依頼されてい�
 ## 次の継続で優先すること
 
 1. 正式ロビーの部屋分離、任意チーム編成、ready、loadout固定。固定8席labを完成版とは表示しない。
-2. 全武器のimpact tickをネットワーク再生へ接続し、match.setupへruleSetVersionを固定する。相手の照準角度と武器の描画も同期する。
+2. match.setupへruleSetVersionと各人のloadoutを固定し、操作中の照準を同期する。impact tick再生と射撃時の角度/武器はworld-ui側で接続済み。
 3. 予測補正、永続化、正式再接続/切断脱落、全マップ編成・最大逆風での到達性。
 4. 生成素材の配信用最適化とproduction pack登録。実機、低速回線、負荷試験、多地域配備、通報運用。
 5. ユーザーの視覚承認と招待alpha評価後、別の明示指示で公開。
@@ -68,3 +68,9 @@ world-uiの生成素材は候補であり、採用最終判断は本人へ。作
 継続確認05:31：heartbeat keropodはACTIVE、30分間隔。リセット使用0/2。両PRはdraftでbaseはcodex/2d-update。本番未反映。
 
 05:39追加：同時tick物理の共通飛行計算を整理。元v1の計算結果は変えていない。扇は同時、volley11tick、stage hold4tickをv2初期値とした。
+
+05:59追加：world-ui上で時刻付き弾道・launch/end tick・impact tick/damageを送信する形式へ更新。
+再生は連射の発射順、着弾順のHP/地形、最終300msの落下を区別し、射撃時の角度・向き・武器を描画へ適用。
+client165/server45、型チェック、2ブラウザworld-network E2E成功。labの固定loadout自体は未変更。
+**新しいprotocolはworld-ui側が最新。8794 serverと5185/5186 clientはgame-world-uiから起動すること。**
+PR25への前回保存は5cdea20。PR26は656c5a3。最新のtick再生commitはworld-uiのgit logで確認。
