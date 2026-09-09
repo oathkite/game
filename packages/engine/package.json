@@ -5,7 +5,7 @@
   "type": "module",
   "exports": {
     ".": "./src/index.ts",
-    "./multiplayer": "./src/multiplayer/rules.ts"
+    "./multiplayer": "./src/multiplayer/index.ts"
   },
   "scripts": {
     "test": "vitest run",

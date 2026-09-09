@@ -132,7 +132,7 @@ const motionOf = (spec: WeaponSpec, wind: number): Motion => ({
 });
 
 /** 扇のずれを掛けて撃ち出す。角度のずれは砲を上げる向きが正で、左向きなら鏡像にする */
-const launch = (muzzle: Muzzle, spec: WeaponSpec, input: TrajectoryInput, fan: FanSpec): Flight => {
+const launch = (muzzle: Muzzle, spec: WeaponSpec, input: Omit<TrajectoryInput, "seat">, fan: FanSpec): Flight => {
   const speed = Math.trunc((scalePercent(scalePercent(MAX_SPEED, spec.speedPercent), fan.speedPercent) * input.power) / POWER_MAX);
   const angle = muzzle.angle + fan.deg * input.facing;
   const px = muzzle.position.x;
@@ -224,22 +224,16 @@ const ringOuts = (mask: TerrainMask, ps: readonly [TankPos, TankPos]): Seat[] =>
 /** 射撃の間だけ持つ可変状態。地形は着弾のたびに削られ、HP は着弾のたびに減る */
 type Volley = {
   mask: TerrainMask;
-  hp: [number, number];
-  readonly impacts: Impact[];
+  hp: number[];
+  readonly impacts: CombatImpact[];
+  readonly removeDefeated: boolean;
   readonly paths: ProjectilePath[];
   /** 判定円の中心。射撃の間は動かないので、射撃前の地形から一度だけ求める。奈落の機体は null */
   readonly centers: readonly (CellPoint | null)[];
-  /** 当たり判定を持つ機体の中心だけ */
-  readonly hitCenters: readonly CellPoint[];
 };
 
-const damageOf = (v: Volley, cell: CellPoint, stage: StageSpec): [number, number] => {
-  const at = (seat: Seat): number => {
-    const c = v.centers[seat];
-    return c ? damageAt(cell, c, stage) : 0;
-  };
-  return [at(0), at(1)];
-};
+const damageOf = (v: Volley, cell: CellPoint, stage: StageSpec): number[] =>
+  v.centers.map((c, i) => c && (!v.removeDefeated || v.hp[i]! > 0) ? damageAt(cell, c, stage) : 0);
 
 /**
  * 弾道 1 本を最後の段まで飛ばし、着弾を v に足す。
@@ -248,7 +242,7 @@ const damageOf = (v: Volley, cell: CellPoint, stage: StageSpec): [number, number
 const flyProjectile = (v: Volley, index: number, f: Flight, m: Motion, spec: WeaponSpec): void => {
   const points: FixedPoint[] = [{ x: f.px, y: f.py }];
   const impactAt: number[] = [];
-  const centers = v.hitCenters;
+  const centers = v.centers.filter((c, i): c is CellPoint => c !== null && (!v.removeDefeated || v.hp[i]! > 0));
   // 砲口のセル自体が壁や機体の中なら、その場で最初の段が着弾する
   const first = checkCell(v.mask, f.prev, centers);
   let hit: Hit | null = null;
@@ -265,9 +259,9 @@ const flyProjectile = (v: Volley, index: number, f: Flight, m: Motion, spec: Wea
     const damage = damageOf(v, hit.cell, s);
     v.impacts.push({ projectile: index, stage, cell: hit.cell, terrainOp, damage });
     v.mask = carve(v.mask, terrainOp);
-    v.hp = [v.hp[0] - damage[0], v.hp[1] - damage[1]];
+    v.hp = v.hp.map((hp, i) => hp - damage[i]!);
     if (stage + 1 >= spec.stages.length) break;
-    if (!hit.tank) hit = fly(v.mask, centers, f, m, points);
+    if (!hit.tank) hit = fly(v.mask, v.centers.filter((c, i): c is CellPoint => c !== null && (!v.removeDefeated || v.hp[i]! > 0)), f, m, points);
   }
   v.paths.push({ points, impactAt });
 };
@@ -285,22 +279,40 @@ export const simulateShot = (
   const shooter: TankPos = { x: input.x, y: input.y };
   const other: TankPos = input.seat === 0 ? players[1] : players[0];
   const before: readonly [TankPos, TankPos] = input.seat === 0 ? [shooter, other] : [other, shooter];
-  // 奈落に落ちている機体は当たり判定を持たず、ダメージも受けない
-  const centerOf = (seat: Seat): CellPoint | null => (isRingOut(mask, before[seat]) ? null : { x: before[seat].x, y: tankCenterY(before[seat]) });
-  const centers = [centerOf(0), centerOf(1)];
-  const v: Volley = { mask, hp: [players[0].hp, players[1].hp], impacts: [], paths: [], centers, hitCenters: centers.filter((c): c is CellPoint => c !== null) };
-  const spec = weaponSpec(input.weapon);
-  const muzzle = muzzleOf(mask, shooter, input.facing, input.elevation);
-  const m = motionOf(spec, input.wind);
-  for (let volley = 0; volley < spec.volleys; volley++) {
-    spec.fan.forEach((f, fan) => flyProjectile(v, volley * spec.fan.length + fan, launch(muzzle, spec, input, f), m, spec));
-  }
+  const v = simulateCombat(mask, before.map((pos, i) => ({ ...pos, hp: players[i]!.hp })), input, false);
   // 落下は削り終わった地形に対して、真下の次の地面まで。地面がなければ奈落
-  const after: readonly [TankPos, TankPos] = [settleTank(v.mask, before[0]), settleTank(v.mask, before[1])];
+  const after: readonly [TankPos, TankPos] = [v.positions[0]!, v.positions[1]!];
   const ringOut = ringOuts(v.mask, after);
   return {
     mask: v.mask,
     paths: v.paths,
-    result: { input, impacts: v.impacts, hpAfter: v.hp, xAfter: [after[0].x, after[1].x], yAfter: [after[0].y, after[1].y], ringOut, finished: judge(v.hp, ringOut) },
+    result: { input, impacts: v.impacts.map(i => ({ ...i, damage: [i.damage[0]!, i.damage[1]!] })), hpAfter: [v.hpAfter[0]!, v.hpAfter[1]!], xAfter: [after[0].x, after[1].x], yAfter: [after[0].y, after[1].y], ringOut, finished: judge([v.hpAfter[0]!, v.hpAfter[1]!], ringOut) },
   };
+};
+
+export type CombatImpact = Omit<Impact, "damage"> & { readonly damage: readonly number[] };
+export type CombatOutcome = {
+  readonly mask: TerrainMask;
+  readonly paths: readonly ProjectilePath[];
+  readonly impacts: readonly CombatImpact[];
+  readonly hpAfter: readonly number[];
+  readonly positions: readonly TankPos[];
+  readonly ringOut: readonly number[];
+};
+
+/** 内部用の可変人数物理。全員の確定位置を渡す。勝敗は呼び出し側でチームから判定する。 */
+export const simulateCombat = (
+  mask: TerrainMask, players: readonly Combatant[], input: Omit<TrajectoryInput, "seat">, removeDefeated = true,
+): CombatOutcome => {
+  const centers = players.map(p => isRingOut(mask, p) ? null : { x: p.x, y: tankCenterY(p) });
+  const v: Volley = { mask, hp: players.map(p => p.hp), impacts: [], paths: [], centers, removeDefeated };
+  const spec = weaponSpec(input.weapon);
+  const muzzle = muzzleOf(mask, input, input.facing, input.elevation);
+  const m = motionOf(spec, input.wind);
+  for (let volley = 0; volley < spec.volleys; volley++) {
+    spec.fan.forEach((f, fan) => flyProjectile(v, volley * spec.fan.length + fan, launch(muzzle, spec, input, f), m, spec));
+  }
+  const positions = players.map(p => settleTank(v.mask, p));
+  return { mask: v.mask, paths: v.paths, impacts: v.impacts, hpAfter: v.hp, positions,
+    ringOut: positions.flatMap((p, i) => isRingOut(v.mask, p) ? [i] : []) };
 };
