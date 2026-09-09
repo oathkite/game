@@ -74,3 +74,9 @@ world-uiの生成素材は候補であり、採用最終判断は本人へ。作
 client165/server45、型チェック、2ブラウザworld-network E2E成功。labの固定loadout自体は未変更。
 **新しいprotocolはworld-ui側が最新。8794 serverと5185/5186 clientはgame-world-uiから起動すること。**
 PR25への前回保存は5cdea20。PR26は656c5a3。最新のtick再生commitはworld-uiのgit logで確認。
+
+06:37追加：world-ui上で正式ロビー準備のengine状態処理を実装。全58編成、2〜8人、未配置、ready/revision、権限、owner移譲、装備固定を検証。
+PreparedMatch→BattleSessionへloadoutとruleSetVersionを渡し、選択したtripleで3弾道になることを確認。
+engine104/server45/protocol22、workspace typecheck成功。詳細docs/design/28-lobby-preparation.md。
+**次はWebSocketでの部屋分離と新UIの部屋操作。今回のロビー基盤はまだ画面/通信へ接続していない。**
+最新作業はgame-world-uiにあり、lab replay packetはshot.weaponを使う。リセット0/2。本番未反映。
