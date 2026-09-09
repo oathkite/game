@@ -12,7 +12,7 @@ export function validateAvatar(){
   if(image.width!==manifest.frameSize[0]*3||image.height!==manifest.frameSize[1])throw new Error('Atlas dimensions');
   images.set(layer.id,image);
   if(readFileSync(root+'/'+layer.source).subarray(0,2).toString()!=='PK')throw new Error('ORA missing');
-  const sheet=layer.id==='body'?'poses':layer.id,hash=sourceDigest(readFileSync(root+'/generated/'+sheet+'.png'));
+  const sheet=manifest.metrics[layer.id][0].sourceSheet??(layer.id==='body'?'poses':layer.id),hash=sourceDigest(readFileSync(root+'/generated/'+sheet+'.png'));
   if(manifest.metrics[layer.id].some(m=>m.sourceHash!==hash))throw new Error('Source provenance mismatch');
  }
  const checks=portraitChecks(manifest,images),failed=checks.filter(c=>!c.pass);

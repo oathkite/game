@@ -7,8 +7,8 @@
   "background": "transparent",
   "images": [
     {
-      "file": "generated/poses.png",
-      "prompt": "prompts/poses.txt",
+      "file": "generated/poses-tall.png",
+      "prompt": "prompts/poses-tall.txt",
       "sha256": "036172495235ce25576fa3f69cb5b822bd916a06c43807b9d6cdcf3a2a2a3488",
       "promptSha256": "be21dbc5788479be162dd7a2da1ac92934161493c5aac0a00ffcfe36a3439b2b",
       "inputs": [
@@ -20,7 +20,8 @@
           "path": "assets/workbench/baseline-v2/generated/pilot.png",
           "sha256": "1301073e18e604a04f08ad4cf83270f4e6efb1f4ccafafe1ea41bb03c35e8f3f"
         }
-      ]
+      ],
+      "usedInCurrentExport": false
     },
     {
       "file": "generated/glasses.png",
@@ -29,14 +30,15 @@
       "promptSha256": "cd3b4c88745a68af698cfb970f5a419ea9f48c471b41c4522779ff060b79939c",
       "inputs": [
         {
-          "path": "assets/workbench/avatar-kita-v1/generated/poses.png",
+          "path": "assets/workbench/avatar-kita-v1/generated/poses-tall.png",
           "sha256": "036172495235ce25576fa3f69cb5b822bd916a06c43807b9d6cdcf3a2a2a3488"
         },
         {
           "path": "assets/concepts/pixel-pilot-v3/references/kita.png",
           "sha256": "4bb9b6080d1868e272b8835645e6b840f713a9b838b03589dcf515c1b6ee48f4"
         }
-      ]
+      ],
+      "usedInCurrentExport": false
     },
     {
       "file": "generated/scarf.png",
@@ -45,14 +47,40 @@
       "promptSha256": "45fec42449f78bc6068b28f708a592551ab2b7b5bdf58104e97432f1fa45013a",
       "inputs": [
         {
-          "path": "assets/workbench/avatar-kita-v1/generated/poses.png",
+          "path": "assets/workbench/avatar-kita-v1/generated/poses-tall.png",
           "sha256": "036172495235ce25576fa3f69cb5b822bd916a06c43807b9d6cdcf3a2a2a3488"
         },
         {
           "path": "assets/concepts/pixel-pilot-v3/references/kita.png",
           "sha256": "4bb9b6080d1868e272b8835645e6b840f713a9b838b03589dcf515c1b6ee48f4"
         }
+      ],
+      "usedInCurrentExport": false
+    },
+    {
+      "file": "generated/poses.png",
+      "prompt": "prompts/poses.txt",
+      "sha256": "4420f8d1c9d4c70deeb0fc470444b037078e6cd0c5015ac89cee48b157a5d893",
+      "promptSha256": "4ec30a2f4b9cad21d0bbdc29ff5c94bb3c589e2ae2a3d7e453b501dd6c6c6b51",
+      "usedInCurrentExport": true,
+      "inputs": [
+        {
+          "path": "assets/workbench/baseline-v2/generated/pilot.png",
+          "sha256": "1301073e18e604a04f08ad4cf83270f4e6efb1f4ccafafe1ea41bb03c35e8f3f"
+        },
+        {
+          "path": "assets/concepts/pixel-pilot-v3/references/kita.png",
+          "sha256": "4bb9b6080d1868e272b8835645e6b840f713a9b838b03589dcf515c1b6ee48f4"
+        }
       ]
+    }
+  ],
+  "reusedSources": [
+    {
+      "file": "generated/game-accessories.png",
+      "source": "assets/workbench/baseline-v2/generated/accessories.png",
+      "sha256": "375777b302f4c95d462dd79b667700d7fad48c246aa2274c5e7faa509579474d",
+      "purpose": "Same glasses and scarf source and export scales as game pilot"
     }
   ]
 }

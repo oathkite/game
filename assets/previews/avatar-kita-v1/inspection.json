@@ -25,7 +25,7 @@
       "name": "neutral：足元が共通基準",
       "pass": true,
       "details": [
-        207
+        59
       ]
     },
     {
@@ -38,8 +38,8 @@
       "pass": true,
       "details": [
         {
-          "glasses": 10,
-          "scarf": 734
+          "glasses": 9,
+          "scarf": 59
         }
       ]
     },
@@ -54,7 +54,7 @@
       "name": "happy：足元が共通基準",
       "pass": true,
       "details": [
-        208
+        59
       ]
     },
     {
@@ -68,7 +68,7 @@
       "details": [
         {
           "glasses": 9,
-          "scarf": 853
+          "scarf": 59
         }
       ]
     },
@@ -83,7 +83,7 @@
       "name": "sad：足元が共通基準",
       "pass": true,
       "details": [
-        207
+        59
       ]
     },
     {
@@ -96,8 +96,8 @@
       "pass": true,
       "details": [
         {
-          "glasses": 59,
-          "scarf": 743
+          "glasses": 27,
+          "scarf": 51
         }
       ]
     },
