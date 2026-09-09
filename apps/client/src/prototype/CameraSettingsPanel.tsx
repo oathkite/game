@@ -14,7 +14,7 @@ export const CameraSettingsPanel = ({ rig }: { readonly rig: CameraRig }) => {
     <input id="camera-speed" type="range" min="0.25" max="3" step="0.05" value={settings.speed} onChange={e => update("speed", e.target.value)} />
     <small>ドラッグ・スワイプ・端スクロール・キーボードに反映</small>
     <label htmlFor="camera-inertia">慣性の長さ <output>{settings.inertiaMs === 0 ? "OFF" : `${settings.inertiaMs} ms`}</output></label>
-    <input id="camera-inertia" type="range" min="0" max="800" step="20" value={settings.inertiaMs} onChange={e => update("inertiaMs", e.target.value)} />
+    <input id="camera-inertia" type="range" min="0" max="1000" step="20" value={settings.inertiaMs} onChange={e => update("inertiaMs", e.target.value)} />
     <small>大きいほど、離したあと長く流れます。0で無効。</small>
     <button type="button" onClick={() => setSettings(DEFAULT_CAMERA_SETTINGS)}>カメラを初期値に戻す</button>
     <small>変更は即時反映され、このブラウザに保存されます。</small>

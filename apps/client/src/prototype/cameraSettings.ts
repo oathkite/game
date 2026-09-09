@@ -7,7 +7,7 @@ const finite = (value: unknown, fallback: number, min: number, max: number): num
 export const normalizeCameraSettings = (value: unknown): CameraSettings => {
   if (!value || typeof value !== "object" || Array.isArray(value)) return DEFAULT_CAMERA_SETTINGS;
   const saved = value as Record<string, unknown>;
-  return { speed: finite(saved.speed, 1, 0.25, 3), inertiaMs: finite(saved.inertiaMs, 320, 0, 800) };
+  return { speed: finite(saved.speed, 1, 0.25, 3), inertiaMs: finite(saved.inertiaMs, 320, 0, 1000) };
 };
 export const loadCameraSettings = (): CameraSettings => {
   try { return normalizeCameraSettings(JSON.parse(localStorage.getItem(KEY) ?? "null")); }
