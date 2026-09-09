@@ -1,4 +1,4 @@
-# FORTRESS
+# KEROPOD
 
 自分のキャラクターが共通キャノピーのマシンに乗り、風と地形を読んで一発を競う、2D ドット絵の砲撃対戦ゲームを目指す。
 現在は 1 対 1 の対戦機能を実装済みで、新しいアートと UI は制作段階。設計は [docs/design](./docs/design/README.md) に、開発の進め方は [CLAUDE.md](./CLAUDE.md) にある。
