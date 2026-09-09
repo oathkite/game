@@ -58,7 +58,9 @@ PRの統合先はcodex/2d-update。本番mainへの反映は依頼されてい�
 1. multiplayer 194f344をpush、draft PR https://github.com/oathkite/game/pull/26 を作成済み。network preview5185/server8794を起動済み。
    client140/engine96/server45、2ブラウザE2E、typecheck/build成功。world UI側はPR25、既存カメラ11項目も確認済み。
    clock.pauseAtのhost/browser時刻差で一度失敗したテストは未来時刻にpauseして修正し、該当2テストを再実行して成功。
-2. `docs/design/25-multiplayer-foundation.md`に記載した複数弾道の同一tick解決を実装する。旧v1 goldenを維持し、v2だけ新しい順序を採用する。
+2. 複数弾道の同一tick解決を実装済み。旧v1 golden25を維持し、v2 engineを新しい同時処理へ切り替えた。
+   sim107、client140、engine96、server45、Node/Chromiumの8武器一致と移動同期のE2E2件成功。
+   次は全武器のimpact tickをネットワーク再生へ接続し、正式match.setupへruleSetVersionを固定する。
 3. 8人オンラインとカメラ/実タンク/新UIの合流。作業branch同士をworld-ui上へ統合してよいが、統合branchやmainへのmergeはしない。
 4. 正式ロビーの任意チーム編成、ready、部屋分離、loadout固定と繋ぐ。固定8席のlabを完成版とは表示しない。
 
@@ -66,3 +68,5 @@ world-uiの生成素材は候補であり、採用最終判断は本人へ。作
 公開deployはしない。リセットは実際の利用制限到達時だけ最大2枚。まだ0枚。
 
 継続確認05:31：heartbeat keropodはACTIVE、30分間隔。リセット使用0/2。両PRはdraftでbaseはcodex/2d-update。本番未反映。
+
+05:39追加：同時tick物理の共通飛行計算を整理。元v1の計算結果は変えていない。扇は同時、volley11tick、stage hold4tickをv2初期値とした。

@@ -37,3 +37,5 @@ export {
   type ShotOutcome,
 } from "./ballistics.js";
 export { WEAPON_SPECS, firstStage, fullHitDamage, projectileCount, scalePercent, weaponSpec, type FanSpec, type StageSpec, type WeaponSpec } from "./weapons.js";
+
+export { simulateConcurrentCombat, COMBAT_TICK_MS, VOLLEY_GAP_TICKS, IMPACT_HOLD_TICKS, type TimedProjectilePath, type TimedCombatImpact, type ConcurrentOutcome } from "./concurrent.js";

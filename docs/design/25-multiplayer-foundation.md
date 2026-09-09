@@ -58,8 +58,8 @@ seedはサーバーが生成・保存し、次の再戦では別seedにする。
 
 ### 残る制約
 
-物理の弾道解決順は既存の「弾道ごとに全段を解決」のまま。複数弾道を同一tickで進めるv2の
-イベント順序への変更は未実装。同一着弾での複数機ダメージは一括だが、全武器の同時飛行仕様完了とは扱わない。
+初期の可変人数物理は既存の弾道単位解決を共通化したもの。後述のv2同時tick解決を追加し、対戦engineを切り替えた。
+旧v1は弾道単位の解決を維持し、goldenを更新しない。
 新MapSpecは地表配列型のみで、洞窟や浮島の生成定義・terrain digestの配布は後続。
 spawnは開発用の人数別固定候補であり、チーム対称配置・全編成の競技バランス・最大逆風での
 全8武器の到達性の承認はまだない。公開用汎用マップの完成ではない。
@@ -95,3 +95,19 @@ fireの最終moveSeq検証・commandId重複排除、turn遷移時のcreateMovem
 単調なeventSeq管理、60秒再接続期限・alarm処理はhost側の後続実装。
 致死落下時の結果を通知して、必要なら次手番へ進める責務もhostが持つ。
 従来のv1エンドポイントと対戦画面には変更を加えていない。
+
+
+## v2同時tick解決（2026-09-10追記）
+
+- `simulateConcurrentCombat`を追加。各tickの全弾道が同じ地形とHPを参照して衝突・damageを決定し、その後に地形とHPを一括更新する。
+- 同tickの複数弾のうち先頭でHPが尽きても、残りの同tick着弾を消さない。次tickから脱落機の衝突を除外する。
+- 扇の弾は同時発射。次のvolleyは11tick（約183ms）、貫通の次stageは4tick（約67ms）後。
+  旧表示の50ms扇遅延をv2物理へ持ち込まず、3発の同時性を優先した初期仕様。volleysとholdは従来の180/70msに近い整数tickへ寄せる。
+- 各pathはglobalなpointTicks/launchTick、各impactはtickを持つ。安定順はtick→projectile index→stage。
+- 機体の落下は射撃全体の地形破壊が完了してから解決し、勝敗を最後に判定する。弾間の途中勝者は出さない。
+- 飛行の整数計算をflight.tsへ分離。旧v1とv2で同じ1tick関数を共有し、弾道の計算式が分岐しないよう整理した。
+- sim107テスト（旧golden25を含む）成功。同時3発、遅れたvolleyからの死体除外、単発武器の互換、8武器の決定性を検証。
+- NodeとChromiumで8武器のpath/tick/impact/HP/position/terrain全cellの一致を確認。
+- v2の対戦engineを新物理へ接続。labの固定cannon/diggerの表示も継続動作。
+
+残件：全武器のimpact tickを使うネットワーク再生、正式match.setupへのruleSetVersion固定、公開マップと全編成の射程検証。

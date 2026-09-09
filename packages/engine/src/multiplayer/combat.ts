@@ -1,5 +1,5 @@
 import type { TrajectoryInput } from "@game/protocol";
-import { simulateCombat, type Combatant, type TerrainMask } from "@game/sim";
+import { simulateConcurrentCombat, type Combatant, type TerrainMask } from "@game/sim";
 import { eliminatePlayers, outcome, type PlayerId, type RosterState } from "./rules.js";
 
 export type BattlePlayer = Combatant & { readonly playerId: PlayerId };
@@ -17,11 +17,11 @@ export const resolveBattleShot = (roster: RosterState, mask: TerrainMask, player
   const ordered = roster.members.map(member => players.find(p => p.playerId === member.playerId)!);
   const shooter = ordered.find(p => p.playerId === input.playerId)!;
   if (shooter.hp <= 0 || shooter.y >= mask.height) throw new Error("shooter is defeated");
-  const result = simulateCombat(mask, ordered.map(p => roster.eliminated.includes(p.playerId) ? { ...p, hp: 0 } : p),
+  const result = simulateConcurrentCombat(mask, ordered.map(p => roster.eliminated.includes(p.playerId) ? { ...p, hp: 0 } : p),
     { ...input, x: shooter.x, y: shooter.y });
   const after = ordered.map((p, i) => ({ ...p, ...result.positions[i]!, hp: result.hpAfter[i]! }));
   const resolved = eliminatePlayers(roster, after.filter((p, i) => p.hp <= 0 || result.ringOut.includes(i)).map(p => p.playerId));
   return { roster: resolved, players: after, mask: result.mask, paths: result.paths, outcome: outcome(resolved),
-    impacts: result.impacts.map(impact => ({ ...impact,
+    ticks: result.ticks, impacts: result.impacts.map(impact => ({ ...impact,
       damage: ordered.map((p, i) => ({ playerId: p.playerId, amount: impact.damage[i]! })) })) };
 };

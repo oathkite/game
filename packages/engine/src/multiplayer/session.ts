@@ -1,6 +1,6 @@
 import { fireCommandSchema, type FireCommand } from "@game/protocol/v2";
 import type { TerrainOp } from "@game/protocol";
-import type { TerrainMask } from "@game/sim";
+import { COMBAT_TICK_MS, type TerrainMask } from "@game/sim";
 import { resolveBattleShot, type BattlePlayer } from "./combat.js";
 import type { createBattle } from "./create.js";
 import { createMovement, type MovementState } from "./movement.js";
@@ -62,7 +62,7 @@ export const fireInSession = (state: BattleSession, playerId: string, raw: unkno
   const weapon = command.slot === 0 ? "cannon" : "digger";
   const shot = resolveBattleShot(state.roster, state.mask, state.players, { playerId, weapon, wind: 0,
     facing: command.facing, elevation: command.elevation, power: command.power });
-  const duration = Math.min(8000, Math.max(1000, Math.max(...shot.paths.map(p => p.points.length)) * 16 + shot.impacts.length * 200));
+  const duration = Math.min(8000, Math.max(1000, shot.ticks * COMBAT_TICK_MS + 300));
   const next: BattleSession = { ...state, roster: shot.roster, players: shot.players, mask: shot.mask, phase: "replaying",
     movement: { ...state.movement, locked: true, eventSeq: state.movement.eventSeq + 1 },
     terrainOps: [...state.terrainOps, ...shot.impacts.map(i => i.terrainOp)],

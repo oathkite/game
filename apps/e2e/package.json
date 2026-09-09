@@ -8,6 +8,7 @@
     "typecheck": "tsc -p tsconfig.json"
   },
   "devDependencies": {
+    "@game/protocol": "workspace:*",
     "@game/sim": "workspace:*",
     "@playwright/test": "^1.62.1",
     "@types/node": "^26.4.1",
