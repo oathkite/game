@@ -1,32 +1,30 @@
 import { randomUUID } from "node:crypto";
-import { createBattle, createMovement, moveBattle, movementSnapshot, nextTurn, type MovementState } from "@game/engine/multiplayer";
+import { createBattle, createBattleSession, fireInSession, moveInSession, movementSnapshot, surrenderInSession, tickSession } from "@game/engine/multiplayer";
 import { TEST_ARENA } from "@game/maps";
+import { ONE } from "@game/sim";
 import { labInputSchema, type LabFrame, type LabOutput } from "@game/protocol/v2-lab";
 import type { WebSocket, WebSocketServer } from "ws";
-
 import { createLabSessions, type LabSession } from "./sessions.js";
-/** localhost限定の移動試験。固定8席の割当順は手番ring順。 */
+
+/** localhost限定の縦断試験。固定8席、固定loadout。 */
 export const attachMovementLab = (wss: WebSocketServer) => {
-  const initial = createBattle(Array.from({ length: 8 }, (_, i) => ({ playerId: `p${i + 1}`, teamId: `t${i % 2}` })), 42, TEST_ARENA);
-  let roster = initial.roster, players = initial.players;
-  const matchId = randomUUID(), sessions = createLabSessions();
-  let eventSeq = 0, dirty = false;
-  const begin = (now: number): MovementState => {
-    const playerId = roster.turnRing[roster.cursor]!, player = players.find(p => p.playerId === playerId)!;
-    return createMovement({ matchId, turnId: roster.turnId, ...player, facing: 1, startsAt: now, deadlineAt: now + 20000 }, ++eventSeq);
-  };
-  let movement = begin(Date.now());
+  const members = Array.from({ length: 8 }, (_, i) => ({ playerId: `p${i + 1}`, teamId: `t${i % 2}` }));
+  let seed = 42;
+  const fresh = () => createBattleSession(createBattle(members, seed++, TEST_ARENA), randomUUID(), Date.now());
+  let state = fresh(), dirty = false;
+  const sessions = createLabSessions();
   const send = (socket: WebSocket, message: LabOutput): void => {
-    if (socket.readyState === socket.OPEN && socket.bufferedAmount < 65536) socket.send(JSON.stringify(message));
+    if (socket.bufferedAmount >= 65536) { socket.close(1008, "slow connection"); return; }
+    if (socket.readyState === socket.OPEN) socket.send(JSON.stringify(message));
   };
-  const frame = (): LabFrame => ({ type: "lab.frame", serverTime: Date.now(), eventSeq: movement.eventSeq,
-    matchId, turnId: roster.turnId, actorId: movement.playerId, deadlineAt: movement.deadlineAt,
-    players: players.map(p => ({ playerId: p.playerId, x: p.x, y: p.y, eliminated: roster.eliminated.includes(p.playerId) })),
-    movement: movementSnapshot(movement, Date.now()) });
+  const frame = (): LabFrame => ({ type: "lab.frame", serverTime: Date.now(), eventSeq: state.movement.eventSeq,
+    matchId: state.matchId, turnId: state.roster.turnId, actorId: state.movement.playerId, deadlineAt: state.movement.deadlineAt,
+    players: state.players.map(p => ({ ...p, teamId: members.find(m => m.playerId === p.playerId)!.teamId, eliminated: state.roster.eliminated.includes(p.playerId) })),
+    movement: movementSnapshot(state.movement, Date.now()), phase: state.phase, result: state.result, terrainOps: [...state.terrainOps],
+    replay: state.replay ? { startsAt: state.replay.startsAt, endsAt: state.replay.endsAt,
+      paths: state.replay.shot.paths.map(p => p.points.filter((_, i) => i % 4 === 0 || i === p.points.length - 1).map(point => ({ x: point.x / ONE, y: point.y / ONE }))) } : null });
   const timer = setInterval(() => {
-    if (Date.now() >= movement.deadlineAt) {
-      roster = nextTurn(roster); movement = begin(Date.now()); dirty = true;
-    }
+    const next = tickSession(state, Date.now()); dirty ||= next !== state; state = next;
     if (!dirty) return;
     dirty = false;
     const snapshot = frame();
@@ -46,18 +44,26 @@ export const attachMovementLab = (wss: WebSocketServer) => {
       const message = parsed.data;
       if (message.type === "lab.join") {
         if (session) return;
-        const order = [...roster.turnRing.slice(roster.cursor), ...roster.turnRing.slice(0, roster.cursor)];
+        const order = [...state.roster.turnRing.slice(state.roster.cursor), ...state.roster.turnRing.slice(0, state.roster.cursor)];
         const joined = sessions.join(socket, order, message.token);
         if ("error" in joined) { send(socket, { type: "lab.error", reason: joined.error }); return; }
         session = joined.session; clearTimeout(handshake);
         send(socket, { type: "lab.welcome", playerId: session.playerId, token: joined.token }); send(socket, frame()); return;
       }
       if (!session) { send(socket, { type: "lab.error", reason: "join-required" }); return; }
-      const reply = moveBattle(roster, players, initial.mask, movement, session.playerId, message, Date.now());
-      const changed = reply.state !== movement;
-      movement = reply.state; players = [...reply.players]; roster = reply.roster;
-      eventSeq = movement.eventSeq; dirty ||= changed;
-      send(socket, { type: "lab.ack", reason: reply.reason, snapshot: reply.snapshot });
+      const before = state;
+      if (message.type === "lab.rematch") {
+        if (state.phase === "finished" && message.matchId === state.matchId) state = fresh();
+      } else if (message.type === "lab.surrender") {
+        if (message.matchId === state.matchId) state = surrenderInSession(state, session.playerId, Date.now());
+      } else if (message.type === "turn.fire") {
+        const reply = fireInSession(state, session.playerId, message, Date.now()); state = reply.state;
+        send(socket, { type: "lab.ack", reason: reply.reason, snapshot: movementSnapshot(state.movement, Date.now()) });
+      } else {
+        const reply = moveInSession(state, session.playerId, message, Date.now()); state = reply.state;
+        send(socket, { type: "lab.ack", reason: reply.reason, snapshot: reply.snapshot });
+      }
+      dirty ||= before !== state;
     });
     socket.on("close", () => { clearTimeout(handshake); if (session) sessions.disconnect(session, socket); });
     socket.on("error", () => socket.close());

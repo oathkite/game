@@ -22,6 +22,10 @@ test("another browser sees movement and reloaded actor retains position", async 
     await expect(a.getByTestId(`tank-${actor}`)).toHaveAttribute("data-x", (x + 1).toFixed(3));
     await a.getByRole("button", { name: "右へ1歩" }).click();
     await expect.poll(async () => Number(await tank.getAttribute("data-x"))).toBe(x + 2);
+    await a.getByRole("button", { name: "発射", exact: true }).click();
+    await expect(b.getByTestId("phase")).toHaveText("射撃を再生中");
+    await expect(a.getByRole("button", { name: "右へ1歩" })).toBeDisabled();
+    await expect(b.getByTestId("phase")).toHaveText("操作中", { timeout: 10000 });
     await b.screenshot({ path: "test-results/network-observer.png" });
     expect(errors).toEqual([]);
   } finally { await first.close(); await second.close(); }

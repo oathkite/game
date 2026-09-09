@@ -38,8 +38,17 @@ it("broadcasts an authenticated move to 8 sockets and resumes without repeating 
     resumed.ws.send(JSON.stringify(command));
     await expect.poll(() => resumed.inbox.some(m => m.type === "lab.ack" && m.snapshot?.ackMoveSeq === 1)).toBe(true);
     expect(resumed.inbox.some(m => m.type === "lab.frame" && m.movement.x === x)).toBe(true);
+    resumed.ws.send(JSON.stringify({ version: 2, type: "turn.fire", matchId: frame.matchId, turnId: frame.turnId,
+      commandId: "fire1", ackMoveSeq: 1, slot: 0, facing: 1, elevation: 45, power: 50 }));
+    await expect.poll(() => resumed.inbox.some(m => m.type === "lab.frame" && m.phase === "replaying")).toBe(true);
+    await expect.poll(() => resumed.inbox.some(m => m.type === "lab.frame" && m.turnId === 2), { timeout: 10000 }).toBe(true);
+    for (let i = 1; i < 8; i++) sockets[i]!.send(JSON.stringify({ type: "lab.surrender", matchId: frame.matchId }));
+    await expect.poll(() => resumed.inbox.some(m => m.type === "lab.frame" && m.phase === "finished")).toBe(true);
+    resumed.ws.send(JSON.stringify({ type: "lab.rematch", matchId: frame.matchId }));
+    await expect.poll(() => resumed.inbox.some(m => m.type === "lab.frame" && m.matchId !== frame.matchId && m.phase === "acting" && m.players.every(p => !p.eliminated))).toBe(true);
+
   } finally {
     for (const ws of sockets) ws.terminate(); host.close();
     await new Promise<void>(resolve => wss.close(() => resolve()));
   }
-});
+}, 20000);

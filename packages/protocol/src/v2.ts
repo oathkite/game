@@ -16,3 +16,10 @@ export const moveSnapshotSchema = z.object({
   serverTime: z.number().finite(), stoppedByFall: z.boolean(), eliminated: z.boolean(),
 }).strict();
 export type MoveSnapshot = z.infer<typeof moveSnapshotSchema>;
+
+export const fireCommandSchema = z.object({
+  version: z.literal(2), type: z.literal("turn.fire"), matchId: id, turnId: sequence.min(1), commandId: id,
+  ackMoveSeq: sequence, slot: z.union([z.literal(0), z.literal(1)]),
+  facing: z.union([z.literal(-1), z.literal(1)]), elevation: z.number().int().min(10).max(90), power: z.number().int().min(0).max(100),
+}).strict();
+export type FireCommand = z.infer<typeof fireCommandSchema>;

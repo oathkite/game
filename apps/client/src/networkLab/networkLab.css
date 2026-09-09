@@ -5,3 +5,7 @@
 .network-lab button { min-width: 100px; min-height: 48px; margin-right: 12px; border: 1px solid #304659; color: #f5f0de; background: #304659; border-radius: 8px; cursor: pointer; }
 
 .network-lab button:disabled { opacity: .45; cursor: default; }
+
+.lab-fire-controls { display: flex; flex-wrap: wrap; gap: 12px; align-items: center; }
+.lab-fire-controls label { display: grid; gap: 4px; }
+.lab-fire-controls input { min-height: 44px; }
