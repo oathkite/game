@@ -1,0 +1,12 @@
+Use case: identity-preserve
+Use the attached owner's 3D yellow frog PHOTO as exact identity. Long white throat above orange scarf, white belly below scarf; slim yellow arms, broad three-toed feet. Small pale blue round glasses resting on forehead with bridge and temple arms in contact, orange scarf with small front knot. Natural eye is high on SIDE of head, visible left of white throat in this slight right-facing three-quarter camera. No face or mouth on white belly. Preserve likeness and outfit completely as ONE integrated sprite.
+1536x1024 transparent sheet, 2x2 cells768x512, FOUR sequential animation frames in reading order. Same character scale and camera throughout. Ground baseline local y470 in every cell. Standing height including glasses about350px (head y120 when standing). Reserve headroom for raised hands and jump; no clipping. Character centered local x384.
+Refined pixel art, crisp outlines and broad flat yellow/cream/blue/orange clusters. No grain, dithering, speckles, glow, ground, shadow, text or backgrounds.
+
+SAD SITTING disappointment loop. All four frames SEATED ON THE GROUND, never standing.
+Round bottom rests on baseline y470, legs extended gently forward/right with feet on ground, hands resting beside knees, shoulders slumped. Seated height including glasses around260px. Keep same anatomical scale as standing350px; fold legs and lower torso, do not make a mini character.
+Frame0 seated, head bowed a little, natural eye downcast.
+Frame1 head bows further with shoulders sinking.
+Frame2 deepest sigh, eye closes sadly, hands loosely near knees.
+Frame3 eye reopens, head rises slightly toward frame0.
+Four subtle consecutive poses with same seated pelvis position and camera. No crying stream, no mouth added to throat, no props. Glasses/scarf integrated and attached.

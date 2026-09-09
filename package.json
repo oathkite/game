@@ -12,7 +12,10 @@
     "assets:lab": "node tools/asset-lab/server.mjs",
     "assets:test:browser": "pnpm --filter @game/e2e exec playwright test --config asset-lab.config.ts",
     "assets:export:v2": "node scripts/assets/import-baseline-v2.mjs",
-    "assets:capture": "node scripts/assets/capture-lab.mjs"
+    "assets:capture": "node scripts/assets/capture-lab.mjs",
+    "assets:export:avatar": "node scripts/assets/export-avatar.mjs",
+    "assets:validate:avatar": "node scripts/assets/validate-avatar.mjs",
+    "assets:capture:avatar": "node scripts/assets/capture-avatar.mjs"
   },
   "devDependencies": {
     "typescript": "^5.9.2",

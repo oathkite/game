@@ -1,0 +1,11 @@
+Use case: identity-preserve
+Use the attached owner's 3D yellow frog PHOTO as exact identity. Long white throat above orange scarf, white belly below scarf; slim yellow arms, broad three-toed feet. Small pale blue round glasses resting on forehead with bridge and temple arms in contact, orange scarf with small front knot. Natural eye is high on SIDE of head, visible left of white throat in this slight right-facing three-quarter camera. No face or mouth on white belly. Preserve likeness and outfit completely as ONE integrated sprite.
+1536x1024 transparent sheet, 2x2 cells768x512, FOUR sequential animation frames in reading order. Same character scale and camera throughout. Ground baseline local y470 in every cell. Standing height including glasses about350px (head y120 when standing). Reserve headroom for raised hands and jump; no clipping. Character centered local x384.
+Refined pixel art, crisp outlines and broad flat yellow/cream/blue/orange clusters. No grain, dithering, speckles, glow, ground, shadow, text or backgrounds.
+
+JOYFUL BANZAI JUMP loop:
+Frame0 anticipation: feet firmly on baseline y470, knees bent a little, BOTH hands already lifting outward above shoulders.
+Frame1 takeoff: BOTH arms straight up in big V banzai above head; BOTH feet clear ground by about35px (soles y435); body stretched upward, joyful natural eye.
+Frame2 apex: BOTH arms fully up V, BOTH feet clearly airborne soles y405; delighted closed natural eye. Keep whole figure and fingertips within cell.
+Frame3 landing: soles back at y470, knees slightly bent absorbing landing, arms lower a little but still raised. Ready to repeat frame0.
+Draw actual different jump poses, no motion lines, no dust or effects. Feet MUST visibly leave ground in middle two frames. Same scale, not shrunken airborne character.

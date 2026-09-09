@@ -113,6 +113,13 @@ export function render(library,canvas,cfg,time,requested=cfg.state) {
   ctx.imageSmoothingEnabled=false;background(ctx,w,h);ctx.save();
   const scale=geometry.scale, cabin=library.images.get('cabin-standard').asset,ground=cabin.anchors.ground;
   ctx.translate(geometry.x,geometry.y);ctx.scale(scale*cfg.facing,scale);ctx.rotate(-cfg.slope*Math.PI/180);ctx.translate(-ground[0],-ground[1]+pose.airborne);
+  drawMachine(library,ctx,cfg,time,pose);
+  ctx.restore();return pose;
+}
+
+// Draw in native art pixels; callers control scene placement and shared scale.
+export function drawMachine(library,ctx,cfg,time,pose=poseAt(cfg.state,time,cfg.hp)) {
+  const cabin=library.images.get('cabin-standard').asset,ground=cabin.anchors.ground;
   if(pose.state==='wreck')ctx.filter='grayscale(1)';
   else if(pose.flash)ctx.filter='brightness(0) invert(1)';
   if(!cfg.pilotOnly){
@@ -120,7 +127,7 @@ export function render(library,canvas,cfg,time,requested=cfg.state) {
   }
   ctx.save();ctx.translate(cfg.pilotOnly?0:firingMotion(cfg.weapon,pose).bodyX,0);
   if(!cfg.pilotOnly)draw(library,ctx,'cabin-standard','idle-back',time,cfg,0,pose.bodyY);
-  pilot(library,ctx,pose,cfg);
+  if(!cfg.hidePilot)pilot(library,ctx,pose,cfg);
   if(!cfg.pilotOnly){
     draw(library,ctx,'cabin-standard','idle',time,cfg,0,pose.bodyY);
     draw(library,ctx,'cabin-standard','idle-glass',time,cfg,0,pose.bodyY);
@@ -132,7 +139,6 @@ export function render(library,canvas,cfg,time,requested=cfg.state) {
     ctx.strokeStyle='#f1c46a';ctx.lineWidth=.5;ctx.strokeRect(...library.images.get('cabin-standard').asset.faceSafeArea);
     for(const [x,y]of[ground,cabin.anchors.pilotSeat,cabin.anchors.weaponPivot]){ctx.fillStyle='#f18b7b';ctx.fillRect(x-1,y-1,2,2);}
   }
-  ctx.restore();return pose;
 }
 
 export function faceClearance(library, cfg) {

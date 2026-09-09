@@ -1,0 +1,200 @@
+{
+  "pack": "kita-personal-portraits",
+  "checks": [
+    {
+      "name": "本人専用の利用区分",
+      "pass": true,
+      "details": []
+    },
+    {
+      "name": "待機・喜び・悲しみの3状態",
+      "pass": true,
+      "details": []
+    },
+    {
+      "name": "装いを含む一体スプライト",
+      "pass": true,
+      "details": []
+    },
+    {
+      "name": "各動作の全コマが共通縮尺",
+      "pass": true,
+      "details": []
+    },
+    {
+      "name": "アニメーション形式",
+      "pass": true,
+      "details": []
+    },
+    {
+      "name": "neutral：コマ・時間・ループ定義",
+      "pass": true,
+      "details": []
+    },
+    {
+      "name": "happy：コマ・時間・ループ定義",
+      "pass": true,
+      "details": []
+    },
+    {
+      "name": "sad：コマ・時間・ループ定義",
+      "pass": true,
+      "details": []
+    },
+    {
+      "name": "frame 0：接地・空中位置が登録通り",
+      "pass": true,
+      "details": [
+        103
+      ]
+    },
+    {
+      "name": "frame 0：キャンバス端で切れない",
+      "pass": true,
+      "details": []
+    },
+    {
+      "name": "frame 1：接地・空中位置が登録通り",
+      "pass": true,
+      "details": [
+        103
+      ]
+    },
+    {
+      "name": "frame 1：キャンバス端で切れない",
+      "pass": true,
+      "details": []
+    },
+    {
+      "name": "frame 2：接地・空中位置が登録通り",
+      "pass": true,
+      "details": [
+        103
+      ]
+    },
+    {
+      "name": "frame 2：キャンバス端で切れない",
+      "pass": true,
+      "details": []
+    },
+    {
+      "name": "frame 3：接地・空中位置が登録通り",
+      "pass": true,
+      "details": [
+        103
+      ]
+    },
+    {
+      "name": "frame 3：キャンバス端で切れない",
+      "pass": true,
+      "details": []
+    },
+    {
+      "name": "frame 4：接地・空中位置が登録通り",
+      "pass": true,
+      "details": [
+        103
+      ]
+    },
+    {
+      "name": "frame 4：キャンバス端で切れない",
+      "pass": true,
+      "details": []
+    },
+    {
+      "name": "frame 5：接地・空中位置が登録通り",
+      "pass": true,
+      "details": [
+        95
+      ]
+    },
+    {
+      "name": "frame 5：キャンバス端で切れない",
+      "pass": true,
+      "details": []
+    },
+    {
+      "name": "frame 6：接地・空中位置が登録通り",
+      "pass": true,
+      "details": [
+        87
+      ]
+    },
+    {
+      "name": "frame 6：キャンバス端で切れない",
+      "pass": true,
+      "details": []
+    },
+    {
+      "name": "frame 7：接地・空中位置が登録通り",
+      "pass": true,
+      "details": [
+        103
+      ]
+    },
+    {
+      "name": "frame 7：キャンバス端で切れない",
+      "pass": true,
+      "details": []
+    },
+    {
+      "name": "frame 8：接地・空中位置が登録通り",
+      "pass": true,
+      "details": [
+        103
+      ]
+    },
+    {
+      "name": "frame 8：キャンバス端で切れない",
+      "pass": true,
+      "details": []
+    },
+    {
+      "name": "frame 9：接地・空中位置が登録通り",
+      "pass": true,
+      "details": [
+        103
+      ]
+    },
+    {
+      "name": "frame 9：キャンバス端で切れない",
+      "pass": true,
+      "details": []
+    },
+    {
+      "name": "frame 10：接地・空中位置が登録通り",
+      "pass": true,
+      "details": [
+        103
+      ]
+    },
+    {
+      "name": "frame 10：キャンバス端で切れない",
+      "pass": true,
+      "details": []
+    },
+    {
+      "name": "frame 11：接地・空中位置が登録通り",
+      "pass": true,
+      "details": [
+        103
+      ]
+    },
+    {
+      "name": "frame 11：キャンバス端で切れない",
+      "pass": true,
+      "details": []
+    },
+    {
+      "name": "全12コマの絵が異なる",
+      "pass": true
+    }
+  ],
+  "frames": 12,
+  "scope": "3 animated loop clips; integrated sprites",
+  "colors": {
+    "skinColor": "#e4be61",
+    "scarfColor": "#c47746"
+  },
+  "humanReview": "pending"
+}
