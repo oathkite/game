@@ -13,7 +13,7 @@ export type BattleSession = {
   readonly mask: TerrainMask; readonly movement: MovementState; readonly startedAt: number;
   readonly phase: "acting" | "replaying" | "finished"; readonly result: TeamOutcome;
   readonly terrainOps: readonly TerrainOp[];
-  readonly replay: { readonly startsAt: number; readonly endsAt: number; readonly shot: ResolvedShot; readonly origin: { readonly x: number; readonly y: number } } | null;
+  readonly replay: { readonly startsAt: number; readonly endsAt: number; readonly shot: ResolvedShot; readonly playersBefore: readonly BattlePlayer[]; readonly eliminatedBefore: readonly string[]; readonly origin: { readonly x: number; readonly y: number } } | null;
   readonly lastFire: { readonly playerId: string; readonly command: FireCommand } | null;
 };
 const movementFor = (state: Pick<BattleSession, "matchId" | "roster" | "players">, now: number, eventSeq: number): MovementState => {
@@ -66,15 +66,18 @@ export const fireInSession = (state: BattleSession, playerId: string, raw: unkno
   const next: BattleSession = { ...state, roster: shot.roster, players: shot.players, mask: shot.mask, phase: "replaying",
     movement: { ...state.movement, locked: true, eventSeq: state.movement.eventSeq + 1 },
     terrainOps: [...state.terrainOps, ...shot.impacts.map(i => i.terrainOp)],
-    replay: { startsAt: now, endsAt: now + duration, shot, origin: { x: state.movement.x, y: state.movement.y } },
+    replay: { startsAt: now, endsAt: now + duration, shot, playersBefore: state.players, eliminatedBefore: state.roster.eliminated, origin: { x: state.movement.x, y: state.movement.y } },
     lastFire: { playerId, command } };
   return { state: next, reason: "accepted" };
 };
 
-export const surrenderInSession = (state: BattleSession, playerId: string, now: number): BattleSession => {
-  if (state.phase === "finished" || !state.roster.members.some(p => p.playerId === playerId) || state.roster.eliminated.includes(playerId)) return state;
-  const roster = eliminatePlayers(state.roster, [playerId]);
+export const forfeitInSession = (state: BattleSession, playerIds: readonly string[], now: number): BattleSession => {
+  if (state.phase === "finished") return state;
+  const ids = playerIds.filter(id => state.roster.members.some(p => p.playerId === id) && !state.roster.eliminated.includes(id));
+  if (!ids.length) return state;
+  const roster = eliminatePlayers(state.roster, ids);
   const next = { ...state, roster, movement: { ...state.movement, eventSeq: state.movement.eventSeq + 1 } };
   if (state.phase === "replaying") return next;
-  return state.movement.playerId === playerId || outcome(roster).type !== "ongoing" ? advance(next, now) : next;
+  return ids.includes(state.movement.playerId) || outcome(roster).type !== "ongoing" ? advance(next, now) : next;
 };
+export const surrenderInSession = (state: BattleSession, playerId: string, now: number): BattleSession => forfeitInSession(state, [playerId], now);

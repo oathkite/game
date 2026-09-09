@@ -2,14 +2,17 @@ import { randomUUID } from "node:crypto";
 import type { WebSocket } from "ws";
 
 export type LabSession = { readonly playerId: string; socket: WebSocket | null; disconnectedAt: number | null };
-export const createLabSessions = () => {
+export const createLabSessions = (now = Date.now) => {
   const sessions = new Map<string, LabSession>();
+  const expired = (session: LabSession) => session.disconnectedAt !== null && now() - session.disconnectedAt >= 60000;
   return {
+    expiredPlayerIds: () => [...sessions.values()].filter(expired).map(s => s.playerId),
+    releaseExpired: () => { for (const [token, session] of sessions) if (expired(session)) sessions.delete(token); },
     values: () => sessions.values(),
     join(socket: WebSocket, order: readonly string[], token?: string) {
       if (token) {
         const session = sessions.get(token);
-        if (!session || session.socket || session.disconnectedAt === null || Date.now() - session.disconnectedAt > 60000) {
+        if (!session || session.socket || session.disconnectedAt === null || now() - session.disconnectedAt >= 60000) {
           return { error: "invalid-session" } as const;
         }
         session.socket = socket; session.disconnectedAt = null;
@@ -23,7 +26,7 @@ export const createLabSessions = () => {
     },
     disconnect(session: LabSession, socket: WebSocket): void {
       if (session.socket !== socket) return;
-      session.socket = null; session.disconnectedAt = Date.now();
+      session.socket = null; session.disconnectedAt = now();
     },
   };
 };

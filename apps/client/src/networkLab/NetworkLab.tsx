@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState } from "react";
 import { labOutputSchema, type LabFrame } from "@game/protocol/v2-lab";
+import { presentLabReplay } from "./labReplay";
 import { createRemoteMotion } from "./remoteMotion";
 import "./networkLab.css";
 
@@ -8,6 +9,8 @@ export const NetworkLab = () => {
   const [status, setStatus] = useState("接続中"), [playerId, setPlayerId] = useState("");
   const [elevation, setElevation] = useState(45), [power, setPower] = useState(50);
   const [frame, setFrame] = useState<LabFrame | null>(null), [positions, setPositions] = useState<Position[]>([]);
+  const [serverNow, setServerNow] = useState(0);
+  const clock = useRef({ time: 0, received: 0 });
   const socket = useRef<WebSocket | null>(null), latest = useRef<LabFrame | null>(null);
   const sequence = useRef(0), commandId = useRef(0), pending = useRef(false);
   useEffect(() => {
@@ -37,6 +40,7 @@ export const NetworkLab = () => {
         if (message.matchId !== latest.current?.matchId) motion.clear();
         if (message.matchId !== latest.current?.matchId || message.turnId !== latest.current?.turnId) { pending.current = false; sequence.current = message.movement.ackMoveSeq; }
         if (!pending.current) sequence.current = message.movement.ackMoveSeq;
+        clock.current = { time: message.serverTime, received: performance.now() };
         latest.current = message; setFrame(message);
         for (const p of message.players) {
           const buffer = motion.get(p.playerId) ?? createRemoteMotion();
@@ -48,6 +52,7 @@ export const NetworkLab = () => {
     ws.onclose = () => { if (active) { setStatus("切断：再読み込みで復帰"); pending.current = false; } };
     ws.onerror = () => { if (active) setStatus("接続に失敗しました"); };
     const draw = (): void => {
+      setServerNow(clock.current.time + performance.now() - clock.current.received);
       setPositions([...motion.entries()].flatMap(([id, buffer]) => { const p = buffer.at(performance.now()); return p ? [{ playerId: id, ...p }] : []; }));
       animation = requestAnimationFrame(draw);
     };
@@ -72,17 +77,19 @@ export const NetworkLab = () => {
   const action = (type: "lab.rematch" | "lab.surrender"): void => {
     if (frame && socket.current?.readyState === WebSocket.OPEN) socket.current.send(JSON.stringify({ type, matchId: frame.matchId }));
   };
+  const presentation = frame ? presentLabReplay(frame, serverNow) : null;
+  const shownPlayers = frame?.phase === "replaying" ? presentation!.players : positions.map(p => ({ ...frame!.players.find(player => player.playerId === p.playerId)!, ...p }));
   return <main className="network-lab">
     <h1>KEROPOD 対戦同期テスト</h1>
     <p>あなた：<strong data-testid="identity">{playerId || "未割当"}</strong>　手番：<strong>{frame?.actorId ?? "—"}</strong>　{status}</p>
     <p>固定8席の開発用画面です。別タブを開くと別の席で参加します。射撃終了または20秒の期限で手番が交代します。</p>
     <svg viewBox="0 0 500 225" aria-label="移動同期フィールド">
-      <defs><mask id="lab-terrain"><rect width="500" height="225" fill="white" />{frame?.terrainOps.map((op, i) => <circle key={i} cx={op.cx} cy={op.cy} r={op.radius} fill="black" />)}</mask></defs>
+      <defs><mask id="lab-terrain"><rect width="500" height="225" fill="white" />{presentation?.terrainOps.map((op, i) => <circle key={i} cx={op.cx} cy={op.cy} r={op.radius} fill="black" />)}</mask></defs>
       <rect width="500" height="225" fill="#d9e9ef" /><path d="M0 150H500V225H0Z" fill="#657d56" mask="url(#lab-terrain)" />
-      {frame?.phase === "replaying" && frame.replay?.paths.map((path, i) => <polyline key={i} points={path.map(p => `${p.x},${p.y}`).join(" ")} fill="none" stroke="#cf6b35" strokeWidth="1" />)}
-      {positions.map(p => <g key={p.playerId} data-testid={`tank-${p.playerId}`} opacity={frame?.players.find(player => player.playerId === p.playerId)?.eliminated ? .25 : 1} data-x={p.x.toFixed(3)} transform={`translate(${p.x},${p.y - 5})`}>
+      {presentation?.bullets.map((p, i) => <circle key={i} data-testid="lab-projectile" cx={p.x} cy={p.y} r="2" fill="#cf6b35" />)}
+      {shownPlayers.map(p => <g key={p.playerId} data-testid={`tank-${p.playerId}`} opacity={p.eliminated ? .25 : 1} data-x={p.x.toFixed(3)} transform={`translate(${p.x},${p.y - 5})`}>
         <rect x="-5" y="-5" width="10" height="10" rx="2" fill={p.playerId === playerId ? "#cf6b35" : "#304659"} />
-        <text y="-12" textAnchor="middle" fontSize="8">{p.playerId} {Math.max(0, frame?.players.find(player => player.playerId === p.playerId)?.hp ?? 100)}{p.playerId === frame?.actorId ? " ▼" : ""}</text>
+        <text y="-12" textAnchor="middle" fontSize="8">{p.playerId} {Math.max(0, p.hp)}{p.playerId === frame?.actorId ? " ▼" : ""}</text>
       </g>)}
     </svg>
     <div><button disabled={frame?.phase !== "acting" || frame?.actorId !== playerId || !playerId} onClick={() => move(-1)}>左へ1歩</button><button disabled={frame?.phase !== "acting" || frame?.actorId !== playerId || !playerId} onClick={() => move(1)}>右へ1歩</button></div>

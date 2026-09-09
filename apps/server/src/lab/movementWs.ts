@@ -1,5 +1,5 @@
 import { randomUUID } from "node:crypto";
-import { createBattle, createBattleSession, fireInSession, moveInSession, movementSnapshot, surrenderInSession, tickSession } from "@game/engine/multiplayer";
+import { createBattle, createBattleSession, fireInSession, forfeitInSession, moveInSession, movementSnapshot, surrenderInSession, tickSession } from "@game/engine/multiplayer";
 import { TEST_ARENA } from "@game/maps";
 import { ONE } from "@game/sim";
 import { labInputSchema, type LabFrame, type LabOutput } from "@game/protocol/v2-lab";
@@ -22,8 +22,13 @@ export const attachMovementLab = (wss: WebSocketServer) => {
     players: state.players.map(p => ({ ...p, teamId: members.find(m => m.playerId === p.playerId)!.teamId, eliminated: state.roster.eliminated.includes(p.playerId) })),
     movement: movementSnapshot(state.movement, Date.now()), phase: state.phase, result: state.result, terrainOps: [...state.terrainOps],
     replay: state.replay ? { startsAt: state.replay.startsAt, endsAt: state.replay.endsAt,
+      terrainOpsBefore: state.terrainOps.length - state.replay.shot.impacts.length,
+      playersBefore: state.replay.playersBefore.map(p => ({ ...p, teamId: members.find(m => m.playerId === p.playerId)!.teamId, eliminated: state.replay!.eliminatedBefore.includes(p.playerId) })),
       paths: state.replay.shot.paths.map(p => p.points.filter((_, i) => i % 4 === 0 || i === p.points.length - 1).map(point => ({ x: point.x / ONE, y: point.y / ONE }))) } : null });
   const timer = setInterval(() => {
+    const before = state;
+    state = forfeitInSession(state, sessions.expiredPlayerIds(), Date.now());
+    dirty ||= before !== state;
     const next = tickSession(state, Date.now()); dirty ||= next !== state; state = next;
     if (!dirty) return;
     dirty = false;
@@ -53,7 +58,7 @@ export const attachMovementLab = (wss: WebSocketServer) => {
       if (!session) { send(socket, { type: "lab.error", reason: "join-required" }); return; }
       const before = state;
       if (message.type === "lab.rematch") {
-        if (state.phase === "finished" && message.matchId === state.matchId) state = fresh();
+        if (state.phase === "finished" && message.matchId === state.matchId) { sessions.releaseExpired(); state = fresh(); }
       } else if (message.type === "lab.surrender") {
         if (message.matchId === state.matchId) state = surrenderInSession(state, session.playerId, Date.now());
       } else if (message.type === "turn.fire") {

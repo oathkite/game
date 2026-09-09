@@ -1,7 +1,7 @@
 import { expect, it } from "vitest";
 import { TEST_ARENA } from "@game/maps";
 import { createBattle } from "../src/multiplayer/create";
-import { createBattleSession, fireInSession, moveInSession, surrenderInSession, tickSession } from "../src/multiplayer/session";
+import { createBattleSession, fireInSession, moveInSession, forfeitInSession, surrenderInSession, tickSession } from "../src/multiplayer/session";
 const start = () => createBattleSession(createBattle(Array.from({ length: 8 }, (_, i) => ({ playerId: `p${i}`, teamId: `t${i % 2}` })), 42, TEST_ARENA), "match", 1000);
 const fire = (state: ReturnType<typeof start>) => ({ version: 2, type: "turn.fire", matchId: "match", turnId: state.roster.turnId, commandId: "fire1", ackMoveSeq: state.movement.ackMoveSeq, slot: 0, facing: 1, elevation: 45, power: 30 });
 it("fires once from the committed location, blocks moves during replay and advances without ACK", () => {
@@ -36,4 +36,10 @@ it("finishes when a whole team surrenders and ignores repeated surrender", () =>
   expect(state.phase).toBe("finished");
   expect(state.result).toEqual({ type: "win", teamId: "t1" });
   expect(surrenderInSession(state, "p0", 1200)).toBe(state);
+});
+
+it("simultaneous disconnect expiries produce a draw, not the first team's victory", () => {
+  const state = start();
+  const ended = forfeitInSession(state, state.roster.members.map(p => p.playerId), 62000);
+  expect(ended.phase).toBe("finished"); expect(ended.result).toEqual({ type: "draw" });
 });

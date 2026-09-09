@@ -6,15 +6,16 @@ export const labJoinSchema = z.object({ type: z.literal("lab.join"), token: z.st
 export const labInputSchema = z.union([labJoinSchema, moveCommandSchema, fireCommandSchema,
   z.object({ type: z.literal("lab.rematch"), matchId: z.string() }).strict(),
   z.object({ type: z.literal("lab.surrender"), matchId: z.string() }).strict()]);
+const labPlayerSchema = z.object({ playerId: z.string(), x: z.number(), y: z.number(), hp: z.number(), teamId: z.string(), eliminated: z.boolean() });
 export const labFrameSchema = z.object({
   type: z.literal("lab.frame"), serverTime: z.number(), eventSeq: z.number().int().nonnegative(),
   matchId: z.string(), turnId: z.number().int(), actorId: z.string(), deadlineAt: z.number(),
-  players: z.array(z.object({ playerId: z.string(), x: z.number(), y: z.number(), hp: z.number(), teamId: z.string(), eliminated: z.boolean() })).length(8),
+  players: z.array(labPlayerSchema).length(8),
   movement: moveSnapshotSchema,
   phase: z.enum(["acting", "replaying", "finished"]),
   result: z.union([z.object({ type: z.literal("ongoing") }), z.object({ type: z.literal("draw") }), z.object({ type: z.literal("win"), teamId: z.string() })]),
   terrainOps: z.array(z.object({ cx: z.number(), cy: z.number(), radius: z.number() })),
-  replay: z.object({ startsAt: z.number(), endsAt: z.number(), paths: z.array(z.array(z.object({ x: z.number(), y: z.number() }))) }).nullable(),
+  replay: z.object({ startsAt: z.number(), endsAt: z.number(), terrainOpsBefore: z.number().int().nonnegative(), playersBefore: z.array(labPlayerSchema).length(8), paths: z.array(z.array(z.object({ x: z.number(), y: z.number() }))) }).nullable(),
 });
 export const labOutputSchema = z.union([
   labFrameSchema,
