@@ -1,4 +1,4 @@
-import { COLOR_HEX, type Seat, type TankColors, type WeaponId } from "@game/protocol";
+import { COLOR_HEX, type TankColors, type WeaponId } from "@game/protocol";
 import type { TerrainMask } from "@game/sim";
 import { Application, Container } from "pixi.js";
 import { spawnDamageLabel } from "./damageLabel";
@@ -17,14 +17,14 @@ export type Renderer = {
   /** 表示だけを移動する。物理座標と倍率は変えない */
   readonly setCameraOffset: (x: number, y: number) => void;
   readonly setTerrain: (mask: TerrainMask) => void;
-  readonly setTank: (seat: Seat, pose: TankPose) => void;
+  readonly setTank: (seat: number, pose: TankPose) => void;
   /** 弾の層を作り直す。色は撃つ側の主色、大きさは武器で決まる */
   readonly projectile: (color: TankColors["primary"], weapon: WeaponId) => ProjectileView;
   readonly onFrame: (fn: (deltaMs: number) => void) => () => void;
   /** 画面全体を整数セルだけずらす。着弾の揺れに使う */
   readonly setShake: (offset: Offset) => void;
   /** 機体の上にダメージ数字を出す。数字は自分で浮いて消える */
-  readonly showDamage: (seat: Seat, text: string, color: TankColors["primary"], big: boolean) => void;
+  readonly showDamage: (seat: number, text: string, color: TankColors["primary"], big: boolean) => void;
   readonly destroy: () => void;
 };
 
@@ -37,7 +37,7 @@ export type RendererInit = {
   readonly terrainTint?: number;
   readonly backgroundAlpha?: number;
   readonly terrainArt?: CanvasImageSource;
-  readonly players: readonly [{ colors: TankColors; nickname: string }, { colors: TankColors; nickname: string }];
+  readonly players: readonly { colors: TankColors; nickname: string }[];
 };
 
 const safely = (fn: () => void): void => {
@@ -76,20 +76,18 @@ export const createRenderer = async (init: RendererInit): Promise<Renderer> => {
   world.addChild(projectileLayer);
   let projectile: ProjectileView | null = null;
 
-  const tanks: readonly [TankView, TankView] = [
-    (init.tankFactory ?? createTankView)(init.players[0].colors, init.players[0].nickname),
-    (init.tankFactory ?? createTankView)(init.players[1].colors, init.players[1].nickname),
-  ];
+  const tanks: readonly TankView[] = init.players.map(player =>
+    (init.tankFactory ?? createTankView)(player.colors, player.nickname));
   for (const t of tanks) {
     world.addChild(t.world);
     labels.addChild(t.label);
   }
-  const poses: [TankPose | null, TankPose | null] = [null, null];
+  const poses: (TankPose | null)[] = tanks.map(() => null);
   const labelStops = new Set<() => void>();
 
-  const applyPose = (seat: Seat): void => {
+  const applyPose = (seat: number): void => {
     const pose = poses[seat];
-    if (pose) tanks[seat].setPose(pose, cell);
+    if (pose) tanks[seat]!.setPose(pose, cell);
   };
 
   return {
@@ -98,8 +96,7 @@ export const createRenderer = async (init: RendererInit): Promise<Renderer> => {
       cell = layout.cell;
       world.scale.set(cell);
       app.renderer.resize(layout.mapWidth, layout.mapHeight);
-      applyPose(0);
-      applyPose(1);
+      tanks.forEach((_, index) => applyPose(index));
     },
     setCameraOffset: (x, y) => {
       world.position.set(x, y);
@@ -130,7 +127,7 @@ export const createRenderer = async (init: RendererInit): Promise<Renderer> => {
       const pose = poses[seat];
       if (!pose) return;
       // 名前の文字の上端から隙間を空けて出す。名前は px で描かれるので px で積む
-      const y = tanks[seat].label.getBounds().minY - labels.getGlobalPosition().y - DAMAGE_LABEL_GAP_PX;
+      const y = tanks[seat]!.label.getBounds().minY - labels.getGlobalPosition().y - DAMAGE_LABEL_GAP_PX;
       const stop = spawnDamageLabel({ parent: labels, ticker: app.ticker, text, color, big, x: (pose.x + 0.5) * cell, y, onEnd: () => labelStops.delete(stop) });
       labelStops.add(stop);
     },

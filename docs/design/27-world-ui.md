@@ -22,7 +22,8 @@
 ## 実装境界
 
 DEV `?prototype=world` に限定。開始→ロビー→ローカルプラクティス→実際の勝敗→結果、設定への往復を接続する。
-8人オンラインは別のnetwork試験画面であり、このロビーを接続済みと表示しない。
+ロビーの「オンライン試験」から固定8席のv2 labへ接続する。カメラ、実タンク8機、生成背景・破壊地形を統合。
+正式な部屋作成・任意チーム編成・readyは未接続。ロビーで選ぶ装備はローカルプラクティス用で、オンラインは固定loadoutと明記する。
 全シーンは同じシャッター演出。reduced-motionでは即時切替。初期表示は自動再生動画ではなく軽い葉の動き。
 UI文字・ゲージ値・操作はDOMで描く。生成画像は背景やフレームに限る。
 地形の画像は既存collision maskへ合成し、画像の見た目から衝突を推測しない。
@@ -40,7 +41,7 @@ UI共通素材を9sliceで使い、角の変形と押しにくい小さなボタ
 - 横向き3サイズでプラクティスの主要ボタンが44px以上、画面内に収まることを検証。
 - 実エンジンの降参による勝敗から結果画面へ進み、再戦で新しい試合を作れることを確認。
 - 地形textureの透過が全collision cellと一致し、穴を削った後にも古い塗りが残らないことをCanvasのpixel値で検証。
-- client161テスト、workspace typecheck、production build成功。既存の大きなJS chunk警告は残る。
+- client164テスト、workspace typecheck、production build成功。既存の大きなJS chunk警告は残る。
 - 生成素材はproduction buildに含まれないことを出力一覧で確認。元PNGは約15MBあり公開前には配信サイズを最適化する。
 - 背景v1の白飛びを画面で確認し、v2の抑えた青緑へ差し替え。地形は1セル4texelで細部を維持する。
 - 狭い横画面の設定はpanel内だけscrollし、戻る操作を画面内に固定。
@@ -51,3 +52,14 @@ UI共通素材を9sliceで使い、角の変形と押しにくい小さなボタ
 新しいブラウザでのカメラ初期値も承認値の移動2.8倍・慣性1000msへ統一。保存済みの個別調整値は維持する。
 
 アセット検証86件成功。assets:checkはproduction pack未登録を報告しており、公開アート納品の完了は意味しない。
+
+## オンライン画面の統合
+
+- 2ブラウザで相手の移動、射撃再生、着弾後の地形、次の手番を確認。
+- 1440×900と844×390で実タンクを描き、見回し、慣性、手番へ戻る、全体図を接続。
+- 縦向きでは横向き案内を表示し操作を止める。主要操作は44px以上。
+- world E2E 5件、world-network E2E 1件、camera E2E 11件、workspace typecheck、production build成功。
+- localhostのlab serverは8794。許可Originはlocalhost/127.0.0.1の5185・5186のみ。
+- server起動はこのUI worktreeで `pnpm --filter @game/server exec tsx src/lab/main.ts`。
+- 固定map・8席・風0の試験。相手の照準角度の同期、全武器のimpact tick再生、正式ロビーは次工程。
+- PC/mobileの保存画像は `docs/design/previews/world-ui/online-desktop.png` と `online-mobile.png`。

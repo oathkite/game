@@ -20,6 +20,8 @@
     "world-tests",
     "world.config.ts",
     "network-tests",
-    "network.config.ts"
+    "network.config.ts",
+    "world-network-tests",
+    "world-network.config.ts"
   ]
 }

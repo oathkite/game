@@ -1,11 +1,12 @@
 import { useEffect, useRef, useState } from "react";
 import { labOutputSchema, type LabFrame } from "@game/protocol/v2-lab";
+import { NetworkField } from "@/worldUi/NetworkField";
 import { presentLabReplay } from "./labReplay";
 import { createRemoteMotion } from "./remoteMotion";
 import "./networkLab.css";
 
 type Position = { readonly playerId: string; readonly x: number; readonly y: number };
-export const NetworkLab = () => {
+export const NetworkLab = ({ worldArt = false, onExit }: { readonly worldArt?: boolean; readonly onExit?: () => void }) => {
   const [status, setStatus] = useState("接続中"), [playerId, setPlayerId] = useState("");
   const [elevation, setElevation] = useState(45), [power, setPower] = useState(50);
   const [frame, setFrame] = useState<LabFrame | null>(null), [positions, setPositions] = useState<Position[]>([]);
@@ -19,10 +20,12 @@ export const NetworkLab = () => {
     const motion = new Map<string, ReturnType<typeof createRemoteMotion>>();
     let ownId = "", active = true, animation = 0;
     ws.onopen = () => {
+      if (!active) return;
       const token = sessionStorage.getItem("keropod.network-lab-token");
       ws.send(JSON.stringify({ type: "lab.join", ...(token ? { token } : {}) }));
     };
     ws.onmessage = event => {
+      if (!active) return;
       let raw: unknown;
       try { raw = JSON.parse(String(event.data)); } catch { return; }
       const result = labOutputSchema.safeParse(raw); if (!result.success) return;
@@ -79,6 +82,22 @@ export const NetworkLab = () => {
   };
   const presentation = frame ? presentLabReplay(frame, serverNow) : null;
   const shownPlayers = frame?.phase === "replaying" ? presentation!.players : positions.map(p => ({ ...frame!.players.find(player => player.playerId === p.playerId)!, ...p }));
+  const phaseLabel = frame?.phase === "replaying" ? "射撃を再生中" : frame?.phase === "finished" ? "対戦終了" : "操作中";
+  const canAct = (!worldArt || innerWidth > innerHeight) && frame?.phase === "acting" && frame.actorId === playerId && socket.current?.readyState === WebSocket.OPEN;
+  if (worldArt) return <main className="network-lab network-world">
+    <header><div><strong>KEROPOD</strong><small>オンライン試験・固定8席・標準砲</small></div><span>あなた <b data-testid="identity">{playerId || "未割当"}</b></span><span>手番 {frame?.actorId ?? "—"}</span><strong data-testid="phase">{phaseLabel}</strong><span>{frame?.phase === "acting" ? Math.max(0, Math.ceil((frame.deadlineAt - serverNow) / 1000)) : "—"}</span><button onClick={onExit}>ロビーに戻る</button></header>
+    {frame && presentation ? <NetworkField frame={frame} players={shownPlayers} presentation={presentation} elevation={elevation} ownId={playerId} /> : <p role="status">{status}</p>}
+    <footer>
+      <div className="network-move"><small>移動 {frame?.movement.stepsLeft ?? 30}</small><div><button disabled={!canAct} onClick={() => move(-1)} aria-label="左へ1歩">←</button><button disabled={!canAct} onClick={() => move(1)} aria-label="右へ1歩">→</button></div></div>
+      <label>角度 {elevation}°<input aria-label="射撃角度" type="range" min="10" max="90" value={elevation} onChange={e => setElevation(Number(e.target.value))} /></label>
+      <label>パワー {power}<input aria-label="射撃パワー" type="range" min="0" max="100" value={power} onChange={e => setPower(Number(e.target.value))} /></label>
+      <button disabled={!canAct} onClick={fire}>発射</button><button disabled={!frame || frame.phase === "finished"} onClick={() => action("lab.surrender")}>降参</button>
+    </footer>
+    {frame?.phase === "finished" && <section className="network-finished"><h2>{frame.result.type === "win" ? `${frame.result.teamId === "t0" ? "A" : "B"}チームの勝利` : "引き分け"}</h2><button onClick={() => action("lab.rematch")}>再戦する</button><button onClick={onExit}>ロビーに戻る</button></section>}
+    {status === "invalid-session" && <div className="network-finished"><p>接続の有効期限が切れました。</p><button onClick={() => { sessionStorage.removeItem("keropod.network-lab-token"); location.reload(); }}>新しい接続で参加</button></div>}
+    <div className="network-portrait"><h2>横向きでプレイしよう</h2><p>端末を回転するとフィールドと操作が見やすくなります。</p><button onClick={onExit}>ロビーに戻る</button></div>
+    {status.startsWith("切断") && <p className="network-connection" role="status">切断されました。再読み込みで復帰できます。</p>}
+  </main>;
   return <main className="network-lab">
     <h1>KEROPOD 対戦同期テスト</h1>
     <p>あなた：<strong data-testid="identity">{playerId || "未割当"}</strong>　手番：<strong>{frame?.actorId ?? "—"}</strong>　{status}</p>
