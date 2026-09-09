@@ -7,41 +7,48 @@
     "grantKey": "kita-personal"
   },
   "model": "gpt-image-2.5-sunburst",
+  "view": "front-three-quarter-right",
   "frameSize": [
-    64,
-    64
+    192,
+    224
   ],
   "foot": [
-    32,
-    60
+    96,
+    208
   ],
-  "scale": 0.07,
+  "scale": 0.3,
   "poses": [
     {
       "id": "neutral",
       "label": "基本の立ち絵",
       "frame": 0,
       "faceArea": [
-        32,
+        76,
+        48,
         20,
-        5,
-        6
+        24
       ],
       "eyeAreas": [
         [
-          32,
+          76,
+          48,
           20,
-          5,
-          6
+          24
+        ],
+        [
+          120,
+          48,
+          16,
+          20
         ]
       ],
       "headAnchor": [
-        27,
-        14
+        68,
+        19
       ],
       "neckAnchor": [
-        25,
-        32
+        60,
+        100
       ]
     },
     {
@@ -49,26 +56,32 @@
       "label": "喜ぶ",
       "frame": 1,
       "faceArea": [
-        33,
-        21,
-        5,
-        4
+        80,
+        52,
+        20,
+        16
       ],
       "eyeAreas": [
         [
-          33,
-          21,
-          5,
-          4
+          80,
+          52,
+          20,
+          16
+        ],
+        [
+          120,
+          52,
+          16,
+          16
         ]
       ],
       "headAnchor": [
-        28,
-        14
+        68,
+        23
       ],
       "neckAnchor": [
-        25,
-        32
+        60,
+        100
       ]
     },
     {
@@ -76,26 +89,32 @@
       "label": "悲しむ",
       "frame": 2,
       "faceArea": [
-        35,
-        25,
-        5,
-        5
+        96,
+        72,
+        20,
+        20
       ],
       "eyeAreas": [
         [
-          35,
-          25,
-          5,
-          5
+          96,
+          72,
+          20,
+          20
+        ],
+        [
+          132,
+          72,
+          12,
+          20
         ]
       ],
       "headAnchor": [
-        29,
-        19
+        80,
+        31
       ],
       "neckAnchor": [
-        26,
-        35
+        64,
+        108
       ]
     }
   ],
@@ -126,72 +145,72 @@
           1024
         ],
         "sourceBounds": [
-          48,
-          242,
-          376,
-          617
+          70,
+          231,
+          413,
+          558
         ],
         "outputSize": [
-          26,
-          43
+          124,
+          167
         ],
         "outputOrigin": [
-          18,
-          17
+          34,
+          41
         ],
-        "scale": 0.07,
+        "scale": 0.3,
         "sourceSheet": "poses",
-        "sourceHash": "4420f8d1c9d4c70deeb0fc470444b037078e6cd0c5015ac89cee48b157a5d893"
+        "sourceHash": "e1291f8eaa01010f71b577df66115eb29b8310de9c22f5f7f0bc5cc22f6badec"
       },
       {
         "region": [
           512,
           0,
-          550,
+          512,
           1024
         ],
         "sourceBounds": [
-          573,
-          242,
-          454,
-          617
+          602,
+          231,
+          401,
+          558
         ],
         "outputSize": [
-          32,
-          43
+          120,
+          167
         ],
         "outputOrigin": [
-          18,
-          17
+          40,
+          41
         ],
-        "scale": 0.07,
+        "scale": 0.3,
         "sourceSheet": "poses",
-        "sourceHash": "4420f8d1c9d4c70deeb0fc470444b037078e6cd0c5015ac89cee48b157a5d893"
+        "sourceHash": "e1291f8eaa01010f71b577df66115eb29b8310de9c22f5f7f0bc5cc22f6badec"
       },
       {
         "region": [
-          1062,
+          1024,
           0,
-          474,
+          512,
           1024
         ],
         "sourceBounds": [
-          1088,
-          297,
-          394,
-          562
+          1099,
+          261,
+          370,
+          528
         ],
         "outputSize": [
-          28,
-          39
+          111,
+          158
         ],
         "outputOrigin": [
-          18,
-          21
+          42,
+          50
         ],
-        "scale": 0.07,
+        "scale": 0.3,
         "sourceSheet": "poses",
-        "sourceHash": "4420f8d1c9d4c70deeb0fc470444b037078e6cd0c5015ac89cee48b157a5d893"
+        "sourceHash": "e1291f8eaa01010f71b577df66115eb29b8310de9c22f5f7f0bc5cc22f6badec"
       }
     ],
     "glasses": [
@@ -199,153 +218,153 @@
         "region": [
           0,
           0,
-          512,
-          512
+          480,
+          1024
         ],
         "sourceBounds": [
-          87,
-          193,
-          368,
-          204
+          155,
+          174,
+          260,
+          101
         ],
         "outputSize": [
-          13,
-          7
+          78,
+          30
         ],
         "outputOrigin": [
-          27,
-          14
-        ],
-        "scale": 0.035,
-        "sourceSheet": "game-accessories",
-        "sourceHash": "375777b302f4c95d462dd79b667700d7fad48c246aa2274c5e7faa509579474d"
-      },
-      {
-        "region": [
-          0,
-          0,
-          512,
-          512
-        ],
-        "sourceBounds": [
-          87,
-          193,
-          368,
-          204
-        ],
-        "outputSize": [
-          13,
-          7
-        ],
-        "outputOrigin": [
-          28,
-          14
-        ],
-        "scale": 0.035,
-        "sourceSheet": "game-accessories",
-        "sourceHash": "375777b302f4c95d462dd79b667700d7fad48c246aa2274c5e7faa509579474d"
-      },
-      {
-        "region": [
-          0,
-          0,
-          512,
-          512
-        ],
-        "sourceBounds": [
-          87,
-          193,
-          368,
-          204
-        ],
-        "outputSize": [
-          13,
-          7
-        ],
-        "outputOrigin": [
-          29,
+          68,
           19
         ],
-        "scale": 0.035,
-        "sourceSheet": "game-accessories",
-        "sourceHash": "375777b302f4c95d462dd79b667700d7fad48c246aa2274c5e7faa509579474d"
+        "scale": 0.3,
+        "sourceSheet": "glasses",
+        "sourceHash": "f2b464c1fc7ae91e9955d4debd363df882350fb096e45d8e93eaf8d0170c2b10"
+      },
+      {
+        "region": [
+          480,
+          0,
+          610,
+          1024
+        ],
+        "sourceBounds": [
+          664,
+          158,
+          267,
+          113
+        ],
+        "outputSize": [
+          80,
+          34
+        ],
+        "outputOrigin": [
+          68,
+          23
+        ],
+        "scale": 0.3,
+        "sourceSheet": "glasses",
+        "sourceHash": "f2b464c1fc7ae91e9955d4debd363df882350fb096e45d8e93eaf8d0170c2b10"
+      },
+      {
+        "region": [
+          1090,
+          0,
+          446,
+          1024
+        ],
+        "sourceBounds": [
+          1238,
+          274,
+          242,
+          136
+        ],
+        "outputSize": [
+          73,
+          41
+        ],
+        "outputOrigin": [
+          80,
+          31
+        ],
+        "scale": 0.3,
+        "sourceSheet": "glasses",
+        "sourceHash": "f2b464c1fc7ae91e9955d4debd363df882350fb096e45d8e93eaf8d0170c2b10"
       }
     ],
     "scarf": [
       {
         "region": [
           0,
-          512,
-          512,
-          512
+          0,
+          480,
+          1024
         ],
         "sourceBounds": [
-          107,
-          690,
-          340,
-          148
+          106,
+          323,
+          297,
+          157
         ],
         "outputSize": [
-          15,
-          7
+          83,
+          44
         ],
         "outputOrigin": [
-          25,
-          32
+          60,
+          100
         ],
-        "scale": 0.045,
-        "sourceSheet": "game-accessories",
-        "sourceHash": "375777b302f4c95d462dd79b667700d7fad48c246aa2274c5e7faa509579474d"
+        "scale": 0.28,
+        "sourceSheet": "scarf",
+        "sourceHash": "e5518b515309c02998285fb5f6bc7a916c917e7e28e75606dcfcf9011fae0ebc"
       },
       {
         "region": [
+          480,
           0,
-          512,
-          512,
-          512
+          610,
+          1024
         ],
         "sourceBounds": [
-          107,
-          690,
+          593,
           340,
-          148
+          318,
+          150
         ],
         "outputSize": [
-          15,
-          7
+          89,
+          42
         ],
         "outputOrigin": [
-          25,
-          32
+          60,
+          100
         ],
-        "scale": 0.045,
-        "sourceSheet": "game-accessories",
-        "sourceHash": "375777b302f4c95d462dd79b667700d7fad48c246aa2274c5e7faa509579474d"
+        "scale": 0.28,
+        "sourceSheet": "scarf",
+        "sourceHash": "e5518b515309c02998285fb5f6bc7a916c917e7e28e75606dcfcf9011fae0ebc"
       },
       {
         "region": [
+          1090,
           0,
-          512,
-          512,
-          512
+          446,
+          1024
         ],
         "sourceBounds": [
-          107,
-          690,
-          340,
-          148
+          1143,
+          385,
+          306,
+          174
         ],
         "outputSize": [
-          15,
-          7
+          86,
+          49
         ],
         "outputOrigin": [
-          26,
-          35
+          64,
+          108
         ],
-        "scale": 0.045,
-        "sourceSheet": "game-accessories",
-        "sourceHash": "375777b302f4c95d462dd79b667700d7fad48c246aa2274c5e7faa509579474d"
+        "scale": 0.28,
+        "sourceSheet": "scarf",
+        "sourceHash": "e5518b515309c02998285fb5f6bc7a916c917e7e28e75606dcfcf9011fae0ebc"
       }
     ]
   },

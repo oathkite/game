@@ -1,7 +1,9 @@
 Use case: identity-preserve
-Image 1 is the APPROVED IN-GAME frog sprite sheet and is the definitive reference for proportions. Image 2 is the owner's original frog identity. Create three FULL BODY standing reaction sprites matching image1's rounded compact body, big head and SHORT limbs. Do not use long humanoid legs or tall adult proportions. These are intended to be about 28 pixels wide and 44 pixels tall when reduced, matching the in-game seated frog at30x36 pixels. Large natural protruding eye on TOP of head, forward yellow lip, white throat and belly BODY PATCH never a face or mouth. True SIDE VIEW facing right as in image1, only the near natural eye clearly visible. Do not draw a frontal humanlike face.
-1536x1024 transparent canvas, three 512-wide cells. In each cell feet at y900. Frog heads roughly y200. Body height about700 source pixels, wide round head and torso, stubby short legs about100 source pixels only. Match scale and ground across all three, reserve margins for arms.
-Left: relaxed standing, short arms lowered.
-Middle: happy with short arms lifted overhead, closed delighted natural eye, both feet remain on baseline.
-Right: sad, slightly bowed head, slumped arms, downcast natural eye, same body proportions and feet baseline.
-BARE frog only, NO glasses, NO scarf, NO accessories, no leftover lines. Restrained flat yellow, cream and dark outline palette, no texture grain, no dithering, no soft shading, clean pixel-art clusters. NO glow, NO background, NO ground, NO shadow, NO text. All three isolated with generous gutters.
+Use the FROG PILOT in the attached approved design board as the definitive character design. Produce ONLY three bare frog full-body sprites, no tank or props. Match its round wide pear-shaped torso, squat build, short legs, simple hands and big protruding natural eyes. Yellow body and large cream-white throat/belly patch. Belly is NOT face. Face consists of two natural eyes on top and tiny forward lip, NO human face on the belly.
+All THREE sprites face slightly right in a FRONT THREE-QUARTER view: both eyes visible, near eye a little larger. Not true side view. Same camera, same body scale and feet baseline. Compact 1.7 head-to-body ratio, legs only bottom 15 percent. Designed to export around 32 pixels wide and 43 pixels tall. Clean broad pixel-art clusters, flat restrained palette, solid dark outline, no texture or dithering.
+1536x1024 transparent canvas, 3 equal columns, plenty of empty gutters.
+Left: neutral standing, arms relaxed, both natural eyes OPEN with obvious BLACK pupils large enough to survive reduction.
+Center: joyful, short arms raised, delighted curved closed eyes on the natural eye bumps.
+Right: sad, head slightly bowed, drooping short arms, downcast eyes with dark visible pupils. Do not change the silhouette drastically or turn side on.
+Each figure around 450 source pixels wide and 600 source pixels tall, feet at y850. Keep all hands inside their column.
+BARE BODY ONLY. No glasses, no scarf, no accessory fragments. No lettering, background, shadow, glow, particles or ground. Actual transparent background.

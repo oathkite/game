@@ -1,7 +1,7 @@
 {
   "status": "draft",
   "humanReview": "pending",
-  "avatarDigest": "f90932c53c56ed29ad5a104c7ea3179e7f2618683c3d86353a473da659c63dca",
+  "avatarDigest": "2111367cb7bfb20f38832f61901976b01e329aa1c98815274b9e371c8a5e890f",
   "assetUnitTests": 77,
   "browserTests": 19,
   "typecheck": "passed",
@@ -19,6 +19,6 @@
     "No game profile/result integration or avatar ownership enforcement is implemented.",
     "Eye areas are manually registered; human review of likeness and accessory fit remains pending."
   ],
-  "revision": "game-scale-64",
-  "visualReview": "Compact side-view bodies, short limbs, shared game accessories; reviewed poses.png at integer scale. Human approval pending."
+  "revision": "three-quarter-concept-density",
+  "visualReview": "Reviewed three-quarter neutral/happy/sad in poses.png at concept density: both eyes visible, compact proportions, independent accessories. Exported directly from generated source, not enlarged low-resolution frames. Glasses attachment adjusted after alpha contact validation. Human approval pending."
 }

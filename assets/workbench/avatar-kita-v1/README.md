@@ -3,7 +3,7 @@
 GPT Image 2.5で生成した、プロフィール・リザルト向けの基本／喜び／悲しみの静止3ポーズ。
 素体、青いメガネ、オレンジスカーフは独立PNG・ORA。本人専用であり、一般配布・販売・public defaultには使わない。
 
-- 形式：avatarPortraitVersion 1、64×64 artpx、足元[32,60]。ゲーム内と同じドット密度・短い手足
+- 形式：avatarPortraitVersion 1、192×224 artpx、足元[96,208]。元デザイン案に近いドット密度・短い手足。両目が見える少し斜めの前方3/4 view
 - ステータス：draft、humanReview pending
 - アニメーション：中間コマは未制作。静止画のみ
 - 原画・プロンプト・出典：generated/、prompts/、generation.json

@@ -33,17 +33,17 @@
 ## 18.3 portrait形式 v1
 
 - manifest：`avatar.json`、`avatarPortraitVersion: 1`。機体用`pack.json`と別形式。
-- frameSize：64×64 artpx、足元基準foot=[32,60]。ゲーム内と同じ右向きの真横 view。
-- 各レイヤーatlas：192×64（横3コマ）、neutral=0、happy=1、sad=2。
+- frameSize：192×224 artpx、足元基準foot=[96,208]。立ち絵は両目の見える、少し右を向いた前方3/4 view。搭乗用の真横 viewとは用途を分ける。
+- 各レイヤーatlas：576×224（横3コマ）、neutral=0、happy=1、sad=2。
 - 画像：32色indexed PNG、index0だけ透明、それ以外は不透明。編集用ORAを併納。
-- ドット表示：nearest、devicePixelRatioを考慮した整数倍率。ゲーム内と同じドット密度で制作し、用途に合わせて表示倍率のみ変える。
-- bodyの原画縮尺は全ポーズ0.07。glassesは全ポーズ0.035、scarfは全ポーズ0.045（ゲーム内と同じ原画・縮尺）。装備単位では同率拡縮を許可し、ポーズごとに大きさを変えない。
+- ドット表示：nearest、devicePixelRatioを考慮した整数倍率。立ち絵は承認された元デザイン案に近い密度で制作する。搭乗用の低解像度へ固定しない。体形・配色を共通にし、用途別に解像度を持つ。
+- bodyの原画縮尺は全ポーズ0.30。装備は前方3/4 viewの原画を使い、glasses=0.30、scarf=0.28のレイヤー別縮尺で出力する。真横向きの搭乗用パーツをそのまま流用しない。装備単位では同率拡縮を許可し、ポーズごとに大きさを変えない。
 - 生成画像は実際の不透明範囲を測定して切り出す。3等分の機械的cropでは、喜ぶポーズの手を切り落とすため、`registration.json`の明示領域を使用する。
 - bodyは原画の足元とfootを対応付ける。sadの低い頭を、拡大してneutralと同じ高さへ合わせない。
 - 描画順：body → scarf → glasses。影・文字・勝利の紙吹雪は原画に焼き込まない。
 - 本人用paletteは固定。立ち絵を色替えして一般用として公開しない。
 
-manifestにはid、status、availability、model、frameSize、foot、scale、poses、layers、metrics、animationStatus、humanReviewを記録する。
+manifestにはid、status、availability、model、frameSize、foot、scale、poses、layers、metrics、view、animationStatus、humanReviewを記録する。
 posesはid、label、frame、eyeAreas、faceArea、headAnchor、neckAnchorを持つ。eyeAreasは左右の自然の目を別々の矩形で記録する。
 faceAreaは顔周辺の参考領域であり、目の遮蔽判定はeyeAreasを使う。白い喉・腹を目の保護領域として扱わない。
 各レイヤーはfileとsource（ORA）を持つ。metricsはcrop領域・不透明bounds・出力サイズ・出力位置・縮尺・原画SHA256を持つ。
@@ -51,14 +51,19 @@ availabilityはowner-only、grantKey=kita-personal。これは素材の利用区
 
 ## 18.4 装備接続と改善記録
 
-初案の素体約85×164ドットはゲーム内約30×36ドットに対して細かく、脚が長かったため不採用。ゲーム内の素体を優先参照して再生成し、立位は幅25〜35・高さ40〜46ドット、短い脚と丸い胴体に統一する。座位と立位で高さは異なるが、細部の密度を増やさない。sadはうつむくため高さを縮め、別倍率で引き伸ばさない。旧原画はposes-tall.pngとして制作履歴に残す。
+最新の方向性（密度の追加フィードバックを反映）：立ち絵は元デザイン案に近い描き込み密度を許可する。現行の素体は約111〜124×158〜167ドット。64×64版の拡大画像ではなく、生成原画から再出力する。
+
+添付のNEW DIRECTION 01にあるカエルの丸い体形を基準に、立ち絵・喜び・悲しみは若干斜めの前方3/4 viewへ変更。全ポーズで両目が見える同じカメラを保つ。ドット密度をそろえることと、搭乗用と同じ真横アングルにすることは別の要件。表情の読みやすさと短い手足を優先する。
+
+
+経緯：初案は脚が長かったため体形を修正。その後、幅25〜35・高さ40〜46ドットの低解像度を試したが、最新フィードバックで元デザイン案に近い密度へ変更した。短い脚と丸い胴体は維持する。sadはうつむくため高さを縮め、別倍率で引き伸ばさない。旧原画はposes-tall.png、真横の試作はposes-side.pngとして制作履歴に残す。
 
 
 初回生成のメガネは自然の目に重なった。上へ移動するだけでは頭から浮き、下へ移すと喉へ装着したように見えた。
 対策としてメガネを全ポーズ共通の縮尺で小さくし、頭の上に接する位置へ登録した。素体の目と表情は表示を保つ。
 スカーフは首元を覆い、輪郭と結び目を持つ別レイヤーにした。外した状態に装備の線を残さない。
 
-今回の装備はゲーム内の原画を共用し、出力位置の正本はregistrationとmetrics。headAnchor/neckAnchorは目視ガイド。
+今回の装備は立ち絵の角度に合わせた原画を使用し、出力位置の正本はregistrationとmetrics。headAnchor/neckAnchorは目視ガイド。
 次のパーツを追加するときは、attachとposeごとの接続点を明示する。既存ガイドの位置へ新規パーツを置くだけで互換としない。
 
 ## 18.5 確認ツール

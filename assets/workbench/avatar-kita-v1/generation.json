@@ -38,7 +38,7 @@
           "sha256": "4bb9b6080d1868e272b8835645e6b840f713a9b838b03589dcf515c1b6ee48f4"
         }
       ],
-      "usedInCurrentExport": false
+      "usedInCurrentExport": true
     },
     {
       "file": "generated/scarf.png",
@@ -55,14 +55,14 @@
           "sha256": "4bb9b6080d1868e272b8835645e6b840f713a9b838b03589dcf515c1b6ee48f4"
         }
       ],
-      "usedInCurrentExport": false
+      "usedInCurrentExport": true
     },
     {
-      "file": "generated/poses.png",
-      "prompt": "prompts/poses.txt",
+      "file": "generated/poses-side.png",
+      "prompt": "prompts/poses-side.txt",
       "sha256": "4420f8d1c9d4c70deeb0fc470444b037078e6cd0c5015ac89cee48b157a5d893",
       "promptSha256": "4ec30a2f4b9cad21d0bbdc29ff5c94bb3c589e2ae2a3d7e453b501dd6c6c6b51",
-      "usedInCurrentExport": true,
+      "usedInCurrentExport": false,
       "inputs": [
         {
           "path": "assets/workbench/baseline-v2/generated/pilot.png",
@@ -73,6 +73,19 @@
           "sha256": "4bb9b6080d1868e272b8835645e6b840f713a9b838b03589dcf515c1b6ee48f4"
         }
       ]
+    },
+    {
+      "file": "generated/poses.png",
+      "prompt": "prompts/poses.txt",
+      "sha256": "e1291f8eaa01010f71b577df66115eb29b8310de9c22f5f7f0bc5cc22f6badec",
+      "promptSha256": "4655093ba280641d6b5576ce7480218b50eb4c746b5677db1779865427692b63",
+      "usedInCurrentExport": true,
+      "inputs": [
+        {
+          "path": "assets/workbench/avatar-kita-v1/generated/design-reference.png",
+          "sha256": "3c5a2490bef3e174434883bdf0389d63be5b3ee8557297aebf8ede10b5971167"
+        }
+      ]
     }
   ],
   "reusedSources": [
@@ -80,7 +93,8 @@
       "file": "generated/game-accessories.png",
       "source": "assets/workbench/baseline-v2/generated/accessories.png",
       "sha256": "375777b302f4c95d462dd79b667700d7fad48c246aa2274c5e7faa509579474d",
-      "purpose": "Same glasses and scarf source and export scales as game pilot"
+      "purpose": "Same glasses and scarf source and export scales as game pilot",
+      "usedInCurrentExport": false
     }
   ]
 }
