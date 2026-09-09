@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useRef, useState, type PointerEvent } from "react";
+import type { WeaponId } from "@game/protocol";
 import type { LabFrame } from "@game/protocol/v2-lab";
 import { applyOps, maskFromHeights, tiltOf } from "@game/sim";
 import { createRenderer, type Renderer } from "@/game/renderer";
@@ -11,7 +12,7 @@ import type { presentLabReplay } from "@/networkLab/labReplay";
 import { loadTerrainArt, worldArt } from "./assets";
 import { WindLeaves } from "./WindLeaves";
 
-type Props = { readonly frame: LabFrame; readonly players: LabFrame["players"]; readonly presentation: ReturnType<typeof presentLabReplay>; readonly elevation: number; readonly ownId: string };
+type Props = { readonly frame: LabFrame; readonly players: LabFrame["players"]; readonly presentation: ReturnType<typeof presentLabReplay>; readonly elevation: number; readonly ownId: string; readonly selectedWeapon?: WeaponId };
 const baseTerrain = () => maskFromHeights(Array.from({ length: 500 }, () => 150), 225);
 export const NetworkField = (props: Props) => {
   const host = useRef<HTMLDivElement>(null), mini = useRef<HTMLCanvasElement>(null), latest = useRef(props); latest.current = props;
@@ -29,7 +30,7 @@ export const NetworkField = (props: Props) => {
       let mask = baseTerrain(), previousSize = "", terrainKey = "", turnKey = "", replayKey = -1;
       const facing = new Map<string, -1 | 1>();
       renderer = await createRenderer({ host: element, layout: layout(), mask, terrainArt, backgroundAlpha: 0, tankFactory: art.create,
-        players: latest.current.frame.players.map(p => ({ nickname: `${p.teamId === "t0" ? "A" : "B"} ${p.playerId}${p.playerId === latest.current.ownId ? " / YOU" : ""}`, colors: { primary: p.teamId === "t0" ? "yellow" : "cyan", secondary: "blue" } })) });
+        players: latest.current.frame.players.map(p => ({ nickname: `${String.fromCharCode(65 + Number(p.teamId.slice(1)))} ${p.nickname ?? p.playerId}${p.playerId === latest.current.ownId ? " / YOU" : ""}`, colors: { primary: p.teamId === "t0" ? "yellow" : "cyan", secondary: "blue" } })) });
       if (disposed) { renderer.destroy(); art.destroy(); return; }
       const r = renderer; let bullet = r.projectile("yellow", "cannon");
       stop = r.onFrame(dt => {
@@ -41,6 +42,7 @@ export const NetworkField = (props: Props) => {
         const nextTurn = `${frame.matchId}/${frame.turnId}`;
         if (nextTurn !== turnKey) { turnKey = nextTurn; focus(); }
         facing.set(frame.actorId, frame.movement.facing);
+        if (frame.phase === "acting" && latest.current.selectedWeapon) art!.setWeapon(frame.players.findIndex(p => p.playerId === ownId), latest.current.selectedWeapon);
         const shot = frame.phase === "replaying" ? frame.replay?.shooter : null;
         if (shot) facing.set(shot.playerId, shot.facing);
         players.forEach((p, i) => r.setTank(i, { x: p.x, y: p.y, tilt: tiltOf(mask, { x: Math.round(p.x), y: Math.round(p.y) }), facing: facing.get(p.playerId) ?? 1,

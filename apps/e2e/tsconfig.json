@@ -22,6 +22,8 @@
     "network-tests",
     "network.config.ts",
     "world-network-tests",
-    "world-network.config.ts"
+    "world-network.config.ts",
+    "rooms-tests",
+    "rooms.config.ts"
   ]
 }

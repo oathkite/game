@@ -7,16 +7,16 @@ export const labJoinSchema = z.object({ type: z.literal("lab.join"), token: z.st
 export const labInputSchema = z.union([labJoinSchema, moveCommandSchema, fireCommandSchema,
   z.object({ type: z.literal("lab.rematch"), matchId: z.string() }).strict(),
   z.object({ type: z.literal("lab.surrender"), matchId: z.string() }).strict()]);
-const labPlayerSchema = z.object({ playerId: z.string(), x: z.number(), y: z.number(), hp: z.number(), teamId: z.string(), eliminated: z.boolean() });
+const labPlayerSchema = z.object({ playerId: z.string(), x: z.number(), y: z.number(), hp: z.number(), teamId: z.string(), eliminated: z.boolean(), nickname: z.string().optional(), loadout: z.tuple([z.enum(WEAPON_IDS), z.enum(WEAPON_IDS)]).optional() });
 export const labFrameSchema = z.object({
   type: z.literal("lab.frame"), serverTime: z.number(), eventSeq: z.number().int().nonnegative(),
   matchId: z.string(), turnId: z.number().int(), actorId: z.string(), deadlineAt: z.number(),
-  players: z.array(labPlayerSchema).length(8),
+  players: z.array(labPlayerSchema).min(2).max(8),
   movement: moveSnapshotSchema,
   phase: z.enum(["acting", "replaying", "finished"]),
   result: z.union([z.object({ type: z.literal("ongoing") }), z.object({ type: z.literal("draw") }), z.object({ type: z.literal("win"), teamId: z.string() })]),
   terrainOps: z.array(z.object({ cx: z.number(), cy: z.number(), radius: z.number() })),
-  replay: z.object({ startsAt: z.number(), endsAt: z.number(), terrainOpsBefore: z.number().int().nonnegative(), playersBefore: z.array(labPlayerSchema).length(8), ticks: z.number().int().nonnegative(),
+  replay: z.object({ startsAt: z.number(), endsAt: z.number(), terrainOpsBefore: z.number().int().nonnegative(), playersBefore: z.array(labPlayerSchema).min(2).max(8), ticks: z.number().int().nonnegative(),
     shooter: z.object({ playerId: z.string(), facing: z.union([z.literal(-1), z.literal(1)]), elevation: z.number(), weapon: z.enum(WEAPON_IDS) }),
     impacts: z.array(z.object({ tick: z.number().int().nonnegative(), damage: z.array(z.object({ playerId: z.string(), amount: z.number() })) })),
     paths: z.array(z.object({ launchTick: z.number().int().nonnegative(), endTick: z.number().int().nonnegative(), points: z.array(z.object({ x: z.number(), y: z.number(), tick: z.number().int().nonnegative() })) })) }).nullable(),

@@ -16,3 +16,4 @@
 
 - [26. WebSocket対戦同期の確認画面](26-network-movement-lab.md)：移動・射撃・復帰・結果・再戦を試す開発用画面
 - [27. 湿地観測所のドット絵UI](27-world-ui.md)：GPT Image 2.5素材と全シーンのDEVプレビュー。
+- [28. ロビー準備と対戦ルーム](28-lobby-preparation.md)：部屋分離、ready、装備固定、WebSocketと新UIの接続。

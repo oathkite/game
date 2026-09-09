@@ -2,6 +2,7 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import { WEAPON_IDS, WEAPON_LABELS, type WeaponId } from "@game/protocol";
 import { loadProfile, saveProfile } from "@/app/profile";
 import { setAudioSettings, unlockAudio } from "@/app/audio";
+import { RoomScreen } from "./RoomScreen";
 import { NetworkLab } from "@/networkLab/NetworkLab";
 import { CameraPrototype } from "@/prototype/CameraPrototype";
 import { CameraSettingsPanel } from "@/prototype/CameraSettingsPanel";
@@ -12,7 +13,7 @@ import { WindLeaves } from "./WindLeaves";
 import { worldArt } from "./assets";
 import "./worldUi.css";
 
-type Scene = "start" | "lobby" | "settings" | "battle" | "result" | "network";
+type Scene = "start" | "lobby" | "settings" | "battle" | "result" | "network" | "rooms";
 export const WorldScenes = () => {
   const [scene, setScene] = useState<Scene>("start"), [closing, setClosing] = useState(false);
   const [result, setResult] = useState("");
@@ -31,7 +32,7 @@ export const WorldScenes = () => {
   const finish = useCallback((label: string) => { setResult(label); go("result"); }, [go]);
   const background = scene === "settings" ? worldArt.settings : scene === "lobby" ? worldArt.lobby : scene === "result" ? worldArt.result : worldArt.background;
   return <div className={`world-ui world-scene-${scene} ${closing ? "world-closing" : ""}`} style={{ backgroundImage: `url(${background})` }}>
-    {scene === "battle" ? <CameraPrototype worldArt onExit={exit} onResult={finish} /> : scene === "network" ? <NetworkLab worldArt onExit={exit} /> : <>
+    {scene === "battle" ? <CameraPrototype worldArt onExit={exit} onResult={finish} /> : scene === "rooms" ? <RoomScreen onExit={exit} onLab={() => go("network")} /> : scene === "network" ? <NetworkLab worldArt onExit={exit} /> : <>
       {scene === "start" && <WindLeaves />}
       <div key={scene} ref={heading} tabIndex={-1} className="world-content">
         {scene === "start" && <section className="world-start"><h1>KEROPOD</h1><p>小さな一発が、世界を変える。</p><PixelButton onClick={() => go("lobby")}>はじめる</PixelButton><span className="world-build-note">2Dプレビュー</span></section>}
@@ -53,9 +54,9 @@ const Lobby = ({ go }: { readonly go: (scene: Scene) => void }) => {
     <PixelPanel className="world-loadout">
       <label>名前<input aria-label="名前" maxLength={12} value={profile.nickname} placeholder="ケロポッド" onChange={e => update({ nickname: e.target.value })} /></label>
       {([0, 1] as const).map(slot => <label key={slot}>装備 {slot + 1}<select aria-label={`装備 ${slot + 1}`} value={profile.loadout[slot]} onChange={e => weapon(slot, e.target.value as WeaponId)}>{WEAPON_IDS.map(id => <option key={id} value={id} disabled={id === profile.loadout[slot === 0 ? 1 : 0]}>{WEAPON_LABELS[id]}</option>)}</select></label>)}
-      <p>装備はプラクティス用です。<br />同じ端末で移動と射撃を試せます。</p>
+      <p>装備は対戦ルームにも引き継ぎます。<br />同じ端末で移動と射撃を試せます。</p>
     </PixelPanel>
-    <footer><PixelButton onClick={() => go("start")}>タイトルへ</PixelButton><PixelButton onClick={() => go("network")}>オンライン試験</PixelButton><PixelButton onClick={() => go("battle")}>プラクティスへ</PixelButton></footer>
+    <footer><PixelButton onClick={() => go("start")}>タイトルへ</PixelButton><PixelButton onClick={() => go("rooms")}>オンライン試験</PixelButton><PixelButton onClick={() => go("battle")}>プラクティスへ</PixelButton></footer>
   </section>;
 };
 const Settings = ({ onBack }: { readonly onBack: () => void }) => {

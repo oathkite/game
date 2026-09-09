@@ -45,7 +45,7 @@ PRの統合先はcodex/2d-update。本番mainへの反映は依頼されてい�
 
 ## 次の継続で優先すること
 
-1. 正式ロビーの部屋分離、任意チーム編成、ready、loadout固定。固定8席labを完成版とは表示しない。
+1. room gatewayと新UIの接続は完了。次は照準の逐次同期、風とマップ選択、公開用map/永続化。固定8席labとメモリ内roomを公開完成版とは表示しない。
 2. match.setupへruleSetVersionと各人のloadoutを固定し、操作中の照準を同期する。impact tick再生と射撃時の角度/武器はworld-ui側で接続済み。
 3. 予測補正、永続化、正式再接続/切断脱落、全マップ編成・最大逆風での到達性。
 4. 生成素材の配信用最適化とproduction pack登録。実機、低速回線、負荷試験、多地域配備、通報運用。
@@ -80,3 +80,9 @@ PreparedMatch→BattleSessionへloadoutとruleSetVersionを渡し、選択した
 engine104/server45/protocol22、workspace typecheck成功。詳細docs/design/28-lobby-preparation.md。
 **次はWebSocketでの部屋分離と新UIの部屋操作。今回のロビー基盤はまだ画面/通信へ接続していない。**
 最新作業はgame-world-uiにあり、lab replay packetはshot.weaponを使う。リセット0/2。本番未反映。
+
+07:08追加（起床後の継続）：DEV room gateway8795と新UIを接続。作成/6桁code参加/チーム/装備/ready/対戦/結果/準備復帰を実装。
+複数部屋の状態・配信分離、権限、60秒token復帰、owner退出後の権限移譲を実WebSocketで検証。
+PC+mobileの2ブラウザ縦断、装備変更のready解除、667×375主要操作44pxを確認。world5/fixed-network1も成功。
+server46/client165、型チェック/build成功。設計28章に起動方法と制限を記録。serverは8794(lab)と8795(rooms)、UI5186。
+リセット0/2。本番未反映。部屋はメモリ内で再起動時に消える。公開永続化とマップ/風は次工程。

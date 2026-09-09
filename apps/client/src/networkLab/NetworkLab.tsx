@@ -1,3 +1,4 @@
+import { DEFAULT_LOADOUT, WEAPON_LABELS } from "@game/protocol";
 import { useEffect, useRef, useState } from "react";
 import { labOutputSchema, type LabFrame } from "@game/protocol/v2-lab";
 import { NetworkField } from "@/worldUi/NetworkField";
@@ -6,8 +7,10 @@ import { createRemoteMotion } from "./remoteMotion";
 import "./networkLab.css";
 
 type Position = { readonly playerId: string; readonly x: number; readonly y: number };
-export const NetworkLab = ({ worldArt = false, onExit }: { readonly worldArt?: boolean; readonly onExit?: () => void }) => {
+export type RoomConnection = { readonly socket: WebSocket; readonly playerId: string; readonly frame: LabFrame };
+export const NetworkLab = ({ worldArt = false, onExit, connection }: { readonly worldArt?: boolean; readonly onExit?: () => void; readonly connection?: RoomConnection }) => {
   const [status, setStatus] = useState("接続中"), [playerId, setPlayerId] = useState("");
+  const [slot, setSlot] = useState<0 | 1>(0);
   const [elevation, setElevation] = useState(45), [power, setPower] = useState(50);
   const [frame, setFrame] = useState<LabFrame | null>(null), [positions, setPositions] = useState<Position[]>([]);
   const [serverNow, setServerNow] = useState(0);
@@ -15,19 +18,18 @@ export const NetworkLab = ({ worldArt = false, onExit }: { readonly worldArt?: b
   const socket = useRef<WebSocket | null>(null), latest = useRef<LabFrame | null>(null);
   const sequence = useRef(0), commandId = useRef(0), pending = useRef(false);
   useEffect(() => {
-    const ws = new WebSocket(`ws://${location.hostname}:8794`);
+    const ws = connection?.socket ?? new WebSocket(`ws://${location.hostname}:8794`);
     socket.current = ws;
     const motion = new Map<string, ReturnType<typeof createRemoteMotion>>();
-    let ownId = "", active = true, animation = 0;
-    ws.onopen = () => {
+    let ownId = connection?.playerId ?? "", active = true, animation = 0;
+    if (connection) { setPlayerId(ownId); setStatus("接続済み"); }
+    if (!connection) ws.onopen = () => {
       if (!active) return;
       const token = sessionStorage.getItem("keropod.network-lab-token");
       ws.send(JSON.stringify({ type: "lab.join", ...(token ? { token } : {}) }));
     };
-    ws.onmessage = event => {
+    const receive = (raw: unknown) => {
       if (!active) return;
-      let raw: unknown;
-      try { raw = JSON.parse(String(event.data)); } catch { return; }
       const result = labOutputSchema.safeParse(raw); if (!result.success) return;
       const message = result.data;
       if (message.type === "lab.welcome") {
@@ -52,16 +54,19 @@ export const NetworkLab = ({ worldArt = false, onExit }: { readonly worldArt?: b
         }
       }
     };
-    ws.onclose = () => { if (active) { setStatus("切断：再読み込みで復帰"); pending.current = false; } };
-    ws.onerror = () => { if (active) setStatus("接続に失敗しました"); };
+    const closed = () => { if (active) { setStatus("切断：再読み込みで復帰"); pending.current = false; } };
+    const failed = () => { if (active) setStatus("接続に失敗しました"); };
+    const message = (event: MessageEvent) => { try { receive(JSON.parse(String(event.data))); } catch { return; } };
+    ws.addEventListener("message", message); ws.addEventListener("close", closed); ws.addEventListener("error", failed);
+    if (connection) receive(connection.frame);
     const draw = (): void => {
       setServerNow(clock.current.time + performance.now() - clock.current.received);
       setPositions([...motion.entries()].flatMap(([id, buffer]) => { const p = buffer.at(performance.now()); return p ? [{ playerId: id, ...p }] : []; }));
       animation = requestAnimationFrame(draw);
     };
     animation = requestAnimationFrame(draw);
-    return () => { active = false; cancelAnimationFrame(animation); ws.close(); socket.current = null; };
-  }, []);
+    return () => { active = false; cancelAnimationFrame(animation); ws.removeEventListener("message", message); ws.removeEventListener("close", closed); ws.removeEventListener("error", failed); if (!connection) ws.close(); socket.current = null; };
+  }, [connection]);
   const move = (direction: -1 | 1): void => {
     const current = latest.current, ws = socket.current;
     if (!current || current.actorId !== playerId || !ws || ws.readyState !== WebSocket.OPEN || pending.current) return;
@@ -75,25 +80,27 @@ export const NetworkLab = ({ worldArt = false, onExit }: { readonly worldArt?: b
     pending.current = true;
     ws.send(JSON.stringify({ version: 2, type: "turn.fire", matchId: current.matchId, turnId: current.turnId,
       commandId: `fire-${playerId}-${++commandId.current}-${Date.now()}`, ackMoveSeq: sequence.current,
-      slot: 0, facing: current.movement.facing, elevation, power }));
+      slot, facing: current.movement.facing, elevation, power }));
   };
   const action = (type: "lab.rematch" | "lab.surrender"): void => {
     if (frame && socket.current?.readyState === WebSocket.OPEN) socket.current.send(JSON.stringify({ type, matchId: frame.matchId }));
   };
   const presentation = frame ? presentLabReplay(frame, serverNow) : null;
   const shownPlayers = frame?.phase === "replaying" ? presentation!.players : positions.map(p => ({ ...frame!.players.find(player => player.playerId === p.playerId)!, ...p }));
+  const loadout = frame?.players.find(p => p.playerId === playerId)?.loadout ?? DEFAULT_LOADOUT;
   const phaseLabel = frame?.phase === "replaying" ? "射撃を再生中" : frame?.phase === "finished" ? "対戦終了" : "操作中";
   const canAct = (!worldArt || innerWidth > innerHeight) && frame?.phase === "acting" && frame.actorId === playerId && socket.current?.readyState === WebSocket.OPEN;
   if (worldArt) return <main className="network-lab network-world">
-    <header><div><strong>KEROPOD</strong><small>オンライン試験・固定8席・標準砲</small></div><span>あなた <b data-testid="identity">{playerId || "未割当"}</b></span><span>手番 {frame?.actorId ?? "—"}</span><strong data-testid="phase">{phaseLabel}</strong><span>{frame?.phase === "acting" ? Math.max(0, Math.ceil((frame.deadlineAt - serverNow) / 1000)) : "—"}</span><button onClick={onExit}>ロビーに戻る</button></header>
-    {frame && presentation ? <NetworkField frame={frame} players={shownPlayers} presentation={presentation} elevation={elevation} ownId={playerId} /> : <p role="status">{status}</p>}
+    <header><div><strong>KEROPOD</strong><small>{connection ? "カスタム対戦" : "オンライン試験・固定8席・標準砲"}</small></div><span>あなた <b data-testid="identity">{(connection ? frame?.players.find(p => p.playerId === playerId)?.nickname : playerId) || "未割当"}</b></span><span>手番 {(connection ? frame?.players.find(p => p.playerId === frame.actorId)?.nickname : frame?.actorId) ?? "—"}</span><strong data-testid="phase">{phaseLabel}</strong><span>{frame?.phase === "acting" ? Math.max(0, Math.ceil((frame.deadlineAt - serverNow) / 1000)) : "—"}</span><button onClick={onExit}>ロビーに戻る</button></header>
+    {frame && presentation ? <NetworkField frame={frame} players={shownPlayers} presentation={presentation} elevation={elevation} ownId={playerId} selectedWeapon={loadout[slot]} /> : <p role="status">{status}</p>}
     <footer>
       <div className="network-move"><small>移動 {frame?.movement.stepsLeft ?? 30}</small><div><button disabled={!canAct} onClick={() => move(-1)} aria-label="左へ1歩">←</button><button disabled={!canAct} onClick={() => move(1)} aria-label="右へ1歩">→</button></div></div>
+      {connection && <select className="network-weapon" aria-label="射撃する装備" value={slot} disabled={!canAct} onChange={e => setSlot(Number(e.target.value) as 0 | 1)}>{loadout.map((weapon, i) => <option value={i} key={i}>{WEAPON_LABELS[weapon]}</option>)}</select>}
       <label>角度 {elevation}°<input aria-label="射撃角度" type="range" min="10" max="90" value={elevation} onChange={e => setElevation(Number(e.target.value))} /></label>
       <label>パワー {power}<input aria-label="射撃パワー" type="range" min="0" max="100" value={power} onChange={e => setPower(Number(e.target.value))} /></label>
       <button disabled={!canAct} onClick={fire}>発射</button><button disabled={!frame || frame.phase === "finished"} onClick={() => action("lab.surrender")}>降参</button>
     </footer>
-    {frame?.phase === "finished" && <section className="network-finished"><h2>{frame.result.type === "win" ? `${frame.result.teamId === "t0" ? "A" : "B"}チームの勝利` : "引き分け"}</h2><button onClick={() => action("lab.rematch")}>再戦する</button><button onClick={onExit}>ロビーに戻る</button></section>}
+    {frame?.phase === "finished" && <section className="network-finished"><h2>{frame.result.type === "win" ? `${String.fromCharCode(65 + Number(frame.result.teamId.slice(1)))}チームの勝利` : "引き分け"}</h2><button onClick={() => action("lab.rematch")}>{connection ? "部屋へ戻る（オーナー）" : "再戦する"}</button><button onClick={onExit}>ロビーに戻る</button></section>}
     {status === "invalid-session" && <div className="network-finished"><p>接続の有効期限が切れました。</p><button onClick={() => { sessionStorage.removeItem("keropod.network-lab-token"); location.reload(); }}>新しい接続で参加</button></div>}
     <div className="network-portrait"><h2>横向きでプレイしよう</h2><p>端末を回転するとフィールドと操作が見やすくなります。</p><button onClick={onExit}>ロビーに戻る</button></div>
     {status.startsWith("切断") && <p className="network-connection" role="status">切断されました。再読み込みで復帰できます。</p>}
@@ -116,7 +123,7 @@ export const NetworkLab = ({ worldArt = false, onExit }: { readonly worldArt?: b
       <button disabled={frame?.phase !== "acting" || frame?.actorId !== playerId || !playerId} onClick={fire}>発射</button>
       <button disabled={!frame || frame.phase === "finished"} onClick={() => action("lab.surrender")}>降参</button></div>
     <p data-testid="phase">{frame?.phase === "replaying" ? "射撃を再生中" : frame?.phase === "finished" ? "対戦終了" : "操作中"}</p>
-    {frame?.phase === "finished" && <section><h2>{frame.result.type === "win" ? `${frame.result.teamId} の勝利` : "引き分け"}</h2><button onClick={() => action("lab.rematch")}>再戦する</button></section>}
+    {frame?.phase === "finished" && <section><h2>{frame.result.type === "win" ? `${frame.result.teamId} の勝利` : "引き分け"}</h2><button onClick={() => action("lab.rematch")}>{connection ? "部屋へ戻る（オーナー）" : "再戦する"}</button></section>}
     <p>残り {frame?.movement.stepsLeft ?? 30} 歩 ／ 確定入力 {frame?.movement.ackMoveSeq ?? 0}</p>
     {status === "invalid-session" && <button onClick={() => { sessionStorage.removeItem("keropod.network-lab-token"); location.reload(); }}>新しい接続で参加</button>}
     <p>相手は125ms補間。固定8席の開発用対戦。ロビーと最終アートは未接続です。</p>

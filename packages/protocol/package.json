@@ -6,7 +6,8 @@
   "exports": {
     ".": "./src/index.ts",
     "./v2": "./src/v2.ts",
-    "./v2-lab": "./src/v2Lab.ts"
+    "./v2-lab": "./src/v2Lab.ts",
+    "./v2-rooms": "./src/v2Rooms.ts"
   },
   "scripts": {
     "test": "vitest run",
