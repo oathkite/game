@@ -8,21 +8,24 @@
   },
   "model": "gpt-image-2.5-sunburst",
   "composition": "integrated",
+  "paletteColors": 16,
+  "outlineColor": "#000000",
   "view": "front-three-quarter-right",
   "frameSize": [
-    192,
-    224
+    96,
+    112
   ],
   "frameCount": 12,
   "foot": [
-    96,
-    208
+    48,
+    104
   ],
-  "scale": 0.4,
+  "scale": 0.2,
   "poses": [
     {
       "id": "neutral",
       "label": "待機",
+      "action": "idle",
       "frame": 0,
       "clip": {
         "frames": [
@@ -43,6 +46,7 @@
     {
       "id": "happy",
       "label": "喜ぶ",
+      "action": "banzai-jump",
       "frame": 4,
       "clip": {
         "frames": [
@@ -52,10 +56,10 @@
           7
         ],
         "durations": [
-          280,
           200,
-          380,
-          260
+          150,
+          220,
+          230
         ],
         "loop": true
       }
@@ -63,6 +67,7 @@
     {
       "id": "sad",
       "label": "悲しむ",
+      "action": "seated-disappointment",
       "frame": 8,
       "clip": {
         "frames": [
@@ -98,22 +103,23 @@
           512
         ],
         "sourceBounds": [
-          297,
-          63,
-          277,
-          439
+          337,
+          47,
+          284,
+          448
         ],
         "outputSize": [
-          111,
-          176
+          57,
+          90
         ],
         "outputOrigin": [
-          34,
-          32
+          17,
+          14
         ],
-        "scale": 0.4,
-        "sourceSheet": "idle-animation",
-        "sourceHash": "e098ef04cab77b971da76475a3569be894b7c3b9b19ae22084953c0f7365a0b3"
+        "footLift": 0,
+        "scale": 0.2,
+        "sourceSheet": "idle-final",
+        "sourceHash": "7b98fd95192eccf649f47aec5f0220182f8b66a5437d14eeaca00b9f6b1781bc"
       },
       {
         "region": [
@@ -123,122 +129,23 @@
           512
         ],
         "sourceBounds": [
-          959,
-          63,
-          275,
-          439
+          945,
+          47,
+          284,
+          448
         ],
         "outputSize": [
-          110,
-          176
+          57,
+          90
         ],
         "outputOrigin": [
-          35,
-          32
+          17,
+          14
         ],
-        "scale": 0.4,
-        "sourceSheet": "idle-animation",
-        "sourceHash": "e098ef04cab77b971da76475a3569be894b7c3b9b19ae22084953c0f7365a0b3"
-      },
-      {
-        "region": [
-          0,
-          512,
-          768,
-          512
-        ],
-        "sourceBounds": [
-          297,
-          546,
-          277,
-          437
-        ],
-        "outputSize": [
-          111,
-          175
-        ],
-        "outputOrigin": [
-          34,
-          33
-        ],
-        "scale": 0.4,
-        "sourceSheet": "idle-animation",
-        "sourceHash": "e098ef04cab77b971da76475a3569be894b7c3b9b19ae22084953c0f7365a0b3"
-      },
-      {
-        "region": [
-          768,
-          512,
-          768,
-          512
-        ],
-        "sourceBounds": [
-          959,
-          548,
-          275,
-          436
-        ],
-        "outputSize": [
-          110,
-          174
-        ],
-        "outputOrigin": [
-          35,
-          34
-        ],
-        "scale": 0.4,
-        "sourceSheet": "idle-animation",
-        "sourceHash": "e098ef04cab77b971da76475a3569be894b7c3b9b19ae22084953c0f7365a0b3"
-      },
-      {
-        "region": [
-          0,
-          0,
-          768,
-          512
-        ],
-        "sourceBounds": [
-          319,
-          54,
-          267,
-          439
-        ],
-        "outputSize": [
-          107,
-          176
-        ],
-        "outputOrigin": [
-          40,
-          32
-        ],
-        "scale": 0.4,
-        "sourceSheet": "happy-animation",
-        "sourceHash": "4e5caff1f48ff1c16f1d70447a9ee92e81eb1903ad53ba96fc8565953a67d241"
-      },
-      {
-        "region": [
-          768,
-          0,
-          768,
-          512
-        ],
-        "sourceBounds": [
-          962,
-          54,
-          280,
-          439
-        ],
-        "outputSize": [
-          112,
-          176
-        ],
-        "outputOrigin": [
-          38,
-          32
-        ],
-        "scale": 0.4,
-        "sourceSheet": "happy-animation",
-        "sourceHash": "4e5caff1f48ff1c16f1d70447a9ee92e81eb1903ad53ba96fc8565953a67d241"
+        "footLift": 0,
+        "scale": 0.2,
+        "sourceSheet": "idle-final",
+        "sourceHash": "7b98fd95192eccf649f47aec5f0220182f8b66a5437d14eeaca00b9f6b1781bc"
       },
       {
         "region": [
@@ -248,22 +155,23 @@
           512
         ],
         "sourceBounds": [
-          330,
-          554,
-          269,
-          437
+          337,
+          535,
+          284,
+          449
         ],
         "outputSize": [
-          108,
-          175
+          57,
+          90
         ],
         "outputOrigin": [
-          43,
-          33
+          17,
+          14
         ],
-        "scale": 0.4,
-        "sourceSheet": "happy-animation",
-        "sourceHash": "4e5caff1f48ff1c16f1d70447a9ee92e81eb1903ad53ba96fc8565953a67d241"
+        "footLift": 0,
+        "scale": 0.2,
+        "sourceSheet": "idle-final",
+        "sourceHash": "7b98fd95192eccf649f47aec5f0220182f8b66a5437d14eeaca00b9f6b1781bc"
       },
       {
         "region": [
@@ -273,22 +181,23 @@
           512
         ],
         "sourceBounds": [
-          967,
-          554,
-          268,
-          437
+          945,
+          535,
+          284,
+          449
         ],
         "outputSize": [
-          107,
-          175
+          57,
+          90
         ],
         "outputOrigin": [
-          40,
-          33
+          17,
+          14
         ],
-        "scale": 0.4,
-        "sourceSheet": "happy-animation",
-        "sourceHash": "4e5caff1f48ff1c16f1d70447a9ee92e81eb1903ad53ba96fc8565953a67d241"
+        "footLift": 0,
+        "scale": 0.2,
+        "sourceSheet": "idle-final",
+        "sourceHash": "7b98fd95192eccf649f47aec5f0220182f8b66a5437d14eeaca00b9f6b1781bc"
       },
       {
         "region": [
@@ -298,22 +207,23 @@
           512
         ],
         "sourceBounds": [
-          350,
-          62,
-          273,
-          439
-        ],
-        "outputSize": [
+          349,
           109,
-          176
+          271,
+          382
+        ],
+        "outputSize": [
+          54,
+          76
         ],
         "outputOrigin": [
-          35,
-          32
+          20,
+          28
         ],
-        "scale": 0.4,
-        "sourceSheet": "sad-animation",
-        "sourceHash": "17d79d80cae689cca014c71515eaca060c3f2841005b9141600f34a22d654a96"
+        "footLift": 0,
+        "scale": 0.2,
+        "sourceSheet": "happy-final",
+        "sourceHash": "f8bff442a9127adeaebe1cc8c93ad038854b0b3087357e573916707d59c19936"
       },
       {
         "region": [
@@ -324,21 +234,22 @@
         ],
         "sourceBounds": [
           926,
-          82,
-          274,
+          56,
+          325,
           419
         ],
         "outputSize": [
-          110,
-          168
+          65,
+          84
         ],
         "outputOrigin": [
-          35,
-          40
+          18,
+          12
         ],
-        "scale": 0.4,
-        "sourceSheet": "sad-animation",
-        "sourceHash": "17d79d80cae689cca014c71515eaca060c3f2841005b9141600f34a22d654a96"
+        "footLift": 8,
+        "scale": 0.2,
+        "sourceSheet": "happy-final",
+        "sourceHash": "f8bff442a9127adeaebe1cc8c93ad038854b0b3087357e573916707d59c19936"
       },
       {
         "region": [
@@ -348,22 +259,23 @@
           512
         ],
         "sourceBounds": [
-          350,
-          563,
-          273,
-          417
+          308,
+          540,
+          340,
+          380
         ],
         "outputSize": [
-          109,
-          167
+          68,
+          76
         ],
         "outputOrigin": [
-          35,
-          41
+          14,
+          12
         ],
-        "scale": 0.4,
-        "sourceSheet": "sad-animation",
-        "sourceHash": "17d79d80cae689cca014c71515eaca060c3f2841005b9141600f34a22d654a96"
+        "footLift": 16,
+        "scale": 0.2,
+        "sourceSheet": "happy-final",
+        "sourceHash": "f8bff442a9127adeaebe1cc8c93ad038854b0b3087357e573916707d59c19936"
       },
       {
         "region": [
@@ -373,22 +285,127 @@
           512
         ],
         "sourceBounds": [
-          926,
-          551,
-          274,
-          429
+          931,
+          599,
+          330,
+          373
         ],
         "outputSize": [
-          110,
-          172
+          66,
+          75
         ],
         "outputOrigin": [
-          35,
-          36
+          14,
+          29
         ],
-        "scale": 0.4,
-        "sourceSheet": "sad-animation",
-        "sourceHash": "17d79d80cae689cca014c71515eaca060c3f2841005b9141600f34a22d654a96"
+        "footLift": 0,
+        "scale": 0.2,
+        "sourceSheet": "happy-final",
+        "sourceHash": "f8bff442a9127adeaebe1cc8c93ad038854b0b3087357e573916707d59c19936"
+      },
+      {
+        "region": [
+          0,
+          0,
+          768,
+          540
+        ],
+        "sourceBounds": [
+          273,
+          111,
+          415,
+          406
+        ],
+        "outputSize": [
+          75,
+          73
+        ],
+        "outputOrigin": [
+          4,
+          31
+        ],
+        "footLift": 0,
+        "scale": 0.18,
+        "sourceSheet": "sad-final",
+        "sourceHash": "72ab226f12ff924d4b75432476282eed08d3c6c58b6cd7e0678a638a8bcd3137"
+      },
+      {
+        "region": [
+          768,
+          0,
+          768,
+          540
+        ],
+        "sourceBounds": [
+          930,
+          161,
+          415,
+          356
+        ],
+        "outputSize": [
+          75,
+          64
+        ],
+        "outputOrigin": [
+          4,
+          40
+        ],
+        "footLift": 0,
+        "scale": 0.18,
+        "sourceSheet": "sad-final",
+        "sourceHash": "72ab226f12ff924d4b75432476282eed08d3c6c58b6cd7e0678a638a8bcd3137"
+      },
+      {
+        "region": [
+          0,
+          540,
+          768,
+          484
+        ],
+        "sourceBounds": [
+          273,
+          643,
+          414,
+          354
+        ],
+        "outputSize": [
+          75,
+          64
+        ],
+        "outputOrigin": [
+          4,
+          40
+        ],
+        "footLift": 0,
+        "scale": 0.18,
+        "sourceSheet": "sad-final",
+        "sourceHash": "72ab226f12ff924d4b75432476282eed08d3c6c58b6cd7e0678a638a8bcd3137"
+      },
+      {
+        "region": [
+          768,
+          540,
+          768,
+          484
+        ],
+        "sourceBounds": [
+          950,
+          600,
+          411,
+          397
+        ],
+        "outputSize": [
+          74,
+          71
+        ],
+        "outputOrigin": [
+          4,
+          33
+        ],
+        "footLift": 0,
+        "scale": 0.18,
+        "sourceSheet": "sad-final",
+        "sourceHash": "72ab226f12ff924d4b75432476282eed08d3c6c58b6cd7e0678a638a8bcd3137"
       }
     ]
   },

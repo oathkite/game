@@ -17,7 +17,7 @@
       "details": []
     },
     {
-      "name": "全コマの縮尺が共通",
+      "name": "各動作の全コマが共通縮尺",
       "pass": true,
       "details": []
     },
@@ -42,10 +42,10 @@
       "details": []
     },
     {
-      "name": "frame 0：足元が共通基準",
+      "name": "frame 0：接地・空中位置が登録通り",
       "pass": true,
       "details": [
-        207
+        103
       ]
     },
     {
@@ -54,10 +54,10 @@
       "details": []
     },
     {
-      "name": "frame 1：足元が共通基準",
+      "name": "frame 1：接地・空中位置が登録通り",
       "pass": true,
       "details": [
-        207
+        103
       ]
     },
     {
@@ -66,10 +66,10 @@
       "details": []
     },
     {
-      "name": "frame 2：足元が共通基準",
+      "name": "frame 2：接地・空中位置が登録通り",
       "pass": true,
       "details": [
-        207
+        103
       ]
     },
     {
@@ -78,10 +78,10 @@
       "details": []
     },
     {
-      "name": "frame 3：足元が共通基準",
+      "name": "frame 3：接地・空中位置が登録通り",
       "pass": true,
       "details": [
-        207
+        103
       ]
     },
     {
@@ -90,10 +90,10 @@
       "details": []
     },
     {
-      "name": "frame 4：足元が共通基準",
+      "name": "frame 4：接地・空中位置が登録通り",
       "pass": true,
       "details": [
-        207
+        103
       ]
     },
     {
@@ -102,10 +102,10 @@
       "details": []
     },
     {
-      "name": "frame 5：足元が共通基準",
+      "name": "frame 5：接地・空中位置が登録通り",
       "pass": true,
       "details": [
-        207
+        95
       ]
     },
     {
@@ -114,10 +114,10 @@
       "details": []
     },
     {
-      "name": "frame 6：足元が共通基準",
+      "name": "frame 6：接地・空中位置が登録通り",
       "pass": true,
       "details": [
-        207
+        87
       ]
     },
     {
@@ -126,10 +126,10 @@
       "details": []
     },
     {
-      "name": "frame 7：足元が共通基準",
+      "name": "frame 7：接地・空中位置が登録通り",
       "pass": true,
       "details": [
-        207
+        103
       ]
     },
     {
@@ -138,10 +138,10 @@
       "details": []
     },
     {
-      "name": "frame 8：足元が共通基準",
+      "name": "frame 8：接地・空中位置が登録通り",
       "pass": true,
       "details": [
-        207
+        103
       ]
     },
     {
@@ -150,10 +150,10 @@
       "details": []
     },
     {
-      "name": "frame 9：足元が共通基準",
+      "name": "frame 9：接地・空中位置が登録通り",
       "pass": true,
       "details": [
-        207
+        103
       ]
     },
     {
@@ -162,10 +162,10 @@
       "details": []
     },
     {
-      "name": "frame 10：足元が共通基準",
+      "name": "frame 10：接地・空中位置が登録通り",
       "pass": true,
       "details": [
-        207
+        103
       ]
     },
     {
@@ -174,10 +174,10 @@
       "details": []
     },
     {
-      "name": "frame 11：足元が共通基準",
+      "name": "frame 11：接地・空中位置が登録通り",
       "pass": true,
       "details": [
-        207
+        103
       ]
     },
     {

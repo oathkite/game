@@ -105,7 +105,33 @@
       "prompt": "prompts/idle-animation.txt",
       "sha256": "e098ef04cab77b971da76475a3569be894b7c3b9b19ae22084953c0f7365a0b3",
       "promptSha256": "588b4ee48e8a6436a3191e2300329227a8e0c5346a6dea490cfab653b2ca681a",
-      "usedInCurrentExport": true,
+      "usedInCurrentExport": false,
+      "inputs": [
+        {
+          "path": "assets/workbench/avatar-kita-v1/generated/kita-reference.png",
+          "sha256": "4bb9b6080d1868e272b8835645e6b840f713a9b838b03589dcf515c1b6ee48f4"
+        }
+      ]
+    },
+    {
+      "file": "generated/happy-subtle.png",
+      "prompt": "prompts/happy-subtle.txt",
+      "sha256": "4e5caff1f48ff1c16f1d70447a9ee92e81eb1903ad53ba96fc8565953a67d241",
+      "promptSha256": "bb262958288fe5d477ddc6b7c6c8321f180579b41c9771ed6181278c89df14a0",
+      "usedInCurrentExport": false,
+      "inputs": [
+        {
+          "path": "assets/workbench/avatar-kita-v1/generated/kita-reference.png",
+          "sha256": "4bb9b6080d1868e272b8835645e6b840f713a9b838b03589dcf515c1b6ee48f4"
+        }
+      ]
+    },
+    {
+      "file": "generated/sad-subtle.png",
+      "prompt": "prompts/sad-subtle.txt",
+      "sha256": "17d79d80cae689cca014c71515eaca060c3f2841005b9141600f34a22d654a96",
+      "promptSha256": "250ff3eab4db2c6f4d7582ce09d4e43b247bd007719da1d45a04219f46ce3369",
+      "usedInCurrentExport": false,
       "inputs": [
         {
           "path": "assets/workbench/avatar-kita-v1/generated/kita-reference.png",
@@ -116,9 +142,9 @@
     {
       "file": "generated/happy-animation.png",
       "prompt": "prompts/happy-animation.txt",
-      "sha256": "4e5caff1f48ff1c16f1d70447a9ee92e81eb1903ad53ba96fc8565953a67d241",
-      "promptSha256": "bb262958288fe5d477ddc6b7c6c8321f180579b41c9771ed6181278c89df14a0",
-      "usedInCurrentExport": true,
+      "sha256": "d3fa21db46dfd1222aefdb1910cb61f5ccadd893af03e4ec83aa34b5f1ba4eaa",
+      "promptSha256": "441a367146735f20df3d5682db32b9e6b80ad5981d89d07b0a5432ed9ae9b9f6",
+      "usedInCurrentExport": false,
       "inputs": [
         {
           "path": "assets/workbench/avatar-kita-v1/generated/kita-reference.png",
@@ -129,13 +155,142 @@
     {
       "file": "generated/sad-animation.png",
       "prompt": "prompts/sad-animation.txt",
-      "sha256": "17d79d80cae689cca014c71515eaca060c3f2841005b9141600f34a22d654a96",
-      "promptSha256": "250ff3eab4db2c6f4d7582ce09d4e43b247bd007719da1d45a04219f46ce3369",
-      "usedInCurrentExport": true,
+      "sha256": "2138aa8f5196fb37eb743e31ee65727b6d846d5212d13989b7c1bdb242f7d210",
+      "promptSha256": "d1146aff3fe9e83d08aec976f35d9b72af882efcd9e1bd3dac56168255b05221",
+      "usedInCurrentExport": false,
       "inputs": [
         {
           "path": "assets/workbench/avatar-kita-v1/generated/kita-reference.png",
           "sha256": "4bb9b6080d1868e272b8835645e6b840f713a9b838b03589dcf515c1b6ee48f4"
+        }
+      ]
+    },
+    {
+      "file": "generated/idle-coarse.png",
+      "prompt": "prompts/idle-coarse.txt",
+      "sha256": "6c90ec61dec3cee9cdd17a691097d009328b847b1f5ae064f7acd181589f486d",
+      "promptSha256": "4eb8fa71edccc8d919442e8702b871135459e92c794cf97b2c7ae4c29b21bf00",
+      "usedInCurrentExport": false,
+      "inputs": [
+        {
+          "path": "assets/workbench/avatar-kita-v1/generated/kita-reference.png",
+          "sha256": "4bb9b6080d1868e272b8835645e6b840f713a9b838b03589dcf515c1b6ee48f4"
+        }
+      ]
+    },
+    {
+      "file": "generated/idle-tank-style.png",
+      "prompt": "prompts/idle-tank-style.txt",
+      "sha256": "6682e24f624d83ca8b5b92fc84e40df9bbbb1beaa137f60af948cd76c80dd005",
+      "promptSha256": "f955b12b5792b8fe2bc9b10c0a8af09a268888012252f9a9ab28fc01d5bd544c",
+      "usedInCurrentExport": false,
+      "inputs": [
+        {
+          "path": "assets/workbench/avatar-kita-v1/generated/kita-reference.png",
+          "sha256": "4bb9b6080d1868e272b8835645e6b840f713a9b838b03589dcf515c1b6ee48f4"
+        },
+        {
+          "path": "assets/workbench/avatar-kita-v1/generated/tank-reference.png",
+          "sha256": "9de235f016333cccf2f5d71e54ac12d33bbb4da87638aa1f107f417a3f6b0919"
+        }
+      ]
+    },
+    {
+      "file": "generated/idle-final.png",
+      "prompt": "prompts/black-contour.txt",
+      "sha256": "7b98fd95192eccf649f47aec5f0220182f8b66a5437d14eeaca00b9f6b1781bc",
+      "promptSha256": "6d4d65cfbf9b38851b0d4a09a10e03cd24b84d125315e299a422c307425ef194",
+      "usedInCurrentExport": true,
+      "inputs": [
+        {
+          "path": "assets/workbench/avatar-kita-v1/generated/idle-tank-style.png",
+          "sha256": "6682e24f624d83ca8b5b92fc84e40df9bbbb1beaa137f60af948cd76c80dd005"
+        }
+      ]
+    },
+    {
+      "file": "generated/happy-coarse.png",
+      "prompt": "prompts/happy-coarse.txt",
+      "sha256": "b151e74bc1ecac84ba47ec07fe41c13cb4c4f1aefbd6efa87f3e437ca5a7d8fb",
+      "promptSha256": "ccd3309392b500599dd602b848fb1d3796d2639b685117f5aa557ea4b88506f6",
+      "usedInCurrentExport": false,
+      "inputs": [
+        {
+          "path": "assets/workbench/avatar-kita-v1/generated/kita-reference.png",
+          "sha256": "4bb9b6080d1868e272b8835645e6b840f713a9b838b03589dcf515c1b6ee48f4"
+        }
+      ]
+    },
+    {
+      "file": "generated/happy-tank-style.png",
+      "prompt": "prompts/happy-tank-style.txt",
+      "sha256": "a2437a93e480260052992631256b8df784e6dc072b46e41cf18f72e7845cf089",
+      "promptSha256": "bc5b1d89ed1e22b143f0795e65837c7f266206f13ab4865ae58f026f10df9a35",
+      "usedInCurrentExport": false,
+      "inputs": [
+        {
+          "path": "assets/workbench/avatar-kita-v1/generated/kita-reference.png",
+          "sha256": "4bb9b6080d1868e272b8835645e6b840f713a9b838b03589dcf515c1b6ee48f4"
+        },
+        {
+          "path": "assets/workbench/avatar-kita-v1/generated/tank-reference.png",
+          "sha256": "9de235f016333cccf2f5d71e54ac12d33bbb4da87638aa1f107f417a3f6b0919"
+        }
+      ]
+    },
+    {
+      "file": "generated/happy-final.png",
+      "prompt": "prompts/black-contour.txt",
+      "sha256": "f8bff442a9127adeaebe1cc8c93ad038854b0b3087357e573916707d59c19936",
+      "promptSha256": "6d4d65cfbf9b38851b0d4a09a10e03cd24b84d125315e299a422c307425ef194",
+      "usedInCurrentExport": true,
+      "inputs": [
+        {
+          "path": "assets/workbench/avatar-kita-v1/generated/happy-tank-style.png",
+          "sha256": "a2437a93e480260052992631256b8df784e6dc072b46e41cf18f72e7845cf089"
+        }
+      ]
+    },
+    {
+      "file": "generated/sad-coarse.png",
+      "prompt": "prompts/sad-coarse.txt",
+      "sha256": "6b96207faac0c7d4b7c1fb1b69a09fbddf1b61e04153c7ede80cee5d0fb0f3f9",
+      "promptSha256": "4516a246be45181febeaeb962704cffe03f1a71cc9fc513bc853373c5003aef7",
+      "usedInCurrentExport": false,
+      "inputs": [
+        {
+          "path": "assets/workbench/avatar-kita-v1/generated/kita-reference.png",
+          "sha256": "4bb9b6080d1868e272b8835645e6b840f713a9b838b03589dcf515c1b6ee48f4"
+        }
+      ]
+    },
+    {
+      "file": "generated/sad-tank-style.png",
+      "prompt": "prompts/sad-tank-style.txt",
+      "sha256": "709254a6eddffaf370a427a09ef939d78d1b0746fa3c4234d6a875a1f62cf360",
+      "promptSha256": "6d5a71591abc9f4d0216e4dc51262c818a00a854ad5250a3ff5fa488baaad011",
+      "usedInCurrentExport": false,
+      "inputs": [
+        {
+          "path": "assets/workbench/avatar-kita-v1/generated/kita-reference.png",
+          "sha256": "4bb9b6080d1868e272b8835645e6b840f713a9b838b03589dcf515c1b6ee48f4"
+        },
+        {
+          "path": "assets/workbench/avatar-kita-v1/generated/tank-reference.png",
+          "sha256": "9de235f016333cccf2f5d71e54ac12d33bbb4da87638aa1f107f417a3f6b0919"
+        }
+      ]
+    },
+    {
+      "file": "generated/sad-final.png",
+      "prompt": "prompts/black-contour.txt",
+      "sha256": "72ab226f12ff924d4b75432476282eed08d3c6c58b6cd7e0678a638a8bcd3137",
+      "promptSha256": "6d4d65cfbf9b38851b0d4a09a10e03cd24b84d125315e299a422c307425ef194",
+      "usedInCurrentExport": true,
+      "inputs": [
+        {
+          "path": "assets/workbench/avatar-kita-v1/generated/sad-tank-style.png",
+          "sha256": "709254a6eddffaf370a427a09ef939d78d1b0746fa3c4234d6a875a1f62cf360"
         }
       ]
     }
@@ -148,5 +303,10 @@
       "purpose": "Same glasses and scarf source and export scales as game pilot",
       "usedInCurrentExport": false
     }
-  ]
+  ],
+  "styleReference": {
+    "file": "generated/tank-reference.png",
+    "source": "live baseline-v2 asset-lab renderer",
+    "sha256": "9de235f016333cccf2f5d71e54ac12d33bbb4da87638aa1f107f417a3f6b0919"
+  }
 }

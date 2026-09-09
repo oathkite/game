@@ -20,3 +20,8 @@ test('animation format rejects missing or non-positive frame durations',()=>{
  const {m,images}=make();m.poses[1].clip.durations[0]=0;
  assert.ok(portraitChecks(m,images).some(c=>!c.pass));
 });
+
+test('airborne frame must match its registered height rather than stick to ground',()=>{
+ const {m,images}=make();m.metrics.character[1].footLift=5;
+ assert.ok(portraitChecks(m,images).some(c=>!c.pass));
+});

@@ -1,7 +1,7 @@
 {
   "frames": [
     {
-      "sheet": "idle-animation",
+      "sheet": "idle-final",
       "region": [
         0,
         0,
@@ -9,12 +9,13 @@
         512
       ],
       "sourceFoot": [
-        451,
-        502
-      ]
+        491,
+        495
+      ],
+      "footLift": 0
     },
     {
-      "sheet": "idle-animation",
+      "sheet": "idle-final",
       "region": [
         768,
         0,
@@ -22,12 +23,13 @@
         512
       ],
       "sourceFoot": [
-        1111,
-        502
-      ]
+        1098,
+        495
+      ],
+      "footLift": 0
     },
     {
-      "sheet": "idle-animation",
+      "sheet": "idle-final",
       "region": [
         0,
         512,
@@ -35,64 +37,13 @@
         512
       ],
       "sourceFoot": [
-        451,
-        983
-      ]
-    },
-    {
-      "sheet": "idle-animation",
-      "region": [
-        768,
-        512,
-        768,
-        512
-      ],
-      "sourceFoot": [
-        1111,
+        491,
         984
-      ]
-    },
-    {
-      "sheet": "happy-animation",
-      "region": [
-        0,
-        0,
-        768,
-        512
       ],
-      "sourceFoot": [
-        460,
-        493
-      ]
+      "footLift": 0
     },
     {
-      "sheet": "happy-animation",
-      "region": [
-        768,
-        0,
-        768,
-        512
-      ],
-      "sourceFoot": [
-        1108,
-        493
-      ]
-    },
-    {
-      "sheet": "happy-animation",
-      "region": [
-        0,
-        512,
-        768,
-        512
-      ],
-      "sourceFoot": [
-        463,
-        991
-      ]
-    },
-    {
-      "sheet": "happy-animation",
+      "sheet": "idle-final",
       "region": [
         768,
         512,
@@ -100,12 +51,13 @@
         512
       ],
       "sourceFoot": [
-        1108,
-        991
-      ]
+        1099,
+        984
+      ],
+      "footLift": 0
     },
     {
-      "sheet": "sad-animation",
+      "sheet": "happy-final",
       "region": [
         0,
         0,
@@ -113,12 +65,13 @@
         512
       ],
       "sourceFoot": [
-        503,
-        501
-      ]
+        489,
+        491
+      ],
+      "footLift": 0
     },
     {
-      "sheet": "sad-animation",
+      "sheet": "happy-final",
       "region": [
         768,
         0,
@@ -126,12 +79,13 @@
         512
       ],
       "sourceFoot": [
-        1079,
-        501
-      ]
+        1077,
+        475
+      ],
+      "footLift": 8
     },
     {
-      "sheet": "sad-animation",
+      "sheet": "happy-final",
       "region": [
         0,
         512,
@@ -139,12 +93,13 @@
         512
       ],
       "sourceFoot": [
-        503,
-        980
-      ]
+        479,
+        920
+      ],
+      "footLift": 16
     },
     {
-      "sheet": "sad-animation",
+      "sheet": "happy-final",
       "region": [
         768,
         512,
@@ -152,15 +107,73 @@
         512
       ],
       "sourceFoot": [
-        1079,
-        980
-      ]
+        1103,
+        972
+      ],
+      "footLift": 0
+    },
+    {
+      "sheet": "sad-final",
+      "region": [
+        0,
+        0,
+        768,
+        540
+      ],
+      "sourceFoot": [
+        517,
+        517
+      ],
+      "footLift": 0
+    },
+    {
+      "sheet": "sad-final",
+      "region": [
+        768,
+        0,
+        768,
+        540
+      ],
+      "sourceFoot": [
+        1175,
+        517
+      ],
+      "footLift": 0
+    },
+    {
+      "sheet": "sad-final",
+      "region": [
+        0,
+        540,
+        768,
+        484
+      ],
+      "sourceFoot": [
+        517,
+        997
+      ],
+      "footLift": 0
+    },
+    {
+      "sheet": "sad-final",
+      "region": [
+        768,
+        540,
+        768,
+        484
+      ],
+      "sourceFoot": [
+        1193,
+        997
+      ],
+      "footLift": 0
     }
   ],
   "poses": [
     {
       "id": "neutral",
       "label": "待機",
+      "action": "idle",
       "frame": 0,
       "clip": {
         "frames": [
@@ -181,6 +194,7 @@
     {
       "id": "happy",
       "label": "喜ぶ",
+      "action": "banzai-jump",
       "frame": 4,
       "clip": {
         "frames": [
@@ -190,10 +204,10 @@
           7
         ],
         "durations": [
-          280,
           200,
-          380,
-          260
+          150,
+          220,
+          230
         ],
         "loop": true
       }
@@ -201,6 +215,7 @@
     {
       "id": "sad",
       "label": "悲しむ",
+      "action": "seated-disappointment",
       "frame": 8,
       "clip": {
         "frames": [
@@ -218,5 +233,10 @@
         "loop": true
       }
     }
-  ]
+  ],
+  "sourceScales": {
+    "idle-final": 0.2,
+    "happy-final": 0.2,
+    "sad-final": 0.18
+  }
 }

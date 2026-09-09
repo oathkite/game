@@ -1,5 +1,5 @@
 import {createRequire} from 'node:module';
-import {mkdirSync} from 'node:fs';
+import {mkdirSync,copyFileSync} from 'node:fs';
 const {chromium}=createRequire(new URL('../../apps/e2e/package.json',import.meta.url))('@playwright/test');
 const out='assets/previews/avatar-kita-v1';mkdirSync(out,{recursive:true});
 const browser=await chromium.launch();
@@ -35,5 +35,21 @@ try{
   }
  });
  await page.screenshot({path:out+'/frames.png',fullPage:true});
- console.log('Portrait desktop, mobile, poses and all 12 frames captured.');
+ await page.setViewportSize({width:1200,height:420});
+ await page.evaluate(async()=>{
+  const {loadPortrait}=await import('/avatar-renderer.mjs'),avatar=await loadPortrait();
+  const {loadPack,render}=await import('/renderer.mjs'),tank=await loadPack();
+  document.body.replaceChildren();document.body.style.cssText='margin:0;padding:0;background:#203746';
+  const canvas=document.createElement('canvas');canvas.style.cssText='width:1200px;height:420px;display:block';document.body.append(canvas);
+  render(tank,canvas,{state:'idle',weapon:'cannon',primary:'#ffc345',secondary:'#ed8244',glasses:true,scarf:true,hp:100,angle:10,facing:1,zoom:1,slope:0},0);
+  const ctx=canvas.getContext('2d'),scale=2,[w,h]=avatar.manifest.frameSize;
+  const atlas=avatar.images.get('character').bitmap;
+  for(const [i,pose]of avatar.manifest.poses.entries()){
+   ctx.drawImage(atlas,pose.frame*w,0,w,h,730+i*150-avatar.manifest.foot[0]*scale,336-avatar.manifest.foot[1]*scale,w*scale,h*scale);
+  }
+  ctx.fillStyle='#dfd1b7';ctx.font='14px sans-serif';ctx.fillText('TANK + PILOT PORTRAITS / SAME 2x PIXEL SCALE (NOT WORLD SIZE)',24,30);
+ });
+ await page.screenshot({path:out+'/tank-comparison.png'});
+ copyFileSync(out+'/tank-comparison.png','assets/workbench/avatar-kita-v1/tank-comparison.png');
+ console.log('Portrait desktop, mobile, frames and live tank comparison captured.');
 }finally{await browser.close();}

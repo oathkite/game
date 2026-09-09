@@ -4,7 +4,9 @@ export function portraitChecks(manifest,images){
  add('本人専用の利用区分',manifest.availability.scope==='owner-only'&&manifest.availability.grantKey==='kita-personal');
  add('待機・喜び・悲しみの3状態',['neutral','happy','sad'].every(id=>manifest.poses.some(p=>p.id===id)));
  add('装いを含む一体スプライト',manifest.composition==='integrated'&&manifest.layers.length===1&&manifest.layers[0].id==='character');
- add('全コマの縮尺が共通',new Set(manifest.metrics.character.map(m=>m.scale)).size===1);
+ const scales=new Map();
+ for(const metric of manifest.metrics.character){const key=metric.sourceSheet??'default';if(!scales.has(key))scales.set(key,new Set());scales.get(key).add(metric.scale);}
+ add('各動作の全コマが共通縮尺',[...scales.values()].every(values=>values.size===1));
  add('アニメーション形式',manifest.animationStatus==='animated-loop-clips');
  for(const pose of manifest.poses){
   const clip=pose.clip;
@@ -17,7 +19,7 @@ export function portraitChecks(manifest,images){
    bottom=Math.max(bottom,y);
    if(x===0||y===0||x===w-1||y===h-1)edge=true;
   }
-  add('frame '+frame+'：足元が共通基準',Math.abs(bottom-(manifest.foot[1]-1))<=2,[bottom]);
+  add('frame '+frame+'：接地・空中位置が登録通り',Math.abs(bottom-(manifest.foot[1]-1-(manifest.metrics.character[frame].footLift??0)))<=2,[bottom]);
   add('frame '+frame+'：キャンバス端で切れない',!edge);
  }
  return checks;
