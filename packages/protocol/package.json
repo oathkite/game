@@ -5,7 +5,8 @@
   "type": "module",
   "exports": {
     ".": "./src/index.ts",
-    "./v2": "./src/v2.ts"
+    "./v2": "./src/v2.ts",
+    "./v2-lab": "./src/v2Lab.ts"
   },
   "scripts": {
     "test": "vitest run",

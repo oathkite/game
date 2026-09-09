@@ -1,0 +1,7 @@
+.network-lab { max-width: 1100px; margin: 0 auto; padding: 24px; color: #243947; background: #f5f0de; height: 100dvh; overflow: auto; box-sizing: border-box; font-family: sans-serif; }
+.network-lab h1 { font-size: 24px; }
+.network-lab p { line-height: 1.7; }
+.network-lab svg { display: block; width: 100%; border-radius: 12px; margin: 16px 0; }
+.network-lab button { min-width: 100px; min-height: 48px; margin-right: 12px; border: 1px solid #304659; color: #f5f0de; background: #304659; border-radius: 8px; cursor: pointer; }
+
+.network-lab button:disabled { opacity: .45; cursor: default; }
