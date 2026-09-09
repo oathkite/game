@@ -9,6 +9,9 @@ const rigAtCenter = () => {
   return rig;
 };
 describe("camera tuning", () => {
+  it("uses the approved speed and inertia on a fresh browser", () => {
+    expect(normalizeCameraSettings(null)).toEqual({ speed: 2.8, inertiaMs: 1000 });
+  });
   it("validates saved values and bounds", () => {
     for (const value of [null, "bad", [], { speed: NaN, inertiaMs: Infinity }]) expect(normalizeCameraSettings(value)).toEqual(DEFAULT_CAMERA_SETTINGS);
     expect(normalizeCameraSettings({ speed: 100, inertiaMs: -1 })).toEqual({ speed: 3, inertiaMs: 0 });

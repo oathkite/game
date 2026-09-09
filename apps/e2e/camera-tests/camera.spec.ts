@@ -130,7 +130,7 @@ test('ordinary practice still loads the original renderer', async ({ page }) => 
 test('released drag coasts briefly and settles without changing the tank', async ({ page }) => {
   await open(page);
   await page.clock.install();
-  await page.clock.pauseAt(new Date());
+  await page.clock.pauseAt(new Date(Date.now() + 1000));
   const world = page.getByTestId('camera-world'), before = await state(page);
   const x = Number(await world.getAttribute('data-camera-x')), direction = x > 200 ? 1 : -1;
   await page.mouse.move(650, 350); await page.mouse.down();
@@ -142,7 +142,7 @@ test('released drag coasts briefly and settles without changing the tank', async
   await page.mouse.up(); await page.clock.runFor(100);
   const coasted = Number(await world.getAttribute('data-camera-x'));
   expect((coasted - released) * -direction).toBeGreaterThan(0);
-  await page.clock.runFor(350);
+  await page.clock.runFor(1100);
   const settled = await world.getAttribute('data-camera-x');
   await page.clock.runFor(100);
   expect(await world.getAttribute('data-camera-x')).toBe(settled);
@@ -158,7 +158,7 @@ test('camera parameters apply immediately, persist and reset on mobile', async (
   await inertia.focus(); await page.keyboard.press('Home');
   await expect(speed).toHaveValue('2'); await expect(inertia).toHaveValue('0');
   await page.getByRole('button', { name: '対戦に戻る' }).click();
-  await page.clock.install(); await page.clock.pauseAt(new Date());
+  await page.clock.install(); await page.clock.pauseAt(new Date(Date.now() + 1000));
   const world = page.getByTestId('camera-world');
   const x = Number(await world.getAttribute('data-camera-x')), direction = x > 200 ? 1 : -1;
   await page.mouse.move(650, 350); await page.mouse.down();
@@ -172,7 +172,7 @@ test('camera parameters apply immediately, persist and reset on mobile', async (
   await page.getByRole('button', { name: '設定を開く' }).click();
   await expect(speed).toHaveValue('2'); await expect(inertia).toHaveValue('0');
   await page.getByRole('button', { name: 'カメラを初期値に戻す' }).click();
-  await expect(speed).toHaveValue('1'); await expect(inertia).toHaveValue('320');
+  await expect(speed).toHaveValue('2.8'); await expect(inertia).toHaveValue('1000');
   await speed.scrollIntoViewIfNeeded();
   expect((await speed.boundingBox())!.height).toBeGreaterThanOrEqual(44);
   await page.screenshot({ path: 'test-results/camera-settings-mobile.png' });

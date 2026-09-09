@@ -3,6 +3,7 @@ import { createCameraRig } from "../src/prototype/cameraRig";
 
 const setup = () => {
   const rig = createCameraRig();
+  rig.configure({ speed: 1, inertiaMs: 320 });
   rig.resize({ width: 900, height: 450, scale: 9 }, { left: 0, top: -100, right: 400, bottom: 225 });
   rig.focus({ x: 100, y: 100 }, "actor", true);
   return rig;
