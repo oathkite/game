@@ -14,6 +14,8 @@ import { createTerrainLayer, type TerrainLayer } from "./terrainLayer";
 export type Renderer = {
   readonly app: Application;
   readonly setLayout: (layout: Layout) => void;
+  /** 表示だけを移動する。物理座標と倍率は変えない */
+  readonly setCameraOffset: (x: number, y: number) => void;
   readonly setTerrain: (mask: TerrainMask) => void;
   readonly setTank: (seat: Seat, pose: TankPose) => void;
   /** 弾の層を作り直す。色は撃つ側の主色、大きさは武器で決まる */
@@ -30,6 +32,9 @@ export type RendererInit = {
   readonly host: HTMLElement;
   readonly layout: Layout;
   readonly mask: TerrainMask;
+  readonly tankFactory?: typeof createTankView;
+  readonly background?: number;
+  readonly terrainTint?: number;
   readonly players: readonly [{ colors: TankColors; nickname: string }, { colors: TankColors; nickname: string }];
 };
 
@@ -46,7 +51,7 @@ export const createRenderer = async (init: RendererInit): Promise<Renderer> => {
   await app.init({
     width: init.layout.mapWidth,
     height: init.layout.mapHeight,
-    background: 0x000000,
+    background: init.background ?? 0x000000,
     antialias: false,
     resolution: 1,
     autoDensity: false,
@@ -62,14 +67,15 @@ export const createRenderer = async (init: RendererInit): Promise<Renderer> => {
 
   const terrain: TerrainLayer = createTerrainLayer(init.mask);
   world.addChild(terrain.sprite);
+  terrain.sprite.tint = init.terrainTint ?? 0xffffff;
 
   const projectileLayer = new Container();
   world.addChild(projectileLayer);
   let projectile: ProjectileView | null = null;
 
   const tanks: readonly [TankView, TankView] = [
-    createTankView(init.players[0].colors, init.players[0].nickname),
-    createTankView(init.players[1].colors, init.players[1].nickname),
+    (init.tankFactory ?? createTankView)(init.players[0].colors, init.players[0].nickname),
+    (init.tankFactory ?? createTankView)(init.players[1].colors, init.players[1].nickname),
   ];
   for (const t of tanks) {
     world.addChild(t.world);
@@ -91,6 +97,10 @@ export const createRenderer = async (init: RendererInit): Promise<Renderer> => {
       app.renderer.resize(layout.mapWidth, layout.mapHeight);
       applyPose(0);
       applyPose(1);
+    },
+    setCameraOffset: (x, y) => {
+      world.position.set(x, y);
+      labels.position.set(x, y);
     },
     setTerrain: (mask) => terrain.update(mask),
     setTank: (seat, pose) => {
@@ -117,7 +127,7 @@ export const createRenderer = async (init: RendererInit): Promise<Renderer> => {
       const pose = poses[seat];
       if (!pose) return;
       // 名前の文字の上端から隙間を空けて出す。名前は px で描かれるので px で積む
-      const y = tanks[seat].label.getBounds().minY - DAMAGE_LABEL_GAP_PX;
+      const y = tanks[seat].label.getBounds().minY - labels.getGlobalPosition().y - DAMAGE_LABEL_GAP_PX;
       const stop = spawnDamageLabel({ parent: labels, ticker: app.ticker, text, color, big, x: (pose.x + 0.5) * cell, y, onEnd: () => labelStops.delete(stop) });
       labelStops.add(stop);
     },

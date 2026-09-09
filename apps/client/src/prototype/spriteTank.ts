@@ -1,0 +1,97 @@
+import { Assets, Container, Graphics, Rectangle, Sprite, Text, Texture } from "pixi.js";
+import type { TankColors, WeaponId } from "@game/protocol";
+import type { TankPose, TankView } from "@/game/tankView";
+
+// 工程A限定。承認済みの機体packを原寸アンカーで配置する。一般向けアバターの配信には使わない。
+const urls = import.meta.glob<string>([
+  "../../../../assets/workbench/baseline-v2/cabin-standard.png",
+  "../../../../assets/workbench/baseline-v2/tracks-standard.png",
+  "../../../../assets/workbench/baseline-v2/pilot-frog.png",
+  "../../../../assets/workbench/baseline-v2/weapon-*.png",
+], { eager: true, query: "?url", import: "default" });
+
+export type SpriteTankFactory = {
+  readonly create: (colors: TankColors, nickname: string) => TankView;
+  readonly setWeapon: (seat: number, weapon: WeaponId) => void;
+  readonly destroy: () => void;
+};
+
+export const loadSpriteTanks = async (): Promise<SpriteTankFactory> => {
+  const sheets = new Map<string, Texture>();
+  await Promise.all(Object.entries(urls).map(async ([path, url]) => {
+    sheets.set(path.split("/").pop()!.replace(".png", ""), await Assets.load<Texture>(url));
+  }));
+  const frames = new Map<string, Texture>();
+  const frame = (id: string, index = 0): Texture => {
+    const key = `${id}/${index}`;
+    const cached = frames.get(key);
+    if (cached) return cached;
+    const sheet = sheets.get(id)!;
+    const columns = sheet.width / 192;
+    const texture = new Texture({ source: sheet.source, frame: new Rectangle((index % columns) * 192, Math.floor(index / columns) * 160, 192, 160) });
+    texture.source.scaleMode = "nearest";
+    frames.set(key, texture);
+    return texture;
+  };
+  const weapons: ((weapon: WeaponId) => void)[] = [];
+  return {
+    create: (_colors, nickname) => {
+      const tank = makeTank(frame, nickname);
+      weapons.push(tank.setWeapon);
+      return tank;
+    },
+    setWeapon: (seat, weapon) => weapons[seat]?.(weapon),
+    destroy: () => { for (const texture of frames.values()) texture.destroy(); },
+  };
+};
+
+type Frame = (id: string, index?: number) => Texture;
+const makeTank = (frame: Frame, nickname: string): TankView & { setWeapon: (weapon: WeaponId) => void } => {
+  const world = new Container(), rig = new Container(), label = new Container();
+  const art = (id: string, index = 0): Sprite => {
+    const sprite = new Sprite(frame(id, index));
+    sprite.scale.set(1 / 12);
+    sprite.position.set(-8, -12);
+    return sprite;
+  };
+  const tracks = art("tracks-standard"), pilot = art("pilot-frog");
+  rig.addChild(tracks, art("cabin-standard", 0), pilot, art("cabin-standard", 1), art("cabin-standard", 2), art("cabin-standard", 3));
+  const gun = new Container(), weapon = new Sprite(frame("weapon-cannon"));
+  weapon.scale.set(1 / 12);
+  weapon.position.set(-8, -8);
+  gun.position.set(0, -4);
+  const aim = new Graphics();
+  for (let i = 0; i < 5; i++) aim.rect(6 + i * 3, -0.12, 1.4, 0.24).fill(0xffc345);
+  gun.addChild(weapon, aim);
+  rig.addChild(gun);
+  world.addChild(rig);
+  const name = new Text({ text: nickname, style: { fontFamily: "sans-serif", fontSize: 13, fill: 0xf6f1df } });
+  name.anchor.set(0.5, 1);
+  const plate = new Graphics(), health = new Graphics();
+  const labelWidth = Math.max(96, name.width + 16);
+  plate.roundRect(-labelWidth / 2, -21, labelWidth, 30, 5).fill(0x101c2c);
+  label.addChild(plate, name, health);
+  let lastX: number | null = null, movedAt = 0;
+  return {
+    world, label,
+    setWeapon: (id) => { weapon.texture = frame(`weapon-${id}`); },
+    setPose: (pose: TankPose, cell: number) => {
+      const now = performance.now();
+      if (lastX !== null && lastX !== pose.x) movedAt = now;
+      lastX = pose.x;
+      const moving = now - movedAt < 150;
+      tracks.texture = frame("tracks-standard", pose.hp <= 0 ? 3 : moving ? Math.floor(now / 100) % 3 : 0);
+      pilot.texture = frame("pilot-frog", pose.hp <= 0 ? 15 : pose.flash ? 7 : moving ? 3 + Math.floor(now / 140) % 2 : 0);
+      world.position.set(pose.x + 0.5, pose.y);
+      world.visible = label.visible = pose.visible;
+      rig.scale.x = pose.facing;
+      rig.rotation = -pose.tilt * Math.PI / 180;
+      rig.alpha = pose.flash ? 0.55 : 1;
+      gun.rotation = -pose.elevation * Math.PI / 180;
+      aim.visible = pose.aiming;
+      label.position.set((pose.x + 0.5) * cell, (pose.y - 14) * cell);
+      health.clear().rect(-38, 3, 76, 3).fill(0x435568).rect(-38, 3, 76 * Math.max(0, pose.hp) / 100, 3).fill(0xffc345);
+    },
+    destroy: () => { world.destroy({ children: true }); label.destroy({ children: true }); },
+  };
+};
