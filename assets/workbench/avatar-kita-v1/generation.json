@@ -38,7 +38,7 @@
           "sha256": "4bb9b6080d1868e272b8835645e6b840f713a9b838b03589dcf515c1b6ee48f4"
         }
       ],
-      "usedInCurrentExport": true
+      "usedInCurrentExport": false
     },
     {
       "file": "generated/scarf.png",
@@ -55,7 +55,7 @@
           "sha256": "4bb9b6080d1868e272b8835645e6b840f713a9b838b03589dcf515c1b6ee48f4"
         }
       ],
-      "usedInCurrentExport": true
+      "usedInCurrentExport": false
     },
     {
       "file": "generated/poses-side.png",
@@ -79,11 +79,63 @@
       "prompt": "prompts/poses.txt",
       "sha256": "e1291f8eaa01010f71b577df66115eb29b8310de9c22f5f7f0bc5cc22f6badec",
       "promptSha256": "4655093ba280641d6b5576ce7480218b50eb4c746b5677db1779865427692b63",
-      "usedInCurrentExport": true,
+      "usedInCurrentExport": false,
       "inputs": [
         {
           "path": "assets/workbench/avatar-kita-v1/generated/design-reference.png",
           "sha256": "3c5a2490bef3e174434883bdf0389d63be5b3ee8557297aebf8ede10b5971167"
+        }
+      ]
+    },
+    {
+      "file": "generated/character.png",
+      "prompt": "prompts/character.txt",
+      "sha256": "42674ed31ecdfd30b9e1cf84cfe6ea5f60864d12f162f37120ecacf4f486bfc1",
+      "promptSha256": "9ac772b025623835cd1b56d44a6e39b100e5b2452604395159eb6855fe5e9e77",
+      "usedInCurrentExport": false,
+      "inputs": [
+        {
+          "path": "assets/workbench/avatar-kita-v1/generated/design-reference.png",
+          "sha256": "3c5a2490bef3e174434883bdf0389d63be5b3ee8557297aebf8ede10b5971167"
+        }
+      ]
+    },
+    {
+      "file": "generated/idle-animation.png",
+      "prompt": "prompts/idle-animation.txt",
+      "sha256": "e098ef04cab77b971da76475a3569be894b7c3b9b19ae22084953c0f7365a0b3",
+      "promptSha256": "588b4ee48e8a6436a3191e2300329227a8e0c5346a6dea490cfab653b2ca681a",
+      "usedInCurrentExport": true,
+      "inputs": [
+        {
+          "path": "assets/workbench/avatar-kita-v1/generated/kita-reference.png",
+          "sha256": "4bb9b6080d1868e272b8835645e6b840f713a9b838b03589dcf515c1b6ee48f4"
+        }
+      ]
+    },
+    {
+      "file": "generated/happy-animation.png",
+      "prompt": "prompts/happy-animation.txt",
+      "sha256": "4e5caff1f48ff1c16f1d70447a9ee92e81eb1903ad53ba96fc8565953a67d241",
+      "promptSha256": "bb262958288fe5d477ddc6b7c6c8321f180579b41c9771ed6181278c89df14a0",
+      "usedInCurrentExport": true,
+      "inputs": [
+        {
+          "path": "assets/workbench/avatar-kita-v1/generated/kita-reference.png",
+          "sha256": "4bb9b6080d1868e272b8835645e6b840f713a9b838b03589dcf515c1b6ee48f4"
+        }
+      ]
+    },
+    {
+      "file": "generated/sad-animation.png",
+      "prompt": "prompts/sad-animation.txt",
+      "sha256": "17d79d80cae689cca014c71515eaca060c3f2841005b9141600f34a22d654a96",
+      "promptSha256": "250ff3eab4db2c6f4d7582ce09d4e43b247bd007719da1d45a04219f46ce3369",
+      "usedInCurrentExport": true,
+      "inputs": [
+        {
+          "path": "assets/workbench/avatar-kita-v1/generated/kita-reference.png",
+          "sha256": "4bb9b6080d1868e272b8835645e6b840f713a9b838b03589dcf515c1b6ee48f4"
         }
       ]
     }

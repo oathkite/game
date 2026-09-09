@@ -1,28 +1,24 @@
 export function portraitChecks(manifest,images){
  const checks=[],add=(name,pass,details=[])=>checks.push({name,pass,details});
- const [w,h]=manifest.frameSize;
- const alpha=(id,frame,x,y)=>images.get(id).rgba[(y*images.get(id).width+frame*w+x)*4+3];
+ const [w,h]=manifest.frameSize,image=images.get('character');
  add('本人専用の利用区分',manifest.availability.scope==='owner-only'&&manifest.availability.grantKey==='kita-personal');
- add('基本・喜び・悲しみの3ポーズ',['neutral','happy','sad'].every(id=>manifest.poses.some(p=>p.id===id)));
- add('全ポーズの素体縮尺が共通',new Set(manifest.metrics.body.map(m=>m.scale)).size===1);
- add('静止ポーズとアニメーションを区別',manifest.animationStatus==='representative-still-poses-only');
+ add('待機・喜び・悲しみの3状態',['neutral','happy','sad'].every(id=>manifest.poses.some(p=>p.id===id)));
+ add('装いを含む一体スプライト',manifest.composition==='integrated'&&manifest.layers.length===1&&manifest.layers[0].id==='character');
+ add('全コマの縮尺が共通',new Set(manifest.metrics.character.map(m=>m.scale)).size===1);
+ add('アニメーション形式',manifest.animationStatus==='animated-loop-clips');
  for(const pose of manifest.poses){
-  let bottom=-1,edge=false,contact={glasses:0,scarf:0},hidden=0;
-  const eyes=pose.eyeAreas??[pose.faceArea];
+  const clip=pose.clip;
+  add(pose.id+'：コマ・時間・ループ定義',clip.loop===true&&clip.frames.length>=4&&clip.frames.length===clip.durations.length&&clip.durations.every(d=>Number.isFinite(d)&&d>0)&&clip.frames.every(f=>Number.isInteger(f)&&f>=0&&f<manifest.frameCount));
+ }
+ for(let frame=0;frame<manifest.frameCount;frame++){
+  let bottom=-1,edge=false;
   for(let y=0;y<h;y++)for(let x=0;x<w;x++){
-   const body=alpha('body',pose.frame,x,y)>200;
-   if(body)bottom=Math.max(bottom,y);
-   for(const id of ['body','glasses','scarf'])if(alpha(id,pose.frame,x,y)>200&&(x===0||y===0||x===w-1||y===h-1))edge=true;
-   for(const id of ['glasses','scarf']){
-    const gear=alpha(id,pose.frame,x,y)>200;
-    if(gear&&body)contact[id]++;
-    if(gear&&eyes.some(([fx,fy,fw,fh])=>x>=fx&&x<fx+fw&&y>=fy&&y<fy+fh))hidden++;
-   }
+   if(image.rgba[(y*image.width+frame*w+x)*4+3]<=200)continue;
+   bottom=Math.max(bottom,y);
+   if(x===0||y===0||x===w-1||y===h-1)edge=true;
   }
-  add(pose.id+'：足元が共通基準',Math.abs(bottom-(manifest.foot[1]-1))<=2,[bottom]);
-  add(pose.id+'：キャンバス端で切れない',!edge);
-  add(pose.id+'：メガネとスカーフが素体に接触',contact.glasses>0&&contact.scarf>0,[contact]);
-  add(pose.id+'：自然の目を装備が隠さない',hidden===0,[hidden]);
+  add('frame '+frame+'：足元が共通基準',Math.abs(bottom-(manifest.foot[1]-1))<=2,[bottom]);
+  add('frame '+frame+'：キャンバス端で切れない',!edge);
  }
  return checks;
 }

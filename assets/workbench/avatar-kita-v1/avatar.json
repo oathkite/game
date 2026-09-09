@@ -1,5 +1,5 @@
 {
-  "avatarPortraitVersion": 1,
+  "avatarPortraitVersion": 2,
   "id": "kita-personal-portraits",
   "status": "draft",
   "availability": {
@@ -7,367 +7,391 @@
     "grantKey": "kita-personal"
   },
   "model": "gpt-image-2.5-sunburst",
+  "composition": "integrated",
   "view": "front-three-quarter-right",
   "frameSize": [
     192,
     224
   ],
+  "frameCount": 12,
   "foot": [
     96,
     208
   ],
-  "scale": 0.3,
+  "scale": 0.4,
   "poses": [
     {
       "id": "neutral",
-      "label": "基本の立ち絵",
+      "label": "待機",
       "frame": 0,
-      "faceArea": [
-        76,
-        48,
-        20,
-        24
-      ],
-      "eyeAreas": [
-        [
-          76,
-          48,
-          20,
-          24
+      "clip": {
+        "frames": [
+          0,
+          1,
+          2,
+          3
         ],
-        [
-          120,
-          48,
-          16,
-          20
-        ]
-      ],
-      "headAnchor": [
-        68,
-        19
-      ],
-      "neckAnchor": [
-        60,
-        100
-      ]
+        "durations": [
+          1100,
+          240,
+          100,
+          240
+        ],
+        "loop": true
+      }
     },
     {
       "id": "happy",
       "label": "喜ぶ",
-      "frame": 1,
-      "faceArea": [
-        80,
-        52,
-        20,
-        16
-      ],
-      "eyeAreas": [
-        [
-          80,
-          52,
-          20,
-          16
+      "frame": 4,
+      "clip": {
+        "frames": [
+          4,
+          5,
+          6,
+          7
         ],
-        [
-          120,
-          52,
-          16,
-          16
-        ]
-      ],
-      "headAnchor": [
-        68,
-        23
-      ],
-      "neckAnchor": [
-        60,
-        100
-      ]
+        "durations": [
+          280,
+          200,
+          380,
+          260
+        ],
+        "loop": true
+      }
     },
     {
       "id": "sad",
       "label": "悲しむ",
-      "frame": 2,
-      "faceArea": [
-        96,
-        72,
-        20,
-        20
-      ],
-      "eyeAreas": [
-        [
-          96,
-          72,
-          20,
-          20
+      "frame": 8,
+      "clip": {
+        "frames": [
+          8,
+          9,
+          10,
+          11
         ],
-        [
-          132,
-          72,
-          12,
-          20
-        ]
-      ],
-      "headAnchor": [
-        80,
-        31
-      ],
-      "neckAnchor": [
-        64,
-        108
-      ]
+        "durations": [
+          600,
+          300,
+          360,
+          340
+        ],
+        "loop": true
+      }
     }
   ],
   "layers": [
     {
-      "id": "body",
-      "file": "body.png",
-      "source": "body.ora"
-    },
-    {
-      "id": "scarf",
-      "file": "scarf.png",
-      "source": "scarf.ora"
-    },
-    {
-      "id": "glasses",
-      "file": "glasses.png",
-      "source": "glasses.ora"
+      "id": "character",
+      "file": "character.png",
+      "source": "character.ora"
     }
   ],
   "metrics": {
-    "body": [
+    "character": [
       {
         "region": [
           0,
           0,
-          512,
-          1024
+          768,
+          512
         ],
         "sourceBounds": [
-          70,
-          231,
-          413,
-          558
-        ],
-        "outputSize": [
-          124,
-          167
-        ],
-        "outputOrigin": [
-          34,
-          41
-        ],
-        "scale": 0.3,
-        "sourceSheet": "poses",
-        "sourceHash": "e1291f8eaa01010f71b577df66115eb29b8310de9c22f5f7f0bc5cc22f6badec"
-      },
-      {
-        "region": [
-          512,
-          0,
-          512,
-          1024
-        ],
-        "sourceBounds": [
-          602,
-          231,
-          401,
-          558
-        ],
-        "outputSize": [
-          120,
-          167
-        ],
-        "outputOrigin": [
-          40,
-          41
-        ],
-        "scale": 0.3,
-        "sourceSheet": "poses",
-        "sourceHash": "e1291f8eaa01010f71b577df66115eb29b8310de9c22f5f7f0bc5cc22f6badec"
-      },
-      {
-        "region": [
-          1024,
-          0,
-          512,
-          1024
-        ],
-        "sourceBounds": [
-          1099,
-          261,
-          370,
-          528
+          297,
+          63,
+          277,
+          439
         ],
         "outputSize": [
           111,
-          158
+          176
         ],
         "outputOrigin": [
-          42,
-          50
+          34,
+          32
         ],
-        "scale": 0.3,
-        "sourceSheet": "poses",
-        "sourceHash": "e1291f8eaa01010f71b577df66115eb29b8310de9c22f5f7f0bc5cc22f6badec"
-      }
-    ],
-    "glasses": [
-      {
-        "region": [
-          0,
-          0,
-          480,
-          1024
-        ],
-        "sourceBounds": [
-          155,
-          174,
-          260,
-          101
-        ],
-        "outputSize": [
-          78,
-          30
-        ],
-        "outputOrigin": [
-          68,
-          19
-        ],
-        "scale": 0.3,
-        "sourceSheet": "glasses",
-        "sourceHash": "f2b464c1fc7ae91e9955d4debd363df882350fb096e45d8e93eaf8d0170c2b10"
+        "scale": 0.4,
+        "sourceSheet": "idle-animation",
+        "sourceHash": "e098ef04cab77b971da76475a3569be894b7c3b9b19ae22084953c0f7365a0b3"
       },
       {
         "region": [
-          480,
+          768,
           0,
-          610,
-          1024
+          768,
+          512
         ],
         "sourceBounds": [
-          664,
-          158,
-          267,
-          113
+          959,
+          63,
+          275,
+          439
         ],
         "outputSize": [
-          80,
-          34
+          110,
+          176
         ],
         "outputOrigin": [
-          68,
-          23
+          35,
+          32
         ],
-        "scale": 0.3,
-        "sourceSheet": "glasses",
-        "sourceHash": "f2b464c1fc7ae91e9955d4debd363df882350fb096e45d8e93eaf8d0170c2b10"
+        "scale": 0.4,
+        "sourceSheet": "idle-animation",
+        "sourceHash": "e098ef04cab77b971da76475a3569be894b7c3b9b19ae22084953c0f7365a0b3"
       },
       {
         "region": [
-          1090,
           0,
-          446,
-          1024
+          512,
+          768,
+          512
         ],
         "sourceBounds": [
-          1238,
-          274,
-          242,
-          136
-        ],
-        "outputSize": [
-          73,
-          41
-        ],
-        "outputOrigin": [
-          80,
-          31
-        ],
-        "scale": 0.3,
-        "sourceSheet": "glasses",
-        "sourceHash": "f2b464c1fc7ae91e9955d4debd363df882350fb096e45d8e93eaf8d0170c2b10"
-      }
-    ],
-    "scarf": [
-      {
-        "region": [
-          0,
-          0,
-          480,
-          1024
-        ],
-        "sourceBounds": [
-          106,
-          323,
           297,
-          157
+          546,
+          277,
+          437
         ],
         "outputSize": [
-          83,
-          44
+          111,
+          175
         ],
         "outputOrigin": [
-          60,
-          100
+          34,
+          33
         ],
-        "scale": 0.28,
-        "sourceSheet": "scarf",
-        "sourceHash": "e5518b515309c02998285fb5f6bc7a916c917e7e28e75606dcfcf9011fae0ebc"
+        "scale": 0.4,
+        "sourceSheet": "idle-animation",
+        "sourceHash": "e098ef04cab77b971da76475a3569be894b7c3b9b19ae22084953c0f7365a0b3"
       },
       {
         "region": [
-          480,
-          0,
-          610,
-          1024
+          768,
+          512,
+          768,
+          512
         ],
         "sourceBounds": [
-          593,
-          340,
-          318,
-          150
+          959,
+          548,
+          275,
+          436
         ],
         "outputSize": [
-          89,
-          42
-        ],
-        "outputOrigin": [
-          60,
-          100
-        ],
-        "scale": 0.28,
-        "sourceSheet": "scarf",
-        "sourceHash": "e5518b515309c02998285fb5f6bc7a916c917e7e28e75606dcfcf9011fae0ebc"
-      },
-      {
-        "region": [
-          1090,
-          0,
-          446,
-          1024
-        ],
-        "sourceBounds": [
-          1143,
-          385,
-          306,
+          110,
           174
         ],
+        "outputOrigin": [
+          35,
+          34
+        ],
+        "scale": 0.4,
+        "sourceSheet": "idle-animation",
+        "sourceHash": "e098ef04cab77b971da76475a3569be894b7c3b9b19ae22084953c0f7365a0b3"
+      },
+      {
+        "region": [
+          0,
+          0,
+          768,
+          512
+        ],
+        "sourceBounds": [
+          319,
+          54,
+          267,
+          439
+        ],
         "outputSize": [
-          86,
-          49
+          107,
+          176
         ],
         "outputOrigin": [
-          64,
-          108
+          40,
+          32
         ],
-        "scale": 0.28,
-        "sourceSheet": "scarf",
-        "sourceHash": "e5518b515309c02998285fb5f6bc7a916c917e7e28e75606dcfcf9011fae0ebc"
+        "scale": 0.4,
+        "sourceSheet": "happy-animation",
+        "sourceHash": "4e5caff1f48ff1c16f1d70447a9ee92e81eb1903ad53ba96fc8565953a67d241"
+      },
+      {
+        "region": [
+          768,
+          0,
+          768,
+          512
+        ],
+        "sourceBounds": [
+          962,
+          54,
+          280,
+          439
+        ],
+        "outputSize": [
+          112,
+          176
+        ],
+        "outputOrigin": [
+          38,
+          32
+        ],
+        "scale": 0.4,
+        "sourceSheet": "happy-animation",
+        "sourceHash": "4e5caff1f48ff1c16f1d70447a9ee92e81eb1903ad53ba96fc8565953a67d241"
+      },
+      {
+        "region": [
+          0,
+          512,
+          768,
+          512
+        ],
+        "sourceBounds": [
+          330,
+          554,
+          269,
+          437
+        ],
+        "outputSize": [
+          108,
+          175
+        ],
+        "outputOrigin": [
+          43,
+          33
+        ],
+        "scale": 0.4,
+        "sourceSheet": "happy-animation",
+        "sourceHash": "4e5caff1f48ff1c16f1d70447a9ee92e81eb1903ad53ba96fc8565953a67d241"
+      },
+      {
+        "region": [
+          768,
+          512,
+          768,
+          512
+        ],
+        "sourceBounds": [
+          967,
+          554,
+          268,
+          437
+        ],
+        "outputSize": [
+          107,
+          175
+        ],
+        "outputOrigin": [
+          40,
+          33
+        ],
+        "scale": 0.4,
+        "sourceSheet": "happy-animation",
+        "sourceHash": "4e5caff1f48ff1c16f1d70447a9ee92e81eb1903ad53ba96fc8565953a67d241"
+      },
+      {
+        "region": [
+          0,
+          0,
+          768,
+          512
+        ],
+        "sourceBounds": [
+          350,
+          62,
+          273,
+          439
+        ],
+        "outputSize": [
+          109,
+          176
+        ],
+        "outputOrigin": [
+          35,
+          32
+        ],
+        "scale": 0.4,
+        "sourceSheet": "sad-animation",
+        "sourceHash": "17d79d80cae689cca014c71515eaca060c3f2841005b9141600f34a22d654a96"
+      },
+      {
+        "region": [
+          768,
+          0,
+          768,
+          512
+        ],
+        "sourceBounds": [
+          926,
+          82,
+          274,
+          419
+        ],
+        "outputSize": [
+          110,
+          168
+        ],
+        "outputOrigin": [
+          35,
+          40
+        ],
+        "scale": 0.4,
+        "sourceSheet": "sad-animation",
+        "sourceHash": "17d79d80cae689cca014c71515eaca060c3f2841005b9141600f34a22d654a96"
+      },
+      {
+        "region": [
+          0,
+          512,
+          768,
+          512
+        ],
+        "sourceBounds": [
+          350,
+          563,
+          273,
+          417
+        ],
+        "outputSize": [
+          109,
+          167
+        ],
+        "outputOrigin": [
+          35,
+          41
+        ],
+        "scale": 0.4,
+        "sourceSheet": "sad-animation",
+        "sourceHash": "17d79d80cae689cca014c71515eaca060c3f2841005b9141600f34a22d654a96"
+      },
+      {
+        "region": [
+          768,
+          512,
+          768,
+          512
+        ],
+        "sourceBounds": [
+          926,
+          551,
+          274,
+          429
+        ],
+        "outputSize": [
+          110,
+          172
+        ],
+        "outputOrigin": [
+          35,
+          36
+        ],
+        "scale": 0.4,
+        "sourceSheet": "sad-animation",
+        "sourceHash": "17d79d80cae689cca014c71515eaca060c3f2841005b9141600f34a22d654a96"
       }
     ]
   },
-  "animationStatus": "representative-still-poses-only",
+  "animationStatus": "animated-loop-clips",
   "humanReview": "pending"
 }

@@ -1,215 +1,221 @@
 {
-  "sheets": {
-    "glasses": "glasses",
-    "scarf": "scarf"
-  },
-  "regions": {
-    "body": [
-      [
+  "frames": [
+    {
+      "sheet": "idle-animation",
+      "region": [
         0,
         0,
-        512,
-        1024
+        768,
+        512
       ],
-      [
-        512,
-        0,
-        512,
-        1024
-      ],
-      [
-        1024,
-        0,
-        512,
-        1024
+      "sourceFoot": [
+        451,
+        502
       ]
-    ],
-    "glasses": [
-      [
+    },
+    {
+      "sheet": "idle-animation",
+      "region": [
+        768,
         0,
-        0,
-        480,
-        1024
+        768,
+        512
       ],
-      [
-        480,
-        0,
-        610,
-        1024
-      ],
-      [
-        1090,
-        0,
-        446,
-        1024
+      "sourceFoot": [
+        1111,
+        502
       ]
-    ],
-    "scarf": [
-      [
+    },
+    {
+      "sheet": "idle-animation",
+      "region": [
         0,
-        0,
-        480,
-        1024
+        512,
+        768,
+        512
       ],
-      [
-        480,
-        0,
-        610,
-        1024
-      ],
-      [
-        1090,
-        0,
-        446,
-        1024
+      "sourceFoot": [
+        451,
+        983
       ]
-    ]
-  },
-  "layerScales": {
-    "body": 0.3,
-    "glasses": 0.3,
-    "scarf": 0.28
-  },
+    },
+    {
+      "sheet": "idle-animation",
+      "region": [
+        768,
+        512,
+        768,
+        512
+      ],
+      "sourceFoot": [
+        1111,
+        984
+      ]
+    },
+    {
+      "sheet": "happy-animation",
+      "region": [
+        0,
+        0,
+        768,
+        512
+      ],
+      "sourceFoot": [
+        460,
+        493
+      ]
+    },
+    {
+      "sheet": "happy-animation",
+      "region": [
+        768,
+        0,
+        768,
+        512
+      ],
+      "sourceFoot": [
+        1108,
+        493
+      ]
+    },
+    {
+      "sheet": "happy-animation",
+      "region": [
+        0,
+        512,
+        768,
+        512
+      ],
+      "sourceFoot": [
+        463,
+        991
+      ]
+    },
+    {
+      "sheet": "happy-animation",
+      "region": [
+        768,
+        512,
+        768,
+        512
+      ],
+      "sourceFoot": [
+        1108,
+        991
+      ]
+    },
+    {
+      "sheet": "sad-animation",
+      "region": [
+        0,
+        0,
+        768,
+        512
+      ],
+      "sourceFoot": [
+        503,
+        501
+      ]
+    },
+    {
+      "sheet": "sad-animation",
+      "region": [
+        768,
+        0,
+        768,
+        512
+      ],
+      "sourceFoot": [
+        1079,
+        501
+      ]
+    },
+    {
+      "sheet": "sad-animation",
+      "region": [
+        0,
+        512,
+        768,
+        512
+      ],
+      "sourceFoot": [
+        503,
+        980
+      ]
+    },
+    {
+      "sheet": "sad-animation",
+      "region": [
+        768,
+        512,
+        768,
+        512
+      ],
+      "sourceFoot": [
+        1079,
+        980
+      ]
+    }
+  ],
   "poses": [
     {
       "id": "neutral",
-      "label": "基本の立ち絵",
-      "sourceFoot": [
-        277,
-        789
-      ],
-      "faceArea": [
-        76,
-        48,
-        20,
-        24
-      ],
-      "eyeAreas": [
-        [
-          76,
-          48,
-          20,
-          24
+      "label": "待機",
+      "frame": 0,
+      "clip": {
+        "frames": [
+          0,
+          1,
+          2,
+          3
         ],
-        [
-          120,
-          48,
-          16,
-          20
-        ]
-      ],
-      "headAnchor": [
-        68,
-        19
-      ],
-      "neckAnchor": [
-        60,
-        100
-      ],
-      "offsets": {},
-      "origins": {
-        "glasses": [
-          68,
-          19
+        "durations": [
+          1100,
+          240,
+          100,
+          240
         ],
-        "scarf": [
-          60,
-          100
-        ]
+        "loop": true
       }
     },
     {
       "id": "happy",
       "label": "喜ぶ",
-      "sourceFoot": [
-        789,
-        789
-      ],
-      "faceArea": [
-        80,
-        52,
-        20,
-        16
-      ],
-      "eyeAreas": [
-        [
-          80,
-          52,
-          20,
-          16
+      "frame": 4,
+      "clip": {
+        "frames": [
+          4,
+          5,
+          6,
+          7
         ],
-        [
-          120,
-          52,
-          16,
-          16
-        ]
-      ],
-      "headAnchor": [
-        68,
-        23
-      ],
-      "neckAnchor": [
-        60,
-        100
-      ],
-      "offsets": {},
-      "origins": {
-        "glasses": [
-          68,
-          23
+        "durations": [
+          280,
+          200,
+          380,
+          260
         ],
-        "scarf": [
-          60,
-          100
-        ]
+        "loop": true
       }
     },
     {
       "id": "sad",
       "label": "悲しむ",
-      "sourceFoot": [
-        1280,
-        789
-      ],
-      "faceArea": [
-        96,
-        72,
-        20,
-        20
-      ],
-      "eyeAreas": [
-        [
-          96,
-          72,
-          20,
-          20
+      "frame": 8,
+      "clip": {
+        "frames": [
+          8,
+          9,
+          10,
+          11
         ],
-        [
-          132,
-          72,
-          12,
-          20
-        ]
-      ],
-      "headAnchor": [
-        80,
-        31
-      ],
-      "neckAnchor": [
-        64,
-        108
-      ],
-      "offsets": {},
-      "origins": {
-        "glasses": [
-          80,
-          31
+        "durations": [
+          600,
+          300,
+          360,
+          340
         ],
-        "scarf": [
-          64,
-          108
-        ]
+        "loop": true
       }
     }
   ]

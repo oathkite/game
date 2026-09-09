@@ -10,7 +10,7 @@ export async function loadPortrait(){
  }
  return {manifest,images};
 }
-export function drawPortrait(library,canvas,poseId,{glasses=true,scarf=true,guides=false,backdrop=null}={}){
+export function drawPortrait(library,canvas,poseId,{guides=false,backdrop=null,frame=null}={}){
  const rect=canvas.getBoundingClientRect(),dpr=window.devicePixelRatio||1;
  canvas.width=Math.round(rect.width*dpr);canvas.height=Math.round(rect.height*dpr);
  const ctx=canvas.getContext('2d'),[w,h]=library.manifest.frameSize,pose=library.manifest.poses.find(p=>p.id===poseId);
@@ -19,11 +19,9 @@ export function drawPortrait(library,canvas,poseId,{glasses=true,scarf=true,guid
  if(backdrop){ctx.fillStyle=backdrop==='dark'?'#203746':'#f4efdf';ctx.fillRect(0,0,canvas.width,canvas.height);}
  ctx.save();ctx.translate(x,y);ctx.scale(scale,scale);
  for(const layer of library.manifest.layers){
-  if(layer.id==='glasses'&&!glasses||layer.id==='scarf'&&!scarf)continue;
-  ctx.drawImage(library.images.get(layer.id).bitmap,pose.frame*w,0,w,h,0,0,w,h);
+  ctx.drawImage(library.images.get(layer.id).bitmap,(frame??pose.frame)*w,0,w,h,0,0,w,h);
  }
- if(guides){ctx.strokeStyle='#e47854';ctx.lineWidth=1;for(const area of pose.eyeAreas??[pose.faceArea])ctx.strokeRect(...area);ctx.beginPath();ctx.moveTo(0,library.manifest.foot[1]);ctx.lineTo(w,library.manifest.foot[1]);ctx.stroke();
-  for(const point of [pose.headAnchor,pose.neckAnchor])ctx.fillRect(point[0]-1,point[1]-1,3,3);
+ if(guides){ctx.strokeStyle='#e47854';ctx.lineWidth=1;ctx.beginPath();ctx.moveTo(0,library.manifest.foot[1]);ctx.lineTo(w,library.manifest.foot[1]);ctx.stroke();
  }
  ctx.restore();return {scale,pose:pose.id};
 }

@@ -1,14 +1,9 @@
-# KITA 本人専用の立ち絵
+# KITA 本人専用の一体スプライト
 
-GPT Image 2.5で生成した、プロフィール・リザルト向けの基本／喜び／悲しみの静止3ポーズ。
-素体、青いメガネ、オレンジスカーフは独立PNG・ORA。本人専用であり、一般配布・販売・public defaultには使わない。
-
-- 形式：avatarPortraitVersion 1、192×224 artpx、足元[96,208]。元デザイン案に近いドット密度・短い手足。両目が見える少し斜めの前方3/4 view
-- ステータス：draft、humanReview pending
-- アニメーション：中間コマは未制作。静止画のみ
-- 原画・プロンプト・出典：generated/、prompts/、generation.json
-- 登録と出力：registration.json、avatar.json
-- 仕様：[18章](../../../docs/design/18-avatar-portraits.md)
-- 確認：アバター工房 `http://127.0.0.1:4178/avatar.html`
-
-登録位置の変更はregistration.jsonを編集し、assets:export:avatarで再出力する。完成PNGだけを手直ししない。
+黄色いカエル・青いメガネ・オレンジのスカーフをGPT Image 2.5で一体生成。
+再送3D画像を参照したneutral / happy / sadの各4コマループ。192×224 artpx、足元[96,208]、前方3/4 view。
+character.png（横12コマ）とcharacter.oraを納品。着脱パーツ・配色変更なし。
+本人専用。一般配布・販売・公開defaultへ使用しない。draft / humanReview pending。
+原画generated/{idle,happy,sad}-animation.png、プロンプトprompts/{idle,happy,sad}-animation.txt、登録registration.json、出典generation.json。
+旧分離原画は履歴のみ。現行出力には使わない。
+仕様：[18章](../../../docs/design/18-avatar-portraits.md)。確認： http://127.0.0.1:4178/avatar.html

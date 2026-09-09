@@ -7,113 +7,190 @@
       "details": []
     },
     {
-      "name": "基本・喜び・悲しみの3ポーズ",
+      "name": "待機・喜び・悲しみの3状態",
       "pass": true,
       "details": []
     },
     {
-      "name": "全ポーズの素体縮尺が共通",
+      "name": "装いを含む一体スプライト",
       "pass": true,
       "details": []
     },
     {
-      "name": "静止ポーズとアニメーションを区別",
+      "name": "全コマの縮尺が共通",
       "pass": true,
       "details": []
     },
     {
-      "name": "neutral：足元が共通基準",
+      "name": "アニメーション形式",
+      "pass": true,
+      "details": []
+    },
+    {
+      "name": "neutral：コマ・時間・ループ定義",
+      "pass": true,
+      "details": []
+    },
+    {
+      "name": "happy：コマ・時間・ループ定義",
+      "pass": true,
+      "details": []
+    },
+    {
+      "name": "sad：コマ・時間・ループ定義",
+      "pass": true,
+      "details": []
+    },
+    {
+      "name": "frame 0：足元が共通基準",
       "pass": true,
       "details": [
         207
       ]
     },
     {
-      "name": "neutral：キャンバス端で切れない",
+      "name": "frame 0：キャンバス端で切れない",
       "pass": true,
       "details": []
     },
     {
-      "name": "neutral：メガネとスカーフが素体に接触",
-      "pass": true,
-      "details": [
-        {
-          "glasses": 12,
-          "scarf": 1406
-        }
-      ]
-    },
-    {
-      "name": "neutral：自然の目を装備が隠さない",
-      "pass": true,
-      "details": [
-        0
-      ]
-    },
-    {
-      "name": "happy：足元が共通基準",
+      "name": "frame 1：足元が共通基準",
       "pass": true,
       "details": [
         207
       ]
     },
     {
-      "name": "happy：キャンバス端で切れない",
+      "name": "frame 1：キャンバス端で切れない",
       "pass": true,
       "details": []
     },
     {
-      "name": "happy：メガネとスカーフが素体に接触",
-      "pass": true,
-      "details": [
-        {
-          "glasses": 68,
-          "scarf": 1505
-        }
-      ]
-    },
-    {
-      "name": "happy：自然の目を装備が隠さない",
-      "pass": true,
-      "details": [
-        0
-      ]
-    },
-    {
-      "name": "sad：足元が共通基準",
+      "name": "frame 2：足元が共通基準",
       "pass": true,
       "details": [
         207
       ]
     },
     {
-      "name": "sad：キャンバス端で切れない",
+      "name": "frame 2：キャンバス端で切れない",
       "pass": true,
       "details": []
     },
     {
-      "name": "sad：メガネとスカーフが素体に接触",
+      "name": "frame 3：足元が共通基準",
       "pass": true,
       "details": [
-        {
-          "glasses": 130,
-          "scarf": 1429
-        }
+        207
       ]
     },
     {
-      "name": "sad：自然の目を装備が隠さない",
+      "name": "frame 3：キャンバス端で切れない",
+      "pass": true,
+      "details": []
+    },
+    {
+      "name": "frame 4：足元が共通基準",
       "pass": true,
       "details": [
-        0
+        207
       ]
     },
     {
-      "name": "3ポーズ×装備4通りを描画",
+      "name": "frame 4：キャンバス端で切れない",
+      "pass": true,
+      "details": []
+    },
+    {
+      "name": "frame 5：足元が共通基準",
+      "pass": true,
+      "details": [
+        207
+      ]
+    },
+    {
+      "name": "frame 5：キャンバス端で切れない",
+      "pass": true,
+      "details": []
+    },
+    {
+      "name": "frame 6：足元が共通基準",
+      "pass": true,
+      "details": [
+        207
+      ]
+    },
+    {
+      "name": "frame 6：キャンバス端で切れない",
+      "pass": true,
+      "details": []
+    },
+    {
+      "name": "frame 7：足元が共通基準",
+      "pass": true,
+      "details": [
+        207
+      ]
+    },
+    {
+      "name": "frame 7：キャンバス端で切れない",
+      "pass": true,
+      "details": []
+    },
+    {
+      "name": "frame 8：足元が共通基準",
+      "pass": true,
+      "details": [
+        207
+      ]
+    },
+    {
+      "name": "frame 8：キャンバス端で切れない",
+      "pass": true,
+      "details": []
+    },
+    {
+      "name": "frame 9：足元が共通基準",
+      "pass": true,
+      "details": [
+        207
+      ]
+    },
+    {
+      "name": "frame 9：キャンバス端で切れない",
+      "pass": true,
+      "details": []
+    },
+    {
+      "name": "frame 10：足元が共通基準",
+      "pass": true,
+      "details": [
+        207
+      ]
+    },
+    {
+      "name": "frame 10：キャンバス端で切れない",
+      "pass": true,
+      "details": []
+    },
+    {
+      "name": "frame 11：足元が共通基準",
+      "pass": true,
+      "details": [
+        207
+      ]
+    },
+    {
+      "name": "frame 11：キャンバス端で切れない",
+      "pass": true,
+      "details": []
+    },
+    {
+      "name": "全12コマの絵が異なる",
       "pass": true
     }
   ],
-  "combinations": 12,
-  "scope": "3 static poses × 4 accessory combinations; no animation playback certification",
+  "frames": 12,
+  "scope": "3 animated loop clips; integrated sprites",
   "humanReview": "pending"
 }

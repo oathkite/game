@@ -1,24 +1,26 @@
 {
   "status": "draft",
   "humanReview": "pending",
-  "avatarDigest": "2111367cb7bfb20f38832f61901976b01e329aa1c98815274b9e371c8a5e890f",
-  "assetUnitTests": 77,
-  "browserTests": 19,
+  "avatarDigest": "fc715a074ac8d794c9b84098d586dd4346f6f8338883cdc7d6aac16be14b1de7",
+  "assetUnitTests": 79,
+  "browserTests": 20,
   "typecheck": "passed",
-  "portraitChecks": 17,
-  "renderCombinations": 12,
-  "animationStatus": "representative-still-poses-only",
+  "portraitChecks": 33,
+  "renderFrames": 12,
+  "animationStatus": "animated-loop-clips",
+  "revision": "original-3d-integrated-animation",
   "evidence": [
     "assets/previews/avatar-kita-v1/poses.png",
+    "assets/previews/avatar-kita-v1/frames.png",
     "assets/previews/avatar-kita-v1/desktop.png",
     "assets/previews/avatar-kita-v1/mobile.png",
     "assets/previews/avatar-kita-v1/inspection.json"
   ],
+  "visualReview": "Original 3D frog identity: tall white throat, side natural eye, attached blue glasses and orange scarf. All 12 frames inspected; shared scale and registered soles. Shared palette revised to preserve yellow.",
   "limitations": [
-    "Static neutral/happy/sad only; motion in-betweens, face icon and wave are not produced.",
-    "No game profile/result integration or avatar ownership enforcement is implemented.",
-    "Eye areas are manually registered; human review of likeness and accessory fit remains pending."
-  ],
-  "revision": "three-quarter-concept-density",
-  "visualReview": "Reviewed three-quarter neutral/happy/sad in poses.png at concept density: both eyes visible, compact proportions, independent accessories. Exported directly from generated source, not enlarged low-resolution frames. Glasses attachment adjusted after alpha contact validation. Human approval pending."
+    "Human review of likeness and animation quality remains pending.",
+    "Four-frame loops; dedicated transitions between emotions, wave and battle sprites are not produced.",
+    "No game profile/result integration or server ownership enforcement.",
+    "Existing tank workshop still uses legacy pilot layers until battle sprite migration."
+  ]
 }

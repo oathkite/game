@@ -1,0 +1,8 @@
+Use case: identity-preserve
+Create THREE COMPLETE fully dressed frog pixel-art sprites based on the supplied FORTRESS design board. Match the yellow frog with blue round glasses and orange tied scarf in WITH OPTIONAL PARTS. The glasses and scarf must be naturally attached and INTEGRATED into the drawing, not floating overlays. Glasses rest securely on the forehead just above natural eyes, visible short temple arms touching head; do not hide natural pupils. Scarf wraps neck snugly with front knot and two short tails.
+All three figures face slightly right in the same FRONT THREE-QUARTER angle with both natural eyes visible. Round compact torso, short legs and arms, friendly stubby frog, big natural eyes at TOP of head. Cream throat and belly is NOT a face. No extra mouth or eyes on belly. Preserve exact outfit and body size across poses.
+1536x1024 true transparent canvas, three equal512-wide columns, isolated figures with generous gaps. Each full figure about400px wide and600px tall; feet baseline y850. No clipping.
+Left: relaxed neutral standing, arms lowered, open eyes with obvious dark pupils.
+Middle: happy, both short arms raised, delighted curved closed natural eyes. Keep glasses resting on head.
+Right: sad, bowed head, shoulders slumped and downcast visible natural eyes. Keep same glasses and scarf fitted to tilted head.
+Clean polished pixel art matching reference detail density, solid crisp dark outline, broad smooth color clusters, restricted yellow/cream/blue/orange palette. NO dithering, NO noise, NO speckling, NO texture grain, NO glow. No background, ground, shadows, captions, tank or other objects. Actual alpha transparency. Deliver complete character sprites, NOT separated parts or a construction sheet.
