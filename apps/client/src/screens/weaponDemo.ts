@@ -13,15 +13,15 @@ import { bulletSize, type BulletSize } from "@/game/weaponArt";
 
 /** 切れ端の幅の下限（セル）。これより狭いとレーザー弾が右端から出る */
 export const FIELD_COLS_MIN = 80;
-/** 地面の厚み（セル）。掘削弾の爆風（半径 16）と貫通弾の 3 段が収まる */
-export const GROUND_ROWS = 20;
+/** 地面の厚み（セル）。掘削弾の爆風（半径 16）とレーザー弾の 7 段が収まる */
+export const GROUND_ROWS = 36;
 /** 戦車の左端のセル */
 export const TANK_X = 4;
 /** 戦車の絵の高さと、主砲の先端の付け根からの高さ（セル）。TankPreview の絵と合わせる */
 const TANK_ROWS = 5;
 const BARREL_CELLS = 4;
-/** 標準砲が落ちる位置。主砲の先端から右端までの距離に対する割合。レーザー弾（重力 70%、到達距離 1 / 0.7 倍）でも右端の内側に落ちる値 */
-const RANGE_SHARE = 0.6;
+/** 標準砲が落ちる位置。主砲の先端から右端までの距離に対する割合。レーザー弾（重力 70%、到達距離 1 / 0.7 倍）の7段の貫通と爆風にも右端の余白を残す値 */
+const RANGE_SHARE = 0.35;
 /** 重力（セル/秒^2）。初速は幅から決めるので、これが飛ぶ時間を決める */
 const GRAVITY = 200;
 /** 発射角（度） */
