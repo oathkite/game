@@ -276,3 +276,10 @@ heartbeatはUI共同調整時にPAUSED。本ゴールは現在のタスクで進
 - タイミング/過去再生防止を含むlabReplay4件、client TypeScript、assets check、実edgeのPC/touch射撃・復帰・再準備E2E通過。
 - 全武器固有VFX・練習側との演出統一と最終視覚比較は残る。
 - 比較soakはsession22808で継続。146秒時点RSS351MB/heap84MB（初回は145秒RSS484MB）。完了まで安定性の判定は保留。
+
+## 12:24 武器別の着弾素材
+
+- 既存energy/drill/digの4コマ画像を目視し、配信用コピーとハッシュ検査へ追加。レーザー/ドリル/地中攻撃に割り当て、その他5武器は通常爆発を使う。
+- 同じ着弾tick/300ms再生/再利用Sprite処理で表示。ダメージ・地形・弾道は変更なし。
+- 素材15件の一致検査、labReplay4件、client TypeScript/diff check、実edgeのPC/touch射撃・復帰・再準備E2E通過。E2Eの実射撃はtripleで、特殊3種の視覚確認はソース画像と割当確認まで。
+- 比較soakはsession22808で継続。294秒RSS297MB/heap64MB。初回同時刻RSS605MBより低く、終了時まで観測を続ける。

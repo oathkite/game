@@ -32,6 +32,24 @@
       "sha256": "a6ed7cef987301dc778f8c378852f8b81d0fd43bfbbd40362552f566e959ad0b"
     },
     {
+      "file": "effect-energy.png",
+      "source": "assets/workbench/baseline-v2/effect-energy.png",
+      "bytes": 1232,
+      "sha256": "3680d003532e36de5bcccae5d42143d9174d79453df53a5a8a488a37152266aa"
+    },
+    {
+      "file": "effect-drill.png",
+      "source": "assets/workbench/baseline-v2/effect-drill.png",
+      "bytes": 1196,
+      "sha256": "7b75a9f145550b631e407eaff0371035f4ab598239f99b304e9b6e1b27af9bb6"
+    },
+    {
+      "file": "effect-dig.png",
+      "source": "assets/workbench/baseline-v2/effect-dig.png",
+      "bytes": 1457,
+      "sha256": "5299f1a9fd6903640ca57a04a0edef7ffd4a8fa462e36f487f0b2504710bbeda"
+    },
+    {
       "file": "weapon-cannon.png",
       "source": "assets/workbench/baseline-v2/weapon-cannon.png",
       "bytes": 652,

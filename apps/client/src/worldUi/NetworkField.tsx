@@ -59,7 +59,7 @@ export const NetworkField = (props: Props) => {
         const actor = players.find(p => p.playerId === frame.actorId); if (actor && frame.phase === "acting") rig.actor({ x: actor.x, y: actor.y - 6 });
         if (frame.replay && replayKey !== frame.replay.startsAt) { replayKey = frame.replay.startsAt; bullet = r.projectile("yellow", frame.replay.shooter.weapon); art!.setWeapon(frame.players.findIndex(p => p.playerId === frame.replay!.shooter.playerId), frame.replay.shooter.weapon); const p = presentation.bullets[0]; if (p) rig.focus(p, "shot"); }
         for (let i = 0; i < 9; i++) { const p = presentation.bullets[i]; bullet.setBullet(i, p?.x ?? null, p?.y ?? 0, 0); }
-        effects!.draw(bullet.container, presentation.effects, matchMedia("(prefers-reduced-motion: reduce)").matches);
+        effects!.draw(bullet.container, presentation.effects, matchMedia("(prefers-reduced-motion: reduce)").matches, frame.replay?.shooter.weapon ?? "cannon");
         const first = presentation.bullets[0]; if (first) rig.shot(first);
         const center = rig.tick(dt, performance.now(), matchMedia("(prefers-reduced-motion: reduce)").matches);
         const offset = worldToScreen({ x: 0, y: 0 }, center, rig.get().viewport); r.setCameraOffset(Math.round(offset.x), Math.round(offset.y));
