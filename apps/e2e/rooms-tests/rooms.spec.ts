@@ -1,6 +1,6 @@
 import { test, expect } from "@playwright/test";
 test("room code, teams, ready, selected weapons and return to preparation", async ({ browser }) => {
-  const contexts = await Promise.all([browser.newContext({ viewport: { width: 1440, height: 900 } }), browser.newContext({ viewport: { width: 844, height: 390 } })]);
+  const contexts = await Promise.all([browser.newContext({ viewport: { width: 1440, height: 900 } }), browser.newContext({ hasTouch: true, viewport: { width: 844, height: 390 } })]);
   const [a, b] = await Promise.all(contexts.map(c => c.newPage()));
   const errors: string[] = [];
   try {
@@ -37,18 +37,19 @@ test("room code, teams, ready, selected weapons and return to preparation", asyn
     await b!.screenshot({ path: "test-results/room-mobile.png" });
     await a!.getByRole("button", { name: "対戦開始" }).click();
     for (const page of [a!, b!]) await expect(page.getByTestId("network-world")).toHaveAttribute("data-loaded", "true");
-    await expect(a!.getByLabel("射撃する装備").locator("option").first()).toHaveText("トリプル弾");
-    const shooter = await a!.getByRole("button", { name: "発射", exact: true }).isEnabled() ? a! : b!;
-    await shooter.getByRole("button", { name: "発射", exact: true }).click();
+    await expect(a!.getByRole("button", { name: "トリプル弾", exact: true })).toHaveAttribute("aria-pressed", "true");
+    const shooter = await a!.getByRole("button", { name: "トリプル弾", exact: true }).isEnabled() ? a! : b!;
+    if (shooter === a) { await shooter.keyboard.down("Space"); await shooter.waitForTimeout(400); await shooter.keyboard.up("Space"); } else { const fire = shooter.getByRole("button", { name: "発射", exact: true }); await fire.hover(); await shooter.mouse.down(); await shooter.waitForTimeout(400); await shooter.mouse.up(); }
     await expect(a!.getByTestId("phase")).toHaveText("射撃を再生中");
     await expect(a!.getByTestId("phase")).toHaveText("操作中", { timeout: 12000 });
     await b!.screenshot({ path: "test-results/room-battle-mobile.png" });
     await b!.setViewportSize({ width: 667, height: 375 });
-    for (const name of ["左へ1歩", "右へ1歩", "発射", "降参"]) {
+    for (const name of ["左へ1歩", "右へ1歩", "発射"]) {
       const box = (await b!.getByRole("button", { name, exact: true }).boundingBox())!;
       expect(box.height).toBeGreaterThanOrEqual(44); expect(box.x).toBeGreaterThanOrEqual(0);
       expect(box.x + box.width).toBeLessThanOrEqual(667); expect(box.y + box.height).toBeLessThanOrEqual(375);
     }
+    await b!.getByRole("button", { name: "設定を開く" }).click();
     await b!.getByRole("button", { name: "降参", exact: true }).click();
     await expect(a!.getByRole("heading", { name: /チームの勝利/ })).toBeVisible();
     await a!.getByRole("button", { name: "部屋へ戻る（オーナー）", exact: true }).click();

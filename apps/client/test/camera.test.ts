@@ -42,3 +42,11 @@ describe('edge scrolling', () => {
     expect(Math.hypot(v.x, v.y)).toBeCloseTo(480);
   });
 });
+
+it('allows vertical edge scrolling across a broad band without entering HUD space', () => {
+  expect(edgeVelocity({ x: 400, y: 40 }, viewport).y).toBeLessThan(0);
+  expect(edgeVelocity({ x: 400, y: 360 }, viewport).y).toBeGreaterThan(0);
+  expect(edgeVelocity({ x: 400, y: 80 }, viewport).y).toBe(0);
+  expect(edgeVelocity({ x: 400, y: -8 }, viewport)).toEqual({ x: 0, y: 0 });
+  expect(edgeVelocity({ x: 400, y: 408 }, viewport)).toEqual({ x: 0, y: 0 });
+});

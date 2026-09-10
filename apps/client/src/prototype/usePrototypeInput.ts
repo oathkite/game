@@ -1,3 +1,4 @@
+import { wheelPan } from "./wheelPan";
 import { useEffect, useRef, type PointerEvent as ReactPointerEvent } from "react";
 import type { MatchStore } from "@/match/matchStore";
 import { useHold } from "@/ui/useHold";
@@ -40,12 +41,27 @@ export const usePrototypeInput = (store: MatchStore, rig: CameraRig, enabled: bo
   useEffect(() => { if (blocked || !enabled) cancel(); }, [blocked, enabled]);
   useEffect(() => {
     let panKey: string | null = null, raf = 0, previous = performance.now();
-    const keyAction = (code: string): Action | null => ({ KeyA: "left", KeyD: "right", ArrowUp: "up", ArrowDown: "down", Space: "fire" } as const)[code as "KeyA"] ?? null;
+    let cycleTurn = -1, cycleSeat = -1;
+    const keyAction = (code: string): Action | null => ({ KeyA: "left", ArrowLeft: "left", KeyD: "right", ArrowRight: "right", KeyW: "up", ArrowUp: "up", KeyS: "down", ArrowDown: "down", Space: "fire" } as const)[code as "KeyA"] ?? null;
     const stop = (): void => { panKey = null; cancel(); };
     const down = (e: KeyboardEvent): void => {
-      if (e.repeat) return;
+      if (e.repeat || e.ctrlKey || e.metaKey || e.altKey) return;
       if (e.code === "Escape") { stop(); latest.current.toggleMenu(); e.preventDefault(); return; }
       if (latest.current.blocked || (e.target instanceof HTMLElement && e.target.matches("input, select, textarea, [contenteditable]"))) return;
+      if (e.code === "Tab" && !e.shiftKey) {
+        e.preventDefault();
+        if (owner.current) return;
+        const view = store.getView();
+        const seats = view.players?.filter(p => p.hp > 0 && p.y < (view.mask?.height ?? 225)) ?? [];
+        if (!seats.length) return;
+        if (cycleTurn !== view.turnNumber) { cycleTurn = view.turnNumber; cycleSeat = view.currentSeat; }
+        const next = seats[(seats.findIndex(p => p.seat === cycleSeat) + 1) % seats.length]!;
+        cycleSeat = next.seat;
+        const position = next.seat === view.mySeat ? view.control ?? next : next;
+        rig.focus({ x: position.x, y: position.y - 6 }, "manual", matchMedia("(prefers-reduced-motion: reduce)").matches);
+        return;
+      }
+      if ((e.code === "KeyQ" || e.code === "KeyE") && !owner.current && latest.current.enabled) { store.selectSlot(e.code === "KeyQ" ? 0 : 1); e.preventDefault(); return; }
       if (e.code === "KeyC" && !owner.current) { rig.focus(actorPoint(store.getView()), "actor", matchMedia("(prefers-reduced-motion: reduce)").matches); e.preventDefault(); return; }
       if (e.shiftKey && e.code.startsWith("Arrow") && !owner.current) { panKey = e.code; e.preventDefault(); return; }
       if (panKey || (e.code === "Space" && e.target instanceof HTMLElement && e.target.closest("button"))) return;
@@ -85,9 +101,12 @@ export const usePrototypeInput = (store: MatchStore, rig: CameraRig, enabled: bo
     onBlur: cancel,
   });
   const world = {
+    onWheel: (e: React.WheelEvent<HTMLDivElement>) => {
+      if (!latest.current.blocked && !owner.current && !e.ctrlKey) wheelPan(rig, e.deltaX, e.deltaY, e.deltaMode);
+    },
     onPointerDown: (e: ReactPointerEvent<HTMLDivElement>) => {
       if (!e.isPrimary || e.button !== 0 || owner.current || latest.current.blocked) return;
-      e.preventDefault(); owner.current = { id: e.pointerId, action: "pan" }; rig.stop();
+      e.preventDefault(); e.currentTarget.focus({ preventScroll: true }); owner.current = { id: e.pointerId, action: "pan" }; rig.stop();
       drag.current = { x: e.clientX, y: e.clientY, active: false, at: performance.now() }; e.currentTarget.setPointerCapture(e.pointerId);
     },
     onPointerMove: (e: ReactPointerEvent<HTMLDivElement>) => {

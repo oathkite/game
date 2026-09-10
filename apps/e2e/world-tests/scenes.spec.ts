@@ -1,5 +1,7 @@
 import { expect, test } from "@playwright/test";
 for (const size of [{ width: 1440, height: 900 }, { width: 844, height: 390 }, { width: 667, height: 375 }, { width: 390, height: 844 }]) {
+  test.describe(`input ${size.width}`, () => {
+  test.use({ hasTouch: size.width < 1000 });
   test(`world scenes at ${size.width}x${size.height}`, async ({ page }) => {
     await page.setViewportSize(size);
     const errors: string[] = [];
@@ -22,6 +24,8 @@ for (const size of [{ width: 1440, height: 900 }, { width: 844, height: 390 }, {
     await expect(page.getByRole("heading", { name: "整備と設定" })).toBeVisible();
     await page.locator(".world-shutter").evaluate(e => Promise.all(e.getAnimations().map(a => a.finished)));
     await page.screenshot({ path: `test-results/world-settings-${size.width}.png` });
+    await page.getByRole("combobox", { name: "機体の表示サイズ" }).selectOption("9");
+    await page.getByRole("combobox", { name: "機体の表示サイズ" }).selectOption("12");
     await page.getByRole("button", { name: "音を消す" }).click();
     await expect(page.getByRole("button", { name: "音を出す" })).toBeVisible();
     await page.getByRole("button", { name: "ロビーに戻る" }).click();
@@ -35,7 +39,9 @@ for (const size of [{ width: 1440, height: 900 }, { width: 844, height: 390 }, {
       await start.click();
       await expect(page.getByTestId("camera-world")).toHaveAttribute("data-loaded", "true");
       await expect(page.getByTestId("world-wind")).toBeVisible();
-      for (const label of ["左へ移動", "右へ移動", "角度を下げる", "角度を上げる", "発射"]) {
+      await expect(page.getByTestId("camera-world")).toHaveAttribute("data-scale", "12");
+      if (size.width === 1440) { await expect(page.getByRole("button", { name: "発射", exact: true })).toHaveCount(0); await expect(page.locator("[data-power-tick]")).toHaveCount(101); }
+      for (const label of (size.width === 1440 ? [] : ["左へ移動", "右へ移動", "角度を下げる", "角度を上げる", "発射"])) {
         const control = (await page.getByRole("button", { name: label, exact: true }).boundingBox())!;
         expect(control.width).toBeGreaterThanOrEqual(44); expect(control.height).toBeGreaterThanOrEqual(44);
         expect(control.x).toBeGreaterThanOrEqual(0); expect(control.x + control.width).toBeLessThanOrEqual(size.width);
@@ -43,6 +49,12 @@ for (const size of [{ width: 1440, height: 900 }, { width: 844, height: 390 }, {
       }
       await page.screenshot({ path: `test-results/world-battle-${size.width}.png` });
       if (size.width === 1440) {
+        const field = page.getByTestId("camera-world");
+        await page.waitForTimeout(350);
+        const beforeY = Number(await field.getAttribute("data-camera-y"));
+        await field.hover({ position: { x: 720, y: 350 } });
+        await page.mouse.wheel(0, -60);
+        await expect.poll(async () => Number(await field.getAttribute("data-camera-y"))).toBeLessThan(beforeY - 1);
         await page.getByRole("button", { name: "設定を開く" }).click();
         await page.getByRole("button", { name: "降参して対戦を終える" }).click();
         await expect(page.getByRole("heading", { name: /の勝利/ })).toBeVisible();
@@ -57,6 +69,7 @@ for (const size of [{ width: 1440, height: 900 }, { width: 844, height: 390 }, {
     }
     expect(errors).toEqual([]);
   });
+  });
 }
 
 test("terrain art preserves collision alpha after carving and ordinary terrain stays white", async ({ page }) => {
@@ -66,12 +79,13 @@ test("terrain art preserves collision alpha after carving and ordinary terrain s
     const { createTerrainLayer } = await import(modulePath);
     const tile = document.createElement("canvas"); tile.width = tile.height = 8;
     tile.getContext("2d")!.fillRect(0, 0, 8, 8);
-    const mask = { width: 8, height: 8, cells: new Uint8Array(64).fill(1) };
-    const carved = { ...mask, cells: new Uint8Array(mask.cells) }; carved.cells[27] = 0;
+    const mask = { width: 128, height: 128, cells: new Uint8Array(128 * 128).fill(1) };
+    const carved = { ...mask, cells: new Uint8Array(mask.cells) }; carved.cells[27] = 0; carved.cells[9000] = 0;
     const layer = createTerrainLayer(mask, tile); layer.update(carved);
     const canvas = layer.sprite.texture.source.resource as HTMLCanvasElement;
-    const pixels = canvas.getContext("2d")!.getImageData(0, 0, 32, 32).data;
-    const matches = Array.from({ length: 64 }, (_, i) => pixels[((Math.floor(i / 8) * 4 + 2) * 32 + i % 8 * 4 + 2) * 4 + 3] === carved.cells[i]! * 255).every(Boolean);
+    const pixels = canvas.getContext("2d")!.getImageData(0, 0, canvas.width, canvas.height).data;
+    const scale = canvas.width / mask.width;
+    const matches = Array.from({ length: canvas.width * canvas.height }, (_, i) => pixels[i * 4 + 3] === carved.cells[Math.floor(Math.floor(i / canvas.width) / scale) * mask.width + Math.floor(i % canvas.width / scale)]! * 255).every(Boolean);
     layer.destroy();
     const plain = createTerrainLayer(carved);
     const plainCanvas = plain.sprite.texture.source.resource as HTMLCanvasElement;

@@ -1,5 +1,10 @@
+import { BattleMenu } from "@/worldUi/BattleMenu";
+import { applyOps, maskFromHeights, tiltOf } from "@game/sim";
+import { BattleConsole, BattleRoster } from "@/worldUi/BattleHud";
+import { useTouchControls } from "@/worldUi/useTouchControls";
+import { useBattleInput } from "@/worldUi/useBattleInput";
 import { DEFAULT_LOADOUT, WEAPON_LABELS } from "@game/protocol";
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { labOutputSchema, type LabFrame } from "@game/protocol/v2-lab";
 import { NetworkField } from "@/worldUi/NetworkField";
 import { presentLabReplay } from "./labReplay";
@@ -9,6 +14,8 @@ import "./networkLab.css";
 type Position = { readonly playerId: string; readonly x: number; readonly y: number };
 export type RoomConnection = { readonly socket: WebSocket; readonly playerId: string; readonly frame: LabFrame };
 export const NetworkLab = ({ worldArt = false, onExit, connection }: { readonly worldArt?: boolean; readonly onExit?: () => void; readonly connection?: RoomConnection }) => {
+  const touch = useTouchControls();
+  const [menu, setMenu] = useState(false);
   const [status, setStatus] = useState("接続中"), [playerId, setPlayerId] = useState("");
   const [slot, setSlot] = useState<0 | 1>(0);
   const [elevation, setElevation] = useState(45), [power, setPower] = useState(50);
@@ -74,13 +81,13 @@ export const NetworkLab = ({ worldArt = false, onExit, connection }: { readonly 
     ws.send(JSON.stringify({ version: 2, type: "move.command", matchId: current.matchId, turnId: current.turnId,
       commandId: `${playerId}-${++commandId.current}-${Date.now()}`, moveSeq: sequence.current + 1, direction, steps: 1 }));
   };
-  const fire = (): void => {
+  const fire = (shotPower = power): void => {
     const current = latest.current, ws = socket.current;
     if (!current || current.phase !== "acting" || current.actorId !== playerId || !ws || ws.readyState !== WebSocket.OPEN || pending.current) return;
     pending.current = true;
     ws.send(JSON.stringify({ version: 2, type: "turn.fire", matchId: current.matchId, turnId: current.turnId,
       commandId: `fire-${playerId}-${++commandId.current}-${Date.now()}`, ackMoveSeq: sequence.current,
-      slot, facing: current.movement.facing, elevation, power }));
+      slot, facing: current.movement.facing, elevation, power: shotPower }));
   };
   const action = (type: "lab.rematch" | "lab.surrender"): void => {
     if (frame && socket.current?.readyState === WebSocket.OPEN) socket.current.send(JSON.stringify({ type, matchId: frame.matchId }));
@@ -90,16 +97,20 @@ export const NetworkLab = ({ worldArt = false, onExit, connection }: { readonly 
   const loadout = frame?.players.find(p => p.playerId === playerId)?.loadout ?? DEFAULT_LOADOUT;
   const phaseLabel = frame?.phase === "replaying" ? "射撃を再生中" : frame?.phase === "finished" ? "対戦終了" : "操作中";
   const canAct = (!worldArt || innerWidth > innerHeight) && frame?.phase === "acting" && frame.actorId === playerId && socket.current?.readyState === WebSocket.OPEN;
+  const input = useBattleInput(Boolean(worldArt && canAct && !menu), move, delta => setElevation(v => Math.max(10, Math.min(90, v + delta))), fire, setSlot);
+  const hudPlayers = frame?.players.map(p => ({ id: p.playerId, name: p.nickname ?? p.playerId, hp: p.hp, team: Number(p.teamId.slice(1)) })) ?? [];
+  const own = shownPlayers.find(p => p.playerId === playerId);
+  const ownFacing = useRef<-1 | 1>(1);
+  if (frame?.actorId === playerId) ownFacing.current = frame.movement.facing;
+  const ground = useMemo(() => own && presentation ? tiltOf(applyOps(maskFromHeights(Array.from({ length: 500 }, () => 150), 225), presentation.terrainOps), own) : 0, [own?.x, own?.y, frame?.eventSeq, frame?.matchId]);
   if (worldArt) return <main className="network-lab network-world">
-    <header><div><strong>KEROPOD</strong><small>{connection ? "カスタム対戦" : "オンライン試験・固定8席・標準砲"}</small></div><span>あなた <b data-testid="identity">{(connection ? frame?.players.find(p => p.playerId === playerId)?.nickname : playerId) || "未割当"}</b></span><span>手番 {(connection ? frame?.players.find(p => p.playerId === frame.actorId)?.nickname : frame?.actorId) ?? "—"}</span><strong data-testid="phase">{phaseLabel}</strong><span>{frame?.phase === "acting" ? Math.max(0, Math.ceil((frame.deadlineAt - serverNow) / 1000)) : "—"}</span><button onClick={onExit}>ロビーに戻る</button></header>
-    {frame && presentation ? <NetworkField frame={frame} players={shownPlayers} presentation={presentation} elevation={elevation} ownId={playerId} selectedWeapon={loadout[slot]} /> : <p role="status">{status}</p>}
-    <footer>
-      <div className="network-move"><small>移動 {frame?.movement.stepsLeft ?? 30}</small><div><button disabled={!canAct} onClick={() => move(-1)} aria-label="左へ1歩">←</button><button disabled={!canAct} onClick={() => move(1)} aria-label="右へ1歩">→</button></div></div>
-      {connection && <select className="network-weapon" aria-label="射撃する装備" value={slot} disabled={!canAct} onChange={e => setSlot(Number(e.target.value) as 0 | 1)}>{loadout.map((weapon, i) => <option value={i} key={i}>{WEAPON_LABELS[weapon]}</option>)}</select>}
-      <label>角度 {elevation}°<input aria-label="射撃角度" type="range" min="10" max="90" value={elevation} onChange={e => setElevation(Number(e.target.value))} /></label>
-      <label>パワー {power}<input aria-label="射撃パワー" type="range" min="0" max="100" value={power} onChange={e => setPower(Number(e.target.value))} /></label>
-      <button disabled={!canAct} onClick={fire}>発射</button><button disabled={!frame || frame.phase === "finished"} onClick={() => action("lab.surrender")}>降参</button>
-    </footer>
+    <BattleRoster players={hudPlayers} actorId={frame?.actorId ?? ""} wind={0} clock={frame?.phase === "acting" ? Math.max(0, Math.ceil((frame.deadlineAt - serverNow) / 1000)) : "—"} onMenu={() => { input.cancel(); setMenu(true); }} />
+    <span className="battle-sr" data-testid="identity">{playerId}</span><span className="battle-sr" data-testid="phase">{phaseLabel}</span>
+    {frame && presentation ? <NetworkField blocked={menu || input.gauge.charging} frame={frame} players={shownPlayers} presentation={presentation} elevation={elevation} ownId={playerId} selectedWeapon={loadout[slot]} /> : <p role="status">{status}</p>}
+    <BattleConsole player={hudPlayers.find(p => p.id === playerId)} steps={frame?.actorId === playerId ? frame.movement.stepsLeft : 0} tilt={ground} elevation={elevation} facing={ownFacing.current} power={input.gauge.value} loadout={loadout} slot={slot} disabled={!canAct || menu || input.gauge.charging} selectSlot={setSlot}>
+      {touch && <><div><button disabled={!canAct || menu} aria-label="左へ1歩" {...input.button("left")}>←</button><button disabled={!canAct || menu} aria-label="右へ1歩" {...input.button("right")}>→</button></div><div><button disabled={!canAct || menu} aria-label="角度を下げる" {...input.button("down")}>−</button><button disabled={!canAct || menu} aria-label="角度を上げる" {...input.button("up")}>＋</button></div><button disabled={!canAct || menu} aria-label="発射" {...input.button("fire")}>発射</button></>}
+    </BattleConsole>
+    {menu && <BattleMenu close={() => setMenu(false)} surrender={() => { action("lab.surrender"); setMenu(false); }} exit={onExit} finished={!frame || frame.phase === "finished"} />}
     {frame?.phase === "finished" && <section className="network-finished"><h2>{frame.result.type === "win" ? `${String.fromCharCode(65 + Number(frame.result.teamId.slice(1)))}チームの勝利` : "引き分け"}</h2><button onClick={() => action("lab.rematch")}>{connection ? "部屋へ戻る（オーナー）" : "再戦する"}</button><button onClick={onExit}>ロビーに戻る</button></section>}
     {status === "invalid-session" && <div className="network-finished"><p>接続の有効期限が切れました。</p><button onClick={() => { sessionStorage.removeItem("keropod.network-lab-token"); location.reload(); }}>新しい接続で参加</button></div>}
     <div className="network-portrait"><h2>横向きでプレイしよう</h2><p>端末を回転するとフィールドと操作が見やすくなります。</p><button onClick={onExit}>ロビーに戻る</button></div>
@@ -120,7 +131,7 @@ export const NetworkLab = ({ worldArt = false, onExit, connection }: { readonly 
     </svg>
     <div><button disabled={frame?.phase !== "acting" || frame?.actorId !== playerId || !playerId} onClick={() => move(-1)}>左へ1歩</button><button disabled={frame?.phase !== "acting" || frame?.actorId !== playerId || !playerId} onClick={() => move(1)}>右へ1歩</button></div>
     <div className="lab-fire-controls"><label>角度 {elevation}°<input aria-label="射撃角度" type="range" min="10" max="90" value={elevation} onChange={e => setElevation(Number(e.target.value))} /></label><label>パワー {power}<input aria-label="射撃パワー" type="range" min="0" max="100" value={power} onChange={e => setPower(Number(e.target.value))} /></label>
-      <button disabled={frame?.phase !== "acting" || frame?.actorId !== playerId || !playerId} onClick={fire}>発射</button>
+      <button disabled={frame?.phase !== "acting" || frame?.actorId !== playerId || !playerId} onClick={() => fire()}>発射</button>
       <button disabled={!frame || frame.phase === "finished"} onClick={() => action("lab.surrender")}>降参</button></div>
     <p data-testid="phase">{frame?.phase === "replaying" ? "射撃を再生中" : frame?.phase === "finished" ? "対戦終了" : "操作中"}</p>
     {frame?.phase === "finished" && <section><h2>{frame.result.type === "win" ? `${frame.result.teamId} の勝利` : "引き分け"}</h2><button onClick={() => action("lab.rematch")}>{connection ? "部屋へ戻る（オーナー）" : "再戦する"}</button></section>}

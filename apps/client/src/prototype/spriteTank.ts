@@ -1,3 +1,4 @@
+import { teamColor } from "@/worldUi/teamColors";
 import { Assets, Container, Graphics, Rectangle, Sprite, Text, Texture } from "pixi.js";
 import type { TankColors, WeaponId } from "@game/protocol";
 import type { TankPose, TankView } from "@/game/tankView";
@@ -16,7 +17,7 @@ export type SpriteTankFactory = {
   readonly destroy: () => void;
 };
 
-export const loadSpriteTanks = async (): Promise<SpriteTankFactory> => {
+export const loadSpriteTanks = async (teamIndices?: readonly number[]): Promise<SpriteTankFactory> => {
   const sheets = new Map<string, Texture>();
   await Promise.all(Object.entries(urls).map(async ([path, url]) => {
     sheets.set(path.split("/").pop()!.replace(".png", ""), await Assets.load<Texture>(url));
@@ -36,7 +37,7 @@ export const loadSpriteTanks = async (): Promise<SpriteTankFactory> => {
   const weapons: ((weapon: WeaponId) => void)[] = [];
   return {
     create: (_colors, nickname) => {
-      const tank = makeTank(frame, nickname);
+      const tank = makeTank(frame, nickname, teamColor(teamIndices?.[weapons.length] ?? weapons.length));
       weapons.push(tank.setWeapon);
       return tank;
     },
@@ -46,7 +47,7 @@ export const loadSpriteTanks = async (): Promise<SpriteTankFactory> => {
 };
 
 type Frame = (id: string, index?: number) => Texture;
-const makeTank = (frame: Frame, nickname: string): TankView & { setWeapon: (weapon: WeaponId) => void } => {
+const makeTank = (frame: Frame, nickname: string, color: string): TankView & { setWeapon: (weapon: WeaponId) => void } => {
   const world = new Container(), rig = new Container(), label = new Container();
   const art = (id: string, index = 0): Sprite => {
     const sprite = new Sprite(frame(id, index));
@@ -70,7 +71,8 @@ const makeTank = (frame: Frame, nickname: string): TankView & { setWeapon: (weap
   const plate = new Graphics(), health = new Graphics();
   const labelWidth = Math.max(96, name.width + 16);
   plate.roundRect(-labelWidth / 2, -21, labelWidth, 30, 5).fill(0x101c2c);
-  label.addChild(plate, name, health);
+  const team = new Graphics().roundRect(-labelWidth / 2, -21, 4, 30, 2).fill(color);
+  label.addChild(plate, team, name, health);
   let lastX: number | null = null, movedAt = 0;
   return {
     world, label,
@@ -90,7 +92,7 @@ const makeTank = (frame: Frame, nickname: string): TankView & { setWeapon: (weap
       gun.rotation = -pose.elevation * Math.PI / 180;
       aim.visible = pose.aiming;
       label.position.set((pose.x + 0.5) * cell, (pose.y - 14) * cell);
-      health.clear().rect(-38, 3, 76, 3).fill(0x435568).rect(-38, 3, 76 * Math.max(0, pose.hp) / 100, 3).fill(0xffc345);
+      health.clear().rect(-38, 3, 76, 3).fill(0x435568).rect(-38, 3, 76 * Math.max(0, pose.hp) / 100, 3).fill(color);
     },
     destroy: () => { world.destroy({ children: true }); label.destroy({ children: true }); },
   };

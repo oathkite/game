@@ -1,3 +1,4 @@
+import { teamColor } from "@/worldUi/teamColors";
 import { useEffect, useRef, useState, type HTMLAttributes } from "react";
 import { isRingOut, tiltOf } from "@game/sim";
 import { weaponOf } from "@game/protocol";
@@ -50,7 +51,7 @@ export const PrototypeCanvas = ({ store, rig, layout, handlers, blocked, followS
       if (disposed) { art.destroy(); return; }
       const terrainArt = worldArt ? await loadTerrainArt() : undefined;
       if (disposed) { art.destroy(); return; }
-      renderer = await createRenderer({ host, layout: latest.current.layout, mask: view.mask, players: [{ ...view.players[0], nickname: `A1 ${view.players[0].nickname}` }, { ...view.players[1], nickname: `B1 ${view.players[1].nickname}` }], tankFactory: art.create, background: 0x20394a, terrainTint: worldArt ? 0xffffff : 0x637d71, backgroundAlpha: worldArt ? 0 : 1, ...(terrainArt ? { terrainArt } : {}) });
+      renderer = await createRenderer({ host, layout: latest.current.layout, mask: view.mask, players: [{ ...view.players[0], nickname: view.players[0].nickname }, { ...view.players[1], nickname: view.players[1].nickname }], tankFactory: art.create, background: 0x20394a, terrainTint: worldArt ? 0xffffff : 0x637d71, backgroundAlpha: worldArt ? 0 : 1, ...(terrainArt ? { terrainArt } : {}) });
       if (disposed) { renderer.destroy(); art.destroy(); return; }
       const r = renderer, sprites = art;
       rig.resize(viewportOf(latest.current.layout), { left: 0, top: -100, right: view.mask.width, bottom: view.mask.height });
@@ -93,9 +94,9 @@ export const PrototypeCanvas = ({ store, rig, layout, handlers, blocked, followS
   }, [store, rig, onReady, worldArt]);
   return <div className="kp-world" style={{ height: layout.mapHeight, ...(worldArt ? { backgroundImage: `url(${artUrls.background})`, backgroundSize: "cover", backgroundPosition: "center" } : {}) }}>
     {worldArt && <WindLeaves wind={store.getView().wind.value} />}
-    <div ref={hostRef} className="kp-canvas" data-testid="camera-world" data-scale={layout.cell} data-loaded={loaded} {...handlers} />
+    <div ref={hostRef} className="kp-canvas" tabIndex={0} aria-label="対戦フィールド" data-testid="camera-world" data-scale={layout.cell} data-loaded={loaded} {...handlers} />
     {!loaded && <div className="kp-loading" role="status">{error ? "素材を読み込めませんでした。ページを再読み込みしてください。" : "マシンを準備しています…"}</div>}
-    <span className="kp-world-help">ドラッグで見回す / Cで手番へ</span>
+    <span className="kp-world-help">ドラッグ・ホイールで見回す / Cで手番へ</span>
     <button className="kp-minimap" aria-label="全体図からカメラを移動" disabled={blocked} onPointerDown={(e) => {
       if (!e.isPrimary || e.button !== 0) return;
       const rect = e.currentTarget.getBoundingClientRect(), b = rig.get().bounds;
@@ -118,7 +119,7 @@ const drawMinimap = (canvas: HTMLCanvasElement | null, v: MatchView, rig: Camera
   }
   v.players?.forEach((p, seat) => {
     const point = seat === v.mySeat && v.control ? v.control : p;
-    ctx.fillStyle = seat === 0 ? "#ffc345" : "#88d5ee";
+    ctx.fillStyle = teamColor(seat);
     ctx.fillRect(point.x * sx - 2, point.y * sy - 3, 4, 4);
   });
   const { center, viewport } = rig.get(), w = viewport.width / viewport.scale, h = viewport.height / viewport.scale;

@@ -1,3 +1,7 @@
+import { tiltOf } from "@game/sim";
+import { BattleRoster, BattleConsole } from "@/worldUi/BattleHud";
+import { useTouchControls } from "@/worldUi/useTouchControls";
+import { loadDisplayScale } from "@/worldUi/displayScale";
 import { useEffect, useMemo, useRef, useState, useSyncExternalStore } from "react";
 import { WEAPON_LABELS, WEAPON_SLOTS } from "@game/protocol";
 import { loadProfile } from "@/app/profile";
@@ -28,6 +32,7 @@ export const CameraPrototype = (props: ThemeProps) => {
 };
 
 const Battle = ({ store, worldArt, onExit, onResult }: { readonly store: MatchStore } & ThemeProps) => {
+  const touch = useTouchControls();
   const view = useSyncExternalStore(store.subscribe, store.getView, store.getView);
   const [size, setSize] = useState({ width: innerWidth, height: innerHeight });
   const [sceneReady, setSceneReady] = useState(false);
@@ -35,7 +40,7 @@ const Battle = ({ store, worldArt, onExit, onResult }: { readonly store: MatchSt
   const wasMenuOpen = useRef(false);
   const dialog = useRef<HTMLDialogElement>(null), menuButton = useRef<HTMLButtonElement>(null);
   const rig = useMemo(createCameraRig, []);
-  const layout = useMemo(() => cameraLayout(size.width, size.height), [size]);
+  const layout = useMemo(() => { const base = cameraLayout(size.width, size.height, worldArt ? loadDisplayScale() : 9); return worldArt ? { ...base, mapHeight: Math.max(1, size.height - 64 - (touch ? 152 : size.height < 500 || size.width < 1000 ? 96 : 120)) } : base; }, [size, worldArt, touch]);
   const portrait = size.height > size.width;
   const enabled = sceneReady && view.phase === "acting" && view.control !== null && !portrait;
   const input = usePrototypeInput(store, rig, enabled, menu || portrait, () => setMenu((open) => !open));
@@ -47,9 +52,9 @@ const Battle = ({ store, worldArt, onExit, onResult }: { readonly store: MatchSt
   }, []);
   useEffect(() => {
     if (menu) dialog.current?.showModal();
-    else { dialog.current?.close(); if (wasMenuOpen.current) menuButton.current?.focus({ preventScroll: true }); }
+    else { dialog.current?.close(); if (wasMenuOpen.current) { if (worldArt) dialog.current?.parentElement?.querySelector<HTMLElement>(".kp-canvas")?.focus({ preventScroll: true }); else menuButton.current?.focus({ preventScroll: true }); } }
     wasMenuOpen.current = menu;
-  }, [menu]);
+  }, [menu, worldArt]);
   useEffect(() => {
     window.__fortress = { store, getView: store.getView, aim: () => null };
     return () => { delete window.__fortress; };
@@ -57,33 +62,38 @@ const Battle = ({ store, worldArt, onExit, onResult }: { readonly store: MatchSt
   useEffect(() => {
     if (view.phase === "finished" && view.result && onResult) onResult(view.result.winner === null ? "引き分け" : `${view.result.winner === 0 ? "A1" : "B1"}の勝利`);
   }, [view.phase, view.result, onResult]);
+  const hudPlayers = view.players?.map(p => ({ id: String(p.seat), name: p.nickname, hp: p.hp, team: p.seat })) ?? [];
+  const pose = view.control ?? actor;
+  const ground = view.mask && pose ? tiltOf(view.mask, pose) : 0;
   const focusActor = (): void => rig.focus(actorPoint(view), "actor", matchMedia("(prefers-reduced-motion: reduce)").matches);
   const toggleMute = (): void => { setMuted(!muted); setAudioSettings(loadProfile().volume, !muted); };
   return <main className="kp-root" onContextMenu={(e) => e.preventDefault()} onPointerDown={() => unlockAudio()}>
-    <header className="kp-topbar">
+    {worldArt ? <BattleRoster players={hudPlayers} actorId={String(view.currentSeat)} clock={<Timer deadlineAt={view.deadlineAt} clockOffset={0} myTurn={enabled} />} wind={view.wind.value} onMenu={() => { input.cancel(); setMenu(true); }} /> : <header className="kp-topbar">
       <div className="kp-brand">KEROPOD <span>プラクティス</span></div>
       <div className="kp-turn"><i>{view.currentSeat === 0 ? "A1" : "B1"}</i><strong>{view.phase === "replaying" ? "弾を見届けよう" : view.phase === "finished" ? "対戦終了" : "あなたの番"}</strong><span>次は {view.currentSeat === 0 ? "B1" : "A1"}</span></div>
       <div className="kp-wind" aria-label="風向き"><span>風</span><div className="kp-wind-window"><b style={{ transform: `translateX(${view.wind.value * 1.5}px) rotate(${view.wind.value * 4}deg)` }}>〰</b></div></div>
       <div className="kp-clock"><Timer deadlineAt={view.deadlineAt} clockOffset={0} myTurn={enabled} /></div>
       <button ref={menuButton} aria-label="設定を開く" onClick={() => { input.cancel(); setMenu(true); }}>設定</button>
-    </header>
+    </header>}
     {ready ? <PrototypeCanvas worldArt={worldArt ?? false} store={store} rig={rig} layout={layout} handlers={input.world} blocked={menu || portrait || input.gauge.charging} followShot={followShot} onReady={setSceneReady} /> : <div style={{ height: layout.mapHeight }}>フィールドを準備しています…</div>}
-    <div className="kp-camera-actions" style={{ bottom: size.height - layout.mapHeight - (size.height < 500 || size.width < 1000 ? 44 : 56) + 14 }}>
-      <button disabled={input.gauge.charging || menu || portrait} onClick={focusActor}>手番へ戻る <kbd>C</kbd></button>
-      <button disabled={input.gauge.charging || menu || portrait} aria-pressed={followShot} onClick={() => { setFollowShot(!followShot); if (followShot) rig.focus(rig.get().center, "manual", true); }}>弾の追従 {followShot ? "ON" : "OFF"}</button>
+    <div className="kp-camera-actions" style={{ bottom: size.height - layout.mapHeight - (worldArt ? 64 : size.height < 500 || size.width < 1000 ? 44 : 56) + 14 }}>
+      <button disabled={input.gauge.charging || menu || portrait} aria-label="手番へ戻る" onClick={focusActor}>{worldArt ? "◎" : <>手番へ戻る <kbd>C</kbd></>}</button>
+      <button disabled={input.gauge.charging || menu || portrait} aria-pressed={followShot} onClick={() => { setFollowShot(!followShot); if (followShot) rig.focus(rig.get().center, "manual", true); }} aria-label="弾の追従">{worldArt ? "↗" : `弾の追従 ${followShot ? "ON" : "OFF"}`}</button>
     </div>
-    <footer className="kp-controls">
+    {worldArt ? <BattleConsole player={hudPlayers[view.currentSeat]} steps={view.control?.stepsLeft ?? 0} tilt={ground} elevation={view.control?.elevation ?? view.lastElevation} facing={pose?.facing ?? 1} power={input.gauge.value} loadout={actor?.loadout} slot={slot} disabled={!enabled || menu || input.gauge.charging} selectSlot={store.selectSlot}>
+      {touch && <><div><button aria-label="左へ移動" disabled={!enabled || menu} {...input.button("left")}>←</button><button aria-label="右へ移動" disabled={!enabled || menu} {...input.button("right")}>→</button></div><div><button aria-label="角度を下げる" disabled={!enabled || menu} {...input.button("down")}>−</button><button aria-label="角度を上げる" disabled={!enabled || menu} {...input.button("up")}>＋</button></div><button aria-label="発射" disabled={!enabled || menu} {...input.button("fire")}>発射</button></>}
+    </BattleConsole> : <footer className="kp-controls">
       <div className="kp-control-group"><span>移動 <small>{view.control?.stepsLeft ?? 0}</small></span><div><button aria-label="左へ移動" disabled={!enabled || menu} {...input.button("left")}>←</button><button aria-label="右へ移動" disabled={!enabled || menu} {...input.button("right")}>→</button></div></div>
       <div className="kp-control-group"><span>角度 <strong data-testid="camera-angle">{view.control?.elevation ?? view.lastElevation}°</strong></span><div><button aria-label="角度を下げる" disabled={!enabled || menu} {...input.button("down")}>−</button><button aria-label="角度を上げる" disabled={!enabled || menu} {...input.button("up")}>＋</button></div></div>
       <div className="kp-weapons" aria-label="武器">{actor && WEAPON_SLOTS.map((s) => <button key={s} aria-pressed={slot === s} disabled={!enabled || menu || input.gauge.charging} onClick={() => store.selectSlot(s)}>{WEAPON_LABELS[actor.loadout[s]]}</button>)}</div>
       <div className="kp-power"><div><span>パワー</span><strong>{Math.round(input.gauge.value)}</strong></div><div className="kp-power-track" role="meter" aria-label="パワー" aria-valuemin={0} aria-valuemax={100} aria-valuenow={Math.round(input.gauge.value)} data-testid="prototype-power"><i style={{ width: `${input.gauge.value}%` }} /></div><small>長押しして、離す</small></div>
       <button className="kp-fire" aria-label="発射" disabled={!enabled || menu} data-testid="prototype-fire" {...input.button("fire")}>{input.gauge.charging ? "離して発射" : "発射"}<small>Space</small></button>
-    </footer>
+    </footer>}
     <dialog ref={dialog} className="kp-dialog" onCancel={(e) => { e.preventDefault(); setMenu(false); }}>
       <h2>ひと息つこう</h2><p>プラクティスは進行中です。</p>
       <button aria-pressed={muted} onClick={toggleMute}>サウンド {muted ? "OFF" : "ON"}</button>
       <CameraSettingsPanel rig={rig} />
-      <p className="kp-shortcuts">A / D：移動<br />↑ / ↓：角度　Space：発射<br />Shift + 矢印：見回す　C：手番へ</p>
+      <p className="kp-shortcuts">A / D・← / →：移動<br />W / S・↑ / ↓：角度　Space：発射<br />Q / E：武器　Tab：機体を順に見る<br />Shift + 矢印：見回す　C：手番へ</p>
       {onResult && <button onClick={() => store.surrender()}>降参して対戦を終える</button>}
       <button onClick={() => setMenu(false)}>対戦に戻る</button>{onExit ? <button onClick={onExit}>ロビーに戻る</button> : <a href="/">ガレージへ戻る</a>}
     </dialog>

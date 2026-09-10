@@ -1,3 +1,4 @@
+import { loadDisplayScale, saveDisplayScale } from "./displayScale";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { WEAPON_IDS, WEAPON_LABELS, type WeaponId } from "@game/protocol";
 import { loadProfile, saveProfile } from "@/app/profile";
@@ -35,7 +36,7 @@ export const WorldScenes = () => {
     {scene === "battle" ? <CameraPrototype worldArt onExit={exit} onResult={finish} /> : scene === "rooms" ? <RoomScreen onExit={exit} onLab={() => go("network")} /> : scene === "network" ? <NetworkLab worldArt onExit={exit} /> : <>
       {scene === "start" && <WindLeaves />}
       <div key={scene} ref={heading} tabIndex={-1} className="world-content">
-        {scene === "start" && <section className="world-start"><h1><img className="world-title-logo" src={worldArt.logo} alt="KEROPOD（ケロポッド）" width="1536" height="1024" fetchPriority="high" /></h1><p>小さな一発が、世界を変える。</p><PixelButton onClick={() => go("lobby")}>はじめる</PixelButton><span className="world-build-note">2Dプレビュー</span></section>}
+        {scene === "start" && <section className="world-start"><h1><img className="world-title-logo" src={worldArt.logo} alt="KEROPOD（ケロポッド）" width="1536" height="1024" fetchPriority="high" /></h1><PixelButton onClick={() => go("lobby")}>はじめる</PixelButton><span className="world-build-note">2Dプレビュー</span></section>}
         {scene === "lobby" && <Lobby go={go} />}
         {scene === "settings" && <Settings onBack={exit} />}
         {scene === "result" && <section className="world-result-screen"><h1>{result}</h1><p>いい一発だった。またここで。</p><TankPortrait /><div><PixelButton onClick={() => go("battle")}>もう一度プレイ</PixelButton><PixelButton onClick={exit}>ロビーに戻る</PixelButton></div></section>}
@@ -60,12 +61,14 @@ const Lobby = ({ go }: { readonly go: (scene: Scene) => void }) => {
   </section>;
 };
 const Settings = ({ onBack }: { readonly onBack: () => void }) => {
+  const [displayScale, setDisplayScale] = useState(loadDisplayScale);
   const [profile, setProfile] = useState(loadProfile), [rig] = useState(createCameraRig);
   const update = (patch: Partial<typeof profile>) => { const next = { ...profile, ...patch }; setProfile(next); saveProfile(next); setAudioSettings(next.volume, next.muted); };
   return <section className="world-settings"><h1>整備と設定</h1><PixelPanel>
     <label>音量 {Math.round(profile.volume * 100)}%<input aria-label="音量" type="range" min="0" max="100" value={profile.volume * 100} onChange={e => update({ volume: Number(e.target.value) / 100 })} /></label>
     <PixelButton onClick={() => update({ muted: !profile.muted })}>{profile.muted ? "音を出す" : "音を消す"}</PixelButton>
     <CameraSettingsPanel rig={rig} />
+    <label>機体の表示サイズ<select aria-label="機体の表示サイズ" value={displayScale} onChange={e => { const value = Number(e.target.value); setDisplayScale(value); saveDisplayScale(value); }}><option value={12}>等倍</option><option value={9}>0.75倍（従来）</option></select></label>
     <small>この端末に保存されます。</small>
   </PixelPanel><PixelButton onClick={onBack}>ロビーに戻る</PixelButton></section>;
 };
