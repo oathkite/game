@@ -1,5 +1,5 @@
 import { useLanguage } from "@/i18n/locale";
-import { TankPortrait } from "./TankPortrait";
+import pilotPortrait from "../../../../assets/runtime/world-v1/pilot-portrait.webp";
 import { WeaponIcon } from "./WeaponIcon";
 import type { CSSProperties, ReactNode } from "react";
 import { WEAPON_LABELS, type Loadout } from "@game/protocol";
@@ -10,7 +10,7 @@ import "./battleHud.css";
 export type HudPlayer = { readonly id: string; readonly name: string; readonly hp: number; readonly team: number };
 export const BattleRoster = ({ players, actorId, clock, wind, onMenu }: { readonly players: readonly HudPlayer[]; readonly actorId: string; readonly clock: ReactNode; readonly wind: number; readonly onMenu: () => void }) => { const { t } = useLanguage();
   const seats = (group: readonly HudPlayer[]) => <div className="battle-seats">{group.map(p => <div className={`battle-seat ${p.id === actorId ? "is-actor" : ""}`} key={p.id} style={{ "--team": teamColor(p.team) } as CSSProperties} aria-label={`${p.name}, ${t("{color}チーム", { color: t(teamColorName(p.team)) })}, HP ${p.hp}${p.id === actorId ? ` ${t("手番")}` : ""}`}>
-    <div className="battle-seat-portrait" aria-hidden="true"><TankPortrait /></div><span className="battle-team-dot" /><strong>{p.name}</strong><div className="battle-hp"><i style={{ width: `${Math.max(0, Math.min(100, p.hp))}%` }} /></div>
+    <div className="battle-seat-portrait" aria-hidden="true"><img className="battle-pilot-portrait" src={pilotPortrait} alt="" /></div><span className="battle-team-dot" /><strong>{p.name}</strong><div className="battle-hp"><i style={{ width: `${Math.max(0, Math.min(100, p.hp))}%` }} /></div>
   </div>)}</div>;
   const middle = Math.ceil(players.length / 2);
   return <header className="battle-roster">
@@ -20,7 +20,7 @@ export const BattleRoster = ({ players, actorId, clock, wind, onMenu }: { readon
 
 type Props = { readonly player?: HudPlayer | undefined; readonly steps: number; readonly tilt: number; readonly elevation: number; readonly facing: -1 | 1; readonly power: number; readonly loadout?: Loadout | undefined; readonly slot: number; readonly disabled: boolean; readonly selectSlot: (slot: 0 | 1) => void; readonly children?: ReactNode };
 export const BattleConsole = (p: Props) => { const { t } = useLanguage(); return <footer className={`battle-console ${p.children ? "has-touch" : ""}`}>
-  <div className="battle-self" style={{ "--team": teamColor(p.player?.team ?? 0) } as CSSProperties}><div className="battle-self-portrait" aria-hidden="true"><TankPortrait /></div><div className="battle-self-info"><strong>{p.player?.name ?? "—"}</strong><div className="battle-hp"><i style={{ width: `${Math.max(0, Math.min(100, p.player?.hp ?? 0))}%` }} /></div><span>{p.player?.hp ?? 0}/100</span><small aria-label={`${t("残り移動")} ${p.steps}`}>↔ {p.steps}</small></div></div>
+  <div className="battle-self" style={{ "--team": teamColor(p.player?.team ?? 0) } as CSSProperties}><div className="battle-self-portrait" aria-hidden="true"><img className="battle-pilot-portrait" src={pilotPortrait} alt="" /></div><div className="battle-self-info"><strong>{p.player?.name ?? "—"}</strong><div className="battle-hp"><i style={{ width: `${Math.max(0, Math.min(100, p.player?.hp ?? 0))}%` }} /></div><span>{p.player?.hp ?? 0}/100</span><small aria-label={`${t("残り移動")} ${p.steps}`}>↔ {p.steps}</small></div></div>
   <AngleDial tilt={p.tilt} elevation={p.elevation} facing={p.facing} /><PowerRuler value={p.power} />
   <div className="battle-weapons">{p.loadout?.map((weapon, slot) => <button key={slot} title={t(WEAPON_LABELS[weapon])} aria-label={t(WEAPON_LABELS[weapon])} aria-pressed={p.slot === slot} disabled={p.disabled} onClick={() => p.selectSlot(slot as 0 | 1)}><WeaponIcon weapon={weapon} /><span>{slot === 0 ? "Q" : "E"}</span></button>)}</div>
   {p.children && <div className="battle-touch">{p.children}</div>}

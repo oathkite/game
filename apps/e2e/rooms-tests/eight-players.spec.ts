@@ -46,7 +46,7 @@ test("eight independent players complete a 4v4 match and return together", async
     }
     const portrait = owner.locator(".battle-seat-portrait").first();
     const portraitBox = (await portrait.boundingBox())!;
-    const imageBox = (await portrait.locator(".tank-portrait > svg").boundingBox())!;
+    const imageBox = (await portrait.locator("img").boundingBox())!;
     expect(imageBox.y).toBeGreaterThanOrEqual(portraitBox.y);
     expect(imageBox.y + imageBox.height).toBeLessThanOrEqual(portraitBox.y + portraitBox.height + 1);
     const actors = await Promise.all(pages.map(page => page.locator(".battle-weapons button").first().isEnabled()));

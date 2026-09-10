@@ -3,6 +3,26 @@
   "encoding": "per-asset-webp",
   "assets": [
     {
+      "id": "pilot-portrait",
+      "source": "assets/workbench/world-ui-final/pilot-portrait-v1.png",
+      "encoding": "lossless-webp-exact-rgba",
+      "channelRms": [
+        0.0,
+        0.0,
+        0.0,
+        0.0
+      ],
+      "file": "pilot-portrait.webp",
+      "sourceSha256": "839052884464d454849b61928173aba35c4e7ebba9d792e80964745c7e5926de",
+      "sha256": "c76d95198d627e496704734fed949bb27775364c2467b8b72baee86d52ce53ba",
+      "size": [
+        1254,
+        1254
+      ],
+      "sourceBytes": 1135959,
+      "bytes": 907086
+    },
+    {
       "id": "logo",
       "source": "assets/workbench/ui-polish-v1/logo.png",
       "encoding": "lossless-webp-exact-rgba",

@@ -16,3 +16,10 @@
 - Brief: full-bleed repeating rock material, charcoal/olive fractured slabs and sparse moss, no sky/UI/characters/grass border. Runtime supplies the arbitrary destruction mask and surface rim.
 - AI review: rock/moss material matches the foreground direction more closely than brown soil. Repeat seams and apparent pixel density require in-game comparison. Not yet selected as runtime terrain; human approval pending.
 - Runtime comparison: selected for the next iteration after desktop/mobile screenshots. A 256-art-pixel repeat tile makes the generated clusters close to tank pixels; the initial 1024 tile made the rock pixels visibly too large. Lossless WebP preserves the source before runtime nearest-neighbor resampling. Surface moss and repetitive material variation still need refinement; this is not final human approval.
+
+## pilot-portrait-v1.png
+
+- Generated with built-in image generation on 2026-09-10. Source: exec-d8593b04-fac3-4baf-b293-a6dbb4cf9acf.png, retained unchanged.
+- Reference: desktop-refined-v4.png cockpit portrait. Generic green frog pilot in olive jacket, no glasses or scarf; not the owner's personal yellow/blue-glasses/orange-scarf avatar.
+- AI review: face and natural eyes remain readable in a small HUD; navy background integrates with the cockpit. Human final approval pending.
+- Runtime: lossless WebP with exact RGBA validation; shared by roster and self panel. This is a HUD portrait, not a replacement gameplay animation sheet.

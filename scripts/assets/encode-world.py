@@ -7,6 +7,7 @@ from PIL import Image, ImageChops, ImageStat
 
 ROOT = Path(__file__).resolve().parents[2]
 FILES = {
+    "pilot-portrait": "world-ui-final/pilot-portrait-v1.png",
     "logo": "ui-polish-v1/logo.png",
     "background": "world-ui-final/background-floating-islands-v1.png",
     "lobby": "world-ui-v1/lobby-v1.png",
