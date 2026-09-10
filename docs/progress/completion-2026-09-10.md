@@ -494,3 +494,5 @@ heartbeatはUI共同調整時にPAUSED。本ゴールは現在のタスクで進
 
 - production.config.ts全33件、Chromium/Firefox/WebKit通過。タイトルencoded transfer=1,861,274 / 1,830,964 / 1,831,114B、練習累計=5,301,958 / 5,271,648 / 5,272,124B。素材追加後も2MB/8MB条件内。
 - 原案desktop-refined-v4を再確認。大きな差の一つである土→岩盤/苔のためterrain-rock-v1.pngを生成しworkbenchへ保存。1254四方、岩・苔の方向は近いが、繰り返し境界と実画素密度を実画面比較してから採用を決める。runtime未変更。
+- 演出追加後のproduction-rooms Chromium独立8contextも通過（32.1秒）。4v4入室→射撃→降参決着→全員部屋復帰。累計最大5,304,165B。これは射撃だけで決着する長時間試合の証拠ではない。
+- 1時間soakはsession72311で2486秒まで進行、同じprocessを継続。
