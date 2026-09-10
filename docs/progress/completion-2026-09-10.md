@@ -35,3 +35,10 @@ heartbeatはUI共同調整時にPAUSED。本ゴールは現在のタスクで進
 - maps68、engine108、protocol22、server46、client170テストと4package TypeScriptを通過。
 - PC＋タッチ2接続E2E：マップ変更、ready解除、風一致、装備、発射、結果、部屋復帰を通過。
 - 射程・全武器の組合せ監査はまだ残る。マップstatusはtest-onlyを維持。
+
+## 10:00 復元基盤
+
+- BattleSnapshot v1を追加。初期surfaceと確定terrainOpsからmaskを復元し、replay/風のprivate state/移動receipts/lastFireを保存。
+- JSON往復後の地形・再生・次ターン一致、移動と発射の二重適用防止、version不一致拒否の3テストを追加。engine111テスト・TypeScript通過。
+- まだgatewayへの永続化接続は未完。次はsocket依存を分離した部屋reducerをNode/DOで共用し、persist-before-ackを実装。
+- Cloudflare durable-objectsスキルとWebSocket hibernation / alarms公式仕様を確認済み。DOは部屋単位、Directory別、SQLite、WebSocket attachment、単一alarmで進める。
