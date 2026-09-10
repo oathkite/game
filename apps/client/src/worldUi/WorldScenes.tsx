@@ -28,16 +28,17 @@ export const WorldScenes = () => {
     setClosing(true);
     timer.current = setTimeout(() => { setScene(next); setClosing(false); timer.current = null; }, 240);
   }, []);
+  useEffect(() => { const profile = loadProfile(); setAudioSettings(profile.volume, profile.muted); }, []);
   useEffect(() => () => { if (timer.current) clearTimeout(timer.current); }, []);
   useEffect(() => { heading.current?.focus({ preventScroll: true }); }, [scene]);
   const exit = useCallback(() => go("lobby"), [go]);
   const finish = useCallback((label: string) => { setResult(label); go("result"); }, [go]);
   const background = scene === "settings" ? worldArt.settings : scene === "lobby" ? worldArt.lobby : scene === "result" ? worldArt.result : worldArt.background;
   return <div className={`world-ui world-scene-${scene} ${closing ? "world-closing" : ""}`} style={{ backgroundImage: `url(${background})` }}>
-    {scene === "battle" ? <CameraPrototype worldArt onExit={exit} onResult={finish} /> : scene === "rooms" ? <RoomScreen onExit={exit} onLab={() => go("network")} /> : scene === "network" ? <NetworkLab worldArt onExit={exit} /> : <>
+    {scene === "battle" ? <CameraPrototype worldArt onExit={exit} onResult={finish} /> : scene === "rooms" ? <RoomScreen onExit={exit} {...(import.meta.env.DEV ? { onLab: () => go("network") } : {})} /> : scene === "network" ? <NetworkLab worldArt onExit={exit} /> : <>
       {scene === "start" && <WindLeaves />}
       <div key={scene} ref={heading} tabIndex={-1} className="world-content">
-        {scene === "start" && <section className="world-start"><h1><img className="world-title-logo" src={worldArt.logo} alt="KEROPOD（ケロポッド）" width="1536" height="1024" fetchPriority="high" /></h1><PixelButton onClick={() => go("lobby")}>はじめる</PixelButton><span className="world-build-note">2Dプレビュー</span></section>}
+        {scene === "start" && <section className="world-start"><h1><img className="world-title-logo" src={worldArt.logo} alt="KEROPOD（ケロポッド）" width="1536" height="1024" fetchPriority="high" /></h1><PixelButton onClick={() => go("lobby")}>はじめる</PixelButton></section>}
         {scene === "lobby" && <Lobby go={go} />}
         {scene === "settings" && <Settings onBack={exit} />}
         {scene === "result" && <section className="world-result-screen"><h1>{result}</h1><p>いい一発だった。またここで。</p><TankPortrait /><div><PixelButton onClick={() => go("battle")}>もう一度プレイ</PixelButton><PixelButton onClick={exit}>ロビーに戻る</PixelButton></div></section>}
@@ -56,9 +57,8 @@ const Lobby = ({ go }: { readonly go: (scene: Scene) => void }) => {
     <PixelPanel className="world-loadout">
       <label>名前<input aria-label="名前" maxLength={12} value={profile.nickname} placeholder="ケロポッド" onChange={e => update({ nickname: e.target.value })} /></label>
       {([0, 1] as const).map(slot => <label key={slot}>装備 {slot + 1}<select aria-label={`装備 ${slot + 1}`} value={profile.loadout[slot]} onChange={e => weapon(slot, e.target.value as WeaponId)}>{WEAPON_IDS.map(id => <option key={id} value={id} disabled={id === profile.loadout[slot === 0 ? 1 : 0]}>{WEAPON_LABELS[id]}</option>)}</select></label>)}
-      <p>装備は対戦ルームにも引き継ぎます。<br />同じ端末で移動と射撃を試せます。</p>
     </PixelPanel>
-    <footer><PixelButton onClick={() => go("start")}>タイトルへ</PixelButton><PixelButton onClick={() => go("rooms")}>オンライン試験</PixelButton><PixelButton onClick={() => go("battle")}>プラクティスへ</PixelButton></footer>
+    <footer><PixelButton onClick={() => go("start")}>タイトルへ</PixelButton><PixelButton onClick={() => go("rooms")}>オンライン対戦</PixelButton><PixelButton onClick={() => go("battle")}>プラクティスへ</PixelButton></footer>
   </section>;
 };
 const Settings = ({ onBack }: { readonly onBack: () => void }) => {

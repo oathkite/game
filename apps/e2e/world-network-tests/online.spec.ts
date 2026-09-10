@@ -8,7 +8,7 @@ test("new world lobby connects two players to the sprite camera battlefield", as
       page.on("pageerror", e => errors.push(e.message));
       await page.goto("/?prototype=world");
       await page.getByRole("button", { name: "はじめる", exact: true }).click();
-      await page.getByRole("button", { name: "オンライン試験" }).click();
+      await page.getByRole("button", { name: "オンライン対戦" }).click();
       await page.getByRole("button", { name: "固定8席試験" }).click();
       await expect(page.getByTestId("identity")).toHaveText(/^p\d$/);
       await expect(page.getByTestId("network-world")).toHaveAttribute("data-loaded", "true");

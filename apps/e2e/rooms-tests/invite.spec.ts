@@ -7,7 +7,7 @@ test("invitation skips the title and an independent spectator watches without co
     for (const page of [a!, b!, viewer!]) page.on("pageerror", e => errors.push(e.message));
     await a!.goto("/?prototype=world");
     await a!.getByRole("button", { name: "はじめる", exact: true }).click();
-    await a!.getByRole("button", { name: "オンライン試験" }).click();
+    await a!.getByRole("button", { name: "オンライン対戦" }).click();
     await a!.getByRole("button", { name: "部屋を作る" }).click();
     await expect(a!.getByTestId("room-code")).toBeVisible();
     await a!.getByRole("button", { name: "招待リンク", exact: true }).click();

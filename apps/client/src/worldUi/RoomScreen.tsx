@@ -9,9 +9,10 @@ import { PixelButton, PixelPanel } from "./PixelUi";
 import "./rooms.css";
 import { inviteRoom, roomInviteUrl } from "./roomInvite";
 import { resolveRoomUrl } from "./roomTransport";
+const serverBase = import.meta.env.VITE_ROOM_SERVER_URL || (import.meta.env.PROD ? location.origin : "");
 const tokenKey = "keropod.room-token", roomKey = "keropod.room-id";
 const errors: Record<string, string> = { "version-mismatch": "ゲームの更新が必要です。再読み込みしてください。", "wrong-mode": "この部屋は別の対戦形式です。クイック参加から入り直してください。", "fixed-mode": "クイック対戦の編成は固定です。", "waiting-for-players": "人数が揃うまでお待ちください。", "spectators-full": "観戦席が満員です。", "read-only": "観戦中は対戦操作できません。", "not-found": "部屋が見つかりません。", full: "部屋が満員です。", locked: "対戦中の部屋には参加できません。", "invalid-session": "復帰期限が切れたか、別の画面で接続中です。", "stale-revision": "部屋が更新されました。内容を確認して再操作してください。", "not-ready": "全員の準備完了を待っています。", unassigned: "全員のチームを選んでください。", "not-enough-teams": "2チーム以上に分かれてください。", "not-enough-players": "2人以上で開始できます。", disconnected: "切断中の参加者がいます。", "not-owner": "オーナーだけが操作できます。", "not-owner-or-not-finished": "対戦終了後、オーナーが部屋へ戻せます。" };
-export const RoomScreen = ({ onExit, onLab }: { readonly onExit: () => void; readonly onLab: () => void }) => {
+export const RoomScreen = ({ onExit, onLab }: { readonly onExit: () => void; readonly onLab?: () => void }) => {
   const [room, setRoom] = useState<RoomSnapshot | null>(null), [playerId, setPlayerId] = useState("");
   const [code, setCode] = useState(() => inviteRoom(location.href) ?? ""), [status, setStatus] = useState(() => new URL(location.href).searchParams.has("room") && !inviteRoom(location.href) ? "招待リンクの部屋コードが無効です。" : ""), [busy, setBusy] = useState(false);
   const [quickMode, setQuickMode] = useState<"1v1" | "2v2">("1v1"), [region, setRegion] = useState<"asia" | "europe" | "americas">("asia");
@@ -25,14 +26,14 @@ export const RoomScreen = ({ onExit, onLab }: { readonly onExit: () => void; rea
     socket.current?.close(); setBusy(true); setStatus("接続しています…");
     socket.current = null;
     let url: string;
-    try { url = import.meta.env.VITE_ROOM_SERVER_URL
-      ? await resolveRoomUrl(initial, import.meta.env.VITE_ROOM_SERVER_URL, sessionStorage.getItem(roomKey))
+    try { url = serverBase
+      ? await resolveRoomUrl(initial, serverBase, sessionStorage.getItem(roomKey))
       : `ws://${location.hostname}:8795`; }
     catch { if (active.current && currentAttempt === attempt.current) { setBusy(false); setStatus("対戦サーバーに接続できません。"); } return; }
     if (!active.current || currentAttempt !== attempt.current) return;
     const ws = new WebSocket(url); socket.current = ws;
     let identity = "", watching = false, versionMismatch = false;
-    ws.onopen = () => { if (active.current && socket.current === ws) ws.send(JSON.stringify({ ...initial, build: CLIENT_BUILD, ...(initial.type === "room.quick" ? { roomId: import.meta.env.VITE_ROOM_SERVER_URL ? new URL(url).pathname.split("/").at(-1) : "000000" } : {}) })); };
+    ws.onopen = () => { if (active.current && socket.current === ws) ws.send(JSON.stringify({ ...initial, build: CLIENT_BUILD, ...(initial.type === "room.quick" ? { roomId: serverBase ? new URL(url).pathname.split("/").at(-1) : "000000" } : {}) })); };
     ws.onmessage = event => {
       if (!active.current || socket.current !== ws) return;
       let raw: unknown; try { raw = JSON.parse(String(event.data)); } catch { return; }
@@ -77,7 +78,7 @@ export const RoomScreen = ({ onExit, onLab }: { readonly onExit: () => void; rea
         <label>部屋コード<input aria-label="部屋コード" maxLength={6} value={code} onChange={e => setCode(e.target.value.toUpperCase().replace(/[^A-F0-9]/g, ""))} /></label>
         <PixelButton disabled={busy || code.length !== 6} onClick={() => connect({ type: "room.join", roomId: code, profile: profile() })}>部屋に参加</PixelButton>
         <PixelButton disabled={busy || code.length !== 6} onClick={() => connect({ type: "room.spectate", roomId: code })}>観戦する</PixelButton>
-        <button className="room-lab-link" onClick={onLab}>固定8席試験</button></div> : <>
+        {onLab && <button className="room-lab-link" onClick={onLab}>固定8席試験</button>}</div> : <>
         {spectator && <p role="status">観戦中</p>}
         {room.mode !== "custom" && <div><strong>{room.mode === "1v1" ? "1 vs 1" : "2 vs 2"}　{room.members.length} / {room.mode === "1v1" ? 2 : 4}</strong><PixelButton onClick={cancelQuick}>待機をキャンセル</PixelButton>{waited && <p role="status">対戦相手を待っています。キャンセルして地域を変更するか、ロビーから練習できます。</p>}</div>}
         <PixelButton onClick={() => setSharing(v => !v)}>招待リンク</PixelButton>

@@ -7,7 +7,7 @@ test(`quick ${count === 2 ? "1v1" : "2v2"} assigns balanced teams and starts whe
     for (const page of pages) {
       await page.goto("/?prototype=world");
       await page.getByRole("button", { name: "はじめる", exact: true }).click();
-      await page.getByRole("button", { name: "オンライン試験" }).click();
+      await page.getByRole("button", { name: "オンライン対戦" }).click();
       await page.getByLabel("クイック対戦形式").selectOption(count === 2 ? "1v1" : "2v2");
       await page.getByLabel("クイック対戦地域").selectOption("asia");
       await page.getByRole("button", { name: "クイック参加", exact: true }).click();
@@ -29,7 +29,7 @@ test(`quick ${count === 2 ? "1v1" : "2v2"} assigns balanced teams and starts whe
 test("a waiting player gets the 30-second choices and can cancel", async ({ page }) => {
   await page.goto("/?prototype=world");
   await page.getByRole("button", { name: "はじめる", exact: true }).click();
-  await page.getByRole("button", { name: "オンライン試験" }).click();
+  await page.getByRole("button", { name: "オンライン対戦" }).click();
   await page.getByLabel("クイック対戦地域").selectOption("americas");
   await page.getByRole("button", { name: "クイック参加", exact: true }).click();
   await expect(page.getByTestId("room-code")).toBeVisible();

@@ -24,6 +24,8 @@
     "world-network-tests",
     "world-network.config.ts",
     "rooms-tests",
-    "rooms.config.ts"
+    "rooms.config.ts",
+    "production-tests",
+    "production.config.ts"
   ]
 }

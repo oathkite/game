@@ -8,7 +8,7 @@ test("room code, teams, ready, selected weapons and return to preparation", asyn
       page.on("pageerror", e => errors.push(e.message));
       await page.goto("/?prototype=world");
       await page.getByRole("button", { name: "はじめる", exact: true }).click();
-      await page.getByRole("button", { name: "オンライン試験" }).click();
+      await page.getByRole("button", { name: "オンライン対戦" }).click();
     }
     await a!.getByRole("button", { name: "部屋を作る" }).click();
     const code = a!.getByTestId("room-code"); await expect(code).toHaveText(/^[A-F0-9]{6}$/);
@@ -18,7 +18,7 @@ test("room code, teams, ready, selected weapons and return to preparation", asyn
     const roomCode = await code.textContent();
     await b!.reload();
     await b!.getByRole("button", { name: "はじめる", exact: true }).click();
-    await b!.getByRole("button", { name: "オンライン試験" }).click();
+    await b!.getByRole("button", { name: "オンライン対戦" }).click();
     await expect(b!.getByTestId("room-code")).toHaveText(roomCode!);
     await expect(b!.locator(".room-members li")).toHaveCount(2);
     await a!.getByLabel("参加者1のチーム").selectOption("t0");

@@ -84,3 +84,11 @@ heartbeatはUI共同調整時にPAUSED。本ゴールは現在のタスクで進
 - セッションにもbuildを保存。未認証の不適合接続によるNodeの空室残留を防止。
 - engine113/server59/protocol24/client175 unitとTypeScript通過。実SQLite edge2テスト、SIGKILL復帰、ブラウザー5 E2E（招待/観戦/custom/quick1v1/2v2/待機取消）通過。
 - 次は通常起動経路と配信buildの検証。version文字列は手動管理のため、sim/rules/assets変更時に更新する運用が必要。
+
+## 10:54 通常の起動経路
+
+- `/`でKEROPODを起動。招待は直接部屋画面へ。旧UIはDEVのlegacy URLへ移動。
+- プレビュー/固定8席試験の表示を配信用画面から除き、保存済み音量・muteを起動時に反映。
+- 配信用buildの接続先未設定時は同一originのv2 API。開発用8795を公開クライアントへ埋め込まない。
+- production build/previewの3 E2E、PC/横長touch/小型/縦画面と操作の7 E2E、client175 unit、TypeScriptを通過。
+- 全配信ファイルは現状約16MB。画像軽量化とpack登録を次に行う。UIの最終デザイン調整は未着手。
