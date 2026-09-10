@@ -100,3 +100,10 @@ heartbeatはUI共同調整時にPAUSED。本ゴールは現在のタスクで進
 - manifestに元と出力のSHA-256、寸法、容量を記録。assets:checkで差し替え・更新漏れを検出。
 - production3 E2E、地形破壊後のalpha E2E、TypeScript通過。
 - spriteの正規pack登録と最終視覚レビューは未完。runtime画像登録は人間によるアート承認の代替ではない。
+
+## 11:00 イントロの再生導線
+
+- 初回3秒の既存素材による演出、常時操作可能な開始/スキップ、設定からの再生を追加。
+- 再訪・招待・reduced motion・saveDataでは省略。保存不可でも自動終了して開始できる。
+- productionのイントロ3 E2E、既存world7 E2E、client/e2e TypeScript通過。
+- 演出の最終的な機体ポーズ/ガレージ/ロゴの絵作りとidle motionはUI最終工程で照合する。今回は再生・省略・遷移の機能基盤。
