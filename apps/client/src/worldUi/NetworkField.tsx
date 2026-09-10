@@ -1,3 +1,4 @@
+import { loadProjectileArt } from "@/worldUi/projectileArt";
 import { loadImpactSprites } from "./impactSprites";
 import { useLanguage } from "@/i18n/locale";
 import { teamColor } from "./teamColors";
@@ -38,7 +39,9 @@ export const NetworkField = (props: Props) => {
       if (disposed) { art.destroy(); effects.destroy(); return; }
       let mask = baseTerrain(latest.current.frame), previousSize = "", terrainKey = "", turnKey = "", replayKey = -1;
       const facing = new Map<string, -1 | 1>();
-      renderer = await createRenderer({ host: element, layout: layout(), mask, terrainArt, backgroundAlpha: 0, tankFactory: art.create,
+      const projectileTextures = await loadProjectileArt();
+      if (disposed) return;
+      renderer = await createRenderer({ projectileTextures, host: element, layout: layout(), mask, terrainArt, backgroundAlpha: 0, tankFactory: art.create,
         players: latest.current.frame.players.map(p => ({ nickname: p.nickname ?? p.playerId, colors: { primary: p.teamId === "t0" ? "yellow" : "cyan", secondary: "blue" } })) });
       if (disposed) { renderer.destroy(); art.destroy(); return; }
       const r = renderer; let bullet = r.projectile("yellow", "cannon");
@@ -58,7 +61,7 @@ export const NetworkField = (props: Props) => {
           elevation: p.playerId === shot?.playerId ? shot.elevation : p.playerId === ownId ? elevation : 45, hp: p.eliminated ? 0 : p.hp, visible: !p.eliminated && p.y < frame.map.height, aiming: frame.phase === "acting" && p.playerId === ownId && p.playerId === frame.actorId, flash: presentation.effects.some(effect => effect.hitIds.includes(p.playerId)) }));
         const actor = players.find(p => p.playerId === frame.actorId); if (actor && frame.phase === "acting") rig.actor({ x: actor.x, y: actor.y - 6 });
         if (frame.replay && replayKey !== frame.replay.startsAt) { replayKey = frame.replay.startsAt; bullet = r.projectile("yellow", frame.replay.shooter.weapon); art!.setWeapon(frame.players.findIndex(p => p.playerId === frame.replay!.shooter.playerId), frame.replay.shooter.weapon); const p = presentation.bullets[0]; if (p) rig.focus(p, "shot"); }
-        for (let i = 0; i < 9; i++) { const p = presentation.bullets[i]; bullet.setBullet(i, p?.x ?? null, p?.y ?? 0, 0); }
+        for (let i = 0; i < 9; i++) { const p = presentation.bullets[i]; bullet.setBullet(i, p?.x ?? null, p?.y ?? 0, p?.angle ?? 0); }
         effects!.draw(bullet.container, presentation.effects, matchMedia("(prefers-reduced-motion: reduce)").matches, frame.replay?.shooter.weapon ?? "cannon");
         const first = presentation.bullets[0]; if (first) rig.shot(first);
         const center = rig.tick(dt, performance.now(), matchMedia("(prefers-reduced-motion: reduce)").matches);

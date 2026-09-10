@@ -7,7 +7,8 @@ const projectileAt = (path: Replay["paths"][number], tick: number) => {
   const a = path.points[right < 0 ? path.points.length - 1 : Math.max(0, right - 1)]!;
   const b = right < 0 ? a : path.points[right]!;
   const t = b.tick === a.tick ? 0 : Math.max(0, (tick - a.tick) / (b.tick - a.tick));
-  return [{ x: a.x + (b.x - a.x) * t, y: a.y + (b.y - a.y) * t }];
+  const heading = right < 0 ? path.points[Math.max(0, path.points.length - 2)]! : a;
+  return [{ x: a.x + (b.x - a.x) * t, y: a.y + (b.y - a.y) * t, angle: Math.atan2(b.y - heading.y, b.x - heading.x) }];
 };
 /** Replay server ticks at a shared pace, retaining a final 300ms settling window. */
 export const presentLabReplay = (frame: LabFrame, now: number) => {

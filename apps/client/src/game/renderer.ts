@@ -1,6 +1,6 @@
 import { COLOR_HEX, type TankColors, type WeaponId } from "@game/protocol";
 import type { TerrainMask } from "@game/sim";
-import { Application, Container } from "pixi.js";
+import { Application, Container, type Texture } from "pixi.js";
 import { spawnDamageLabel } from "./damageLabel";
 import { DAMAGE_LABEL_GAP_PX, type Offset } from "./hitFeedback";
 import { createProjectileView, type ProjectileView } from "./projectileView";
@@ -32,6 +32,7 @@ export type RendererInit = {
   readonly host: HTMLElement;
   readonly layout: Layout;
   readonly mask: TerrainMask;
+  readonly projectileTextures?: Readonly<Record<WeaponId, Texture>>;
   readonly tankFactory?: typeof createTankView;
   readonly background?: number;
   readonly terrainTint?: number;
@@ -109,7 +110,7 @@ export const createRenderer = async (init: RendererInit): Promise<Renderer> => {
     },
     projectile: (color, weapon) => {
       if (projectile) projectile.destroy();
-      projectile = createProjectileView(Number.parseInt(COLOR_HEX[color].slice(1), 16), weapon);
+      projectile = createProjectileView(Number.parseInt(COLOR_HEX[color].slice(1), 16), weapon, init.projectileTextures?.[weapon]);
       projectileLayer.addChild(projectile.container);
       return projectile;
     },

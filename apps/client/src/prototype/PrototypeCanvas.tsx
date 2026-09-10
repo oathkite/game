@@ -1,3 +1,4 @@
+import { loadProjectileArt } from "@/worldUi/projectileArt";
 import { useLanguage } from "@/i18n/locale";
 import { teamColor } from "@/worldUi/teamColors";
 import { useEffect, useRef, useState, type HTMLAttributes } from "react";
@@ -53,7 +54,9 @@ export const PrototypeCanvas = ({ store, rig, layout, handlers, blocked, followS
       if (disposed) { art.destroy(); return; }
       const terrainArt = worldArt ? await loadTerrainArt() : undefined;
       if (disposed) { art.destroy(); return; }
-      renderer = await createRenderer({ host, layout: latest.current.layout, mask: view.mask, players: [{ ...view.players[0], nickname: view.players[0].nickname }, { ...view.players[1], nickname: view.players[1].nickname }], tankFactory: art.create, background: 0x20394a, terrainTint: worldArt ? 0xffffff : 0x637d71, backgroundAlpha: worldArt ? 0 : 1, ...(terrainArt ? { terrainArt } : {}) });
+      const projectileTextures = await loadProjectileArt();
+      if (disposed) return;
+      renderer = await createRenderer({ projectileTextures, host, layout: latest.current.layout, mask: view.mask, players: [{ ...view.players[0], nickname: view.players[0].nickname }, { ...view.players[1], nickname: view.players[1].nickname }], tankFactory: art.create, background: 0x20394a, terrainTint: worldArt ? 0xffffff : 0x637d71, backgroundAlpha: worldArt ? 0 : 1, ...(terrainArt ? { terrainArt } : {}) });
       if (disposed) { renderer.destroy(); art.destroy(); return; }
       const r = renderer, sprites = art;
       rig.resize(viewportOf(latest.current.layout), { left: 0, top: -100, right: view.mask.width, bottom: view.mask.height });

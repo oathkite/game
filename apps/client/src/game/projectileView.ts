@@ -1,5 +1,5 @@
 import type { CellPoint, WeaponId } from "@game/protocol";
-import { Container, Graphics } from "pixi.js";
+import { Container, Graphics, Sprite, type Texture } from "pixi.js";
 import { blastCells, bulletSize, type BulletSize } from "./weaponArt";
 
 // 弾、飛行中の尾、爆風、破片、外れの印。設計書 08 の 8.6、10 の 10.5。単位はセル。
@@ -44,11 +44,12 @@ const drawBlast = (g: Graphics, color: number, cx: number, cy: number, r: number
 };
 
 /** 弾の列。弾道の数だけ矩形を持ち、足りなければ作る */
-const bulletPool = (parent: Container, size: BulletSize, color: number) => {
-  const list: Graphics[] = [];
-  return (index: number): Graphics => {
+const bulletPool = (parent: Container, size: BulletSize, color: number, texture?: Texture) => {
+  const list: (Graphics | Sprite)[] = [];
+  return (index: number): Graphics | Sprite => {
     while (list.length <= index) {
-      const g = new Graphics().rect(-size.w / 2, -size.h / 2, size.w, size.h).fill(color);
+      const g = texture ? new Sprite(texture) : new Graphics().rect(-size.w / 2, -size.h / 2, size.w, size.h).fill(color);
+      if (g instanceof Sprite) { g.anchor.set(0.5, 0.6); g.scale.set(1 / 12); }
       g.visible = false;
       parent.addChild(g);
       list.push(g);
@@ -61,7 +62,7 @@ const drawMissMark = (g: Graphics, color: number, cx: number, cy: number): void 
   g.rect(cx, cy, 1, 1).rect(cx - 1, cy, 1, 1).rect(cx + 1, cy, 1, 1).rect(cx, cy - 1, 1, 1).rect(cx, cy + 1, 1, 1).fill(color);
 };
 
-export const createProjectileView = (color: number, weapon: WeaponId): ProjectileView => {
+export const createProjectileView = (color: number, weapon: WeaponId, texture?: Texture): ProjectileView => {
   const container = new Container();
   const trail = new Graphics();
   const blasts = new Container();
@@ -72,7 +73,7 @@ export const createProjectileView = (color: number, weapon: WeaponId): Projectil
   const blastLayer = keyedLayer(blasts);
   const debrisLayer = keyedLayer(debris);
   const missLayer = keyedLayer(misses);
-  const bulletAt = bulletPool(bullets, bulletSize(weapon), color);
+  const bulletAt = bulletPool(bullets, bulletSize(weapon), color, texture);
 
   return {
     container,

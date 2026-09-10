@@ -283,3 +283,10 @@ heartbeatはUI共同調整時にPAUSED。本ゴールは現在のタスクで進
 - 同じ着弾tick/300ms再生/再利用Sprite処理で表示。ダメージ・地形・弾道は変更なし。
 - 素材15件の一致検査、labReplay4件、client TypeScript/diff check、実edgeのPC/touch射撃・復帰・再準備E2E通過。E2Eの実射撃はtripleで、特殊3種の視覚確認はソース画像と割当確認まで。
 - 比較soakはsession22808で継続。294秒RSS297MB/heap64MB。初回同時刻RSS605MBより低く、終了時まで観測を続ける。
+
+## 12:27 砲弾素材の共通描画
+
+- 8武器の砲弾を配信用コピーへ追加。共有projectileViewが任意のTextureを受け取り、練習/オンラインで同じ画像を使用。従来の呼出しには既存描画を維持。
+- 元素材のorigin[96,96]、12px/cell、nearest samplingで配置。オンラインの弾道区間から進行角を算出し、画像を回転。弾道/ダメージ/地形は変更なし。
+- assets23件の一致検査、labReplay4件（方向角を含む）、client TypeScript/diff check、実edgeの対戦1件と配信buildの入口/練習/招待3件が通過。
+- 比較soakはsession22808で継続。442秒RSS227MB/heap72MB。完了後に初回とまとめて比較する。

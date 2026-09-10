@@ -10,7 +10,8 @@ const frame = labFrameSchema.parse({ type: "lab.frame", build: { protocol: 2, si
 it("holds committed pre-shot positions and terrain until impact, then settles before the deadline", () => {
   const start = presentLabReplay(frame, 1000);
   expect(start.players[0]).toMatchObject({ x: 20, y: 150, hp: 100 }); expect(start.terrainOps).toEqual([]);
-  expect(start.bullets[0]).toEqual({ x: 20, y: 140 });
+  expect(start.bullets[0]).toMatchObject({ x: 20, y: 140 });
+  expect(start.bullets[0]!.angle).toBeCloseTo(Math.atan2(-10, 60));
   const middle = presentLabReplay(frame, 1350); expect(middle.bullets[0]!.x).toBeCloseTo(50);
   const falling = presentLabReplay(frame, 1850); expect(falling.bullets).toEqual([]);
   expect(falling.terrainOps).toHaveLength(1); expect(falling.players[0]!.y).toBeCloseTo(160);
@@ -34,7 +35,7 @@ it("staggered launches and impacts follow authoritative ticks, preserving earlie
   expect(beforeSecond.terrainOps).toHaveLength(1);
   expect(beforeSecond.players[0]).toMatchObject({ hp: 90, y: 150 });
   const second = presentLabReplay(staggered, 1525); // tick 30
-  expect(second.bullets).toEqual([{ x: 30, y: 140 }]);
+  expect(second.bullets).toEqual([{ x: 30, y: 140, angle: 0 }]);
   expect(second.players[0]!.hp).toBe(90);
   const settled = presentLabReplay(staggered, 1850);
   expect(settled.players[0]).toMatchObject({ hp: 65, y: 160 });
