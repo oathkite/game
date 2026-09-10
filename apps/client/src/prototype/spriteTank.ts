@@ -113,7 +113,7 @@ const makeTank = (frame: Frame, nickname: string, color: string): TankView & { s
       weapon.x = -8 - recoil / 12;
       const wreck = animation.pilot === 15;
       if (wreck !== wasWreck) { rig.filters = wreck ? [grayscale] : null; wasWreck = wreck; }
-      body.y = wreck ? 8 / 12 : 0;
+      body.y = (wreck ? 8 : animation.bodyY ?? 0) / 12;
       gun.rotation = (wreck ? 18 : -pose.elevation) * Math.PI / 180;
       aim.visible = pose.hp > 0 && pose.aiming;
       showFlashes(pose.hp > 0 && !reducedMotion.matches

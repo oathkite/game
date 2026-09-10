@@ -49,3 +49,20 @@ it("plays destruction once on a live-to-dead transition and skips it for existin
   animate(pose, 1100);
   expect(animate({ ...pose, hp: 0 }, 1200).pilot).toBe(7);
 });
+it("settles the body over the authored 450ms landing without moving the tracks", () => {
+  const animate = createTankAnimation(), pose = { x: 0, hp: 100, flash: false };
+  animate({ ...pose, falling: true }, 0);
+  expect(animate(pose, 100).bodyY).toBe(0);
+  expect(animate(pose, 325).bodyY).toBe(3);
+  expect(animate(pose, 325).tracks).toBe(0);
+  expect(animate(pose, 500).bodyY).toBe(1);
+  expect(animate(pose, 550).bodyY ?? 0).toBe(0);
+});
+it("suppresses landing bounce with reduced motion and lets destruction take priority", () => {
+  const animate = createTankAnimation(), pose = { x: 0, hp: 100, flash: false };
+  animate({ ...pose, falling: true }, 0);
+  animate(pose, 100);
+  expect(animate(pose, 325, true).bodyY).toBe(0);
+  expect(animate({ ...pose, hp: 0 }, 350).pilot).toBe(7);
+  expect(animate({ ...pose, hp: 0 }, 350).bodyY ?? 0).toBe(0);
+});

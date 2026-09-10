@@ -545,3 +545,8 @@ heartbeatはUI共同調整時にPAUSED。本ゴールは現在のタスクで進
 - 配信build/local edgeのChromiumで独立8人の4v4入室→射撃共有→降参決着→8人部屋復帰が通過（37.8秒）。転送量は各context 6,325,646Bで8MB以内。
 - HUDの緑色パイロットと戦場の既存黄色パイロットの整合は、最終素材比較に残す。
 - 配信entryのChromium4件通過。タイトル1,861,218B、練習まで6,323,449B。初期2MB/対戦8MB条件を維持。
+
+### 着地の車体演出（2026-09-11）
+
+- asset-labの450ms着地曲線をゲームのSpriteTankへ接続。最大3 artpxの車体沈下のみで、tracks・world位置・当たり判定は変更しない。
+- reduced motionでは沈下を抑止。死亡時はdestroy/wreck優先。単体7件（追加2件の失敗確認後に修正）、client typecheck、既存反動/大破/残骸の実Pixi browser test通過。
