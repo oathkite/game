@@ -8,7 +8,7 @@ from PIL import Image
 ROOT = Path(__file__).resolve().parents[2]
 FILES = {
     "logo": "ui-polish-v1/logo.png",
-    "background": "world-ui-v1/background-v2.png",
+    "background": "world-ui-final/background-floating-islands-v1.png",
     "lobby": "world-ui-v1/lobby-v1.png",
     "settings": "world-ui-v1/settings-v1.png",
     "result": "world-ui-v1/result-v1.png",

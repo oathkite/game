@@ -17,16 +17,16 @@
     },
     {
       "id": "background",
-      "source": "assets/workbench/world-ui-v1/background-v2.png",
+      "source": "assets/workbench/world-ui-final/background-floating-islands-v1.png",
       "file": "background.webp",
-      "sourceSha256": "6396e2b29a24997de6d2b565bab4bb4e7363c92d846298e5039d2d35c980dc6f",
-      "sha256": "c85eb26c08681c2d6ab7fa53f97e7c376b2cda2ab34d6b7aa7a54bfad680c980",
+      "sourceSha256": "c019204b6be880ef3071376a1a67dda3756be22b19d4e83cac9900ff4fd6619c",
+      "sha256": "d197cbf942cf0b88126399b9224826d2a17a94440576b2c5bc6f53e670648042",
       "size": [
         1536,
         1024
       ],
-      "sourceBytes": 1876656,
-      "bytes": 1454374
+      "sourceBytes": 2122982,
+      "bytes": 1731642
     },
     {
       "id": "lobby",
