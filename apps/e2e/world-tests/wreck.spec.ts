@@ -1,0 +1,35 @@
+import { expect, test } from "@playwright/test";
+test("wreck sinks its body and lowers its barrel while keeping the tracks grounded", async ({ page }) => {
+  await page.goto("/?prototype=world");
+  const poses = await page.evaluate(async () => {
+    const source = "/src/prototype/spriteTank.ts";
+    const { loadSpriteTanks } = await import(/* @vite-ignore */ source);
+    const factory = await loadSpriteTanks();
+    const tank = factory.create({}, "wreck");
+    const pose = { x: 100, y: 90, tilt: 0, facing: 1, elevation: 70, hp: 100, visible: true, flash: false, aiming: true };
+    const read = () => {
+      const rig = tank.world.children[0];
+      const tracks = rig.getChildByLabel("tracks");
+      const body = rig.getChildByLabel("body");
+      const gun = body?.getChildByLabel("gun");
+      return { ground: tank.world.y, tracksY: tracks?.y, bodyY: body?.y, barrel: gun?.rotation, aim: gun?.children[1].visible };
+    };
+    tank.setPose(pose, 3);
+    const alive = read();
+    tank.setPose({ ...pose, hp: 0 }, 3);
+    const wreck = read();
+    tank.setPose({ ...pose, hp: 0, elevation: 10, facing: -1 }, 3);
+    const otherAim = read();
+    tank.setPose(pose, 3);
+    const restored = read();
+    tank.destroy(); factory.destroy();
+    return { alive, wreck, otherAim, restored };
+  });
+  expect(poses.wreck.bodyY).toBeCloseTo(8 / 12);
+  expect(poses.wreck.barrel).toBeCloseTo(18 * Math.PI / 180);
+  expect(poses.wreck.aim).toBe(false);
+  expect(poses.wreck.ground).toBe(poses.alive.ground);
+  expect(poses.wreck.tracksY).toBe(poses.alive.tracksY);
+  expect(poses.otherAim).toEqual(poses.wreck);
+  expect(poses.restored).toEqual(poses.alive);
+});

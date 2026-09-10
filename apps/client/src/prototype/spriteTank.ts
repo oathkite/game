@@ -57,15 +57,18 @@ const makeTank = (frame: Frame, nickname: string, color: string): TankView & { s
     return sprite;
   };
   const tracks = art("tracks-standard"), pilot = art("pilot-frog");
-  rig.addChild(tracks, art("cabin-standard", 0), pilot, art("cabin-standard", 1), art("cabin-standard", 2), art("cabin-standard", 3));
-  const gun = new Container(), weapon = new Sprite(frame("weapon-cannon"));
+  tracks.label = "tracks";
+  const body = new Container({ label: "body" });
+  body.addChild(art("cabin-standard", 0), pilot, art("cabin-standard", 1), art("cabin-standard", 2), art("cabin-standard", 3));
+  rig.addChild(tracks, body);
+  const gun = new Container({ label: "gun" }), weapon = new Sprite(frame("weapon-cannon"));
   weapon.scale.set(1 / 12);
   weapon.position.set(-8, -8);
   gun.position.set(0, -4);
   const aim = new Graphics();
   for (let i = 0; i < 5; i++) aim.rect(6 + i * 3, -0.12, 1.4, 0.24).fill(0xffc345);
   gun.addChild(weapon, aim);
-  rig.addChild(gun);
+  body.addChild(gun);
   world.addChild(rig);
   const name = new Text({ text: nickname, style: { fontFamily: "sans-serif", fontSize: 13, fill: 0xf6f1df } });
   name.anchor.set(0.5, 1);
@@ -88,8 +91,10 @@ const makeTank = (frame: Frame, nickname: string, color: string): TankView & { s
       rig.scale.x = pose.facing;
       rig.rotation = -pose.tilt * Math.PI / 180;
       rig.alpha = pose.flash ? 0.55 : 1;
-      gun.rotation = -pose.elevation * Math.PI / 180;
-      aim.visible = pose.aiming;
+      // Authored wreck pose: the body settles eight art pixels; tracks keep contact.
+      body.y = pose.hp <= 0 ? 8 / 12 : 0;
+      gun.rotation = (pose.hp <= 0 ? 18 : -pose.elevation) * Math.PI / 180;
+      aim.visible = pose.hp > 0 && pose.aiming;
       label.position.set((pose.x + 0.5) * cell, (pose.y - 14) * cell);
       health.clear().rect(-38, 3, 76, 3).fill(0x435568).rect(-38, 3, 76 * Math.max(0, pose.hp) / 100, 3).fill(color);
     },
