@@ -129,7 +129,7 @@ const makeTank = (frame: Frame, nickname: string, color: string): TankView & { s
         sprite.texture = frame(effect.id, effect.frame);
         sprite.position.set(effect.x, effect.y); sprite.alpha = effect.alpha; sprite.visible = true;
       });
-      label.position.set((pose.x + 0.5) * cell, (pose.y - 14) * cell);
+      label.position.set((pose.x + 0.5) * cell, (pose.y - 11.5) * cell);
       health.clear().rect(-38, 3, 76, 3).fill(0x435568).rect(-38, 3, 76 * Math.max(0, pose.hp) / 100, 3).fill(color);
     },
     destroy: () => { world.destroy({ children: true }); label.destroy({ children: true }); grayscale.destroy(); },
