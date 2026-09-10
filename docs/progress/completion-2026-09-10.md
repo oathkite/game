@@ -237,3 +237,11 @@ heartbeatはUI共同調整時にPAUSED。本ゴールは現在のタスクで進
 - ROOM_SOAK_SECONDS（0〜600）で初期対戦検証後の接続維持/全接続ping/手番内移動/期限進行/保存復元確認を追加。
 - 4部屋、実ファイル保存、片道125ms、継続10秒の試運転とserver TypeScript/diff check通過。実際に移動を送った回数もassertし、待機だけで成功しないようにした。
 - 100部屋/800接続、実ファイル保存、片道125ms、継続600秒を開始。結果はまだ未確認。ログ `/tmp/keropod-soak-600.log`、実行session25911。既存handleをpollし、終了確認前に再起動しない。
+
+## 12:09 タンク画像の配信元を固定
+
+- spriteTankが使う11枚をassets/runtime/tanks-v1へ無加工で分離。制作フォルダーからの直接読み込みを解消。
+- 再作成scriptとmanifestを追加。assets:checkで元画像とのバイト一致/ハッシュ/サイズを検査。画像の見た目・密度は変更なし。
+- assets:check、client TypeScript、配信buildの入口/練習/招待/routingの3 E2E通過。
+- 視覚承認はpendingを明記。assets/sprites向けの人による最終承認や、全VFX/アニメーション統合は未完。
+- 10分soakはsession25911で継続中。96秒時点100部屋、テスト全体RSS445MB。完了結果は未確認。

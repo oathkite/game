@@ -1,0 +1,77 @@
+{
+  "version": 1,
+  "artPixelsPerCell": 12,
+  "frameSize": [
+    192,
+    160
+  ],
+  "visualApproval": "pending",
+  "entries": [
+    {
+      "file": "cabin-standard.png",
+      "source": "assets/workbench/baseline-v2/cabin-standard.png",
+      "bytes": 2263,
+      "sha256": "efee005a8f6c3b8a5ea2b6f62e73abba8fa32974c7db1515a811a9570e1e62e9"
+    },
+    {
+      "file": "tracks-standard.png",
+      "source": "assets/workbench/baseline-v2/tracks-standard.png",
+      "bytes": 4101,
+      "sha256": "a54b6b094a304c3f42e55f0d939add44c0d9bfc7202e08343055afc3422598ac"
+    },
+    {
+      "file": "pilot-frog.png",
+      "source": "assets/workbench/baseline-v2/pilot-frog.png",
+      "bytes": 5711,
+      "sha256": "e03372d898ff90c5cf9c367f3bd469b382280117d2510cc886a52b10cda92c03"
+    },
+    {
+      "file": "weapon-cannon.png",
+      "source": "assets/workbench/baseline-v2/weapon-cannon.png",
+      "bytes": 652,
+      "sha256": "afac7b5b02bb46354e65141e45d110b2d867b459c803b91c306085cbcbc7d09d"
+    },
+    {
+      "file": "weapon-triple.png",
+      "source": "assets/workbench/baseline-v2/weapon-triple.png",
+      "bytes": 736,
+      "sha256": "9acd1430cbe70de825e9ebbfe77943f4ffd019f08dc0f4d882ce8003deca0acc"
+    },
+    {
+      "file": "weapon-multiple.png",
+      "source": "assets/workbench/baseline-v2/weapon-multiple.png",
+      "bytes": 812,
+      "sha256": "e2932dfb95484e2aa6d22cb66429a9dccc0e324f59cb5635d4c87afe842fa28e"
+    },
+    {
+      "file": "weapon-drill.png",
+      "source": "assets/workbench/baseline-v2/weapon-drill.png",
+      "bytes": 772,
+      "sha256": "4b0ad669089e470998afcbd01caccefbc034b7add45d13c7ee5abe95512e2ef8"
+    },
+    {
+      "file": "weapon-laser.png",
+      "source": "assets/workbench/baseline-v2/weapon-laser.png",
+      "bytes": 791,
+      "sha256": "800c2576b61138b0b97fa4a055e4a615dc1e7b09815ee5e5094918c7fd3c92f5"
+    },
+    {
+      "file": "weapon-digger.png",
+      "source": "assets/workbench/baseline-v2/weapon-digger.png",
+      "bytes": 758,
+      "sha256": "38a2f53329251eed25b3ee78c6d91c8e6c5b709bda812bb113056f70ebc308ca"
+    },
+    {
+      "file": "weapon-floater.png",
+      "source": "assets/workbench/baseline-v2/weapon-floater.png",
+      "bytes": 990,
+      "sha256": "a0bbac9b611aa97dde4d66f77782a9b33fb39764160e254020da8176be62d269"
+    },
+    {
+      "file": "weapon-stinger.png",
+      "source": "assets/workbench/baseline-v2/weapon-stinger.png",
+      "bytes": 606,
+      "sha256": "da6a889452d38924d12665f28ff4c8c11f585b8a951ebf32301df25449e42331"
+    }
+  ]
+}

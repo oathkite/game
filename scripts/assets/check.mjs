@@ -1,3 +1,4 @@
+import { runtimeTanks } from "./runtime-tanks.mjs";
 import { checkRuntime } from "./check-runtime.mjs";
 import { existsSync, readdirSync } from 'node:fs';
 import { resolve } from 'node:path';
@@ -19,3 +20,5 @@ for (const entry of entries) {
 if (failures) process.exitCode = 1;
 
 console.log(`Runtime artwork: ${checkRuntime()} verified files`);
+
+console.log(`Runtime tanks: ${runtimeTanks()} verified files`);

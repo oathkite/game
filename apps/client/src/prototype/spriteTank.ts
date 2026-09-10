@@ -3,12 +3,12 @@ import { Assets, Container, Graphics, Rectangle, Sprite, Text, Texture } from "p
 import type { TankColors, WeaponId } from "@game/protocol";
 import type { TankPose, TankView } from "@/game/tankView";
 
-// 工程A限定。承認済みの機体packを原寸アンカーで配置する。一般向けアバターの配信には使わない。
+// 配信用コピーを原寸アンカーで配置する。元画像との一致はassets:checkで検証。
 const urls = import.meta.glob<string>([
-  "../../../../assets/workbench/baseline-v2/cabin-standard.png",
-  "../../../../assets/workbench/baseline-v2/tracks-standard.png",
-  "../../../../assets/workbench/baseline-v2/pilot-frog.png",
-  "../../../../assets/workbench/baseline-v2/weapon-*.png",
+  "../../../../assets/runtime/tanks-v1/cabin-standard.png",
+  "../../../../assets/runtime/tanks-v1/tracks-standard.png",
+  "../../../../assets/runtime/tanks-v1/pilot-frog.png",
+  "../../../../assets/runtime/tanks-v1/weapon-*.png",
 ], { eager: true, query: "?url", import: "default" });
 
 export type SpriteTankFactory = {
