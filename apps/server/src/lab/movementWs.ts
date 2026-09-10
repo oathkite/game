@@ -1,6 +1,6 @@
 import { compatibleBuild } from "@game/protocol/build";
 import { randomUUID, randomInt } from "node:crypto";
-import { createBattle, createBattleSession, fireInSession, forfeitInSession, moveInSession, movementSnapshot, surrenderInSession, tickSession } from "@game/engine/multiplayer";
+import { upcomingPlayers, createBattle, createBattleSession, fireInSession, forfeitInSession, moveInSession, movementSnapshot, surrenderInSession, tickSession } from "@game/engine/multiplayer";
 import { TEST_ARENA } from "@game/maps";
 import { labInputSchema, type LabFrame, type LabOutput } from "@game/protocol/v2-lab";
 import type { WebSocket, WebSocketServer } from "ws";
@@ -19,7 +19,7 @@ export const attachMovementLab = (wss: WebSocketServer) => {
     if (socket.readyState === socket.OPEN) socket.send(JSON.stringify(message));
   };
   const frame = (): LabFrame => ({ type: "lab.frame", build: state.build, serverTime: Date.now(), eventSeq: state.movement.eventSeq,
-    matchId: state.matchId, turnId: state.roster.turnId, actorId: state.movement.playerId, deadlineAt: state.movement.deadlineAt,
+    matchId: state.matchId, turnId: state.roster.turnId, actorId: state.movement.playerId, upcomingPlayerIds: [...upcomingPlayers(state.roster)], deadlineAt: state.movement.deadlineAt,
     players: state.players.map(p => ({ ...p, teamId: members.find(m => m.playerId === p.playerId)!.teamId, eliminated: state.roster.eliminated.includes(p.playerId) })),
     movement: movementSnapshot(state.movement, Date.now()), phase: state.phase, result: state.result, terrainOps: [...state.terrainOps], wind: state.windState.value, map: state.map,
     replay: replayFrame(state) });

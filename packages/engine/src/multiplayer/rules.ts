@@ -75,3 +75,10 @@ export const nextTurn = (state: RosterState): RosterState => {
   }
   return state;
 };
+
+/** Next distinct participants; the current actor is not repeated in short matches. */
+export const upcomingPlayers = (state: RosterState): readonly PlayerId[] => {
+  if (outcome(state).type !== "ongoing") return [];
+  return [...state.turnRing.slice(state.cursor + 1), ...state.turnRing.slice(0, state.cursor)]
+    .filter(id => !state.eliminated.includes(id)).slice(0, 3);
+};

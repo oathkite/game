@@ -8,8 +8,9 @@ import { teamColor, teamColorName } from "./teamColors";
 import "./battleHud.css";
 
 export type HudPlayer = { readonly id: string; readonly name: string; readonly hp: number; readonly team: number };
-export const BattleRoster = ({ players, actorId, clock, wind, onMenu }: { readonly players: readonly HudPlayer[]; readonly actorId: string; readonly clock: ReactNode; readonly wind: number; readonly onMenu: () => void }) => { const { t } = useLanguage();
+export const BattleRoster = ({ players, actorId, upcomingPlayerIds = [], clock, wind, onMenu }: { readonly players: readonly HudPlayer[]; readonly actorId: string; readonly upcomingPlayerIds?: readonly string[]; readonly clock: ReactNode; readonly wind: number; readonly onMenu: () => void }) => { const { t } = useLanguage();
   const seats = (group: readonly HudPlayer[]) => <div className="battle-seats">{group.map(p => <div className={`battle-seat ${p.id === actorId ? "is-actor" : ""}`} key={p.id} style={{ "--team": teamColor(p.team) } as CSSProperties} aria-label={`${p.name}, ${t("{color}チーム", { color: t(teamColorName(p.team)) })}, HP ${p.hp}${p.id === actorId ? ` ${t("手番")}` : ""}`}>
+    {upcomingPlayerIds.includes(p.id) && <span className="battle-upcoming" aria-label={t("{order}人後の手番", { order: upcomingPlayerIds.indexOf(p.id) + 1 })}>{upcomingPlayerIds.indexOf(p.id) + 1}</span>}
     <div className="battle-seat-portrait" aria-hidden="true"><img className="battle-pilot-portrait" src={pilotPortrait} alt="" /></div><span className="battle-team-dot" /><strong>{p.name}</strong><div className="battle-hp"><i style={{ width: `${Math.max(0, Math.min(100, p.hp))}%` }} /></div>
   </div>)}</div>;
   const middle = Math.ceil(players.length / 2);

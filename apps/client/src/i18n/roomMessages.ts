@@ -49,7 +49,7 @@ export const roomEnglish: Readonly<Record<string, string>> = {
   "対戦終了後、オーナーが部屋へ戻せます。": "The owner can return everyone to the room after the battle.",
   "操作を受け付けられませんでした。部屋の状態を確認してください。": "That action was not accepted. Check the room state.",
   "対戦設定": "Battle settings", "対戦に戻る": "Resume battle", "降参": "Surrender", "試合の診断情報": "Match diagnostics",
-  "診断情報をコピー": "Copy diagnostics", "コピーしました": "Copied", "設定を開く": "Open settings", "手番": "Active turn", "風": "Wind", "残り移動": "Steps left",
+  "診断情報をコピー": "Copy diagnostics", "コピーしました": "Copied", "設定を開く": "Open settings", "手番": "Active turn", "{order}人後の手番": "Turn in {order}", "風": "Wind", "残り移動": "Steps left",
   "A / D・← / →：移動　W / S・↑ / ↓：角度": "A / D or ← / →: move. W / S or ↑ / ↓: aim.",
   "Space：溜めて発射　Q / E：武器　Tab：機体を順に見る": "Hold Space to charge, release to fire. Q / E: weapon. Tab: cycle tanks.",
 };

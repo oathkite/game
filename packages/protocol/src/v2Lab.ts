@@ -13,6 +13,7 @@ export const labFrameSchema = z.object({
   build: matchBuildSchema,
   type: z.literal("lab.frame"), serverTime: z.number(), eventSeq: z.number().int().nonnegative(),
   matchId: z.string(), turnId: z.number().int(), actorId: z.string(), deadlineAt: z.number(),
+  upcomingPlayerIds: z.array(z.string()).max(3).optional(),
   players: z.array(labPlayerSchema).min(2).max(8),
   movement: moveSnapshotSchema,
   map: z.object({ id: z.string().min(1).max(128), version: z.number().int().positive(),
