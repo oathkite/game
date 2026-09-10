@@ -3,6 +3,7 @@ import { fireCommandSchema, lobbyCommandSchema, lobbyProfileSchema, moveCommandS
 import { labOutputSchema } from "./v2Lab.js";
 const roomId = z.string().regex(/^[A-F0-9]{6}$/);
 export const roomInputSchema = z.union([
+  z.object({ type: z.literal("room.spectate"), roomId }).strict(),
   z.object({ type: z.literal("room.create"), profile: lobbyProfileSchema }).strict(),
   z.object({ type: z.literal("room.join"), roomId, profile: lobbyProfileSchema }).strict(),
   z.object({ type: z.literal("room.resume"), token: z.string().uuid() }).strict(),
@@ -18,7 +19,7 @@ export const roomSnapshotSchema = z.object({ type: z.literal("room.snapshot"), r
   map: z.object({ id: z.string(), version: z.number(), width: z.number(), height: z.number() }),
 }) });
 export const roomOutputSchema = z.union([labOutputSchema, roomSnapshotSchema,
-  z.object({ type: z.literal("room.welcome"), playerId: z.string(), token: z.string().uuid() }),
+  z.object({ type: z.literal("room.welcome"), playerId: z.string(), token: z.string().uuid(), role: z.enum(["player", "spectator"]).default("player"), generation: z.number().int().positive().default(1) }),
   z.object({ type: z.literal("room.error"), reason: z.string() }),
 ]);
 export type RoomSnapshot = z.infer<typeof roomSnapshotSchema>["room"];

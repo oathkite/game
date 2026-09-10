@@ -56,3 +56,12 @@ heartbeatはUI共同調整時にPAUSED。本ゴールは現在のタスクで進
 - ブラウザーPC+touch2接続のrooms E2EをNode/edge両方で通過。
 - scripts/verify-edge-restart.ts: live socketのままSIGKILL→同じSQLiteで再起動→同じmatch/terrain、generation2、shot重複拒否を確認。
 - 未完：version tuple、Directoryの地域/クイック参加・観戦、一般公開UIへの接続、負荷/長時間試験、最終UI。
+
+## 10:25 招待と観戦
+
+- room=6桁コードの招待URL。タイトルを省略し、名前/入室画面へ直行。共有URLからtokenや無関係なquery/hashを除去。
+- プレイヤーとは別に観戦8席。観戦tokenはsession roleで権限分離し、ready/開始/移動/射撃/降参をサーバーで拒否。
+- 観戦者の入退室ではroster/revision/readyを変えず、ownerにも選ばない。Directoryの人数はプレイヤーと観戦者を分離。
+- 最新snapshotから観戦開始。発射/降参を非表示、Tabでカメラ巡回、手動視点維持を選択可能。脱落したプレイヤーも操作HUDを観戦表示へ切り替える。
+- client174/server55テスト通過。PC+touch+観戦の3端末招待E2Eを追加し、既存rooms E2Eとともにedgeで通過。
+- 後続：クイック参加（1v1/2v2・地域別）、version固定、公開画面への切替、日英/アバター/診断、負荷試験、最終UI。

@@ -27,7 +27,7 @@ export const attachRooms = (wss: WebSocketServer, options: Options = {}) => {
     }
   }, 100);
   const effects = (socket: WebSocket, result: RoomReply) => {
-    if (result.welcome) send(socket, { type: "room.welcome", playerId: result.welcome.playerId, token: result.welcome.token, generation: result.welcome.generation });
+    if (result.welcome) send(socket, { type: "room.welcome", playerId: result.welcome.playerId, token: result.welcome.token, role: result.welcome.role, generation: result.welcome.generation });
     if (result.ack && result.state.battle) send(socket, { type: "lab.ack", reason: result.reason, snapshot: movementSnapshot(result.state.battle.movement, Date.now()) });
     else if (!["accepted", "unchanged"].includes(result.reason)) send(socket, { type: "room.error", reason: result.reason });
     if (result.welcome && result.state.battle) send(socket, { type: "room.snapshot", room: result.state.lobby });
@@ -48,7 +48,7 @@ export const attachRooms = (wss: WebSocketServer, options: Options = {}) => {
           if ([...rooms.values()].reduce((n, r) => n + r.state.sessions.length, 0) >= 256 || rooms.size >= 128) { error("capacity"); return; }
           do { roomId = randomUUID().slice(0, 6).toUpperCase(); } while (rooms.has(roomId));
           rooms.set(roomId, new RoomRuntime(createRoomState(roomId), save));
-        } else if (input.type === "room.join") roomId = input.roomId;
+        } else if ((input.type === "room.join" || input.type === "room.spectate")) roomId = input.roomId;
         else if (input.type === "room.resume") roomId = [...rooms.values()].find(r => r.state.sessions.some(s => s.token === input.token))?.state.roomId ?? null;
         else { error("join-required"); return; }
       }

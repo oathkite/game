@@ -32,6 +32,11 @@ it.skipIf(!endpoint)("runs an isolated room through the SQLite Durable Object ad
     expect(frame).not.toHaveProperty("windState");
     const actor = frame.actorId === a.last("room.welcome").playerId ? a : b;
     const fire = { type: "turn.fire", version: 2, matchId: frame.matchId, turnId: 1, commandId: "edge-shot", ackMoveSeq: 0, slot: 0, facing: 1, elevation: 45, power: 35 };
+    const spectator = await connect(); spectator.send({ type: "room.spectate", roomId: created.roomId });
+    await expect.poll(() => spectator.last("room.welcome")?.role).toBe("spectator");
+    expect(spectator.last("lab.frame").players).toHaveLength(2);
+    spectator.send(fire);
+    await expect.poll(() => spectator.last("room.error")?.reason).toBe("read-only");
     actor.send(fire);
     await expect.poll(() => actor.last("lab.ack")?.reason).toBe("accepted");
     const token = actor.last("room.welcome").token;
@@ -42,6 +47,6 @@ it.skipIf(!endpoint)("runs an isolated room through the SQLite Durable Object ad
     await expect.poll(() => resumed.last("lab.ack")?.reason).toBe("duplicate");
     await expect.poll(() => resumed.last("lab.frame")?.turnId, { timeout: 12000 }).toBe(2);
     const list = await fetch(`${endpoint}/v2/rooms`, { headers }).then(r => r.json()) as any[];
-    expect(list.find(r => r.roomId === created.roomId)).toMatchObject({ members: 2, phase: "started" });
+    expect(list.find(r => r.roomId === created.roomId)).toMatchObject({ members: 2, spectators: 1, phase: "started" });
   } finally { for (const socket of sockets) socket.close(); }
 }, 20000);

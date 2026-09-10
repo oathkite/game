@@ -1,3 +1,4 @@
+import { inviteRoom } from "./roomInvite";
 import { loadDisplayScale, saveDisplayScale } from "./displayScale";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { WEAPON_IDS, WEAPON_LABELS, type WeaponId } from "@game/protocol";
@@ -16,7 +17,7 @@ import "./worldUi.css";
 
 type Scene = "start" | "lobby" | "settings" | "battle" | "result" | "network" | "rooms";
 export const WorldScenes = () => {
-  const [scene, setScene] = useState<Scene>("start"), [closing, setClosing] = useState(false);
+  const [scene, setScene] = useState<Scene>(() => inviteRoom(location.href) || new URL(location.href).searchParams.has("room") ? "rooms" : "start"), [closing, setClosing] = useState(false);
   const [result, setResult] = useState("");
   const timer = useRef<ReturnType<typeof setTimeout> | null>(null);
   const heading = useRef<HTMLDivElement>(null);

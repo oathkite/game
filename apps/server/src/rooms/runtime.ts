@@ -4,7 +4,7 @@ export type RoomSnapshot = { readonly version: 1; readonly state: Omit<RoomState
 export const serializeRoom = (state: RoomState): RoomSnapshot => ({ version: 1, state: { ...state, battle: state.battle ? serializeBattle(state.battle) : null } });
 export const restoreRoom = (snapshot: RoomSnapshot): RoomState => {
   if (snapshot.version !== 1) throw new Error("unsupported room snapshot version");
-  return { ...snapshot.state, battle: snapshot.state.battle ? restoreBattle(snapshot.state.battle) : null };
+  return { ...snapshot.state, sessions: snapshot.state.sessions.map(s => ({ ...s, role: s.role ?? "player" })), battle: snapshot.state.battle ? restoreBattle(snapshot.state.battle) : null };
 };
 /** Serialize commands per room. A rejected storage write never publishes an acknowledgement. */
 export class RoomRuntime {

@@ -15,7 +15,7 @@ import type { presentLabReplay } from "@/networkLab/labReplay";
 import { loadTerrainArt, worldArt } from "./assets";
 import { WindLeaves } from "./WindLeaves";
 
-type Props = { readonly blocked?: boolean; readonly frame: LabFrame; readonly players: LabFrame["players"]; readonly presentation: ReturnType<typeof presentLabReplay>; readonly elevation: number; readonly ownId: string; readonly selectedWeapon?: WeaponId };
+type Props = { readonly followTurns?: boolean; readonly blocked?: boolean; readonly frame: LabFrame; readonly players: LabFrame["players"]; readonly presentation: ReturnType<typeof presentLabReplay>; readonly elevation: number; readonly ownId: string; readonly selectedWeapon?: WeaponId };
 const baseTerrain = (frame: LabFrame) => maskFromHeights(frame.map.surface, frame.map.height);
 export const NetworkField = (props: Props) => {
   const host = useRef<HTMLDivElement>(null), mini = useRef<HTMLCanvasElement>(null), latest = useRef(props); latest.current = props;
@@ -44,7 +44,7 @@ export const NetworkField = (props: Props) => {
         const nextTerrain = `${frame.matchId}/${presentation.terrainOps.length}`;
         if (nextTerrain !== terrainKey) { terrainKey = nextTerrain; mask = applyOps(baseTerrain(frame), presentation.terrainOps); r.setTerrain(mask); }
         const nextTurn = `${frame.matchId}/${frame.turnId}`;
-        if (nextTurn !== turnKey) { turnKey = nextTurn; focus(); }
+        if (nextTurn !== turnKey) { turnKey = nextTurn; if (latest.current.followTurns !== false) focus(); }
         facing.set(frame.actorId, frame.movement.facing);
         if (frame.phase === "acting" && latest.current.selectedWeapon) art!.setWeapon(frame.players.findIndex(p => p.playerId === ownId), latest.current.selectedWeapon);
         const shot = frame.phase === "replaying" ? frame.replay?.shooter : null;

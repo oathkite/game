@@ -49,7 +49,7 @@ export class RoomObject extends DurableObject<RoomEnv> {
       if (state.sessions.some(s => s.connectionId === attachment.connectionId)) this.send(ws, frame);
     }
     if (!state.lobby) return;
-    const summary = { roomId: state.roomId, members: state.sessions.length, phase: state.lobby?.phase ?? "waiting" as const, mapId: state.lobby?.map.id ?? "moss-valley" };
+    const summary = { roomId: state.roomId, members: state.sessions.filter(s => s.role === "player").length, spectators: state.sessions.filter(s => s.role === "spectator").length, phase: state.lobby?.phase ?? "waiting" as const, mapId: state.lobby?.map.id ?? "moss-valley" };
     const key = JSON.stringify(summary);
     if (key !== this.summaryKey || Date.now() - this.summaryAt >= 240000) {
       this.summaryAt = Date.now();
@@ -80,7 +80,7 @@ export class RoomObject extends DurableObject<RoomEnv> {
     const result = await runtime.update(state => reduceRoom(this.reconcile(state), a.connectionId, raw, now, { playerId: `p${crypto.randomUUID()}`, token: crypto.randomUUID(), matchId: crypto.randomUUID(), seed }));
     if (result.welcome) {
       ws.serializeAttachment({ ...ws.deserializeAttachment(), joined: true });
-      this.send(ws, { type: "room.welcome", playerId: result.welcome.playerId, token: result.welcome.token, generation: result.welcome.generation });
+      this.send(ws, { type: "room.welcome", playerId: result.welcome.playerId, token: result.welcome.token, role: result.welcome.role, generation: result.welcome.generation });
       if (result.state.battle) this.send(ws, { type: "room.snapshot", room: result.state.lobby });
     }
     if (result.ack && result.state.battle) this.send(ws, { type: "lab.ack", reason: result.reason, snapshot: movementSnapshot(result.state.battle.movement, now) });

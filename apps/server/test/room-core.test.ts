@@ -28,3 +28,28 @@ it("keeps room identities isolated and denies active-token reuse", () => {
   expect(reduceRoom(state, "socket-b", { type: "room.resume", token: state.sessions[0]!.token }, 1200, identity()).reason).toBe("invalid-session");
   expect(state.sessions).toHaveLength(1);
 });
+it("keeps spectators out of the roster and rejects every gameplay mutation", () => {
+  const initial = create();
+  const watched = reduceRoom(initial, "viewer", { type: "room.spectate", roomId: "ABCDEF" }, 1100, identity());
+  expect(watched.reason).toBe("accepted");
+  expect(watched.welcome?.role).toBe("spectator");
+  expect(watched.state.lobby).toBe(initial.lobby);
+  expect(watched.state.lobby!.members).toHaveLength(1);
+  const command = { type: "room.ready", version: 2, roomId: "ABCDEF", revision: initial.lobby!.revision, ready: true };
+  expect(reduceRoom(watched.state, "viewer", command, 1200, identity()).reason).toBe("read-only");
+  for (const action of [
+    { type: "room.start", version: 2, roomId: "ABCDEF", revision: initial.lobby!.revision },
+    { type: "lab.surrender", matchId: "m" },
+    { type: "turn.fire", version: 2, matchId: "m", turnId: 1, commandId: "forged", ackMoveSeq: 0, slot: 0, facing: 1, elevation: 45, power: 50 },
+    { type: "move.command", version: 2, matchId: "m", turnId: 1, commandId: "forged", moveSeq: 1, direction: 1, steps: 1 },
+  ]) expect(reduceRoom(watched.state, "viewer", action, 1200, identity()).reason).toBe("read-only");
+  const left = reduceRoom(watched.state, "viewer", { type: "room.leave" }, 1300, identity());
+  expect(left.state.lobby).toBe(initial.lobby);
+});
+it("caps spectators separately at eight and never assigns them ownership", () => {
+  let state = create();
+  for (let i = 0; i < 8; i++) state = reduceRoom(state, `viewer${i}`, { type: "room.spectate", roomId: "ABCDEF" }, 1100, identity()).state;
+  expect(state.sessions).toHaveLength(9);
+  expect(reduceRoom(state, "extra", { type: "room.spectate", roomId: "ABCDEF" }, 1200, identity()).reason).toBe("spectators-full");
+  expect(disconnectRoom(state, "socket-a", 1300).lobby!.ownerId).toBeNull();
+});

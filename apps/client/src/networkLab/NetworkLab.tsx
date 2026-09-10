@@ -12,9 +12,11 @@ import { createRemoteMotion } from "./remoteMotion";
 import "./networkLab.css";
 
 type Position = { readonly playerId: string; readonly x: number; readonly y: number };
-export type RoomConnection = { readonly socket: WebSocket; readonly playerId: string; readonly frame: LabFrame };
+export type RoomConnection = { readonly spectator?: boolean; readonly socket: WebSocket; readonly playerId: string; readonly frame: LabFrame };
 export const NetworkLab = ({ worldArt = false, onExit, connection }: { readonly worldArt?: boolean; readonly onExit?: () => void; readonly connection?: RoomConnection }) => {
   const touch = useTouchControls();
+  const spectator = connection?.spectator ?? false;
+  const [keepView, setKeepView] = useState(false);
   const [menu, setMenu] = useState(false);
   const [status, setStatus] = useState("接続中"), [playerId, setPlayerId] = useState("");
   const [slot, setSlot] = useState<0 | 1>(0);
@@ -96,6 +98,7 @@ export const NetworkLab = ({ worldArt = false, onExit, connection }: { readonly 
   const shownPlayers = frame?.phase === "replaying" ? presentation!.players : positions.map(p => ({ ...frame!.players.find(player => player.playerId === p.playerId)!, ...p }));
   const loadout = frame?.players.find(p => p.playerId === playerId)?.loadout ?? DEFAULT_LOADOUT;
   const phaseLabel = frame?.phase === "replaying" ? "射撃を再生中" : frame?.phase === "finished" ? "対戦終了" : "操作中";
+  const observing = spectator || Boolean(frame?.players.find(p => p.playerId === playerId)?.eliminated);
   const canAct = (!worldArt || innerWidth > innerHeight) && frame?.phase === "acting" && frame.actorId === playerId && socket.current?.readyState === WebSocket.OPEN;
   const input = useBattleInput(Boolean(worldArt && canAct && !menu), move, delta => setElevation(v => Math.max(10, Math.min(90, v + delta))), fire, setSlot);
   const hudPlayers = frame?.players.map(p => ({ id: p.playerId, name: p.nickname ?? p.playerId, hp: p.hp, team: Number(p.teamId.slice(1)) })) ?? [];
@@ -106,12 +109,12 @@ export const NetworkLab = ({ worldArt = false, onExit, connection }: { readonly 
   if (worldArt) return <main className="network-lab network-world">
     <BattleRoster players={hudPlayers} actorId={frame?.actorId ?? ""} wind={frame?.wind ?? 0} clock={frame?.phase === "acting" ? Math.max(0, Math.ceil((frame.deadlineAt - serverNow) / 1000)) : "—"} onMenu={() => { input.cancel(); setMenu(true); }} />
     <span className="battle-sr" data-testid="identity">{playerId}</span><span className="battle-sr" data-testid="phase">{phaseLabel}</span>
-    {frame && presentation ? <NetworkField blocked={menu || input.gauge.charging} frame={frame} players={shownPlayers} presentation={presentation} elevation={elevation} ownId={playerId} selectedWeapon={loadout[slot]} /> : <p role="status">{status}</p>}
-    <BattleConsole player={hudPlayers.find(p => p.id === playerId)} steps={frame?.actorId === playerId ? frame.movement.stepsLeft : 0} tilt={ground} elevation={elevation} facing={ownFacing.current} power={input.gauge.value} loadout={loadout} slot={slot} disabled={!canAct || menu || input.gauge.charging} selectSlot={setSlot}>
+    {frame && presentation ? <NetworkField blocked={menu || input.gauge.charging} frame={frame} players={shownPlayers} presentation={presentation} elevation={elevation} ownId={playerId} followTurns={!observing || !keepView} {...(!observing ? { selectedWeapon: loadout[slot] } : {})} /> : <p role="status">{status}</p>}
+    {observing ? <footer className="battle-console"><span role="status">観戦中</span><label><input type="checkbox" checked={keepView} onChange={e => setKeepView(e.target.checked)} />手動視点を維持</label></footer> : <BattleConsole player={hudPlayers.find(p => p.id === playerId)} steps={frame?.actorId === playerId ? frame.movement.stepsLeft : 0} tilt={ground} elevation={elevation} facing={ownFacing.current} power={input.gauge.value} loadout={loadout} slot={slot} disabled={!canAct || menu || input.gauge.charging} selectSlot={setSlot}>
       {touch && <><div><button disabled={!canAct || menu} aria-label="左へ1歩" {...input.button("left")}>←</button><button disabled={!canAct || menu} aria-label="右へ1歩" {...input.button("right")}>→</button></div><div><button disabled={!canAct || menu} aria-label="角度を下げる" {...input.button("down")}>−</button><button disabled={!canAct || menu} aria-label="角度を上げる" {...input.button("up")}>＋</button></div><button disabled={!canAct || menu} aria-label="発射" {...input.button("fire")}>発射</button></>}
-    </BattleConsole>
-    {menu && <BattleMenu close={() => setMenu(false)} surrender={() => { action("lab.surrender"); setMenu(false); }} exit={onExit} finished={!frame || frame.phase === "finished"} />}
-    {frame?.phase === "finished" && <section className="network-finished"><h2>{frame.result.type === "win" ? `${String.fromCharCode(65 + Number(frame.result.teamId.slice(1)))}チームの勝利` : "引き分け"}</h2><button onClick={() => action("lab.rematch")}>{connection ? "部屋へ戻る（オーナー）" : "再戦する"}</button><button onClick={onExit}>ロビーに戻る</button></section>}
+    </BattleConsole>}
+    {menu && <BattleMenu spectator={observing} close={() => setMenu(false)} surrender={() => { action("lab.surrender"); setMenu(false); }} exit={onExit} finished={!frame || frame.phase === "finished"} />}
+    {frame?.phase === "finished" && <section className="network-finished"><h2>{frame.result.type === "win" ? `${String.fromCharCode(65 + Number(frame.result.teamId.slice(1)))}チームの勝利` : "引き分け"}</h2>{!spectator && <button onClick={() => action("lab.rematch")}>{connection ? "部屋へ戻る（オーナー）" : "再戦する"}</button>}<button onClick={onExit}>ロビーに戻る</button></section>}
     {status === "invalid-session" && <div className="network-finished"><p>接続の有効期限が切れました。</p><button onClick={() => { sessionStorage.removeItem("keropod.network-lab-token"); location.reload(); }}>新しい接続で参加</button></div>}
     <div className="network-portrait"><h2>横向きでプレイしよう</h2><p>端末を回転するとフィールドと操作が見やすくなります。</p><button onClick={onExit}>ロビーに戻る</button></div>
     {status.startsWith("切断") && <p className="network-connection" role="status">切断されました。再読み込みで復帰できます。</p>}
@@ -134,7 +137,7 @@ export const NetworkLab = ({ worldArt = false, onExit, connection }: { readonly 
       <button disabled={frame?.phase !== "acting" || frame?.actorId !== playerId || !playerId} onClick={() => fire()}>発射</button>
       <button disabled={!frame || frame.phase === "finished"} onClick={() => action("lab.surrender")}>降参</button></div>
     <p data-testid="phase">{frame?.phase === "replaying" ? "射撃を再生中" : frame?.phase === "finished" ? "対戦終了" : "操作中"}</p>
-    {frame?.phase === "finished" && <section><h2>{frame.result.type === "win" ? `${frame.result.teamId} の勝利` : "引き分け"}</h2><button onClick={() => action("lab.rematch")}>{connection ? "部屋へ戻る（オーナー）" : "再戦する"}</button></section>}
+    {frame?.phase === "finished" && <section><h2>{frame.result.type === "win" ? `${frame.result.teamId} の勝利` : "引き分け"}</h2>{!spectator && <button onClick={() => action("lab.rematch")}>{connection ? "部屋へ戻る（オーナー）" : "再戦する"}</button>}</section>}
     <p>残り {frame?.movement.stepsLeft ?? 30} 歩 ／ 確定入力 {frame?.movement.ackMoveSeq ?? 0}</p>
     {status === "invalid-session" && <button onClick={() => { sessionStorage.removeItem("keropod.network-lab-token"); location.reload(); }}>新しい接続で参加</button>}
     <p>相手は125ms補間。固定8席の開発用対戦。ロビーと最終アートは未接続です。</p>

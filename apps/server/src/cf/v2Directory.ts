@@ -1,5 +1,5 @@
 import { DurableObject } from "cloudflare:workers";
-export type RoomSummary = { readonly roomId: string; readonly members: number; readonly phase: "waiting" | "started"; readonly mapId: string; readonly updatedAt: number };
+export type RoomSummary = { readonly roomId: string; readonly members: number; readonly spectators: number; readonly phase: "waiting" | "started"; readonly mapId: string; readonly updatedAt: number };
 export class RoomDirectory extends DurableObject<unknown> {
   constructor(ctx: DurableObjectState, env: unknown) {
     super(ctx, env);
@@ -13,13 +13,13 @@ export class RoomDirectory extends DurableObject<unknown> {
     let roomId: string;
     do { roomId = crypto.randomUUID().slice(0, 6).toUpperCase(); } while (this.ctx.storage.sql.exec("SELECT id FROM room_codes WHERE id = ?", roomId).toArray().length);
     this.ctx.storage.sql.exec("INSERT INTO room_codes VALUES (?)", roomId);
-    const summary: RoomSummary = { roomId, members: 0, phase: "waiting", mapId: "moss-valley", updatedAt: Date.now() };
+    const summary: RoomSummary = { roomId, members: 0, spectators: 0, phase: "waiting", mapId: "moss-valley", updatedAt: Date.now() };
     this.ctx.storage.sql.exec("INSERT INTO rooms VALUES (?, ?, ?)", roomId, JSON.stringify(summary), Date.now() + 120000);
     return roomId;
   }
   exists(roomId: string): boolean { return this.ctx.storage.sql.exec("SELECT id FROM rooms WHERE id = ? AND expires >= ?", roomId, Date.now()).toArray().length > 0; }
   update(summary: RoomSummary): void {
-    if (!summary.members) { this.ctx.storage.sql.exec("DELETE FROM rooms WHERE id = ?", summary.roomId); return; }
+    if (!summary.members && !summary.spectators) { this.ctx.storage.sql.exec("DELETE FROM rooms WHERE id = ?", summary.roomId); return; }
     this.ctx.storage.sql.exec("INSERT OR REPLACE INTO rooms VALUES (?, ?, ?)", summary.roomId, JSON.stringify(summary), Date.now() + 1800000);
   }
   list(): readonly RoomSummary[] {
