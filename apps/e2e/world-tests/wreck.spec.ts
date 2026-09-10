@@ -16,6 +16,11 @@ test("wreck sinks its body and lowers its barrel while keeping the tracks ground
     };
     tank.setPose(pose, 3);
     const alive = read();
+    factory.setWeapon(0, "triple");
+    tank.setPose({ ...pose, shotFlashes: [{ age: 30, index: 0 }, { age: 30, index: 1 }, { age: 30, index: 2 }], recoil: 3 }, 3);
+    const gun = tank.world.children[0].getChildByLabel("body").getChildByLabel("gun");
+    const muzzle = () => gun.children.filter((child: { label: string }) => child.label.startsWith("muzzle-")).map((child: { x: number; y: number; visible: boolean }) => ({ x: child.x, y: child.y, visible: child.visible }));
+    const activeMuzzle = muzzle();
     tank.setPose({ ...pose, recoil: 3 }, 3);
     const firing = read();
     tank.setPose({ ...pose, hp: 0 }, 3);
@@ -24,9 +29,12 @@ test("wreck sinks its body and lowers its barrel while keeping the tracks ground
     const otherAim = read();
     tank.setPose(pose, 3);
     const restored = read();
+    const stoppedMuzzle = muzzle();
     tank.destroy(); factory.destroy();
-    return { alive, firing, wreck, otherAim, restored };
+    return { alive, firing, wreck, otherAim, restored, activeMuzzle, stoppedMuzzle };
   });
+  expect(poses.activeMuzzle).toEqual([-103 / 12, -8, -89 / 12].map(y => ({ x: -51 / 12, y, visible: true })));
+  expect(poses.stoppedMuzzle.every((sprite: { visible: boolean }) => !sprite.visible)).toBe(true);
   expect(poses.firing.bodyX).toBeCloseTo(-2 / 12);
   expect(poses.firing.weaponX).toBeCloseTo(-8 - 3 / 12);
   expect(poses.firing.tracksY).toBe(poses.alive.tracksY);

@@ -1,3 +1,4 @@
+import { shotFlashes } from "./muzzlePose";
 import { shotRecoil } from "./shotRecoil";
 import type { CellPoint, Impact, Seat } from "@game/protocol";
 import { carve, isRingOut, MAP_HEIGHT, ONE, tiltOf, weaponSpec, type ProjectilePath, type TerrainMask } from "@game/sim";
@@ -137,6 +138,7 @@ const poseAfterHit = (run: Run, seat: Seat, flash: boolean): TankPose => {
   // 落下前なので、撃った側は移動後の地表、相手はターン開始時の地表に立つ
   return poseOf({ ...before, hp: bar.hp, x: after.x, y: groundBeforeFall(run.job, seat), facing: after.facing }, run.job.maskBefore, elevationOf(run, seat), {
     flash,
+    shotFlashes: seat === run.job.shot.input.seat ? shotFlashes(run.elapsed, run.launchAt) : [],
     recoil: seat === run.job.shot.input.seat ? shotRecoil(run.elapsed, run.launchAt) : 0,
     hpGhost: bar.hpGhost,
     ghostOn: bar.ghostOn,

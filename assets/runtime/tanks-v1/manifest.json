@@ -26,6 +26,12 @@
       "sha256": "e03372d898ff90c5cf9c367f3bd469b382280117d2510cc886a52b10cda92c03"
     },
     {
+      "file": "effect-muzzle.png",
+      "source": "assets/workbench/baseline-v2/effect-muzzle.png",
+      "bytes": 642,
+      "sha256": "c4f8187d0b0c0c3484c884d8d5e9b5afae42675da977e88c6b150b0c179c4479"
+    },
+    {
       "file": "effect-explosion.png",
       "source": "assets/workbench/baseline-v2/effect-explosion.png",
       "bytes": 3664,

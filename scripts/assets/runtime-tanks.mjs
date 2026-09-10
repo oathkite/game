@@ -2,7 +2,7 @@ import { createHash } from 'node:crypto';
 import { mkdirSync, readFileSync, writeFileSync } from 'node:fs';
 import { resolve } from 'node:path';
 import { pathToFileURL } from 'node:url';
-const files = ['cabin-standard', 'tracks-standard', 'pilot-frog', 'effect-explosion', 'effect-energy', 'effect-drill', 'effect-dig', ...['cannon', 'triple', 'multiple', 'drill', 'laser', 'digger', 'floater', 'stinger'].flatMap(id => [`weapon-${id}`, `projectile-${id}`])];
+const files = ['cabin-standard', 'tracks-standard', 'pilot-frog', 'effect-muzzle', 'effect-explosion', 'effect-energy', 'effect-drill', 'effect-dig', ...['cannon', 'triple', 'multiple', 'drill', 'laser', 'digger', 'floater', 'stinger'].flatMap(id => [`weapon-${id}`, `projectile-${id}`])];
 const digest = bytes => createHash('sha256').update(bytes).digest('hex');
 export function runtimeTanks(check = true) {
   const root = resolve('assets/runtime/tanks-v1');

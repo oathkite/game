@@ -56,9 +56,9 @@ export const NetworkField = (props: Props) => {
         facing.set(frame.actorId, frame.movement.facing);
         if (frame.phase === "acting" && latest.current.selectedWeapon) art!.setWeapon(frame.players.findIndex(p => p.playerId === ownId), latest.current.selectedWeapon);
         const shot = frame.phase === "replaying" ? frame.replay?.shooter : null;
-        if (shot) facing.set(shot.playerId, shot.facing);
+        if (shot) { facing.set(shot.playerId, shot.facing); art!.setWeapon(frame.players.findIndex(p => p.playerId === shot.playerId), shot.weapon); }
         players.forEach((p, i) => r.setTank(i, { x: p.x, y: p.y, tilt: tiltOf(mask, { x: Math.round(p.x), y: Math.round(p.y) }), facing: facing.get(p.playerId) ?? 1,
-          elevation: p.playerId === shot?.playerId ? shot.elevation : p.playerId === ownId ? elevation : 45, hp: p.eliminated ? 0 : p.hp, visible: p.y < frame.map.height, falling: presentation.fallingIds.includes(p.playerId), recoil: p.playerId === shot?.playerId ? presentation.recoil : 0, aiming: frame.phase === "acting" && p.playerId === ownId && p.playerId === frame.actorId, flash: presentation.effects.some(effect => effect.hitIds.includes(p.playerId)) }));
+          elevation: p.playerId === shot?.playerId ? shot.elevation : p.playerId === ownId ? elevation : 45, hp: p.eliminated ? 0 : p.hp, visible: p.y < frame.map.height, falling: presentation.fallingIds.includes(p.playerId), shotFlashes: p.playerId === shot?.playerId ? presentation.shotFlashes : [], recoil: p.playerId === shot?.playerId ? presentation.recoil : 0, aiming: frame.phase === "acting" && p.playerId === ownId && p.playerId === frame.actorId, flash: presentation.effects.some(effect => effect.hitIds.includes(p.playerId)) }));
         const actor = players.find(p => p.playerId === frame.actorId); if (actor && frame.phase === "acting") rig.actor({ x: actor.x, y: actor.y - 6 });
         if (frame.replay && replayKey !== frame.replay.startsAt) { replayKey = frame.replay.startsAt; bullet = r.projectile("yellow", frame.replay.shooter.weapon); art!.setWeapon(frame.players.findIndex(p => p.playerId === frame.replay!.shooter.playerId), frame.replay.shooter.weapon); const p = presentation.bullets[0]; if (p) rig.focus(p, "shot"); }
         bullet.clear();

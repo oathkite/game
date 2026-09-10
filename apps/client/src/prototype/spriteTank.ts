@@ -1,3 +1,4 @@
+import { muzzlePose } from "@/game/muzzlePose";
 import { createTankAnimation } from "./tankAnimation";
 import { teamColor } from "@/worldUi/teamColors";
 import { Assets, Container, Graphics, Rectangle, Sprite, Text, Texture } from "pixi.js";
@@ -10,6 +11,8 @@ const urls = import.meta.glob<string>([
   "../../../../assets/runtime/tanks-v1/tracks-standard.png",
   "../../../../assets/runtime/tanks-v1/pilot-frog.png",
   "../../../../assets/runtime/tanks-v1/weapon-*.png",
+  "../../../../assets/runtime/tanks-v1/effect-muzzle.png",
+  "../../../../assets/runtime/tanks-v1/effect-energy.png",
 ], { eager: true, query: "?url", import: "default" });
 
 export type SpriteTankFactory = {
@@ -68,6 +71,8 @@ const makeTank = (frame: Frame, nickname: string, color: string): TankView & { s
   const aim = new Graphics();
   for (let i = 0; i < 5; i++) aim.rect(6 + i * 3, -0.12, 1.4, 0.24).fill(0xffc345);
   gun.addChild(weapon, aim);
+  const flashes: Sprite[] = [];
+  let weaponId: WeaponId = "cannon";
   body.addChild(gun);
   world.addChild(rig);
   const name = new Text({ text: nickname, style: { fontFamily: "sans-serif", fontSize: 13, fill: 0xf6f1df } });
@@ -81,7 +86,7 @@ const makeTank = (frame: Frame, nickname: string, color: string): TankView & { s
   const reducedMotion = matchMedia("(prefers-reduced-motion: reduce)");
   return {
     world, label,
-    setWeapon: (id) => { weapon.texture = frame(`weapon-${id}`); },
+    setWeapon: (id) => { weaponId = id; weapon.texture = frame(`weapon-${id}`); },
     setPose: (pose: TankPose, cell: number) => {
       const animation = animate(pose, performance.now(), reducedMotion.matches);
       tracks.texture = frame("tracks-standard", animation.tracks);
@@ -98,6 +103,14 @@ const makeTank = (frame: Frame, nickname: string, color: string): TankView & { s
       body.y = pose.hp <= 0 ? 8 / 12 : 0;
       gun.rotation = (pose.hp <= 0 ? 18 : -pose.elevation) * Math.PI / 180;
       aim.visible = pose.hp > 0 && pose.aiming;
+      flashes.forEach(sprite => { sprite.visible = false; });
+      if (pose.hp > 0 && !reducedMotion.matches) (pose.shotFlashes ?? []).forEach((flash, i) => {
+        const effect = muzzlePose(weaponId, flash, recoil);
+        const sprite = flashes[i] ?? new Sprite();
+        if (!flashes[i]) { flashes.push(sprite); gun.addChild(sprite); sprite.label = `muzzle-${i}`; sprite.scale.set(1 / 12); }
+        sprite.texture = frame(effect.id, effect.frame);
+        sprite.position.set(effect.x, effect.y); sprite.alpha = effect.alpha; sprite.visible = true;
+      });
       label.position.set((pose.x + 0.5) * cell, (pose.y - 14) * cell);
       health.clear().rect(-38, 3, 76, 3).fill(0x435568).rect(-38, 3, 76 * Math.max(0, pose.hp) / 100, 3).fill(color);
     },

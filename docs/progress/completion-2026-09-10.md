@@ -464,3 +464,11 @@ heartbeatはUI共同調整時にPAUSED。本ゴールは現在のタスクで進
 - 実ブラウザで全4フレームがcannonと同一Textureを使うこと、drill/laserは別素材であることを変更前に失敗確認してから修正。
 - 砲口接続の調査：effect-muzzleは25/35/40/40msの4枚、energyは先頭フレームを140msでfade。weapon emissionPortsは通常[144,96]、tripleはy89/96/103、multipleはy86/96/105。原点[96,96]から反動を差し引いて砲台へ接続する。runtimeへのmuzzle追加と描画接続は次工程。
 - 検証：impact-art browser test、client/e2e typecheck通過。1時間soak session72311は1812秒まで進行（未完走）。
+
+### 砲口VFXを練習・オンラインへ接続
+
+- baseline-v2のeffect-muzzleを原寸/同一byteでruntimeへ追加（24files、human approval pending維持）。通常弾は25/35/40/40ms、laser/floaterはenergy先頭frameを140msでfadeする。
+- shotFlashesを既存のlaunchAt/authoritative launchTickから算出。各砲口のemissionPortsと原点を使い、砲台回転・反動・車体移動に追従。表示Spriteを再利用し、毎poseで不要表示を消す。reduced-motionと撃破時は発光を省く。
+- NetworkFieldはpose更新前に公開済みshotの武器を設定し、発射直後の1frameで前武器の砲口を使わない。
+- 検証：client全197件、client/e2e typecheck、実Pixiの連装3砲口/反動追従/消去test、runtime24files同一性通過。元素材の人間承認や全画面美観の承認を代替しない。
+- 次は大破遷移・残骸グレースケール・煙/着地土煙を接続。1時間soak session72311は1969秒まで進行、未完走。
