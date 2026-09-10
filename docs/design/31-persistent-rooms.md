@@ -39,3 +39,16 @@ clientに`VITE_ROOM_SERVER_URL=http://127.0.0.1:8796`を渡すとedgeへ接続�
 - [Alarms](https://developers.cloudflare.com/durable-objects/api/alarms/)
 
 観戦と[クイック参加](32-quick-play.md)を追加済み。世界各地の実測、負荷・長時間試験、運用監視、公開用ドメイン設定は後続工程。ローカルランタイムの合格を世界各地での本番検証と同一視しない。
+
+## Nodeの同時部屋検証
+
+Node adapterはcustom/quickとも128部屋を上限とし、各部屋は8参加者＋8観戦者の定員を維持する。
+旧custom作成だけの256セッション判定はquick経路と不一致だったため廃止した。
+次の試験で100部屋・800接続の作成/編成/同時移動/射撃/100接続の切断復帰/重複拒否/部屋分離を確認できる。
+
+```sh
+ROOM_LOAD_COUNT=100 pnpm --filter @game/server exec vitest run test/concurrent-rooms.test.ts
+```
+
+通常testでは4部屋で実行する。環境変数は1〜100の整数のみ。
+これは同一プロセスのNode transport・メモリ保存の短時間試験であり、DO/Directory/永続I/O/地域RTT/長時間の容量gateを証明しない。

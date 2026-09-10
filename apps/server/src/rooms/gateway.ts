@@ -61,7 +61,7 @@ export const attachRooms = (wss: WebSocketServer, options: Options = {}) => {
           reserved = roomId; reservations.set(roomId, (reservations.get(roomId) ?? 0) + 1);
           input = { ...quick, roomId };
         } else if (input.type === "room.create") {
-          if ([...rooms.values()].reduce((n, r) => n + r.state.sessions.length, 0) >= 256 || rooms.size >= 128) { error("capacity"); return; }
+          if (rooms.size >= 128) { error("capacity"); return; }
           do { roomId = randomUUID().slice(0, 6).toUpperCase(); } while (rooms.has(roomId));
           rooms.set(roomId, new RoomRuntime(createRoomState(roomId), save));
         } else if ((input.type === "room.join" || input.type === "room.spectate")) roomId = input.roomId;
