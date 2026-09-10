@@ -6,6 +6,14 @@ test("room code, teams, ready, selected weapons and return to preparation", asyn
   try {
     for (const page of [a!, b!]) {
       await page.addInitScript(() => {
+        const NativeSocket = WebSocket;
+        window.WebSocket = class extends NativeSocket {
+          constructor(url: string | URL, protocols?: string | string[]) {
+            super(url, protocols);
+            (window as unknown as { gameSockets?: WebSocket[] }).gameSockets ??= [];
+            (window as unknown as { gameSockets: WebSocket[] }).gameSockets.push(this);
+          }
+        };
         const start = OscillatorNode.prototype.start;
         OscillatorNode.prototype.start = function (when?: number) {
           const target = window as unknown as { playedTones?: number[] };
@@ -64,6 +72,18 @@ test("room code, teams, ready, selected weapons and return to preparation", asyn
       expect(box.height).toBeGreaterThanOrEqual(44); expect(box.x).toBeGreaterThanOrEqual(0);
       expect(box.x + box.width).toBeLessThanOrEqual(667); expect(box.y + box.height).toBeLessThanOrEqual(375);
     }
+    const identity = await b!.getByTestId("identity").textContent();
+    await b!.evaluate(() => {
+      const sockets = (window as unknown as { gameSockets: WebSocket[] }).gameSockets.filter(socket => socket.readyState === WebSocket.OPEN && (socket.url.includes("/v2/rooms/") || new URL(socket.url).port === "8795"));
+      if (sockets.length !== 1) throw new Error(`Expected one live room connection: ${sockets.map(s => s.url)}`);
+      sockets[0]!.close();
+    });
+    await expect(b!.getByRole("button", { name: "再接続", exact: true })).toBeVisible();
+    await expect(b!.getByTestId("network-world")).toBeVisible();
+    await b!.getByRole("button", { name: "再接続", exact: true }).click();
+    await expect(b!.getByTestId("network-world")).toBeVisible();
+    await expect(b!.getByRole("button", { name: "再接続", exact: true })).toHaveCount(0);
+    await expect(b!.getByTestId("identity")).toHaveText(identity!);
     await b!.getByRole("button", { name: "設定を開く" }).click();
     await b!.getByRole("button", { name: "降参", exact: true }).click();
     await expect(a!.getByRole("heading", { name: /チームの勝利/ })).toBeVisible();

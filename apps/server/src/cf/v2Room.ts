@@ -96,6 +96,7 @@ export class RoomObject extends DurableObject<RoomEnv> {
     if (result.close) ws.close(1000, "left");
   }
   override async webSocketClose(ws: WebSocket): Promise<void> {
+    ws.close(1000, "disconnected");
     const a = ws.deserializeAttachment() as Attachment;
     const result = await this.load().update(state => ({ state: disconnectRoom(state, a.connectionId, Date.now()), reason: "disconnected" }));
     this.publish(result.state);

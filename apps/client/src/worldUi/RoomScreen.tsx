@@ -42,7 +42,7 @@ export const RoomScreen = ({ onExit, onLab }: { readonly onExit: () => void; rea
       if (message.type === "room.welcome") { identity = message.playerId; watching = message.role === "spectator"; setSpectator(watching); setPlayerId(identity); sessionStorage.setItem(tokenKey, message.token); setBusy(false); setStatus(""); }
       if (message.type === "room.snapshot") { sessionStorage.setItem(roomKey, message.room.roomId); setRoom(message.room); if (message.room.phase === "waiting") setBattle(null); }
       if (message.type === "lab.frame" && !compatibleMatch(message.build, message.map)) { versionMismatch = true; setStatus("ゲームの更新が必要です。再読み込みしてください。"); ws.close(); return; }
-      if (message.type === "lab.frame") setBattle(current => current ?? { socket: ws, playerId: identity, spectator: watching, frame: message });
+      if (message.type === "lab.frame") setBattle(current => current?.socket === ws ? current : { socket: ws, playerId: identity, spectator: watching, frame: message });
       if (message.type === "room.error") { versionMismatch = message.reason === "version-mismatch"; setBusy(false); setStatus(errors[message.reason] ?? "操作を受け付けられませんでした。部屋の状態を確認してください。");
         if (message.reason === "invalid-session") { sessionStorage.removeItem(tokenKey); sessionStorage.removeItem(roomKey); socket.current = null; setRoom(null); setBattle(null); ws.close(); } }
     };
@@ -65,7 +65,7 @@ export const RoomScreen = ({ onExit, onLab }: { readonly onExit: () => void; rea
   const me = room?.members.find(p => p.playerId === playerId), owner = room?.ownerId === playerId;
   const canStart = owner && room!.members.length >= 2 && room!.members.every(p => p.ready && p.connected && p.teamId) && new Set(room!.members.map(p => p.teamId)).size >= 2;
   const connected = socket.current?.readyState === WebSocket.OPEN;
-  if (battle) return <><NetworkLab connection={battle} worldArt onExit={leave} />{status && <div className="room-battle-status" role="status">{status}{!connected && <PixelButton onClick={() => { setBattle(null); connect({ type: "room.resume", token: sessionStorage.getItem(tokenKey) }); }}>再接続</PixelButton>}</div>}</>;
+  if (battle) return <><NetworkLab connection={battle} worldArt onExit={leave} />{status && <div className="room-battle-status" role="status">{status}{!connected && <PixelButton disabled={busy} onClick={() => connect({ type: "room.resume", token: sessionStorage.getItem(tokenKey) })}>再接続</PixelButton>}</div>}</>;
   return <section className="room-screen">
     <header><h1>{room ? <>部屋 <span data-testid="room-code">{room.roomId}</span></> : "対戦ルーム"}</h1><PixelButton onClick={leave}>ロビーに戻る</PixelButton></header>
     <div className="room-body"><PixelPanel>
@@ -94,7 +94,7 @@ export const RoomScreen = ({ onExit, onLab }: { readonly onExit: () => void; rea
         <p className="room-note">マップ・装備・編成が変わると全員の準備が解除されます。</p>
       </>}
     </PixelPanel></div>
-    <footer>{status && <span role="status">{status}</span>}{!connected && sessionStorage.getItem(tokenKey) && <PixelButton onClick={() => connect({ type: "room.resume", token: sessionStorage.getItem(tokenKey) })}>再接続</PixelButton>}
+    <footer>{status && <span role="status">{status}</span>}{!connected && sessionStorage.getItem(tokenKey) && <PixelButton disabled={busy} onClick={() => connect({ type: "room.resume", token: sessionStorage.getItem(tokenKey) })}>再接続</PixelButton>}
       {room && me && <><PixelButton disabled={!connected} onClick={() => edit("room.ready", { ready: !me?.ready })}>{me?.ready ? "準備を解除" : "準備完了"}</PixelButton>{owner && room.mode === "custom" && <PixelButton disabled={!connected || !canStart} onClick={() => edit("room.start")}>対戦開始</PixelButton>}</>}
     </footer>
   </section>;

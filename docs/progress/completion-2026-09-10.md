@@ -115,3 +115,11 @@ heartbeatはUI共同調整時にPAUSED。本ゴールは現在のタスクで進
 - 音声初期化が拒否されても開始導線を止めず、resume拒否の未処理Promiseを防止。
 - client179 unit、client/e2e TypeScript、edgeのPC/touch対戦E2E（実Oscillator起動確認）、音声拒否production E2E通過。
 - 音色の最終調整とローカル練習の音の統合確認、再接続UIの改善は残る。
+
+## 11:09 対戦中の再接続
+
+- 再接続時も対戦画面を保持し、新しいsocketのframeで接続を置き換える。接続中のボタン連打を抑止し、重複した再読み込み案内を除去。
+- ブラウザーのclose後に再接続UIが出ない問題をedge E2Eで再現。DOのwebSocketCloseで明示的にclose応答すると同じ試験が通過。
+- close応答はCloudflare公式のWebSocket best practicesでも許容される操作。local runtime差異に依存せず明示する。
+- PC/touchの対戦→発射→socket切断→同一identityで再接続→降参→部屋復帰のE2E通過。client/server/e2e TypeScript通過。
+- 練習の発射音はPrototypeCanvas→playReplayの既存経路を確認。音量とmuteの実操作確認は後続の横断試験に含める。
