@@ -123,3 +123,9 @@ heartbeatはUI共同調整時にPAUSED。本ゴールは現在のタスクで進
 - close応答はCloudflare公式のWebSocket best practicesでも許容される操作。local runtime差異に依存せず明示する。
 - PC/touchの対戦→発射→socket切断→同一identityで再接続→降参→部屋復帰のE2E通過。client/server/e2e TypeScript通過。
 - 練習の発射音はPrototypeCanvas→playReplayの既存経路を確認。音量とmuteの実操作確認は後続の横断試験に含める。
+
+## 11:14 マップ・武器・編成の組合せ検証
+
+- 2マップ×2〜8人×全8武器×power1/50/100の336射撃を追加検証。射撃受付、有限座標、HP範囲、mask寸法、replay終了、保存復元後の地形と次ターン一致を確認。
+- 2〜8人の全整数分割（単一チームを除外）を両マップで確認。116通りすべてで全員が手番を持ち、ラウンド上限で終了。
+- 追加15テスト通過、engine TypeScript確認。これは進行・保存の整合性の証拠で、射程/配置の公平性/武器バランスを証明するものではない。マップのtest-only状態を維持。
