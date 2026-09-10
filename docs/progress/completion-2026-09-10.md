@@ -531,3 +531,9 @@ heartbeatはUI共同調整時にPAUSED。本ゴールは現在のタスクで進
 
 - 砲口/機体エフェクトのSprite生成・再利用・非表示・texture/位置/alpha更新が重複したためtankEffectLayerへ集約。親Containerが破棄責務を持つ既存構成を維持し、別の寿命管理は追加しない。
 - SpriteTankのsetPoseから素材表示の反復処理を除去。実Pixiの連装砲口/反動/大破/残骸煙/通常復帰testとclient typecheckが通過。
+
+### 1時間soak完走
+
+- session72311がexit0、3608.74秒で完走。100部屋/800接続、実ファイル保存、送受信各125ms遅延。再戦3,500回、移動187,021回。終了後の全室復元検証まで通過。
+- 生ログと適用範囲をevidence/soak-100rooms-3600s.logおよび.mdへ保存。最終照合表を実行中→ローカル通過へ更新。
+- RSS286〜633MB/heap74〜338MBはrunner/clients込み。全field全frame一致、実DO容量、実端末fps、自然決着の長時間実戦を完了と読み替えない。
