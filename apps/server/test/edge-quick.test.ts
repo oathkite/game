@@ -1,3 +1,4 @@
+import { CLIENT_BUILD } from "@game/protocol/build";
 import { expect, it } from "vitest";
 import { WebSocket } from "ws";
 const endpoint = process.env.EDGE_TEST_URL;
@@ -15,7 +16,7 @@ it.skipIf(!endpoint)("reserves concurrent quick seats by mode and region and sta
       const ws = new WebSocket(`${endpoint!.replace("http", "ws")}/v2/rooms/${roomId}`, { headers }), messages: any[] = [];
       sockets.push(ws); ws.on("message", data => messages.push(JSON.parse(String(data))));
       await new Promise<void>((r, reject) => { ws.once("open", r); ws.once("error", reject); });
-      ws.send(JSON.stringify({ type: "room.quick", roomId, mode: "2v2", region: "europe", profile: { nickname: "Quick", loadout: ["cannon", "laser"] } }));
+      ws.send(JSON.stringify({ type: "room.quick", build: CLIENT_BUILD, roomId, mode: "2v2", region: "europe", profile: { nickname: "Quick", loadout: ["cannon", "laser"] } }));
       return { ws, last: (type: string) => messages.filter(m => m.type === type).at(-1) };
     }));
     await expect.poll(() => clients.every(c => c.last("room.snapshot")?.room.members.length === 4)).toBe(true);

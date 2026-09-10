@@ -28,3 +28,12 @@ it("refuses incompatible stored versions instead of silently changing the simula
   const stored = serializeBattle(start());
   expect(() => restoreBattle(JSON.parse(JSON.stringify({ ...stored, version: 999 })))).toThrow(/version/);
 });
+it("rejects a different simulation or map revision in a saved match", () => {
+  const stored = serializeBattle(start());
+  expect(() => restoreBattle({ ...stored, state: { ...stored.state, build: { ...stored.state.build, sim: "old" } } })).toThrow(/version/);
+  expect(() => restoreBattle({ ...stored, state: { ...stored.state, map: { ...stored.state.map, version: 2 } } })).toThrow(/version/);
+});
+it("explicitly migrates only the known pre-public v1 snapshot", () => {
+  const state = start(), stored = serializeBattle(state), { build: _build, ...legacy } = stored.state;
+  expect(restoreBattle({ version: 1, state: legacy })).toEqual(state);
+});

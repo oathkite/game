@@ -76,3 +76,11 @@ heartbeatはUI共同調整時にPAUSED。本ゴールは現在のタスクで進
 - server58/client175 unit、server/client/e2e TypeScript通過。edgeの同時予約/地域分離/全ready開始を実ランタイムで検証。
 - Nodeで1v1/2v2/30秒キャンセル3 E2E通過。edgeで2v2/30秒キャンセル、既存招待/観戦/カスタム対戦を通過。
 - 強制終了後のSQLite復帰も再実行して通過。edge1v1 E2Eは途中のコード更新による切断をログで確認後、固定状態で再実行して通過。
+
+## 10:52 通信と保存状態のバージョン固定
+
+- protocol/sim/assets/rulesとmap id/versionを試合に固定。入室・復帰時に一致しないクライアントを拒否し、更新案内を表示。
+- BattleSnapshot v2へ移行。未公開v1の明示的な旧version移行のみ許可し、異なるsimやmap revisionの復元を拒否。
+- セッションにもbuildを保存。未認証の不適合接続によるNodeの空室残留を防止。
+- engine113/server59/protocol24/client175 unitとTypeScript通過。実SQLite edge2テスト、SIGKILL復帰、ブラウザー5 E2E（招待/観戦/custom/quick1v1/2v2/待機取消）通過。
+- 次は通常起動経路と配信buildの検証。version文字列は手動管理のため、sim/rules/assets変更時に更新する運用が必要。

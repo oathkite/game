@@ -1,3 +1,4 @@
+import { CLIENT_BUILD } from "@game/protocol/build";
 import { expect, it } from "vitest";
 import { WebSocket, WebSocketServer } from "ws";
 import { attachRooms } from "../src/rooms/gateway";
@@ -20,14 +21,14 @@ it("resumes the same lobby after restarting the gateway from durable snapshots",
   let running = await server();
   try {
     const a = await connect(running.port);
-    a.send({ type: "room.create", profile: { nickname: "Kero", loadout: ["cannon", "laser"] } });
+    a.send({ type: "room.create", build: CLIENT_BUILD, profile: { nickname: "Kero", loadout: ["cannon", "laser"] } });
     await expect.poll(() => a.last("room.welcome")).toBeTruthy();
     const welcome = a.last("room.welcome"), roomId = a.last("room.snapshot").room.roomId;
     a.ws.close();
     await expect.poll(() => stored.get(roomId)?.state.sessions[0]?.connectionId).toBeNull();
     await running.stop(); running = await server();
     const b = await connect(running.port);
-    b.send({ type: "room.resume", token: welcome.token });
+    b.send({ type: "room.resume", build: CLIENT_BUILD, token: welcome.token });
     await expect.poll(() => b.last("room.welcome")).toBeTruthy();
     expect(b.last("room.welcome")).toMatchObject({ playerId: welcome.playerId, generation: 2 });
     expect(b.last("room.snapshot").room.roomId).toBe(roomId);

@@ -1,3 +1,4 @@
+import { clientBuildSchema } from "./build.js";
 import { z } from "zod";
 import { fireCommandSchema, lobbyCommandSchema, lobbyProfileSchema, moveCommandSchema } from "./v2.js";
 import { labOutputSchema } from "./v2Lab.js";
@@ -8,11 +9,11 @@ export type RoomRegion = z.infer<typeof roomRegionSchema>;
 export const quickRequestSchema = z.object({ mode: z.enum(["1v1", "2v2"]), region: roomRegionSchema }).strict();
 const roomId = z.string().regex(/^[A-F0-9]{6}$/);
 export const roomInputSchema = z.union([
-  quickRequestSchema.extend({ type: z.literal("room.quick"), roomId, profile: lobbyProfileSchema }).strict(),
-  z.object({ type: z.literal("room.spectate"), roomId }).strict(),
-  z.object({ type: z.literal("room.create"), profile: lobbyProfileSchema }).strict(),
-  z.object({ type: z.literal("room.join"), roomId, profile: lobbyProfileSchema }).strict(),
-  z.object({ type: z.literal("room.resume"), token: z.string().uuid() }).strict(),
+  quickRequestSchema.extend({ type: z.literal("room.quick"), build: clientBuildSchema.optional(), roomId, profile: lobbyProfileSchema }).strict(),
+  z.object({ type: z.literal("room.spectate"), build: clientBuildSchema.optional(), roomId }).strict(),
+  z.object({ type: z.literal("room.create"), build: clientBuildSchema.optional(), profile: lobbyProfileSchema }).strict(),
+  z.object({ type: z.literal("room.join"), build: clientBuildSchema.optional(), roomId, profile: lobbyProfileSchema }).strict(),
+  z.object({ type: z.literal("room.resume"), build: clientBuildSchema.optional(), token: z.string().uuid() }).strict(),
   z.object({ type: z.literal("room.leave") }).strict(),
   z.object({ type: z.literal("room.start"), version: z.literal(2), roomId, revision: z.number().int().positive() }).strict(),
   z.object({ type: z.literal("lab.rematch"), matchId: z.string() }).strict(),

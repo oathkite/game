@@ -1,5 +1,6 @@
 import { randomUUID, randomInt } from "node:crypto";
 import { movementSnapshot } from "@game/engine/multiplayer";
+import { compatibleBuild } from "@game/protocol/build";
 import { roomInputSchema } from "@game/protocol/v2-rooms";
 import type { WebSocket, WebSocketServer } from "ws";
 import { createRoomState, reduceRoom, disconnectRoom, tickRoom, type RoomState, type RoomReply } from "./core.js";
@@ -22,7 +23,7 @@ export const attachRooms = (wss: WebSocketServer, options: Options = {}) => {
       let before: RoomState;
       void room.update(state => { before = state; return { state: tickRoom(state, Date.now()), reason: "tick" }; }).then(result => {
         if (result.state !== before) broadcast(result.state);
-        if (result.state.lobby && !result.state.sessions.length) rooms.delete(roomId);
+        if (!result.state.sessions.length) rooms.delete(roomId);
       }).catch(error => console.error("room timer persistence failed", error));
     }
   }, 100);
@@ -44,6 +45,7 @@ export const attachRooms = (wss: WebSocketServer, options: Options = {}) => {
       let input = parsed.data;
       let roomId = joinedRoom, reserved: string | null = null;
       if (!roomId) {
+        if ((input.type === "room.create" || input.type === "room.quick" || input.type === "room.join" || input.type === "room.spectate" || input.type === "room.resume") && !compatibleBuild(input.build)) { error("version-mismatch"); return; }
         if (input.type === "room.quick") {
           const quick = input;
           const candidate = [...rooms.values()].find(r => r.state.mode === quick.mode && r.state.region === quick.region && !r.state.battle &&

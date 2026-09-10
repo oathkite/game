@@ -1,3 +1,4 @@
+import { CLIENT_BUILD } from "@game/protocol/build";
 import { expect, it } from "vitest";
 import { WebSocket } from "ws";
 import { roomOutputSchema } from "@game/protocol/v2-rooms";
@@ -15,9 +16,9 @@ it.skipIf(!endpoint)("runs an isolated room through the SQLite Durable Object ad
   try {
     const a = await connect(), b = await connect();
     const profile = { nickname: "Edge", loadout: ["cannon", "laser"] };
-    a.send({ type: "room.create", profile });
+    a.send({ type: "room.create", build: CLIENT_BUILD, profile });
     await expect.poll(() => a.last("room.welcome")).toBeTruthy();
-    b.send({ type: "room.join", roomId: created.roomId, profile });
+    b.send({ type: "room.join", build: CLIENT_BUILD, roomId: created.roomId, profile });
     await expect.poll(() => a.last("room.snapshot").room.members.length).toBe(2);
     const edit = (client: typeof a, type: string, extra: object) => client.send({ type, version: 2, roomId: created.roomId, revision: a.last("room.snapshot").room.revision, ...extra });
     edit(a, "room.assignTeam", { playerId: a.last("room.welcome").playerId, teamId: "t0" });
@@ -32,7 +33,7 @@ it.skipIf(!endpoint)("runs an isolated room through the SQLite Durable Object ad
     expect(frame).not.toHaveProperty("windState");
     const actor = frame.actorId === a.last("room.welcome").playerId ? a : b;
     const fire = { type: "turn.fire", version: 2, matchId: frame.matchId, turnId: 1, commandId: "edge-shot", ackMoveSeq: 0, slot: 0, facing: 1, elevation: 45, power: 35 };
-    const spectator = await connect(); spectator.send({ type: "room.spectate", roomId: created.roomId });
+    const spectator = await connect(); spectator.send({ type: "room.spectate", build: CLIENT_BUILD, roomId: created.roomId });
     await expect.poll(() => spectator.last("room.welcome")?.role).toBe("spectator");
     expect(spectator.last("lab.frame").players).toHaveLength(2);
     spectator.send(fire);
@@ -41,7 +42,7 @@ it.skipIf(!endpoint)("runs an isolated room through the SQLite Durable Object ad
     await expect.poll(() => actor.last("lab.ack")?.reason).toBe("accepted");
     const token = actor.last("room.welcome").token;
     actor.ws.close(); await new Promise<void>(r => actor.ws.once("close", r));
-    const resumed = await connect(); resumed.send({ type: "room.resume", token });
+    const resumed = await connect(); resumed.send({ type: "room.resume", build: CLIENT_BUILD, token });
     await expect.poll(() => resumed.last("room.welcome")?.generation).toBe(2);
     resumed.send(fire);
     await expect.poll(() => resumed.last("lab.ack")?.reason).toBe("duplicate");

@@ -1,8 +1,9 @@
+import { CLIENT_BUILD } from "@game/protocol/build";
 import type { Loadout } from "@game/protocol";
 import { lobbyCommandSchema, lobbyProfileSchema } from "@game/protocol/v2";
 import { multiplayerMap, buildMapSpec, type MapSpec } from "@game/maps";
 
-export const RULE_SET_VERSION = "keropod-v2.1";
+export const RULE_SET_VERSION = CLIENT_BUILD.rules;
 export type LobbyProfile = { readonly nickname: string; readonly loadout: Loadout };
 export type LobbyMember = LobbyProfile & {
   readonly playerId: string; readonly teamId: string | null; readonly connected: boolean; readonly ready: boolean;

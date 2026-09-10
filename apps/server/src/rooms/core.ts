@@ -1,9 +1,10 @@
+import { CLIENT_BUILD, compatibleBuild, type ClientBuild } from "@game/protocol/build";
 import { MULTIPLAYER_MAPS } from "@game/maps";
 import { createLobby, joinLobby, leaveLobby, setLobbyConnection, editLobby, startLobby, createPreparedSession,
   fireInSession, moveInSession, surrenderInSession, forfeitInSession, tickSession, type LobbyState, type BattleSession } from "@game/engine/multiplayer";
 import { roomInputSchema, type RoomMode, type RoomRegion } from "@game/protocol/v2-rooms";
 
-export type RoomSession = { readonly role: "player" | "spectator"; readonly token: string; readonly playerId: string; readonly connectionId: string | null; readonly disconnectedAt: number; readonly generation: number };
+export type RoomSession = { readonly build: ClientBuild; readonly role: "player" | "spectator"; readonly token: string; readonly playerId: string; readonly connectionId: string | null; readonly disconnectedAt: number; readonly generation: number };
 export type RoomState = { readonly mode: RoomMode; readonly region: RoomRegion; readonly roomId: string; readonly lobby: LobbyState | null; readonly battle: BattleSession | null; readonly sessions: readonly RoomSession[] };
 export type Identity = { readonly playerId: string; readonly token: string; readonly matchId: string; readonly seed: number };
 type Input = ReturnType<typeof roomInputSchema.parse>;
@@ -41,10 +42,12 @@ export const nextRoomDeadline = (state: { readonly sessions: readonly RoomSessio
   return deadlines.length ? Math.min(...deadlines) : null;
 };
 const join = (state: RoomState, connectionId: string, message: Extract<Input, { type: "room.create" | "room.join" | "room.resume" | "room.spectate" | "room.quick" }>, now: number, id: Identity): RoomReply => {
+  if (!compatibleBuild(message.build)) return reply(state, "version-mismatch");
   if (state.sessions.some(s => s.connectionId === connectionId)) return reply(state, "already-joined");
   if (message.type === "room.resume") {
     const saved = state.sessions.find(s => s.token === message.token);
     if (!saved || saved.connectionId || now - saved.disconnectedAt >= 60000) return reply(state, "invalid-session");
+    if (!compatibleBuild(saved.build)) return reply(state, "version-mismatch");
     const welcome = { ...saved, connectionId, generation: saved.generation + 1 };
     const next = connectedOwner({ ...state, sessions: state.sessions.map(s => s === saved ? welcome : s),
       lobby: state.lobby && !state.battle ? setLobbyConnection(state.lobby, saved.playerId, true) : state.lobby });
@@ -57,7 +60,7 @@ const join = (state: RoomState, connectionId: string, message: Extract<Input, { 
   if (message.type === "room.create" && state.lobby) return reply(state, "already-exists");
   if (message.type === "room.spectate") {
     if (state.sessions.filter(s => s.role === "spectator").length >= 8) return reply(state, "spectators-full");
-    const welcome: RoomSession = { role: "spectator", token: id.token, playerId: id.playerId, connectionId, generation: 1, disconnectedAt: 0 };
+    const welcome: RoomSession = { build: { ...CLIENT_BUILD }, role: "spectator", token: id.token, playerId: id.playerId, connectionId, generation: 1, disconnectedAt: 0 };
     return { state: { ...state, sessions: [...state.sessions, welcome] }, reason: "accepted", welcome };
   }
   if (state.battle) return reply(state, "locked");
@@ -68,7 +71,7 @@ const join = (state: RoomState, connectionId: string, message: Extract<Input, { 
     lobby = editLobby(lobby, id.playerId, { version: 2, type: "room.assignTeam", roomId: state.roomId, revision: lobby.revision,
       playerId: id.playerId, teamId: count("t0") <= count("t1") ? "t0" : "t1" }).room;
   }
-  const welcome: RoomSession = { role: "player", token: id.token, playerId: id.playerId, connectionId, generation: 1, disconnectedAt: 0 };
+  const welcome: RoomSession = { build: { ...CLIENT_BUILD }, role: "player", token: id.token, playerId: id.playerId, connectionId, generation: 1, disconnectedAt: 0 };
   return { state: { ...state, lobby, sessions: [...state.sessions, welcome] }, reason: "accepted", welcome };
 };
 const battleCommand = (state: RoomState, playerId: string, message: Input, now: number): RoomReply => {
@@ -95,6 +98,7 @@ export const reduceRoom = (state: RoomState, connectionId: string, raw: unknown,
   if (message.type === "room.create" || message.type === "room.join" || message.type === "room.resume" || message.type === "room.spectate" || message.type === "room.quick") return join(state, connectionId, message, now, id);
   const session = state.sessions.find(s => s.connectionId === connectionId);
   if (!session) return reply(state, "join-required");
+  if (!compatibleBuild(session.build)) return reply(state, "version-mismatch");
   if (message.type === "room.leave") return { state: leave(state, session.playerId, now), reason: "accepted", close: true };
   if (session.role === "spectator") return reply(state, "read-only");
   if ("roomId" in message && message.roomId !== state.roomId) return reply(state, "wrong-room");

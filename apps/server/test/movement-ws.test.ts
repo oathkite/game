@@ -1,3 +1,4 @@
+import { CLIENT_BUILD } from "@game/protocol/build";
 import { expect, it } from "vitest";
 import { WebSocket, WebSocketServer } from "ws";
 import { labOutputSchema, type LabOutput } from "@game/protocol/v2-lab";
@@ -14,7 +15,7 @@ it("broadcasts an authenticated move to 8 sockets and resumes without repeating 
     sockets.push(ws); inboxes.push(inbox);
     ws.on("message", data => inbox.push(labOutputSchema.parse(JSON.parse(data.toString()))));
     await new Promise<void>(resolve => ws.once("open", resolve));
-    ws.send(JSON.stringify({ type: "lab.join", ...(token ? { token } : {}) }));
+    ws.send(JSON.stringify({ type: "lab.join", build: CLIENT_BUILD, ...(token ? { token } : {}) }));
     await expect.poll(() => inbox.some(m => m.type === "lab.welcome")).toBe(true);
     return { ws, inbox };
   };

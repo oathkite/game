@@ -1,14 +1,16 @@
+import { clientBuildSchema, matchBuildSchema } from "./build.js";
 import { z } from "zod";
 import { WEAPON_IDS } from "./weapons.js";
 import { fireCommandSchema, moveCommandSchema, moveSnapshotSchema } from "./v2.js";
 
 // 開発用の8接続移動試験。公開ロビー用のjoin/ready契約とは分離する。
-export const labJoinSchema = z.object({ type: z.literal("lab.join"), token: z.string().uuid().optional() }).strict();
+export const labJoinSchema = z.object({ type: z.literal("lab.join"), build: clientBuildSchema.optional(), token: z.string().uuid().optional() }).strict();
 export const labInputSchema = z.union([labJoinSchema, moveCommandSchema, fireCommandSchema,
   z.object({ type: z.literal("lab.rematch"), matchId: z.string() }).strict(),
   z.object({ type: z.literal("lab.surrender"), matchId: z.string() }).strict()]);
 const labPlayerSchema = z.object({ playerId: z.string(), x: z.number(), y: z.number(), hp: z.number(), teamId: z.string(), eliminated: z.boolean(), nickname: z.string().optional(), loadout: z.tuple([z.enum(WEAPON_IDS), z.enum(WEAPON_IDS)]).optional() });
 export const labFrameSchema = z.object({
+  build: matchBuildSchema,
   type: z.literal("lab.frame"), serverTime: z.number(), eventSeq: z.number().int().nonnegative(),
   matchId: z.string(), turnId: z.number().int(), actorId: z.string(), deadlineAt: z.number(),
   players: z.array(labPlayerSchema).min(2).max(8),

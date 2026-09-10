@@ -1,8 +1,9 @@
+import { CLIENT_BUILD } from "@game/protocol/build";
 import { expect, it } from "vitest";
 import { createRoomState, reduceRoom } from "../src/rooms/core";
 const profile = { nickname: "Quick", loadout: ["cannon", "laser"] };
 const id = (n: number) => ({ playerId: `p${n}`, token: `00000000-0000-4000-8000-${String(n).padStart(12, "0")}`, matchId: "quick-match", seed: n });
-const join = (n: number, mode = "2v2") => ({ type: "room.quick", roomId: "ABCDEF", mode, region: "asia", profile });
+const join = (n: number, mode = "2v2") => ({ type: "room.quick", build: CLIENT_BUILD, roomId: "ABCDEF", mode, region: "asia", profile });
 it("starts 2v2 only with four ready players and fixes the symmetric teams", () => {
   let state = createRoomState("ABCDEF", "2v2", "asia");
   for (let n = 1; n <= 3; n++) state = reduceRoom(state, `c${n}`, join(n), 1000, id(n)).state;
@@ -20,5 +21,5 @@ it("never mixes custom rooms, modes or regions", () => {
   const state = createRoomState("ABCDEF", "1v1", "asia");
   expect(reduceRoom(state, "c1", join(1), 1000, id(1)).reason).toBe("wrong-mode");
   expect(reduceRoom(state, "c1", { ...join(1, "1v1"), region: "europe" }, 1000, id(1)).reason).toBe("wrong-mode");
-  expect(reduceRoom(state, "c1", { type: "room.create", profile }, 1000, id(1)).reason).toBe("wrong-mode");
+  expect(reduceRoom(state, "c1", { type: "room.create", build: CLIENT_BUILD, profile }, 1000, id(1)).reason).toBe("wrong-mode");
 });

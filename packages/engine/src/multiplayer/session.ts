@@ -1,3 +1,4 @@
+import { matchBuild, type MatchBuild } from "@game/protocol/build";
 import { fireCommandSchema, type FireCommand } from "@game/protocol/v2";
 import { DEFAULT_LOADOUT, parseLoadout, type Loadout, type TerrainOp } from "@game/protocol";
 import { RULE_SET_VERSION } from "./lobby.js";
@@ -12,6 +13,7 @@ import { createBattleWind, advanceBattleWind, type BattleWind } from "./battleWi
 
 type ResolvedShot = ReturnType<typeof resolveBattleShot>;
 export type BattleSession = {
+  readonly build: MatchBuild;
   readonly map: ReturnType<typeof createBattle>["map"];
   readonly windState: BattleWind;
   readonly loadouts: Readonly<Record<string, Loadout>>; readonly ruleSetVersion: typeof RULE_SET_VERSION;
@@ -33,7 +35,7 @@ const copyLoadouts = (battle: ReturnType<typeof createBattle>, supplied?: Readon
     return [p.playerId, [...loadout]];
   }));
 export const createBattleSession = (battle: ReturnType<typeof createBattle>, matchId: string, now: number, loadouts?: Readonly<Record<string, Loadout>>, windSeed = 0): BattleSession => ({
-  windState: createBattleWind(windSeed),
+  build: matchBuild(battle.map), windState: createBattleWind(windSeed),
   loadouts: copyLoadouts(battle, loadouts), ruleSetVersion: RULE_SET_VERSION,
   ...battle, matchId, startedAt: now, phase: "acting", result: { type: "ongoing" }, terrainOps: [], replay: null, lastFire: null,
   movement: movementFor({ ...battle, matchId }, now, 1),

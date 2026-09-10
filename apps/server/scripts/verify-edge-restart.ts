@@ -1,3 +1,4 @@
+import { CLIENT_BUILD } from "@game/protocol/build";
 import { spawn, type ChildProcess } from "node:child_process";
 import { mkdtemp, rm } from "node:fs/promises";
 import { tmpdir } from "node:os";
@@ -37,8 +38,8 @@ try {
   await start();
   const { roomId } = await fetch(`${endpoint}/v2/rooms`, { method: "POST", headers }).then(r => r.json()) as { roomId: string };
   const a = await connect(roomId), b = await connect(roomId), profile = { nickname: "Restart", loadout: ["cannon", "laser"] };
-  a.send({ type: "room.create", profile }); await until(() => a.last("room.welcome"));
-  b.send({ type: "room.join", roomId, profile }); await until(() => a.last("room.snapshot").room.members.length === 2);
+  a.send({ type: "room.create", build: CLIENT_BUILD, profile }); await until(() => a.last("room.welcome"));
+  b.send({ type: "room.join", build: CLIENT_BUILD, roomId, profile }); await until(() => a.last("room.snapshot").room.members.length === 2);
   const edit = (client: typeof a, type: string, extra: object) => client.send({ type, version: 2, roomId, revision: a.last("room.snapshot").room.revision, ...extra });
   edit(a, "room.assignTeam", { playerId: a.last("room.welcome").playerId, teamId: "t0" }); await until(() => a.last("room.snapshot").room.members[0].teamId === "t0");
   edit(b, "room.assignTeam", { playerId: b.last("room.welcome").playerId, teamId: "t1" }); await until(() => a.last("room.snapshot").room.members[1].teamId === "t1");
@@ -51,7 +52,7 @@ try {
   await until(() => actor.last("lab.frame")?.phase === "replaying");
   const committed = actor.last("lab.frame");
   await stop(true); await start();
-  const resumed = await connect(roomId); resumed.send({ type: "room.resume", token: welcome.token });
+  const resumed = await connect(roomId); resumed.send({ type: "room.resume", build: CLIENT_BUILD, token: welcome.token });
   await until(() => resumed.last("room.welcome"));
   assert.equal(resumed.last("room.welcome").generation, 2);
   assert.equal(resumed.last("lab.frame").matchId, frame.matchId);

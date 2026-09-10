@@ -1,3 +1,4 @@
+import { compatibleBuild } from "@game/protocol/build";
 import { randomUUID, randomInt } from "node:crypto";
 import { createBattle, createBattleSession, fireInSession, forfeitInSession, moveInSession, movementSnapshot, surrenderInSession, tickSession } from "@game/engine/multiplayer";
 import { TEST_ARENA } from "@game/maps";
@@ -17,7 +18,7 @@ export const attachMovementLab = (wss: WebSocketServer) => {
     if (socket.bufferedAmount >= 65536) { socket.close(1008, "slow connection"); return; }
     if (socket.readyState === socket.OPEN) socket.send(JSON.stringify(message));
   };
-  const frame = (): LabFrame => ({ type: "lab.frame", serverTime: Date.now(), eventSeq: state.movement.eventSeq,
+  const frame = (): LabFrame => ({ type: "lab.frame", build: state.build, serverTime: Date.now(), eventSeq: state.movement.eventSeq,
     matchId: state.matchId, turnId: state.roster.turnId, actorId: state.movement.playerId, deadlineAt: state.movement.deadlineAt,
     players: state.players.map(p => ({ ...p, teamId: members.find(m => m.playerId === p.playerId)!.teamId, eliminated: state.roster.eliminated.includes(p.playerId) })),
     movement: movementSnapshot(state.movement, Date.now()), phase: state.phase, result: state.result, terrainOps: [...state.terrainOps], wind: state.windState.value, map: state.map,
@@ -45,6 +46,7 @@ export const attachMovementLab = (wss: WebSocketServer) => {
       if (!parsed.success) { send(socket, { type: "lab.error", reason: "invalid-message" }); return; }
       const message = parsed.data;
       if (message.type === "lab.join") {
+        if (!compatibleBuild(message.build)) { send(socket, { type: "lab.error", reason: "version-mismatch" }); return; }
         if (session) return;
         const order = [...state.roster.turnRing.slice(state.roster.cursor), ...state.roster.turnRing.slice(0, state.roster.cursor)];
         const joined = sessions.join(socket, order, message.token);

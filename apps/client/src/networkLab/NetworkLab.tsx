@@ -1,3 +1,4 @@
+import { CLIENT_BUILD, compatibleMatch } from "@game/protocol/build";
 import { BattleMenu } from "@/worldUi/BattleMenu";
 import { applyOps, maskFromHeights, tiltOf } from "@game/sim";
 import { BattleConsole, BattleRoster } from "@/worldUi/BattleHud";
@@ -30,12 +31,12 @@ export const NetworkLab = ({ worldArt = false, onExit, connection }: { readonly 
     const ws = connection?.socket ?? new WebSocket(`ws://${location.hostname}:8794`);
     socket.current = ws;
     const motion = new Map<string, ReturnType<typeof createRemoteMotion>>();
-    let ownId = connection?.playerId ?? "", active = true, animation = 0;
+    let ownId = connection?.playerId ?? "", active = true, versionMismatch = false, animation = 0;
     if (connection) { setPlayerId(ownId); setStatus("接続済み"); }
     if (!connection) ws.onopen = () => {
       if (!active) return;
       const token = sessionStorage.getItem("keropod.network-lab-token");
-      ws.send(JSON.stringify({ type: "lab.join", ...(token ? { token } : {}) }));
+      ws.send(JSON.stringify({ type: "lab.join", build: CLIENT_BUILD, ...(token ? { token } : {}) }));
     };
     const receive = (raw: unknown) => {
       if (!active) return;
@@ -50,6 +51,7 @@ export const NetworkLab = ({ worldArt = false, onExit, connection }: { readonly 
         if (message.snapshot) sequence.current = message.snapshot.ackMoveSeq;
         setStatus(message.reason);
       } else {
+        if (!compatibleMatch(message.build, message.map)) { versionMismatch = true; setStatus("ゲームの更新が必要です。再読み込みしてください。"); ws.close(); return; }
         if (latest.current && message.matchId === latest.current.matchId && message.eventSeq < latest.current.eventSeq) return;
         if (message.matchId !== latest.current?.matchId) motion.clear();
         if (message.matchId !== latest.current?.matchId || message.turnId !== latest.current?.turnId) { pending.current = false; sequence.current = message.movement.ackMoveSeq; }
@@ -63,7 +65,7 @@ export const NetworkLab = ({ worldArt = false, onExit, connection }: { readonly 
         }
       }
     };
-    const closed = () => { if (active) { setStatus("切断：再読み込みで復帰"); pending.current = false; } };
+    const closed = () => { if (active && !versionMismatch) { setStatus("切断：再読み込みで復帰"); pending.current = false; } };
     const failed = () => { if (active) setStatus("接続に失敗しました"); };
     const message = (event: MessageEvent) => { try { receive(JSON.parse(String(event.data))); } catch { return; } };
     ws.addEventListener("message", message); ws.addEventListener("close", closed); ws.addEventListener("error", failed);

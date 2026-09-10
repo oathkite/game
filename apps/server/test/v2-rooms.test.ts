@@ -1,3 +1,4 @@
+import { CLIENT_BUILD } from "@game/protocol/build";
 import { expect, it } from "vitest";
 import { WebSocket, WebSocketServer } from "ws";
 import { attachRooms } from "../src/rooms/gateway";
@@ -15,11 +16,11 @@ it("isolates rooms, authenticates edits, starts chosen equipment and resumes the
   const profile = { nickname: "Kero", loadout: ["triple", "laser"] };
   try {
     const a = await connect(), b = await connect(), other = await connect();
-    a.send({ type: "room.create", profile }); other.send({ type: "room.create", profile });
+    a.send({ type: "room.create", build: CLIENT_BUILD, profile }); other.send({ type: "room.create", build: CLIENT_BUILD, profile });
     await expect.poll(() => a.last("room.snapshot")).toBeTruthy();
     await expect.poll(() => other.last("room.snapshot")).toBeTruthy();
     const roomId = a.last("room.snapshot").room.roomId, owner = a.last("room.welcome").playerId;
-    b.send({ type: "room.join", roomId, profile });
+    b.send({ type: "room.join", build: CLIENT_BUILD, roomId, profile });
     await expect.poll(() => a.last("room.snapshot").room.members.length).toBe(2);
     const guest = b.last("room.welcome").playerId;
     const edit = (client: typeof a, type: string, extra: object) => client.send({ version: 2, type, roomId, revision: a.last("room.snapshot").room.revision, ...extra });
@@ -50,12 +51,12 @@ it("isolates rooms, authenticates edits, starts chosen equipment and resumes the
     expect(a.last("lab.frame").replay.paths).toHaveLength(3);
     const token = b.last("room.welcome").token;
     b.ws.close(); await new Promise<void>(r => b.ws.once("close", r));
-    const resumed = await connect(); resumed.send({ type: "room.resume", token });
+    const resumed = await connect(); resumed.send({ type: "room.resume", build: CLIENT_BUILD, token });
     await expect.poll(() => resumed.last("room.welcome")?.playerId).toBe(guest);
     expect(resumed.last("lab.frame").matchId).toBe(frame.matchId);
-    const intruder = await connect(); intruder.send({ type: "room.resume", token });
+    const intruder = await connect(); intruder.send({ type: "room.resume", build: CLIENT_BUILD, token });
     await expect.poll(() => intruder.last("room.error")?.reason).toBe("invalid-session");
-    intruder.send({ type: "room.join", roomId, profile });
+    intruder.send({ type: "room.join", build: CLIENT_BUILD, roomId, profile });
     await expect.poll(() => intruder.last("room.error")?.reason).toBe("locked");
     a.send({ type: "room.leave" });
     await expect.poll(() => resumed.last("lab.frame")?.phase, { timeout: 10000 }).toBe("finished");

@@ -1,3 +1,4 @@
+import { CLIENT_BUILD, compatibleMatch } from "@game/protocol/build";
 import { MULTIPLAYER_MAPS, MULTIPLAYER_MAP_LABELS } from "@game/maps";
 import { useEffect, useRef, useState } from "react";
 import { WEAPON_IDS, WEAPON_LABELS } from "@game/protocol";
@@ -9,7 +10,7 @@ import "./rooms.css";
 import { inviteRoom, roomInviteUrl } from "./roomInvite";
 import { resolveRoomUrl } from "./roomTransport";
 const tokenKey = "keropod.room-token", roomKey = "keropod.room-id";
-const errors: Record<string, string> = { "wrong-mode": "この部屋は別の対戦形式です。クイック参加から入り直してください。", "fixed-mode": "クイック対戦の編成は固定です。", "waiting-for-players": "人数が揃うまでお待ちください。", "spectators-full": "観戦席が満員です。", "read-only": "観戦中は対戦操作できません。", "not-found": "部屋が見つかりません。", full: "部屋が満員です。", locked: "対戦中の部屋には参加できません。", "invalid-session": "復帰期限が切れたか、別の画面で接続中です。", "stale-revision": "部屋が更新されました。内容を確認して再操作してください。", "not-ready": "全員の準備完了を待っています。", unassigned: "全員のチームを選んでください。", "not-enough-teams": "2チーム以上に分かれてください。", "not-enough-players": "2人以上で開始できます。", disconnected: "切断中の参加者がいます。", "not-owner": "オーナーだけが操作できます。", "not-owner-or-not-finished": "対戦終了後、オーナーが部屋へ戻せます。" };
+const errors: Record<string, string> = { "version-mismatch": "ゲームの更新が必要です。再読み込みしてください。", "wrong-mode": "この部屋は別の対戦形式です。クイック参加から入り直してください。", "fixed-mode": "クイック対戦の編成は固定です。", "waiting-for-players": "人数が揃うまでお待ちください。", "spectators-full": "観戦席が満員です。", "read-only": "観戦中は対戦操作できません。", "not-found": "部屋が見つかりません。", full: "部屋が満員です。", locked: "対戦中の部屋には参加できません。", "invalid-session": "復帰期限が切れたか、別の画面で接続中です。", "stale-revision": "部屋が更新されました。内容を確認して再操作してください。", "not-ready": "全員の準備完了を待っています。", unassigned: "全員のチームを選んでください。", "not-enough-teams": "2チーム以上に分かれてください。", "not-enough-players": "2人以上で開始できます。", disconnected: "切断中の参加者がいます。", "not-owner": "オーナーだけが操作できます。", "not-owner-or-not-finished": "対戦終了後、オーナーが部屋へ戻せます。" };
 export const RoomScreen = ({ onExit, onLab }: { readonly onExit: () => void; readonly onLab: () => void }) => {
   const [room, setRoom] = useState<RoomSnapshot | null>(null), [playerId, setPlayerId] = useState("");
   const [code, setCode] = useState(() => inviteRoom(location.href) ?? ""), [status, setStatus] = useState(() => new URL(location.href).searchParams.has("room") && !inviteRoom(location.href) ? "招待リンクの部屋コードが無効です。" : ""), [busy, setBusy] = useState(false);
@@ -30,8 +31,8 @@ export const RoomScreen = ({ onExit, onLab }: { readonly onExit: () => void; rea
     catch { if (active.current && currentAttempt === attempt.current) { setBusy(false); setStatus("対戦サーバーに接続できません。"); } return; }
     if (!active.current || currentAttempt !== attempt.current) return;
     const ws = new WebSocket(url); socket.current = ws;
-    let identity = "", watching = false;
-    ws.onopen = () => { if (active.current && socket.current === ws) ws.send(JSON.stringify(initial.type === "room.quick" ? { ...initial, roomId: import.meta.env.VITE_ROOM_SERVER_URL ? new URL(url).pathname.split("/").at(-1) : "000000" } : initial)); };
+    let identity = "", watching = false, versionMismatch = false;
+    ws.onopen = () => { if (active.current && socket.current === ws) ws.send(JSON.stringify({ ...initial, build: CLIENT_BUILD, ...(initial.type === "room.quick" ? { roomId: import.meta.env.VITE_ROOM_SERVER_URL ? new URL(url).pathname.split("/").at(-1) : "000000" } : {}) })); };
     ws.onmessage = event => {
       if (!active.current || socket.current !== ws) return;
       let raw: unknown; try { raw = JSON.parse(String(event.data)); } catch { return; }
@@ -39,11 +40,12 @@ export const RoomScreen = ({ onExit, onLab }: { readonly onExit: () => void; rea
       const message = result.data;
       if (message.type === "room.welcome") { identity = message.playerId; watching = message.role === "spectator"; setSpectator(watching); setPlayerId(identity); sessionStorage.setItem(tokenKey, message.token); setBusy(false); setStatus(""); }
       if (message.type === "room.snapshot") { sessionStorage.setItem(roomKey, message.room.roomId); setRoom(message.room); if (message.room.phase === "waiting") setBattle(null); }
+      if (message.type === "lab.frame" && !compatibleMatch(message.build, message.map)) { versionMismatch = true; setStatus("ゲームの更新が必要です。再読み込みしてください。"); ws.close(); return; }
       if (message.type === "lab.frame") setBattle(current => current ?? { socket: ws, playerId: identity, spectator: watching, frame: message });
-      if (message.type === "room.error") { setBusy(false); setStatus(errors[message.reason] ?? "操作を受け付けられませんでした。部屋の状態を確認してください。");
+      if (message.type === "room.error") { versionMismatch = message.reason === "version-mismatch"; setBusy(false); setStatus(errors[message.reason] ?? "操作を受け付けられませんでした。部屋の状態を確認してください。");
         if (message.reason === "invalid-session") { sessionStorage.removeItem(tokenKey); sessionStorage.removeItem(roomKey); socket.current = null; setRoom(null); setBattle(null); ws.close(); } }
     };
-    ws.onclose = () => { if (active.current && socket.current === ws) { setBusy(false); setStatus("接続が切れました。再接続で復帰できます（60秒以内）。"); } };
+    ws.onclose = () => { if (versionMismatch) return; if (active.current && socket.current === ws) { setBusy(false); setStatus("接続が切れました。再接続で復帰できます（60秒以内）。"); } };
     ws.onerror = () => { if (active.current && socket.current === ws) { setBusy(false); setStatus("対戦サーバーに接続できません。"); } };
   };
   useEffect(() => { active.current = true; const token = sessionStorage.getItem(tokenKey); if (token && (!inviteRoom(location.href) || sessionStorage.getItem(roomKey) === inviteRoom(location.href))) connect({ type: "room.resume", token });
