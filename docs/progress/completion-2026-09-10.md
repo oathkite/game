@@ -601,3 +601,9 @@ heartbeatはUI共同調整時にPAUSED。本ゴールは現在のタスクで進
 - production-rooms.configへresult-timeout.specを追加。2人が通常のUIから入室・開始・降参で決着し、敗者のbrowser contextを閉じる。勝者も帰還を選ばず、clockを加工せずに待機する。
 - Chromium/local workerdで約1.2分、テスト通過。結果を見てから55〜68秒の範囲で同じ部屋へ自動復帰し、準備完了ボタンが使えることを検証。JS errorなし。
 - CF webSocketMessageはpingでtickRoomを呼ばず、alarmがtickRoomを実行することをコードで確認。実際のクラウド配備・休止復帰のSLO保証とは別。E2E型検査も通過。
+
+### 一般用搭乗キャラクター候補（2026-09-11）
+
+- ユーザー指定の内蔵image generationのみで、HUDの緑色・オリーブ服に合わせた16ポーズの搭乗用候補を制作。baseline-v2の4x4ポーズ/座席位置とHUD portraitを参照。
+- 初回と透過補正の2回とも1374x1145 RGBで、透過を表す市松模様が描き込まれ、alphaなし。2回目は大きさも変化。2候補・元生成ID・不採用理由をworkbench/pilot-generic-v1へ保存。API fallbackやruntime置換は行っていない。
+- 未完: 実alphaを持つ搭乗用素材、共通倍率・座席位置・16ポーズ検証、HUD/戦場/各シーンの外見統一。候補の生成を実装完了として扱わない。
