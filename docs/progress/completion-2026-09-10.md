@@ -204,3 +204,10 @@ heartbeatはUI共同調整時にPAUSED。本ゴールは現在のタスクで進
 - asset checkは明示的に `No production asset packs yet; art delivery is incomplete.` を出している。コマンド成功を素材納品完了とは扱わない。配信用sprite pack登録が残る。
 - 設計23章の残項目を再確認：RTT300ms超の表示が未実装。100同時部屋/800人の容量gate、長時間/遅延下の観測試験、実DO CPU計測、実機/複数地域試験は未達。4部屋32接続の既存試験で代替しない。
 - 次に通信遅延の計測/表示と負荷試験を実装し、素材登録・残る画面要件を埋めてから最終UI整合へ進む。
+
+## 11:58 通信遅延の計測と表示
+
+- 認証済みroom.ping/pongを追加。nonceだけを応答し、状態変更・保存・全員への配信を行わない。既存の入力rate limit内で扱う。
+- 対戦/観戦の現在socketで5秒ごとにRTT計測。performance.nowで往復を測り、異なるnonce/古い応答を無視する。切断・再接続・未応答時の古い値をクリア。
+- 300ms超は戦場の小さな表示、通常値は対戦メニューに表示。日英対応。背景タブで計測送信しない。対戦時計・物理・補間は変更しない。
+- server67件、latency unit、server/client/e2e TypeScript、実edgeの英語対戦でRTT表示→通報→結果E2E通過。RTT表示は相手の描画遅延SLOの計測とは別。

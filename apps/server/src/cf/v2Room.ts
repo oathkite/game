@@ -90,6 +90,7 @@ export class RoomObject extends DurableObject<RoomEnv> {
       this.send(ws, { type: "room.welcome", playerId: result.welcome.playerId, token: result.welcome.token, role: result.welcome.role, generation: result.welcome.generation });
       if (result.state.battle) this.send(ws, lobbyFrame(result.state));
     }
+    if (result.pong !== undefined) { this.send(ws, { type: "room.pong", nonce: result.pong }); return; }
     if (result.reported) { this.send(ws, { type: "room.reported", status: result.reported }); return; }
     if (result.ack && result.state.battle) this.send(ws, { type: "lab.ack", reason: result.reason, snapshot: movementSnapshot(result.state.battle.movement, now) });
     else if (!["accepted", "unchanged"].includes(result.reason)) this.send(ws, { type: "room.error", reason: result.reason });

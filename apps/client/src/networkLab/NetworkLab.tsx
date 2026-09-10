@@ -1,3 +1,4 @@
+import { measureLatency } from "./latency";
 import { roomOutputSchema } from "@game/protocol/v2-rooms";
 import { teamColorName } from "@/worldUi/teamColors";
 import { useLanguage } from "@/i18n/locale";
@@ -27,6 +28,8 @@ export const NetworkLab = ({ worldArt = false, onExit, connection }: { readonly 
   const [keepView, setKeepView] = useState(false);
   const [menu, setMenu] = useState(false);
   const [status, setStatus] = useState("接続中"), [playerId, setPlayerId] = useState("");
+  const [latency, setLatency] = useState<number | null>(null);
+  useEffect(() => { if (connection) return measureLatency(connection.socket, setLatency); setLatency(null); }, [connection]);
   const [reportStatus, setReportStatus] = useState("");
   const [slot, setSlot] = useState<0 | 1>(0);
   const [elevation, setElevation] = useState(45), [power, setPower] = useState(50);
@@ -132,7 +135,8 @@ export const NetworkLab = ({ worldArt = false, onExit, connection }: { readonly 
     {observing ? <footer className="battle-console"><span role="status">{t("観戦中")}</span><label><input type="checkbox" checked={keepView} onChange={e => setKeepView(e.target.checked)} />{t("手動視点を維持")}</label></footer> : <BattleConsole player={hudPlayers.find(p => p.id === playerId)} steps={frame?.actorId === playerId ? frame.movement.stepsLeft : 0} tilt={ground} elevation={elevation} facing={ownFacing.current} power={input.gauge.value} loadout={loadout} slot={slot} disabled={!canAct || menu || input.gauge.charging} selectSlot={setSlot}>
       {touch && <><div><button disabled={!canAct || menu} aria-label={t("左へ1歩")} {...input.button("left")}>←</button><button disabled={!canAct || menu} aria-label={t("右へ1歩")} {...input.button("right")}>→</button></div><div><button disabled={!canAct || menu} aria-label={t("角度を下げる")} {...input.button("down")}>−</button><button disabled={!canAct || menu} aria-label={t("角度を上げる")} {...input.button("up")}>＋</button></div><button disabled={!canAct || menu} aria-label={t("発射")} {...input.button("fire")}>{t("発射")}</button></>}
     </BattleConsole>}
-    {menu && <BattleMenu {...(connection && frame ? { report: { players: frame.players.filter(p => p.playerId !== playerId).map(p => ({ id: p.playerId, name: p.nickname ?? p.playerId })), status: reportStatus, send: (targetId: string, reason: "name" | "abuse" | "cheating") => {
+    {latency !== null && latency > 300 && <span className="network-latency" role="status">{t("通信遅延")} {latency} ms</span>}
+    {menu && <BattleMenu latency={latency} {...(connection && frame ? { report: { players: frame.players.filter(p => p.playerId !== playerId).map(p => ({ id: p.playerId, name: p.nickname ?? p.playerId })), status: reportStatus, send: (targetId: string, reason: "name" | "abuse" | "cheating") => {
       if (socket.current?.readyState !== WebSocket.OPEN) { setReportStatus("通報を送信できませんでした。"); return; }
       setReportStatus("送信中…"); socket.current.send(JSON.stringify({ type: "room.report", matchId: frame.matchId, targetId, reason }));
     } } } : {})} {...(frame ? { diagnostics: matchDiagnostics(frame) } : {})} spectator={observing} close={() => setMenu(false)} surrender={() => { action("lab.surrender"); setMenu(false); }} exit={onExit} finished={!frame || frame.phase === "finished"} />}

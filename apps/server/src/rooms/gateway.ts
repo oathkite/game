@@ -29,6 +29,7 @@ export const attachRooms = (wss: WebSocketServer, options: Options = {}) => {
   }, 100);
   const effects = (socket: WebSocket, result: RoomReply) => {
     if (result.welcome) send(socket, { type: "room.welcome", playerId: result.welcome.playerId, token: result.welcome.token, role: result.welcome.role, generation: result.welcome.generation });
+    if (result.pong !== undefined) { send(socket, { type: "room.pong", nonce: result.pong }); return; }
     if (result.reported) { send(socket, { type: "room.reported", status: result.reported }); return; }
     if (result.ack && result.state.battle) send(socket, { type: "lab.ack", reason: result.reason, snapshot: movementSnapshot(result.state.battle.movement, Date.now()) });
     else if (!["accepted", "unchanged"].includes(result.reason)) send(socket, { type: "room.error", reason: result.reason });

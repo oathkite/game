@@ -11,6 +11,7 @@ export const reportReasonSchema = z.enum(["name", "abuse", "cheating"]);
 export const reportResultSchema = z.object({ type: z.literal("room.reported"), status: z.enum(["saved", "duplicate"]) }).strict();
 const roomId = z.string().regex(/^[A-F0-9]{6}$/);
 export const roomInputSchema = z.union([
+  z.object({ type: z.literal("room.ping"), nonce: z.number().int().nonnegative().max(Number.MAX_SAFE_INTEGER) }).strict(),
   z.object({ type: z.literal("room.report"), matchId: z.string().min(1).max(128), targetId: z.string().min(1).max(128), reason: reportReasonSchema }).strict(),
   quickRequestSchema.extend({ type: z.literal("room.quick"), build: clientBuildSchema.optional(), roomId, profile: lobbyProfileSchema }).strict(),
   z.object({ type: z.literal("room.spectate"), build: clientBuildSchema.optional(), roomId }).strict(),
@@ -29,7 +30,8 @@ export const roomSnapshotSchema = z.object({ type: z.literal("room.snapshot"), r
   members: z.array(lobbyProfileSchema.extend({ playerId: z.string(), teamId: z.string().nullable(), connected: z.boolean(), ready: z.boolean() })).max(8),
   map: z.object({ id: z.string(), version: z.number(), width: z.number(), height: z.number() }),
 }) });
-export const roomOutputSchema = z.union([labOutputSchema, roomSnapshotSchema, reportResultSchema,
+export const roomOutputSchema = z.union([
+  z.object({ type: z.literal("room.pong"), nonce: z.number().int().nonnegative() }).strict(),labOutputSchema, roomSnapshotSchema, reportResultSchema,
   z.object({ type: z.literal("room.welcome"), playerId: z.string(), token: z.string().uuid(), role: z.enum(["player", "spectator"]).default("player"), generation: z.number().int().positive().default(1) }),
   z.object({ type: z.literal("room.error"), reason: z.string() }),
 ]);

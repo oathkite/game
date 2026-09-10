@@ -135,3 +135,5 @@
 .world-machine .tank-portrait,.world-result-screen .tank-portrait { border-image:url("../../../../assets/runtime/world-v1/cockpit.webp") 110 / 12px / 0 stretch; }
 @media (max-height:499px),(max-width:999px) { .world-ui .kp-brand span,.world-ui .kp-power > small { display:none; } }
 .world-ui .room-screen { position:relative; }
+
+.network-latency { position:absolute; top:64px; right:12px; z-index:4; padding:4px 8px; color:#ffe3a0; background:#24344aeb; border:1px solid #b59a5b; font-size:12px; pointer-events:none; }

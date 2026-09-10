@@ -9,7 +9,7 @@ export type RoomSession = { readonly build: ClientBuild; readonly role: "player"
 export type RoomState = { readonly reports: readonly PlayerReport[]; readonly mode: RoomMode; readonly region: RoomRegion; readonly roomId: string; readonly lobby: LobbyState | null; readonly battle: BattleSession | null; readonly sessions: readonly RoomSession[] };
 export type Identity = { readonly playerId: string; readonly token: string; readonly matchId: string; readonly seed: number };
 type Input = ReturnType<typeof roomInputSchema.parse>;
-export type RoomReply = { readonly state: RoomState; readonly reason: string; readonly welcome?: RoomSession; readonly ack?: boolean; readonly reported?: "saved" | "duplicate"; readonly close?: boolean };
+export type RoomReply = { readonly state: RoomState; readonly reason: string; readonly welcome?: RoomSession; readonly ack?: boolean; readonly pong?: number; readonly reported?: "saved" | "duplicate"; readonly close?: boolean };
 export const createRoomState = (roomId: string, mode: RoomMode = "custom", region: RoomRegion = "asia"): RoomState => ({ roomId, mode, region, reports: [], lobby: null, battle: null, sessions: [] });
 const reply = (state: RoomState, reason = "accepted"): RoomReply => ({ state, reason });
 const connectedOwner = (state: RoomState): RoomState => {
@@ -102,6 +102,7 @@ export const reduceRoom = (state: RoomState, connectionId: string, raw: unknown,
   const session = state.sessions.find(s => s.connectionId === connectionId);
   if (!session) return reply(state, "join-required");
   if (!compatibleBuild(session.build)) return reply(state, "version-mismatch");
+  if (message.type === "room.ping") return { state, reason: "accepted", pong: message.nonce };
   if (message.type === "room.leave") return { state: leave(state, session.playerId, now), reason: "accepted", close: true };
   if (message.type === "room.report") return reportPlayer(state, session.playerId, message, now);
   if (session.role === "spectator") return reply(state, "read-only");

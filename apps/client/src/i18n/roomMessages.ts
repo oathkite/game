@@ -1,4 +1,5 @@
 export const roomEnglish: Readonly<Record<string, string>> = {
+  "通信遅延": "Network latency",
   "プレイヤーを通報": "Report player", "対象": "Player", "通報するプレイヤー": "Player to report", "理由": "Reason", "通報理由": "Report reason",
   "不適切な名前": "Inappropriate name", "迷惑行為": "Disruptive behavior", "不正行為の疑い": "Suspected cheating",
   "対象の名前・試合情報・理由を運営向けに保存します（7日間）。": "The player name, match details and reason are stored for moderation for 7 days.",
