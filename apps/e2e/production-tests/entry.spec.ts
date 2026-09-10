@@ -28,6 +28,11 @@ test("production root opens KEROPOD and practice with real assets", async ({ pag
   await expect(page.locator(".world-machine svg").first()).toBeVisible();
   await page.getByRole("button", { name: "プラクティスへ", exact: true }).click();
   await expect(page.getByTestId("camera-world")).toHaveAttribute("data-loaded", "true");
+  await page.waitForLoadState("networkidle");
+  const battleBytes = await page.evaluate(() => [...performance.getEntriesByType("navigation"), ...performance.getEntriesByType("resource")].reduce((total, entry) => total + (entry as PerformanceResourceTiming).encodedBodySize, 0));
+  console.info(`Cold practice cumulative encoded transfer: ${battleBytes} bytes`);
+  expect(battleBytes).toBeGreaterThan(initialBytes);
+  expect(battleBytes).toBeLessThanOrEqual(8_000_000);
   expect(errors).toEqual([]);
 });
 test("production invitation reaches the room screen without development controls", async ({ page }) => {

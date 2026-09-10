@@ -364,3 +364,9 @@ heartbeatはUI共同調整時にPAUSED。本ゴールは現在のタスクで進
 - 最終設定の配信build初期転送1,861,003Bで上限通過。cold cache相当の新ブラウザーcontext、ローカルpreviewのencoded body合計であり、実地域の起動時間を保証しない。
 - production全11 E2E通過後、可逆素材のencode設定を従来へ戻して差分を絞り、入口/転送/練習のテストを再実行して通過。e2e TypeScript、assets:check、Python fidelity check、diff check通過。
 - 次は最初の対戦までの累計8MBと残要件の最終照合。人間の最終アート承認/実環境SLO/公開運用判断は未完を維持。
+
+## 初回練習の転送量と残要件の照合
+
+- 配信buildのタイトル→ロビー→練習までのencoded body累計5,294,817B。8MB上限assertを追加して通過。タイトル1,861,002B、e2e TypeScript/diff checkも通過。
+- final-audit-2026-09-10.mdへ正本20〜23の残要件を整理。8ブラウザー完走はserver/engine/少人数browser試験の合算では証明できず、1時間soakも既存600秒上限では未達。次の実装・検証として継続。
+- 実機・実DO容量/費用・運用/法務・人間art承認を外部判断として区別。本ゴールは未完のまま。
