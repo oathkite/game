@@ -11,6 +11,24 @@ type Region = { readonly x: number; readonly y: number; readonly width: number; 
 const CHUNK_CELLS = 128;
 const ART_PIXELS_PER_CELL = 12;
 
+const updateMask = (mask: TerrainMask, region: Region, image: ImageData, above: Uint8Array): boolean => {
+  let dirty = false;
+  for (let y = 0; y < region.height; y++) for (let x = 0; x < region.width; x++) {
+    const offset = (y * region.width + x) * 4;
+    const alpha = mask.cells[(region.y + y) * mask.width + region.x + x] === 1 ? 255 : 0;
+    if (image.data[offset + 3] !== alpha) dirty = true;
+    image.data[offset] = image.data[offset + 1] = image.data[offset + 2] = 255;
+    image.data[offset + 3] = alpha;
+  }
+  // The top moss rim also depends on the immediately preceding chunk row.
+  for (let x = 0; x < region.width; x++) {
+    const cell = region.y > 0 ? mask.cells[(region.y - 1) * mask.width + region.x + x]! : 0;
+    if (above[x] !== cell) dirty = true;
+    above[x] = cell;
+  }
+  return dirty;
+};
+
 const createChunk = (region: Region, scale: number, tile?: HTMLCanvasElement) => {
   const canvas = document.createElement("canvas"), maskCanvas = document.createElement("canvas");
   canvas.width = region.width * scale; canvas.height = region.height * scale;
@@ -24,12 +42,12 @@ const createChunk = (region: Region, scale: number, tile?: HTMLCanvasElement) =>
   const texture = Texture.from(canvas); texture.source.scaleMode = "nearest";
   const sprite = new Sprite(texture);
   sprite.position.set(region.x, region.y); sprite.width = region.width; sprite.height = region.height;
+  const above = new Uint8Array(region.width);
+  let painted = false;
   const paint = (mask: TerrainMask) => {
-    for (let y = 0; y < region.height; y++) for (let x = 0; x < region.width; x++) {
-      const offset = (y * region.width + x) * 4;
-      image.data[offset] = image.data[offset + 1] = image.data[offset + 2] = 255;
-      image.data[offset + 3] = mask.cells[(region.y + y) * mask.width + region.x + x] === 1 ? 255 : 0;
-    }
+    const dirty = updateMask(mask, region, image, above);
+    if (painted && !dirty) return;
+    painted = true;
     maskContext.putImageData(image, 0, 0);
     ctx.clearRect(0, 0, canvas.width, canvas.height);
     ctx.drawImage(maskCanvas, 0, 0, canvas.width, canvas.height);

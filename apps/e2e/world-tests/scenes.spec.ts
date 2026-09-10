@@ -117,3 +117,30 @@ test("terrain art preserves collision alpha after carving and ordinary terrain s
     expect(chunk.height).toBeLessThanOrEqual(1536);
   }
 });
+
+test("terrain only uploads changed chunks and refreshes the moss across a chunk boundary", async ({ page }) => {
+  await page.goto("/?prototype=world");
+  const result = await page.evaluate(async () => {
+    const modulePath = "/src/game/terrainLayer.ts";
+    const { createTerrainLayer } = await import(modulePath);
+    const tile = document.createElement("canvas"); tile.width = tile.height = 8;
+    tile.getContext("2d")!.fillRect(0, 0, 8, 8);
+    const mask = { width: 300, height: 140, cells: new Uint8Array(300 * 140).fill(1) };
+    const layer = createTerrainLayer(mask, tile);
+    const updates = new Array(6).fill(0);
+    layer.sprite.children.forEach((sprite: any, index: number) => sprite.texture.source.on("update", () => updates[index]++));
+    mask.cells[1] = 0; layer.update(mask);
+    const first = [...updates]; layer.update(mask);
+    const unchanged = [...updates];
+    mask.cells[127 * 300 + 130] = 0; layer.update(mask);
+    const boundary = [...updates];
+    const canvas = layer.sprite.children[4].texture.source.resource as HTMLCanvasElement;
+    const rim = Array.from(canvas.getContext("2d")!.getImageData(24, 0, 1, 1).data);
+    layer.destroy();
+    return { first, unchanged, boundary, rim };
+  });
+  expect(result.first).toEqual([1, 0, 0, 0, 0, 0]);
+  expect(result.unchanged).toEqual(result.first);
+  expect(result.boundary).toEqual([1, 1, 0, 0, 1, 0]);
+  expect(result.rim).toEqual([116, 132, 76, 255]);
+});

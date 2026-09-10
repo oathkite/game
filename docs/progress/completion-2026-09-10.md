@@ -419,3 +419,10 @@ heartbeatはUI共同調整時にPAUSED。本ゴールは現在のタスクで進
 - Firefox16.0秒、WebKit約1.9分で試験完了。自動操作8 contextの総経過時間であり、1ユーザーの描画/入室SLOへ読み替えない。
 - Firefoxの累計転送5,266,930〜5,266,969B、WebKit5,267,423Bで全接続8MB以内。e2e TypeScript/diff check通過。実iOS/Android/Safari/Edgeは引き続き別gate。
 - soak72311は415秒時点RSS458MB/heap195MBで実行中。完走未確認。
+
+## 地形のdirty chunk更新
+
+- 区画ごとの前回alphaと直上の1行を保持し、内容が変わった区画だけCanvas再描画とTextureSource更新を行う。直上行も比較して、境界の上が削れたときの苔の縁を更新。
+- 先に旧実装で全6区画が更新される失敗を確認。修正後、1セル破壊で1区画のみ・同じmaskで更新0・境界破壊で当該と下側の2区画・苔の実画素を検証して通過。
+- world全8 E2E、client/e2e TypeScript/diff check通過。これは転送回数削減の検証であり、実機60fps保証とは区別する。
+- soak72311は725秒時点RSS491MB/heap209MBで継続中。完走未確認。
