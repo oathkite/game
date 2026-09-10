@@ -595,3 +595,9 @@ heartbeatはUI共同調整時にPAUSED。本ゴールは現在のタスクで進
 
 - production.configのChromium/Firefox/WebKit全33件が1.4分で通過。起動、招待、読み込み失敗からの復帰、イントロ、storage/audio拒否、日英、設定保存の範囲。最新の全員帰還8人オンラインは別途Chromiumで確認済み。
 - cold title最大1,862,583B、練習開始まで最大6,325,578B。初期2MB/対戦8MBを維持。実機・実地域の速度は別検証。
+
+### 結果期限の実時間ブラウザ検証（2026-09-11）
+
+- production-rooms.configへresult-timeout.specを追加。2人が通常のUIから入室・開始・降参で決着し、敗者のbrowser contextを閉じる。勝者も帰還を選ばず、clockを加工せずに待機する。
+- Chromium/local workerdで約1.2分、テスト通過。結果を見てから55〜68秒の範囲で同じ部屋へ自動復帰し、準備完了ボタンが使えることを検証。JS errorなし。
+- CF webSocketMessageはpingでtickRoomを呼ばず、alarmがtickRoomを実行することをコードで確認。実際のクラウド配備・休止復帰のSLO保証とは別。E2E型検査も通過。

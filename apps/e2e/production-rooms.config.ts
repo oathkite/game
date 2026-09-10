@@ -1,7 +1,7 @@
 import { defineConfig } from "@playwright/test";
 
 export default defineConfig({
-  testDir: "./rooms-tests", testMatch: "eight-players.spec.ts", workers: 1, timeout: 120000, reporter: "list",
+  testDir: "./rooms-tests", testMatch: ["eight-players.spec.ts", "result-timeout.spec.ts"], workers: 1, timeout: 120000, reporter: "list",
   metadata: { measureTransfer: true },
   projects: [
     { name: "chromium", use: { browserName: "chromium" } },
