@@ -1,3 +1,5 @@
+import { createBattleSounds } from "./battleSounds";
+import { playSound, unlockAudio } from "@/app/audio";
 import { CLIENT_BUILD, compatibleMatch } from "@game/protocol/build";
 import { BattleMenu } from "@/worldUi/BattleMenu";
 import { applyOps, maskFromHeights, tiltOf } from "@game/sim";
@@ -30,6 +32,7 @@ export const NetworkLab = ({ worldArt = false, onExit, connection }: { readonly 
   useEffect(() => {
     const ws = connection?.socket ?? new WebSocket(`ws://${location.hostname}:8794`);
     socket.current = ws;
+    const sounds = createBattleSounds();
     const motion = new Map<string, ReturnType<typeof createRemoteMotion>>();
     let ownId = connection?.playerId ?? "", active = true, versionMismatch = false, animation = 0;
     if (connection) { setPlayerId(ownId); setStatus("接続済み"); }
@@ -71,7 +74,12 @@ export const NetworkLab = ({ worldArt = false, onExit, connection }: { readonly 
     ws.addEventListener("message", message); ws.addEventListener("close", closed); ws.addEventListener("error", failed);
     if (connection) receive(connection.frame);
     const draw = (): void => {
-      setServerNow(clock.current.time + performance.now() - clock.current.received);
+      const now = clock.current.time + performance.now() - clock.current.received;
+      setServerNow(now);
+      if (latest.current) {
+        const events = sounds(latest.current, now);
+        if (!document.hidden) events.forEach(playSound);
+      }
       setPositions([...motion.entries()].flatMap(([id, buffer]) => { const p = buffer.at(performance.now()); return p ? [{ playerId: id, ...p }] : []; }));
       animation = requestAnimationFrame(draw);
     };
@@ -108,7 +116,7 @@ export const NetworkLab = ({ worldArt = false, onExit, connection }: { readonly 
   const ownFacing = useRef<-1 | 1>(1);
   if (frame?.actorId === playerId) ownFacing.current = frame.movement.facing;
   const ground = useMemo(() => own && presentation && frame ? tiltOf(applyOps(maskFromHeights(frame.map.surface, frame.map.height), presentation.terrainOps), own) : 0, [own?.x, own?.y, frame?.eventSeq, frame?.matchId]);
-  if (worldArt) return <main className="network-lab network-world">
+  if (worldArt) return <main className="network-lab network-world" onPointerDown={() => unlockAudio()} onKeyDown={() => unlockAudio()}>
     <BattleRoster players={hudPlayers} actorId={frame?.actorId ?? ""} wind={frame?.wind ?? 0} clock={frame?.phase === "acting" ? Math.max(0, Math.ceil((frame.deadlineAt - serverNow) / 1000)) : "—"} onMenu={() => { input.cancel(); setMenu(true); }} />
     <span className="battle-sr" data-testid="identity">{playerId}</span><span className="battle-sr" data-testid="phase">{phaseLabel}</span>
     {frame && presentation ? <NetworkField blocked={menu || input.gauge.charging} frame={frame} players={shownPlayers} presentation={presentation} elevation={elevation} ownId={playerId} followTurns={!observing || !keepView} {...(!observing ? { selectedWeapon: loadout[slot] } : {})} /> : <p role="status">{status}</p>}

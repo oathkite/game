@@ -107,3 +107,11 @@ heartbeatはUI共同調整時にPAUSED。本ゴールは現在のタスクで進
 - 再訪・招待・reduced motion・saveDataでは省略。保存不可でも自動終了して開始できる。
 - productionのイントロ3 E2E、既存world7 E2E、client/e2e TypeScript通過。
 - 演出の最終的な機体ポーズ/ガレージ/ロゴの絵作りとidle motionはUI最終工程で照合する。今回は再生・省略・遷移の機能基盤。
+
+## 11:04 オンライン対戦音
+
+- サーバーのreplay時刻から発射/着弾/被弾、手番交代/終了音を再生。初期snapshot・再接続で過去音を再生しない。
+- 同時tickの音をまとめ、500ms超の停止後のcatch-upを破棄。時計の後退補正でも重複しない。非表示中もイベントを消費し音は鳴らさない。
+- 音声初期化が拒否されても開始導線を止めず、resume拒否の未処理Promiseを防止。
+- client179 unit、client/e2e TypeScript、edgeのPC/touch対戦E2E（実Oscillator起動確認）、音声拒否production E2E通過。
+- 音色の最終調整とローカル練習の音の統合確認、再接続UIの改善は残る。

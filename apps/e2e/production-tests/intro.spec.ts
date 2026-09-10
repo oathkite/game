@@ -34,3 +34,11 @@ test("intro finishes automatically even when storage is unavailable", async ({ p
   await page.getByRole("button", { name: "はじめる", exact: true }).click();
   await expect(page.getByRole("heading", { name: "出発の準備" })).toBeVisible();
 });
+test("audio initialization refusal does not block starting the game", async ({ page }) => {
+  await page.addInitScript(() => {
+    Object.defineProperty(window, "AudioContext", { value: class { constructor() { throw new Error("audio unavailable"); } } });
+  });
+  await page.goto("/");
+  await page.getByRole("button", { name: "はじめる", exact: true }).click();
+  await expect(page.getByRole("heading", { name: "出発の準備" })).toBeVisible();
+});

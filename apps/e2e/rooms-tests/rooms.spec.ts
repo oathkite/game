@@ -5,6 +5,14 @@ test("room code, teams, ready, selected weapons and return to preparation", asyn
   const errors: string[] = [];
   try {
     for (const page of [a!, b!]) {
+      await page.addInitScript(() => {
+        const start = OscillatorNode.prototype.start;
+        OscillatorNode.prototype.start = function (when?: number) {
+          const target = window as unknown as { playedTones?: number[] };
+          (target.playedTones ??= []).push(this.frequency.value);
+          start.call(this, when);
+        };
+      });
       page.on("pageerror", e => errors.push(e.message));
       await page.goto("/?prototype=world");
       await page.getByRole("button", { name: "はじめる", exact: true }).click();
@@ -48,6 +56,7 @@ test("room code, teams, ready, selected weapons and return to preparation", asyn
     if (shooter === a) { await shooter.keyboard.down("Space"); await shooter.waitForTimeout(400); await shooter.keyboard.up("Space"); } else { const fire = shooter.getByRole("button", { name: "発射", exact: true }); await fire.hover(); await shooter.mouse.down(); await shooter.waitForTimeout(400); await shooter.mouse.up(); }
     await expect(a!.getByTestId("phase")).toHaveText("射撃を再生中");
     await expect(a!.getByTestId("phase")).toHaveText("操作中", { timeout: 12000 });
+    await expect.poll(() => shooter.evaluate(() => (window as unknown as { playedTones?: number[] }).playedTones?.length ?? 0)).toBeGreaterThan(0);
     await b!.screenshot({ path: "test-results/room-battle-mobile.png" });
     await b!.setViewportSize({ width: 667, height: 375 });
     for (const name of ["左へ1歩", "右へ1歩", "発射"]) {

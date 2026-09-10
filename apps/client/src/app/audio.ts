@@ -15,11 +15,12 @@ const state: AudioState = { ctx: null, master: null, volume: 0.5, muted: false }
 /** 最初のユーザー操作で呼び、自動再生制限を解除する */
 export const unlockAudio = (): void => {
   if (state.ctx) {
-    if (state.ctx.state === "suspended") void state.ctx.resume();
+    if (state.ctx.state === "suspended") void state.ctx.resume().catch(() => {});
     return;
   }
   if (typeof AudioContext === "undefined") return;
-  const ctx = new AudioContext();
+  let ctx: AudioContext;
+  try { ctx = new AudioContext(); } catch { return; }
   const master = ctx.createDynamicsCompressor();
   master.threshold.value = -12;
   master.ratio.value = 8;
