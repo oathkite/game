@@ -8,7 +8,9 @@ test("eight independent players complete a 4v4 match and return together", async
   try {
     await Promise.all(pages.map(async (page, index) => {
       page.on("pageerror", error => errors.push(error.message));
-      await page.goto("/?room=000000");
+      await page.goto("/");
+      await page.getByRole("button", { name: "はじめる", exact: true }).click();
+      await page.getByRole("button", { name: "オンライン対戦", exact: true }).click();
       await page.getByLabel("対戦で使う名前").fill(`Pilot${index + 1}`);
     }));
     const owner = pages[0]!;
@@ -32,6 +34,15 @@ test("eight independent players complete a 4v4 match and return together", async
     for (const page of pages) {
       await expect(page.getByTestId("network-world")).toHaveAttribute("data-loaded", "true");
       await expect(page.locator(".battle-seat")).toHaveCount(8);
+    }
+    if (test.info().project.metadata.measureTransfer) {
+      const bytes = await Promise.all(pages.map(async page => {
+        await page.waitForLoadState("networkidle");
+        return page.evaluate(() => [...performance.getEntriesByType("navigation"), ...performance.getEntriesByType("resource")].reduce((total, entry) => total + (entry as PerformanceResourceTiming).encodedBodySize, 0));
+      }));
+      console.info(`Eight-player cumulative encoded transfer: ${JSON.stringify(bytes)}`);
+      for (const value of bytes) { expect(value).toBeGreaterThan(0); expect(value).toBeLessThanOrEqual(8_000_000); }
+      await test.info().attach("eight-player-transfer.json", { body: JSON.stringify(bytes), contentType: "application/json" });
     }
     const portrait = owner.locator(".battle-seat-portrait").first();
     const portraitBox = (await portrait.boundingBox())!;

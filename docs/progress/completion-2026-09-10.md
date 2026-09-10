@@ -377,3 +377,10 @@ heartbeatはUI共同調整時にPAUSED。本ゴールは現在のタスクで進
 - 青4名の降参で全8名が赤チーム勝利を表示し、ownerの部屋復帰で全員8名の準備画面へ戻ることを通過。射撃だけで決着する長時間対戦と区別する。
 - 目視でオンライン画面のSVG共通marginが小さなポートレートをずらす問題を確認。network-lab直下SVGへ限定し、画像が枠内に収まるassertを追加。修正後再実行31.3秒で通過、画像も確認。
 - e2e TypeScript/diff check通過。1時間soakと配信版8人転送量は継続。
+
+## 配信buildの8人対戦と転送量
+
+- production-rooms.config.tsを追加。専用local Wrangler8798（保存先.keropod/e2e-production）と配信build/preview5186を自動起動・終了する。既存local edge8796と分離し、本番には接続しない。
+- 8名が通常タイトル→ロビー→オンラインへ進む経路に変更。各独立contextで戦場読込までのencoded body累計を測り、5,296,962〜5,296,963Bで8MB以下を確認。
+- 同じ配信buildで射撃共有、降参決着、全員同じ結果、8名部屋復帰まで29.4秒で通過。e2e TypeScript/diff check通過。
+- 実行: `pnpm --filter @game/e2e exec playwright test --config production-rooms.config.ts`。5186が使用中ならこのcheckoutの開発serverを止めて実行する。1時間soak・実機/運用ゲートは継続。
