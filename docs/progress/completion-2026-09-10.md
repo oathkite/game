@@ -489,3 +489,8 @@ heartbeatはUI共同調整時にPAUSED。本ゴールは現在のタスクで進
 - 検証：新規unitを先に失敗確認後、client全200件・typecheck通過。実Pixiの大破発生数/残骸煙4本/通常復帰時0個をbrowser testへ追加。
 - 1時間soak session72311は2226秒まで進行、完走判定はまだ行わない。次は一連の対戦画面をまとめて検証し、演出を含む最終視覚比較へ戻る。
 - browser test・e2e typecheck・runtime26files同一性検証も通過。
+
+### 演出追加後の配信build再検証と地形候補
+
+- production.config.ts全33件、Chromium/Firefox/WebKit通過。タイトルencoded transfer=1,861,274 / 1,830,964 / 1,831,114B、練習累計=5,301,958 / 5,271,648 / 5,272,124B。素材追加後も2MB/8MB条件内。
+- 原案desktop-refined-v4を再確認。大きな差の一つである土→岩盤/苔のためterrain-rock-v1.pngを生成しworkbenchへ保存。1254四方、岩・苔の方向は近いが、繰り返し境界と実画素密度を実画面比較してから採用を決める。runtime未変更。
