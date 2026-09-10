@@ -33,10 +33,10 @@ export class RoomObject extends DurableObject<RoomEnv> {
     if (runtime.state.mode !== mode || runtime.state.region !== region) throw new Error("room mode mismatch");
     await this.ctx.storage.sync();
   }
-  private async schedule(state: Pick<RoomState, "sessions"> & { readonly battle: RoomSnapshot["state"]["battle"] | RoomState["battle"] }): Promise<void> {
+  private async schedule(state: Pick<RoomState, "sessions" | "reports"> & { readonly battle: RoomSnapshot["state"]["battle"] | RoomState["battle"] }): Promise<void> {
     // Stored battle deadlines share the same state, but the snapshot wraps its battle payload.
     const battle = state.battle && "version" in state.battle ? state.battle.state : state.battle;
-    const deadline = nextRoomDeadline({ sessions: state.sessions, battle });
+    const deadline = nextRoomDeadline({ sessions: state.sessions, reports: state.reports, battle });
     const handshakes = this.ctx.getWebSockets().filter(ws => ws.readyState === WebSocket.OPEN).map(ws => ws.deserializeAttachment() as Attachment).filter(a => !a.joined).map(a => a.acceptedAt + 10000);
     const next = [deadline, ...handshakes, ...(state.sessions.length ? [Date.now() + 300000] : [])].filter((n): n is number => n !== null);
     if (next.length) await this.ctx.storage.setAlarm(Math.max(Date.now() + 1, Math.min(...next)));
@@ -90,6 +90,7 @@ export class RoomObject extends DurableObject<RoomEnv> {
       this.send(ws, { type: "room.welcome", playerId: result.welcome.playerId, token: result.welcome.token, role: result.welcome.role, generation: result.welcome.generation });
       if (result.state.battle) this.send(ws, lobbyFrame(result.state));
     }
+    if (result.reported) { this.send(ws, { type: "room.reported", status: result.reported }); return; }
     if (result.ack && result.state.battle) this.send(ws, { type: "lab.ack", reason: result.reason, snapshot: movementSnapshot(result.state.battle.movement, now) });
     else if (!["accepted", "unchanged"].includes(result.reason)) this.send(ws, { type: "room.error", reason: result.reason });
     this.publish(result.state);

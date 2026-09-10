@@ -1,3 +1,4 @@
+import { roomOutputSchema } from "@game/protocol/v2-rooms";
 import { teamColorName } from "@/worldUi/teamColors";
 import { useLanguage } from "@/i18n/locale";
 import { matchDiagnostics } from "@/worldUi/diagnostics";
@@ -26,6 +27,7 @@ export const NetworkLab = ({ worldArt = false, onExit, connection }: { readonly 
   const [keepView, setKeepView] = useState(false);
   const [menu, setMenu] = useState(false);
   const [status, setStatus] = useState("接続中"), [playerId, setPlayerId] = useState("");
+  const [reportStatus, setReportStatus] = useState("");
   const [slot, setSlot] = useState<0 | 1>(0);
   const [elevation, setElevation] = useState(45), [power, setPower] = useState(50);
   const [frame, setFrame] = useState<LabFrame | null>(null), [positions, setPositions] = useState<Position[]>([]);
@@ -47,6 +49,9 @@ export const NetworkLab = ({ worldArt = false, onExit, connection }: { readonly 
     };
     const receive = (raw: unknown) => {
       if (!active) return;
+      const roomMessage = roomOutputSchema.safeParse(raw);
+      if (roomMessage.success && roomMessage.data.type === "room.reported") { setReportStatus(roomMessage.data.status === "saved" ? "通報を受け付けました。" : "このプレイヤーへの通報は受付済みです。"); return; }
+      if (roomMessage.success && roomMessage.data.type === "room.error" && ["report-capacity", "invalid-report-target", "wrong-turn"].includes(roomMessage.data.reason)) setReportStatus("通報を送信できませんでした。");
       const result = labOutputSchema.safeParse(raw); if (!result.success) return;
       const message = result.data;
       if (message.type === "lab.welcome") {
@@ -60,7 +65,7 @@ export const NetworkLab = ({ worldArt = false, onExit, connection }: { readonly 
       } else {
         if (!compatibleMatch(message.build, message.map)) { versionMismatch = true; setStatus("ゲームの更新が必要です。再読み込みしてください。"); ws.close(); return; }
         if (latest.current && message.matchId === latest.current.matchId && message.eventSeq < latest.current.eventSeq) return;
-        if (message.matchId !== latest.current?.matchId) motion.clear();
+        if (message.matchId !== latest.current?.matchId) { motion.clear(); setReportStatus(""); }
         if (message.matchId !== latest.current?.matchId || message.turnId !== latest.current?.turnId) { pending.current = false; sequence.current = message.movement.ackMoveSeq; }
         if (!pending.current) sequence.current = message.movement.ackMoveSeq;
         clock.current = { time: message.serverTime, received: performance.now() };
@@ -72,7 +77,7 @@ export const NetworkLab = ({ worldArt = false, onExit, connection }: { readonly 
         }
       }
     };
-    const closed = () => { if (active && !versionMismatch) { setStatus("切断：再読み込みで復帰"); pending.current = false; } };
+    const closed = () => { if (active && !versionMismatch) { setStatus("切断：再読み込みで復帰"); setReportStatus(previous => previous === "送信中…" ? "通報を送信できませんでした。" : previous); pending.current = false; } };
     const failed = () => { if (active) setStatus("接続に失敗しました"); };
     const message = (event: MessageEvent) => { try { receive(JSON.parse(String(event.data))); } catch { return; } };
     ws.addEventListener("message", message); ws.addEventListener("close", closed); ws.addEventListener("error", failed);
@@ -127,7 +132,10 @@ export const NetworkLab = ({ worldArt = false, onExit, connection }: { readonly 
     {observing ? <footer className="battle-console"><span role="status">{t("観戦中")}</span><label><input type="checkbox" checked={keepView} onChange={e => setKeepView(e.target.checked)} />{t("手動視点を維持")}</label></footer> : <BattleConsole player={hudPlayers.find(p => p.id === playerId)} steps={frame?.actorId === playerId ? frame.movement.stepsLeft : 0} tilt={ground} elevation={elevation} facing={ownFacing.current} power={input.gauge.value} loadout={loadout} slot={slot} disabled={!canAct || menu || input.gauge.charging} selectSlot={setSlot}>
       {touch && <><div><button disabled={!canAct || menu} aria-label={t("左へ1歩")} {...input.button("left")}>←</button><button disabled={!canAct || menu} aria-label={t("右へ1歩")} {...input.button("right")}>→</button></div><div><button disabled={!canAct || menu} aria-label={t("角度を下げる")} {...input.button("down")}>−</button><button disabled={!canAct || menu} aria-label={t("角度を上げる")} {...input.button("up")}>＋</button></div><button disabled={!canAct || menu} aria-label={t("発射")} {...input.button("fire")}>{t("発射")}</button></>}
     </BattleConsole>}
-    {menu && <BattleMenu {...(frame ? { diagnostics: matchDiagnostics(frame) } : {})} spectator={observing} close={() => setMenu(false)} surrender={() => { action("lab.surrender"); setMenu(false); }} exit={onExit} finished={!frame || frame.phase === "finished"} />}
+    {menu && <BattleMenu {...(connection && frame ? { report: { players: frame.players.filter(p => p.playerId !== playerId).map(p => ({ id: p.playerId, name: p.nickname ?? p.playerId })), status: reportStatus, send: (targetId: string, reason: "name" | "abuse" | "cheating") => {
+      if (socket.current?.readyState !== WebSocket.OPEN) { setReportStatus("通報を送信できませんでした。"); return; }
+      setReportStatus("送信中…"); socket.current.send(JSON.stringify({ type: "room.report", matchId: frame.matchId, targetId, reason }));
+    } } } : {})} {...(frame ? { diagnostics: matchDiagnostics(frame) } : {})} spectator={observing} close={() => setMenu(false)} surrender={() => { action("lab.surrender"); setMenu(false); }} exit={onExit} finished={!frame || frame.phase === "finished"} />}
     {frame?.phase === "finished" && <section className="network-finished"><h2>{frame.result.type === "win" ? t("{team}チームの勝利", { team: t(teamColorName(Number(frame.result.teamId.slice(1)))) }) : t("引き分け")}</h2>{!spectator && <button onClick={() => action("lab.rematch")}>{connection ? t("部屋へ戻る（オーナー）") : t("再戦する")}</button>}<button onClick={onExit}>{t("ロビーに戻る")}</button></section>}
     {status === "invalid-session" && <div className="network-finished"><p>{t("接続の有効期限が切れました。")}</p><button onClick={() => { sessionStorage.removeItem("keropod.network-lab-token"); location.reload(); }}>{t("新しい接続で参加")}</button></div>}
     <div className="network-portrait"><h2>{t("横向きでプレイしよう")}</h2><p>{t("端末を回転するとフィールドと操作が見やすくなります。")}</p><button onClick={onExit}>{t("ロビーに戻る")}</button></div>

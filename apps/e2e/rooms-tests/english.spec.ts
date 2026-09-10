@@ -15,6 +15,11 @@ test("English players can join, ready up, inspect diagnostics and finish a quick
     for (const page of pages) await expect(page.getByTestId("network-world")).toHaveAttribute("data-loaded", "true");
     const guest = pages[1]!;
     await guest.getByRole("button", { name: "Open settings", exact: true }).click();
+    await guest.getByText("Report player", { exact: true }).click();
+    await guest.getByRole("button", { name: "Send report", exact: true }).click();
+    await expect(guest.getByText("Report received.", { exact: true })).toBeVisible();
+    await guest.getByRole("button", { name: "Send report", exact: true }).click();
+    await expect(guest.getByText("You have already reported this player.", { exact: true })).toBeVisible();
     await guest.getByText("Match diagnostics", { exact: true }).click();
     await expect(guest.getByRole("textbox", { name: "Match diagnostics", exact: true })).toContainText("keropod-match-diagnostics-v1");
     await guest.getByRole("button", { name: "Surrender", exact: true }).click();

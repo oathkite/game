@@ -23,12 +23,13 @@ export const attachRooms = (wss: WebSocketServer, options: Options = {}) => {
       let before: RoomState;
       void room.update(state => { before = state; return { state: tickRoom(state, Date.now()), reason: "tick" }; }).then(result => {
         if (result.state !== before) broadcast(result.state);
-        if (!result.state.sessions.length) rooms.delete(roomId);
+        if (!result.state.sessions.length && !result.state.reports.length) rooms.delete(roomId);
       }).catch(error => console.error("room timer persistence failed", error));
     }
   }, 100);
   const effects = (socket: WebSocket, result: RoomReply) => {
     if (result.welcome) send(socket, { type: "room.welcome", playerId: result.welcome.playerId, token: result.welcome.token, role: result.welcome.role, generation: result.welcome.generation });
+    if (result.reported) { send(socket, { type: "room.reported", status: result.reported }); return; }
     if (result.ack && result.state.battle) send(socket, { type: "lab.ack", reason: result.reason, snapshot: movementSnapshot(result.state.battle.movement, Date.now()) });
     else if (!["accepted", "unchanged"].includes(result.reason)) send(socket, { type: "room.error", reason: result.reason });
     if (result.welcome && result.state.battle) send(socket, lobbyFrame(result.state));

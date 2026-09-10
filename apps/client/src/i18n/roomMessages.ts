@@ -1,4 +1,10 @@
 export const roomEnglish: Readonly<Record<string, string>> = {
+  "プレイヤーを通報": "Report player", "対象": "Player", "通報するプレイヤー": "Player to report", "理由": "Reason", "通報理由": "Report reason",
+  "不適切な名前": "Inappropriate name", "迷惑行為": "Disruptive behavior", "不正行為の疑い": "Suspected cheating",
+  "対象の名前・試合情報・理由を運営向けに保存します（7日間）。": "The player name, match details and reason are stored for moderation for 7 days.",
+  "通報を送信": "Send report", "送信中…": "Sending…", "通報を受け付けました。": "Report received.",
+  "このプレイヤーへの通報は受付済みです。": "You have already reported this player.", "通報を送信できませんでした。": "Could not send the report.",
+
   "青": "Blue", "赤": "Red", "緑": "Green", "紫": "Purple", "黄": "Yellow", "青緑": "Teal", "桃": "Pink", "銀": "Silver",
   "{color}チーム": "{color} team",
 

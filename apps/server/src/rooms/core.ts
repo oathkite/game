@@ -1,3 +1,4 @@
+import { reportPlayer, REPORT_RETENTION_MS, type PlayerReport } from "./reports.js";
 import { CLIENT_BUILD, compatibleBuild, type ClientBuild } from "@game/protocol/build";
 import { MULTIPLAYER_MAPS } from "@game/maps";
 import { createLobby, joinLobby, leaveLobby, setLobbyConnection, editLobby, startLobby, createPreparedSession,
@@ -5,11 +6,11 @@ import { createLobby, joinLobby, leaveLobby, setLobbyConnection, editLobby, star
 import { roomInputSchema, type RoomMode, type RoomRegion } from "@game/protocol/v2-rooms";
 
 export type RoomSession = { readonly build: ClientBuild; readonly role: "player" | "spectator"; readonly token: string; readonly playerId: string; readonly connectionId: string | null; readonly disconnectedAt: number; readonly generation: number };
-export type RoomState = { readonly mode: RoomMode; readonly region: RoomRegion; readonly roomId: string; readonly lobby: LobbyState | null; readonly battle: BattleSession | null; readonly sessions: readonly RoomSession[] };
+export type RoomState = { readonly reports: readonly PlayerReport[]; readonly mode: RoomMode; readonly region: RoomRegion; readonly roomId: string; readonly lobby: LobbyState | null; readonly battle: BattleSession | null; readonly sessions: readonly RoomSession[] };
 export type Identity = { readonly playerId: string; readonly token: string; readonly matchId: string; readonly seed: number };
 type Input = ReturnType<typeof roomInputSchema.parse>;
-export type RoomReply = { readonly state: RoomState; readonly reason: string; readonly welcome?: RoomSession; readonly ack?: boolean; readonly close?: boolean };
-export const createRoomState = (roomId: string, mode: RoomMode = "custom", region: RoomRegion = "asia"): RoomState => ({ roomId, mode, region, lobby: null, battle: null, sessions: [] });
+export type RoomReply = { readonly state: RoomState; readonly reason: string; readonly welcome?: RoomSession; readonly ack?: boolean; readonly reported?: "saved" | "duplicate"; readonly close?: boolean };
+export const createRoomState = (roomId: string, mode: RoomMode = "custom", region: RoomRegion = "asia"): RoomState => ({ roomId, mode, region, reports: [], lobby: null, battle: null, sessions: [] });
 const reply = (state: RoomState, reason = "accepted"): RoomReply => ({ state, reason });
 const connectedOwner = (state: RoomState): RoomState => {
   if (!state.lobby || state.sessions.some(s => s.playerId === state.lobby!.ownerId && s.connectionId && s.role === "player")) return state;
@@ -32,11 +33,13 @@ export const disconnectRoom = (state: RoomState, connectionId: string, now: numb
 export const tickRoom = (state: RoomState, now: number): RoomState => {
   const expired = state.sessions.filter(s => !s.connectionId && now - s.disconnectedAt >= 60000);
   const battle = state.battle ? tickSession(forfeitInSession(state.battle, expired.map(s => s.playerId), now), now) : null;
-  const next = battle === state.battle ? state : { ...state, battle };
+  const reports = state.reports.filter(report => now < report.createdAt + REPORT_RETENTION_MS);
+  const next = battle === state.battle && reports.length === state.reports.length ? state : { ...state, battle, reports };
   return expired.reduce((room, s) => leave(room, s.playerId, now), next);
 };
-export const nextRoomDeadline = (state: { readonly sessions: readonly RoomSession[]; readonly battle: { readonly phase: string; readonly movement: { readonly deadlineAt: number }; readonly replay: { readonly endsAt: number } | null } | null }): number | null => {
+export const nextRoomDeadline = (state: { readonly reports?: readonly PlayerReport[]; readonly sessions: readonly RoomSession[]; readonly battle: { readonly phase: string; readonly movement: { readonly deadlineAt: number }; readonly replay: { readonly endsAt: number } | null } | null }): number | null => {
   const deadlines = state.sessions.filter(s => !s.connectionId).map(s => s.disconnectedAt + 60000);
+  if (state.reports?.length) deadlines.push(...state.reports.map(report => report.createdAt + REPORT_RETENTION_MS));
   if (state.battle?.phase === "acting") deadlines.push(state.battle.movement.deadlineAt);
   if (state.battle?.phase === "replaying") deadlines.push(state.battle.replay!.endsAt);
   return deadlines.length ? Math.min(...deadlines) : null;
@@ -100,6 +103,7 @@ export const reduceRoom = (state: RoomState, connectionId: string, raw: unknown,
   if (!session) return reply(state, "join-required");
   if (!compatibleBuild(session.build)) return reply(state, "version-mismatch");
   if (message.type === "room.leave") return { state: leave(state, session.playerId, now), reason: "accepted", close: true };
+  if (message.type === "room.report") return reportPlayer(state, session.playerId, message, now);
   if (session.role === "spectator") return reply(state, "read-only");
   if ("roomId" in message && message.roomId !== state.roomId) return reply(state, "wrong-room");
   if (state.mode !== "custom" && (message.type === "room.assignTeam" || message.type === "room.map")) return reply(state, "fixed-mode");

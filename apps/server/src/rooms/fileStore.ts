@@ -9,7 +9,7 @@ export const fileRoomStore = (directory: string) => {
     if (!/^[A-F0-9]{6}$/.test(id)) throw new Error("invalid room id");
     await mkdir(directory, { recursive: true });
     const path = join(directory, `${id}.json`);
-    if (!snapshot.state.sessions.length) { await rm(path, { force: true }); return; }
+    if (!snapshot.state.sessions.length && !snapshot.state.reports.length) { await rm(path, { force: true }); return; }
     await writeFile(`${path}.tmp`, JSON.stringify(snapshot), { mode: 0o600 });
     await rename(`${path}.tmp`, path);
   };
@@ -23,7 +23,7 @@ export const fileRoomStore = (directory: string) => {
       for (const s of state.sessions) if (s.connectionId) state = disconnectRoom(state, s.connectionId, now);
       state = tickRoom(state, now);
       await save(serializeRoom(state));
-      if (state.sessions.length) rooms.push(state);
+      if (state.sessions.length || state.reports.length) rooms.push(state);
     }
     return rooms;
   };

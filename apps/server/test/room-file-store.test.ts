@@ -21,3 +21,16 @@ it("reopens a persisted room with reconnect grace and preserves its private sess
     expect(await fileRoomStore(dir).load(62000)).toEqual([]);
   } finally { await rm(dir, { recursive: true, force: true }); }
 });
+it("retains reports after everyone leaves and deletes the file after expiry", async () => {
+  const dir = await mkdtemp(join(tmpdir(), "keropod-report-"));
+  try {
+    const { REPORT_RETENTION_MS } = await import("../src/rooms/reports");
+    const store = fileRoomStore(dir);
+    const report = { matchId: "m", reporterId: "p1", targetId: "p2", reason: "name" as const, createdAt: 1000, targetName: "Kero", turnId: 1, eventSeq: 0 };
+    await store.save(serializeRoom({ ...createRoomState("ABCDEF"), reports: [report] }));
+    expect((await store.load(2000))[0]!.reports).toEqual([report]);
+    expect(await store.load(1000 + REPORT_RETENTION_MS)).toEqual([]);
+    const { readdir } = await import("node:fs/promises");
+    expect(await readdir(dir)).toEqual([]);
+  } finally { await rm(dir, { recursive: true, force: true }); }
+});
