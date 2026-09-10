@@ -275,7 +275,7 @@ const stepFall = (run: Run): void => {
   for (const f of run.falls) {
     const y = Math.min(f.to, f.from + FALL_CELLS_PER_S * t);
     if (y < f.to) allDone = false;
-    run.renderer.setTank(f.seat, poseOf(run.job.playersAfter[f.seat], run.job.maskBefore, elevationOf(run, f.seat), { y, visible: y < MAP_HEIGHT + 6 }));
+    run.renderer.setTank(f.seat, poseOf(run.job.playersAfter[f.seat], run.job.maskBefore, elevationOf(run, f.seat), { y, falling: y < f.to, visible: y < MAP_HEIGHT + 6 }));
   }
   if (allDone) finish(run);
 };

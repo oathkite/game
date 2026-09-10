@@ -49,3 +49,11 @@ it("shows impact frames and damage flashes only on the authoritative impact time
   expect(presentLabReplay(frame, 1999).effects[0]!.frame).toBe(3);
   expect(presentLabReplay(frame, 2000).effects).toEqual([]);
 });
+it("marks only descending tanks during settlement and clears falling at its deadline", () => {
+  const mixed = { ...frame, players: frame.players.map((p, i) => ({ ...p, y: i === 0 ? 170 : 150 })) };
+  expect(presentLabReplay(mixed, 1699).fallingIds).toEqual([]);
+  expect(presentLabReplay(mixed, 1700).fallingIds).toEqual(["p1"]);
+  expect(presentLabReplay(mixed, 1999).fallingIds).toEqual(["p1"]);
+  expect(presentLabReplay(mixed, 2000).fallingIds).toEqual([]);
+  expect(presentLabReplay({ ...mixed, phase: "acting" }, 1750).fallingIds).toEqual([]);
+});

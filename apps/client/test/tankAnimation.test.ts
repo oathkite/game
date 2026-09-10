@@ -25,3 +25,15 @@ it("keeps optional frame cycling still when reduced motion is enabled", () => {
   expect(animate(pose, 1000, true)).toEqual({ tracks: 0, pilot: 0 });
   expect(animate({ ...pose, hp: 0 }, 1100, true).pilot).toBe(15);
 });
+it("plays fall then landing from frame zero without mistaking ground movement for falling", () => {
+  const animate = createTankAnimation();
+  const pose = { x: 0, hp: 100, flash: false, falling: false };
+  animate(pose, 0);
+  expect(animate({ ...pose, x: 1 }, 20).pilot).toBe(3);
+  expect(animate({ ...pose, falling: true }, 40).pilot).toBe(11);
+  expect(animate({ ...pose, falling: true }, 500).pilot).toBe(11);
+  expect(animate(pose, 600).pilot).toBe(12);
+  expect(animate(pose, 750).pilot).toBe(0);
+  expect(animate(pose, 780).pilot).toBe(0);
+  expect(animate({ ...pose, falling: true, hp: 0 }, 800).pilot).toBe(15);
+});

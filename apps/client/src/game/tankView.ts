@@ -14,6 +14,7 @@ export type TankPose = {
   readonly facing: Facing;
   readonly elevation: number;
   readonly hp: number;
+  readonly falling?: boolean;
   /** 減る前の HP。hp より大きいとき、その差を失った区間として描く。省略なら hp と同じ */
   readonly hpGhost?: number;
   /** 失った区間を描くか。明滅に使う */
