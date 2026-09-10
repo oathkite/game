@@ -70,3 +70,9 @@ WebSocket自体のパケット損失・帯域制限・ブラウザー描画は�
 ```sh
 ROOM_LOAD_COUNT=100 ROOM_LOAD_PERSIST=1 ROOM_LOAD_DELAY_MS=125 pnpm --filter @game/server exec vitest run test/concurrent-rooms.test.ts
 ```
+
+`ROOM_SOAK_SECONDS=600`を加えると、初期射撃と再接続の検証後、同じ部屋と接続を10分間維持する。
+各接続へのping、手番内の往復移動、手番期限による進行、部屋分離、終了後の保存復元一致を確認する。
+受信履歴は各種の最新メッセージだけへ整理し、約30反復ごとに経過時間/部屋数/プロセスRSSを出力する。
+RSSにはテストクライアントも含まれる。継続部分は移動と期限進行であり、全武器を10分間撃ち続ける試験ではない。
+設定範囲は0〜600秒。通常testは0秒。

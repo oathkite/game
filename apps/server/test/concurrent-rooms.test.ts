@@ -15,6 +15,8 @@ const roomCount = Number(process.env.ROOM_LOAD_COUNT ?? 4);
 if (!Number.isInteger(roomCount) || roomCount < 1 || roomCount > 100) throw new Error("ROOM_LOAD_COUNT must be 1..100");
 const delayMs = Number(process.env.ROOM_LOAD_DELAY_MS ?? 0);
 if (!Number.isInteger(delayMs) || delayMs < 0 || delayMs > 500) throw new Error("ROOM_LOAD_DELAY_MS must be 0..500");
+const soakSeconds = Number(process.env.ROOM_SOAK_SECONDS ?? 0);
+if (!Number.isInteger(soakSeconds) || soakSeconds < 0 || soakSeconds > 600) throw new Error("ROOM_SOAK_SECONDS must be 0..600");
 it(`keeps ${roomCount} simultaneous eight-player battles isolated through firing and abrupt reconnects`, async () => {
   const poll = <T>(read: () => T, options = { timeout: 15000 }) => expect.poll(read, options);
   const wss = new WebSocketServer({ host: "127.0.0.1", port: 0 });
@@ -87,7 +89,40 @@ it(`keeps ${roomCount} simultaneous eight-player battles isolated through firing
         expect(frames.length).toBeGreaterThan(0);
         expect(frames.every(frame => frame.matchId === battle.matchId && frame.players.length === 8)).toBe(true);
       }
+      battle.clients[battle.clients.indexOf(actor)] = resumed;
     }));
+    const soakStart = performance.now();
+    let iteration = 1, soakMoves = 0;
+    while (performance.now() - soakStart < soakSeconds * 1000) {
+      const nonce = ++iteration;
+      await Promise.all(battles.map(async battle => {
+        for (const client of battle.clients) {
+          expect(client.ws.readyState).toBe(WebSocket.OPEN);
+          client.send({ type: "room.ping", nonce });
+        }
+        await poll(() => battle.clients.every(client => client.last("room.pong")?.nonce === nonce)).toBe(true);
+        const frame = battle.clients[0]!.last("lab.frame")!;
+        expect(frame.phase).toBe("acting");
+        if (frame.movement.stepsLeft > 0 && frame.deadlineAt - Date.now() > 2000) {
+          const actor = battle.clients.find(client => client.last("room.welcome")!.playerId === frame.actorId)!;
+          const seq = frame.movement.ackMoveSeq + 1;
+          soakMoves++;
+          actor.send({ version: 2, type: "move.command", matchId: frame.matchId, turnId: frame.turnId, commandId: `soak-${nonce}`, moveSeq: seq, direction: nonce % 2 ? -1 : 1, steps: 1 });
+          await poll(() => battle.clients.every(client => client.last("lab.frame")!.movement.ackMoveSeq === seq || client.last("lab.frame")!.turnId > frame.turnId)).toBe(true);
+        }
+        for (const client of battle.clients) {
+          expect(client.messages.filter(message => message.type === "lab.frame").every(frame => frame.matchId === battle.matchId && frame.players.length === 8)).toBe(true);
+          const latestByType = new Map(client.messages.map(message => [message.type, message]));
+          client.messages.splice(0, client.messages.length, ...latestByType.values());
+        }
+      }));
+      if (iteration % 30 === 0) console.log(`soak elapsed=${Math.round((performance.now() - soakStart) / 1000)}s rooms=${roomCount} rssMB=${Math.round(process.memoryUsage().rss / 1048576)}`);
+      await new Promise(resolve => setTimeout(resolve, 1000));
+    }
+    if (soakSeconds > 0) {
+      expect(soakMoves).toBeGreaterThan(0);
+      for (const battle of battles) expect(battle.clients[0]!.last("lab.frame")!.turnId).toBeGreaterThanOrEqual(1 + Math.floor(soakSeconds / 20));
+    }
     if (store) {
       expect(saved.size).toBe(roomCount);
       for (const battle of battles) {
@@ -105,9 +140,9 @@ it(`keeps ${roomCount} simultaneous eight-player battles isolated through firing
         await poll(() => [...saved.values()].every(snapshot => snapshot.state.sessions.every(session => session.connectionId === null))).toBe(true);
         const restored = await store.load(Date.now());
         expect(restored.length).toBe(saved.size);
-        expect(restored.every(room => room.battle?.roster.turnId === 2 && room.sessions.length === 8)).toBe(true);
+        expect(restored.every(room => (room.battle?.roster.turnId ?? 0) >= 2 && room.sessions.length === 8)).toBe(true);
         for (const room of restored) expect(serializeBattle(room.battle!)).toEqual(saved.get(room.roomId)!.state.battle);
       } finally { await rm(directory, { recursive: true, force: true }); }
     }
   }
-}, 120000);
+}, 120000 + soakSeconds * 1000);
