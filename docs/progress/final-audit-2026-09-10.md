@@ -7,7 +7,7 @@
 | --- | --- | --- |
 | cold start操作可能p95 | startup-tests、10Mbps/150ms・cache無効20回、p95 684.1ms | Chromiumローカル配信で3秒条件通過。画像完了・実機CPU・実地域DNS/TLSは別 |
 | 初期タイトル転送2MB | production-tests/entry.spec.ts、cold新context、1,861,274B | ローカル配信buildで通過。実地域の起動時間とは別 |
-| 初回対戦まで8MB | 岩盤変更後の練習5,416,375B、独立8 contextは直前素材版で最大5,304,165B | 練習は最新素材で通過。8人オンラインは地形差替後の転送量再測定を残す。実地域の待ち時間とは別 |
+| 初回対戦まで8MB | 岩盤変更後の練習5,416,375B、独立8 contextは3browserで最大5,418,584B | 練習・8人オンラインを最新素材で通過。実地域の待ち時間とは別 |
 | 独立8クライアントで試合完走 | eight-players.spec.ts、独立8 contextで4v4入室→準備→射撃共有→青4名降参→全員同じ結果→8名部屋復帰 | Chromium/Firefox/WebKit配信build・local edgeで通過。射撃のみで決着する長時間実戦・実機の証拠とは別 |
 | 1時間soak | 初回122秒でowner配信不具合を検出・修正。100部屋125秒通過後3600秒を再開、session72311 | 修正版実行中。1時間の完走結果は未確認 |
 | 全編成・射程・復元 | engine/map/server tests、進捗記録参照 | 自動検証済み。人間による公平感・バランス観察とは別 |

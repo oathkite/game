@@ -519,3 +519,4 @@ heartbeatはUI共同調整時にPAUSED。本ゴールは現在のタスクで進
 
 - release-decisions-2026-09-10.mdへ、ユーザー判断が必要な7項目と実環境検証を整理。未回答を承認とせず、ローカル実装/検証で外部の運営判断を代替しない。
 - 最新素材のproduction-rooms3browserを再実行中。Chromiumは34.0秒で8名結果→部屋復帰まで通過、全員累計5,418,584B。Firefox/WebKitは完了待ち。
+- 最新素材のproduction-rooms全3件通過（計2.9分）。Firefox14.7秒・最大5,388,313B、WebKit2.0分・5,388,766B。独立8contextの同時実行所要時間であり、単一プレイヤーの応答時間SLOではない。1時間soakはsession72311で3263秒まで進行。
