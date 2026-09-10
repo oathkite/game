@@ -1,3 +1,4 @@
+import { SceneBoundary } from "./SceneBoundary";
 import { AudioControls } from "./AudioControls";
 import { LanguageSelect } from "@/i18n/LanguageSelect";
 import { useLanguage } from "@/i18n/locale";
@@ -8,9 +9,6 @@ import { lazy, Suspense, useCallback, useEffect, useRef, useState } from "react"
 import { WEAPON_IDS, WEAPON_LABELS, type WeaponId } from "@game/protocol";
 import { loadProfile, saveProfile } from "@/app/profile";
 import { setAudioSettings, unlockAudio } from "@/app/audio";
-const RoomScreen = lazy(() => import("./RoomScreen").then(module => ({ default: module.RoomScreen })));
-const NetworkLab = lazy(() => import("@/networkLab/NetworkLab").then(module => ({ default: module.NetworkLab })));
-const CameraPrototype = lazy(() => import("@/prototype/CameraPrototype").then(module => ({ default: module.CameraPrototype })));
 import { CameraSettingsPanel } from "@/prototype/CameraSettingsPanel";
 import { createCameraRig } from "@/prototype/cameraRig";
 import { PixelButton, PixelPanel } from "./PixelUi";
@@ -18,6 +16,10 @@ import { TankPortrait } from "./TankPortrait";
 import { WindLeaves } from "./WindLeaves";
 import { worldArt } from "./assets";
 import "./worldUi.css";
+
+const RoomScreen = lazy(() => import("./RoomScreen").then(module => ({ default: module.RoomScreen })));
+const NetworkLab = lazy(() => import("@/networkLab/NetworkLab").then(module => ({ default: module.NetworkLab })));
+const CameraPrototype = lazy(() => import("@/prototype/CameraPrototype").then(module => ({ default: module.CameraPrototype })));
 
 type Scene = "start" | "lobby" | "settings" | "battle" | "result" | "network" | "rooms";
 export const WorldScenes = () => {
@@ -43,6 +45,7 @@ export const WorldScenes = () => {
   const finish = useCallback((label: string) => { setResult(label); go("result"); }, [go]);
   const background = scene === "settings" ? worldArt.settings : scene === "lobby" ? worldArt.lobby : scene === "result" ? worldArt.result : worldArt.background;
   return <div className={`world-ui world-scene-${scene} ${closing ? "world-closing" : ""}`} style={{ backgroundImage: `url(${background})` }}>
+    <SceneBoundary message={t("画面を読み込めませんでした。通信を確認して再読み込みしてください。")} retryLabel={t("再読み込み")}>
     <Suspense fallback={<p role="status">{t("フィールドを準備しています…")}</p>}>
     {scene === "battle" ? <CameraPrototype worldArt onExit={exit} onResult={finish} /> : scene === "rooms" ? <RoomScreen onExit={exit} {...(import.meta.env.DEV ? { onLab: () => go("network") } : {})} /> : scene === "network" ? <NetworkLab worldArt onExit={exit} /> : <>
       {scene === "start" && <WindLeaves />}
@@ -54,6 +57,7 @@ export const WorldScenes = () => {
       </div>
     </>}
     </Suspense>
+    </SceneBoundary>
     <div className="world-shutter" aria-hidden="true" />
   </div>;
 };

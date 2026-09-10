@@ -1,4 +1,6 @@
 export const roomEnglish: Readonly<Record<string, string>> = {
+  "画面を読み込めませんでした。通信を確認して再読み込みしてください。": "Could not load the screen. Check your connection and reload.",
+  "再読み込み": "Reload",
   "通信遅延": "Network latency",
   "プレイヤーを通報": "Report player", "対象": "Player", "通報するプレイヤー": "Player to report", "理由": "Reason", "通報理由": "Report reason",
   "不適切な名前": "Inappropriate name", "迷惑行為": "Disruptive behavior", "不正行為の疑い": "Suspected cheating",
