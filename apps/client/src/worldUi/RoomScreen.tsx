@@ -6,16 +6,25 @@ import { loadProfile } from "@/app/profile";
 import { NetworkLab, type RoomConnection } from "@/networkLab/NetworkLab";
 import { PixelButton, PixelPanel } from "./PixelUi";
 import "./rooms.css";
-const tokenKey = "keropod.room-token";
+import { resolveRoomUrl } from "./roomTransport";
+const tokenKey = "keropod.room-token", roomKey = "keropod.room-id";
 const errors: Record<string, string> = { "not-found": "部屋が見つかりません。", full: "部屋が満員です。", locked: "対戦中の部屋には参加できません。", "invalid-session": "復帰期限が切れたか、別の画面で接続中です。", "stale-revision": "部屋が更新されました。内容を確認して再操作してください。", "not-ready": "全員の準備完了を待っています。", unassigned: "全員のチームを選んでください。", "not-enough-teams": "2チーム以上に分かれてください。", "not-enough-players": "2人以上で開始できます。", disconnected: "切断中の参加者がいます。", "not-owner": "オーナーだけが操作できます。", "not-owner-or-not-finished": "対戦終了後、オーナーが部屋へ戻せます。" };
 export const RoomScreen = ({ onExit, onLab }: { readonly onExit: () => void; readonly onLab: () => void }) => {
   const [room, setRoom] = useState<RoomSnapshot | null>(null), [playerId, setPlayerId] = useState("");
   const [code, setCode] = useState(""), [status, setStatus] = useState(""), [busy, setBusy] = useState(false);
   const [battle, setBattle] = useState<RoomConnection | null>(null);
-  const socket = useRef<WebSocket | null>(null), active = useRef(true);
-  const connect = (initial: unknown) => {
+  const socket = useRef<WebSocket | null>(null), active = useRef(true), attempt = useRef(0);
+  const connect = async (initial: { readonly type: string; readonly roomId?: string; readonly token?: string | null; readonly profile?: ReturnType<typeof profile> }) => {
+    const currentAttempt = ++attempt.current;
     socket.current?.close(); setBusy(true); setStatus("接続しています…");
-    const ws = new WebSocket(`ws://${location.hostname}:8795`); socket.current = ws;
+    socket.current = null;
+    let url: string;
+    try { url = import.meta.env.VITE_ROOM_SERVER_URL
+      ? await resolveRoomUrl(initial, import.meta.env.VITE_ROOM_SERVER_URL, sessionStorage.getItem(roomKey))
+      : `ws://${location.hostname}:8795`; }
+    catch { if (active.current && currentAttempt === attempt.current) { setBusy(false); setStatus("対戦サーバーに接続できません。"); } return; }
+    if (!active.current || currentAttempt !== attempt.current) return;
+    const ws = new WebSocket(url); socket.current = ws;
     let identity = "";
     ws.onopen = () => { if (active.current && socket.current === ws) ws.send(JSON.stringify(initial)); };
     ws.onmessage = event => {
@@ -24,19 +33,19 @@ export const RoomScreen = ({ onExit, onLab }: { readonly onExit: () => void; rea
       const result = roomOutputSchema.safeParse(raw); if (!result.success) return;
       const message = result.data;
       if (message.type === "room.welcome") { identity = message.playerId; setPlayerId(identity); sessionStorage.setItem(tokenKey, message.token); setBusy(false); setStatus(""); }
-      if (message.type === "room.snapshot") { setRoom(message.room); if (message.room.phase === "waiting") setBattle(null); }
+      if (message.type === "room.snapshot") { sessionStorage.setItem(roomKey, message.room.roomId); setRoom(message.room); if (message.room.phase === "waiting") setBattle(null); }
       if (message.type === "lab.frame") setBattle(current => current ?? { socket: ws, playerId: identity, frame: message });
       if (message.type === "room.error") { setBusy(false); setStatus(errors[message.reason] ?? "操作を受け付けられませんでした。部屋の状態を確認してください。");
-        if (message.reason === "invalid-session") { sessionStorage.removeItem(tokenKey); socket.current = null; setRoom(null); setBattle(null); ws.close(); } }
+        if (message.reason === "invalid-session") { sessionStorage.removeItem(tokenKey); sessionStorage.removeItem(roomKey); socket.current = null; setRoom(null); setBattle(null); ws.close(); } }
     };
     ws.onclose = () => { if (active.current && socket.current === ws) { setBusy(false); setStatus("接続が切れました。再接続で復帰できます（60秒以内）。"); } };
     ws.onerror = () => { if (active.current && socket.current === ws) { setBusy(false); setStatus("対戦サーバーに接続できません。"); } };
   };
   useEffect(() => { active.current = true; const token = sessionStorage.getItem(tokenKey); if (token) connect({ type: "room.resume", token });
-    return () => { active.current = false; socket.current?.close(); }; }, []);
+    return () => { active.current = false; attempt.current++; socket.current?.close(); }; }, []);
   const send = (message: unknown) => { if (socket.current?.readyState === WebSocket.OPEN) { setStatus(""); socket.current.send(JSON.stringify(message)); } };
   const edit = (type: string, fields: object = {}) => { if (room) send({ type, version: 2, roomId: room.roomId, revision: room.revision, ...fields }); };
-  const leave = () => { send({ type: "room.leave" }); sessionStorage.removeItem(tokenKey); onExit(); };
+  const leave = () => { send({ type: "room.leave" }); sessionStorage.removeItem(tokenKey); sessionStorage.removeItem(roomKey); onExit(); };
   const profile = () => { const p = loadProfile(); return { nickname: p.nickname.trim() || "ケロポッド", loadout: p.loadout }; };
   const me = room?.members.find(p => p.playerId === playerId), owner = room?.ownerId === playerId;
   const canStart = owner && room!.members.length >= 2 && room!.members.every(p => p.ready && p.connected && p.teamId) && new Set(room!.members.map(p => p.teamId)).size >= 2;

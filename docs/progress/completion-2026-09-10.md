@@ -42,3 +42,17 @@ heartbeatはUI共同調整時にPAUSED。本ゴールは現在のタスクで進
 - JSON往復後の地形・再生・次ターン一致、移動と発射の二重適用防止、version不一致拒否の3テストを追加。engine111テスト・TypeScript通過。
 - まだgatewayへの永続化接続は未完。次はsocket依存を分離した部屋reducerをNode/DOで共用し、persist-before-ackを実装。
 - Cloudflare durable-objectsスキルとWebSocket hibernation / alarms公式仕様を確認済み。DOは部屋単位、Directory別、SQLite、WebSocket attachment、単一alarmで進める。
+
+## 10:15 部屋単位の永続化と再起動復帰
+
+- WebSocket非依存のRoom reducerへNode gatewayを接続。session generation、旧接続拒否、切断期限、所有者引継ぎを共用。
+- RoomRuntimeは部屋単位に直列化し、保存成功後のみstate公開/ACK。保存失敗後の再試行をテスト。
+- NodeはROOM_STORE_DIR（既定.keropod/rooms）の原子的ファイル保存から復元。tokenを含むローカル状態はGit対象外。
+- 別のwrangler.v2.jsoncでRoomObject（各部屋）とRoomDirectory（一覧）をSQLite DOへ分離。既存本番Hubは変更していない。
+- WebSocket hibernation attachment、単一alarmによる手番/切断/handshake/一覧更新、接続消失の照合を追加。
+- /v2/roomsで作成・一覧、/v2/rooms/:idでWS接続。Origin制限。部屋コードはDirectoryから削除しても再利用しない。
+- VITE_ROOM_SERVER_URLを設定すると画面がedge経路を使う。未設定ではNode8795。再接続用roomIdをsessionStorageへ保存。
+- server53テスト、client172テスト、TypeScript通過。edge個別テストは実際のwrangler localで1件通過。
+- ブラウザーPC+touch2接続のrooms E2EをNode/edge両方で通過。
+- scripts/verify-edge-restart.ts: live socketのままSIGKILL→同じSQLiteで再起動→同じmatch/terrain、generation2、shot重複拒否を確認。
+- 未完：version tuple、Directoryの地域/クイック参加・観戦、一般公開UIへの接続、負荷/長時間試験、最終UI。
