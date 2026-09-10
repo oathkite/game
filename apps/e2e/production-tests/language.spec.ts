@@ -18,3 +18,17 @@ test("English browser can change language and retain it across reloads and setti
   await page.getByRole("combobox", { name: "Language / 言語" }).selectOption("ja");
   await expect(page.getByRole("heading", { name: "整備と設定" })).toBeVisible();
 });
+test("English practice exposes translated instruments, camera controls and pause menu", async ({ page }) => {
+  await page.goto("/");
+  await page.getByRole("button", { name: "Play", exact: true }).click();
+  await page.getByRole("button", { name: "Practice", exact: true }).click();
+  await expect(page.getByTestId("camera-world")).toHaveAttribute("data-loaded", "true");
+  await expect(page.getByRole("meter", { name: "Power", exact: true })).toBeVisible();
+  await expect(page.getByRole("img", { name: /^Ground .* elevation .* world angle/ })).toBeVisible();
+  await expect(page.getByRole("button", { name: "Focus active tank", exact: true })).toBeVisible();
+  await page.getByRole("button", { name: "Open settings", exact: true }).click();
+  await expect(page.getByRole("heading", { name: "Take a breather", exact: true })).toBeVisible();
+  await expect(page.getByRole("button", { name: "Surrender and finish", exact: true })).toBeVisible();
+  await page.getByRole("button", { name: "Resume battle", exact: true }).click();
+  await expect(page.getByRole("heading", { name: "Take a breather", exact: true })).not.toBeVisible();
+});

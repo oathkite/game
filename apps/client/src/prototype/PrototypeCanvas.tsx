@@ -1,3 +1,4 @@
+import { useLanguage } from "@/i18n/locale";
 import { teamColor } from "@/worldUi/teamColors";
 import { useEffect, useRef, useState, type HTMLAttributes } from "react";
 import { isRingOut, tiltOf } from "@game/sim";
@@ -34,6 +35,7 @@ export const PrototypeCanvas = ({ store, rig, layout, handlers, blocked, followS
   const hostRef = useRef<HTMLDivElement>(null), miniRef = useRef<HTMLCanvasElement>(null);
   const latest = useRef({ layout, blocked, followShot });
   latest.current = { layout, blocked, followShot };
+  const { t } = useLanguage();
   const [error, setError] = useState(false), [loaded, setLoaded] = useState(false);
   useEffect(() => {
     const host = hostRef.current;
@@ -94,16 +96,16 @@ export const PrototypeCanvas = ({ store, rig, layout, handlers, blocked, followS
   }, [store, rig, onReady, worldArt]);
   return <div className="kp-world" style={{ height: layout.mapHeight, ...(worldArt ? { backgroundImage: `url(${artUrls.background})`, backgroundSize: "cover", backgroundPosition: "center" } : {}) }}>
     {worldArt && <WindLeaves wind={store.getView().wind.value} />}
-    <div ref={hostRef} className="kp-canvas" tabIndex={0} aria-label="対戦フィールド" data-testid="camera-world" data-scale={layout.cell} data-loaded={loaded} {...handlers} />
-    {!loaded && <div className="kp-loading" role="status">{error ? "素材を読み込めませんでした。ページを再読み込みしてください。" : "マシンを準備しています…"}</div>}
-    <span className="kp-world-help">ドラッグ・ホイールで見回す / Cで手番へ</span>
-    <button className="kp-minimap" aria-label="全体図からカメラを移動" disabled={blocked} onPointerDown={(e) => {
+    <div ref={hostRef} className="kp-canvas" tabIndex={0} aria-label={t("対戦フィールド")} data-testid="camera-world" data-scale={layout.cell} data-loaded={loaded} {...handlers} />
+    {!loaded && <div className="kp-loading" role="status">{error ? t("素材を読み込めませんでした。ページを再読み込みしてください。") : t("マシンを準備しています…")}</div>}
+    <span className="kp-world-help">{t("ドラッグ・ホイールで見回す / Cで手番へ")}</span>
+    <button className="kp-minimap" aria-label={t("全体図からカメラを移動")} disabled={blocked} onPointerDown={(e) => {
       if (!e.isPrimary || e.button !== 0) return;
       const rect = e.currentTarget.getBoundingClientRect(), b = rig.get().bounds;
       rig.focus({ x: (e.clientX - rect.left) / rect.width * b.right, y: (e.clientY - rect.top) / rect.height * b.bottom }, "manual", true);
     }} onClick={(e) => { if (e.detail === 0) rig.focus({ x: 200, y: 112 }, "manual", true); }}>
       <canvas ref={miniRef} width={200} height={112} />
-      <span>フィールド全体</span>
+      <span>{t("フィールド全体")}</span>
     </button>
   </div>;
 };

@@ -1,6 +1,7 @@
+import { playEnglish } from "./playMessages";
 import { roomEnglish } from "./roomMessages";
 export const english: Readonly<Record<string, string>> = {
-  ...roomEnglish,
+  ...roomEnglish, ...playEnglish,
   "はじめる": "Play", "スキップ": "Skip", "出発の準備": "Get ready", "設定": "Settings",
   "湿地の観測所": "Wetland observatory", "名前": "Name", "装備": "Weapon", "ケロポッド": "KEROPOD",
   "タイトルへ": "Title", "オンライン対戦": "Online battle", "プラクティスへ": "Practice",

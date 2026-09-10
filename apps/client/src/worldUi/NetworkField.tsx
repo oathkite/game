@@ -1,3 +1,4 @@
+import { useLanguage } from "@/i18n/locale";
 import { teamColor } from "./teamColors";
 import { loadDisplayScale } from "./displayScale";
 import { wheelPan } from "@/prototype/wheelPan";
@@ -20,6 +21,7 @@ const baseTerrain = (frame: LabFrame) => maskFromHeights(frame.map.surface, fram
 export const NetworkField = (props: Props) => {
   const host = useRef<HTMLDivElement>(null), mini = useRef<HTMLCanvasElement>(null), latest = useRef(props); latest.current = props;
   const rig = useMemo(createCameraRig, []), drag = useRef<{ x: number; y: number; at: number } | null>(null);
+  const { t } = useLanguage();
   const [loaded, setLoaded] = useState(false), [error, setError] = useState(false);
   const focus = () => { const p = latest.current.players.find(p => p.playerId === latest.current.frame.actorId) ?? latest.current.frame.players.find(p => p.playerId === latest.current.frame.actorId); if (p) rig.focus({ x: p.x, y: p.y - 6 }, "actor", matchMedia("(prefers-reduced-motion: reduce)").matches); };
   useEffect(() => {
@@ -88,15 +90,15 @@ export const NetworkField = (props: Props) => {
   const point = (e: PointerEvent<HTMLDivElement>) => { const box = e.currentTarget.getBoundingClientRect(); return { x: e.clientX - box.left, y: e.clientY - box.top }; };
   return <div className="network-field" style={{ backgroundImage: `url(${worldArt.background})` }}>
     <WindLeaves wind={props.frame.wind} />
-    <div ref={host} className="network-pixi" data-testid="network-world" data-loaded={loaded} data-positions={JSON.stringify(props.players)} tabIndex={0} aria-label="対戦フィールド。ドラッグ・ホイールで見回す、Cで手番へ" onKeyDown={e => { if (e.key.toLowerCase() === "c") focus(); }}
+    <div ref={host} className="network-pixi" data-testid="network-world" data-loaded={loaded} data-positions={JSON.stringify(props.players)} tabIndex={0} aria-label={t("対戦フィールド。ドラッグ・ホイールで見回す、Cで手番へ")} onKeyDown={e => { if (e.key.toLowerCase() === "c") focus(); }}
       onWheel={e => { if (!drag.current && !e.ctrlKey) wheelPan(rig, e.deltaX, e.deltaY, e.deltaMode); }}
       onPointerDown={e => { if (!e.isPrimary || e.button !== 0) return; e.currentTarget.setPointerCapture(e.pointerId); drag.current = { ...point(e), at: performance.now() }; rig.stop(); }}
       onPointerMove={e => { if (!e.isPrimary) return; const p = point(e), now = performance.now(); if (drag.current) { rig.pan({ x: p.x - drag.current.x, y: p.y - drag.current.y }, now - drag.current.at, now); drag.current = { ...p, at: now }; } else if (e.pointerType === "mouse") rig.edge(p, now); }}
       onPointerUp={e => { if (!drag.current) return; drag.current = null; rig.releasePan(performance.now()); if (e.currentTarget.hasPointerCapture(e.pointerId)) e.currentTarget.releasePointerCapture(e.pointerId); }}
       onPointerCancel={() => { drag.current = null; rig.stop(); }} onPointerLeave={() => { if (!drag.current) rig.stop(); }} onBlur={() => rig.stop()} />
-    {!loaded && <p className="network-loading" role="status">{error ? "素材を読み込めませんでした。再読み込みしてください。" : "フィールドを準備しています…"}</p>}
-    <button className="network-focus" onClick={focus} aria-label="手番へ戻る">◎</button>
-    <button className="network-overview" aria-label="全体図からカメラを移動" onClick={e => { const box = e.currentTarget.getBoundingClientRect(); rig.focus(e.detail === 0 ? { x: props.frame.map.width / 2, y: props.frame.map.height / 2 } : { x: (e.clientX - box.left) / box.width * props.frame.map.width, y: (e.clientY - box.top) / box.height * props.frame.map.height }, "manual", true); }}><canvas ref={mini} width="200" height="90" /></button>
+    {!loaded && <p className="network-loading" role="status">{error ? t("素材を読み込めませんでした。再読み込みしてください。") : t("フィールドを準備しています…")}</p>}
+    <button className="network-focus" onClick={focus} aria-label={t("手番へ戻る")}>◎</button>
+    <button className="network-overview" aria-label={t("全体図からカメラを移動")} onClick={e => { const box = e.currentTarget.getBoundingClientRect(); rig.focus(e.detail === 0 ? { x: props.frame.map.width / 2, y: props.frame.map.height / 2 } : { x: (e.clientX - box.left) / box.width * props.frame.map.width, y: (e.clientY - box.top) / box.height * props.frame.map.height }, "manual", true); }}><canvas ref={mini} width="200" height="90" /></button>
   </div>;
 };
 const drawOverview = (canvas: HTMLCanvasElement | null, mask: ReturnType<typeof baseTerrain>, players: LabFrame["players"], camera: ReturnType<ReturnType<typeof createCameraRig>["get"]>) => {

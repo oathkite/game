@@ -1,9 +1,11 @@
+import { useLanguage } from "@/i18n/locale";
 import { useId } from "react";
 import { fireAngle } from "@game/sim";
 
 export const PowerRuler = ({ value }: { readonly value: number }) => {
+  const { t } = useLanguage();
   const gradient = useId(), power = Math.max(0, Math.min(100, value));
-  return <div className="battle-power" role="meter" aria-label="パワー" aria-valuemin={0} aria-valuemax={100} aria-valuenow={Math.round(power)} data-testid="prototype-power">
+  return <div className="battle-power" role="meter" aria-label={t("パワー")} aria-valuemin={0} aria-valuemax={100} aria-valuenow={Math.round(power)} data-testid="prototype-power">
     <strong className="battle-power-value" style={{ left: `clamp(10px, ${power}%, calc(100% - 10px))` }}>{Math.round(power)}</strong>
     <svg viewBox="0 0 1000 40" preserveAspectRatio="none" aria-hidden="true">
       <defs><linearGradient id={gradient} gradientUnits="userSpaceOnUse" x1="0" x2="1000"><stop stopColor="#51e899" /><stop offset=".6" stopColor="#e8e860" /><stop offset="1" stopColor="#ff9b50" /></linearGradient></defs>
@@ -16,10 +18,11 @@ export const PowerRuler = ({ value }: { readonly value: number }) => {
 };
 
 export const AngleDial = ({ tilt, elevation, facing }: { readonly tilt: number; readonly elevation: number; readonly facing: -1 | 1 }) => {
+  const { t } = useLanguage();
   const world = fireAngle(tilt, elevation, facing), ground = facing === 1 ? tilt : 180 + tilt;
   const point = (angle: number, radius: number) => ({ x: 60 + Math.cos(angle * Math.PI / 180) * radius, y: 60 - Math.sin(angle * Math.PI / 180) * radius });
   const start = point(ground, 32), end = point(world, 32);
-  return <svg className="battle-angle" viewBox="0 0 120 120" role="img" aria-label={`地面 ${tilt}度、射角 ${elevation}度、水平から ${world}度`} data-ground-angle={tilt} data-world-angle={world} data-elevation={elevation}>
+  return <svg className="battle-angle" viewBox="0 0 120 120" role="img" aria-label={t("地面 {tilt}度、射角 {elevation}度、水平から {world}度", { tilt, elevation, world })} data-ground-angle={tilt} data-world-angle={world} data-elevation={elevation}>
     <circle cx="60" cy="60" r="57" fill="#c7b478" stroke="#59482b" strokeWidth="2" /><circle cx="60" cy="60" r="51" fill="#102333" stroke="#f4df9f" strokeWidth="2" />
     {Array.from({ length: 36 }, (_, i) => <line key={i} x1="60" x2="60" y1="12" y2={i % 3 === 0 ? 20 : 16} stroke="#9baeb8" transform={`rotate(${i * 10} 60 60)`} />)}
     <path d="M13 60H107" stroke="#698ba5" strokeDasharray="4 4" />
