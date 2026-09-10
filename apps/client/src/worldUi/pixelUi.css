@@ -1,4 +1,4 @@
-.pixel-panel { border:18px solid transparent; border-image:url("../../../../assets/runtime/world-v1/panel.webp") 190 fill / 18px / 0 stretch; padding:24px; color:#24344a; }
+.pixel-panel { border:2px solid #718a9a; padding:40px; color:#f4f0de; background:#112333 url("./cockpitFrame.svg") center / 100% 100% no-repeat; box-shadow:0 4px 0 #081724; }
 .pixel-button,.world-ui .network-world button,.world-ui .kp-camera-settings button,.world-ui .kp-root button:not(.kp-minimap) { border:10px solid transparent; border-image:url("../../../../assets/runtime/world-v1/button.webp") 220 fill / 12px / 0 stretch; border-radius:0; min-height:48px; min-width:48px; padding:6px 20px; color:#24344a; background:transparent; font:inherit; font-weight:800; cursor:pointer; touch-action:manipulation; image-rendering:pixelated; box-shadow:none; }
 .pixel-button:hover:not(:disabled),.world-ui .kp-root button:hover:not(:disabled) { filter:brightness(1.09); background:transparent; }
 .pixel-button:active:not(:disabled),.world-ui .kp-root button:active:not(:disabled) { transform:translateY(2px); }

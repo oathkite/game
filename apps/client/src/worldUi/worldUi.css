@@ -19,8 +19,8 @@
 .world-loadout { align-self:center; }
 .world-ui label { display:block; font-size:14px; font-weight:700; margin-bottom:12px; }
 .world-ui input:not([type=range]), .world-ui select { display:block; width:100%; height:44px; margin-top:6px; border:2px solid #657078; border-radius:0; padding:8px; color:#24344a; background:#fff3d9; font:inherit; }
-.world-ui input[type=range] { width:100%; height:44px; accent-color:#b5692c; touch-action:pan-y; }
-.world-ui input:focus-visible,.world-ui select:focus-visible { outline:3px solid #176575; outline-offset:2px; }
+.world-ui input[type=range] { width:100%; height:44px; accent-color:#8cbd73; touch-action:pan-y; }
+.world-ui input:focus-visible,.world-ui select:focus-visible { outline:3px solid #77dbe0; outline-offset:2px; }
 .world-loadout p { font-size:12px; margin:16px 0 0; }
 .world-lobby footer { grid-column:1/-1; display:flex; justify-content:space-between; gap:16px; }
 .world-lobby footer .pixel-button:last-child { min-width:260px; }
@@ -121,17 +121,17 @@
 /* Observation glass quiets the scenery; solid instrument faces carry the text. */
 .world-ui::before { content:""; position:absolute; inset:0; pointer-events:none; background:linear-gradient(180deg,#182d4966,#24344a22 45%,#152b4566); }
 .world-ui .kp-world::before,.network-field::before { content:""; position:absolute; inset:0; pointer-events:none; background:linear-gradient(180deg,#90a7b266,#6b879566); }
-.world-lobby h1,.world-settings h1,.world-result-screen h1 { padding:8px 16px; background:#24344a; border:2px solid #c69b64; box-shadow:inset 0 0 0 2px #101e30,0 3px 0 #172638; text-shadow:none; }
+.world-lobby h1,.world-settings h1,.world-result-screen h1 { padding:8px 16px; background:#24344a; border:2px solid #718a9a; box-shadow:inset 0 0 0 2px #101e30,0 3px 0 #172638; text-shadow:none; }
 .world-build-note { padding:4px 12px; background:#24344a; border:1px solid #bf9968; }
-.world-machine .tank-portrait,.world-result-screen .tank-portrait { background:radial-gradient(ellipse at 50% 70%,#52636a 0,#24344a 65%); border:3px solid #c29a67; box-shadow:inset 0 0 0 3px #17283b,0 5px 0 #17283b; }
-.world-result-screen p { background:#fff0dc; }
+.world-machine .tank-portrait,.world-result-screen .tank-portrait { background:radial-gradient(ellipse at 50% 70%,#34566b 0,#112333 65%); border:3px solid #718a9a; box-shadow:inset 0 0 0 3px #17283b,0 5px 0 #17283b; }
+.world-result-screen p { background:#112333; color:#f4f0de; border:1px solid #718a9a; }
 .world-ui .kp-topbar,.world-ui .kp-controls,.network-world > header,.network-world > footer { position:relative; isolation:isolate; background:#20344b; border:0; box-shadow:inset 0 0 0 2px #101e30; }
 .world-ui .kp-topbar::before,.world-ui .kp-controls::before,.network-world > header::before,.network-world > footer::before { content:""; position:absolute; inset:0; border:8px solid transparent; border-image:url("../../../../assets/runtime/world-v1/cockpit.webp") 110 110 110 110 / 8px 12px / 0 stretch; pointer-events:none; z-index:-1; image-rendering:pixelated; }
 .world-ui .kp-control-group > span,.world-ui .kp-wind,.world-ui .kp-brand span { color:#d7e0df; }
 .world-ui .kp-world-help { background:#24344a; color:#fff1d5; border-left:3px solid #c69b64; }
 @media (max-height:550px) and (orientation:landscape) { .world-lobby h1,.world-settings h1 { padding:4px 12px; } }
 
-.world-machine .tank-portrait,.world-result-screen .tank-portrait { border-image:url("../../../../assets/runtime/world-v1/cockpit.webp") 110 / 12px / 0 stretch; }
+
 @media (max-height:499px),(max-width:999px) { .world-ui .kp-brand span,.world-ui .kp-power > small { display:none; } }
 .world-ui .room-screen { position:relative; }
 
