@@ -18,7 +18,22 @@ if (!Number.isInteger(delayMs) || delayMs < 0 || delayMs > 500) throw new Error(
 const soakSeconds = Number(process.env.ROOM_SOAK_SECONDS ?? 0);
 if (!Number.isInteger(soakSeconds) || soakSeconds < 0 || soakSeconds > 600) throw new Error("ROOM_SOAK_SECONDS must be 0..600");
 it(`keeps ${roomCount} simultaneous eight-player battles isolated through firing and abrupt reconnects`, async () => {
-  const poll = <T>(read: () => T, options = { timeout: 15000 }) => expect.poll(read, options);
+  // expect.poll retains an onFinished closure per call in Vitest 3; avoid it in soak loops.
+  const poll = <T>(read: () => T, options = { timeout: 15000 }) => {
+    const wait = async (matches: (value: T) => boolean) => {
+      const deadline = performance.now() + options.timeout;
+      let value = read();
+      while (!matches(value) && performance.now() < deadline) {
+        await new Promise(resolve => setTimeout(resolve, 50));
+        value = read();
+      }
+      return value;
+    };
+    return {
+      toBe: async (expected: T) => { expect(await wait(value => Object.is(value, expected))).toBe(expected); },
+      toBeTruthy: async () => { expect(await wait(Boolean)).toBeTruthy(); },
+    };
+  };
   const wss = new WebSocketServer({ host: "127.0.0.1", port: 0 });
   await new Promise<void>(resolve => wss.once("listening", resolve));
   const directory = process.env.ROOM_LOAD_PERSIST === "1" ? await mkdtemp(join(tmpdir(), "keropod-load-")) : null;
@@ -116,7 +131,7 @@ it(`keeps ${roomCount} simultaneous eight-player battles isolated through firing
           client.messages.splice(0, client.messages.length, ...latestByType.values());
         }
       }));
-      if (iteration % 30 === 0) console.log(`soak elapsed=${Math.round((performance.now() - soakStart) / 1000)}s rooms=${roomCount} rssMB=${Math.round(process.memoryUsage().rss / 1048576)}`);
+      if (iteration % 30 === 0) console.log(`soak elapsed=${Math.round((performance.now() - soakStart) / 1000)}s rooms=${roomCount} rssMB=${Math.round(process.memoryUsage().rss / 1048576)} heapMB=${Math.round(process.memoryUsage().heapUsed / 1048576)}`);
       await new Promise(resolve => setTimeout(resolve, 1000));
     }
     if (soakSeconds > 0) {
