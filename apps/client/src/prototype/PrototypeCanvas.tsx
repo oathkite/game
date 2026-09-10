@@ -1,3 +1,4 @@
+import { loadImpactArt } from "@/worldUi/impactSprites";
 import { loadProjectileArt } from "@/worldUi/projectileArt";
 import { useLanguage } from "@/i18n/locale";
 import { teamColor } from "@/worldUi/teamColors";
@@ -46,6 +47,7 @@ export const PrototypeCanvas = ({ store, rig, layout, handlers, blocked, followS
     let replayId: number | null = null, lastTurn = -1, lastMask: MatchView["mask"] = null;
     let activeReplay = false, previousLayout = latest.current.layout;
     const elevations: [number, number] = [45, 45];
+    let effects: Awaited<ReturnType<typeof loadImpactArt>> | null = null;
     const reduced = matchMedia("(prefers-reduced-motion: reduce)");
     const start = async (): Promise<void> => {
       const view = store.getView();
@@ -55,8 +57,9 @@ export const PrototypeCanvas = ({ store, rig, layout, handlers, blocked, followS
       const terrainArt = worldArt ? await loadTerrainArt() : undefined;
       if (disposed) { art.destroy(); return; }
       const projectileTextures = await loadProjectileArt();
-      if (disposed) return;
-      renderer = await createRenderer({ projectileTextures, host, layout: latest.current.layout, mask: view.mask, players: [{ ...view.players[0], nickname: view.players[0].nickname }, { ...view.players[1], nickname: view.players[1].nickname }], tankFactory: art.create, background: 0x20394a, terrainTint: worldArt ? 0xffffff : 0x637d71, backgroundAlpha: worldArt ? 0 : 1, ...(terrainArt ? { terrainArt } : {}) });
+      effects = await loadImpactArt();
+      if (disposed) { effects.destroy(); return; }
+      renderer = await createRenderer({ projectileTextures, impactTextures: effects.textures, host, layout: latest.current.layout, mask: view.mask, players: [{ ...view.players[0], nickname: view.players[0].nickname }, { ...view.players[1], nickname: view.players[1].nickname }], tankFactory: art.create, background: 0x20394a, terrainTint: worldArt ? 0xffffff : 0x637d71, backgroundAlpha: worldArt ? 0 : 1, ...(terrainArt ? { terrainArt } : {}) });
       if (disposed) { renderer.destroy(); art.destroy(); return; }
       const r = renderer, sprites = art;
       rig.resize(viewportOf(latest.current.layout), { left: 0, top: -100, right: view.mask.width, bottom: view.mask.height });
@@ -95,7 +98,7 @@ export const PrototypeCanvas = ({ store, rig, layout, handlers, blocked, followS
       });
     };
     void start().catch((e: unknown) => { console.error(e); if (!disposed) setError(true); });
-    return () => { disposed = true; onReady(false); stopFrames(); stopReplay(); renderer?.destroy(); art?.destroy(); };
+    return () => { disposed = true; onReady(false); stopFrames(); stopReplay(); renderer?.destroy(); art?.destroy(); effects?.destroy(); };
   }, [store, rig, onReady, worldArt]);
   return <div className="kp-world" style={{ height: layout.mapHeight, ...(worldArt ? { backgroundImage: `url(${artUrls.background})`, backgroundSize: "cover", backgroundPosition: "center" } : {}) }}>
     {worldArt && <WindLeaves wind={store.getView().wind.value} />}

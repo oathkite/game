@@ -290,3 +290,12 @@ heartbeatはUI共同調整時にPAUSED。本ゴールは現在のタスクで進
 - 元素材のorigin[96,96]、12px/cell、nearest samplingで配置。オンラインの弾道区間から進行角を算出し、画像を回転。弾道/ダメージ/地形は変更なし。
 - assets23件の一致検査、labReplay4件（方向角を含む）、client TypeScript/diff check、実edgeの対戦1件と配信buildの入口/練習/招待3件が通過。
 - 比較soakはsession22808で継続。442秒RSS227MB/heap72MB。完了後に初回とまとめて比較する。
+
+## 12:31 着弾描画の共通化とsoak比較修正
+
+- 着弾Texture選択を共通projectileViewへ移し、練習/オンラインに同じ武器別素材を接続。既存の各再生時計と地形/ダメージ処理は維持。専用Sprite描画の重複を除去。
+- client190件、client TypeScript、worldの7 E2Eと実edge対戦1 E2E通過。Texture recordの型不一致を修正し型検査を再通過。
+- 2回目10分soakは接続/移動を完走したが、最後の保存復元比較で失敗。読み込み時に手番期限を越えたため31→32と風更新が発生。fileRoomStore.loadがtickRoomを適用する仕様に対し、保存時そのままを期待していた試験の誤り。
+- 同じ復元時刻でtickした期待stateと比較するよう修正。期限をまたぐfile loadの独立テストを追加し、file store3件と短時間soak/server TypeScript通過。
+- メモリ比較は初回586秒RSS951MBに対し、2回目590秒RSS223MB/heap83MB。pollの終了時保持を避けることで増加傾向が解消する証拠。ただし2回目test全体は未合格と記録。
+- 修正版100部屋/600秒をsession28045で開始。ログ `/tmp/keropod-soak-final.log`。既存の22808は終了済み。

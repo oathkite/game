@@ -34,3 +34,18 @@ it("retains reports after everyone leaves and deletes the file after expiry", as
     expect(await readdir(dir)).toEqual([]);
   } finally { await rm(dir, { recursive: true, force: true }); }
 });
+it("advances a deadline crossed during restoration instead of replaying the expired turn", async () => {
+  const dir = await mkdtemp(join(tmpdir(), "keropod-deadline-"));
+  try {
+    const { createBattle, createBattleSession } = await import("@game/engine/multiplayer");
+    const { MULTIPLAYER_MAPS } = await import("@game/maps");
+    const battle = createBattleSession(createBattle([{ playerId: "p1", teamId: "t0" }, { playerId: "p2", teamId: "t1" }], 1, MULTIPLAYER_MAPS[0]!), "m", 0);
+    const sessions = ["p1", "p2"].map(playerId => ({ playerId, token: playerId, role: "player" as const, connectionId: playerId, disconnectedAt: 0, generation: 1, build: CLIENT_BUILD }));
+    const store = fileRoomStore(dir);
+    await store.save(serializeRoom({ ...createRoomState("ABCDEF"), battle, sessions }));
+    const [restored] = await store.load(battle.movement.deadlineAt);
+    expect(restored!.battle!.roster.turnId).toBe(2);
+    expect(restored!.battle!.movement.playerId).not.toBe(battle.movement.playerId);
+    expect(restored!.sessions.every(session => session.connectionId === null)).toBe(true);
+  } finally { await rm(dir, { recursive: true, force: true }); }
+});

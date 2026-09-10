@@ -1,8 +1,9 @@
+import { tickRoom } from "../src/rooms/core";
 import { mkdtemp, rm } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { fileRoomStore } from "../src/rooms/fileStore";
-import type { RoomSnapshot } from "../src/rooms/runtime";
+import { restoreRoom, type RoomSnapshot } from "../src/rooms/runtime";
 import { serializeBattle } from "@game/engine/multiplayer";
 import { CLIENT_BUILD } from "@game/protocol/build";
 import { roomOutputSchema } from "@game/protocol/v2-rooms";
@@ -153,10 +154,11 @@ it(`keeps ${roomCount} simultaneous eight-player battles isolated through firing
     if (store && directory) {
       try {
         await poll(() => [...saved.values()].every(snapshot => snapshot.state.sessions.every(session => session.connectionId === null))).toBe(true);
-        const restored = await store.load(Date.now());
+        const restoredAt = Date.now();
+        const restored = await store.load(restoredAt);
         expect(restored.length).toBe(saved.size);
         expect(restored.every(room => (room.battle?.roster.turnId ?? 0) >= 2 && room.sessions.length === 8)).toBe(true);
-        for (const room of restored) expect(serializeBattle(room.battle!)).toEqual(saved.get(room.roomId)!.state.battle);
+        for (const room of restored) expect(serializeBattle(room.battle!)).toEqual(serializeBattle(tickRoom(restoreRoom(saved.get(room.roomId)!), restoredAt).battle!));
       } finally { await rm(directory, { recursive: true, force: true }); }
     }
   }

@@ -32,6 +32,7 @@ export type RendererInit = {
   readonly host: HTMLElement;
   readonly layout: Layout;
   readonly mask: TerrainMask;
+  readonly impactTextures?: Readonly<Record<WeaponId, readonly Texture[]>>;
   readonly projectileTextures?: Readonly<Record<WeaponId, Texture>>;
   readonly tankFactory?: typeof createTankView;
   readonly background?: number;
@@ -110,7 +111,7 @@ export const createRenderer = async (init: RendererInit): Promise<Renderer> => {
     },
     projectile: (color, weapon) => {
       if (projectile) projectile.destroy();
-      projectile = createProjectileView(Number.parseInt(COLOR_HEX[color].slice(1), 16), weapon, init.projectileTextures?.[weapon]);
+      projectile = createProjectileView(Number.parseInt(COLOR_HEX[color].slice(1), 16), weapon, init.projectileTextures?.[weapon], init.impactTextures?.[weapon]);
       projectileLayer.addChild(projectile.container);
       return projectile;
     },

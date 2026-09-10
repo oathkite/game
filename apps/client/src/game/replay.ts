@@ -238,7 +238,7 @@ const updateImpact = (run: Run, ir: ImpactRun): void => {
   }
   const { cell, terrainOp } = ir.impact;
   const frame = blastFrameAt(t, terrainOp.radius);
-  run.view.setBlast(ir.key, frame ? cell.x : null, cell.y, frame?.radius ?? 0, frame?.on ?? false, frame?.ring ?? false);
+  run.view.setBlast(ir.key, frame ? cell.x : null, cell.y, frame?.radius ?? 0, frame?.on ?? false, frame?.ring ?? false, run.cb.reduceMotion ? 1 : Math.min(3, Math.floor(t / IMPACT_TOTAL_MS * 4)));
   if (frame?.carved && !ir.carved) carveImpact(run, ir);
   if (ir.carved) run.view.setDebris(ir.key, debrisAt(t - CARVE_AT_MS, cell, terrainOp.radius));
 };
