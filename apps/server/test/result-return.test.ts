@@ -30,3 +30,17 @@ it("rejects early and stale return requests", () => {
   expect(vote({ ...room, battle: { ...room.battle, phase: "acting" } }, "a").state.battle?.phase).toBe("acting");
   expect(reduceRoom(room, "a", { type: "lab.rematch", matchId: "old" }, 3000, id("a")).state).toBe(room);
 });
+it("reuses an emptied result room with a fresh owner and no stale votes or members", () => {
+  let room = vote(finished(), "a").state;
+  for (const player of ["a", "b"]) room = reduceRoom(room, player, { type: "room.leave" }, 3100, id(player)).state;
+  room = tickRoom(room, 3200);
+  expect(room.battle).toBeNull();
+  expect(room.returnReadyIds).toEqual([]);
+  expect(room.lobby?.members).toEqual([]);
+  expect(room.lobby?.ownerId).toBeNull();
+  const joined = reduceRoom(room, "c", { type: "room.join", roomId: "ABCDEF", build: CLIENT_BUILD,
+    profile: { nickname: "New pilot", loadout: ["cannon", "digger"] } }, 3300, id("c"));
+  expect(joined.reason).toBe("accepted");
+  expect(joined.state.lobby?.ownerId).toBe("c");
+  expect(joined.state.lobby?.members.map(p => ({ id: p.playerId, ready: p.ready }))).toEqual([{ id: "c", ready: false }]);
+});
