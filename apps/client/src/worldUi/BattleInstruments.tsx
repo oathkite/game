@@ -9,9 +9,12 @@ export const PowerRuler = ({ value }: { readonly value: number }) => {
     <strong className="battle-power-value" style={{ left: `clamp(10px, ${power}%, calc(100% - 10px))` }}>{Math.round(power)}</strong>
     <svg viewBox="0 0 1000 40" preserveAspectRatio="none" aria-hidden="true">
       <defs><linearGradient id={gradient} gradientUnits="userSpaceOnUse" x1="0" x2="1000"><stop stopColor="#51e899" /><stop offset=".6" stopColor="#e8e860" /><stop offset="1" stopColor="#ff9b50" /></linearGradient></defs>
-      <rect y="5" width="1000" height="22" fill="#111f30" stroke="#8397a8" /><rect y="5" width={power * 10} height="22" fill={`url(#${gradient})`} />
-      {Array.from({ length: 101 }, (_, i) => <line key={i} data-power-tick={i} data-major={i % 10 === 0} x1={i * 10} x2={i * 10} y1={i % 10 === 0 ? 1 : 21} y2={i % 10 === 0 ? 39 : 33} stroke={i % 10 === 0 ? "#fff6df" : "#a6bbcb"} strokeWidth={i % 10 === 0 ? 2 : 1} />)}
-      <path data-cursor={power} d={`M${power * 10} 0v40`} stroke="#fff5a7" strokeWidth="4" />
+      <rect y="5" width="1000" height="22" fill="#3b5265" />
+      <rect y="5" width={power * 10} height="22" fill={`url(#${gradient})`} />
+      {Array.from({ length: 100 }, (_, i) => <rect key={i} x={i * 10} y="5" width="2" height="22" fill="#102333" />)}
+      <path d="M0 5H1000M0 27H1000" stroke="#8397a8" />
+      {Array.from({ length: 101 }, (_, i) => <line key={i} data-power-tick={i} data-major={i % 10 === 0} x1={i * 10} x2={i * 10} y1="28" y2={i % 10 === 0 ? 39 : 33} stroke={i % 10 === 0 ? "#fff6df" : "#a6bbcb"} strokeWidth={i % 10 === 0 ? 2 : 1} />)}
+      <path data-cursor={power} d={`M${power * 10 - 6} -3h12l-6 7ZM${power * 10} 5v35`} fill="#fff5a7" stroke="#fff5a7" strokeWidth="2" />
     </svg>
     <div className="battle-power-labels">{Array.from({ length: 11 }, (_, i) => <span key={i} style={{ left: `${i * 10}%` }}>{i * 10}</span>)}</div>
   </div>;
