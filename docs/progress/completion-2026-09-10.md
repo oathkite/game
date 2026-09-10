@@ -196,3 +196,11 @@ heartbeatはUI共同調整時にPAUSED。本ゴールは現在のタスクで進
 - RoomScreenの通信管理は再マウントせず、表示sectionのみroomIdで切り替える。readyや通常frameの更新ではkeyが変わらない。通信時計/サーバー進行に待機時間を追加しない。
 - 先行E2Eで結果のanimation-name=noneを再現後、英語quick/日本語custom対戦・復帰・再準備の2 E2E通過。reduced-motionの結果演出無効を検証。client/e2e TypeScriptとdiff check通過。
 - これは機能上の演出漏れの補完。最終的な視覚表現の承認・原案への整合は最後のUI工程に残る。
+
+## 11:56 全ワークスペース検証
+
+- `pnpm test`完走：protocol24 / sim107 / maps68 / engine130 / client185 / server66、合計580件通過。serverのedge2件はこの通常runでは環境未指定でskip（直前の個別edge実行は通過）。asset unit/checkもコマンド成功。
+- `pnpm typecheck`で全7package完走。production.config.tsの10 E2Eも全通過。通常入口・招待・同一origin routing・イントロ・音初期化失敗・日英・練習音設定を実buildで確認。
+- asset checkは明示的に `No production asset packs yet; art delivery is incomplete.` を出している。コマンド成功を素材納品完了とは扱わない。配信用sprite pack登録が残る。
+- 設計23章の残項目を再確認：RTT300ms超の表示が未実装。100同時部屋/800人の容量gate、長時間/遅延下の観測試験、実DO CPU計測、実機/複数地域試験は未達。4部屋32接続の既存試験で代替しない。
+- 次に通信遅延の計測/表示と負荷試験を実装し、素材登録・残る画面要件を埋めてから最終UI整合へ進む。
