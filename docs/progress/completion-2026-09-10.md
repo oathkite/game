@@ -299,3 +299,11 @@ heartbeatはUI共同調整時にPAUSED。本ゴールは現在のタスクで進
 - 同じ復元時刻でtickした期待stateと比較するよう修正。期限をまたぐfile loadの独立テストを追加し、file store3件と短時間soak/server TypeScript通過。
 - メモリ比較は初回586秒RSS951MBに対し、2回目590秒RSS223MB/heap83MB。pollの終了時保持を避けることで増加傾向が解消する証拠。ただし2回目test全体は未合格と記録。
 - 修正版100部屋/600秒をsession28045で開始。ログ `/tmp/keropod-soak-final.log`。既存の22808は終了済み。
+
+## 12:36 初期画面のWebGL除去と遅延読込
+
+- タイトル/ロビー/結果の機体プレビューを同じPNG層・アンカー・倍率のSVG合成へ変更し、プレビューだけのPixi Application生成を除去。全4画像のload完了をdata-loadedへ反映。
+- 対戦/練習/部屋画面をReact.lazy/Suspenseで分割。WorldScenesの単一build片は496KB→13KB。ただし共通chunkを含む総転送削減量とは扱わない。
+- production10件通過後、タイトルのWebGL要求0→練習の描画開始をassertする入口試験3件も通過。4画面サイズ+地形のworld5件、client/e2e TypeScript通過。
+- 速くなったプレビューでスクリーンショットがシャッター途中を撮る問題を確認し、ロビー撮影前に演出終了を待つよう修正。1440pxの撮影を再実行してSVG合成を目視確認。
+- 背景1,454,374B＋ロゴ775,426Bだけで2,229,800B。タイトル必須転送2MB目安は未達。最終UI素材整理時に継続改善し、今回のコード分割で達成したとは扱わない。

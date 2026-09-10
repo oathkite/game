@@ -4,13 +4,13 @@ import { useLanguage } from "@/i18n/locale";
 import { StartScreen } from "./StartScreen";
 import { inviteRoom } from "./roomInvite";
 import { loadDisplayScale, saveDisplayScale } from "./displayScale";
-import { useCallback, useEffect, useRef, useState } from "react";
+import { lazy, Suspense, useCallback, useEffect, useRef, useState } from "react";
 import { WEAPON_IDS, WEAPON_LABELS, type WeaponId } from "@game/protocol";
 import { loadProfile, saveProfile } from "@/app/profile";
 import { setAudioSettings, unlockAudio } from "@/app/audio";
-import { RoomScreen } from "./RoomScreen";
-import { NetworkLab } from "@/networkLab/NetworkLab";
-import { CameraPrototype } from "@/prototype/CameraPrototype";
+const RoomScreen = lazy(() => import("./RoomScreen").then(module => ({ default: module.RoomScreen })));
+const NetworkLab = lazy(() => import("@/networkLab/NetworkLab").then(module => ({ default: module.NetworkLab })));
+const CameraPrototype = lazy(() => import("@/prototype/CameraPrototype").then(module => ({ default: module.CameraPrototype })));
 import { CameraSettingsPanel } from "@/prototype/CameraSettingsPanel";
 import { createCameraRig } from "@/prototype/cameraRig";
 import { PixelButton, PixelPanel } from "./PixelUi";
@@ -43,6 +43,7 @@ export const WorldScenes = () => {
   const finish = useCallback((label: string) => { setResult(label); go("result"); }, [go]);
   const background = scene === "settings" ? worldArt.settings : scene === "lobby" ? worldArt.lobby : scene === "result" ? worldArt.result : worldArt.background;
   return <div className={`world-ui world-scene-${scene} ${closing ? "world-closing" : ""}`} style={{ backgroundImage: `url(${background})` }}>
+    <Suspense fallback={<p role="status">{t("フィールドを準備しています…")}</p>}>
     {scene === "battle" ? <CameraPrototype worldArt onExit={exit} onResult={finish} /> : scene === "rooms" ? <RoomScreen onExit={exit} {...(import.meta.env.DEV ? { onLab: () => go("network") } : {})} /> : scene === "network" ? <NetworkLab worldArt onExit={exit} /> : <>
       {scene === "start" && <WindLeaves />}
       <div key={scene} ref={heading} tabIndex={-1} className="world-content">
@@ -52,6 +53,7 @@ export const WorldScenes = () => {
         {scene === "result" && <section className="world-result-screen"><h1>{result}</h1><p>{t("いい一発だった。またここで。")}</p><TankPortrait /><div><PixelButton onClick={() => go("battle")}>{t("もう一度プレイ")}</PixelButton><PixelButton onClick={exit}>{t("ロビーに戻る")}</PixelButton></div></section>}
       </div>
     </>}
+    </Suspense>
     <div className="world-shutter" aria-hidden="true" />
   </div>;
 };

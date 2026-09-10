@@ -2,14 +2,24 @@ import { expect, test } from "@playwright/test";
 test("production root opens KEROPOD and practice with real assets", async ({ page }) => {
   const errors: string[] = [];
   page.on("pageerror", error => errors.push(error.message));
+  await page.addInitScript(() => {
+    const original = HTMLCanvasElement.prototype.getContext;
+    (window as Window & { webglRequests?: number }).webglRequests = 0;
+    HTMLCanvasElement.prototype.getContext = function (this: HTMLCanvasElement, ...args: Parameters<typeof original>) {
+      if (String(args[0]).includes("webgl")) { const state = window as Window & { webglRequests?: number }; state.webglRequests = (state.webglRequests ?? 0) + 1; }
+      return Reflect.apply(original, this, args);
+    } as typeof original;
+  });
   await page.goto("/");
   await expect(page).toHaveTitle("KEROPOD");
   const logo = page.getByRole("img", { name: "KEROPOD（ケロポッド）", exact: true });
   await expect(logo).toBeVisible();
   await expect.poll(() => logo.evaluate(image => (image as HTMLImageElement).naturalWidth)).toBe(1536);
   await expect(page.getByText("2Dプレビュー", { exact: true })).toHaveCount(0);
+  expect(await page.evaluate(() => (window as Window & { webglRequests?: number }).webglRequests)).toBe(0);
   await page.getByRole("button", { name: "はじめる", exact: true }).click();
   await expect(page.getByRole("button", { name: "オンライン対戦", exact: true })).toBeVisible();
+  await expect(page.locator(".world-machine svg").first()).toBeVisible();
   await page.getByRole("button", { name: "プラクティスへ", exact: true }).click();
   await expect(page.getByTestId("camera-world")).toHaveAttribute("data-loaded", "true");
   expect(errors).toEqual([]);

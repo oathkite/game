@@ -34,6 +34,7 @@ for (const size of [{ width: 1440, height: 900 }, { width: 844, height: 390 }, {
     const box = await start.boundingBox();
     expect(box!.y + box!.height).toBeLessThanOrEqual(size.height);
     await expect(page.locator(".tank-portrait")).toHaveAttribute("data-loaded", "true");
+    await page.locator(".world-shutter").evaluate(e => Promise.all(e.getAnimations().map(a => a.finished)));
     await page.screenshot({ path: `test-results/world-lobby-${size.width}.png` });
     if (size.width > size.height) {
       await start.click();
