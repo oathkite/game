@@ -54,10 +54,17 @@ const createChunk = (region: Region, scale: number, tile?: HTMLCanvasElement) =>
     if (pattern) {
       ctx.globalCompositeOperation = "source-in"; ctx.fillStyle = pattern;
       ctx.fillRect(0, 0, canvas.width, canvas.height); ctx.globalCompositeOperation = "source-over";
-      ctx.fillStyle = "#74844c";
       for (let y = 0; y < region.height; y++) for (let x = 0; x < region.width; x++) {
         const index = (region.y + y) * mask.width + region.x + x;
-        if (mask.cells[index] && (region.y + y === 0 || !mask.cells[index - mask.width])) ctx.fillRect(x * scale, y * scale, scale, 2);
+        if (!mask.cells[index] || (region.y + y > 0 && mask.cells[index - mask.width])) continue;
+        // Keep every moss pixel inside its solid cell, including newly carved surfaces.
+        for (let column = 0; column < 4; column++) {
+          const hash = ((region.x + x) * 37 + (region.y + y) * 17 + column * 11) >>> 0;
+          const left = x * scale + column * 3, top = y * scale, depth = 5 + hash % 6;
+          ctx.fillStyle = "#384b32"; ctx.fillRect(left, top, 3, depth);
+          ctx.fillStyle = hash % 3 === 0 ? "#8d9c50" : "#627b3d"; ctx.fillRect(left, top, 3, depth - 2);
+        }
+        ctx.fillStyle = "#74844c"; ctx.fillRect(x * scale, y * scale, scale, 2);
       }
     }
     texture.source.update();

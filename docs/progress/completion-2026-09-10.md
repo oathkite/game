@@ -503,3 +503,9 @@ heartbeatはUI共同調整時にPAUSED。本ゴールは現在のタスクで進
 - 初期1024px tileでは岩のドットがタンクより大きいため、256 artpx repeatへ調整。GPU chunk/12artpxセル/物理maskは維持。原案の岩盤方向へ近づいたが、地表の苔と繰返しの自然さは継続調整が必要。
 - encodeとtestを誤って重ねた初回は画像書込途中のdecode失敗が1件。encode終了後にkeyboard/touch2件再実行通過。最終tileでPC/横844/横667/縦390と破壊alpha/区画境界の6件通過。完成前の画像へテストを開始しない。
 - 1時間soak session72311は2694秒まで進行、未完走。
+
+### 地表の苔の厚み
+
+- 地表を一律2px線だけで描く状態から、3 artpx単位の葉塊と陰影を持つ5〜10artpxの苔へ変更。world座標から決まる高さを使い再描画で揺らがない。
+- 苔の全画素は元のsolidセル内に収め、穴や区画境界の透明部分へはみ出さない。地形操作や当たり判定は変更しない。
+- PC/mobile4サイズとalpha一致/dirty chunk境界の6件、およびclient typecheckで検証。
