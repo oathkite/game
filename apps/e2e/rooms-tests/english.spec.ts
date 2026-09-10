@@ -18,6 +18,6 @@ test("English players can join, ready up, inspect diagnostics and finish a quick
     await guest.getByText("Match diagnostics", { exact: true }).click();
     await expect(guest.getByRole("textbox", { name: "Match diagnostics", exact: true })).toContainText("keropod-match-diagnostics-v1");
     await guest.getByRole("button", { name: "Surrender", exact: true }).click();
-    await expect(pages[0]!.getByRole("heading", { name: /Team . wins/ })).toBeVisible();
+    await expect(pages[0]!.getByRole("heading", { name: /Team (Blue|Red) wins/ })).toBeVisible();
   } finally { for (const context of contexts) await context.close(); }
 });

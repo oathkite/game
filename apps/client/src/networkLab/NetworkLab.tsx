@@ -1,3 +1,4 @@
+import { teamColorName } from "@/worldUi/teamColors";
 import { useLanguage } from "@/i18n/locale";
 import { matchDiagnostics } from "@/worldUi/diagnostics";
 import { createBattleSounds } from "./battleSounds";
@@ -127,7 +128,7 @@ export const NetworkLab = ({ worldArt = false, onExit, connection }: { readonly 
       {touch && <><div><button disabled={!canAct || menu} aria-label={t("左へ1歩")} {...input.button("left")}>←</button><button disabled={!canAct || menu} aria-label={t("右へ1歩")} {...input.button("right")}>→</button></div><div><button disabled={!canAct || menu} aria-label={t("角度を下げる")} {...input.button("down")}>−</button><button disabled={!canAct || menu} aria-label={t("角度を上げる")} {...input.button("up")}>＋</button></div><button disabled={!canAct || menu} aria-label={t("発射")} {...input.button("fire")}>{t("発射")}</button></>}
     </BattleConsole>}
     {menu && <BattleMenu {...(frame ? { diagnostics: matchDiagnostics(frame) } : {})} spectator={observing} close={() => setMenu(false)} surrender={() => { action("lab.surrender"); setMenu(false); }} exit={onExit} finished={!frame || frame.phase === "finished"} />}
-    {frame?.phase === "finished" && <section className="network-finished"><h2>{frame.result.type === "win" ? t("{team}チームの勝利", { team: String.fromCharCode(65 + Number(frame.result.teamId.slice(1))) }) : t("引き分け")}</h2>{!spectator && <button onClick={() => action("lab.rematch")}>{connection ? t("部屋へ戻る（オーナー）") : t("再戦する")}</button>}<button onClick={onExit}>{t("ロビーに戻る")}</button></section>}
+    {frame?.phase === "finished" && <section className="network-finished"><h2>{frame.result.type === "win" ? t("{team}チームの勝利", { team: t(teamColorName(Number(frame.result.teamId.slice(1)))) }) : t("引き分け")}</h2>{!spectator && <button onClick={() => action("lab.rematch")}>{connection ? t("部屋へ戻る（オーナー）") : t("再戦する")}</button>}<button onClick={onExit}>{t("ロビーに戻る")}</button></section>}
     {status === "invalid-session" && <div className="network-finished"><p>{t("接続の有効期限が切れました。")}</p><button onClick={() => { sessionStorage.removeItem("keropod.network-lab-token"); location.reload(); }}>{t("新しい接続で参加")}</button></div>}
     <div className="network-portrait"><h2>{t("横向きでプレイしよう")}</h2><p>{t("端末を回転するとフィールドと操作が見やすくなります。")}</p><button onClick={onExit}>{t("ロビーに戻る")}</button></div>
     {!connection && status.startsWith("切断") && <p className="network-connection" role="status">{t("切断されました。再読み込みで復帰できます。")}</p>}

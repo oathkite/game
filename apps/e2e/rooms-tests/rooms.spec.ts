@@ -31,6 +31,8 @@ test("room code, teams, ready, selected weapons and return to preparation", asyn
     await b!.getByLabel("部屋コード", { exact: true }).fill((await code.textContent())!);
     await b!.getByRole("button", { name: "部屋に参加", exact: true }).click();
     await expect(a!.getByLabel("参加者2のチーム")).toBeVisible();
+    await expect(a!.getByLabel("参加者1のチーム").locator('option[value="t0"]')).toHaveText("青チーム");
+    await expect(a!.getByLabel("参加者1のチーム").locator('option[value="t7"]')).toHaveText("銀チーム");
     const roomCode = await code.textContent();
     await b!.reload();
     await b!.getByRole("button", { name: "はじめる", exact: true }).click();

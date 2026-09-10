@@ -1,4 +1,7 @@
 export const roomEnglish: Readonly<Record<string, string>> = {
+  "青": "Blue", "赤": "Red", "緑": "Green", "紫": "Purple", "黄": "Yellow", "青緑": "Teal", "桃": "Pink", "銀": "Silver",
+  "{color}チーム": "{color} team",
+
   "射撃を再生中": "Shot replay", "対戦終了": "Battle finished", "操作中": "Acting", "手動視点を維持": "Keep manual camera",
   "左へ1歩": "Step left", "右へ1歩": "Step right", "角度を下げる": "Lower angle", "角度を上げる": "Raise angle", "発射": "Fire",
   "{team}チームの勝利": "Team {team} wins", "引き分け": "Draw", "部屋へ戻る（オーナー）": "Return to room (owner)", "再戦する": "Rematch",

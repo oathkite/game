@@ -3,12 +3,12 @@ import { WeaponIcon } from "./WeaponIcon";
 import type { CSSProperties, ReactNode } from "react";
 import { WEAPON_LABELS, type Loadout } from "@game/protocol";
 import { AngleDial, PowerRuler } from "./BattleInstruments";
-import { teamColor } from "./teamColors";
+import { teamColor, teamColorName } from "./teamColors";
 import "./battleHud.css";
 
 export type HudPlayer = { readonly id: string; readonly name: string; readonly hp: number; readonly team: number };
 export const BattleRoster = ({ players, actorId, clock, wind, onMenu }: { readonly players: readonly HudPlayer[]; readonly actorId: string; readonly clock: ReactNode; readonly wind: number; readonly onMenu: () => void }) => { const { t } = useLanguage(); return <header className="battle-roster">
-  <div className="battle-seats">{players.map(p => <div className={`battle-seat ${p.id === actorId ? "is-actor" : ""}`} key={p.id} style={{ "--team": teamColor(p.team) } as CSSProperties} aria-label={`${p.name} HP ${p.hp}${p.id === actorId ? ` ${t("手番")}` : ""}`}>
+  <div className="battle-seats">{players.map(p => <div className={`battle-seat ${p.id === actorId ? "is-actor" : ""}`} key={p.id} style={{ "--team": teamColor(p.team) } as CSSProperties} aria-label={`${p.name}, ${t("{color}チーム", { color: t(teamColorName(p.team)) })}, HP ${p.hp}${p.id === actorId ? ` ${t("手番")}` : ""}`}>
     <span className="battle-team-dot" /><strong>{p.name}</strong><div className="battle-hp"><i style={{ width: `${Math.max(0, Math.min(100, p.hp))}%` }} /></div>
   </div>)}</div>
   <div className="battle-countdown">{clock}</div><div className="battle-wind" aria-label={`${t("風")} ${wind}`}><span>{wind < 0 ? "←" : wind > 0 ? "→" : "↔"}</span><b>{Math.abs(wind)}</b></div>

@@ -1,3 +1,4 @@
+import { teamColor, teamColorName } from "./teamColors";
 import { useLanguage } from "@/i18n/locale";
 import { CLIENT_BUILD, compatibleMatch } from "@game/protocol/build";
 import { MULTIPLAYER_MAPS, MULTIPLAYER_MAP_LABELS } from "@game/maps";
@@ -88,7 +89,7 @@ export const RoomScreen = ({ onExit, onLab }: { readonly onExit: () => void; rea
         <p>{t("チームを選び、準備完了にしてください。人数差のある編成でも開始できます。")}</p>
         <ul className="room-members">{room.members.map((p, i) => <li key={p.playerId}>
           <strong>{i + 1}. {p.nickname}{p.playerId === playerId ? t("（あなた）") : ""}{p.playerId === room.ownerId ? " / OWNER" : ""}</strong>
-          <select aria-label={t("参加者{n}のチーム", { n: i + 1 })} value={p.teamId ?? ""} disabled={room.mode !== "custom" || !connected || (!owner && p.playerId !== playerId)} onChange={e => edit("room.assignTeam", { playerId: p.playerId, teamId: e.target.value || null })}><option value="">{t("未配置")}</option>{Array.from({ length: 8 }, (_, team) => <option key={team} value={`t${team}`}>{t("チーム")} {String.fromCharCode(65 + team)}</option>)}</select>
+          <select aria-label={t("参加者{n}のチーム", { n: i + 1 })} value={p.teamId ?? ""} style={{ borderLeft: `6px solid ${p.teamId ? teamColor(Number(p.teamId.slice(1))) : "transparent"}` }} disabled={room.mode !== "custom" || !connected || (!owner && p.playerId !== playerId)} onChange={e => edit("room.assignTeam", { playerId: p.playerId, teamId: e.target.value || null })}><option value="">{t("未配置")}</option>{Array.from({ length: 8 }, (_, team) => <option key={team} value={`t${team}`}>{t("{color}チーム", { color: t(teamColorName(team)) })}</option>)}</select>
           <span>{!p.connected ? t("切断中") : p.ready ? t("準備完了") : t("準備中")}</span>
         </li>)}</ul>
         {me && <div className="room-equipment">{([0, 1] as const).map(slot => <label key={slot}>{t("装備")} {slot + 1}<select aria-label={t("部屋の装備{n}", { n: slot + 1 })} disabled={!connected} value={me.loadout[slot]} onChange={e => edit("room.loadout", { loadout: slot === 0 ? [e.target.value, me.loadout[1]] : [me.loadout[0], e.target.value] })}>{WEAPON_IDS.map(id => <option value={id} key={id} disabled={id === me.loadout[slot === 0 ? 1 : 0]}>{t(WEAPON_LABELS[id])}</option>)}</select></label>)}</div>}

@@ -1,3 +1,4 @@
+import { teamColorName } from "@/worldUi/teamColors";
 import { useLanguage } from "@/i18n/locale";
 import { tiltOf } from "@game/sim";
 import { BattleRoster, BattleConsole } from "@/worldUi/BattleHud";
@@ -63,7 +64,7 @@ const Battle = ({ store, worldArt, onExit, onResult }: { readonly store: MatchSt
     return () => { delete window.__fortress; };
   }, [store]);
   useEffect(() => {
-    if (view.phase === "finished" && view.result && onResult) onResult(view.result.winner === null ? t("引き分け") : t("{player}の勝利", { player: view.result.winner === 0 ? "A1" : "B1" }));
+    if (view.phase === "finished" && view.result && onResult) onResult(view.result.winner === null ? t("引き分け") : t("{player}の勝利", { player: t(teamColorName(view.result.winner)) }));
   }, [view.phase, view.result, onResult]);
   const hudPlayers = view.players?.map(p => ({ id: String(p.seat), name: p.nickname, hp: p.hp, team: p.seat })) ?? [];
   const pose = view.control ?? actor;
@@ -73,7 +74,7 @@ const Battle = ({ store, worldArt, onExit, onResult }: { readonly store: MatchSt
   return <main className="kp-root" onContextMenu={(e) => e.preventDefault()} onPointerDown={() => unlockAudio()}>
     {worldArt ? <BattleRoster players={hudPlayers} actorId={String(view.currentSeat)} clock={<Timer deadlineAt={view.deadlineAt} clockOffset={0} myTurn={enabled} />} wind={view.wind.value} onMenu={() => { input.cancel(); setMenu(true); }} /> : <header className="kp-topbar">
       <div className="kp-brand">KEROPOD <span>{t("プラクティス")}</span></div>
-      <div className="kp-turn"><i>{view.currentSeat === 0 ? "A1" : "B1"}</i><strong>{view.phase === "replaying" ? t("弾を見届けよう") : view.phase === "finished" ? t("対戦終了") : t("あなたの番")}</strong><span>{t("次は")} {view.currentSeat === 0 ? "B1" : "A1"}</span></div>
+      <div className="kp-turn"><i>{t(teamColorName(view.currentSeat))}</i><strong>{view.phase === "replaying" ? t("弾を見届けよう") : view.phase === "finished" ? t("対戦終了") : t("あなたの番")}</strong><span>{t("次は")} {t(teamColorName(view.currentSeat === 0 ? 1 : 0))}</span></div>
       <div className="kp-wind" aria-label={t("風向き")}><span>{t("風")}</span><div className="kp-wind-window"><b style={{ transform: `translateX(${view.wind.value * 1.5}px) rotate(${view.wind.value * 4}deg)` }}>〰</b></div></div>
       <div className="kp-clock"><Timer deadlineAt={view.deadlineAt} clockOffset={0} myTurn={enabled} /></div>
       <button ref={menuButton} aria-label={t("設定を開く")} onClick={() => { input.cancel(); setMenu(true); }}>{t("設定")}</button>
@@ -101,6 +102,6 @@ const Battle = ({ store, worldArt, onExit, onResult }: { readonly store: MatchSt
       <button onClick={() => setMenu(false)}>{t("対戦に戻る")}</button>{onExit ? <button onClick={onExit}>{t("ロビーに戻る")}</button> : <a href="/">{t("ガレージへ戻る")}</a>}
     </dialog>
     {portrait && <div className="kp-portrait"><strong>{t("横向きでプレイしよう")}</strong><p>{t("機体と照準を見やすくするため、端末を回転してください。")}</p>{onExit ? <button onClick={onExit}>{t("ロビーに戻る")}</button> : <a href="/">{t("ガレージへ戻る")}</a>}</div>}
-    {view.phase === "finished" && !onResult && <div className="kp-result"><h2>{view.result?.winner === null ? t("引き分け") : t("{player}の勝利", { player: view.result?.winner === 0 ? "A1" : "B1" })}</h2><button onClick={() => store.closeResult()}>{t("もう一度")}</button>{onExit ? <button onClick={onExit}>{t("ロビーに戻る")}</button> : <a href="/">{t("ガレージへ戻る")}</a>}</div>}
+    {view.phase === "finished" && !onResult && <div className="kp-result"><h2>{view.result?.winner === null ? t("引き分け") : t("{player}の勝利", { player: t(teamColorName(view.result?.winner ?? 0)) })}</h2><button onClick={() => store.closeResult()}>{t("もう一度")}</button>{onExit ? <button onClick={onExit}>{t("ロビーに戻る")}</button> : <a href="/">{t("ガレージへ戻る")}</a>}</div>}
   </main>;
 };
