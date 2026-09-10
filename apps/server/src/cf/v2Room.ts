@@ -1,10 +1,11 @@
+import type { RoomMode, RoomRegion } from "@game/protocol/v2-rooms";
 import { DurableObject } from "cloudflare:workers";
 import { movementSnapshot } from "@game/engine/multiplayer";
 import { createRoomState, disconnectRoom, nextRoomDeadline, reduceRoom, tickRoom, type RoomState } from "../rooms/core.js";
 import { RoomRuntime, restoreRoom, serializeRoom, type RoomSnapshot } from "../rooms/runtime.js";
-import { roomFrame } from "../rooms/frame.js";
+import { roomFrame, lobbyFrame } from "../rooms/frame.js";
 import type { RoomDirectory } from "./v2Directory.js";
-export type RoomEnv = { readonly DIRECTORY: DurableObjectNamespace<RoomDirectory>; readonly ROOMS: DurableObjectNamespace<RoomObject>; readonly ALLOWED_ORIGINS: string };
+export type RoomEnv = { readonly ALLOCATION_LIMITER: RateLimit; readonly DIRECTORY: DurableObjectNamespace<RoomDirectory>; readonly ROOMS: DurableObjectNamespace<RoomObject>; readonly ALLOWED_ORIGINS: string };
 type Attachment = { readonly connectionId: string; readonly acceptedAt: number; readonly joined: boolean; readonly windowAt: number; readonly count: number };
 export class RoomObject extends DurableObject<RoomEnv> {
   private runtime: RoomRuntime | null = null;
@@ -14,11 +15,11 @@ export class RoomObject extends DurableObject<RoomEnv> {
     super(ctx, env);
     ctx.storage.sql.exec("CREATE TABLE IF NOT EXISTS room_state (id INTEGER PRIMARY KEY CHECK(id = 1), snapshot TEXT NOT NULL)");
   }
-  private load(roomId?: string): RoomRuntime {
+  private load(roomId?: string, mode: RoomMode = "custom", region: RoomRegion = "asia"): RoomRuntime {
     if (this.runtime) return this.runtime;
     const stored = this.ctx.storage.sql.exec<{ snapshot: string }>("SELECT snapshot FROM room_state WHERE id = 1").toArray()[0];
     if (!stored && !roomId) throw new Error("missing room state");
-    const state = stored ? restoreRoom(JSON.parse(stored.snapshot)) : createRoomState(roomId!);
+    const state = stored ? restoreRoom(JSON.parse(stored.snapshot)) : createRoomState(roomId!, mode, region);
     if (!stored) this.ctx.storage.sql.exec("INSERT INTO room_state VALUES (1, ?)", JSON.stringify(serializeRoom(state)));
     return this.runtime = new RoomRuntime(state, async snapshot => {
       await this.ctx.storage.transaction(async () => {
@@ -26,6 +27,11 @@ export class RoomObject extends DurableObject<RoomEnv> {
         await this.schedule(snapshot.state);
       });
     });
+  }
+  async initialize(roomId: string, mode: RoomMode, region: RoomRegion): Promise<void> {
+    const runtime = this.load(roomId, mode, region);
+    if (runtime.state.mode !== mode || runtime.state.region !== region) throw new Error("room mode mismatch");
+    await this.ctx.storage.sync();
   }
   private async schedule(state: Pick<RoomState, "sessions"> & { readonly battle: RoomSnapshot["state"]["battle"] | RoomState["battle"] }): Promise<void> {
     // Stored battle deadlines share the same state, but the snapshot wraps its battle payload.
@@ -49,16 +55,17 @@ export class RoomObject extends DurableObject<RoomEnv> {
       if (state.sessions.some(s => s.connectionId === attachment.connectionId)) this.send(ws, frame);
     }
     if (!state.lobby) return;
-    const summary = { roomId: state.roomId, members: state.sessions.filter(s => s.role === "player").length, spectators: state.sessions.filter(s => s.role === "spectator").length, phase: state.lobby?.phase ?? "waiting" as const, mapId: state.lobby?.map.id ?? "moss-valley" };
+    const summary = { roomId: state.roomId, mode: state.mode, region: state.region, members: state.sessions.filter(s => s.role === "player").length, spectators: state.sessions.filter(s => s.role === "spectator").length, phase: state.lobby?.phase ?? "waiting" as const, mapId: state.lobby?.map.id ?? "moss-valley" };
     const key = JSON.stringify(summary);
     if (key !== this.summaryKey || Date.now() - this.summaryAt >= 240000) {
-      this.summaryAt = Date.now();
+      this.summaryAt = Math.max(Date.now(), this.summaryAt + 1);
       this.summaryKey = key;
-      this.ctx.waitUntil(this.env.DIRECTORY.getByName("public").update({ ...summary, updatedAt: Date.now() }).catch(error => { this.summaryKey = ""; console.error("directory update failed", error); }));
+      this.ctx.waitUntil(this.env.DIRECTORY.getByName("public").update({ ...summary, updatedAt: this.summaryAt }).catch(error => { this.summaryKey = ""; console.error("directory update failed", error); }));
     }
   }
   override async fetch(request: Request): Promise<Response> {
     const roomId = new URL(request.url).pathname.split("/").at(-1)!;
+    if (!this.runtime && !this.ctx.storage.sql.exec("SELECT id FROM room_state WHERE id = 1").toArray().length) return new Response("room not found", { status: 404 });
     const runtime = this.load(roomId);
     await runtime.update(state => ({ state: this.reconcile(state), reason: "reconcile" }));
     if (request.headers.get("Upgrade")?.toLowerCase() !== "websocket") return new Response("WebSocket required", { status: 426 });
@@ -81,7 +88,7 @@ export class RoomObject extends DurableObject<RoomEnv> {
     if (result.welcome) {
       ws.serializeAttachment({ ...ws.deserializeAttachment(), joined: true });
       this.send(ws, { type: "room.welcome", playerId: result.welcome.playerId, token: result.welcome.token, role: result.welcome.role, generation: result.welcome.generation });
-      if (result.state.battle) this.send(ws, { type: "room.snapshot", room: result.state.lobby });
+      if (result.state.battle) this.send(ws, lobbyFrame(result.state));
     }
     if (result.ack && result.state.battle) this.send(ws, { type: "lab.ack", reason: result.reason, snapshot: movementSnapshot(result.state.battle.movement, now) });
     else if (!["accepted", "unchanged"].includes(result.reason)) this.send(ws, { type: "room.error", reason: result.reason });

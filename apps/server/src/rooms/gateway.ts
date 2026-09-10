@@ -4,7 +4,7 @@ import { roomInputSchema } from "@game/protocol/v2-rooms";
 import type { WebSocket, WebSocketServer } from "ws";
 import { createRoomState, reduceRoom, disconnectRoom, tickRoom, type RoomState, type RoomReply } from "./core.js";
 import { RoomRuntime, type RoomSnapshot } from "./runtime.js";
-import { roomFrame } from "./frame.js";
+import { roomFrame, lobbyFrame } from "./frame.js";
 const send = (socket: WebSocket | undefined, message: unknown) => {
   if (!socket || socket.readyState !== socket.OPEN) return;
   if (socket.bufferedAmount > 262144) { socket.close(1008, "slow connection"); return; }
@@ -15,7 +15,7 @@ type Options = { readonly initial?: readonly RoomState[]; readonly save?: (snaps
 export const attachRooms = (wss: WebSocketServer, options: Options = {}) => {
   const save = options.save ?? (async () => {});
   const rooms = new Map((options.initial ?? []).map(state => [state.roomId, new RoomRuntime(state, save)]));
-  const sockets = new Map<string, WebSocket>();
+  const sockets = new Map<string, WebSocket>(), reservations = new Map<string, number>();
   const broadcast = (state: RoomState) => { const frame = roomFrame(state, Date.now()); for (const s of state.sessions) if (s.connectionId) send(sockets.get(s.connectionId), frame); };
   const timer = setInterval(() => {
     for (const [roomId, room] of rooms) {
@@ -30,7 +30,7 @@ export const attachRooms = (wss: WebSocketServer, options: Options = {}) => {
     if (result.welcome) send(socket, { type: "room.welcome", playerId: result.welcome.playerId, token: result.welcome.token, role: result.welcome.role, generation: result.welcome.generation });
     if (result.ack && result.state.battle) send(socket, { type: "lab.ack", reason: result.reason, snapshot: movementSnapshot(result.state.battle.movement, Date.now()) });
     else if (!["accepted", "unchanged"].includes(result.reason)) send(socket, { type: "room.error", reason: result.reason });
-    if (result.welcome && result.state.battle) send(socket, { type: "room.snapshot", room: result.state.lobby });
+    if (result.welcome && result.state.battle) send(socket, lobbyFrame(result.state));
     broadcast(result.state);
     if (result.close) socket.close(1000, "left");
   };
@@ -41,22 +41,34 @@ export const attachRooms = (wss: WebSocketServer, options: Options = {}) => {
     const handshake = setTimeout(() => socket.close(1008, "join required"), 10000);
     const message = async (raw: unknown) => {
       const parsed = roomInputSchema.safeParse(raw); if (!parsed.success) { error("invalid"); return; }
-      const input = parsed.data;
-      let roomId = joinedRoom;
+      let input = parsed.data;
+      let roomId = joinedRoom, reserved: string | null = null;
       if (!roomId) {
-        if (input.type === "room.create") {
+        if (input.type === "room.quick") {
+          const quick = input;
+          const candidate = [...rooms.values()].find(r => r.state.mode === quick.mode && r.state.region === quick.region && !r.state.battle &&
+            r.state.sessions.filter(s => s.role === "player").length + (reservations.get(r.state.roomId) ?? 0) < (quick.mode === "1v1" ? 2 : 4));
+          roomId = candidate?.state.roomId ?? null;
+          if (!roomId) {
+            if (rooms.size >= 128) { error("capacity"); return; }
+            do { roomId = randomUUID().slice(0, 6).toUpperCase(); } while (rooms.has(roomId));
+            rooms.set(roomId, new RoomRuntime(createRoomState(roomId, quick.mode, quick.region), save));
+          }
+          reserved = roomId; reservations.set(roomId, (reservations.get(roomId) ?? 0) + 1);
+          input = { ...quick, roomId };
+        } else if (input.type === "room.create") {
           if ([...rooms.values()].reduce((n, r) => n + r.state.sessions.length, 0) >= 256 || rooms.size >= 128) { error("capacity"); return; }
           do { roomId = randomUUID().slice(0, 6).toUpperCase(); } while (rooms.has(roomId));
           rooms.set(roomId, new RoomRuntime(createRoomState(roomId), save));
         } else if ((input.type === "room.join" || input.type === "room.spectate")) roomId = input.roomId;
-        else if (input.type === "room.resume") roomId = [...rooms.values()].find(r => r.state.sessions.some(s => s.token === input.token))?.state.roomId ?? null;
+        else if (input.type === "room.resume") { const token = input.token; roomId = [...rooms.values()].find(r => r.state.sessions.some(s => s.token === token))?.state.roomId ?? null; }
         else { error("join-required"); return; }
       }
       const room = roomId ? rooms.get(roomId) : undefined;
       if (!room) { error(input.type === "room.resume" ? "invalid-session" : "not-found"); return; }
       const result = await room.update(state => reduceRoom(state, connectionId, input, Date.now(), {
         playerId: `p${randomUUID()}`, token: randomUUID(), matchId: randomUUID(), seed: randomInt(0x100000000),
-      }));
+      })).finally(() => { if (reserved) { const remaining = (reservations.get(reserved) ?? 1) - 1; if (remaining) reservations.set(reserved, remaining); else reservations.delete(reserved); } });
       if (result.welcome) { joinedRoom = result.state.roomId; clearTimeout(handshake); }
       effects(socket, result);
     };

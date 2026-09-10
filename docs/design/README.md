@@ -17,3 +17,7 @@
 - [26. WebSocket対戦同期の確認画面](26-network-movement-lab.md)：移動・射撃・復帰・結果・再戦を試す開発用画面
 - [27. 湿地観測所のドット絵UI](27-world-ui.md)：GPT Image 2.5素材と全シーンのDEVプレビュー。
 - [28. ロビー準備と対戦ルーム](28-lobby-preparation.md)：部屋分離、ready、装備固定、WebSocketと新UIの接続。
+- [29. UIブラッシュアップ方針](29-ui-polish.md)：視認性、ロゴ、コックピット、ドット密度。
+- [30. 共通HUD実装](30-battle-hud-implementation.md)：メーター・キーボード・タッチ入力。
+- [31. 部屋単位の永続化](31-persistent-rooms.md)：共通reducer、SQLite、再起動復帰。
+- [32. クイック参加](32-quick-play.md)：モード・地域・同時予約・待機キャンセル。

@@ -38,4 +38,4 @@ clientに`VITE_ROOM_SERVER_URL=http://127.0.0.1:8796`を渡すとedgeへ接続�
 - [SQLite transactions](https://developers.cloudflare.com/durable-objects/api/sqlite-storage-api/)
 - [Alarms](https://developers.cloudflare.com/durable-objects/api/alarms/)
 
-地域別Directory、クイック参加、観戦、負荷・長時間試験、運用監視、公開用ドメイン設定は後続工程。ローカルランタイムの合格を世界各地での本番検証と同一視しない。
+観戦と[クイック参加](32-quick-play.md)を追加済み。世界各地の実測、負荷・長時間試験、運用監視、公開用ドメイン設定は後続工程。ローカルランタイムの合格を世界各地での本番検証と同一視しない。

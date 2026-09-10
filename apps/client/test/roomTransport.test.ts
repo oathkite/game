@@ -10,3 +10,8 @@ it("allocates a server room before opening the create socket", async () => {
   expect(await resolveRoomUrl({ type: "room.create" }, "http://localhost:8796", null, request)).toBe("ws://localhost:8796/v2/rooms/FEDCBA");
   expect(request).toHaveBeenCalledWith("http://localhost:8796/v2/rooms", { method: "POST" });
 });
+it("keeps the requested mode and region when allocating a quick room", async () => {
+  const request = vi.fn(async () => new Response(JSON.stringify({ roomId: "FEDCBA" })));
+  expect(await resolveRoomUrl({ type: "room.quick", mode: "2v2", region: "europe" }, "https://game.example", null, request)).toBe("wss://game.example/v2/rooms/FEDCBA");
+  expect(request).toHaveBeenCalledWith("https://game.example/v2/quick", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ mode: "2v2", region: "europe" }) });
+});

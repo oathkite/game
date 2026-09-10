@@ -1,14 +1,14 @@
 import { MULTIPLAYER_MAPS } from "@game/maps";
 import { createLobby, joinLobby, leaveLobby, setLobbyConnection, editLobby, startLobby, createPreparedSession,
   fireInSession, moveInSession, surrenderInSession, forfeitInSession, tickSession, type LobbyState, type BattleSession } from "@game/engine/multiplayer";
-import { roomInputSchema } from "@game/protocol/v2-rooms";
+import { roomInputSchema, type RoomMode, type RoomRegion } from "@game/protocol/v2-rooms";
 
 export type RoomSession = { readonly role: "player" | "spectator"; readonly token: string; readonly playerId: string; readonly connectionId: string | null; readonly disconnectedAt: number; readonly generation: number };
-export type RoomState = { readonly roomId: string; readonly lobby: LobbyState | null; readonly battle: BattleSession | null; readonly sessions: readonly RoomSession[] };
+export type RoomState = { readonly mode: RoomMode; readonly region: RoomRegion; readonly roomId: string; readonly lobby: LobbyState | null; readonly battle: BattleSession | null; readonly sessions: readonly RoomSession[] };
 export type Identity = { readonly playerId: string; readonly token: string; readonly matchId: string; readonly seed: number };
 type Input = ReturnType<typeof roomInputSchema.parse>;
 export type RoomReply = { readonly state: RoomState; readonly reason: string; readonly welcome?: RoomSession; readonly ack?: boolean; readonly close?: boolean };
-export const createRoomState = (roomId: string): RoomState => ({ roomId, lobby: null, battle: null, sessions: [] });
+export const createRoomState = (roomId: string, mode: RoomMode = "custom", region: RoomRegion = "asia"): RoomState => ({ roomId, mode, region, lobby: null, battle: null, sessions: [] });
 const reply = (state: RoomState, reason = "accepted"): RoomReply => ({ state, reason });
 const connectedOwner = (state: RoomState): RoomState => {
   if (!state.lobby || state.sessions.some(s => s.playerId === state.lobby!.ownerId && s.connectionId && s.role === "player")) return state;
@@ -40,7 +40,7 @@ export const nextRoomDeadline = (state: { readonly sessions: readonly RoomSessio
   if (state.battle?.phase === "replaying") deadlines.push(state.battle.replay!.endsAt);
   return deadlines.length ? Math.min(...deadlines) : null;
 };
-const join = (state: RoomState, connectionId: string, message: Extract<Input, { type: "room.create" | "room.join" | "room.resume" | "room.spectate" }>, now: number, id: Identity): RoomReply => {
+const join = (state: RoomState, connectionId: string, message: Extract<Input, { type: "room.create" | "room.join" | "room.resume" | "room.spectate" | "room.quick" }>, now: number, id: Identity): RoomReply => {
   if (state.sessions.some(s => s.connectionId === connectionId)) return reply(state, "already-joined");
   if (message.type === "room.resume") {
     const saved = state.sessions.find(s => s.token === message.token);
@@ -52,6 +52,8 @@ const join = (state: RoomState, connectionId: string, message: Extract<Input, { 
   }
   if ((message.type === "room.join" || message.type === "room.spectate") && message.roomId !== state.roomId) return reply(state, "wrong-room");
   if ((message.type === "room.join" || message.type === "room.spectate") && !state.lobby) return reply(state, "not-found");
+  if (message.type === "room.quick" && (message.roomId !== state.roomId || message.mode !== state.mode || message.region !== state.region)) return reply(state, "wrong-mode");
+  if (message.type === "room.create" && state.mode !== "custom") return reply(state, "wrong-mode");
   if (message.type === "room.create" && state.lobby) return reply(state, "already-exists");
   if (message.type === "room.spectate") {
     if (state.sessions.filter(s => s.role === "spectator").length >= 8) return reply(state, "spectators-full");
@@ -59,8 +61,13 @@ const join = (state: RoomState, connectionId: string, message: Extract<Input, { 
     return { state: { ...state, sessions: [...state.sessions, welcome] }, reason: "accepted", welcome };
   }
   if (state.battle) return reply(state, "locked");
-  if (state.sessions.filter(s => s.role === "player").length >= 8) return reply(state, "full");
-  const lobby = state.lobby ? joinLobby(state.lobby, id.playerId, message.profile) : createLobby(state.roomId, id.playerId, message.profile, MULTIPLAYER_MAPS[0]!);
+  if (state.sessions.filter(s => s.role === "player").length >= (state.mode === "1v1" ? 2 : state.mode === "2v2" ? 4 : 8)) return reply(state, "full");
+  let lobby = state.lobby ? joinLobby(state.lobby, id.playerId, message.profile) : createLobby(state.roomId, id.playerId, message.profile, MULTIPLAYER_MAPS[0]!);
+  if (state.mode !== "custom") {
+    const count = (team: string) => lobby.members.filter(p => p.teamId === team).length;
+    lobby = editLobby(lobby, id.playerId, { version: 2, type: "room.assignTeam", roomId: state.roomId, revision: lobby.revision,
+      playerId: id.playerId, teamId: count("t0") <= count("t1") ? "t0" : "t1" }).room;
+  }
   const welcome: RoomSession = { role: "player", token: id.token, playerId: id.playerId, connectionId, generation: 1, disconnectedAt: 0 };
   return { state: { ...state, lobby, sessions: [...state.sessions, welcome] }, reason: "accepted", welcome };
 };
@@ -85,18 +92,24 @@ export const reduceRoom = (state: RoomState, connectionId: string, raw: unknown,
   const parsed = roomInputSchema.safeParse(raw);
   if (!parsed.success || !Number.isFinite(now)) return reply(state, "invalid");
   const message = parsed.data;
-  if (message.type === "room.create" || message.type === "room.join" || message.type === "room.resume" || message.type === "room.spectate") return join(state, connectionId, message, now, id);
+  if (message.type === "room.create" || message.type === "room.join" || message.type === "room.resume" || message.type === "room.spectate" || message.type === "room.quick") return join(state, connectionId, message, now, id);
   const session = state.sessions.find(s => s.connectionId === connectionId);
   if (!session) return reply(state, "join-required");
   if (message.type === "room.leave") return { state: leave(state, session.playerId, now), reason: "accepted", close: true };
   if (session.role === "spectator") return reply(state, "read-only");
   if ("roomId" in message && message.roomId !== state.roomId) return reply(state, "wrong-room");
+  if (state.mode !== "custom" && (message.type === "room.assignTeam" || message.type === "room.map")) return reply(state, "fixed-mode");
   if (message.type === "room.start") {
+    if (state.mode !== "custom" && state.lobby!.members.length !== (state.mode === "1v1" ? 2 : 4)) return reply(state, "waiting-for-players");
     const result = startLobby(state.lobby!, session.playerId, message.revision);
     return result.setup ? reply({ ...state, lobby: result.room, battle: createPreparedSession(result.setup, id.matchId, id.seed, now) }) : reply(state, result.reason);
   }
   if (message.type.startsWith("room.")) {
     const result = editLobby(state.lobby!, session.playerId, message);
+    if (message.type === "room.ready" && state.mode !== "custom" && result.room.members.length === (state.mode === "1v1" ? 2 : 4)) {
+      const started = startLobby(result.room, result.room.ownerId!, result.room.revision);
+      if (started.setup) return reply({ ...state, lobby: started.room, battle: createPreparedSession(started.setup, id.matchId, id.seed, now) });
+    }
     return reply(result.room === state.lobby ? state : { ...state, lobby: result.room }, result.reason);
   }
   return battleCommand(state, session.playerId, message, now);

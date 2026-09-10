@@ -65,3 +65,14 @@ heartbeatはUI共同調整時にPAUSED。本ゴールは現在のタスクで進
 - 最新snapshotから観戦開始。発射/降参を非表示、Tabでカメラ巡回、手動視点維持を選択可能。脱落したプレイヤーも操作HUDを観戦表示へ切り替える。
 - client174/server55テスト通過。PC+touch+観戦の3端末招待E2Eを追加し、既存rooms E2Eとともにedgeで通過。
 - 後続：クイック参加（1v1/2v2・地域別）、version固定、公開画面への切替、日英/アバター/診断、負荷試験、最終UI。
+
+## 10:38 クイック参加
+
+- 1v1/2v2とasia/europe/americasを区別し、customと混ぜない。参加時の自動チーム配置、定員、編成変更拒否、全readyで自動開始。
+- Directoryの10秒予約とNodeの処理中予約により同時参加の空席競合を抑止。Room reducerも最終定員を検証。
+- 30秒後の地域変更/練習案内と待機キャンセルを追加。BOT補充や勝手なmode/region変更なし。
+- RoomObject初期化RPC＋配置hint。既存の招待/復帰はDirectory照会なしで処理する。
+- POST割当の512bytes制限、120回/分のIP Rate Limitを追加。共有IPとnamespaceの運用確認は32章に記載。
+- server58/client175 unit、server/client/e2e TypeScript通過。edgeの同時予約/地域分離/全ready開始を実ランタイムで検証。
+- Nodeで1v1/2v2/30秒キャンセル3 E2E通過。edgeで2v2/30秒キャンセル、既存招待/観戦/カスタム対戦を通過。
+- 強制終了後のSQLite復帰も再実行して通過。edge1v1 E2Eは途中のコード更新による切断をログで確認後、固定状態で再実行して通過。

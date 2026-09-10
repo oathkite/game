@@ -1,8 +1,14 @@
 import { z } from "zod";
 import { fireCommandSchema, lobbyCommandSchema, lobbyProfileSchema, moveCommandSchema } from "./v2.js";
 import { labOutputSchema } from "./v2Lab.js";
+export const roomModeSchema = z.enum(["custom", "1v1", "2v2"]);
+export const roomRegionSchema = z.enum(["asia", "europe", "americas"]);
+export type RoomMode = z.infer<typeof roomModeSchema>;
+export type RoomRegion = z.infer<typeof roomRegionSchema>;
+export const quickRequestSchema = z.object({ mode: z.enum(["1v1", "2v2"]), region: roomRegionSchema }).strict();
 const roomId = z.string().regex(/^[A-F0-9]{6}$/);
 export const roomInputSchema = z.union([
+  quickRequestSchema.extend({ type: z.literal("room.quick"), roomId, profile: lobbyProfileSchema }).strict(),
   z.object({ type: z.literal("room.spectate"), roomId }).strict(),
   z.object({ type: z.literal("room.create"), profile: lobbyProfileSchema }).strict(),
   z.object({ type: z.literal("room.join"), roomId, profile: lobbyProfileSchema }).strict(),
@@ -14,6 +20,7 @@ export const roomInputSchema = z.union([
   lobbyCommandSchema, fireCommandSchema, moveCommandSchema,
 ]);
 export const roomSnapshotSchema = z.object({ type: z.literal("room.snapshot"), room: z.object({
+  mode: roomModeSchema.default("custom"), region: roomRegionSchema.default("asia"),
   roomId, ownerId: z.string().nullable(), revision: z.number().int(), phase: z.enum(["waiting", "started"]),
   members: z.array(lobbyProfileSchema.extend({ playerId: z.string(), teamId: z.string().nullable(), connected: z.boolean(), ready: z.boolean() })).max(8),
   map: z.object({ id: z.string(), version: z.number(), width: z.number(), height: z.number() }),
