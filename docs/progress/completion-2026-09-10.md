@@ -590,3 +590,8 @@ heartbeatはUI共同調整時にPAUSED。本ゴールは現在のタスクで進
 
 - .gitignoreの.wrangler除外より前に登録されていた26ファイル（一時bundle、source map、local DB/WAL）をindexから除外。実ファイルは削除せず、ローカルDBの存在とignore適用を確認。履歴の書換えは行っていない。
 - 素材関連86テスト、runtime画像12・機体/効果27の整合性検査が通過。正式art承認はpendingのまま。
+
+### 公開用buildの再検証（2026-09-11）
+
+- production.configのChromium/Firefox/WebKit全33件が1.4分で通過。起動、招待、読み込み失敗からの復帰、イントロ、storage/audio拒否、日英、設定保存の範囲。最新の全員帰還8人オンラインは別途Chromiumで確認済み。
+- cold title最大1,862,583B、練習開始まで最大6,325,578B。初期2MB/対戦8MBを維持。実機・実地域の速度は別検証。
