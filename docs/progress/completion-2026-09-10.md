@@ -456,3 +456,11 @@ heartbeatはUI共同調整時にPAUSED。本ゴールは現在のタスクで進
 - client全193件・typecheck通過後、オンライン連射時計testを追加して関連6件とe2e typecheck通過。実Pixi姿勢testで砲身/車体移動と履帯不変、通常位置復帰を追加。0/-0の復帰比較を検出し停止位置を0に統一。
 - 砲口VFX、大破/煙/土煙はこの変更には含まない。次工程で素材と発生位置を照合する。
 - 実Pixi反動/残骸姿勢browser test再実行通過。1時間soak session72311は1605秒まで進行を確認。
+
+### 採掘弾の着弾素材を最新指定へ修正
+
+- design/15の「採掘弾の着弾演出を通常爆発に統一」とruntime impactSpritesが不一致だった。diggerをcannonと同じexplosion clipへ変更し、練習・オンライン共通で適用。
+- 読み込むimpact画像を使用中のexplosion/energy/drillへ限定。元のdig素材と記録は保存し、不要なダウンロードを止める。
+- 実ブラウザで全4フレームがcannonと同一Textureを使うこと、drill/laserは別素材であることを変更前に失敗確認してから修正。
+- 砲口接続の調査：effect-muzzleは25/35/40/40msの4枚、energyは先頭フレームを140msでfade。weapon emissionPortsは通常[144,96]、tripleはy89/96/103、multipleはy86/96/105。原点[96,96]から反動を差し引いて砲台へ接続する。runtimeへのmuzzle追加と描画接続は次工程。
+- 検証：impact-art browser test、client/e2e typecheck通過。1時間soak session72311は1812秒まで進行（未完走）。
