@@ -14,6 +14,7 @@ import { createBattleWind, advanceBattleWind, type BattleWind } from "./battleWi
 
 type ResolvedShot = ReturnType<typeof resolveBattleShot>;
 export type BattleSession = {
+  readonly finishedAt?: number;
   readonly stats?: BattleStats;
   readonly build: MatchBuild;
   readonly map: ReturnType<typeof createBattle>["map"];
@@ -46,7 +47,7 @@ export const createBattleSession = (battle: ReturnType<typeof createBattle>, mat
 const advance = (state: BattleSession, now: number): BattleSession => {
   const result = outcome(state.roster), roster = nextTurn(state.roster);
   if (result.type !== "ongoing" || roster.round > 12 || now - state.startedAt >= 1200000) {
-    return { ...state, phase: "finished", result: result.type === "ongoing" ? { type: "draw" } : result,
+    return { ...state, finishedAt: now, phase: "finished", result: result.type === "ongoing" ? { type: "draw" } : result,
       movement: { ...state.movement, locked: true, eventSeq: state.movement.eventSeq + 1 } };
   }
   const next = { ...state, windState: advanceBattleWind(state.windState), roster, phase: "acting" as const, replay: null };

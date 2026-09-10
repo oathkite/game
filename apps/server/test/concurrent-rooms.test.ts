@@ -120,7 +120,7 @@ it(`keeps ${roomCount} simultaneous eight-player battles isolated through firing
       }
       await poll(() => battle.clients.every(client => client.last("lab.frame")?.phase === "finished")).toBe(true);
       const owner = battle.clients.find(client => client.last("room.welcome")!.playerId === snapshot.ownerId)!;
-      owner.send({ type: "lab.rematch", matchId: battle.matchId });
+      for (const client of battle.clients) client.send({ type: "lab.rematch", matchId: battle.matchId });
       await poll(() => battle.clients.every(client => client.last("room.snapshot")?.room.phase === "waiting")).toBe(true).catch(() => {
         throw new Error(`Rematch refused: ${JSON.stringify({ error: owner.last("room.error"), match: battle.matchId, frames: battle.clients.map(client => ({ match: client.last("lab.frame")?.matchId, phase: client.last("lab.frame")?.phase, owner: client.last("room.snapshot")?.room.ownerId })) })}`);
       });

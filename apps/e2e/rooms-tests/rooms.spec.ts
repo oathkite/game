@@ -95,7 +95,8 @@ test("room code, teams, ready, selected weapons and return to preparation", asyn
     expect(JSON.stringify(diagnostics)).not.toContain((await b!.evaluate(() => sessionStorage.getItem("keropod.room-token")))!);
     await b!.getByRole("button", { name: "降参", exact: true }).click();
     await expect(a!.getByRole("heading", { name: /チームの勝利/ })).toBeVisible();
-    await a!.getByRole("button", { name: "部屋へ戻る（オーナー）", exact: true }).click();
+    await a!.getByRole("button", { name: "部屋へ戻る", exact: true }).click();
+    await b!.getByRole("button", { name: "部屋へ戻る", exact: true }).click();
     await expect(a!.getByTestId("room-code")).toHaveText((await code.textContent())!);
     await expect(b!.getByRole("button", { name: "準備完了", exact: true })).toBeVisible();
     expect(errors).toEqual([]);

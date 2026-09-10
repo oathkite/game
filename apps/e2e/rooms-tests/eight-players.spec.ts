@@ -81,7 +81,11 @@ test("eight independent players complete a 4v4 match and return together", async
     const shotCounts = await owner.getByRole("table", { name: "試合成績" }).locator("tbody tr td:first-of-type").allTextContents();
     expect(shotCounts.reduce((sum, value) => sum + Number(value), 0)).toBe(1);
     await owner.screenshot({ path: "test-results/eight-player-result.png" });
-    await owner.getByRole("button", { name: "部屋へ戻る（オーナー）", exact: true }).click();
+    for (const page of pages.slice(0, -1)) {
+      await page.getByRole("button", { name: "部屋へ戻る", exact: true }).click();
+      await expect(page.getByRole("button", { name: "帰還待ち", exact: true })).toBeDisabled();
+    }
+    await pages[7]!.getByRole("button", { name: "部屋へ戻る", exact: true }).click();
     for (const page of pages) {
       await expect(page.getByTestId("room-code")).toHaveText(code!);
       await expect(page.locator(".room-members li")).toHaveCount(8);

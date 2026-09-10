@@ -578,3 +578,10 @@ heartbeatはUI共同調整時にPAUSED。本ゴールは現在のタスクで進
 - 結果に全参加者の表を表示。HPによる順位付けは行わない。日英対応、狭い画面で表・結果領域をスクロール可能にした。最終アート調整は未完。
 - 成績/保存復元/重複入力/既存session13テスト、翻訳網羅、全workspace型検査、server68テストが通過（別edge2件skip）。Chromium配信buildの8人対戦44.8秒通過、全員の結果表一致・合計発射数1を確認。PC結果スクリーンショットを目視確認。
 - 残件: 結果の全員帰還投票と60秒自動閉じ、結果の最終アート・実機表示。
+
+### 全員帰還と結果60秒期限（2026-09-11）
+
+- lab.rematchの公開部屋側の動作を帰還選択へ変更。オーナーだけで結果を閉じず、残っている全playerが選択すると部屋へ戻る。spectatorは選択権を持たず人数に含めない。重複選択は状態を更新しない。開発用固定labの再戦は従来どおり。
+- finishedAtを確定時に記録し60秒後をRoom deadline/DO alarmへ含める。切断者が選択できない場合も期限で帰還。保存snapshotに帰還選択・終了時刻を保持。古い終了snapshotは当時の手番deadlineを基準とする。帰還後は全員ready=false、選択を空に戻す。
+- 結果に残り秒と帰還待ちを表示。clientは期限で独断遷移せずserverのroom.snapshotで戻る。
+- server71件（別edge2件skip）、全workspace型検査、engine session/snapshot11件、翻訳検査通過。Chromium/local edge8人で最初の7人の帰還待ち→最後の1人の選択→全員部屋復帰が通過（約1.1分）。60秒境界はserver単体・deadline構成で検証し、実DOの60秒待機をこのE2Eで計測したものではない。

@@ -6,7 +6,7 @@ import { createLobby, joinLobby, leaveLobby, setLobbyConnection, editLobby, star
 import { roomInputSchema, type RoomMode, type RoomRegion } from "@game/protocol/v2-rooms";
 
 export type RoomSession = { readonly build: ClientBuild; readonly role: "player" | "spectator"; readonly token: string; readonly playerId: string; readonly connectionId: string | null; readonly disconnectedAt: number; readonly generation: number };
-export type RoomState = { readonly reports: readonly PlayerReport[]; readonly mode: RoomMode; readonly region: RoomRegion; readonly roomId: string; readonly lobby: LobbyState | null; readonly battle: BattleSession | null; readonly sessions: readonly RoomSession[] };
+export type RoomState = { readonly returnReadyIds?: readonly string[]; readonly reports: readonly PlayerReport[]; readonly mode: RoomMode; readonly region: RoomRegion; readonly roomId: string; readonly lobby: LobbyState | null; readonly battle: BattleSession | null; readonly sessions: readonly RoomSession[] };
 export type Identity = { readonly playerId: string; readonly token: string; readonly matchId: string; readonly seed: number };
 type Input = ReturnType<typeof roomInputSchema.parse>;
 export type RoomReply = { readonly state: RoomState; readonly reason: string; readonly welcome?: RoomSession; readonly ack?: boolean; readonly pong?: number; readonly reported?: "saved" | "duplicate"; readonly close?: boolean };
@@ -35,11 +35,12 @@ export const tickRoom = (state: RoomState, now: number): RoomState => {
   const battle = state.battle ? tickSession(forfeitInSession(state.battle, expired.map(s => s.playerId), now), now) : null;
   const reports = state.reports.filter(report => now < report.createdAt + REPORT_RETENTION_MS);
   const next = battle === state.battle && reports.length === state.reports.length ? state : { ...state, battle, reports };
-  return expired.reduce((room, s) => leave(room, s.playerId, now), next);
+  return returnWhenReady(expired.reduce((room, s) => leave(room, s.playerId, now), next), now);
 };
-export const nextRoomDeadline = (state: { readonly reports?: readonly PlayerReport[]; readonly sessions: readonly RoomSession[]; readonly battle: { readonly phase: string; readonly movement: { readonly deadlineAt: number }; readonly replay: { readonly endsAt: number } | null } | null }): number | null => {
+export const nextRoomDeadline = (state: { readonly reports?: readonly PlayerReport[]; readonly sessions: readonly RoomSession[]; readonly battle: { readonly phase: string; readonly finishedAt?: number; readonly movement: { readonly deadlineAt: number }; readonly replay: { readonly endsAt: number } | null } | null }): number | null => {
   const deadlines = state.sessions.filter(s => !s.connectionId).map(s => s.disconnectedAt + 60000);
   if (state.reports?.length) deadlines.push(...state.reports.map(report => report.createdAt + REPORT_RETENTION_MS));
+  if (state.battle?.phase === "finished") deadlines.push((state.battle.finishedAt ?? state.battle.movement.deadlineAt) + 60000);
   if (state.battle?.phase === "acting") deadlines.push(state.battle.movement.deadlineAt);
   if (state.battle?.phase === "replaying") deadlines.push(state.battle.replay!.endsAt);
   return deadlines.length ? Math.min(...deadlines) : null;
@@ -81,11 +82,9 @@ const battleCommand = (state: RoomState, playerId: string, message: Input, now: 
   const battle = state.battle;
   if (!battle) return reply(state, "not-started");
   if (message.type === "lab.rematch") {
-    if (battle.phase !== "finished" || message.matchId !== battle.matchId || state.lobby!.ownerId !== playerId) return reply(state, "not-owner-or-not-finished");
-    let lobby: LobbyState = { ...state.lobby!, phase: "waiting", revision: state.lobby!.revision + 1,
-      members: state.lobby!.members.filter(p => state.sessions.some(s => s.playerId === p.playerId)).map(p => ({ ...p, ready: false })) };
-    for (const s of state.sessions) lobby = setLobbyConnection(lobby, s.playerId, s.connectionId !== null);
-    return reply({ ...state, lobby, battle: null });
+    if (battle.phase !== "finished" || message.matchId !== battle.matchId) return reply(state, "not-finished-or-wrong-match");
+    if (state.returnReadyIds?.includes(playerId)) return reply(state);
+    return reply(returnWhenReady({ ...state, returnReadyIds: [...(state.returnReadyIds ?? []), playerId] }, now));
   }
   if (message.type === "lab.surrender") return message.matchId !== battle.matchId ? reply(state, "wrong-match") : reply({ ...state, battle: surrenderInSession(battle, playerId, now) });
   if (message.type === "turn.fire" || message.type === "move.command") {
@@ -122,4 +121,15 @@ export const reduceRoom = (state: RoomState, connectionId: string, raw: unknown,
     return reply(result.room === state.lobby ? state : { ...state, lobby: result.room }, result.reason);
   }
   return battleCommand(state, session.playerId, message, now);
+};
+
+const returnWhenReady = (state: RoomState, now: number): RoomState => {
+  const battle = state.battle;
+  if (battle?.phase !== "finished") return state;
+  const everyoneReady = state.sessions.filter(s => s.role === "player").every(s => state.returnReadyIds?.includes(s.playerId));
+  if (!everyoneReady && now < (battle.finishedAt ?? battle.movement.deadlineAt) + 60000) return state;
+  let lobby: LobbyState = { ...state.lobby!, phase: "waiting", revision: state.lobby!.revision + 1,
+    members: state.lobby!.members.filter(p => state.sessions.some(s => s.playerId === p.playerId && s.role === "player")).map(p => ({ ...p, ready: false })) };
+  for (const s of state.sessions.filter(s => s.role === "player")) lobby = setLobbyConnection(lobby, s.playerId, s.connectionId !== null);
+  return { ...state, lobby, battle: null, returnReadyIds: [] };
 };
