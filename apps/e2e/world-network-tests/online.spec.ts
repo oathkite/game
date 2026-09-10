@@ -1,6 +1,6 @@
 import { expect, test } from "@playwright/test";
 test("new world lobby connects two players to the sprite camera battlefield", async ({ browser }) => {
-  const contexts = await Promise.all([browser.newContext({ viewport: { width: 1440, height: 900 } }), browser.newContext({ hasTouch: true, viewport: { width: 844, height: 390 } })]);
+  const contexts = await Promise.all([browser.newContext({ locale: "ja-JP", viewport: { width: 1440, height: 900 } }), browser.newContext({ locale: "ja-JP", hasTouch: true, viewport: { width: 844, height: 390 } })]);
   const pages = await Promise.all(contexts.map(c => c.newPage()));
   const errors: string[] = [];
   try {

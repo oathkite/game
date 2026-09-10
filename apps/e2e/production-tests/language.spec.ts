@@ -1,0 +1,20 @@
+import { expect, test } from "@playwright/test";
+test.use({ locale: "en-US" });
+test("English browser can change language and retain it across reloads and settings", async ({ page }) => {
+  await page.goto("/");
+  await expect(page.getByRole("button", { name: "Play", exact: true })).toBeVisible();
+  await expect(page.locator("html")).toHaveAttribute("lang", "en");
+  await page.getByRole("combobox", { name: "Language / 言語" }).selectOption("ja");
+  await expect(page.getByRole("button", { name: "はじめる", exact: true })).toBeVisible();
+  await page.reload();
+  await expect(page.getByRole("button", { name: "はじめる", exact: true })).toBeVisible();
+  await page.getByRole("combobox", { name: "Language / 言語" }).selectOption("en");
+  await page.getByRole("button", { name: "Play", exact: true }).click();
+  await expect(page.getByRole("heading", { name: "Get ready" })).toBeVisible();
+  await expect(page.getByRole("combobox", { name: "Weapon 1" })).toContainText("Cannon");
+  await page.getByRole("button", { name: "Settings", exact: true }).click();
+  await expect(page.getByRole("slider", { name: "Volume" })).toBeVisible();
+  await expect(page.getByRole("button", { name: "Reset camera" })).toBeVisible();
+  await page.getByRole("combobox", { name: "Language / 言語" }).selectOption("ja");
+  await expect(page.getByRole("heading", { name: "整備と設定" })).toBeVisible();
+});

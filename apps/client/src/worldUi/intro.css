@@ -8,3 +8,5 @@
 @keyframes garage-arrival { 0%,25% { transform:translateX(-130%); opacity:0; } 62%,85% { transform:translateX(0); opacity:1; } 100% { transform:translateX(0); opacity:0; } }
 @keyframes intro-logo { 0%,60% { opacity:.25; } 100% { opacity:1; } }
 @media (prefers-reduced-motion:reduce) { .world-intro::before,.world-intro h1,.world-intro-machine { animation:none; } }
+.world-language { position:absolute; left:max(20px,env(safe-area-inset-left)); top:max(20px,env(safe-area-inset-top)); z-index:2; }
+.world-language select { min-height:44px; padding:8px 12px; color:#fff3cf; background:#142f40; border:1px solid #d0b879; font:inherit; }

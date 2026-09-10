@@ -1,3 +1,5 @@
+import { LanguageSelect } from "@/i18n/LanguageSelect";
+import { useLanguage } from "@/i18n/locale";
 import { useCallback, useEffect, useState } from "react";
 import { PixelButton } from "./PixelUi";
 import { TankPortrait } from "./TankPortrait";
@@ -10,6 +12,7 @@ const shouldAnimate = (replay: boolean): boolean => {
   try { return replay || localStorage.getItem(seenKey) !== "1"; } catch { return true; }
 };
 export const StartScreen = ({ onBegin, replay }: { readonly onBegin: () => void; readonly replay: boolean }) => {
+  const { t } = useLanguage();
   const [intro, setIntro] = useState(() => shouldAnimate(replay));
   const finish = useCallback(() => {
     setIntro(false);
@@ -25,8 +28,9 @@ export const StartScreen = ({ onBegin, replay }: { readonly onBegin: () => void;
   }, [intro, finish]);
   return <section className={`world-start ${intro ? "world-intro" : ""}`} data-intro={intro}>
     {intro && <div className="world-intro-machine" aria-hidden="true"><TankPortrait /></div>}
-    <h1><img className="world-title-logo" src={worldArt.logo} alt="KEROPOD（ケロポッド）" width="1536" height="1024" fetchPriority="high" /></h1>
-    <PixelButton onClick={() => { finish(); onBegin(); }}>はじめる</PixelButton>
-    {intro && <button className="world-intro-skip" onClick={finish}>スキップ</button>}
+    <div className="world-language"><LanguageSelect /></div>
+    <h1><img className="world-title-logo" src={worldArt.logo} alt={t("KEROPOD（ケロポッド）")} width="1536" height="1024" fetchPriority="high" /></h1>
+    <PixelButton onClick={() => { finish(); onBegin(); }}>{t("はじめる")}</PixelButton>
+    {intro && <button className="world-intro-skip" onClick={finish}>{t("スキップ")}</button>}
   </section>;
 };

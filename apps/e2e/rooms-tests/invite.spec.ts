@@ -1,6 +1,6 @@
 import { expect, test } from "@playwright/test";
 test("invitation skips the title and an independent spectator watches without controls", async ({ browser }) => {
-  const contexts = await Promise.all([browser.newContext(), browser.newContext(), browser.newContext({ hasTouch: true, viewport: { width: 844, height: 390 } })]);
+  const contexts = await Promise.all([browser.newContext({ locale: "ja-JP" }), browser.newContext({ locale: "ja-JP" }), browser.newContext({ locale: "ja-JP", hasTouch: true, viewport: { width: 844, height: 390 } })]);
   const [a, b, viewer] = await Promise.all(contexts.map(c => c.newPage()));
   const errors: string[] = [];
   try {

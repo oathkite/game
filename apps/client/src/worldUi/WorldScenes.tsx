@@ -1,3 +1,5 @@
+import { LanguageSelect } from "@/i18n/LanguageSelect";
+import { useLanguage } from "@/i18n/locale";
 import { StartScreen } from "./StartScreen";
 import { inviteRoom } from "./roomInvite";
 import { loadDisplayScale, saveDisplayScale } from "./displayScale";
@@ -18,6 +20,8 @@ import "./worldUi.css";
 
 type Scene = "start" | "lobby" | "settings" | "battle" | "result" | "network" | "rooms";
 export const WorldScenes = () => {
+  const { t, language } = useLanguage();
+  useEffect(() => { document.documentElement.lang = language; }, [language]);
   const [scene, setScene] = useState<Scene>(() => inviteRoom(location.href) || new URL(location.href).searchParams.has("room") ? "rooms" : "start"), [closing, setClosing] = useState(false);
   const [introReplay, setIntroReplay] = useState(0);
   const [result, setResult] = useState("");
@@ -44,36 +48,39 @@ export const WorldScenes = () => {
         {scene === "start" && <StartScreen key={introReplay} replay={introReplay > 0} onBegin={() => go("lobby")} />}
         {scene === "lobby" && <Lobby go={go} />}
         {scene === "settings" && <Settings onBack={exit} onReplay={() => { setIntroReplay(value => value + 1); go("start"); }} />}
-        {scene === "result" && <section className="world-result-screen"><h1>{result}</h1><p>いい一発だった。またここで。</p><TankPortrait /><div><PixelButton onClick={() => go("battle")}>もう一度プレイ</PixelButton><PixelButton onClick={exit}>ロビーに戻る</PixelButton></div></section>}
+        {scene === "result" && <section className="world-result-screen"><h1>{result}</h1><p>{t("いい一発だった。またここで。")}</p><TankPortrait /><div><PixelButton onClick={() => go("battle")}>{t("もう一度プレイ")}</PixelButton><PixelButton onClick={exit}>{t("ロビーに戻る")}</PixelButton></div></section>}
       </div>
     </>}
     <div className="world-shutter" aria-hidden="true" />
   </div>;
 };
 const Lobby = ({ go }: { readonly go: (scene: Scene) => void }) => {
+  const { t } = useLanguage();
   const [profile, setProfile] = useState(loadProfile);
   const update = (patch: Partial<typeof profile>) => { const next = { ...profile, ...patch }; setProfile(next); saveProfile(next); };
   const weapon = (slot: 0 | 1, value: WeaponId) => update({ loadout: slot === 0 ? [value, profile.loadout[1]] : [profile.loadout[0], value] });
   return <section className="world-lobby">
-    <header><h1>出発の準備</h1><PixelButton onClick={() => go("settings")}>設定</PixelButton></header>
-    <div className="world-machine"><TankPortrait /><p>湿地の観測所</p></div>
+    <header><h1>{t("出発の準備")}</h1><PixelButton onClick={() => go("settings")}>{t("設定")}</PixelButton></header>
+    <div className="world-machine"><TankPortrait /><p>{t("湿地の観測所")}</p></div>
     <PixelPanel className="world-loadout">
-      <label>名前<input aria-label="名前" maxLength={12} value={profile.nickname} placeholder="ケロポッド" onChange={e => update({ nickname: e.target.value })} /></label>
-      {([0, 1] as const).map(slot => <label key={slot}>装備 {slot + 1}<select aria-label={`装備 ${slot + 1}`} value={profile.loadout[slot]} onChange={e => weapon(slot, e.target.value as WeaponId)}>{WEAPON_IDS.map(id => <option key={id} value={id} disabled={id === profile.loadout[slot === 0 ? 1 : 0]}>{WEAPON_LABELS[id]}</option>)}</select></label>)}
+      <label>{t("名前")}<input aria-label={t("名前")} maxLength={12} value={profile.nickname} placeholder={t("ケロポッド")} onChange={e => update({ nickname: e.target.value })} /></label>
+      {([0, 1] as const).map(slot => <label key={slot}>{t("装備")} {slot + 1}<select aria-label={`${t("装備")} ${slot + 1}`} value={profile.loadout[slot]} onChange={e => weapon(slot, e.target.value as WeaponId)}>{WEAPON_IDS.map(id => <option key={id} value={id} disabled={id === profile.loadout[slot === 0 ? 1 : 0]}>{t(WEAPON_LABELS[id])}</option>)}</select></label>)}
     </PixelPanel>
-    <footer><PixelButton onClick={() => go("start")}>タイトルへ</PixelButton><PixelButton onClick={() => go("rooms")}>オンライン対戦</PixelButton><PixelButton onClick={() => go("battle")}>プラクティスへ</PixelButton></footer>
+    <footer><PixelButton onClick={() => go("start")}>{t("タイトルへ")}</PixelButton><PixelButton onClick={() => go("rooms")}>{t("オンライン対戦")}</PixelButton><PixelButton onClick={() => go("battle")}>{t("プラクティスへ")}</PixelButton></footer>
   </section>;
 };
 const Settings = ({ onBack, onReplay }: { readonly onBack: () => void; readonly onReplay: () => void }) => {
+  const { t } = useLanguage();
   const [displayScale, setDisplayScale] = useState(loadDisplayScale);
   const [profile, setProfile] = useState(loadProfile), [rig] = useState(createCameraRig);
   const update = (patch: Partial<typeof profile>) => { const next = { ...profile, ...patch }; setProfile(next); saveProfile(next); setAudioSettings(next.volume, next.muted); };
-  return <section className="world-settings"><h1>整備と設定</h1><PixelPanel>
-    <label>音量 {Math.round(profile.volume * 100)}%<input aria-label="音量" type="range" min="0" max="100" value={profile.volume * 100} onChange={e => update({ volume: Number(e.target.value) / 100 })} /></label>
-    <PixelButton onClick={() => update({ muted: !profile.muted })}>{profile.muted ? "音を出す" : "音を消す"}</PixelButton>
+  return <section className="world-settings"><h1>{t("整備と設定")}</h1><PixelPanel>
+    <LanguageSelect />
+    <label>{t("音量")} {Math.round(profile.volume * 100)}%<input aria-label={t("音量")} type="range" min="0" max="100" value={profile.volume * 100} onChange={e => update({ volume: Number(e.target.value) / 100 })} /></label>
+    <PixelButton onClick={() => update({ muted: !profile.muted })}>{profile.muted ? t("音を出す") : t("音を消す")}</PixelButton>
     <CameraSettingsPanel rig={rig} />
-    <label>機体の表示サイズ<select aria-label="機体の表示サイズ" value={displayScale} onChange={e => { const value = Number(e.target.value); setDisplayScale(value); saveDisplayScale(value); }}><option value={12}>等倍</option><option value={9}>0.75倍（従来）</option></select></label>
-    <PixelButton onClick={onReplay}>イントロを再生</PixelButton>
-    <small>この端末に保存されます。</small>
-  </PixelPanel><PixelButton onClick={onBack}>ロビーに戻る</PixelButton></section>;
+    <label>{t("機体の表示サイズ")}<select aria-label={t("機体の表示サイズ")} value={displayScale} onChange={e => { const value = Number(e.target.value); setDisplayScale(value); saveDisplayScale(value); }}><option value={12}>{t("等倍")}</option><option value={9}>{t("0.75倍（従来）")}</option></select></label>
+    <PixelButton onClick={onReplay}>{t("イントロを再生")}</PixelButton>
+    <small>{t("この端末に保存されます。")}</small>
+  </PixelPanel><PixelButton onClick={onBack}>{t("ロビーに戻る")}</PixelButton></section>;
 };

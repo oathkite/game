@@ -1,7 +1,7 @@
 import { expect, test } from "@playwright/test";
 for (const count of [2, 4]) {
 test(`quick ${count === 2 ? "1v1" : "2v2"} assigns balanced teams and starts when everyone is ready`, async ({ browser }) => {
-  const contexts = await Promise.all(Array.from({ length: count }, () => browser.newContext({ viewport: { width: 1440, height: 900 } })));
+  const contexts = await Promise.all(Array.from({ length: count }, () => browser.newContext({ locale: "ja-JP", viewport: { width: 1440, height: 900 } })));
   const pages = await Promise.all(contexts.map(c => c.newPage()));
   try {
     for (const page of pages) {

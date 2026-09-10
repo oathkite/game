@@ -1,7 +1,9 @@
+import { useLanguage } from "@/i18n/locale";
 import { useEffect, useRef } from "react";
 import { Application } from "pixi.js";
 import { loadSpriteTanks } from "@/prototype/spriteTank";
 export const TankPortrait = () => {
+  const { t } = useLanguage();
   const ref = useRef<HTMLDivElement>(null);
   useEffect(() => {
     let disposed = false, cleanup = () => {};
@@ -20,5 +22,5 @@ export const TankPortrait = () => {
     void start().catch(console.error);
     return () => { disposed = true; cleanup(); };
   }, []);
-  return <div ref={ref} className="tank-portrait" role="img" aria-label="カエルのパイロットと黄色いケロポッド" />;
+  return <div ref={ref} className="tank-portrait" role="img" aria-label={t("カエルのパイロットと黄色いケロポッド")} />;
 };
