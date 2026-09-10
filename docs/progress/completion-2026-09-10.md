@@ -404,3 +404,11 @@ heartbeatはUI共同調整時にPAUSED。本ゴールは現在のタスクで進
 - 原因は対戦中のbroadcastがlab.frameだけで、切断によるlobby.ownerId変更を既存接続へ配信していなかったこと。Node/DOともlobby参照が変わったときだけroom.snapshotを先行配信し、毎tickの重複配信を避けた。
 - 復帰後の全接続ownerId一致をassert。修正後100部屋・125秒・実保存・片道125msで200再戦/6500移動、保存復元一致まで通過（131.91秒）。server68件/TypeScriptと配信版8ブラウザー対戦通過。
 - 修正版1時間試験は **session72311**、ログ `/tmp/keropod-soak-3600-owner-fix.log` で開始。90534/52939/80269/85978は終了済み。新実行はまだ合格扱いにしない。
+
+## WebKitの画面コード再取得を修正
+
+- 再読み込み時にsceneRetryを付け、通常importが再び失敗した場合だけbuild manifestから画面entryを新しいquery付きURLで取得。通常のVite依存/CSS preloadを先に通し、通常起動の追加取得を避ける。
+- manifestはassets/chunks.jsonとして配信。RoomScreen/NetworkLab/CameraPrototypeが対象。同一origin assets内のJSのみを解決し、manifest取得失敗は既存エラー画面で再試行可能。
+- WebKitの再現試験を2回連続失敗→通信復旧→再読み込み→練習表示・高さ確認へ拡張。Chromium/Firefox/WebKit全33 E2E、client/e2e TypeScript/diff check通過。
+- Chromiumタイトル1,861,268B、初回練習5,295,079Bで転送目標を維持。実Safari/iOSの確認は別途必要。
+- 1時間soak72311は258秒時点RSS465MB/heap74MBで実行中。まだ完走扱いにしない。

@@ -1,3 +1,4 @@
+import { loadScene } from "./loadScene";
 import { SceneBoundary } from "./SceneBoundary";
 import { AudioControls } from "./AudioControls";
 import { LanguageSelect } from "@/i18n/LanguageSelect";
@@ -17,9 +18,9 @@ import { WindLeaves } from "./WindLeaves";
 import { worldArt } from "./assets";
 import "./worldUi.css";
 
-const RoomScreen = lazy(() => import("./RoomScreen").then(module => ({ default: module.RoomScreen })));
-const NetworkLab = lazy(() => import("@/networkLab/NetworkLab").then(module => ({ default: module.NetworkLab })));
-const CameraPrototype = lazy(() => import("@/prototype/CameraPrototype").then(module => ({ default: module.CameraPrototype })));
+const RoomScreen = lazy(() => loadScene("src/worldUi/RoomScreen.tsx", () => import("./RoomScreen")).then(module => ({ default: module.RoomScreen })));
+const NetworkLab = lazy(() => loadScene("src/networkLab/NetworkLab.tsx", () => import("@/networkLab/NetworkLab")).then(module => ({ default: module.NetworkLab })));
+const CameraPrototype = lazy(() => loadScene("src/prototype/CameraPrototype.tsx", () => import("@/prototype/CameraPrototype")).then(module => ({ default: module.CameraPrototype })));
 
 type Scene = "start" | "lobby" | "settings" | "battle" | "result" | "network" | "rooms";
 export const WorldScenes = () => {

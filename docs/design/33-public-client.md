@@ -21,3 +21,9 @@ KEROPODの入口を`/`へ統合。`?prototype=world`も同じ画面になる。
 - アセットの配信最適化と正規pack登録。現在の生成素材を使用しているが、見た目の最終レビューは未完了。
 - 日英表示、イントロ、音のイベント同期、診断、長時間/遅延/切断試験。
 - 最後に承認済みデザイン原案と比較してUIを調整。
+
+## 画面コードの再取得
+
+配信buildは`assets/chunks.json`を出力する。通常はViteのdynamic importとCSS preloadを使い、初期表示ではmanifestを取得しない。
+画面取得エラーからの再読み込みでは、URLにsceneRetryを付ける。通常importが再び失敗した場合だけ、manifestにある同一originの画面entryを新しいquery付きURLで取得する。WebKitで失敗したmodule URLが再読み込み後も再取得されないケースへの対応。
+再読み込みURLは既存の部屋queryを保持する。manifest取得失敗もエラー画面へ戻し、無限自動再試行はしない。配信時はmanifestを他のassetsと一緒に含める。

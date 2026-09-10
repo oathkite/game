@@ -7,7 +7,7 @@ export class SceneBoundary extends Component<Props, { readonly failed: boolean }
   override render() {
     if (this.state.failed) return <section className="world-content" role="alert">
       <p>{this.props.message}</p>
-      <button className="pixel-button" onClick={() => location.reload()}>{this.props.retryLabel}</button>
+      <button className="pixel-button" onClick={() => { const url = new URL(location.href); url.searchParams.set("sceneRetry", String(Date.now())); location.replace(url.href); }}>{this.props.retryLabel}</button>
     </section>;
     return this.props.children;
   }

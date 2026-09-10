@@ -51,14 +51,19 @@ test("production allocation uses the same origin when no separate server is conf
 });
 
 test("a failed battle chunk offers a reload instead of a blank screen", async ({ page }) => {
-  await page.route("**/assets/CameraPrototype-*.js", route => route.abort());
+  await page.route("**/assets/CameraPrototype-*.js*", route => route.abort());
   await page.goto("/");
   await page.getByRole("button", { name: "はじめる", exact: true }).click();
   await page.getByRole("button", { name: "プラクティスへ", exact: true }).click();
   await expect(page.getByRole("alert")).toContainText("画面を読み込めませんでした");
-  await page.unroute("**/assets/CameraPrototype-*.js");
+  await page.getByRole("button", { name: "再読み込み", exact: true }).click();
+  await page.getByRole("button", { name: "はじめる", exact: true }).click();
+  await page.getByRole("button", { name: "プラクティスへ", exact: true }).click();
+  await expect(page.getByRole("alert")).toContainText("画面を読み込めませんでした");
+  await page.unroute("**/assets/CameraPrototype-*.js*");
   await page.getByRole("button", { name: "再読み込み", exact: true }).click();
   await page.getByRole("button", { name: "はじめる", exact: true }).click();
   await page.getByRole("button", { name: "プラクティスへ", exact: true }).click();
   await expect(page.getByTestId("camera-world")).toHaveAttribute("data-loaded", "true");
+  expect((await page.getByTestId("camera-world").boundingBox())!.height).toBeGreaterThan(300);
 });
