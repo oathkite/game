@@ -472,3 +472,11 @@ heartbeatはUI共同調整時にPAUSED。本ゴールは現在のタスクで進
 - NetworkFieldはpose更新前に公開済みshotの武器を設定し、発射直後の1frameで前武器の砲口を使わない。
 - 検証：client全197件、client/e2e typecheck、実Pixiの連装3砲口/反動追従/消去test、runtime24files同一性通過。元素材の人間承認や全画面美観の承認を代替しない。
 - 次は大破遷移・残骸グレースケール・煙/着地土煙を接続。1時間soak session72311は1969秒まで進行、未完走。
+
+### 大破から残骸への姿勢とグレースケール
+
+- 生存→HP0を観測したときだけbaseline-v2 pilot 7/13/14を120/330/150ms再生し、600msで15（残骸）へ遷移する。初期状態ですでにHP0なら大破を再発火しない。再戦でHPが戻ると次の撃破を新しく受け付ける。
+- 残骸へ移った時点で車体の8 artpx沈み込み・砲身18度下降・機体全体のdesaturateを適用。背景/名前plate/チーム色はfilter対象外。通常状態でfilter解除、描画器破棄時にfilterも破棄。毎frameでfilter配列を作り直さない。
+- reduced-motionは大破モーションを省き残骸へ直行。位置・当たり判定・HP確定は変更しない。
+- 検証：大破境界/途中参加/繰り返し防止/再戦のunitを先に失敗確認、client全198件とclient/e2e typecheck通過。大破→残骸の時間経過とfilterの有無を実Pixi browser testでも確認。
+- ここでは大破の搭乗者姿勢と残骸表示を接続。爆発3連・損傷煙・着地土煙のSpriteは次工程。1時間soakはsession72311で2073秒まで進行、未完走。

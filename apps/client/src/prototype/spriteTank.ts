@@ -1,7 +1,7 @@
 import { muzzlePose } from "@/game/muzzlePose";
 import { createTankAnimation } from "./tankAnimation";
 import { teamColor } from "@/worldUi/teamColors";
-import { Assets, Container, Graphics, Rectangle, Sprite, Text, Texture } from "pixi.js";
+import { Assets, ColorMatrixFilter, Container, Graphics, Rectangle, Sprite, Text, Texture } from "pixi.js";
 import type { TankColors, WeaponId } from "@game/protocol";
 import type { TankPose, TankView } from "@/game/tankView";
 
@@ -83,6 +83,9 @@ const makeTank = (frame: Frame, nickname: string, color: string): TankView & { s
   const team = new Graphics().roundRect(-labelWidth / 2, -21, 4, 30, 2).fill(color);
   label.addChild(plate, team, name, health);
   const animate = createTankAnimation();
+  const grayscale = new ColorMatrixFilter();
+  grayscale.desaturate();
+  let wasWreck = false;
   const reducedMotion = matchMedia("(prefers-reduced-motion: reduce)");
   return {
     world, label,
@@ -100,8 +103,10 @@ const makeTank = (frame: Frame, nickname: string, color: string): TankView & { s
       const recoil = pose.hp <= 0 || reducedMotion.matches ? 0 : pose.recoil ?? 0;
       body.x = recoil ? -Math.round(recoil * 2 / 3) / 12 : 0;
       weapon.x = -8 - recoil / 12;
-      body.y = pose.hp <= 0 ? 8 / 12 : 0;
-      gun.rotation = (pose.hp <= 0 ? 18 : -pose.elevation) * Math.PI / 180;
+      const wreck = animation.pilot === 15;
+      if (wreck !== wasWreck) { rig.filters = wreck ? [grayscale] : null; wasWreck = wreck; }
+      body.y = wreck ? 8 / 12 : 0;
+      gun.rotation = (wreck ? 18 : -pose.elevation) * Math.PI / 180;
       aim.visible = pose.hp > 0 && pose.aiming;
       flashes.forEach(sprite => { sprite.visible = false; });
       if (pose.hp > 0 && !reducedMotion.matches) (pose.shotFlashes ?? []).forEach((flash, i) => {
@@ -114,6 +119,6 @@ const makeTank = (frame: Frame, nickname: string, color: string): TankView & { s
       label.position.set((pose.x + 0.5) * cell, (pose.y - 14) * cell);
       health.clear().rect(-38, 3, 76, 3).fill(0x435568).rect(-38, 3, 76 * Math.max(0, pose.hp) / 100, 3).fill(color);
     },
-    destroy: () => { world.destroy({ children: true }); label.destroy({ children: true }); },
+    destroy: () => { world.destroy({ children: true }); label.destroy({ children: true }); grayscale.destroy(); },
   };
 };

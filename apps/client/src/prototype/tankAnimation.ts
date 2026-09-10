@@ -2,14 +2,19 @@ type Pose = { readonly x: number; readonly hp: number; readonly falling?: boolea
 /** Frame timings from baseline-v2's authored idle/move/low-hp clips. */
 export const createTankAnimation = () => {
   let lastX: number | null = null, movedAt = -Infinity, beganAt = 0, previous = "", wasFalling = false, landedAt = -Infinity;
+  let lastHp: number | null = null, destroyedAt = -Infinity;
   return (pose: Pose, now: number, reducedMotion = false) => {
     if (lastX !== null && Math.abs(lastX - pose.x) > 0.001) movedAt = now;
     lastX = pose.x;
     if (wasFalling && !pose.falling) landedAt = now;
     wasFalling = pose.falling === true;
-    const state = pose.hp <= 0 ? "wreck" : pose.flash ? "hit" : pose.falling ? "fall" : now - landedAt < 180 ? "land" : now - movedAt < 150 ? "move" : pose.hp <= 25 ? "low" : "idle";
+    if (lastHp !== null && lastHp > 0 && pose.hp <= 0) destroyedAt = now;
+    if (pose.hp > 0) destroyedAt = -Infinity;
+    lastHp = pose.hp;
+    const state = pose.hp <= 0 ? !reducedMotion && now - destroyedAt < 600 ? "destroy" : "wreck" : pose.flash ? "hit" : pose.falling ? "fall" : now - landedAt < 180 ? "land" : now - movedAt < 150 ? "move" : pose.hp <= 25 ? "low" : "idle";
     if (state !== previous) { previous = state; beganAt = now; }
     const elapsed = reducedMotion ? 0 : Math.max(0, now - beganAt);
+    if (state === "destroy") return { tracks: 0, pilot: now - destroyedAt < 120 ? 7 : now - destroyedAt < 450 ? 13 : 14 };
     if (state === "wreck") return { tracks: 3, pilot: 15 };
     if (state === "hit") return { tracks: 0, pilot: 7 };
     if (state === "fall") return { tracks: 0, pilot: 11 };
