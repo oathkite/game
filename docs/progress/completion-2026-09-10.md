@@ -175,3 +175,9 @@ heartbeatはUI共同調整時にPAUSED。本ゴールは現在のタスクで進
 - チーム選択のA/B表記を8色の色名と選択色帯へ変更。HUDの読み上げとオンライン/練習の勝利表示も同じ色名を使用。
 - 内部t0〜t7や編成ルールは変更しない。色名は日英辞書へ登録。
 - 色/翻訳unit、client/e2e TypeScript、日本語custom対戦・復帰と英語quick対戦の2 E2E通過。
+
+## 11:40 音設定の共通化
+
+- 設定/練習メニュー/オンラインメニューで同じAudioControlsを使用。音量とmuteを即時反映し、profileへ保存。
+- 練習中muteが保存されない不一致を解消。保存時は最新profileへ音設定だけを上書きし、名前/装備を巻き戻さない。
+- 英語productionで練習の音変更→設定画面→reload維持を含む3 E2E、PC/touchオンライン対戦E2E、client/e2e TypeScript通過。

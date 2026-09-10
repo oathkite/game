@@ -1,3 +1,4 @@
+import { AudioControls } from "./AudioControls";
 import { LanguageSelect } from "@/i18n/LanguageSelect";
 import { useLanguage } from "@/i18n/locale";
 import { StartScreen } from "./StartScreen";
@@ -72,12 +73,10 @@ const Lobby = ({ go }: { readonly go: (scene: Scene) => void }) => {
 const Settings = ({ onBack, onReplay }: { readonly onBack: () => void; readonly onReplay: () => void }) => {
   const { t } = useLanguage();
   const [displayScale, setDisplayScale] = useState(loadDisplayScale);
-  const [profile, setProfile] = useState(loadProfile), [rig] = useState(createCameraRig);
-  const update = (patch: Partial<typeof profile>) => { const next = { ...profile, ...patch }; setProfile(next); saveProfile(next); setAudioSettings(next.volume, next.muted); };
+  const [rig] = useState(createCameraRig);
   return <section className="world-settings"><h1>{t("整備と設定")}</h1><PixelPanel>
     <LanguageSelect />
-    <label>{t("音量")} {Math.round(profile.volume * 100)}%<input aria-label={t("音量")} type="range" min="0" max="100" value={profile.volume * 100} onChange={e => update({ volume: Number(e.target.value) / 100 })} /></label>
-    <PixelButton onClick={() => update({ muted: !profile.muted })}>{profile.muted ? t("音を出す") : t("音を消す")}</PixelButton>
+    <AudioControls />
     <CameraSettingsPanel rig={rig} />
     <label>{t("機体の表示サイズ")}<select aria-label={t("機体の表示サイズ")} value={displayScale} onChange={e => { const value = Number(e.target.value); setDisplayScale(value); saveDisplayScale(value); }}><option value={12}>{t("等倍")}</option><option value={9}>{t("0.75倍（従来）")}</option></select></label>
     <PixelButton onClick={onReplay}>{t("イントロを再生")}</PixelButton>

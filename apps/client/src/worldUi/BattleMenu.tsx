@@ -1,3 +1,4 @@
+import { AudioControls } from "./AudioControls";
 import { useLanguage } from "@/i18n/locale";
 import { useEffect, useRef, useState } from "react";
 export const BattleMenu = ({ close, surrender, exit, finished, diagnostics, spectator = false }: { readonly diagnostics?: string; readonly spectator?: boolean; readonly close: () => void; readonly surrender: () => void; readonly exit: (() => void) | undefined; readonly finished: boolean }) => {
@@ -8,6 +9,7 @@ export const BattleMenu = ({ close, surrender, exit, finished, diagnostics, spec
   useEffect(() => { dialog.current?.showModal(); }, []);
   return <dialog ref={dialog} className="battle-menu-panel" aria-label={t("対戦設定")} onCancel={e => { e.preventDefault(); close(); }}>
     <button autoFocus onClick={close}>{t("対戦に戻る")}</button>{!spectator && <button disabled={finished} onClick={surrender}>{t("降参")}</button>}<button onClick={exit}>{t("ロビーに戻る")}</button>
+    <AudioControls />
     {!spectator && <p>{t("A / D・← / →：移動　W / S・↑ / ↓：角度")}<br />{t("Space：溜めて発射　Q / E：武器　Tab：機体を順に見る")}</p>}
     {diagnostics && <details><summary>{t("試合の診断情報")}</summary>
       <textarea ref={text} aria-label={t("試合の診断情報")} readOnly value={diagnostics} rows={7} onFocus={e => e.currentTarget.select()} />

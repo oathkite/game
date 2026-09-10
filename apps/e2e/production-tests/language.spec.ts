@@ -32,3 +32,22 @@ test("English practice exposes translated instruments, camera controls and pause
   await page.getByRole("button", { name: "Resume battle", exact: true }).click();
   await expect(page.getByRole("heading", { name: "Take a breather", exact: true })).not.toBeVisible();
 });
+test("practice audio preferences persist into settings and after reload", async ({ page }) => {
+  await page.goto("/");
+  await page.getByRole("button", { name: "Play", exact: true }).click();
+  await page.getByRole("button", { name: "Practice", exact: true }).click();
+  await expect(page.getByTestId("camera-world")).toHaveAttribute("data-loaded", "true");
+  await page.getByRole("button", { name: "Open settings", exact: true }).click();
+  await page.getByRole("slider", { name: "Volume" }).focus();
+  await page.keyboard.press("Home");
+  await page.getByRole("button", { name: "Mute", exact: true }).click();
+  await page.getByRole("button", { name: "Back to lobby", exact: true }).click();
+  await page.getByRole("button", { name: "Settings", exact: true }).click();
+  await expect(page.getByRole("slider", { name: "Volume" })).toHaveValue("0");
+  await expect(page.getByRole("button", { name: "Unmute", exact: true })).toBeVisible();
+  await page.reload();
+  await page.getByRole("button", { name: "Play", exact: true }).click();
+  await page.getByRole("button", { name: "Settings", exact: true }).click();
+  await expect(page.getByRole("slider", { name: "Volume" })).toHaveValue("0");
+  await expect(page.getByRole("button", { name: "Unmute", exact: true })).toBeVisible();
+});

@@ -1,3 +1,4 @@
+import { AudioControls } from "@/worldUi/AudioControls";
 import { teamColorName } from "@/worldUi/teamColors";
 import { useLanguage } from "@/i18n/locale";
 import { tiltOf } from "@game/sim";
@@ -40,7 +41,7 @@ const Battle = ({ store, worldArt, onExit, onResult }: { readonly store: MatchSt
   const view = useSyncExternalStore(store.subscribe, store.getView, store.getView);
   const [size, setSize] = useState({ width: innerWidth, height: innerHeight });
   const [sceneReady, setSceneReady] = useState(false);
-  const [menu, setMenu] = useState(false), [muted, setMuted] = useState(() => loadProfile().muted), [followShot, setFollowShot] = useState(true);
+  const [menu, setMenu] = useState(false), [followShot, setFollowShot] = useState(true);
   const wasMenuOpen = useRef(false);
   const dialog = useRef<HTMLDialogElement>(null), menuButton = useRef<HTMLButtonElement>(null);
   const rig = useMemo(createCameraRig, []);
@@ -70,7 +71,6 @@ const Battle = ({ store, worldArt, onExit, onResult }: { readonly store: MatchSt
   const pose = view.control ?? actor;
   const ground = view.mask && pose ? tiltOf(view.mask, pose) : 0;
   const focusActor = (): void => rig.focus(actorPoint(view), "actor", matchMedia("(prefers-reduced-motion: reduce)").matches);
-  const toggleMute = (): void => { setMuted(!muted); setAudioSettings(loadProfile().volume, !muted); };
   return <main className="kp-root" onContextMenu={(e) => e.preventDefault()} onPointerDown={() => unlockAudio()}>
     {worldArt ? <BattleRoster players={hudPlayers} actorId={String(view.currentSeat)} clock={<Timer deadlineAt={view.deadlineAt} clockOffset={0} myTurn={enabled} />} wind={view.wind.value} onMenu={() => { input.cancel(); setMenu(true); }} /> : <header className="kp-topbar">
       <div className="kp-brand">KEROPOD <span>{t("プラクティス")}</span></div>
@@ -95,7 +95,7 @@ const Battle = ({ store, worldArt, onExit, onResult }: { readonly store: MatchSt
     </footer>}
     <dialog ref={dialog} className="kp-dialog" onCancel={(e) => { e.preventDefault(); setMenu(false); }}>
       <h2>{t("ひと息つこう")}</h2><p>{t("プラクティスは進行中です。")}</p>
-      <button aria-pressed={muted} onClick={toggleMute}>{t("サウンド")} {muted ? "OFF" : "ON"}</button>
+      <AudioControls />
       <CameraSettingsPanel rig={rig} />
       <p className="kp-shortcuts">{t("A / D・← / →：移動")}<br />{t("W / S・↑ / ↓：角度　Space：発射")}<br />{t("Q / E：武器　Tab：機体を順に見る")}<br />{t("Shift + 矢印：見回す　C：手番へ")}</p>
       {onResult && <button onClick={() => store.surrender()}>{t("降参して対戦を終える")}</button>}
