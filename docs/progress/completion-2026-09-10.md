@@ -163,3 +163,9 @@ heartbeatはUI共同調整時にPAUSED。本ゴールは現在のタスクで進
 - 各部屋で同じcommandIdによる同時発射、actor接続のterminate、generation2で同一identity復帰、同じ発射の重複拒否、次ターンを確認。
 - 全クライアントの受信frameが所属matchId/8人rosterのみであることを確認。server TypeScriptと試験通過。
 - これはローカル並行動作smoke test。DOの多数部屋負荷、帯域/RTT、長時間soak、世界各地域からの性能保証は別途必要。
+
+## 11:33 試合全体の保存復元
+
+- 両マップの8人・3チーム・混成武器で終了まで射撃を進める試験を追加。毎ターンの保存復元、地形のバイト一致、射撃重複拒否、状態/結果一致を確認。
+- engine全130テスト、server全60テスト通過。通常runのedge2件は環境指定がないためskip（直近の実edge個別実行では通過済み）。engine TypeScript通過。
+- 時刻を進める決定論的シミュレーション試験であり、実時間soakの代替とは扱わない。
