@@ -1,3 +1,9 @@
+import { mkdtemp, rm } from "node:fs/promises";
+import { tmpdir } from "node:os";
+import { join } from "node:path";
+import { fileRoomStore } from "../src/rooms/fileStore";
+import type { RoomSnapshot } from "../src/rooms/runtime";
+import { serializeBattle } from "@game/engine/multiplayer";
 import { CLIENT_BUILD } from "@game/protocol/build";
 import { roomOutputSchema } from "@game/protocol/v2-rooms";
 import { expect, it } from "vitest";
@@ -11,7 +17,10 @@ it(`keeps ${roomCount} simultaneous eight-player battles isolated through firing
   const poll = <T>(read: () => T, options = { timeout: 15000 }) => expect.poll(read, options);
   const wss = new WebSocketServer({ host: "127.0.0.1", port: 0 });
   await new Promise<void>(resolve => wss.once("listening", resolve));
-  const service = attachRooms(wss), sockets: WebSocket[] = [];
+  const directory = process.env.ROOM_LOAD_PERSIST === "1" ? await mkdtemp(join(tmpdir(), "keropod-load-")) : null;
+  const store = directory ? fileRoomStore(directory) : null;
+  const saved = new Map<string, RoomSnapshot>();
+  const service = attachRooms(wss, store ? { save: async snapshot => { await store.save(snapshot); saved.set(snapshot.state.roomId, snapshot); } } : {}), sockets: WebSocket[] = [];
   const connect = async () => {
     const ws = new WebSocket(`ws://127.0.0.1:${(wss.address() as { port: number }).port}`);
     const messages: Output[] = []; sockets.push(ws);
@@ -67,5 +76,24 @@ it(`keeps ${roomCount} simultaneous eight-player battles isolated through firing
         expect(frames.every(frame => frame.matchId === battle.matchId && frame.players.length === 8)).toBe(true);
       }
     }));
-  } finally { sockets.forEach(socket => socket.terminate()); service.close(); await new Promise<void>(resolve => wss.close(() => resolve())); }
+    if (store) {
+      expect(saved.size).toBe(roomCount);
+      for (const battle of battles) {
+        const snapshot = saved.get(battle.roomId)!;
+        expect(snapshot.state.battle?.state.matchId).toBe(battle.matchId);
+      }
+    }
+  } finally {
+    sockets.forEach(socket => socket.terminate()); service.close();
+    await new Promise<void>(resolve => wss.close(() => resolve()));
+    if (store && directory) {
+      try {
+        await poll(() => [...saved.values()].every(snapshot => snapshot.state.sessions.every(session => session.connectionId === null))).toBe(true);
+        const restored = await store.load(Date.now());
+        expect(restored.length).toBe(saved.size);
+        expect(restored.every(room => room.battle?.roster.turnId === 2 && room.sessions.length === 8)).toBe(true);
+        for (const room of restored) expect(serializeBattle(room.battle!)).toEqual(saved.get(room.roomId)!.state.battle);
+      } finally { await rm(directory, { recursive: true, force: true }); }
+    }
+  }
 }, 120000);

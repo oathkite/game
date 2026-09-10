@@ -52,3 +52,13 @@ ROOM_LOAD_COUNT=100 pnpm --filter @game/server exec vitest run test/concurrent-r
 
 通常testでは4部屋で実行する。環境変数は1〜100の整数のみ。
 これは同一プロセスのNode transport・メモリ保存の短時間試験であり、DO/Directory/永続I/O/地域RTT/長時間の容量gateを証明しない。
+
+`ROOM_LOAD_PERSIST=1`を付けると、一時ディレクトリで実際の原子的JSONファイル保存を使用する。
+全接続を閉じ、切断状態の保存を待ってから全室を読み直し、保存時のBattleSnapshotとの一致を検証する。
+一時保存にはセッショントークンを含むため、テスト終了時にディレクトリごと削除し、ログへ内容を出さない。
+
+```sh
+ROOM_LOAD_COUNT=100 ROOM_LOAD_PERSIST=1 pnpm --filter @game/server exec vitest run test/concurrent-rooms.test.ts
+```
+
+このモードもローカルファイルI/Oの短時間試験であり、SQLite DO実環境の保存性能や長時間安定性とは区別する。
