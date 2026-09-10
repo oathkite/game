@@ -7,12 +7,12 @@
 | --- | --- | --- |
 | 初期タイトル転送2MB | production-tests/entry.spec.ts、cold新context、1,861,002B | ローカル配信buildで通過。実地域の起動時間とは別 |
 | 初回対戦まで8MB | 練習5,294,817B、production-rooms.config.tsの独立8 contextで各5,296,962〜5,296,963B | 配信buildのタイトル→ロビー→8人オンライン戦場で通過。実地域の待ち時間とは別 |
-| 独立8クライアントで試合完走 | eight-players.spec.ts、独立8 contextで4v4入室→準備→射撃共有→青4名降参→全員同じ結果→8名部屋復帰 | Chromium/local edgeで通過。射撃のみで決着する長時間実戦・実機の証拠とは別 |
+| 独立8クライアントで試合完走 | eight-players.spec.ts、独立8 contextで4v4入室→準備→射撃共有→青4名降参→全員同じ結果→8名部屋復帰 | Chromium/Firefox/WebKit配信build・local edgeで通過。射撃のみで決着する長時間実戦・実機の証拠とは別 |
 | 1時間soak | 初回122秒でowner配信不具合を検出・修正。100部屋125秒通過後3600秒を再開、session72311 | 修正版実行中。1時間の完走結果は未確認 |
 | 全編成・射程・復元 | engine/map/server tests、進捗記録参照 | 自動検証済み。人間による公平感・バランス観察とは別 |
 | 世界UI最終原案一致 | 浮島背景・濃紺パネル・中央timer・円形角度計・100目盛り実装 | 地形表層や情報密度も含めて最終比較を継続。人間の最終承認は未記録 |
 | 正式art pack | runtime manifest/hash/fidelity check | 原素材の人間承認を自動記録しない。正式pack登録条件を残す |
-| 実機・browser対応 | Chromium/Firefox/WebKit配信全33件（取得失敗の繰返し復帰を含む） | 自動試験通過。実iOS/Android/Safari/Edgeの入室〜結果は別途必要 |
+| 実機・browser対応 | Chromium/Firefox/WebKit配信全33件と各8接続オンライン対戦（取得失敗の繰返し復帰を含む） | 自動試験通過。実iOS/Android/Safari/Edgeの入室〜結果は別途必要 |
 | mobile描画・入力・移動・復帰p95 | 機能E2E、ローカル遅延試験 | 型番/OS固定の実機SLO・地域測定は未完 |
 | DO容量・費用 | local Wrangler復元、Node100部屋 | 実DO容量を証明しない。stage構成・費用予算・alarm・測定が必要 |
 | 運用・法務・公開 | 通報保存/期限/診断/rate limit実装 | 運営主体・保持目的/削除窓口・対象地域/年齢・規約/privacy・監視担当の判断が必要 |

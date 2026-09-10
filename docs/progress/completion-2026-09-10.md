@@ -412,3 +412,10 @@ heartbeatはUI共同調整時にPAUSED。本ゴールは現在のタスクで進
 - WebKitの再現試験を2回連続失敗→通信復旧→再読み込み→練習表示・高さ確認へ拡張。Chromium/Firefox/WebKit全33 E2E、client/e2e TypeScript/diff check通過。
 - Chromiumタイトル1,861,268B、初回練習5,295,079Bで転送目標を維持。実Safari/iOSの確認は別途必要。
 - 1時間soak72311は258秒時点RSS465MB/heap74MBで実行中。まだ完走扱いにしない。
+
+## Firefox/WebKitの配信版8人オンライン対戦
+
+- production-rooms.config.tsにも3 browser projectsを追加。FirefoxとWebKitで独立8 contextの4v4準備・射撃共有・降参決着・8名部屋復帰を通過。
+- Firefox16.0秒、WebKit約1.9分で試験完了。自動操作8 contextの総経過時間であり、1ユーザーの描画/入室SLOへ読み替えない。
+- Firefoxの累計転送5,266,930〜5,266,969B、WebKit5,267,423Bで全接続8MB以内。e2e TypeScript/diff check通過。実iOS/Android/Safari/Edgeは引き続き別gate。
+- soak72311は415秒時点RSS458MB/heap195MBで実行中。完走未確認。
