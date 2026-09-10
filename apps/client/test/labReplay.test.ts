@@ -2,7 +2,7 @@ import { expect, it } from "vitest";
 import { labFrameSchema } from "@game/protocol/v2-lab";
 import { presentLabReplay } from "../src/networkLab/labReplay";
 const player = { playerId: "p1", x: 20, y: 150, hp: 100, teamId: "t0", eliminated: false };
-const frame = labFrameSchema.parse({ type: "lab.frame", serverTime: 1000, eventSeq: 2, matchId: "m", turnId: 1, actorId: "p1", deadlineAt: 20000,
+const frame = labFrameSchema.parse({ type: "lab.frame", wind: 0, map: { id: "test", version: 1, width: 500, height: 225, surface: Array(500).fill(150) }, serverTime: 1000, eventSeq: 2, matchId: "m", turnId: 1, actorId: "p1", deadlineAt: 20000,
   players: Array.from({ length: 8 }, (_, i) => ({ ...player, playerId: `p${i + 1}`, y: 170, hp: 65 })),
   movement: { version: 2, type: "move.snapshot", matchId: "m", turnId: 1, playerId: "p1", eventSeq: 2, serverTime: 1000, x: 20, y: 150, facing: 1, stepsLeft: 30, ackMoveSeq: 0, stoppedByFall: false, eliminated: false },
   phase: "replaying", result: { type: "ongoing" }, terrainOps: [{ cx: 20, cy: 150, radius: 10 }],

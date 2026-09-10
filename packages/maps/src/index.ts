@@ -169,3 +169,5 @@ export const allMaps = (): readonly MapDefinition[] => MAP_NAMES.map((n) => defi
 export { heightsFromProfile, merge, slabs, solidBelow, type ProfilePoint, type Slab } from "./profile.js";
 export { columnsOfMask, decodeColumns, encodeColumns, simplify, slabsFromColumns, validateDrawing, type Drawing, type Run } from "./drawing.js";
 export { buildMapSpec, TEST_ARENA, type MapSpec } from "./spec.js";
+
+export { MULTIPLAYER_MAPS, MULTIPLAYER_MAP_LABELS, multiplayerMap } from "./catalog.js";

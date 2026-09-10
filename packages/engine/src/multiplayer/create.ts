@@ -8,5 +8,5 @@ export const createBattle = (members: readonly RosterMember[], seed: number, spe
   const { mask, spawns } = buildMapSpec(spec, members.length);
   const players = roster.members.map(member => ({ playerId: member.playerId, hp: HP_MAX,
     ...spawns[roster.turnRing.indexOf(member.playerId)]! }));
-  return { roster, players, mask, map: { id: spec.id, version: spec.version, width: spec.width, height: spec.height } };
+  return { roster, players, mask, map: { id: spec.id, version: spec.version, width: spec.width, height: spec.height, surface: [...spec.surface] } };
 };

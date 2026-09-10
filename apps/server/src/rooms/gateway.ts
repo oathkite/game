@@ -1,5 +1,5 @@
-import { randomUUID } from "node:crypto";
-import { TEST_ARENA } from "@game/maps";
+import { randomUUID, randomInt } from "node:crypto";
+import { MULTIPLAYER_MAPS } from "@game/maps";
 import { createLobby, joinLobby, leaveLobby, setLobbyConnection, editLobby, startLobby, createPreparedSession, fireInSession, moveInSession, surrenderInSession, forfeitInSession, tickSession, movementSnapshot, type LobbyState, type BattleSession } from "@game/engine/multiplayer";
 import { roomInputSchema } from "@game/protocol/v2-rooms";
 import type { LabFrame } from "@game/protocol/v2-lab";
@@ -20,7 +20,7 @@ const battleFrame = (room: Room): LabFrame => {
     players: state.players.map(p => { const member = room.lobby.members.find(m => m.playerId === p.playerId)!;
       return { ...p, teamId: member.teamId!, nickname: member.nickname, loadout: [...state.loadouts[p.playerId]!], eliminated: state.roster.eliminated.includes(p.playerId) }; }),
     movement: movementSnapshot(state.movement, now), phase: state.phase, result: state.result,
-    terrainOps: [...state.terrainOps], replay: replayFrame(state) };
+    terrainOps: [...state.terrainOps], wind: state.windState.value, map: state.map, replay: replayFrame(state) };
 };
 /** DEV room gateway. Tokens stay server-private; every command uses the socket's identity. */
 export const attachRooms = (wss: WebSocketServer) => {
@@ -74,7 +74,7 @@ export const attachRooms = (wss: WebSocketServer) => {
           if (room?.battle) { error("locked"); return; }
           if (room && room.lobby.members.length >= 8) { error("full"); return; }
           if (room) room.lobby = joinLobby(room.lobby, playerId, message.profile);
-          else rooms.set(roomId, { lobby: createLobby(roomId, playerId, message.profile, TEST_ARENA), battle: null });
+          else rooms.set(roomId, { lobby: createLobby(roomId, playerId, message.profile, MULTIPLAYER_MAPS[0]!), battle: null });
           token = randomUUID(); session = { roomId, playerId, socket, disconnectedAt: 0 }; sessions.set(token, session);
         }
         clearTimeout(handshake); send(socket, { type: "room.welcome", playerId: session.playerId, token });
@@ -87,7 +87,7 @@ export const attachRooms = (wss: WebSocketServer) => {
       if (message.type === "room.start") {
         const result = startLobby(room.lobby, session.playerId, message.revision);
         if (!result.setup) { error(result.reason); return; }
-        room.lobby = result.room; room.battle = createPreparedSession(result.setup, randomUUID(), Math.floor(Math.random() * 0xffffffff), Date.now());
+        room.lobby = result.room; room.battle = createPreparedSession(result.setup, randomUUID(), randomInt(0x100000000), Date.now());
         for (const s of members(session.roomId)) send(s.socket, snapshot(room)); broadcast(room); return;
       }
       if (message.type.startsWith("room.")) {

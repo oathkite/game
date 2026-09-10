@@ -102,9 +102,9 @@ export const NetworkLab = ({ worldArt = false, onExit, connection }: { readonly 
   const own = shownPlayers.find(p => p.playerId === playerId);
   const ownFacing = useRef<-1 | 1>(1);
   if (frame?.actorId === playerId) ownFacing.current = frame.movement.facing;
-  const ground = useMemo(() => own && presentation ? tiltOf(applyOps(maskFromHeights(Array.from({ length: 500 }, () => 150), 225), presentation.terrainOps), own) : 0, [own?.x, own?.y, frame?.eventSeq, frame?.matchId]);
+  const ground = useMemo(() => own && presentation && frame ? tiltOf(applyOps(maskFromHeights(frame.map.surface, frame.map.height), presentation.terrainOps), own) : 0, [own?.x, own?.y, frame?.eventSeq, frame?.matchId]);
   if (worldArt) return <main className="network-lab network-world">
-    <BattleRoster players={hudPlayers} actorId={frame?.actorId ?? ""} wind={0} clock={frame?.phase === "acting" ? Math.max(0, Math.ceil((frame.deadlineAt - serverNow) / 1000)) : "—"} onMenu={() => { input.cancel(); setMenu(true); }} />
+    <BattleRoster players={hudPlayers} actorId={frame?.actorId ?? ""} wind={frame?.wind ?? 0} clock={frame?.phase === "acting" ? Math.max(0, Math.ceil((frame.deadlineAt - serverNow) / 1000)) : "—"} onMenu={() => { input.cancel(); setMenu(true); }} />
     <span className="battle-sr" data-testid="identity">{playerId}</span><span className="battle-sr" data-testid="phase">{phaseLabel}</span>
     {frame && presentation ? <NetworkField blocked={menu || input.gauge.charging} frame={frame} players={shownPlayers} presentation={presentation} elevation={elevation} ownId={playerId} selectedWeapon={loadout[slot]} /> : <p role="status">{status}</p>}
     <BattleConsole player={hudPlayers.find(p => p.id === playerId)} steps={frame?.actorId === playerId ? frame.movement.stepsLeft : 0} tilt={ground} elevation={elevation} facing={ownFacing.current} power={input.gauge.value} loadout={loadout} slot={slot} disabled={!canAct || menu || input.gauge.charging} selectSlot={setSlot}>
@@ -120,9 +120,9 @@ export const NetworkLab = ({ worldArt = false, onExit, connection }: { readonly 
     <h1>KEROPOD 対戦同期テスト</h1>
     <p>あなた：<strong data-testid="identity">{playerId || "未割当"}</strong>　手番：<strong>{frame?.actorId ?? "—"}</strong>　{status}</p>
     <p>固定8席の開発用画面です。別タブを開くと別の席で参加します。射撃終了または20秒の期限で手番が交代します。</p>
-    <svg viewBox="0 0 500 225" aria-label="移動同期フィールド">
-      <defs><mask id="lab-terrain"><rect width="500" height="225" fill="white" />{presentation?.terrainOps.map((op, i) => <circle key={i} cx={op.cx} cy={op.cy} r={op.radius} fill="black" />)}</mask></defs>
-      <rect width="500" height="225" fill="#d9e9ef" /><path d="M0 150H500V225H0Z" fill="#657d56" mask="url(#lab-terrain)" />
+    <svg viewBox={`0 0 ${frame?.map.width ?? 500} ${frame?.map.height ?? 225}`} aria-label="移動同期フィールド">
+      <defs><mask id="lab-terrain"><rect width={frame?.map.width ?? 500} height={frame?.map.height ?? 225} fill="white" />{presentation?.terrainOps.map((op, i) => <circle key={i} cx={op.cx} cy={op.cy} r={op.radius} fill="black" />)}</mask></defs>
+      <rect width={frame?.map.width ?? 500} height={frame?.map.height ?? 225} fill="#d9e9ef" /><path d={frame ? `M0 ${frame.map.height} ${frame.map.surface.map((y, x) => `L${x} ${y}`).join(" ")} L${frame.map.width} ${frame.map.height}Z` : ""} fill="#657d56" mask="url(#lab-terrain)" />
       {presentation?.bullets.map((p, i) => <circle key={i} data-testid="lab-projectile" cx={p.x} cy={p.y} r="2" fill="#cf6b35" />)}
       {shownPlayers.map(p => <g key={p.playerId} data-testid={`tank-${p.playerId}`} opacity={p.eliminated ? .25 : 1} data-x={p.x.toFixed(3)} transform={`translate(${p.x},${p.y - 5})`}>
         <rect x="-5" y="-5" width="10" height="10" rx="2" fill={p.playerId === playerId ? "#cf6b35" : "#304659"} />

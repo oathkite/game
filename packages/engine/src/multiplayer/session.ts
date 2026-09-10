@@ -8,8 +8,12 @@ import { createMovement, type MovementState } from "./movement.js";
 import { moveBattle } from "./moveBattle.js";
 import { eliminatePlayers, nextTurn, outcome, type RosterState, type TeamOutcome } from "./rules.js";
 
+import { createBattleWind, advanceBattleWind, type BattleWind } from "./battleWind.js";
+
 type ResolvedShot = ReturnType<typeof resolveBattleShot>;
 export type BattleSession = {
+  readonly map: ReturnType<typeof createBattle>["map"];
+  readonly windState: BattleWind;
   readonly loadouts: Readonly<Record<string, Loadout>>; readonly ruleSetVersion: typeof RULE_SET_VERSION;
   readonly matchId: string; readonly roster: RosterState; readonly players: readonly BattlePlayer[];
   readonly mask: TerrainMask; readonly movement: MovementState; readonly startedAt: number;
@@ -28,7 +32,8 @@ const copyLoadouts = (battle: ReturnType<typeof createBattle>, supplied?: Readon
     if (!loadout) throw new Error("every member must have a valid loadout");
     return [p.playerId, [...loadout]];
   }));
-export const createBattleSession = (battle: ReturnType<typeof createBattle>, matchId: string, now: number, loadouts?: Readonly<Record<string, Loadout>>): BattleSession => ({
+export const createBattleSession = (battle: ReturnType<typeof createBattle>, matchId: string, now: number, loadouts?: Readonly<Record<string, Loadout>>, windSeed = 0): BattleSession => ({
+  windState: createBattleWind(windSeed),
   loadouts: copyLoadouts(battle, loadouts), ruleSetVersion: RULE_SET_VERSION,
   ...battle, matchId, startedAt: now, phase: "acting", result: { type: "ongoing" }, terrainOps: [], replay: null, lastFire: null,
   movement: movementFor({ ...battle, matchId }, now, 1),
@@ -39,7 +44,7 @@ const advance = (state: BattleSession, now: number): BattleSession => {
     return { ...state, phase: "finished", result: result.type === "ongoing" ? { type: "draw" } : result,
       movement: { ...state.movement, locked: true, eventSeq: state.movement.eventSeq + 1 } };
   }
-  const next = { ...state, roster, phase: "acting" as const, replay: null };
+  const next = { ...state, windState: advanceBattleWind(state.windState), roster, phase: "acting" as const, replay: null };
   return { ...next, movement: movementFor(next, now, state.movement.eventSeq + 1) };
 };
 export const tickSession = (state: BattleSession, now: number): BattleSession => {
@@ -68,7 +73,7 @@ export const fireInSession = (state: BattleSession, playerId: string, raw: unkno
   if (now < state.movement.startsAt || now >= state.movement.deadlineAt) return reject("outside-turn");
   if (command.ackMoveSeq !== state.movement.ackMoveSeq) return reject("move-sync-required");
   const weapon = state.loadouts[playerId]![command.slot];
-  const shot = resolveBattleShot(state.roster, state.mask, state.players, { playerId, weapon, wind: 0,
+  const shot = resolveBattleShot(state.roster, state.mask, state.players, { playerId, weapon, wind: state.windState.value,
     facing: command.facing, elevation: command.elevation, power: command.power });
   const duration = Math.min(8000, Math.max(1000, shot.ticks * COMBAT_TICK_MS + 300));
   const next: BattleSession = { ...state, roster: shot.roster, players: shot.players, mask: shot.mask, phase: "replaying",

@@ -25,3 +25,13 @@ worldプレビュー、可変8人ルール、メモリ内部屋、移動同期�
 生成原案：output/imagegen/game-screen-functional-v1/desktop-refined-v4.png。
 heartbeatはUI共同調整時にPAUSED。本ゴールは現在のタスクで進行。
 利用制限リセットの既存許可は最大2枚。使用済み0/2、実際に上限へ達したときだけ使う。
+
+## 09:58 可変マップと風
+
+- 苔の谷(500×225)・葦の丘(400×200)を登録。2〜8人の全配置を検証。
+- owner限定のマップ選択。revision競合拒否、全ready解除、サーバー登録定義のみ許可。
+- サーバー確定の初期surfaceを配信し、地形破壊、角度計、カメラ範囲、全体図を可変寸法へ接続。
+- サーバー内部のwind PRNG stateを保持し、手番ごとに一度更新。公開frameは現在値のみ。弾道・HUD・落下物に反映。
+- maps68、engine108、protocol22、server46、client170テストと4package TypeScriptを通過。
+- PC＋タッチ2接続E2E：マップ変更、ready解除、風一致、装備、発射、結果、部屋復帰を通過。
+- 射程・全武器の組合せ監査はまだ残る。マップstatusはtest-onlyを維持。

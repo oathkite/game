@@ -36,6 +36,11 @@ it("isolates rooms, authenticates edits, starts chosen equipment and resumes the
     edit(a, "room.start", {});
     await expect.poll(() => a.last("lab.frame")).toBeTruthy();
     expect(a.last("lab.frame").players).toHaveLength(2);
+    expect(a.last("lab.frame").map.id).toBe("moss-valley");
+    expect(a.last("lab.frame").map.surface).toHaveLength(500);
+    expect(a.last("lab.frame")).not.toHaveProperty("windState");
+    expect(a.last("lab.frame").wind).toBeGreaterThanOrEqual(-10);
+    expect(a.last("lab.frame").wind).toBeLessThanOrEqual(10);
     expect(other.last("lab.frame")).toBeUndefined();
     expect(other.last("room.snapshot").room.members).toHaveLength(1);
     const frame = a.last("lab.frame"), shooter = frame.actorId === owner ? a : b;

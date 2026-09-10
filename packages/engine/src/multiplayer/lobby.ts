@@ -1,6 +1,6 @@
 import type { Loadout } from "@game/protocol";
 import { lobbyCommandSchema, lobbyProfileSchema } from "@game/protocol/v2";
-import { buildMapSpec, type MapSpec } from "@game/maps";
+import { multiplayerMap, buildMapSpec, type MapSpec } from "@game/maps";
 
 export const RULE_SET_VERSION = "keropod-v2.1";
 export type LobbyProfile = { readonly nickname: string; readonly loadout: Loadout };
@@ -58,6 +58,13 @@ export const editLobby = (room: LobbyState, authenticatedId: string, raw: unknow
   if (!actor.connected) return reject("disconnected");
   if (room.phase !== "waiting") return reject("locked");
   if (command.revision !== room.revision) return reject("stale-revision");
+  if (command.type === "room.map") {
+    if (room.ownerId !== authenticatedId) return reject("not-owner");
+    const map = multiplayerMap(command.mapId);
+    if (!map) return reject("unsupported-map");
+    if (map.id === room.map.id && map.version === room.map.version) return reject("unchanged");
+    return { room: { ...changed(room, room.members), map: copyMap(map) }, reason: "accepted" };
+  }
   if (command.type === "room.ready") return { room: { ...room, members: room.members.map(p => p === actor ? { ...p, ready: command.ready } : p) }, reason: "accepted" };
   if (command.type === "room.profile") return { room: { ...room, members: room.members.map(p => p === actor ? { ...p, nickname: command.nickname } : p) }, reason: "accepted" };
   if (command.type === "room.loadout") {

@@ -16,7 +16,7 @@ import { loadTerrainArt, worldArt } from "./assets";
 import { WindLeaves } from "./WindLeaves";
 
 type Props = { readonly blocked?: boolean; readonly frame: LabFrame; readonly players: LabFrame["players"]; readonly presentation: ReturnType<typeof presentLabReplay>; readonly elevation: number; readonly ownId: string; readonly selectedWeapon?: WeaponId };
-const baseTerrain = () => maskFromHeights(Array.from({ length: 500 }, () => 150), 225);
+const baseTerrain = (frame: LabFrame) => maskFromHeights(frame.map.surface, frame.map.height);
 export const NetworkField = (props: Props) => {
   const host = useRef<HTMLDivElement>(null), mini = useRef<HTMLCanvasElement>(null), latest = useRef(props); latest.current = props;
   const rig = useMemo(createCameraRig, []), drag = useRef<{ x: number; y: number; at: number } | null>(null);
@@ -31,7 +31,7 @@ export const NetworkField = (props: Props) => {
       rig.configure(loadCameraSettings());
       art = await loadSpriteTanks(latest.current.frame.players.map(p => Number(p.teamId.slice(1)))); const terrainArt = await loadTerrainArt();
       if (disposed) { art.destroy(); return; }
-      let mask = baseTerrain(), previousSize = "", terrainKey = "", turnKey = "", replayKey = -1;
+      let mask = baseTerrain(latest.current.frame), previousSize = "", terrainKey = "", turnKey = "", replayKey = -1;
       const facing = new Map<string, -1 | 1>();
       renderer = await createRenderer({ host: element, layout: layout(), mask, terrainArt, backgroundAlpha: 0, tankFactory: art.create,
         players: latest.current.frame.players.map(p => ({ nickname: p.nickname ?? p.playerId, colors: { primary: p.teamId === "t0" ? "yellow" : "cyan", secondary: "blue" } })) });
@@ -39,10 +39,10 @@ export const NetworkField = (props: Props) => {
       const r = renderer; let bullet = r.projectile("yellow", "cannon");
       stop = r.onFrame(dt => {
         const { frame, players, presentation, elevation, ownId } = latest.current;
-        const size = layout(), key = `${size.mapWidth}/${size.mapHeight}`;
-        if (key !== previousSize) { previousSize = key; r.setLayout(size); rig.resize({ width: size.mapWidth, height: size.mapHeight, scale: size.cell }, { left: 0, top: -100, right: 500, bottom: 225 }); }
+        const size = layout(), key = `${size.mapWidth}/${size.mapHeight}/${frame.map.width}/${frame.map.height}`;
+        if (key !== previousSize) { previousSize = key; r.setLayout(size); rig.resize({ width: size.mapWidth, height: size.mapHeight, scale: size.cell }, { left: 0, top: -100, right: frame.map.width, bottom: frame.map.height }); }
         const nextTerrain = `${frame.matchId}/${presentation.terrainOps.length}`;
-        if (nextTerrain !== terrainKey) { terrainKey = nextTerrain; mask = applyOps(baseTerrain(), presentation.terrainOps); r.setTerrain(mask); }
+        if (nextTerrain !== terrainKey) { terrainKey = nextTerrain; mask = applyOps(baseTerrain(frame), presentation.terrainOps); r.setTerrain(mask); }
         const nextTurn = `${frame.matchId}/${frame.turnId}`;
         if (nextTurn !== turnKey) { turnKey = nextTurn; focus(); }
         facing.set(frame.actorId, frame.movement.facing);
@@ -50,7 +50,7 @@ export const NetworkField = (props: Props) => {
         const shot = frame.phase === "replaying" ? frame.replay?.shooter : null;
         if (shot) facing.set(shot.playerId, shot.facing);
         players.forEach((p, i) => r.setTank(i, { x: p.x, y: p.y, tilt: tiltOf(mask, { x: Math.round(p.x), y: Math.round(p.y) }), facing: facing.get(p.playerId) ?? 1,
-          elevation: p.playerId === shot?.playerId ? shot.elevation : p.playerId === ownId ? elevation : 45, hp: p.eliminated ? 0 : p.hp, visible: !p.eliminated && p.y < 225, aiming: frame.phase === "acting" && p.playerId === ownId && p.playerId === frame.actorId, flash: false }));
+          elevation: p.playerId === shot?.playerId ? shot.elevation : p.playerId === ownId ? elevation : 45, hp: p.eliminated ? 0 : p.hp, visible: !p.eliminated && p.y < frame.map.height, aiming: frame.phase === "acting" && p.playerId === ownId && p.playerId === frame.actorId, flash: false }));
         const actor = players.find(p => p.playerId === frame.actorId); if (actor && frame.phase === "acting") rig.actor({ x: actor.x, y: actor.y - 6 });
         if (frame.replay && replayKey !== frame.replay.startsAt) { replayKey = frame.replay.startsAt; bullet = r.projectile("yellow", frame.replay.shooter.weapon); art!.setWeapon(frame.players.findIndex(p => p.playerId === frame.replay!.shooter.playerId), frame.replay.shooter.weapon); const p = presentation.bullets[0]; if (p) rig.focus(p, "shot"); }
         for (let i = 0; i < 9; i++) { const p = presentation.bullets[i]; bullet.setBullet(i, p?.x ?? null, p?.y ?? 0, 0); }
@@ -73,7 +73,7 @@ export const NetworkField = (props: Props) => {
       if (e.code !== "Tab" || frame.phase === "finished") return;
       e.preventDefault();
       if (drag.current) return;
-      const candidates = players.filter(p => !p.eliminated && p.hp > 0 && p.y < 225);
+      const candidates = players.filter(p => !p.eliminated && p.hp > 0 && p.y < frame.map.height);
       if (!candidates.length) return;
       const key = frame.matchId + "/" + frame.turnId;
       if (turn !== key) { turn = key; selected = frame.actorId; }
@@ -87,7 +87,7 @@ export const NetworkField = (props: Props) => {
   }, [rig]);
   const point = (e: PointerEvent<HTMLDivElement>) => { const box = e.currentTarget.getBoundingClientRect(); return { x: e.clientX - box.left, y: e.clientY - box.top }; };
   return <div className="network-field" style={{ backgroundImage: `url(${worldArt.background})` }}>
-    <WindLeaves wind={0} />
+    <WindLeaves wind={props.frame.wind} />
     <div ref={host} className="network-pixi" data-testid="network-world" data-loaded={loaded} data-positions={JSON.stringify(props.players)} tabIndex={0} aria-label="対戦フィールド。ドラッグ・ホイールで見回す、Cで手番へ" onKeyDown={e => { if (e.key.toLowerCase() === "c") focus(); }}
       onWheel={e => { if (!drag.current && !e.ctrlKey) wheelPan(rig, e.deltaX, e.deltaY, e.deltaMode); }}
       onPointerDown={e => { if (!e.isPrimary || e.button !== 0) return; e.currentTarget.setPointerCapture(e.pointerId); drag.current = { ...point(e), at: performance.now() }; rig.stop(); }}
@@ -96,14 +96,15 @@ export const NetworkField = (props: Props) => {
       onPointerCancel={() => { drag.current = null; rig.stop(); }} onPointerLeave={() => { if (!drag.current) rig.stop(); }} onBlur={() => rig.stop()} />
     {!loaded && <p className="network-loading" role="status">{error ? "素材を読み込めませんでした。再読み込みしてください。" : "フィールドを準備しています…"}</p>}
     <button className="network-focus" onClick={focus} aria-label="手番へ戻る">◎</button>
-    <button className="network-overview" aria-label="全体図からカメラを移動" onClick={e => { const box = e.currentTarget.getBoundingClientRect(); rig.focus(e.detail === 0 ? { x: 250, y: 130 } : { x: (e.clientX - box.left) / box.width * 500, y: (e.clientY - box.top) / box.height * 225 }, "manual", true); }}><canvas ref={mini} width="200" height="90" /></button>
+    <button className="network-overview" aria-label="全体図からカメラを移動" onClick={e => { const box = e.currentTarget.getBoundingClientRect(); rig.focus(e.detail === 0 ? { x: props.frame.map.width / 2, y: props.frame.map.height / 2 } : { x: (e.clientX - box.left) / box.width * props.frame.map.width, y: (e.clientY - box.top) / box.height * props.frame.map.height }, "manual", true); }}><canvas ref={mini} width="200" height="90" /></button>
   </div>;
 };
 const drawOverview = (canvas: HTMLCanvasElement | null, mask: ReturnType<typeof baseTerrain>, players: LabFrame["players"], camera: ReturnType<ReturnType<typeof createCameraRig>["get"]>) => {
   const ctx = canvas?.getContext("2d"); if (!canvas || !ctx) return;
   ctx.fillStyle = "#24344a"; ctx.fillRect(0, 0, 200, 90); ctx.fillStyle = "#8c995f";
-  for (let y = 0; y < 225; y += 5) for (let x = 0; x < 500; x += 5) if (mask.cells[y * 500 + x]) ctx.fillRect(x * .4, y * .4, 2, 2);
-  for (const p of players) if (!p.eliminated) { ctx.fillStyle = teamColor(Number(p.teamId.slice(1))); ctx.fillRect(p.x * .4 - 1, p.y * .4 - 3, 3, 3); }
+  const sx = 200 / mask.width, sy = 90 / mask.height;
+  for (let y = 0; y < mask.height; y += 5) for (let x = 0; x < mask.width; x += 5) if (mask.cells[y * mask.width + x]) ctx.fillRect(x * sx, y * sy, 5 * sx, 5 * sy);
+  for (const p of players) if (!p.eliminated) { ctx.fillStyle = teamColor(Number(p.teamId.slice(1))); ctx.fillRect(p.x * sx - 1, p.y * sy - 3, 3, 3); }
   const w = camera.viewport.width / camera.viewport.scale, h = camera.viewport.height / camera.viewport.scale;
-  ctx.strokeStyle = "#fff1d5"; ctx.strokeRect((camera.center.x - w / 2) * .4, (camera.center.y - h / 2) * .4, w * .4, h * .4);
+  ctx.strokeStyle = "#fff1d5"; ctx.strokeRect((camera.center.x - w / 2) * sx, (camera.center.y - h / 2) * sy, w * sx, h * sy);
 };

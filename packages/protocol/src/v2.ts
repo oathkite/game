@@ -30,6 +30,7 @@ const lobbyBase = { version: z.literal(2), roomId: id, revision: sequence.min(1)
 const lobbyLoadout = z.tuple([z.enum(WEAPON_IDS), z.enum(WEAPON_IDS)]).refine(pair => pair[0] !== pair[1]);
 export const lobbyProfileSchema = z.object({ nickname: z.string().trim().min(1).max(12), loadout: lobbyLoadout }).strict();
 export const lobbyCommandSchema = z.discriminatedUnion("type", [
+  z.object({ ...lobbyBase, type: z.literal("room.map"), mapId: id }).strict(),
   z.object({ ...lobbyBase, type: z.literal("room.ready"), ready: z.boolean() }).strict(),
   z.object({ ...lobbyBase, type: z.literal("room.assignTeam"), playerId: id, teamId: z.enum(["t0", "t1", "t2", "t3", "t4", "t5", "t6", "t7"]).nullable() }).strict(),
   z.object({ ...lobbyBase, type: z.literal("room.profile"), nickname: z.string().trim().min(1).max(12) }).strict(),

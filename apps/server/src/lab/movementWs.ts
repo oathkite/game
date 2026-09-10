@@ -1,4 +1,4 @@
-import { randomUUID } from "node:crypto";
+import { randomUUID, randomInt } from "node:crypto";
 import { createBattle, createBattleSession, fireInSession, forfeitInSession, moveInSession, movementSnapshot, surrenderInSession, tickSession } from "@game/engine/multiplayer";
 import { TEST_ARENA } from "@game/maps";
 import { labInputSchema, type LabFrame, type LabOutput } from "@game/protocol/v2-lab";
@@ -10,7 +10,7 @@ import { replayFrame } from "./replay.js";
 export const attachMovementLab = (wss: WebSocketServer) => {
   const members = Array.from({ length: 8 }, (_, i) => ({ playerId: `p${i + 1}`, teamId: `t${i % 2}` }));
   let seed = 42;
-  const fresh = () => createBattleSession(createBattle(members, seed++, TEST_ARENA), randomUUID(), Date.now());
+  const fresh = () => createBattleSession(createBattle(members, seed++, TEST_ARENA), randomUUID(), Date.now(), undefined, randomInt(0x100000000));
   let state = fresh(), dirty = false;
   const sessions = createLabSessions();
   const send = (socket: WebSocket, message: LabOutput): void => {
@@ -20,7 +20,7 @@ export const attachMovementLab = (wss: WebSocketServer) => {
   const frame = (): LabFrame => ({ type: "lab.frame", serverTime: Date.now(), eventSeq: state.movement.eventSeq,
     matchId: state.matchId, turnId: state.roster.turnId, actorId: state.movement.playerId, deadlineAt: state.movement.deadlineAt,
     players: state.players.map(p => ({ ...p, teamId: members.find(m => m.playerId === p.playerId)!.teamId, eliminated: state.roster.eliminated.includes(p.playerId) })),
-    movement: movementSnapshot(state.movement, Date.now()), phase: state.phase, result: state.result, terrainOps: [...state.terrainOps],
+    movement: movementSnapshot(state.movement, Date.now()), phase: state.phase, result: state.result, terrainOps: [...state.terrainOps], wind: state.windState.value, map: state.map,
     replay: replayFrame(state) });
   const timer = setInterval(() => {
     const before = state;

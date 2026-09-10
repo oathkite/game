@@ -109,3 +109,14 @@ it("uses the frozen loadout for the match instead of the lab's fixed cannon", as
   expect(session.loadouts[session.movement.playerId]).toEqual(["triple", "laser"]);
   expect(session.loadouts[session.movement.playerId]).not.toBe(setup.members[0]!.loadout);
 });
+
+it("allows only the owner to select a registered map and clears every ready state", () => {
+  const room = ready(two()), change = command(room, "room.map", { mapId: "reed-hills" });
+  expect(editLobby(room, "p2", change).reason).toBe("not-owner");
+  expect(editLobby(room, "p1", { ...change, mapId: "unknown" }).reason).toBe("unsupported-map");
+  const next = editLobby(room, "p1", change).room;
+  expect(next.map.width).toBe(400);
+  expect(next.revision).toBe(room.revision + 1);
+  expect(next.members.every(p => !p.ready)).toBe(true);
+  expect(editLobby(next, "p1", change).reason).toBe("stale-revision");
+});

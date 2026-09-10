@@ -22,7 +22,7 @@ it("connects versioned map setup to an eight-player shot", async () => {
   const { TEST_ARENA } = await import("@game/maps");
   const { createBattle } = await import("../src/multiplayer/create");
   const battle = createBattle(Array.from({ length: 8 }, (_, i) => ({ playerId: `p${i}`, teamId: `t${i % 2}` })), 42, TEST_ARENA);
-  expect(battle.map).toEqual({ id: TEST_ARENA.id, version: 1, width: 500, height: 225 });
+  expect(battle.map).toEqual({ id: TEST_ARENA.id, version: 1, width: 500, height: 225, surface: TEST_ARENA.surface });
   const result = resolveBattleShot(battle.roster, battle.mask, battle.players,
     { playerId: battle.roster.turnRing[0]!, weapon: "cannon", elevation: 45, facing: 1, power: 60, wind: 0 });
   expect(result.players).toHaveLength(8); expect(result.mask.width).toBe(500);

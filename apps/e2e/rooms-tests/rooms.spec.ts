@@ -29,6 +29,10 @@ test("room code, teams, ready, selected weapons and return to preparation", asyn
       await expect(page.getByLabel("部屋の装備1")).toHaveValue("triple");
     }
     await a!.getByRole("button", { name: "準備完了", exact: true }).click();
+    await expect(b!.getByLabel("マップ", { exact: true })).toBeDisabled();
+    await a!.getByLabel("マップ", { exact: true }).selectOption("reed-hills");
+    await expect(b!.getByLabel("マップ", { exact: true })).toHaveValue("reed-hills");
+    await expect(a!.getByRole("button", { name: "準備完了", exact: true })).toBeVisible();
     await b!.getByLabel("部屋の装備2").selectOption("laser");
     await expect(a!.getByRole("button", { name: "準備完了", exact: true })).toBeVisible();
     await a!.getByRole("button", { name: "準備完了", exact: true }).click();
@@ -37,6 +41,8 @@ test("room code, teams, ready, selected weapons and return to preparation", asyn
     await b!.screenshot({ path: "test-results/room-mobile.png" });
     await a!.getByRole("button", { name: "対戦開始" }).click();
     for (const page of [a!, b!]) await expect(page.getByTestId("network-world")).toHaveAttribute("data-loaded", "true");
+    const wind = await a!.getByTestId("world-wind").getAttribute("data-wind");
+    await expect(b!.getByTestId("world-wind")).toHaveAttribute("data-wind", wind!);
     await expect(a!.getByRole("button", { name: "トリプル弾", exact: true })).toHaveAttribute("aria-pressed", "true");
     const shooter = await a!.getByRole("button", { name: "トリプル弾", exact: true }).isEnabled() ? a! : b!;
     if (shooter === a) { await shooter.keyboard.down("Space"); await shooter.waitForTimeout(400); await shooter.keyboard.up("Space"); } else { const fire = shooter.getByRole("button", { name: "発射", exact: true }); await fire.hover(); await shooter.mouse.down(); await shooter.waitForTimeout(400); await shooter.mouse.up(); }

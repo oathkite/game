@@ -1,3 +1,4 @@
+import { MULTIPLAYER_MAPS, MULTIPLAYER_MAP_LABELS } from "@game/maps";
 import { useEffect, useRef, useState } from "react";
 import { WEAPON_IDS, WEAPON_LABELS } from "@game/protocol";
 import { roomOutputSchema, type RoomSnapshot } from "@game/protocol/v2-rooms";
@@ -56,7 +57,8 @@ export const RoomScreen = ({ onExit, onLab }: { readonly onExit: () => void; rea
           <span>{!p.connected ? "切断中" : p.ready ? "準備完了" : "準備中"}</span>
         </li>)}</ul>
         {me && <div className="room-equipment">{([0, 1] as const).map(slot => <label key={slot}>装備 {slot + 1}<select aria-label={`部屋の装備${slot + 1}`} disabled={!connected} value={me.loadout[slot]} onChange={e => edit("room.loadout", { loadout: slot === 0 ? [e.target.value, me.loadout[1]] : [me.loadout[0], e.target.value] })}>{WEAPON_IDS.map(id => <option value={id} key={id} disabled={id === me.loadout[slot === 0 ? 1 : 0]}>{WEAPON_LABELS[id]}</option>)}</select></label>)}</div>}
-        <p className="room-note">テストマップ・風なし／装備や編成が変わると全員の準備が解除されます。</p>
+        <label>マップ<select aria-label="マップ" value={room.map.id} disabled={!connected || !owner} onChange={e => edit("room.map", { mapId: e.target.value })}>{MULTIPLAYER_MAPS.map(map => <option key={map.id} value={map.id}>{MULTIPLAYER_MAP_LABELS[map.id]}</option>)}</select></label>
+        <p className="room-note">マップ・装備・編成が変わると全員の準備が解除されます。</p>
       </>}
     </PixelPanel></div>
     <footer>{status && <span role="status">{status}</span>}{!connected && sessionStorage.getItem(tokenKey) && <PixelButton onClick={() => connect({ type: "room.resume", token: sessionStorage.getItem(tokenKey) })}>再接続</PixelButton>}
