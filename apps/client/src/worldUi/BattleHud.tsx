@@ -1,3 +1,4 @@
+import { WindGauge } from "./WindGauge";
 import { useLanguage } from "@/i18n/locale";
 import pilotPortrait from "../../../../assets/runtime/world-v1/pilot-portrait.webp";
 import { WeaponIcon } from "./WeaponIcon";
@@ -15,7 +16,7 @@ export const BattleRoster = ({ players, actorId, upcomingPlayerIds = [], clock, 
   </div>)}</div>;
   const middle = Math.ceil(players.length / 2);
   return <header className="battle-roster">
-  {seats(players.slice(0, middle))}<div className="battle-countdown">{clock}</div>{seats(players.slice(middle))}<div className="battle-wind" aria-label={`${t("風")} ${wind}`}><span>{wind < 0 ? "←" : wind > 0 ? "→" : "↔"}</span><b>{Math.abs(wind)}</b></div>
+  {seats(players.slice(0, middle))}<div className="battle-countdown">{clock}</div>{seats(players.slice(middle))}<WindGauge wind={wind} />
   <button className="battle-menu" aria-label={t("設定を開く")} onClick={onMenu}><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 2v4m0 12v4M2 12h4m12 0h4M5 5l3 3m8 8l3 3M5 19l3-3m8-8l3-3" stroke="currentColor" strokeWidth="3" /><circle cx="12" cy="12" r="6" fill="none" stroke="currentColor" strokeWidth="3" /><circle cx="12" cy="12" r="2" fill="currentColor" /></svg></button>
 </header>; };
 

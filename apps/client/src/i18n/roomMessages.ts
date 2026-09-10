@@ -49,7 +49,7 @@ export const roomEnglish: Readonly<Record<string, string>> = {
   "対戦終了後、オーナーが部屋へ戻せます。": "The owner can return everyone to the room after the battle.",
   "操作を受け付けられませんでした。部屋の状態を確認してください。": "That action was not accepted. Check the room state.",
   "対戦設定": "Battle settings", "対戦に戻る": "Resume battle", "降参": "Surrender", "試合の診断情報": "Match diagnostics",
-  "診断情報をコピー": "Copy diagnostics", "コピーしました": "Copied", "設定を開く": "Open settings", "手番": "Active turn", "帰還待ち": "Waiting to return", "部屋へ戻る": "Return to room", "部屋へ戻るまで {seconds}秒": "Returning to room in {seconds}s", "試合成績": "Match statistics", "発射数": "Shots", "敵へのダメージ": "Enemy damage", "味方へのダメージ": "Ally damage", "自分へのダメージ": "Self damage", "あなたの手番です": "Your turn", "{order}人後の手番": "Turn in {order}", "風": "Wind", "残り移動": "Steps left",
+  "診断情報をコピー": "Copy diagnostics", "コピーしました": "Copied", "設定を開く": "Open settings", "手番": "Active turn", "左向きの風": "Wind to the left", "右向きの風": "Wind to the right", "無風": "No wind", "帰還待ち": "Waiting to return", "部屋へ戻る": "Return to room", "部屋へ戻るまで {seconds}秒": "Returning to room in {seconds}s", "試合成績": "Match statistics", "発射数": "Shots", "敵へのダメージ": "Enemy damage", "味方へのダメージ": "Ally damage", "自分へのダメージ": "Self damage", "あなたの手番です": "Your turn", "{order}人後の手番": "Turn in {order}", "風": "Wind", "残り移動": "Steps left",
   "A / D・← / →：移動　W / S・↑ / ↓：角度": "A / D or ← / →: move. W / S or ↑ / ↓: aim.",
   "Space：溜めて発射　Q / E：武器　Tab：機体を順に見る": "Hold Space to charge, release to fire. Q / E: weapon. Tab: cycle tanks.",
 };
