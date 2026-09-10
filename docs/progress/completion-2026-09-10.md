@@ -245,3 +245,10 @@ heartbeatはUI共同調整時にPAUSED。本ゴールは現在のタスクで進
 - assets:check、client TypeScript、配信buildの入口/練習/招待/routingの3 E2E通過。
 - 視覚承認はpendingを明記。assets/sprites向けの人による最終承認や、全VFX/アニメーション統合は未完。
 - 10分soakはsession25911で継続中。96秒時点100部屋、テスト全体RSS445MB。完了結果は未確認。
+
+## 12:12 タンクの状態別フレーム同期
+
+- 既存画像のidle（まばたき）/move/low-hp/hit/wreckを状態別に選ぶ小さなフレーム選択器へ分離。移動開始を先頭フレームへ揃え、初期表示の移動誤判定を解消。
+- 既存packのidle1200ms/move100ms/low-hp1600msを採用。低HPは25以下、被弾/撃破を優先。reduced-motionではコマ循環を止めて状態は表示する。
+- 状態遷移/各ポーズ/移動停止猶予/reduced-motionの3 unit、client TypeScript/diff check通過。配信buildの入口/練習/招待3 E2E通過（reduced-motion追加前）。最終アート比較や全VFX/落下同期の完了とは扱わない。
+- 100部屋soakはsession25911で継続。243秒時点RSS619MB（テストクライアント込み）。増加傾向があるため完了後に判定し、現時点で安定性合格とは扱わない。

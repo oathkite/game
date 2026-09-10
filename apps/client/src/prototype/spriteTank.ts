@@ -1,3 +1,4 @@
+import { createTankAnimation } from "./tankAnimation";
 import { teamColor } from "@/worldUi/teamColors";
 import { Assets, Container, Graphics, Rectangle, Sprite, Text, Texture } from "pixi.js";
 import type { TankColors, WeaponId } from "@game/protocol";
@@ -73,17 +74,15 @@ const makeTank = (frame: Frame, nickname: string, color: string): TankView & { s
   plate.roundRect(-labelWidth / 2, -21, labelWidth, 30, 5).fill(0x101c2c);
   const team = new Graphics().roundRect(-labelWidth / 2, -21, 4, 30, 2).fill(color);
   label.addChild(plate, team, name, health);
-  let lastX: number | null = null, movedAt = 0;
+  const animate = createTankAnimation();
+  const reducedMotion = matchMedia("(prefers-reduced-motion: reduce)");
   return {
     world, label,
     setWeapon: (id) => { weapon.texture = frame(`weapon-${id}`); },
     setPose: (pose: TankPose, cell: number) => {
-      const now = performance.now();
-      if (lastX !== null && lastX !== pose.x) movedAt = now;
-      lastX = pose.x;
-      const moving = now - movedAt < 150;
-      tracks.texture = frame("tracks-standard", pose.hp <= 0 ? 3 : moving ? Math.floor(now / 100) % 3 : 0);
-      pilot.texture = frame("pilot-frog", pose.hp <= 0 ? 15 : pose.flash ? 7 : moving ? 3 + Math.floor(now / 140) % 2 : 0);
+      const animation = animate(pose, performance.now(), reducedMotion.matches);
+      tracks.texture = frame("tracks-standard", animation.tracks);
+      pilot.texture = frame("pilot-frog", animation.pilot);
       world.position.set(pose.x + 0.5, pose.y);
       world.visible = label.visible = pose.visible;
       rig.scale.x = pose.facing;
