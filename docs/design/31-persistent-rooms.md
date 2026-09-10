@@ -62,3 +62,11 @@ ROOM_LOAD_COUNT=100 ROOM_LOAD_PERSIST=1 pnpm --filter @game/server exec vitest r
 ```
 
 このモードもローカルファイルI/Oの短時間試験であり、SQLite DO実環境の保存性能や長時間安定性とは区別する。
+
+`ROOM_LOAD_DELAY_MS=125`を指定すると、クライアントの送信と受信通知をそれぞれ125ms遅らせる。
+WebSocket自体のパケット損失・帯域制限・ブラウザー描画は再現しない。ping応答に往復分の遅延が入ることを確認してから移動/射撃/復帰を検証する。
+値は0〜500msの整数（片道）。
+
+```sh
+ROOM_LOAD_COUNT=100 ROOM_LOAD_PERSIST=1 ROOM_LOAD_DELAY_MS=125 pnpm --filter @game/server exec vitest run test/concurrent-rooms.test.ts
+```

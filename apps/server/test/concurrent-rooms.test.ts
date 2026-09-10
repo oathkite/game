@@ -13,6 +13,8 @@ type Output = ReturnType<typeof roomOutputSchema.parse>;
 const profile = { nickname: "Concurrent", loadout: ["triple", "laser"] };
 const roomCount = Number(process.env.ROOM_LOAD_COUNT ?? 4);
 if (!Number.isInteger(roomCount) || roomCount < 1 || roomCount > 100) throw new Error("ROOM_LOAD_COUNT must be 1..100");
+const delayMs = Number(process.env.ROOM_LOAD_DELAY_MS ?? 0);
+if (!Number.isInteger(delayMs) || delayMs < 0 || delayMs > 500) throw new Error("ROOM_LOAD_DELAY_MS must be 0..500");
 it(`keeps ${roomCount} simultaneous eight-player battles isolated through firing and abrupt reconnects`, async () => {
   const poll = <T>(read: () => T, options = { timeout: 15000 }) => expect.poll(read, options);
   const wss = new WebSocketServer({ host: "127.0.0.1", port: 0 });
@@ -21,12 +23,18 @@ it(`keeps ${roomCount} simultaneous eight-player battles isolated through firing
   const store = directory ? fileRoomStore(directory) : null;
   const saved = new Map<string, RoomSnapshot>();
   const service = attachRooms(wss, store ? { save: async snapshot => { await store.save(snapshot); saved.set(snapshot.state.roomId, snapshot); } } : {}), sockets: WebSocket[] = [];
+  const timers = new Set<ReturnType<typeof setTimeout>>();
+  const deliver = (action: () => void) => {
+    if (!delayMs) { action(); return; }
+    const timer = setTimeout(() => { timers.delete(timer); action(); }, delayMs);
+    timers.add(timer);
+  };
   const connect = async () => {
     const ws = new WebSocket(`ws://127.0.0.1:${(wss.address() as { port: number }).port}`);
     const messages: Output[] = []; sockets.push(ws);
-    ws.on("message", data => messages.push(roomOutputSchema.parse(JSON.parse(String(data)))));
+    ws.on("message", data => deliver(() => messages.push(roomOutputSchema.parse(JSON.parse(String(data))))));
     await new Promise<void>((resolve, reject) => { ws.once("open", resolve); ws.once("error", reject); });
-    return { ws, messages, send: (message: unknown) => ws.send(JSON.stringify(message)),
+    return { ws, messages, send: (message: unknown) => deliver(() => { if (ws.readyState === WebSocket.OPEN) ws.send(JSON.stringify(message)); }),
       last: <T extends Output["type"]>(type: T) => [...messages].reverse().find(message => message.type === type) as Extract<Output, { type: T }> | undefined };
   };
   try {
@@ -53,6 +61,10 @@ it(`keeps ${roomCount} simultaneous eight-player battles isolated through firing
     }));
     expect(new Set(battles.map(b => b.matchId)).size).toBe(roomCount);
     await Promise.all(battles.map(async battle => {
+      const probeAt = performance.now();
+      battle.clients[0]!.send({ type: "room.ping", nonce: 1 });
+      await poll(() => battle.clients[0]!.last("room.pong")?.nonce).toBe(1);
+      expect(performance.now() - probeAt).toBeGreaterThanOrEqual(delayMs * 2 - 2);
       const frame = battle.clients[0]!.last("lab.frame")!;
       const actor = battle.clients.find(client => client.last("room.welcome")!.playerId === frame.actorId)!;
       actor.send({ version: 2, type: "move.command", matchId: frame.matchId, turnId: frame.turnId, commandId: "same-move-in-each-room", moveSeq: 1, direction: 1, steps: 1 });
@@ -84,6 +96,8 @@ it(`keeps ${roomCount} simultaneous eight-player battles isolated through firing
       }
     }
   } finally {
+    for (const timer of timers) clearTimeout(timer);
+    timers.clear();
     sockets.forEach(socket => socket.terminate()); service.close();
     await new Promise<void>(resolve => wss.close(() => resolve()));
     if (store && directory) {
