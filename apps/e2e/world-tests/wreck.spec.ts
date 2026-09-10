@@ -12,7 +12,7 @@ test("wreck sinks its body and lowers its barrel while keeping the tracks ground
       const tracks = rig.getChildByLabel("tracks");
       const body = rig.getChildByLabel("body");
       const gun = body?.getChildByLabel("gun");
-      return { ground: tank.world.y, tracksY: tracks?.y, bodyY: body?.y, bodyX: body?.x, weaponX: gun?.children[0].x, gray: Boolean(rig.filters?.length), barrel: gun?.rotation, aim: gun?.children[1].visible };
+      return { effects: rig.children.filter((child: { label: string; visible: boolean }) => child.label.startsWith("tank-effect-") && child.visible).length, ground: tank.world.y, tracksY: tracks?.y, bodyY: body?.y, bodyX: body?.x, weaponX: gun?.children[0].x, gray: Boolean(rig.filters?.length), barrel: gun?.rotation, aim: gun?.children[1].visible };
     };
     tank.setPose(pose, 3);
     const alive = read();
@@ -41,6 +41,9 @@ test("wreck sinks its body and lowers its barrel while keeping the tracks ground
   expect(poses.firing.bodyX).toBeCloseTo(-2 / 12);
   expect(poses.firing.weaponX).toBeCloseTo(-8 - 3 / 12);
   expect(poses.firing.tracksY).toBe(poses.alive.tracksY);
+  expect(poses.destruction.effects).toBe(1);
+  expect(poses.wreck.effects).toBe(4);
+  expect(poses.restored.effects).toBe(0);
   expect(poses.destruction.bodyY).toBe(0);
   expect(poses.destruction.gray).toBe(false);
   expect(poses.wreck.gray).toBe(true);

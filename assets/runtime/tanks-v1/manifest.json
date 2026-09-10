@@ -26,6 +26,18 @@
       "sha256": "e03372d898ff90c5cf9c367f3bd469b382280117d2510cc886a52b10cda92c03"
     },
     {
+      "file": "effect-smoke.png",
+      "source": "assets/workbench/baseline-v2/effect-smoke.png",
+      "bytes": 1606,
+      "sha256": "80dfa1e7e81c022a8a2c5b33ddf7cf034c98430b6ce162cda4040aff5d63e5b7"
+    },
+    {
+      "file": "effect-dust.png",
+      "source": "assets/workbench/baseline-v2/effect-dust.png",
+      "bytes": 1782,
+      "sha256": "7fb33aae990e811a9144d9247fc853e4121ba69b3affa329a5e29943889894a3"
+    },
+    {
       "file": "effect-muzzle.png",
       "source": "assets/workbench/baseline-v2/effect-muzzle.png",
       "bytes": 642,

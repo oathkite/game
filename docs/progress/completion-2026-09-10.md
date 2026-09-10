@@ -480,3 +480,12 @@ heartbeatはUI共同調整時にPAUSED。本ゴールは現在のタスクで進
 - reduced-motionは大破モーションを省き残骸へ直行。位置・当たり判定・HP確定は変更しない。
 - 検証：大破境界/途中参加/繰り返し防止/再戦のunitを先に失敗確認、client全198件とclient/e2e typecheck通過。大破→残骸の時間経過とfilterの有無を実Pixi browser testでも確認。
 - ここでは大破の搭乗者姿勢と残骸表示を接続。爆発3連・損傷煙・着地土煙のSpriteは次工程。1時間soakはsession72311で2073秒まで進行、未完走。
+
+### 機体の爆発・損傷煙・着地土煙
+
+- baseline-v2のeffect-smoke/dustを原寸runtime登録（26files）。既存explosionと合わせ、素材ガレージのemittersをworld座標へ変換。
+- 大破は0/80/140msの3発生源、600msで全終了。低HPは3本、残骸は4本の900ms周期の煙。着地は3か所・450msで終了。途中参加の残骸で爆発を再発火しない。reduced-motionは省略。
+- Spriteは再利用し未使用分を毎frame非表示。残骸煙も機体のグレースケール配下、名前/チームplateは色を維持。
+- 検証：新規unitを先に失敗確認後、client全200件・typecheck通過。実Pixiの大破発生数/残骸煙4本/通常復帰時0個をbrowser testへ追加。
+- 1時間soak session72311は2226秒まで進行、完走判定はまだ行わない。次は一連の対戦画面をまとめて検証し、演出を含む最終視覚比較へ戻る。
+- browser test・e2e typecheck・runtime26files同一性検証も通過。

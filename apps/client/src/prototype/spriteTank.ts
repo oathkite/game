@@ -1,3 +1,4 @@
+import { createTankEffects } from "./tankEffects";
 import { muzzlePose } from "@/game/muzzlePose";
 import { createTankAnimation } from "./tankAnimation";
 import { teamColor } from "@/worldUi/teamColors";
@@ -12,6 +13,9 @@ const urls = import.meta.glob<string>([
   "../../../../assets/runtime/tanks-v1/pilot-frog.png",
   "../../../../assets/runtime/tanks-v1/weapon-*.png",
   "../../../../assets/runtime/tanks-v1/effect-muzzle.png",
+  "../../../../assets/runtime/tanks-v1/effect-smoke.png",
+  "../../../../assets/runtime/tanks-v1/effect-dust.png",
+  "../../../../assets/runtime/tanks-v1/effect-explosion.png",
   "../../../../assets/runtime/tanks-v1/effect-energy.png",
 ], { eager: true, query: "?url", import: "default" });
 
@@ -82,7 +86,8 @@ const makeTank = (frame: Frame, nickname: string, color: string): TankView & { s
   plate.roundRect(-labelWidth / 2, -21, labelWidth, 30, 5).fill(0x101c2c);
   const team = new Graphics().roundRect(-labelWidth / 2, -21, 4, 30, 2).fill(color);
   label.addChild(plate, team, name, health);
-  const animate = createTankAnimation();
+  const animate = createTankAnimation(), effectsAt = createTankEffects();
+  const effects: Sprite[] = [];
   const grayscale = new ColorMatrixFilter();
   grayscale.desaturate();
   let wasWreck = false;
@@ -91,7 +96,15 @@ const makeTank = (frame: Frame, nickname: string, color: string): TankView & { s
     world, label,
     setWeapon: (id) => { weaponId = id; weapon.texture = frame(`weapon-${id}`); },
     setPose: (pose: TankPose, cell: number) => {
-      const animation = animate(pose, performance.now(), reducedMotion.matches);
+      const now = performance.now();
+      const animation = animate(pose, now, reducedMotion.matches);
+      effects.forEach(sprite => { sprite.visible = false; });
+      effectsAt(pose, now, reducedMotion.matches).forEach((effect, i) => {
+        const sprite = effects[i] ?? new Sprite();
+        if (!effects[i]) { effects.push(sprite); rig.addChild(sprite); sprite.label = `tank-effect-${i}`; sprite.scale.set(1 / 12); }
+        sprite.texture = frame(effect.id, effect.frame);
+        sprite.position.set(effect.x, effect.y); sprite.alpha = effect.alpha; sprite.visible = true;
+      });
       tracks.texture = frame("tracks-standard", animation.tracks);
       pilot.texture = frame("pilot-frog", animation.pilot);
       world.position.set(pose.x + 0.5, pose.y);
