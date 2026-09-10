@@ -11,3 +11,8 @@ it("translates known messages and preserves unknown names", () => {
   expect(translate("はじめる", "ja")).toBe("はじめる");
   expect(translate("player name", "en")).toBe("player name");
 });
+it("interpolates dynamic labels without translating player-supplied values", () => {
+  expect(translate("参加者{n}のチーム", "ja", { n: 2 })).toBe("参加者2のチーム");
+  expect(translate("参加者{n}のチーム", "en", { n: 2 })).toBe("Player 2 team");
+  expect(translate("{team}チームの勝利", "en", { team: "赤" })).toBe("Team 赤 wins");
+});

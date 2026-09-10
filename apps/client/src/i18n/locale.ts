@@ -16,8 +16,9 @@ export const setLanguage = (next: Language): void => {
   document.documentElement.lang = next;
   listeners.forEach(listener => listener());
 };
-export const translate = (text: string, locale: Language): string => locale === "en" ? english[text] ?? text : text;
+export const translate = (text: string, locale: Language, values: Readonly<Record<string, string | number>> = {}): string =>
+  (locale === "en" ? english[text] ?? text : text).replace(/\{(\w+)\}/g, (match, key: string) => values[key] === undefined ? match : String(values[key]));
 export const useLanguage = () => {
   const locale = useSyncExternalStore(subscribe, () => language, () => "ja" as Language);
-  return { language: locale, t: (text: string) => translate(text, locale) };
+  return { language: locale, t: (text: string, values?: Readonly<Record<string, string | number>>) => translate(text, locale, values) };
 };
