@@ -15,8 +15,11 @@
 .battle-countdown .timer { background:none; border:0; padding:0; color:#fff6df; font:inherit; min-width:0; }
 .battle-wind { position:absolute; top:76px; left:16px; padding:8px 12px; border:1px solid #718b9b; border-radius:4px; background:#112333ed; pointer-events:none; display:flex; align-items:center; gap:6px; min-width:48px; font-size:15px; }
 .world-ui .battle-menu { position:absolute; top:10px; right:16px; width:44px; min-width:44px; height:44px; padding:8px!important; border:1px solid #718b9b!important; border-image:none!important; background:#243c51!important; color:#fff1d5!important; }
-.world-ui .battle-console { height:120px; display:grid; grid-template-columns:140px 108px minmax(0,1fr) 112px; gap:16px; align-items:center; padding:6px 16px; background:#112333; color:#f4f0de; border:0; box-shadow:inset 0 2px #8296a5; }
-.battle-self { display:grid; gap:5px; min-width:0; padding:8px; background:#1d3346; border:1px solid #526c80; border-radius:4px; }
+.world-ui .battle-console { height:120px; display:grid; grid-template-columns:188px 108px minmax(0,1fr) 112px; gap:16px; align-items:center; padding:6px 16px; background:#112333 url("./cockpitFrame.svg") center / 100% 100% no-repeat; color:#f4f0de; border:0; }
+.battle-self { display:grid; grid-template-columns:56px minmax(0,1fr); gap:8px; min-width:0; padding:8px; background:#1d3346; border:1px solid #526c80; border-radius:4px; }
+.battle-self-portrait { align-self:stretch; display:grid; align-items:center; background:#102333; border:1px solid #526c80; border-radius:3px; overflow:hidden; }
+.battle-self-portrait .tank-portrait { width:80px; height:68px; margin-left:-12px; }
+.battle-self-info { display:grid; gap:5px; min-width:0; }
 .battle-self strong { overflow:hidden; text-overflow:ellipsis; white-space:nowrap; font-size:14px; }
 .battle-self span,.battle-self small { font-size:12px; font-variant-numeric:tabular-nums; }
 .battle-self span { text-align:right; }
@@ -28,6 +31,8 @@
 .battle-weapons svg { width:36px; height:36px; display:block; margin:auto; }
 .battle-weapons span { font-size:11px; }
 .world-ui .battle-console.has-touch { height:152px; grid-template-rows:84px 50px; grid-template-columns:100px 84px minmax(0,1fr) 104px; gap:4px 12px; }
+.battle-console.has-touch .battle-self { grid-template-columns:minmax(0,1fr); }
+.battle-console.has-touch .battle-self-portrait { display:none; }
 .battle-console.has-touch .battle-angle { width:84px; height:84px; }
 .battle-touch { grid-column:1/-1; display:flex; justify-content:space-between; gap:12px; }
 .battle-touch > div { display:flex; gap:8px; }
@@ -46,7 +51,7 @@
  .battle-seats { gap:4px; }.battle-seat { padding:6px 4px; gap:4px; grid-template-columns:5px minmax(0,1fr); }.battle-seat.is-actor { padding:5px 3px; }.battle-seat strong { font-size:10px; }.battle-team-dot { width:5px; height:5px; }
  .battle-wind { min-width:30px; font-size:12px; gap:2px; }.battle-countdown { width:40px; height:40px; font-size:21px; }
  .world-ui .battle-console { height:96px; padding:4px 8px; gap:8px; grid-template-columns:84px 84px minmax(0,1fr) 100px; }
- .battle-angle { width:84px; height:84px; }.battle-self { padding:5px; gap:3px; }.battle-self strong { font-size:11px; }.battle-self span,.battle-self small { font-size:10px; }
+ .battle-angle { width:84px; height:84px; }.battle-self { grid-template-columns:minmax(0,1fr); padding:5px; gap:3px; }.battle-self-portrait { display:none; }.battle-self-info { gap:3px; }.battle-self strong { font-size:11px; }.battle-self span,.battle-self small { font-size:10px; }
  .battle-power { height:68px; }.battle-weapons { gap:4px; }
  .world-ui .network-world:has(.battle-console) { grid-template-rows:64px minmax(0,1fr) 96px; }
  .world-ui .network-world:has(.battle-console.has-touch) { grid-template-rows:64px minmax(0,1fr) 152px; }
