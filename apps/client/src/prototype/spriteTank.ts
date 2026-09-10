@@ -15,6 +15,7 @@ const urls = import.meta.glob<string>([
   "../../../../assets/runtime/tanks-v1/weapon-*.png",
   "../../../../assets/runtime/tanks-v1/effect-muzzle.png",
   "../../../../assets/runtime/tanks-v1/effect-smoke.png",
+  "../../../../assets/runtime/tanks-v1/effect-spark.png",
   "../../../../assets/runtime/tanks-v1/effect-dust.png",
   "../../../../assets/runtime/tanks-v1/effect-explosion.png",
   "../../../../assets/runtime/tanks-v1/effect-energy.png",

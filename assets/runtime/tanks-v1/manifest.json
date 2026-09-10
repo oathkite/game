@@ -26,6 +26,12 @@
       "sha256": "e03372d898ff90c5cf9c367f3bd469b382280117d2510cc886a52b10cda92c03"
     },
     {
+      "file": "effect-spark.png",
+      "source": "assets/workbench/baseline-v2/effect-spark.png",
+      "bytes": 652,
+      "sha256": "eaaa42125b1558183c9f1e274c055797a67c447069b5b2b6135d58712d829347"
+    },
+    {
       "file": "effect-smoke.png",
       "source": "assets/workbench/baseline-v2/effect-smoke.png",
       "bytes": 1606,

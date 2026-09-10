@@ -23,6 +23,8 @@ test("wreck sinks its body and lowers its barrel while keeping the tracks ground
     const activeMuzzle = muzzle();
     tank.setPose({ ...pose, recoil: 3 }, 3);
     const firing = read();
+    tank.setPose({ ...pose, hp: 80 }, 3);
+    const hit = read();
     tank.setPose({ ...pose, hp: 0 }, 3);
     const destruction = read();
     await new Promise(resolve => setTimeout(resolve, 620));
@@ -34,13 +36,14 @@ test("wreck sinks its body and lowers its barrel while keeping the tracks ground
     const restored = read();
     const stoppedMuzzle = muzzle();
     tank.destroy(); factory.destroy();
-    return { alive, firing, wreck, otherAim, restored, destruction, activeMuzzle, stoppedMuzzle };
+    return { alive, firing, hit, wreck, otherAim, restored, destruction, activeMuzzle, stoppedMuzzle };
   });
   expect(poses.activeMuzzle).toEqual([-103 / 12, -8, -89 / 12].map(y => ({ x: -51 / 12, y, visible: true })));
   expect(poses.stoppedMuzzle.every((sprite: { visible: boolean }) => !sprite.visible)).toBe(true);
   expect(poses.firing.bodyX).toBeCloseTo(-2 / 12);
   expect(poses.firing.weaponX).toBeCloseTo(-8 - 3 / 12);
   expect(poses.firing.tracksY).toBe(poses.alive.tracksY);
+  expect(poses.hit.effects).toBe(1);
   expect(poses.destruction.effects).toBe(1);
   expect(poses.wreck.effects).toBe(4);
   expect(poses.restored.effects).toBe(0);

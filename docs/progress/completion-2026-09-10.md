@@ -550,3 +550,10 @@ heartbeatはUI共同調整時にPAUSED。本ゴールは現在のタスクで進
 
 - asset-labの450ms着地曲線をゲームのSpriteTankへ接続。最大3 artpxの車体沈下のみで、tracks・world位置・当たり判定は変更しない。
 - reduced motionでは沈下を抑止。死亡時はdestroy/wreck優先。単体7件（追加2件の失敗確認後に修正）、client typecheck、既存反動/大破/残骸の実Pixi browser test通過。
+
+### 作成済み射撃素材の反映確認（2026-09-11）
+
+- baseline-v2の弾8種類・通常爆発/ドリル/エネルギー着弾は既に接続済み。全8武器のProjectileViewで弾textureと着弾4コマの選択をbrowser testへ追加。
+- 未接続のeffect-sparkをruntimeへ原PNGのまま登録し、HP減少時に300msの火花を再生。初期HP低下状態・回復・死亡後の再出現では誤発火させず、reduced motionでは抑止。
+- floaterの着弾をasset-labと同じenergyへ修正。diggerは設計15の決定どおり通常爆発を維持。
+- 単体3件・実Pixi browser3件・client/e2e型検査・runtime27素材の原画像一致検査が通過。
