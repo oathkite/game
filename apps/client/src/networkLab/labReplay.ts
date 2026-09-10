@@ -1,3 +1,4 @@
+import { shotRecoil } from "@/game/shotRecoil";
 import type { LabFrame } from "@game/protocol/v2-lab";
 const smooth = (t: number) => t * t * t * (t * (t * 6 - 15) + 10);
 type Replay = NonNullable<LabFrame["replay"]>;
@@ -13,7 +14,7 @@ const projectileAt = (path: Replay["paths"][number], tick: number) => {
 /** Replay server ticks at a shared pace, retaining a final 300ms settling window. */
 export const presentLabReplay = (frame: LabFrame, now: number) => {
   const replay = frame.replay;
-  if (frame.phase !== "replaying" || !replay || now >= replay.endsAt) return { players: frame.players, terrainOps: frame.terrainOps, bullets: [], effects: [], fallingIds: [] as string[] };
+  if (frame.phase !== "replaying" || !replay || now >= replay.endsAt) return { players: frame.players, terrainOps: frame.terrainOps, bullets: [], effects: [], fallingIds: [] as string[], recoil: 0 };
   const settleAt = replay.endsAt - 300;
   const t = Math.max(0, Math.min(1, (now - replay.startsAt) / Math.max(1, settleAt - replay.startsAt)));
   const tick = t * replay.ticks;
@@ -31,6 +32,7 @@ export const presentLabReplay = (frame: LabFrame, now: number) => {
     return age >= 0 && age < 300 && op ? [{ ...op, frame: Math.min(3, Math.floor(age / 75)), hitIds: age < 150 ? impact.damage.filter(damage => damage.amount > 0).map(damage => damage.playerId) : [] }] : [];
   });
   const fallingIds = now >= settleAt ? replay.playersBefore.filter(before => (frame.players.find(p => p.playerId === before.playerId)?.y ?? before.y) > before.y).map(p => p.playerId) : [];
-  return { players, effects, fallingIds, bullets: now >= settleAt ? [] : replay.paths.flatMap(path => projectileAt(path, tick)),
+  const launches = replay.paths.map(path => replay.startsAt + path.launchTick / Math.max(1, replay.ticks) * (settleAt - replay.startsAt));
+  return { players, effects, fallingIds, recoil: shotRecoil(now, launches), bullets: now >= settleAt ? [] : replay.paths.flatMap(path => projectileAt(path, tick)),
     terrainOps: frame.terrainOps.slice(0, replay.terrainOpsBefore + impacts.length) };
 };

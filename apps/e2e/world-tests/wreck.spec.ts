@@ -12,10 +12,12 @@ test("wreck sinks its body and lowers its barrel while keeping the tracks ground
       const tracks = rig.getChildByLabel("tracks");
       const body = rig.getChildByLabel("body");
       const gun = body?.getChildByLabel("gun");
-      return { ground: tank.world.y, tracksY: tracks?.y, bodyY: body?.y, barrel: gun?.rotation, aim: gun?.children[1].visible };
+      return { ground: tank.world.y, tracksY: tracks?.y, bodyY: body?.y, bodyX: body?.x, weaponX: gun?.children[0].x, barrel: gun?.rotation, aim: gun?.children[1].visible };
     };
     tank.setPose(pose, 3);
     const alive = read();
+    tank.setPose({ ...pose, recoil: 3 }, 3);
+    const firing = read();
     tank.setPose({ ...pose, hp: 0 }, 3);
     const wreck = read();
     tank.setPose({ ...pose, hp: 0, elevation: 10, facing: -1 }, 3);
@@ -23,8 +25,11 @@ test("wreck sinks its body and lowers its barrel while keeping the tracks ground
     tank.setPose(pose, 3);
     const restored = read();
     tank.destroy(); factory.destroy();
-    return { alive, wreck, otherAim, restored };
+    return { alive, firing, wreck, otherAim, restored };
   });
+  expect(poses.firing.bodyX).toBeCloseTo(-2 / 12);
+  expect(poses.firing.weaponX).toBeCloseTo(-8 - 3 / 12);
+  expect(poses.firing.tracksY).toBe(poses.alive.tracksY);
   expect(poses.wreck.bodyY).toBeCloseTo(8 / 12);
   expect(poses.wreck.barrel).toBeCloseTo(18 * Math.PI / 180);
   expect(poses.wreck.aim).toBe(false);

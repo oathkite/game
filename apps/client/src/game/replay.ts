@@ -1,3 +1,4 @@
+import { shotRecoil } from "./shotRecoil";
 import type { CellPoint, Impact, Seat } from "@game/protocol";
 import { carve, isRingOut, MAP_HEIGHT, ONE, tiltOf, weaponSpec, type ProjectilePath, type TerrainMask } from "@game/sim";
 import type { SoundName } from "@/app/audio";
@@ -136,6 +137,7 @@ const poseAfterHit = (run: Run, seat: Seat, flash: boolean): TankPose => {
   // 落下前なので、撃った側は移動後の地表、相手はターン開始時の地表に立つ
   return poseOf({ ...before, hp: bar.hp, x: after.x, y: groundBeforeFall(run.job, seat), facing: after.facing }, run.job.maskBefore, elevationOf(run, seat), {
     flash,
+    recoil: seat === run.job.shot.input.seat ? shotRecoil(run.elapsed, run.launchAt) : 0,
     hpGhost: bar.hpGhost,
     ghostOn: bar.ghostOn,
   });
@@ -246,7 +248,7 @@ const updateImpact = (run: Run, ir: ImpactRun): void => {
 /** 被弾の見せ方。白はダメージが大きいほど長く続き、HP バーは減っていき、画面が揺れる */
 const updateHits = (run: Run): void => {
   for (const seat of [0, 1] as const) {
-    if (run.drains[seat]) run.renderer.setTank(seat, poseAfterHit(run, seat, run.elapsed < run.flashUntil[seat]));
+    if (run.drains[seat] || seat === run.job.shot.input.seat) run.renderer.setTank(seat, poseAfterHit(run, seat, run.elapsed < run.flashUntil[seat]));
   }
   if (run.cb.reduceMotion) return;
   run.renderer.setShake(run.shake ? shakeOffsetAt(run.elapsed - run.shake.at, run.shake.damage) : { dx: 0, dy: 0 });

@@ -57,3 +57,12 @@ it("marks only descending tanks during settlement and clears falling at its dead
   expect(presentLabReplay(mixed, 2000).fallingIds).toEqual([]);
   expect(presentLabReplay({ ...mixed, phase: "acting" }, 1750).fallingIds).toEqual([]);
 });
+it("derives recoil from the shared replay clock including a later launch", () => {
+  const repeated = { ...frame, replay: { ...frame.replay!, paths: [frame.replay!.paths[0]!, { ...frame.replay!.paths[0]!, launchTick: 12 }] } };
+  expect(presentLabReplay(repeated, 1000).recoil).toBe(0);
+  expect(presentLabReplay(repeated, 1090).recoil).toBe(3);
+  expect(presentLabReplay(repeated, 1180).recoil).toBe(0);
+  expect(presentLabReplay(repeated, 1290).recoil).toBe(3);
+  expect(presentLabReplay(repeated, 1380).recoil).toBe(0);
+  expect(presentLabReplay(repeated, 2000).recoil).toBe(0);
+});

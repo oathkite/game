@@ -448,3 +448,11 @@ heartbeatはUI共同調整時にPAUSED。本ゴールは現在のタスクで進
 - NetworkFieldでeliminatedを一律非表示にしていたため残骸姿勢が表示されなかった。場外のy判定を維持し、地上の撃破機体は残骸として残す。
 - 検証：新しいfall/landing unitを先に失敗確認、client全191件通過。その後online settlementの下降対象限定/境界解除testを追加し、関連9件通過。client typecheck通過。土煙・発射反動/VFX・大破演出は引き続き未接続部分を照合する。
 - 同じ1時間soak session72311は1451秒まで進行。完走判定は保留。
+
+### 発射時刻に同期する反動
+
+- 素材ガレージの180ms sin pulseをshared shotRecoilとして接続。砲身最大3 artpx、車体最大2 artpx後退。搭乗者/キャノピーは車体に追従し、履帯は固定。同時発射は最大値、連射は各launch時刻から計算する。
+- 練習は既存launchAt、オンラインはauthoritative launchTickをreplay時間へ変換して同じ反動を使用。途中観測でも経過時刻から姿勢を決める。撃破/reduced-motionは反動を止める。
+- client全193件・typecheck通過後、オンライン連射時計testを追加して関連6件とe2e typecheck通過。実Pixi姿勢testで砲身/車体移動と履帯不変、通常位置復帰を追加。0/-0の復帰比較を検出し停止位置を0に統一。
+- 砲口VFX、大破/煙/土煙はこの変更には含まない。次工程で素材と発生位置を照合する。
+- 実Pixi反動/残骸姿勢browser test再実行通過。1時間soak session72311は1605秒まで進行を確認。

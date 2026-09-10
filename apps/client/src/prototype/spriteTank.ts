@@ -92,6 +92,9 @@ const makeTank = (frame: Frame, nickname: string, color: string): TankView & { s
       rig.rotation = -pose.tilt * Math.PI / 180;
       rig.alpha = pose.flash ? 0.55 : 1;
       // Authored wreck pose: the body settles eight art pixels; tracks keep contact.
+      const recoil = pose.hp <= 0 || reducedMotion.matches ? 0 : pose.recoil ?? 0;
+      body.x = recoil ? -Math.round(recoil * 2 / 3) / 12 : 0;
+      weapon.x = -8 - recoil / 12;
       body.y = pose.hp <= 0 ? 8 / 12 : 0;
       gun.rotation = (pose.hp <= 0 ? 18 : -pose.elevation) * Math.PI / 180;
       aim.visible = pose.hp > 0 && pose.aiming;
