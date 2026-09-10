@@ -12,7 +12,7 @@
 | 全編成・射程・復元 | engine/map/server tests、進捗記録参照 | 自動検証済み。人間による公平感・バランス観察とは別 |
 | 世界UI最終原案一致 | 浮島背景・濃紺パネル・中央timer・円形角度計・100目盛り実装 | 地形表層や情報密度も含めて最終比較を継続。人間の最終承認は未記録 |
 | 正式art pack | runtime manifest/hash/fidelity check | 原素材の人間承認を自動記録しない。正式pack登録条件を残す |
-| 実機・browser対応 | Chromium viewport E2E | WebKit/Firefoxの自動試験、実iOS/Android/Safari/Edgeの入室〜結果は別途必要 |
+| 実機・browser対応 | Chromium viewport、Firefox配信11/11、WebKit配信10/11 | WebKitのchunk取得失敗後reload復帰が未解決。実iOS/Android/Safari/Edgeの入室〜結果は別途必要 |
 | mobile描画・入力・移動・復帰p95 | 機能E2E、ローカル遅延試験 | 型番/OS固定の実機SLO・地域測定は未完 |
 | DO容量・費用 | local Wrangler復元、Node100部屋 | 実DO容量を証明しない。stage構成・費用予算・alarm・測定が必要 |
 | 運用・法務・公開 | 通報保存/期限/診断/rate limit実装 | 運営主体・保持目的/削除窓口・対象地域/年齢・規約/privacy・監視担当の判断が必要 |

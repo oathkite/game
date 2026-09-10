@@ -391,3 +391,9 @@ heartbeatはUI共同調整時にPAUSED。本ゴールは現在のタスクで進
 - ping nonceを実行中に再利用しないよう変更。短時間の4部屋/100部屋・実保存・片道125ms・15秒soakは通過（100部屋:100再戦/700移動、23.02秒）。server TypeScript/diff check通過。
 - 1時間実行: session **90534**、ログ `/tmp/keropod-soak-3600.log`。`ROOM_LOAD_COUNT=100 ROOM_LOAD_PERSIST=1 ROOM_LOAD_DELAY_MS=125 ROOM_SOAK_SECONDS=3600 pnpm --filter @game/server exec vitest run test/concurrent-rooms.test.ts`。起動を確認した段階であり、完走/合格ではない。
 - 再戦は降参決着。自然な20分上限の連続完走や実DOの1時間容量・実機描画を同時に証明したとは扱わない。引き続き同じsessionを監視し、観測タイムアウトだけで再起動しない。
+
+## Firefox/WebKit検証の追加と未解決事項
+
+- production.config.tsにChromium/Firefox/WebKit projectsを追加。Playwright管理Firefox153.0/WebKit26.5を導入し、配信buildで22件を実行。Firefox11/11、WebKit10/11通過。
+- WebKitはdynamic chunkをabortした後、再読み込みしてもCameraPrototypeを再取得せずエラー画面へ戻る。HTTP traceで再取得なしを確認。query付きdocument再遷移・connectionreset・route維持も改善せず、実験的な変更は残さない。未解決であり全browser合格ではない。
+- `pnpm --filter @game/e2e exec playwright test --config production.config.ts --project=webkit --grep "failed battle chunk"`で再現。実iOS/Safari/Androidの代替証明とは扱わない。
