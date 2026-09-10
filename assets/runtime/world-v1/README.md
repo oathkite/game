@@ -1,10 +1,12 @@
 # Runtime world artwork
 
-`assets/workbench`の生成PNGを配信用に可逆圧縮したもの。構図・寸法・透明度・RGBA画素は変更しない。
 元PNGと生成記録はworkbenchに保持する。最終デザイン承認やsprite packの承認を意味しない。
+背景と共通ボタンはWebP quality 94、それ以外は可逆WebP。構図・寸法・alphaは変更しない。
+非可逆の2素材はRGB各チャンネルのRMS誤差6/255以下、alpha完全一致を検証する。
+他の9素材はRGBA完全一致。これは画質の自動承認ではなく、表示比較も必要。
 
 再生成: `python3 scripts/assets/encode-world.py`
 検証: `python3 scripts/assets/encode-world.py --check`
 依存: Python 3、Pillow（WebP対応）。`scripts/assets/requirements.txt`を参照。
-manifestは元/出力SHA-256、寸法、容量を記録する。検証はRGBAの完全一致とmanifest一致を確認する。
-アート変更時は元PNGを更新後に再生成し、ゲーム内で表示を確認する。
+manifest v2は元/出力SHA-256、寸法、容量、素材ごとのencodingと画素誤差を記録する。
+Nodeのassets:checkはhash/容量/誤差記録を確認し、Pythonのcheckは実際の画素差を再計算する。

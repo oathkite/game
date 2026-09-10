@@ -17,6 +17,12 @@ test("production root opens KEROPOD and practice with real assets", async ({ pag
   await expect.poll(() => logo.evaluate(image => (image as HTMLImageElement).naturalWidth)).toBe(1536);
   await expect(page.getByText("2Dプレビュー", { exact: true })).toHaveCount(0);
   expect(await page.evaluate(() => (window as Window & { webglRequests?: number }).webglRequests)).toBe(0);
+  await page.waitForLoadState("networkidle");
+  const initialBytes = await page.evaluate(() => [...performance.getEntriesByType("navigation"), ...performance.getEntriesByType("resource")].reduce((total, entry) => total + (entry as PerformanceResourceTiming).encodedBodySize, 0));
+  console.info(`Cold title encoded transfer: ${initialBytes} bytes`);
+  expect(initialBytes).toBeGreaterThan(0);
+  expect(initialBytes).toBeLessThanOrEqual(2_000_000);
+  await test.info().attach("title-transfer.json", { body: JSON.stringify({ initialBytes }), contentType: "application/json" });
   await page.getByRole("button", { name: "はじめる", exact: true }).click();
   await expect(page.getByRole("button", { name: "オンライン対戦", exact: true })).toBeVisible();
   await expect(page.locator(".world-machine svg").first()).toBeVisible();

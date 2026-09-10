@@ -7,4 +7,4 @@
 - Brief: background-only, crisp pixel art; blue sky, distant floating stone islands, ivory castle, thin bridges, waterfalls and a low water horizon. Atmospheric cool colors so yellow tanks remain distinct. No UI, text, characters, tanks, projectiles or foreground destructible platforms.
 - Original generation: `exec-12163271-ffae-46da-a90f-ed5b121502f6.png`.
 - AI visual review: the generated image follows the reference environment and excludes gameplay/UI elements. Human final approval remains pending.
-- Runtime encoding: `scripts/assets/encode-world.py`, lossless WebP with exact RGBA verification. Previous background sources are retained.
+- Runtime encoding: `scripts/assets/encode-world.py`, WebP quality 94 with exact alpha/dimensions and RGB RMS error checks. Previous background sources are retained.

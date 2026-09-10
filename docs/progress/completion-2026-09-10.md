@@ -356,3 +356,11 @@ heartbeatはUI共同調整時にPAUSED。本ゴールは現在のタスクで進
 - 共通PixelPanelを戦闘画面と同じ濃紺のSVG金属枠へ統一。ロビー/設定/部屋画面の文字を明色にし、見出し・機体プレビュー・リザルト説明も青灰色の縁へ統一。主要ボタンの黄色と入力面の明色を保持。
 - world4画面サイズ＋地形の5件、オンラインPC/touchの部屋準備・射撃・再接続・再準備の1件が通過。1440pxロビーと667px設定で背景上の可読性を目視確認。diff check通過。
 - 背景/原案との全体比較、転送量最適化、最終検証と公開前判断事項の整理は継続。
+
+## タイトル初期転送量の目標達成
+
+- cold browserのnavigation/resource encodedBodySize合計に2,000,000B上限を設定し、旧素材で3,804,217Bの失敗を確認。背景と共通ボタンをWebP quality94へ変更。元PNG保持、寸法/alpha完全一致、RGB各RMS6/255以下をPythonで実検証。残り9素材は従来byte列を維持。
+- manifest v2で素材別encoding/画素誤差を記録。Nodeはhash/容量/記録を検証し、Python checkで画素差を再計算する。背景/ボタンを画像表示でレビュー。
+- 最終設定の配信build初期転送1,861,003Bで上限通過。cold cache相当の新ブラウザーcontext、ローカルpreviewのencoded body合計であり、実地域の起動時間を保証しない。
+- production全11 E2E通過後、可逆素材のencode設定を従来へ戻して差分を絞り、入口/転送/練習のテストを再実行して通過。e2e TypeScript、assets:check、Python fidelity check、diff check通過。
+- 次は最初の対戦までの累計8MBと残要件の最終照合。人間の最終アート承認/実環境SLO/公開運用判断は未完を維持。

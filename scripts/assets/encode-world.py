@@ -1,9 +1,9 @@
-"""Encode runtime artwork losslessly; preserve original pixels and provenance."""
+"""Encode runtime artwork with explicit per-asset fidelity and provenance."""
 import argparse
 import hashlib
 import json
 from pathlib import Path
-from PIL import Image
+from PIL import Image, ImageChops, ImageStat
 
 ROOT = Path(__file__).resolve().parents[2]
 FILES = {
@@ -33,16 +33,21 @@ def run(check):
         original = ROOT / "assets/workbench" / source
         output = target / f"{name}.webp"
         image = Image.open(original).convert("RGBA")
+        lossy = name in {"background", "button"}
+        encoding = "webp-q94" if lossy else "lossless-webp-exact-rgba"
         if not check:
-            image.save(output, "WEBP", lossless=True, exact=True, method=6)
+            image.save(output, "WEBP", quality=94 if lossy else 80, lossless=not lossy, exact=True, method=6)
         decoded = Image.open(output).convert("RGBA")
-        if image.size != decoded.size or image.tobytes() != decoded.tobytes():
-            raise ValueError(f"Pixel mismatch: {name}")
+        if image.size != decoded.size or image.getchannel("A").tobytes() != decoded.getchannel("A").tobytes():
+            raise ValueError(f"Dimensions/alpha mismatch: {name}")
+        rms = ImageStat.Stat(ImageChops.difference(image, decoded)).rms
+        if (lossy and max(rms) > 6) or (not lossy and image.tobytes() != decoded.tobytes()):
+            raise ValueError(f"Pixel fidelity mismatch: {name}: {rms}")
         records.append({"id": name, "source": str(original.relative_to(ROOT)),
-                        "file": output.name, "sourceSha256": digest(original),
+                        "encoding": encoding, "channelRms": rms, "file": output.name, "sourceSha256": digest(original),
                         "sha256": digest(output), "size": list(image.size),
                         "sourceBytes": original.stat().st_size, "bytes": output.stat().st_size})
-    manifest = {"version": 1, "encoding": "lossless-webp-exact-rgba", "assets": records}
+    manifest = {"version": 2, "encoding": "per-asset-webp", "assets": records}
     path = target / "manifest.json"
     if check:
         if json.loads(path.read_text()) != manifest:
@@ -51,7 +56,7 @@ def run(check):
         path.write_text(json.dumps(manifest, indent=2) + "\n")
     before = sum(item["sourceBytes"] for item in records)
     after = sum(item["bytes"] for item in records)
-    print(f"Verified {len(records)} exact RGBA images: {before} -> {after} bytes ({100 * (1 - after / before):.1f}% smaller)")
+    print(f"Verified {len(records)} fidelity-checked images: {before} -> {after} bytes ({100 * (1 - after / before):.1f}% smaller)")
 
 
 if __name__ == "__main__":
