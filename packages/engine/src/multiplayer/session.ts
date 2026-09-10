@@ -1,3 +1,4 @@
+import { recordShotStats, type BattleStats } from "./stats.js";
 import { matchBuild, type MatchBuild } from "@game/protocol/build";
 import { fireCommandSchema, type FireCommand } from "@game/protocol/v2";
 import { DEFAULT_LOADOUT, parseLoadout, type Loadout, type TerrainOp } from "@game/protocol";
@@ -13,6 +14,7 @@ import { createBattleWind, advanceBattleWind, type BattleWind } from "./battleWi
 
 type ResolvedShot = ReturnType<typeof resolveBattleShot>;
 export type BattleSession = {
+  readonly stats?: BattleStats;
   readonly build: MatchBuild;
   readonly map: ReturnType<typeof createBattle>["map"];
   readonly windState: BattleWind;
@@ -35,6 +37,7 @@ const copyLoadouts = (battle: ReturnType<typeof createBattle>, supplied?: Readon
     return [p.playerId, [...loadout]];
   }));
 export const createBattleSession = (battle: ReturnType<typeof createBattle>, matchId: string, now: number, loadouts?: Readonly<Record<string, Loadout>>, windSeed = 0): BattleSession => ({
+  stats: Object.fromEntries(battle.players.map(p => [p.playerId, { shots: 0, enemyDamage: 0, friendlyDamage: 0, selfDamage: 0 }])),
   build: matchBuild(battle.map), windState: createBattleWind(windSeed),
   loadouts: copyLoadouts(battle, loadouts), ruleSetVersion: RULE_SET_VERSION,
   ...battle, matchId, startedAt: now, phase: "acting", result: { type: "ongoing" }, terrainOps: [], replay: null, lastFire: null,
@@ -78,7 +81,7 @@ export const fireInSession = (state: BattleSession, playerId: string, raw: unkno
   const shot = resolveBattleShot(state.roster, state.mask, state.players, { playerId, weapon, wind: state.windState.value,
     facing: command.facing, elevation: command.elevation, power: command.power });
   const duration = Math.min(8000, Math.max(1000, shot.ticks * COMBAT_TICK_MS + 300));
-  const next: BattleSession = { ...state, roster: shot.roster, players: shot.players, mask: shot.mask, phase: "replaying",
+  const next: BattleSession = { ...state, ...(state.stats ? { stats: recordShotStats(state.stats, state.roster.members, playerId, state.players, shot.impacts) } : {}), roster: shot.roster, players: shot.players, mask: shot.mask, phase: "replaying",
     movement: { ...state.movement, locked: true, eventSeq: state.movement.eventSeq + 1 },
     terrainOps: [...state.terrainOps, ...shot.impacts.map(i => i.terrainOp)],
     replay: { startsAt: now, endsAt: now + duration, shot, playersBefore: state.players, eliminatedBefore: state.roster.eliminated, origin: { x: state.movement.x, y: state.movement.y } },

@@ -83,3 +83,11 @@
 .battle-upcoming { position:absolute; right:3px; bottom:1px; z-index:1; min-width:14px; text-align:center; font-size:10px; line-height:14px; color:#f4f0de; background:#102637; border:1px solid #526c80; border-radius:3px; }
 
 .battle-turn-notice { padding:10px 12px; color:#fff1d5; background:#274a56; border-left:3px solid #e9ce83; }
+
+.battle-result-stats { max-height:45vh; width:min(680px,94vw); overflow:auto; background:#142b3df5; color:#fff1d5; border:1px solid #c7b478; }
+.battle-result-stats table { width:100%; border-collapse:collapse; font-size:12px; font-variant-numeric:tabular-nums; }
+.battle-result-stats th,.battle-result-stats td { padding:6px 8px; border-bottom:1px solid #526c80; text-align:right; }
+.battle-result-stats th:first-child { text-align:left; max-width:140px; overflow-wrap:anywhere; }
+
+.network-finished:has(.battle-result-stats) { overflow-y:auto; justify-content:flex-start; padding:16px; box-sizing:border-box; gap:10px; }
+.network-finished:has(.battle-result-stats) > * { flex-shrink:0; }

@@ -12,8 +12,10 @@ it("round trips replay, terrain, wind and fire deduplication through JSON", () =
   const state = fireInSession(initial, id, command, 1100).state;
   const restored = restoreBattle(JSON.parse(JSON.stringify(serializeBattle(state))));
   expect(restored).toEqual(state);
+  expect(restored.stats?.[id]?.shots).toBe(1);
   expect(restored.mask.cells).toBeInstanceOf(Uint8Array);
   expect(fireInSession(restored, id, command, 1200).reason).toBe("duplicate");
+  expect(fireInSession(restored, id, command, 1200).state.stats?.[id]?.shots).toBe(1);
   expect(tickSession(restored, state.replay!.endsAt)).toEqual(tickSession(state, state.replay!.endsAt));
 });
 it("retains movement receipts so a reconnect cannot spend a step twice", () => {
@@ -36,4 +38,10 @@ it("rejects a different simulation or map revision in a saved match", () => {
 it("explicitly migrates only the known pre-public v1 snapshot", () => {
   const state = start(), stored = serializeBattle(state), { build: _build, ...legacy } = stored.state;
   expect(restoreBattle({ version: 1, state: legacy })).toEqual(state);
+});
+
+it("keeps statistics unavailable for old snapshots instead of fabricating zero damage", () => {
+  const stored = serializeBattle(start());
+  const { stats: _stats, ...state } = stored.state;
+  expect(restoreBattle({ ...stored, state }).stats).toBeUndefined();
 });

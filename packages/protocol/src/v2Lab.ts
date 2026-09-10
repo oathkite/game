@@ -13,6 +13,7 @@ export const labFrameSchema = z.object({
   build: matchBuildSchema,
   type: z.literal("lab.frame"), serverTime: z.number(), eventSeq: z.number().int().nonnegative(),
   matchId: z.string(), turnId: z.number().int(), actorId: z.string(), deadlineAt: z.number(),
+  stats: z.record(z.string(), z.object({ shots: z.number().int().nonnegative(), enemyDamage: z.number().int().nonnegative(), friendlyDamage: z.number().int().nonnegative(), selfDamage: z.number().int().nonnegative() })).optional(),
   upcomingPlayerIds: z.array(z.string()).max(3).optional(),
   players: z.array(labPlayerSchema).min(2).max(8),
   movement: moveSnapshotSchema,

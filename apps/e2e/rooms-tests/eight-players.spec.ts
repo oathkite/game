@@ -72,6 +72,15 @@ test("eight independent players complete a 4v4 match and return together", async
       await page.getByRole("button", { name: "降参", exact: true }).click();
     }
     for (const page of pages) await expect(page.getByRole("heading", { name: /赤チームの勝利/ })).toBeVisible();
+    const resultTables = await Promise.all(pages.map(async page => {
+      const table = page.getByRole("table", { name: "試合成績" });
+      await expect(table.locator("tbody tr")).toHaveCount(8);
+      return table.locator("tbody").innerText();
+    }));
+    expect(new Set(resultTables).size).toBe(1);
+    const shotCounts = await owner.getByRole("table", { name: "試合成績" }).locator("tbody tr td:first-of-type").allTextContents();
+    expect(shotCounts.reduce((sum, value) => sum + Number(value), 0)).toBe(1);
+    await owner.screenshot({ path: "test-results/eight-player-result.png" });
     await owner.getByRole("button", { name: "部屋へ戻る（オーナー）", exact: true }).click();
     for (const page of pages) {
       await expect(page.getByTestId("room-code")).toHaveText(code!);

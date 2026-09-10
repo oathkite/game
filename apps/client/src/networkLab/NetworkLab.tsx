@@ -1,3 +1,4 @@
+import { ResultStats } from "@/worldUi/ResultStats";
 import { measureLatency } from "./latency";
 import { roomOutputSchema } from "@game/protocol/v2-rooms";
 import { teamColorName } from "@/worldUi/teamColors";
@@ -140,7 +141,7 @@ export const NetworkLab = ({ worldArt = false, onExit, connection }: { readonly 
       if (socket.current?.readyState !== WebSocket.OPEN) { setReportStatus("通報を送信できませんでした。"); return; }
       setReportStatus("送信中…"); socket.current.send(JSON.stringify({ type: "room.report", matchId: frame.matchId, targetId, reason }));
     } } } : {})} {...(frame ? { diagnostics: matchDiagnostics(frame) } : {})} spectator={observing} close={() => setMenu(false)} surrender={() => { action("lab.surrender"); setMenu(false); }} exit={onExit} finished={!frame || frame.phase === "finished"} />}
-    {frame?.phase === "finished" && <section className="network-finished"><h2>{frame.result.type === "win" ? t("{team}チームの勝利", { team: t(teamColorName(Number(frame.result.teamId.slice(1)))) }) : t("引き分け")}</h2>{!spectator && <button onClick={() => action("lab.rematch")}>{connection ? t("部屋へ戻る（オーナー）") : t("再戦する")}</button>}<button onClick={onExit}>{t("ロビーに戻る")}</button></section>}
+    {frame?.phase === "finished" && <section className="network-finished"><h2>{frame.result.type === "win" ? t("{team}チームの勝利", { team: t(teamColorName(Number(frame.result.teamId.slice(1)))) }) : t("引き分け")}</h2><ResultStats players={frame.players} {...(frame.stats ? { stats: frame.stats } : {})} />{!spectator && <button onClick={() => action("lab.rematch")}>{connection ? t("部屋へ戻る（オーナー）") : t("再戦する")}</button>}<button onClick={onExit}>{t("ロビーに戻る")}</button></section>}
     {status === "invalid-session" && <div className="network-finished"><p>{t("接続の有効期限が切れました。")}</p><button onClick={() => { sessionStorage.removeItem("keropod.network-lab-token"); location.reload(); }}>{t("新しい接続で参加")}</button></div>}
     <div className="network-portrait"><h2>{t("横向きでプレイしよう")}</h2><p>{t("端末を回転するとフィールドと操作が見やすくなります。")}</p><button onClick={onExit}>{t("ロビーに戻る")}</button></div>
     {!connection && status.startsWith("切断") && <p className="network-connection" role="status">{t("切断されました。再読み込みで復帰できます。")}</p>}
