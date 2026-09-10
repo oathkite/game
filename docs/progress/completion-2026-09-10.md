@@ -612,3 +612,9 @@ heartbeatはUI共同調整時にPAUSED。本ゴールは現在のタスクで進
 
 - 結果中に帰還を選んだ参加者を含め全員退出→tickで部屋復帰→新規参加を回帰テストへ追加。古いbattle/帰還選択/参加者が残らず、新しい参加者がowner・ready=falseになることを確認。既存実装の修正は不要だった。
 - result-return4テストとserver/CF型検査通過。
+
+### 最新対戦フローのFirefox/WebKit確認（2026-09-11）
+
+- production-rooms.configでFirefox/WebKit各2件、計4件が4.0分で通過。独立8人の射撃共有、設定中の手番通知、次手番予告、全員同じ成績、全員帰還選択を確認。
+- 両browserで、結果後に片方を切断し誰も帰還を選ばず、実時間55〜68秒内の自動部屋復帰を確認。Chromiumの既存証拠と合わせて3browserを検証済み。実Safari/iOS等の端末確認とは別。
+- 対戦までの転送はFirefox最大6,297,985B、WebKit6,298,437B。8MB以内。
