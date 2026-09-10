@@ -426,3 +426,9 @@ heartbeatはUI共同調整時にPAUSED。本ゴールは現在のタスクで進
 - 先に旧実装で全6区画が更新される失敗を確認。修正後、1セル破壊で1区画のみ・同じmaskで更新0・境界破壊で当該と下側の2区画・苔の実画素を検証して通過。
 - world全8 E2E、client/e2e TypeScript/diff check通過。これは転送回数削減の検証であり、実機60fps保証とは区別する。
 - soak72311は725秒時点RSS491MB/heap209MBで継続中。完走未確認。
+
+### 低速回線でのcold start計測
+
+- startup.config.tsを分離し、Chromium CDPで10Mbps・latency150ms、毎回新context/cache無効の20回を測定。navigation開始から開始ボタンが表示・有効・中央hit test可能になるまでをrequestAnimationFrameで記録し、実クリックでロビーへ進めることも全回確認。
+- p95=684.1ms、最大690.3ms。ローカルproduction配信の開始操作可能3秒条件を通過。画像の完全ロード・実端末CPU・実地域DNS/TLS時間の測定ではない。
+- 初回設定で既存3browser projectsが合成されCDP非対応2件が失敗したため、Chromium専用設定に修正。正式再実行は1件通過。E2E型検査対象へ専用設定とtestを追加。

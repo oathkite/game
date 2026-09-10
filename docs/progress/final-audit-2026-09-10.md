@@ -5,6 +5,7 @@
 
 | 要件 | 現在の証拠 | 判定・次の作業 |
 | --- | --- | --- |
+| cold start操作可能p95 | startup-tests、10Mbps/150ms・cache無効20回、p95 684.1ms | Chromiumローカル配信で3秒条件通過。画像完了・実機CPU・実地域DNS/TLSは別 |
 | 初期タイトル転送2MB | production-tests/entry.spec.ts、cold新context、1,861,002B | ローカル配信buildで通過。実地域の起動時間とは別 |
 | 初回対戦まで8MB | 練習5,294,817B、production-rooms.config.tsの独立8 contextで各5,296,962〜5,296,963B | 配信buildのタイトル→ロビー→8人オンライン戦場で通過。実地域の待ち時間とは別 |
 | 独立8クライアントで試合完走 | eight-players.spec.ts、独立8 contextで4v4入室→準備→射撃共有→青4名降参→全員同じ結果→8名部屋復帰 | Chromium/Firefox/WebKit配信build・local edgeで通過。射撃のみで決着する長時間実戦・実機の証拠とは別 |

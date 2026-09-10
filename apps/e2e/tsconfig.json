@@ -26,6 +26,9 @@
     "rooms-tests",
     "rooms.config.ts",
     "production-tests",
-    "production.config.ts"
+    "production.config.ts",
+    "startup-tests",
+    "startup.config.ts",
+    "production-rooms.config.ts"
   ]
 }
