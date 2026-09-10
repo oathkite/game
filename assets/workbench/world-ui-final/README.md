@@ -15,3 +15,4 @@
 - Source: exec-a782864c-e915-46e6-a617-352641393b39.png. Original retained; 1254x1254 output despite 1024 requested.
 - Brief: full-bleed repeating rock material, charcoal/olive fractured slabs and sparse moss, no sky/UI/characters/grass border. Runtime supplies the arbitrary destruction mask and surface rim.
 - AI review: rock/moss material matches the foreground direction more closely than brown soil. Repeat seams and apparent pixel density require in-game comparison. Not yet selected as runtime terrain; human approval pending.
+- Runtime comparison: selected for the next iteration after desktop/mobile screenshots. A 256-art-pixel repeat tile makes the generated clusters close to tank pixels; the initial 1024 tile made the rock pixels visibly too large. Lossless WebP preserves the source before runtime nearest-neighbor resampling. Surface moss and repetitive material variation still need refinement; this is not final human approval.

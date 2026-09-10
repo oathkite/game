@@ -496,3 +496,10 @@ heartbeatはUI共同調整時にPAUSED。本ゴールは現在のタスクで進
 - 原案desktop-refined-v4を再確認。大きな差の一つである土→岩盤/苔のためterrain-rock-v1.pngを生成しworkbenchへ保存。1254四方、岩・苔の方向は近いが、繰り返し境界と実画素密度を実画面比較してから採用を決める。runtime未変更。
 - 演出追加後のproduction-rooms Chromium独立8contextも通過（32.1秒）。4v4入室→射撃→降参決着→全員部屋復帰。累計最大5,304,165B。これは射撃だけで決着する長時間試合の証拠ではない。
 - 1時間soakはsession72311で2486秒まで進行、同じprocessを継続。
+
+### 岩盤素材の実画面比較
+
+- terrain-rock-v1をlossless runtimeへ接続。原寸source保存、RGBA完全一致check通過。texture単体1,520,170B、world全11画像10,013,544B（起動時すべて取得するわけではない）。
+- 初期1024px tileでは岩のドットがタンクより大きいため、256 artpx repeatへ調整。GPU chunk/12artpxセル/物理maskは維持。原案の岩盤方向へ近づいたが、地表の苔と繰返しの自然さは継続調整が必要。
+- encodeとtestを誤って重ねた初回は画像書込途中のdecode失敗が1件。encode終了後にkeyboard/touch2件再実行通過。最終tileでPC/横844/横667/縦390と破壊alpha/区画境界の6件通過。完成前の画像へテストを開始しない。
+- 1時間soak session72311は2694秒まで進行、未完走。

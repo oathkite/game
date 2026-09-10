@@ -12,7 +12,7 @@ FILES = {
     "lobby": "world-ui-v1/lobby-v1.png",
     "settings": "world-ui-v1/settings-v1.png",
     "result": "world-ui-v1/result-v1.png",
-    "terrain": "ui-polish-v1/terrain.png",
+    "terrain": "world-ui-final/terrain-rock-v1.png",
     "leaf": "world-ui-v1/leaf-v1.png",
     "panel": "world-ui-v1/panel-v1.png",
     "button": "world-ui-v1/button-v2.png",

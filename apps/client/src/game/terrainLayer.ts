@@ -70,7 +70,8 @@ export const createTerrainLayer = (mask: TerrainMask, art?: CanvasImageSource): 
   const scale = art ? ART_PIXELS_PER_CELL : 1;
   const tile = art ? document.createElement("canvas") : undefined;
   if (tile && art) {
-    tile.width = tile.height = 1024;
+    // The generated clusters become roughly one tank-art pixel at this tile size.
+    tile.width = tile.height = 256;
     const context = tile.getContext("2d");
     if (!context) throw new Error("2d context がない");
     context.imageSmoothingEnabled = false; context.drawImage(art, 0, 0, tile.width, tile.height);

@@ -95,7 +95,7 @@ test("terrain art preserves collision alpha after carving and ordinary terrain s
         if (pixels[(y * canvas.width + x) * 4 + 3] !== carved.cells[cell]! * 255) matches = false;
       }
       for (const x of [0, canvas.width - 1]) {
-        const expected = (sprite.x * scale + x) % 1024 < 512 ? 255 : 0;
+        const expected = (sprite.x * scale + x) % 256 < 128 ? 255 : 0;
         if (pixels[(24 * canvas.width + x) * 4] !== expected) continuous = false;
       }
       return { scale, width: canvas.width, height: canvas.height };
