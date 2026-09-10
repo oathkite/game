@@ -1,3 +1,4 @@
+import { matchDiagnostics } from "@/worldUi/diagnostics";
 import { createBattleSounds } from "./battleSounds";
 import { playSound, unlockAudio } from "@/app/audio";
 import { CLIENT_BUILD, compatibleMatch } from "@game/protocol/build";
@@ -123,7 +124,7 @@ export const NetworkLab = ({ worldArt = false, onExit, connection }: { readonly 
     {observing ? <footer className="battle-console"><span role="status">観戦中</span><label><input type="checkbox" checked={keepView} onChange={e => setKeepView(e.target.checked)} />手動視点を維持</label></footer> : <BattleConsole player={hudPlayers.find(p => p.id === playerId)} steps={frame?.actorId === playerId ? frame.movement.stepsLeft : 0} tilt={ground} elevation={elevation} facing={ownFacing.current} power={input.gauge.value} loadout={loadout} slot={slot} disabled={!canAct || menu || input.gauge.charging} selectSlot={setSlot}>
       {touch && <><div><button disabled={!canAct || menu} aria-label="左へ1歩" {...input.button("left")}>←</button><button disabled={!canAct || menu} aria-label="右へ1歩" {...input.button("right")}>→</button></div><div><button disabled={!canAct || menu} aria-label="角度を下げる" {...input.button("down")}>−</button><button disabled={!canAct || menu} aria-label="角度を上げる" {...input.button("up")}>＋</button></div><button disabled={!canAct || menu} aria-label="発射" {...input.button("fire")}>発射</button></>}
     </BattleConsole>}
-    {menu && <BattleMenu spectator={observing} close={() => setMenu(false)} surrender={() => { action("lab.surrender"); setMenu(false); }} exit={onExit} finished={!frame || frame.phase === "finished"} />}
+    {menu && <BattleMenu {...(frame ? { diagnostics: matchDiagnostics(frame) } : {})} spectator={observing} close={() => setMenu(false)} surrender={() => { action("lab.surrender"); setMenu(false); }} exit={onExit} finished={!frame || frame.phase === "finished"} />}
     {frame?.phase === "finished" && <section className="network-finished"><h2>{frame.result.type === "win" ? `${String.fromCharCode(65 + Number(frame.result.teamId.slice(1)))}チームの勝利` : "引き分け"}</h2>{!spectator && <button onClick={() => action("lab.rematch")}>{connection ? "部屋へ戻る（オーナー）" : "再戦する"}</button>}<button onClick={onExit}>ロビーに戻る</button></section>}
     {status === "invalid-session" && <div className="network-finished"><p>接続の有効期限が切れました。</p><button onClick={() => { sessionStorage.removeItem("keropod.network-lab-token"); location.reload(); }}>新しい接続で参加</button></div>}
     <div className="network-portrait"><h2>横向きでプレイしよう</h2><p>端末を回転するとフィールドと操作が見やすくなります。</p><button onClick={onExit}>ロビーに戻る</button></div>

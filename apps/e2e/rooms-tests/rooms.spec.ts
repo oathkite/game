@@ -85,6 +85,12 @@ test("room code, teams, ready, selected weapons and return to preparation", asyn
     await expect(b!.getByRole("button", { name: "再接続", exact: true })).toHaveCount(0);
     await expect(b!.getByTestId("identity")).toHaveText(identity!);
     await b!.getByRole("button", { name: "設定を開く" }).click();
+    await b!.getByText("試合の診断情報", { exact: true }).click();
+    const diagnostics = JSON.parse(await b!.getByRole("textbox", { name: "試合の診断情報", exact: true }).inputValue());
+    expect(diagnostics.format).toBe("keropod-match-diagnostics-v1");
+    expect(diagnostics.matchId).toBeTruthy();
+    expect(diagnostics.build.map.id).toBe("reed-hills");
+    expect(JSON.stringify(diagnostics)).not.toContain((await b!.evaluate(() => sessionStorage.getItem("keropod.room-token")))!);
     await b!.getByRole("button", { name: "降参", exact: true }).click();
     await expect(a!.getByRole("heading", { name: /チームの勝利/ })).toBeVisible();
     await a!.getByRole("button", { name: "部屋へ戻る（オーナー）", exact: true }).click();

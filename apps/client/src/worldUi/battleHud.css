@@ -67,3 +67,4 @@
 .world-ui .network-world header.battle-roster .battle-seat strong { color:#f4f0de; font:700 12px sans-serif; }
 .world-ui .network-world .battle-menu svg { width:26px; height:26px; }
 @media(max-width:999px),(max-height:499px) { .world-ui .network-world header.battle-roster .battle-seat strong { font-size:10px; } }
+.battle-menu-panel textarea { display:block; box-sizing:border-box; width:100%; margin:8px 0; resize:vertical; font:12px monospace; }
