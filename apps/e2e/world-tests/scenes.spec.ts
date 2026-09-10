@@ -80,19 +80,40 @@ test("terrain art preserves collision alpha after carving and ordinary terrain s
     const { createTerrainLayer } = await import(modulePath);
     const tile = document.createElement("canvas"); tile.width = tile.height = 8;
     tile.getContext("2d")!.fillRect(0, 0, 8, 8);
-    const mask = { width: 128, height: 128, cells: new Uint8Array(128 * 128).fill(1) };
-    const carved = { ...mask, cells: new Uint8Array(mask.cells) }; carved.cells[27] = 0; carved.cells[9000] = 0;
+    tile.getContext("2d")!.fillStyle = "#ff0000"; tile.getContext("2d")!.fillRect(0, 0, 4, 8);
+    const mask = { width: 300, height: 140, cells: new Uint8Array(300 * 140).fill(1) };
+    const carved = { ...mask, cells: new Uint8Array(mask.cells) };
+    for (const index of [27, 127, 128, 255, 256, 127 * 300 + 128, 128 * 300 + 128]) carved.cells[index] = 0;
     const layer = createTerrainLayer(mask, tile); layer.update(carved);
-    const canvas = layer.sprite.texture.source.resource as HTMLCanvasElement;
-    const pixels = canvas.getContext("2d")!.getImageData(0, 0, canvas.width, canvas.height).data;
-    const scale = canvas.width / mask.width;
-    const matches = Array.from({ length: canvas.width * canvas.height }, (_, i) => pixels[i * 4 + 3] === carved.cells[Math.floor(Math.floor(i / canvas.width) / scale) * mask.width + Math.floor(i % canvas.width / scale)]! * 255).every(Boolean);
+    let matches = true, continuous = true;
+    const chunks = layer.sprite.children.map((sprite: any) => {
+      const canvas = sprite.texture.source.resource as HTMLCanvasElement;
+      const pixels = canvas.getContext("2d")!.getImageData(0, 0, canvas.width, canvas.height).data;
+      const scale = canvas.width / sprite.width;
+      for (let y = 0; y < canvas.height; y++) for (let x = 0; x < canvas.width; x++) {
+        const cell = (sprite.y + Math.floor(y / scale)) * mask.width + sprite.x + Math.floor(x / scale);
+        if (pixels[(y * canvas.width + x) * 4 + 3] !== carved.cells[cell]! * 255) matches = false;
+      }
+      for (const x of [0, canvas.width - 1]) {
+        const expected = (sprite.x * scale + x) % 1024 < 512 ? 255 : 0;
+        if (pixels[(24 * canvas.width + x) * 4] !== expected) continuous = false;
+      }
+      return { scale, width: canvas.width, height: canvas.height };
+    });
     layer.destroy();
     const plain = createTerrainLayer(carved);
-    const plainCanvas = plain.sprite.texture.source.resource as HTMLCanvasElement;
+    const plainCanvas = plain.sprite.children[0].texture.source.resource as HTMLCanvasElement;
     const white = Array.from(plainCanvas.getContext("2d")!.getImageData(0, 0, 1, 1).data);
     plain.destroy();
-    return { matches, white };
+    return { matches, continuous, white, chunks };
   });
-  expect(result).toEqual({ matches: true, white: [255, 255, 255, 255] });
+  expect(result.matches).toBe(true);
+  expect(result.continuous).toBe(true);
+  expect(result.white).toEqual([255, 255, 255, 255]);
+  expect(result.chunks).toHaveLength(6);
+  for (const chunk of result.chunks) {
+    expect(chunk.scale).toBe(12);
+    expect(chunk.width).toBeLessThanOrEqual(1536);
+    expect(chunk.height).toBeLessThanOrEqual(1536);
+  }
 });
