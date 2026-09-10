@@ -1,3 +1,4 @@
+import { createTankEffectLayer } from "./tankEffectLayer";
 import { createTankEffects } from "./tankEffects";
 import { muzzlePose } from "@/game/muzzlePose";
 import { createTankAnimation } from "./tankAnimation";
@@ -75,7 +76,7 @@ const makeTank = (frame: Frame, nickname: string, color: string): TankView & { s
   const aim = new Graphics();
   for (let i = 0; i < 5; i++) aim.rect(6 + i * 3, -0.12, 1.4, 0.24).fill(0xffc345);
   gun.addChild(weapon, aim);
-  const flashes: Sprite[] = [];
+  const showFlashes = createTankEffectLayer(gun, "muzzle", frame);
   let weaponId: WeaponId = "cannon";
   body.addChild(gun);
   world.addChild(rig);
@@ -87,7 +88,7 @@ const makeTank = (frame: Frame, nickname: string, color: string): TankView & { s
   const team = new Graphics().roundRect(-labelWidth / 2, -21, 4, 30, 2).fill(color);
   label.addChild(plate, team, name, health);
   const animate = createTankAnimation(), effectsAt = createTankEffects();
-  const effects: Sprite[] = [];
+  const showEffects = createTankEffectLayer(rig, "tank-effect", frame);
   const grayscale = new ColorMatrixFilter();
   grayscale.desaturate();
   let wasWreck = false;
@@ -98,13 +99,7 @@ const makeTank = (frame: Frame, nickname: string, color: string): TankView & { s
     setPose: (pose: TankPose, cell: number) => {
       const now = performance.now();
       const animation = animate(pose, now, reducedMotion.matches);
-      effects.forEach(sprite => { sprite.visible = false; });
-      effectsAt(pose, now, reducedMotion.matches).forEach((effect, i) => {
-        const sprite = effects[i] ?? new Sprite();
-        if (!effects[i]) { effects.push(sprite); rig.addChild(sprite); sprite.label = `tank-effect-${i}`; sprite.scale.set(1 / 12); }
-        sprite.texture = frame(effect.id, effect.frame);
-        sprite.position.set(effect.x, effect.y); sprite.alpha = effect.alpha; sprite.visible = true;
-      });
+      showEffects(effectsAt(pose, now, reducedMotion.matches));
       tracks.texture = frame("tracks-standard", animation.tracks);
       pilot.texture = frame("pilot-frog", animation.pilot);
       world.position.set(pose.x + 0.5, pose.y);
@@ -121,14 +116,8 @@ const makeTank = (frame: Frame, nickname: string, color: string): TankView & { s
       body.y = wreck ? 8 / 12 : 0;
       gun.rotation = (wreck ? 18 : -pose.elevation) * Math.PI / 180;
       aim.visible = pose.hp > 0 && pose.aiming;
-      flashes.forEach(sprite => { sprite.visible = false; });
-      if (pose.hp > 0 && !reducedMotion.matches) (pose.shotFlashes ?? []).forEach((flash, i) => {
-        const effect = muzzlePose(weaponId, flash, recoil);
-        const sprite = flashes[i] ?? new Sprite();
-        if (!flashes[i]) { flashes.push(sprite); gun.addChild(sprite); sprite.label = `muzzle-${i}`; sprite.scale.set(1 / 12); }
-        sprite.texture = frame(effect.id, effect.frame);
-        sprite.position.set(effect.x, effect.y); sprite.alpha = effect.alpha; sprite.visible = true;
-      });
+      showFlashes(pose.hp > 0 && !reducedMotion.matches
+        ? (pose.shotFlashes ?? []).map(flash => muzzlePose(weaponId, flash, recoil)) : []);
       label.position.set((pose.x + 0.5) * cell, (pose.y - 11.5) * cell);
       health.clear().rect(-38, 3, 76, 3).fill(0x435568).rect(-38, 3, 76 * Math.max(0, pose.hp) / 100, 3).fill(color);
     },

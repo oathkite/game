@@ -526,3 +526,8 @@ heartbeatはUI共同調整時にPAUSED。本ゴールは現在のタスクで進
 - SpriteTankの名前plateを接地点から14cell上→11.5cell上へ寄せ、原案に近い機体と情報のまとまりへ調整。plateの不透明背景・HP/チーム色は維持。
 - PC/mobile4サイズと地形6E2E、client typecheck通過。1440実画面で確認。全仰角/傾斜の視認性最終確認は全体の視覚比較へ含める。
 - 1時間soak session72311は3367秒まで進行、未完走。
+
+### 機体描画の重複整理
+
+- 砲口/機体エフェクトのSprite生成・再利用・非表示・texture/位置/alpha更新が重複したためtankEffectLayerへ集約。親Containerが破棄責務を持つ既存構成を維持し、別の寿命管理は追加しない。
+- SpriteTankのsetPoseから素材表示の反復処理を除去。実Pixiの連装砲口/反動/大破/残骸煙/通常復帰testとclient typecheckが通過。
