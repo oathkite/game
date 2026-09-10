@@ -69,7 +69,7 @@ export const RoomScreen = ({ onExit, onLab }: { readonly onExit: () => void; rea
   const canStart = owner && room!.members.length >= 2 && room!.members.every(p => p.ready && p.connected && p.teamId) && new Set(room!.members.map(p => p.teamId)).size >= 2;
   const connected = socket.current?.readyState === WebSocket.OPEN;
   if (battle) return <><NetworkLab connection={battle} worldArt onExit={leave} />{status && <div className="room-battle-status" role="status">{t(status)}{!connected && <PixelButton disabled={busy} onClick={() => connect({ type: "room.resume", token: sessionStorage.getItem(tokenKey) })}>{t("再接続")}</PixelButton>}</div>}</>;
-  return <section className="room-screen">
+  return <section key={room?.roomId ?? "entry"} className="room-screen">
     <header><h1>{room ? <>{t("部屋")} <span data-testid="room-code">{room.roomId}</span></> : t("対戦ルーム")}</h1><PixelButton onClick={leave}>{t("ロビーに戻る")}</PixelButton></header>
     <div className="room-body"><PixelPanel>
       {!room ? <div className="room-entry"><h2>{t("仲間と出発しよう")}</h2><p>{t("部屋コードを共有して、2〜8人で遊べます。")}</p>

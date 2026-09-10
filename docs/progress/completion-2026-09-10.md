@@ -189,3 +189,10 @@ heartbeatはUI共同調整時にPAUSED。本ゴールは現在のタスクで進
 - 上限256件、7日保持。全員退出後も保存し、Node tick/DO alarmで期限切れを削除する。
 - server全65件通過後、空室ファイル保持/削除を追加し関連7件通過。edge2件、実edgeに対する英語通報/重複受付E2E、server/client/e2e TypeScript通過。
 - 公開前に運営の確認担当・頻度・対応基準を決める。受付機能は自動処分や運営対応完了を意味しない。
+
+## 11:56 オンライン内のシーン演出補完
+
+- 既存の対戦開始/部屋復帰フェードを確認。演出がなかった入室（entry→部屋）とオンライン結果表示に同じ240msフェードを適用。
+- RoomScreenの通信管理は再マウントせず、表示sectionのみroomIdで切り替える。readyや通常frameの更新ではkeyが変わらない。通信時計/サーバー進行に待機時間を追加しない。
+- 先行E2Eで結果のanimation-name=noneを再現後、英語quick/日本語custom対戦・復帰・再準備の2 E2E通過。reduced-motionの結果演出無効を検証。client/e2e TypeScriptとdiff check通過。
+- これは機能上の演出漏れの補完。最終的な視覚表現の承認・原案への整合は最後のUI工程に残る。
