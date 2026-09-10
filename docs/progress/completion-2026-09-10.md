@@ -92,3 +92,11 @@ heartbeatはUI共同調整時にPAUSED。本ゴールは現在のタスクで進
 - 配信用buildの接続先未設定時は同一originのv2 API。開発用8795を公開クライアントへ埋め込まない。
 - production build/previewの3 E2E、PC/横長touch/小型/縦画面と操作の7 E2E、client175 unit、TypeScriptを通過。
 - 全配信ファイルは現状約16MB。画像軽量化とpack登録を次に行う。UIの最終デザイン調整は未着手。
+
+## 10:57 配信画像の可逆圧縮
+
+- 背景/地形/ロゴ/共通UIの11画像をruntime/world-v1へ登録。元PNGと生成記録は保持。
+- RGBA全画素・寸法を完全一致で検証するWebPエンコーダーを追加。15,784,549→11,565,164 bytes（26.7%削減）。配信build全体は約16MB→12MB。
+- manifestに元と出力のSHA-256、寸法、容量を記録。assets:checkで差し替え・更新漏れを検出。
+- production3 E2E、地形破壊後のalpha E2E、TypeScript通過。
+- spriteの正規pack登録と最終視覚レビューは未完。runtime画像登録は人間によるアート承認の代替ではない。

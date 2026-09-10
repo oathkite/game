@@ -1,0 +1,149 @@
+{
+  "version": 1,
+  "encoding": "lossless-webp-exact-rgba",
+  "assets": [
+    {
+      "id": "logo",
+      "source": "assets/workbench/ui-polish-v1/logo.png",
+      "file": "logo.webp",
+      "sourceSha256": "fc3142f265d621b7992e397b234f4fad86aadfc39c9bdb2e2433ab041672d4a8",
+      "sha256": "5818f3c21c70152eee181b9a50fb3edc770473d08a13a713437b1f6fa862ad91",
+      "size": [
+        1536,
+        1024
+      ],
+      "sourceBytes": 1120804,
+      "bytes": 775426
+    },
+    {
+      "id": "background",
+      "source": "assets/workbench/world-ui-v1/background-v2.png",
+      "file": "background.webp",
+      "sourceSha256": "6396e2b29a24997de6d2b565bab4bb4e7363c92d846298e5039d2d35c980dc6f",
+      "sha256": "c85eb26c08681c2d6ab7fa53f97e7c376b2cda2ab34d6b7aa7a54bfad680c980",
+      "size": [
+        1536,
+        1024
+      ],
+      "sourceBytes": 1876656,
+      "bytes": 1454374
+    },
+    {
+      "id": "lobby",
+      "source": "assets/workbench/world-ui-v1/lobby-v1.png",
+      "file": "lobby.webp",
+      "sourceSha256": "6ba8124ce2ca8658ecc7545f4421da488c9f44acc15d160b60f15917a60bb147",
+      "sha256": "4cc7c0d797699b42f1ea9c63b661596e08d9b3d6b5b4bb4bdef0c209443cd726",
+      "size": [
+        1536,
+        1024
+      ],
+      "sourceBytes": 2165716,
+      "bytes": 1810624
+    },
+    {
+      "id": "settings",
+      "source": "assets/workbench/world-ui-v1/settings-v1.png",
+      "file": "settings.webp",
+      "sourceSha256": "6da62790c3a573353b93999935d889bb0643ffa5b41e9d41a5ba54c8467fdd61",
+      "sha256": "fd52ba056eb612933aadc2b0d430e8caa8ac1a673debd97e7b625ca7c5dc6cf6",
+      "size": [
+        1536,
+        1024
+      ],
+      "sourceBytes": 1638723,
+      "bytes": 1148648
+    },
+    {
+      "id": "result",
+      "source": "assets/workbench/world-ui-v1/result-v1.png",
+      "file": "result.webp",
+      "sourceSha256": "7e7ca2887908980aa7d275401d8508048ae1cf3d16fab71a810bca801417cf8e",
+      "sha256": "33e0724e2ec8b865fcba95cfd975f1be9b7fa2b6213125213df1d4c9661097a1",
+      "size": [
+        1536,
+        1024
+      ],
+      "sourceBytes": 1912703,
+      "bytes": 1575660
+    },
+    {
+      "id": "terrain",
+      "source": "assets/workbench/ui-polish-v1/terrain.png",
+      "file": "terrain.webp",
+      "sourceSha256": "23b4f1ac6be678bfd807683f554b6c7eeb3bb9a1fd3c488a41823b6cafe23d66",
+      "sha256": "a931937a42b81b721e3efe572452616ea3c52c08cb25db74ba9f522a4e44a063",
+      "size": [
+        1024,
+        1024
+      ],
+      "sourceBytes": 1919070,
+      "bytes": 1405846
+    },
+    {
+      "id": "leaf",
+      "source": "assets/workbench/world-ui-v1/leaf-v1.png",
+      "file": "leaf.webp",
+      "sourceSha256": "6d3a49b461208566bf01c74861403a7917d90a1ed79006271136f4814b9a3734",
+      "sha256": "00441dfc54008c97a32813b3b4fd7b726982324192c0dcca3d719e242f2a24dd",
+      "size": [
+        1024,
+        1024
+      ],
+      "sourceBytes": 745693,
+      "bytes": 451318
+    },
+    {
+      "id": "panel",
+      "source": "assets/workbench/world-ui-v1/panel-v1.png",
+      "file": "panel.webp",
+      "sourceSha256": "25d28d7c81bf4bdbd449d177318b375a093e4d428d23b0e753eee2365793440c",
+      "sha256": "b6587e7336440d290cd4064d495c55fa65eef0be1263bfaea3ad9a30ab501601",
+      "size": [
+        1536,
+        1024
+      ],
+      "sourceBytes": 1091585,
+      "bytes": 751742
+    },
+    {
+      "id": "button",
+      "source": "assets/workbench/world-ui-v1/button-v2.png",
+      "file": "button.webp",
+      "sourceSha256": "f7c4e011502d961f88b05a97361ef1b66968bdc42efafd545db03e488d303819",
+      "sha256": "fe4fd3b4a363af1a0a3abd594bf857fc3ea60f2b1af43f5b5277502a634404a5",
+      "size": [
+        1536,
+        1024
+      ],
+      "sourceBytes": 1069225,
+      "bytes": 696330
+    },
+    {
+      "id": "meter",
+      "source": "assets/workbench/world-ui-v1/meter-v1.png",
+      "file": "meter.webp",
+      "sourceSha256": "fe56bcd0a4c37c4df90cafc4d315ce65ab52485872d9a6819a1fa120cc16f8e3",
+      "sha256": "0454ccc5cc308b3dde2fca462c8cb3e82f4acff272589dd589c68d975927cf75",
+      "size": [
+        1536,
+        1024
+      ],
+      "sourceBytes": 884158,
+      "bytes": 610650
+    },
+    {
+      "id": "cockpit",
+      "source": "assets/workbench/ui-polish-v1/cockpit.png",
+      "file": "cockpit.webp",
+      "sourceSha256": "fa65e03308fe2f5d4b4a94a00dd9ece4caa7af400d54b44044cca1e684c6636f",
+      "sha256": "471675c29913eeb4ae3242e03373aba3ae1c888ee2c09bf04ee050833b4b8a47",
+      "size": [
+        1536,
+        1024
+      ],
+      "sourceBytes": 1360216,
+      "bytes": 884546
+    }
+  ]
+}

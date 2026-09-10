@@ -1,10 +1,10 @@
-import logo from "../../../../assets/workbench/ui-polish-v1/logo.png";
-import background from "../../../../assets/workbench/world-ui-v1/background-v2.png";
-import lobby from "../../../../assets/workbench/world-ui-v1/lobby-v1.png";
-import settings from "../../../../assets/workbench/world-ui-v1/settings-v1.png";
-import result from "../../../../assets/workbench/world-ui-v1/result-v1.png";
-import terrain from "../../../../assets/workbench/ui-polish-v1/terrain.png";
-import leaf from "../../../../assets/workbench/world-ui-v1/leaf-v1.png";
+import logo from "../../../../assets/runtime/world-v1/logo.webp";
+import background from "../../../../assets/runtime/world-v1/background.webp";
+import lobby from "../../../../assets/runtime/world-v1/lobby.webp";
+import settings from "../../../../assets/runtime/world-v1/settings.webp";
+import result from "../../../../assets/runtime/world-v1/result.webp";
+import terrain from "../../../../assets/runtime/world-v1/terrain.webp";
+import leaf from "../../../../assets/runtime/world-v1/leaf.webp";
 export const worldArt = { background, lobby, settings, result, terrain, leaf, logo };
 export const loadTerrainArt = async (): Promise<HTMLImageElement> => {
   const image = new Image(); image.src = terrain; await image.decode(); return image;

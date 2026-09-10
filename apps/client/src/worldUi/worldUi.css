@@ -76,7 +76,7 @@
   .world-settings { padding:24px 16px; }
 }
 @media (prefers-reduced-motion:reduce) { .world-shutter { transition:none; } }
-.world-ui .kp-power-track { height:24px; padding:7px 14%; border:0; box-shadow:none; background: url("../../../../assets/workbench/world-ui-v1/meter-v1.png") center / 100% 310% no-repeat; overflow:hidden; }
+.world-ui .kp-power-track { height:24px; padding:7px 14%; border:0; box-shadow:none; background: url("../../../../assets/runtime/world-v1/meter.webp") center / 100% 310% no-repeat; overflow:hidden; }
 .world-ui .network-world { display:grid; grid-template-rows:56px minmax(0,1fr) 98px; max-width:none; padding:0; margin:0; overflow:hidden; color:#fff1d5; background:#24344a; }
 .network-world header { display:flex; align-items:center; gap:20px; padding:0 16px; border-bottom:3px solid #c68a4c; }
 .network-world header > div { margin-right:auto; }
@@ -116,7 +116,7 @@
 @media (orientation:portrait) { .world-ui .network-world header { flex-wrap:wrap; } .network-world footer { flex-wrap:wrap; overflow:auto; } }
 .network-portrait { display:none; }
 @media (orientation:portrait) { .network-portrait { position:absolute; inset:0; z-index:10; display:flex; flex-direction:column; align-items:center; justify-content:center; padding:24px; background:#24344a; text-align:center; } }
-.world-ui .network-finished { background: url("../../../../assets/workbench/world-ui-v1/result-v1.png") center / cover; color:#24344a; }
+.world-ui .network-finished { background: url("../../../../assets/runtime/world-v1/result.webp") center / cover; color:#24344a; }
 .network-finished h2 { padding:8px 24px; background:#fff1d5e8; }
 
 /* Observation glass quiets the scenery; solid instrument faces carry the text. */
@@ -127,11 +127,11 @@
 .world-machine .tank-portrait,.world-result-screen .tank-portrait { background:radial-gradient(ellipse at 50% 70%,#52636a 0,#24344a 65%); border:3px solid #c29a67; box-shadow:inset 0 0 0 3px #17283b,0 5px 0 #17283b; }
 .world-result-screen p { background:#fff0dc; }
 .world-ui .kp-topbar,.world-ui .kp-controls,.network-world > header,.network-world > footer { position:relative; isolation:isolate; background:#20344b; border:0; box-shadow:inset 0 0 0 2px #101e30; }
-.world-ui .kp-topbar::before,.world-ui .kp-controls::before,.network-world > header::before,.network-world > footer::before { content:""; position:absolute; inset:0; border:8px solid transparent; border-image:url("../../../../assets/workbench/ui-polish-v1/cockpit.png") 110 110 110 110 / 8px 12px / 0 stretch; pointer-events:none; z-index:-1; image-rendering:pixelated; }
+.world-ui .kp-topbar::before,.world-ui .kp-controls::before,.network-world > header::before,.network-world > footer::before { content:""; position:absolute; inset:0; border:8px solid transparent; border-image:url("../../../../assets/runtime/world-v1/cockpit.webp") 110 110 110 110 / 8px 12px / 0 stretch; pointer-events:none; z-index:-1; image-rendering:pixelated; }
 .world-ui .kp-control-group > span,.world-ui .kp-wind,.world-ui .kp-brand span { color:#d7e0df; }
 .world-ui .kp-world-help { background:#24344a; color:#fff1d5; border-left:3px solid #c69b64; }
 @media (max-height:550px) and (orientation:landscape) { .world-lobby h1,.world-settings h1 { padding:4px 12px; } }
 
-.world-machine .tank-portrait,.world-result-screen .tank-portrait { border-image:url("../../../../assets/workbench/ui-polish-v1/cockpit.png") 110 / 12px / 0 stretch; }
+.world-machine .tank-portrait,.world-result-screen .tank-portrait { border-image:url("../../../../assets/runtime/world-v1/cockpit.webp") 110 / 12px / 0 stretch; }
 @media (max-height:499px),(max-width:999px) { .world-ui .kp-brand span,.world-ui .kp-power > small { display:none; } }
 .world-ui .room-screen { position:relative; }
