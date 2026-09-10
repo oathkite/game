@@ -1,3 +1,4 @@
+import { loadImpactSprites } from "./impactSprites";
 import { useLanguage } from "@/i18n/locale";
 import { teamColor } from "./teamColors";
 import { loadDisplayScale } from "./displayScale";
@@ -27,12 +28,14 @@ export const NetworkField = (props: Props) => {
   useEffect(() => {
     const element = host.current; if (!element) return;
     let disposed = false, renderer: Renderer | null = null, art: SpriteTankFactory | null = null, stop = () => {};
+    let effects: Awaited<ReturnType<typeof loadImpactSprites>> | null = null;
     const cell = loadDisplayScale();
     const layout = (): Layout => ({ cell, mapWidth: element.clientWidth, mapHeight: element.clientHeight, panelWidth: 0, panelCell: 1 });
     const start = async () => {
       rig.configure(loadCameraSettings());
       art = await loadSpriteTanks(latest.current.frame.players.map(p => Number(p.teamId.slice(1)))); const terrainArt = await loadTerrainArt();
-      if (disposed) { art.destroy(); return; }
+      effects = await loadImpactSprites();
+      if (disposed) { art.destroy(); effects.destroy(); return; }
       let mask = baseTerrain(latest.current.frame), previousSize = "", terrainKey = "", turnKey = "", replayKey = -1;
       const facing = new Map<string, -1 | 1>();
       renderer = await createRenderer({ host: element, layout: layout(), mask, terrainArt, backgroundAlpha: 0, tankFactory: art.create,
@@ -52,10 +55,11 @@ export const NetworkField = (props: Props) => {
         const shot = frame.phase === "replaying" ? frame.replay?.shooter : null;
         if (shot) facing.set(shot.playerId, shot.facing);
         players.forEach((p, i) => r.setTank(i, { x: p.x, y: p.y, tilt: tiltOf(mask, { x: Math.round(p.x), y: Math.round(p.y) }), facing: facing.get(p.playerId) ?? 1,
-          elevation: p.playerId === shot?.playerId ? shot.elevation : p.playerId === ownId ? elevation : 45, hp: p.eliminated ? 0 : p.hp, visible: !p.eliminated && p.y < frame.map.height, aiming: frame.phase === "acting" && p.playerId === ownId && p.playerId === frame.actorId, flash: false }));
+          elevation: p.playerId === shot?.playerId ? shot.elevation : p.playerId === ownId ? elevation : 45, hp: p.eliminated ? 0 : p.hp, visible: !p.eliminated && p.y < frame.map.height, aiming: frame.phase === "acting" && p.playerId === ownId && p.playerId === frame.actorId, flash: presentation.effects.some(effect => effect.hitIds.includes(p.playerId)) }));
         const actor = players.find(p => p.playerId === frame.actorId); if (actor && frame.phase === "acting") rig.actor({ x: actor.x, y: actor.y - 6 });
         if (frame.replay && replayKey !== frame.replay.startsAt) { replayKey = frame.replay.startsAt; bullet = r.projectile("yellow", frame.replay.shooter.weapon); art!.setWeapon(frame.players.findIndex(p => p.playerId === frame.replay!.shooter.playerId), frame.replay.shooter.weapon); const p = presentation.bullets[0]; if (p) rig.focus(p, "shot"); }
         for (let i = 0; i < 9; i++) { const p = presentation.bullets[i]; bullet.setBullet(i, p?.x ?? null, p?.y ?? 0, 0); }
+        effects!.draw(bullet.container, presentation.effects, matchMedia("(prefers-reduced-motion: reduce)").matches);
         const first = presentation.bullets[0]; if (first) rig.shot(first);
         const center = rig.tick(dt, performance.now(), matchMedia("(prefers-reduced-motion: reduce)").matches);
         const offset = worldToScreen({ x: 0, y: 0 }, center, rig.get().viewport); r.setCameraOffset(Math.round(offset.x), Math.round(offset.y));
@@ -65,7 +69,7 @@ export const NetworkField = (props: Props) => {
       setLoaded(true);
     };
     void start().catch(e => { console.error(e); if (!disposed) setError(true); });
-    return () => { disposed = true; stop(); renderer?.destroy(); art?.destroy(); };
+    return () => { disposed = true; stop(); renderer?.destroy(); art?.destroy(); effects?.destroy(); };
   }, [rig]);
   useEffect(() => {
     let turn = "", selected = "";

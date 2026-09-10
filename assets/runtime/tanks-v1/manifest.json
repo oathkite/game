@@ -26,6 +26,12 @@
       "sha256": "e03372d898ff90c5cf9c367f3bd469b382280117d2510cc886a52b10cda92c03"
     },
     {
+      "file": "effect-explosion.png",
+      "source": "assets/workbench/baseline-v2/effect-explosion.png",
+      "bytes": 3664,
+      "sha256": "a6ed7cef987301dc778f8c378852f8b81d0fd43bfbbd40362552f566e959ad0b"
+    },
+    {
       "file": "weapon-cannon.png",
       "source": "assets/workbench/baseline-v2/weapon-cannon.png",
       "bytes": 652,

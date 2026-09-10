@@ -12,7 +12,7 @@ const projectileAt = (path: Replay["paths"][number], tick: number) => {
 /** Replay server ticks at a shared pace, retaining a final 300ms settling window. */
 export const presentLabReplay = (frame: LabFrame, now: number) => {
   const replay = frame.replay;
-  if (frame.phase !== "replaying" || !replay || now >= replay.endsAt) return { players: frame.players, terrainOps: frame.terrainOps, bullets: [] };
+  if (frame.phase !== "replaying" || !replay || now >= replay.endsAt) return { players: frame.players, terrainOps: frame.terrainOps, bullets: [], effects: [] };
   const settleAt = replay.endsAt - 300;
   const t = Math.max(0, Math.min(1, (now - replay.startsAt) / Math.max(1, settleAt - replay.startsAt)));
   const tick = t * replay.ticks;
@@ -24,6 +24,11 @@ export const presentLabReplay = (frame: LabFrame, now: number) => {
     const hp = before.hp - impacts.reduce((sum, impact) => sum + (impact.damage.find(d => d.playerId === before.playerId)?.amount ?? 0), 0);
     return { ...before, hp, eliminated: before.eliminated || hp <= 0 };
   });
-  return { players, bullets: now >= settleAt ? [] : replay.paths.flatMap(path => projectileAt(path, tick)),
+  const effects = replay.impacts.flatMap((impact, index) => {
+    const at = replay.startsAt + impact.tick / Math.max(1, replay.ticks) * (settleAt - replay.startsAt);
+    const age = now - at, op = frame.terrainOps[replay.terrainOpsBefore + index];
+    return age >= 0 && age < 300 && op ? [{ ...op, frame: Math.min(3, Math.floor(age / 75)), hitIds: age < 150 ? impact.damage.filter(damage => damage.amount > 0).map(damage => damage.playerId) : [] }] : [];
+  });
+  return { players, effects, bullets: now >= settleAt ? [] : replay.paths.flatMap(path => projectileAt(path, tick)),
     terrainOps: frame.terrainOps.slice(0, replay.terrainOpsBefore + impacts.length) };
 };

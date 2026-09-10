@@ -40,3 +40,11 @@ it("staggered launches and impacts follow authoritative ticks, preserving earlie
   expect(settled.players[0]).toMatchObject({ hp: 65, y: 160 });
   expect(settled.terrainOps).toHaveLength(2);
 });
+
+it("shows impact frames and damage flashes only on the authoritative impact timeline", () => {
+  expect(presentLabReplay(frame, 1699).effects).toEqual([]);
+  expect(presentLabReplay(frame, 1700).effects[0]).toMatchObject({ cx: 20, cy: 150, frame: 0, hitIds: ["p1"] });
+  expect(presentLabReplay(frame, 1850).effects[0]).toMatchObject({ frame: 2, hitIds: [] });
+  expect(presentLabReplay(frame, 1999).effects[0]!.frame).toBe(3);
+  expect(presentLabReplay(frame, 2000).effects).toEqual([]);
+});

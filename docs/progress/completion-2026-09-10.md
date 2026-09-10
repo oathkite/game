@@ -267,3 +267,12 @@ heartbeatはUI共同調整時にPAUSED。本ゴールは現在のタスクで進
 - インストール済みVitest3.2.7のcreateExpectPollを確認し、各呼び出しがtest.onFinishedへクロージャを追加することを確認。長時間ループで呼び続けるためテスト保持の影響が疑われる。
 - 試験のpollを期限付きの通常Promise待機＋最終同期assertへ変更。失敗条件/timeoutは維持し、RSSに加えてheapUsedを記録。4部屋/10秒の同条件試運転・server TypeScript/diff check通過。
 - 同じ100部屋/600秒の比較試験を開始。ログ `/tmp/keropod-soak-bounded.log`。結果未確認。元の951MB増加をサーバーのリークとも試験だけの問題とも断定しない。
+
+## 12:21 オンライン着弾の生成素材接続
+
+- 生成済みeffect-explosionの4コマを確認し、配信用コピーとハッシュ検査へ追加。オンライン射撃のProjectile containerへ再利用するSpriteとして接続。
+- impact.tickを既存replay時刻へ変換し、地形削りと同時に開始。確保済みの300ms settling内に4コマを表示し、遅れて届いた過去の爆発は再開しない。
+- 正のdamageを受けた機体を最初の150msだけflash表示。reduced-motionでは爆発のコマ変化を止める。物理や対戦時計は変更なし。
+- タイミング/過去再生防止を含むlabReplay4件、client TypeScript、assets check、実edgeのPC/touch射撃・復帰・再準備E2E通過。
+- 全武器固有VFX・練習側との演出統一と最終視覚比較は残る。
+- 比較soakはsession22808で継続。146秒時点RSS351MB/heap84MB（初回は145秒RSS484MB）。完了まで安定性の判定は保留。
