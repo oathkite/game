@@ -9,6 +9,7 @@ export type RoomEnv = { readonly ALLOCATION_LIMITER: RateLimit; readonly DIRECTO
 type Attachment = { readonly connectionId: string; readonly acceptedAt: number; readonly joined: boolean; readonly windowAt: number; readonly count: number };
 export class RoomObject extends DurableObject<RoomEnv> {
   private runtime: RoomRuntime | null = null;
+  private publishedLobby: RoomState["lobby"] = null;
   private summaryKey = "";
   private summaryAt = 0;
   constructor(ctx: DurableObjectState, env: RoomEnv) {
@@ -50,10 +51,15 @@ export class RoomObject extends DurableObject<RoomEnv> {
   private send(ws: WebSocket, message: unknown): void { if (ws.readyState === WebSocket.OPEN) ws.send(JSON.stringify(message)); }
   private publish(state: RoomState): void {
     const frame = roomFrame(state, Date.now());
+    const changedLobby = state.battle && state.lobby !== this.publishedLobby;
     for (const ws of this.ctx.getWebSockets()) {
       const attachment = ws.deserializeAttachment() as Attachment;
-      if (state.sessions.some(s => s.connectionId === attachment.connectionId)) this.send(ws, frame);
+      if (state.sessions.some(s => s.connectionId === attachment.connectionId)) {
+        if (changedLobby) this.send(ws, lobbyFrame(state));
+        this.send(ws, frame);
+      }
     }
+    this.publishedLobby = state.lobby;
     if (!state.lobby) return;
     const summary = { roomId: state.roomId, mode: state.mode, region: state.region, members: state.sessions.filter(s => s.role === "player").length, spectators: state.sessions.filter(s => s.role === "spectator").length, phase: state.lobby?.phase ?? "waiting" as const, mapId: state.lobby?.map.id ?? "moss-valley" };
     const key = JSON.stringify(summary);

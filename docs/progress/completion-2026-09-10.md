@@ -397,3 +397,10 @@ heartbeatはUI共同調整時にPAUSED。本ゴールは現在のタスクで進
 - production.config.tsにChromium/Firefox/WebKit projectsを追加。Playwright管理Firefox153.0/WebKit26.5を導入し、配信buildで22件を実行。Firefox11/11、WebKit10/11通過。
 - WebKitはdynamic chunkをabortした後、再読み込みしてもCameraPrototypeを再取得せずエラー画面へ戻る。HTTP traceで再取得なしを確認。query付きdocument再遷移・connectionreset・route維持も改善せず、実験的な変更は残さない。未解決であり全browser合格ではない。
 - `pnpm --filter @game/e2e exec playwright test --config production.config.ts --project=webkit --grep "failed battle chunk"`で再現。実iOS/Safari/Androidの代替証明とは扱わない。
+
+## 長時間試験で見つけたオーナー交代配信の修正
+
+- 初回1時間試験90534は122秒で失敗して停止。4部屋125秒は通過したが100部屋125秒で再現し、既存接続と復帰接続のownerId不一致、not-owner-or-not-finishedを確認。
+- 原因は対戦中のbroadcastがlab.frameだけで、切断によるlobby.ownerId変更を既存接続へ配信していなかったこと。Node/DOともlobby参照が変わったときだけroom.snapshotを先行配信し、毎tickの重複配信を避けた。
+- 復帰後の全接続ownerId一致をassert。修正後100部屋・125秒・実保存・片道125msで200再戦/6500移動、保存復元一致まで通過（131.91秒）。server68件/TypeScriptと配信版8ブラウザー対戦通過。
+- 修正版1時間試験は **session72311**、ログ `/tmp/keropod-soak-3600-owner-fix.log` で開始。90534/52939/80269/85978は終了済み。新実行はまだ合格扱いにしない。

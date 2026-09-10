@@ -107,6 +107,7 @@ it(`keeps ${roomCount} simultaneous eight-player battles isolated through firing
         expect(frames.every(frame => frame.matchId === battle.matchId && frame.players.length === 8)).toBe(true);
       }
       battle.clients[battle.clients.indexOf(actor)] = resumed;
+      await poll(() => battle.clients.every(client => client.last("room.snapshot")?.room.ownerId === resumed.last("room.snapshot")?.room.ownerId)).toBe(true);
     };
     await Promise.all(battles.map(exerciseShot));
     const soakStart = performance.now();
@@ -120,7 +121,9 @@ it(`keeps ${roomCount} simultaneous eight-player battles isolated through firing
       await poll(() => battle.clients.every(client => client.last("lab.frame")?.phase === "finished")).toBe(true);
       const owner = battle.clients.find(client => client.last("room.welcome")!.playerId === snapshot.ownerId)!;
       owner.send({ type: "lab.rematch", matchId: battle.matchId });
-      await poll(() => battle.clients.every(client => client.last("room.snapshot")?.room.phase === "waiting")).toBe(true);
+      await poll(() => battle.clients.every(client => client.last("room.snapshot")?.room.phase === "waiting")).toBe(true).catch(() => {
+        throw new Error(`Rematch refused: ${JSON.stringify({ error: owner.last("room.error"), match: battle.matchId, frames: battle.clients.map(client => ({ match: client.last("lab.frame")?.matchId, phase: client.last("lab.frame")?.phase, owner: client.last("room.snapshot")?.room.ownerId })) })}`);
+      });
       const edit = (client: typeof owner, type: string, values: object) => client.send({ type, version: 2, roomId: battle.roomId, revision: owner.last("room.snapshot")!.room.revision, ...values });
       for (const client of battle.clients) edit(client, "room.ready", { ready: true });
       await poll(() => owner.last("room.snapshot")!.room.members.every(member => member.ready)).toBe(true);

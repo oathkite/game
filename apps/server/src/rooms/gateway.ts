@@ -17,13 +17,23 @@ export const attachRooms = (wss: WebSocketServer, options: Options = {}) => {
   const save = options.save ?? (async () => {});
   const rooms = new Map((options.initial ?? []).map(state => [state.roomId, new RoomRuntime(state, save)]));
   const sockets = new Map<string, WebSocket>(), reservations = new Map<string, number>();
-  const broadcast = (state: RoomState) => { const frame = roomFrame(state, Date.now()); for (const s of state.sessions) if (s.connectionId) send(sockets.get(s.connectionId), frame); };
+  const publishedLobbies = new Map<string, RoomState["lobby"]>();
+  const broadcast = (state: RoomState) => {
+    const frame = roomFrame(state, Date.now());
+    const changedLobby = state.battle && state.lobby !== publishedLobbies.get(state.roomId);
+    for (const session of state.sessions) if (session.connectionId) {
+      const socket = sockets.get(session.connectionId);
+      if (changedLobby) send(socket, lobbyFrame(state));
+      send(socket, frame);
+    }
+    publishedLobbies.set(state.roomId, state.lobby);
+  };
   const timer = setInterval(() => {
     for (const [roomId, room] of rooms) {
       let before: RoomState;
       void room.update(state => { before = state; return { state: tickRoom(state, Date.now()), reason: "tick" }; }).then(result => {
         if (result.state !== before) broadcast(result.state);
-        if (!result.state.sessions.length && !result.state.reports.length) rooms.delete(roomId);
+        if (!result.state.sessions.length && !result.state.reports.length) { rooms.delete(roomId); publishedLobbies.delete(roomId); }
       }).catch(error => console.error("room timer persistence failed", error));
     }
   }, 100);
