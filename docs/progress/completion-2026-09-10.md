@@ -384,3 +384,10 @@ heartbeatはUI共同調整時にPAUSED。本ゴールは現在のタスクで進
 - 8名が通常タイトル→ロビー→オンラインへ進む経路に変更。各独立contextで戦場読込までのencoded body累計を測り、5,296,962〜5,296,963Bで8MB以下を確認。
 - 同じ配信buildで射撃共有、降参決着、全員同じ結果、8名部屋復帰まで29.4秒で通過。e2e TypeScript/diff check通過。
 - 実行: `pnpm --filter @game/e2e exec playwright test --config production-rooms.config.ts`。5186が使用中ならこのcheckoutの開発serverを止めて実行する。1時間soak・実機/運用ゲートは継続。
+
+## 1時間soakの開始（実行中）
+
+- concurrent-rooms試験を最大3600秒へ拡張。開始時と60ループごとに一方のチームが降参→部屋復帰→全ready→再戦し、毎試合射撃中の切断/世代更新/同一射撃duplicate拒否を再検証。接続ごとのmatch分離、移動ACK、終了時の保存/復元一致を維持。
+- ping nonceを実行中に再利用しないよう変更。短時間の4部屋/100部屋・実保存・片道125ms・15秒soakは通過（100部屋:100再戦/700移動、23.02秒）。server TypeScript/diff check通過。
+- 1時間実行: session **90534**、ログ `/tmp/keropod-soak-3600.log`。`ROOM_LOAD_COUNT=100 ROOM_LOAD_PERSIST=1 ROOM_LOAD_DELAY_MS=125 ROOM_SOAK_SECONDS=3600 pnpm --filter @game/server exec vitest run test/concurrent-rooms.test.ts`。起動を確認した段階であり、完走/合格ではない。
+- 再戦は降参決着。自然な20分上限の連続完走や実DOの1時間容量・実機描画を同時に証明したとは扱わない。引き続き同じsessionを監視し、観測タイムアウトだけで再起動しない。

@@ -17,7 +17,7 @@ if (!Number.isInteger(roomCount) || roomCount < 1 || roomCount > 100) throw new 
 const delayMs = Number(process.env.ROOM_LOAD_DELAY_MS ?? 0);
 if (!Number.isInteger(delayMs) || delayMs < 0 || delayMs > 500) throw new Error("ROOM_LOAD_DELAY_MS must be 0..500");
 const soakSeconds = Number(process.env.ROOM_SOAK_SECONDS ?? 0);
-if (!Number.isInteger(soakSeconds) || soakSeconds < 0 || soakSeconds > 600) throw new Error("ROOM_SOAK_SECONDS must be 0..600");
+if (!Number.isInteger(soakSeconds) || soakSeconds < 0 || soakSeconds > 3600) throw new Error("ROOM_SOAK_SECONDS must be 0..3600");
 it(`keeps ${roomCount} simultaneous eight-player battles isolated through firing and abrupt reconnects`, async () => {
   // expect.poll retains an onFinished closure per call in Vitest 3; avoid it in soak loops.
   const poll = <T>(read: () => T, options = { timeout: 15000 }) => {
@@ -78,10 +78,11 @@ it(`keeps ${roomCount} simultaneous eight-player battles isolated through firing
       return { clients, roomId, matchId: owner.last("lab.frame")!.matchId };
     }));
     expect(new Set(battles.map(b => b.matchId)).size).toBe(roomCount);
-    await Promise.all(battles.map(async battle => {
-      const probeAt = performance.now();
-      battle.clients[0]!.send({ type: "room.ping", nonce: 1 });
-      await poll(() => battle.clients[0]!.last("room.pong")?.nonce).toBe(1);
+    let pingNonce = 0;
+    const exerciseShot = async (battle: typeof battles[number]) => {
+      const probeAt = performance.now(), probeNonce = ++pingNonce;
+      battle.clients[0]!.send({ type: "room.ping", nonce: probeNonce });
+      await poll(() => battle.clients[0]!.last("room.pong")?.nonce).toBe(probeNonce);
       expect(performance.now() - probeAt).toBeGreaterThanOrEqual(delayMs * 2 - 2);
       const frame = battle.clients[0]!.last("lab.frame")!;
       const actor = battle.clients.find(client => client.last("room.welcome")!.playerId === frame.actorId)!;
@@ -95,7 +96,7 @@ it(`keeps ${roomCount} simultaneous eight-player battles isolated through firing
       actor.ws.terminate();
       await new Promise<void>(resolve => actor.ws.once("close", resolve));
       const resumed = await connect(); resumed.send({ type: "room.resume", build: CLIENT_BUILD, token: welcome.token });
-      await poll(() => resumed.last("room.welcome")?.generation).toBe(2);
+      await poll(() => resumed.last("room.welcome")?.generation).toBe(welcome.generation + 1);
       expect(resumed.last("room.welcome")!.playerId).toBe(welcome.playerId);
       resumed.send(shot);
       await poll(() => resumed.last("lab.ack")?.reason).toBe("duplicate");
@@ -106,11 +107,39 @@ it(`keeps ${roomCount} simultaneous eight-player battles isolated through firing
         expect(frames.every(frame => frame.matchId === battle.matchId && frame.players.length === 8)).toBe(true);
       }
       battle.clients[battle.clients.indexOf(actor)] = resumed;
-    }));
+    };
+    await Promise.all(battles.map(exerciseShot));
     const soakStart = performance.now();
-    let iteration = 1, soakMoves = 0;
+    let iteration = 1, soakMoves = 0, rematches = 0;
+    const restart = async (battle: typeof battles[number]) => {
+      const snapshot = battle.clients[0]!.last("room.snapshot")!.room;
+      for (const client of battle.clients) {
+        const member = snapshot.members.find(member => member.playerId === client.last("room.welcome")!.playerId)!;
+        if (member.teamId === "t0") client.send({ type: "lab.surrender", matchId: battle.matchId });
+      }
+      await poll(() => battle.clients.every(client => client.last("lab.frame")?.phase === "finished")).toBe(true);
+      const owner = battle.clients.find(client => client.last("room.welcome")!.playerId === snapshot.ownerId)!;
+      owner.send({ type: "lab.rematch", matchId: battle.matchId });
+      await poll(() => battle.clients.every(client => client.last("room.snapshot")?.room.phase === "waiting")).toBe(true);
+      const edit = (client: typeof owner, type: string, values: object) => client.send({ type, version: 2, roomId: battle.roomId, revision: owner.last("room.snapshot")!.room.revision, ...values });
+      for (const client of battle.clients) edit(client, "room.ready", { ready: true });
+      await poll(() => owner.last("room.snapshot")!.room.members.every(member => member.ready)).toBe(true);
+      edit(owner, "room.start", {});
+      await poll(() => battle.clients.every(client => client.last("lab.frame")?.matchId !== battle.matchId)).toBe(true);
+      battle.matchId = owner.last("lab.frame")!.matchId;
+      for (const client of battle.clients) {
+        const latest = new Map(client.messages.map(message => [message.type, message]));
+        client.messages.splice(0, client.messages.length, ...latest.values());
+      }
+      await exerciseShot(battle);
+      rematches++;
+    };
+    // Exercise result/rematch even in short runs; then repeat throughout the hour.
+    if (soakSeconds > 0) await Promise.all(battles.map(restart));
     while (performance.now() - soakStart < soakSeconds * 1000) {
-      const nonce = ++iteration;
+      iteration++;
+      const nonce = ++pingNonce;
+      if (iteration % 60 === 0) await Promise.all(battles.map(restart));
       await Promise.all(battles.map(async battle => {
         for (const client of battle.clients) {
           expect(client.ws.readyState).toBe(WebSocket.OPEN);
@@ -137,7 +166,9 @@ it(`keeps ${roomCount} simultaneous eight-player battles isolated through firing
     }
     if (soakSeconds > 0) {
       expect(soakMoves).toBeGreaterThan(0);
-      for (const battle of battles) expect(battle.clients[0]!.last("lab.frame")!.turnId).toBeGreaterThanOrEqual(1 + Math.floor(soakSeconds / 20));
+      expect(rematches).toBeGreaterThanOrEqual(roomCount);
+      for (const battle of battles) expect(battle.clients[0]!.last("lab.frame")!.turnId).toBeGreaterThanOrEqual(2);
+      console.log(`soak complete seconds=${soakSeconds} rematches=${rematches} moves=${soakMoves}`);
     }
     if (store) {
       expect(saved.size).toBe(roomCount);

@@ -8,7 +8,7 @@
 | 初期タイトル転送2MB | production-tests/entry.spec.ts、cold新context、1,861,002B | ローカル配信buildで通過。実地域の起動時間とは別 |
 | 初回対戦まで8MB | 練習5,294,817B、production-rooms.config.tsの独立8 contextで各5,296,962〜5,296,963B | 配信buildのタイトル→ロビー→8人オンライン戦場で通過。実地域の待ち時間とは別 |
 | 独立8クライアントで試合完走 | eight-players.spec.ts、独立8 contextで4v4入室→準備→射撃共有→青4名降参→全員同じ結果→8名部屋復帰 | Chromium/local edgeで通過。射撃のみで決着する長時間実戦・実機の証拠とは別 |
-| 1時間soak | concurrent-rooms.test.tsは最大600秒、100部屋/800接続を607秒で通過 | 未達。試合終了・再戦も扱える1時間シナリオが必要 |
+| 1時間soak | 再戦/射撃中切断/duplicate拒否を反復する3600秒試験を開始、session90534 | 実行中。短時間100部屋は通過したが1時間の完走結果は未確認 |
 | 全編成・射程・復元 | engine/map/server tests、進捗記録参照 | 自動検証済み。人間による公平感・バランス観察とは別 |
 | 世界UI最終原案一致 | 浮島背景・濃紺パネル・中央timer・円形角度計・100目盛り実装 | 地形表層や情報密度も含めて最終比較を継続。人間の最終承認は未記録 |
 | 正式art pack | runtime manifest/hash/fidelity check | 原素材の人間承認を自動記録しない。正式pack登録条件を残す |
