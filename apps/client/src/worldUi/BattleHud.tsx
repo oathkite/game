@@ -7,6 +7,7 @@ import { WEAPON_LABELS, type Loadout } from "@game/protocol";
 import { AngleDial, PowerRuler } from "./BattleInstruments";
 import { teamColor, teamColorName } from "./teamColors";
 import "./battleHud.css";
+import "./battleHudDesktop.css";
 
 export type HudPlayer = { readonly id: string; readonly name: string; readonly hp: number; readonly team: number };
 export const BattleRoster = ({ players, actorId, upcomingPlayerIds = [], clock, wind, onMenu }: { readonly players: readonly HudPlayer[]; readonly actorId: string; readonly upcomingPlayerIds?: readonly string[]; readonly clock: ReactNode; readonly wind: number; readonly onMenu: () => void }) => { const { t } = useLanguage();

@@ -83,7 +83,7 @@ test("weapon icon layout keeps inner projectile viewports at their own size", as
   const weapon = page.locator(".battle-weapons").getByRole("button", { name: "トリプル弾", exact: true });
   await expect(weapon).toBeVisible({ timeout: 25000 });
   const icon = weapon.locator(":scope > svg");
-  await expect(icon).toHaveCSS("width", "36px");
+  await expect(icon).toHaveCSS("width", "52px");
   const projectiles = icon.locator(":scope > svg");
   await expect(projectiles).toHaveCount(3);
   for (const projectile of await projectiles.all()) {

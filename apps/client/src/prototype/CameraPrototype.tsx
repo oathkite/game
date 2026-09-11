@@ -46,7 +46,10 @@ const Battle = ({ store, worldArt, onExit, onResult }: { readonly store: MatchSt
   const wasMenuOpen = useRef(false);
   const dialog = useRef<HTMLDialogElement>(null), menuButton = useRef<HTMLButtonElement>(null);
   const rig = useMemo(createCameraRig, []);
-  const layout = useMemo(() => { const base = cameraLayout(size.width, size.height, worldArt ? loadDisplayScale() : 9); return worldArt ? { ...base, mapHeight: Math.max(1, size.height - 64 - (touch ? 152 : size.height < 500 || size.width < 1000 ? 96 : 120)) } : base; }, [size, worldArt, touch]);
+  const largeHud = size.width >= 1200 && size.height >= 700;
+  const hudTop = largeHud ? 76 : 64;
+  const hudBottom = touch ? 152 : largeHud ? 160 : size.height < 500 || size.width < 1000 ? 96 : 120;
+  const layout = useMemo(() => { const base = cameraLayout(size.width, size.height, worldArt ? loadDisplayScale() : 9); return worldArt ? { ...base, mapHeight: Math.max(1, size.height - hudTop - hudBottom) } : base; }, [size, worldArt, hudTop, hudBottom]);
   const portrait = size.height > size.width;
   const enabled = sceneReady && view.phase === "acting" && view.control !== null && !portrait;
   const input = usePrototypeInput(store, rig, enabled, menu || portrait, () => setMenu((open) => !open));
@@ -84,7 +87,7 @@ const Battle = ({ store, worldArt, onExit, onResult }: { readonly store: MatchSt
       <button ref={menuButton} aria-label={t("設定を開く")} onClick={() => { input.cancel(); setMenu(true); }}>{t("設定")}</button>
     </header>}
     {ready ? <PrototypeCanvas worldArt={worldArt ?? false} store={store} rig={rig} layout={layout} handlers={input.world} blocked={menu || portrait || input.gauge.charging} followShot={followShot} onReady={setSceneReady} /> : <div style={{ height: layout.mapHeight }}>{t("フィールドを準備しています…")}</div>}
-    <div className="kp-camera-actions" style={{ bottom: size.height - layout.mapHeight - (worldArt ? 64 : size.height < 500 || size.width < 1000 ? 44 : 56) + 14 }}>
+    <div className="kp-camera-actions" style={{ bottom: size.height - layout.mapHeight - (worldArt ? hudTop : size.height < 500 || size.width < 1000 ? 44 : 56) + 14 }}>
       <button disabled={input.gauge.charging || menu || portrait} aria-label={t("手番へ戻る")} onClick={focusActor}>{worldArt ? "◎" : <>{t("手番へ戻る")} <kbd>C</kbd></>}</button>
       <button disabled={input.gauge.charging || menu || portrait} aria-pressed={followShot} onClick={() => { setFollowShot(!followShot); if (followShot) rig.focus(rig.get().center, "manual", true); }} aria-label={t("弾の追従")}>{worldArt ? "↗" : `${t("弾の追従")} ${followShot ? "ON" : "OFF"}`}</button>
     </div>
