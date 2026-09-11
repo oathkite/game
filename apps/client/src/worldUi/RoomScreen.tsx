@@ -1,3 +1,4 @@
+import { RoomTeamSummary } from "./RoomTeamSummary";
 import { useBrowserBackAction } from "./browserBack";
 import { setMusic } from "@/app/audio";
 import { teamColor, teamColorName } from "./teamColors";
@@ -91,6 +92,7 @@ export const RoomScreen = ({ onExit, onLab }: { readonly onExit: () => void; rea
         <PixelButton onClick={() => setSharing(v => !v)}>{t("招待リンク")}</PixelButton>
         {sharing && <label>{t("招待リンク")}<input aria-label={t("招待リンク")} readOnly value={roomInviteUrl(location.href, room.roomId)} onFocus={e => e.currentTarget.select()} /><PixelButton onClick={() => { void (navigator.clipboard?.writeText(roomInviteUrl(location.href, room.roomId)) ?? Promise.reject()).then(() => setStatus("招待リンクをコピーしました。"), () => setStatus("リンクを選択してコピーしてください。")); }}>{t("コピー")}</PixelButton></label>}
         <p>{t("チームを選び、準備完了にしてください。人数差のある編成でも開始できます。")}</p>
+        <RoomTeamSummary members={room.members} />
         <ul className="room-members">{room.members.map((p, i) => <li key={p.playerId}>
           <strong>{i + 1}. {p.nickname}{p.playerId === playerId ? t("（あなた）") : ""}{p.playerId === room.ownerId ? " / OWNER" : ""}</strong>
           <select aria-label={t("参加者{n}のチーム", { n: i + 1 })} value={p.teamId ?? ""} style={{ borderLeft: `6px solid ${p.teamId ? teamColor(Number(p.teamId.slice(1))) : "transparent"}` }} disabled={room.mode !== "custom" || !connected || (!owner && p.playerId !== playerId)} onChange={e => edit("room.assignTeam", { playerId: p.playerId, teamId: e.target.value || null })}><option value="">{t("未配置")}</option>{Array.from({ length: 8 }, (_, team) => <option key={team} value={`t${team}`}>{t("{color}チーム", { color: t(teamColorName(team)) })}</option>)}</select>

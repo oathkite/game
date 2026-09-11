@@ -21,3 +21,8 @@
 .room-screen,.network-world,.network-finished { animation:room-reveal .24s ease-out; }
 @keyframes room-reveal { from { opacity:0; } to { opacity:1; } }
 @media(prefers-reduced-motion:reduce) { .room-screen,.network-world,.network-finished { animation:none; } }
+
+.room-team-summary { padding:10px 12px; border:1px solid #718a9a; background:#142b3d; color:#fff1d5; }
+.room-team-summary ul { display:flex; flex-wrap:wrap; gap:8px 16px; list-style:none; margin:0; padding:0; }
+.room-team-summary li { border-left:5px solid #718a9a; padding-left:8px; font-size:13px; }
+.room-team-summary > strong { display:block; margin-top:8px; color:#ffcf66; font-size:13px; }

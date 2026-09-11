@@ -1,4 +1,6 @@
 export const roomEnglish: Readonly<Record<string, string>> = {
+  "チーム編成": "Team composition", "人数差あり": "Uneven teams",
+  "{color}チーム: {count}人": "{color} team: {count}", "未配置: {count}人": "Unassigned: {count}",
   "勝利": "Victory", "敗北": "Defeat",
   "画面を読み込めませんでした。通信を確認して再読み込みしてください。": "Could not load the screen. Check your connection and reload.",
   "再読み込み": "Reload",
