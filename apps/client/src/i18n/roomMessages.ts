@@ -1,6 +1,7 @@
 export const roomEnglish: Readonly<Record<string, string>> = {
   "入室前の応答": "Pre-join response", "通信遅延が大きい状態です": "High connection latency",
   "地域を測定中…": "Measuring regions…", "地域を選択してください": "Select a region", "地域別の応答": "Regional response", "地域を測定できません。手動で選択してください。": "Could not measure regions. Select one manually.",
+  "部屋のデータを復元できませんでした。この試合は無効です。ロビーへ戻ってください。": "The room could not be restored. This match is invalid. Please return to the lobby.",
   "公開部屋": "Public rooms", "一覧を閉じる": "Close list", "一覧を更新": "Refresh rooms",
   "公開部屋を探す": "Browse public rooms", "もっと見る": "Load more", "部屋一覧を読み込み中…": "Loading rooms…",
   "作成した部屋は公開一覧に表示されます。": "Rooms you create appear in the public list.",

@@ -15,7 +15,7 @@
 | 開始前の人数差明示（22.1） | チーム色別の現在人数と未配置を表示し、非対称時に人数差ありを明示 | 独立3contextの1対2→FFA→退出を3browserで確認。補正・開始条件は変更しない。evidence/ui/2026-09-11-team-counts.md |
 | 公開部屋一覧 | custom部屋を20件ずつ取得し、一覧参加・対戦中観戦・満員・取得失敗に対応 | local edge21部屋と3browserの独立3contextで確認。evidence/ui/2026-09-11-public-rooms.md |
 | Directory分割（23.3） | 地域×mode×固定shard 0の9区分へ割当・要約更新を分離。コード発行元は共通 | local edgeとSQLite保存先・再起動復元を確認。共通発行元の容量・既存環境の移行検証は残る。evidence/ui/2026-09-11-directory-partitions.md |
-| 復元失敗の隔離（23.5） | 不正version/buildはrestoreRoom/restoreBattleが例外で拒否し、旧snapshotを上書きしない | 復旧不能として記録・専用理由の通知・ロビーへの誘導が未接続。通常の切断表示と区別する実装が必要 |
+| 復元失敗の隔離（23.5） | 復元拒否を永続隔離し、元snapshotを保持・無効記録・一覧除外・専用理由を通知 | local SQLiteに未対応versionを注入した再起動と、配信3browserの理由表示・resume情報消去・ロビー帰還を確認。evidence/ui/2026-09-11-room-quarantine.md |
 | 地形checkpointと短いevent log（23.5） | snapshotはmaskを除き、固定surfaceと全TerrainOpから復元する。状態更新ごとにsnapshotを保存 | checkpoint maskと以後の短いop列への圧縮は未実装。書込量・復元時間の測定から間隔を決める |
 | 期限付き招待token（23.7） | 招待URLは6桁roomコードを含み、権限は別sessionで検証 | 十分なentropy・期限付きdeep-link tokenは未実装。コード直参加との共存と失効を設計する |
 | 全編成・射程・復元 | engine/map/server tests、進捗記録参照 | 自動検証済み。人間による公平感・バランス観察とは別 |

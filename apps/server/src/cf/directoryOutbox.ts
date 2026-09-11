@@ -13,6 +13,12 @@ export class DirectoryOutbox {
     const entry = this.read();
     return entry?.pending ? Math.max(entry.next_at, this.sending ? now + 5000 : 0) : null;
   }
+  withdraw(now: number): void {
+    const entry = this.read();
+    if (!entry) return;
+    const { updatedAt: _updatedAt, ...summary } = JSON.parse(entry.summary) as RoomSummary;
+    this.enqueue({ ...summary, members: 0, spectators: 0 }, now);
+  }
   enqueue(summary: Omit<RoomSummary, "updatedAt">, now: number): void {
     const entry = this.read(), previous = entry && JSON.parse(entry.summary) as RoomSummary;
     if (previous) {

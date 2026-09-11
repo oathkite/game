@@ -2,7 +2,8 @@ import type { RoomMode, RoomRegion } from "@game/protocol/v2-rooms";
 import { DurableObject } from "cloudflare:workers";
 import { movementSnapshot } from "@game/engine/multiplayer";
 import { createRoomState, disconnectRoom, nextRoomDeadline, reduceRoom, tickRoom, type RoomState } from "../rooms/core.js";
-import { RoomRuntime, restoreRoom, serializeRoom, type RoomSnapshot } from "../rooms/runtime.js";
+import { RoomRuntime, serializeRoom, type RoomSnapshot } from "../rooms/runtime.js";
+import { restoreStoredRoom, UnrecoverableRoom } from "../rooms/restoreFailure.js";
 import { roomFrame, lobbyFrame } from "../rooms/frame.js";
 import { directoryKey, directoryLocation } from "./directoryPartitions.js";
 import { DirectoryOutbox } from "./directoryOutbox.js";
@@ -16,13 +17,15 @@ export class RoomObject extends DurableObject<RoomEnv> {
   constructor(ctx: DurableObjectState, env: RoomEnv) {
     super(ctx, env);
     this.outbox = new DirectoryOutbox(ctx.storage.sql);
+    ctx.storage.sql.exec("CREATE TABLE IF NOT EXISTS room_failure (id INTEGER PRIMARY KEY CHECK(id = 1), failed_at INTEGER NOT NULL, reason TEXT NOT NULL, outcome TEXT NOT NULL)");
     ctx.storage.sql.exec("CREATE TABLE IF NOT EXISTS room_state (id INTEGER PRIMARY KEY CHECK(id = 1), snapshot TEXT NOT NULL)");
   }
   private load(roomId?: string, mode: RoomMode = "custom", region: RoomRegion = "asia"): RoomRuntime {
+    if (this.ctx.storage.sql.exec("SELECT id FROM room_failure WHERE id = 1").toArray().length) throw new UnrecoverableRoom();
     if (this.runtime) return this.runtime;
     const stored = this.ctx.storage.sql.exec<{ snapshot: string }>("SELECT snapshot FROM room_state WHERE id = 1").toArray()[0];
     if (!stored && !roomId) throw new Error("missing room state");
-    const state = stored ? restoreRoom(JSON.parse(stored.snapshot)) : createRoomState(roomId!, mode, region);
+    const state = stored ? restoreStoredRoom(stored.snapshot) : createRoomState(roomId!, mode, region);
     if (!stored) this.ctx.storage.sql.exec("INSERT INTO room_state VALUES (1, ?)", JSON.stringify(serializeRoom(state)));
     return this.runtime = new RoomRuntime(state, async snapshot => {
       await this.ctx.storage.transaction(async () => {
@@ -44,7 +47,7 @@ export class RoomObject extends DurableObject<RoomEnv> {
     // Stored battle deadlines share the same state, but the snapshot wraps its battle payload.
     const battle = state.battle && "version" in state.battle ? state.battle.state : state.battle;
     const deadline = nextRoomDeadline({ sessions: state.sessions, reports: state.reports, battle });
-    const handshakes = this.ctx.getWebSockets().filter(ws => ws.readyState === WebSocket.OPEN).map(ws => ws.deserializeAttachment() as Attachment).filter(a => !a.joined).map(a => a.acceptedAt + 10000);
+    const handshakes = this.ctx.getWebSockets().filter(ws => ws.readyState === WebSocket.OPEN).map(ws => ws.deserializeAttachment() as Attachment).filter(a => a && !a.joined).map(a => a.acceptedAt + 10000);
     const next = [deadline, this.outbox.deadline(Date.now()), ...handshakes, ...(state.sessions.length ? [Date.now() + 300000] : [])].filter((n): n is number => n !== null);
     if (next.length) await this.ctx.storage.setAlarm(Math.max(Date.now() + 1, Math.min(...next)));
     else await this.ctx.storage.deleteAlarm();
@@ -67,8 +70,11 @@ export class RoomObject extends DurableObject<RoomEnv> {
     }
     this.publishedLobby = state.lobby;
     this.queueSummary(state);
+    this.flushSummary();
+  }
+  private flushSummary(): void {
     this.ctx.waitUntil(this.outbox.flush(Date.now(), async () => {
-      await this.schedule(this.load().state);
+      await this.schedule(this.runtime?.state ?? { sessions: [], reports: [], battle: null });
       await this.ctx.storage.sync();
     }, summary => this.env.DIRECTORY.getByName(directoryKey(summary.region, summary.mode), { locationHint: directoryLocation(summary.region) }).update(summary))
       .catch(error => console.error("directory update failed", error)));
@@ -80,10 +86,34 @@ export class RoomObject extends DurableObject<RoomEnv> {
       spectators: state.sessions.filter(s => s.role === "spectator").length,
       phase: state.lobby.phase, mapId: state.lobby.map.id }, Date.now());
   }
+  private async recover(roomId?: string): Promise<RoomRuntime | null> {
+    try { return this.load(roomId); }
+    catch (error) {
+      if (!(error instanceof UnrecoverableRoom)) throw error;
+      this.ctx.storage.sql.exec("INSERT OR IGNORE INTO room_failure VALUES (1, ?, 'restore-failed', 'invalid')", Date.now());
+      this.runtime = null;
+      this.outbox.withdraw(Date.now());
+      await this.schedule({ sessions: [], reports: [], battle: null });
+      for (const ws of this.ctx.getWebSockets()) if (ws.readyState === WebSocket.OPEN) {
+        this.send(ws, { type: "room.error", reason: "room-unrecoverable" });
+        ws.close(1011, "room-unrecoverable");
+      }
+      this.flushSummary();
+      return null;
+    }
+  }
   override async fetch(request: Request): Promise<Response> {
     const roomId = new URL(request.url).pathname.split("/").at(-1)!;
     if (!this.runtime && !this.ctx.storage.sql.exec("SELECT id FROM room_state WHERE id = 1").toArray().length) return new Response("room not found", { status: 404 });
-    const runtime = this.load(roomId);
+    const runtime = await this.recover(roomId);
+    if (!runtime) {
+      if (request.headers.get("Upgrade")?.toLowerCase() !== "websocket") return new Response("room-unrecoverable", { status: 503 });
+      const pair = new WebSocketPair();
+      this.ctx.acceptWebSocket(pair[1]);
+      this.send(pair[1], { type: "room.error", reason: "room-unrecoverable" });
+      pair[1].close(1011, "room-unrecoverable");
+      return new Response(null, { status: 101, webSocket: pair[0] });
+    }
     await runtime.update(state => ({ state: this.reconcile(state), reason: "reconcile" }));
     if (request.headers.get("Upgrade")?.toLowerCase() !== "websocket") return new Response("WebSocket required", { status: 426 });
     if (this.ctx.getWebSockets().length >= 16) return new Response("room capacity", { status: 429 });
@@ -94,13 +124,15 @@ export class RoomObject extends DurableObject<RoomEnv> {
     return new Response(null, { status: 101, webSocket: pair[0] });
   }
   override async webSocketMessage(ws: WebSocket, data: string | ArrayBuffer): Promise<void> {
-    const a = ws.deserializeAttachment() as Attachment, now = Date.now();
+    const a = ws.deserializeAttachment() as Attachment | null, now = Date.now();
+    if (!a) { ws.close(1011, "room-unrecoverable"); return; }
     const count = now - a.windowAt >= 1000 ? 1 : a.count + 1;
     if (typeof data !== "string" || data.length > 4096 || count > 30) { ws.close(1008, "rate limit"); return; }
     ws.serializeAttachment({ ...a, count, windowAt: now - a.windowAt >= 1000 ? now : a.windowAt });
     let raw: unknown; try { raw = JSON.parse(data); } catch { this.send(ws, { type: "room.error", reason: "invalid" }); return; }
     const seed = crypto.getRandomValues(new Uint32Array(1))[0]!;
-    const runtime = this.load();
+    const runtime = await this.recover();
+    if (!runtime) return;
     const result = await runtime.update(state => reduceRoom(this.reconcile(state), a.connectionId, raw, now, { playerId: `p${crypto.randomUUID()}`, token: crypto.randomUUID(), matchId: crypto.randomUUID(), seed }));
     if (result.welcome) {
       ws.serializeAttachment({ ...ws.deserializeAttachment(), joined: true });
@@ -116,17 +148,20 @@ export class RoomObject extends DurableObject<RoomEnv> {
   }
   override async webSocketClose(ws: WebSocket): Promise<void> {
     ws.close(1000, "disconnected");
+    const runtime = await this.recover();
+    if (!runtime) return;
     const a = ws.deserializeAttachment() as Attachment;
-    const result = await this.load().update(state => ({ state: disconnectRoom(state, a.connectionId, Date.now()), reason: "disconnected" }));
+    const result = await runtime.update(state => ({ state: disconnectRoom(state, a.connectionId, Date.now()), reason: "disconnected" }));
     this.publish(result.state);
   }
   override async webSocketError(ws: WebSocket): Promise<void> { await this.webSocketClose(ws); }
   override async alarm(): Promise<void> {
     for (const ws of this.ctx.getWebSockets()) {
       const a = ws.deserializeAttachment() as Attachment;
-      if (!a.joined && Date.now() >= a.acceptedAt + 10000) ws.close(1008, "join required");
+      if (a && !a.joined && Date.now() >= a.acceptedAt + 10000) ws.close(1008, "join required");
     }
-    const runtime = this.load();
+    const runtime = await this.recover();
+    if (!runtime) return;
     const result = await runtime.update(state => ({ state: tickRoom(this.reconcile(state), Date.now()), reason: "tick" }));
     await this.schedule(result.state); this.publish(result.state);
   }
