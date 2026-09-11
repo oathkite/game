@@ -1,3 +1,4 @@
+import { fitTankLabel } from "./tankLabelLayout";
 import { COLOR_HEX, type TankColors, type WeaponId } from "@game/protocol";
 import type { TerrainMask } from "@game/sim";
 import { Application, Container, type Texture } from "pixi.js";
@@ -86,10 +87,24 @@ export const createRenderer = async (init: RendererInit): Promise<Renderer> => {
   }
   const poses: (TankPose | null)[] = tanks.map(() => null);
   const labelStops = new Set<() => void>();
+  const labelOrigins = tanks.map(() => ({ x: 0, y: 0 }));
+  const placeLabel = (seat: number): void => {
+    const pose = poses[seat];
+    if (!pose) return;
+    const label = tanks[seat]!.label, origin = labelOrigins[seat]!;
+    const point = fitTankLabel({ x: origin.x + labels.x, y: origin.y + labels.y },
+      { x: (pose.x + 0.5) * cell + world.x, y: pose.y * cell + world.y },
+      label.getLocalBounds(), app.screen);
+    label.position.set(point.x - labels.x, point.y - labels.y);
+  };
 
   const applyPose = (seat: number): void => {
     const pose = poses[seat];
-    if (pose) tanks[seat]!.setPose(pose, cell);
+    if (pose) {
+      tanks[seat]!.setPose(pose, cell);
+      labelOrigins[seat] = { x: tanks[seat]!.label.x, y: tanks[seat]!.label.y };
+      placeLabel(seat);
+    }
   };
 
   return {
@@ -103,6 +118,7 @@ export const createRenderer = async (init: RendererInit): Promise<Renderer> => {
     setCameraOffset: (x, y) => {
       world.position.set(x, y);
       labels.position.set(x, y);
+      tanks.forEach((_, index) => placeLabel(index));
     },
     setTerrain: (mask) => terrain.update(mask),
     setTank: (seat, pose) => {
