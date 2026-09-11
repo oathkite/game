@@ -74,6 +74,26 @@ for (const size of [{ width: 1440, height: 900 }, { width: 844, height: 390 }, {
   });
 }
 
+test("weapon icon layout keeps inner projectile viewports at their own size", async ({ page }) => {
+  await page.goto("/?prototype=world");
+  await page.getByRole("button", { name: "はじめる", exact: true }).click();
+  await page.getByRole("combobox", { name: "装備 1" }).selectOption("triple");
+  await page.getByRole("button", { name: "プラクティスへ", exact: true }).click();
+  await expect(page.getByTestId("camera-world")).toHaveAttribute("data-loaded", "true");
+  const weapon = page.locator(".battle-weapons").getByRole("button", { name: "トリプル弾", exact: true });
+  await expect(weapon).toBeVisible({ timeout: 25000 });
+  const icon = weapon.locator(":scope > svg");
+  await expect(icon).toHaveCSS("width", "36px");
+  const projectiles = icon.locator(":scope > svg");
+  await expect(projectiles).toHaveCount(3);
+  for (const projectile of await projectiles.all()) {
+    await expect(projectile).toHaveAttribute("width", "17");
+    await expect(projectile).toHaveCSS("width", "auto");
+    await expect(projectile).toHaveAttribute("height", "17");
+    await expect(projectile).toHaveCSS("height", "auto");
+  }
+});
+
 for (const ratio of [1, 3]) test(`terrain art preserves collision alpha and ${ratio}:1 tile proportions`, async ({ page }) => {
   await page.goto("/?prototype=world");
   const result = await page.evaluate(async (ratio) => {

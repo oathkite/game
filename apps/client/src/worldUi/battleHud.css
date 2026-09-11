@@ -28,7 +28,7 @@
 .battle-weapons { display:flex; gap:8px; }
 .world-ui .battle-weapons button { position:relative; width:48px; min-width:48px!important; min-height:56px; padding:2px!important; border:2px solid #526c80!important; border-image:none!important; border-radius:6px; color:#fff1d5!important; background:#1d3346!important; }
 .world-ui .battle-weapons button[aria-pressed=true] { border-color:#f8e98d!important; outline:none!important; box-shadow:0 0 0 1px #f8e98d; }
-.battle-weapons svg { width:36px; height:36px; display:block; margin:auto; }
+.battle-weapons button > svg { width:36px; height:36px; display:block; margin:auto; }
 .battle-weapons span { font-size:11px; }
 .world-ui .battle-console.has-touch { height:152px; grid-template-rows:84px 50px; grid-template-columns:100px 84px minmax(0,1fr) 104px; gap:4px 12px; }
 .battle-console.has-touch .battle-self { grid-template-columns:minmax(0,1fr); }
