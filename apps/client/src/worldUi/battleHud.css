@@ -11,7 +11,7 @@
 .battle-hp i { display:block; height:100%; background:var(--team); }
 .battle-seat.is-actor { border:2px solid #9edbe5; padding:6px; opacity:1; box-shadow:0 0 7px #9edbe533; }
 .battle-seat.is-actor::before { content:""; position:absolute; top:-6px; left:50%; border:4px solid transparent; border-top-color:#9edbe5; }
-.battle-countdown { flex-shrink:0; width:48px; height:48px; border:3px solid #8cbd73; border-radius:50%; display:grid; place-items:center; font-size:25px; font-weight:800; }
+.battle-countdown { flex-shrink:0; width:48px; height:48px; border:3px solid transparent; border-radius:50%; display:grid; place-items:center; font-size:25px; font-weight:800; }
 .battle-countdown .timer { background:none; border:0; padding:0; color:#fff6df; font:inherit; min-width:0; }
 .battle-wind { position:absolute; top:76px; left:16px; padding:8px 12px; border:1px solid #718b9b; border-radius:4px; background:#112333ed; pointer-events:none; display:flex; align-items:center; gap:12px; min-width:124px; font-size:24px; box-shadow:inset 0 1px #466479; }
 .world-ui .battle-menu { position:absolute; top:10px; right:16px; width:44px; min-width:44px; height:44px; padding:8px!important; border:1px solid #718b9b!important; border-image:none!important; background:#243c51!important; color:#fff1d5!important; }
@@ -97,3 +97,7 @@
 @media(max-width:999px),(max-height:499px) { .battle-wind-cloud,.battle-wind-arrow { width:24px; height:18px; } }
 
 .network-finished > p { padding:6px 12px; background:#112333; color:#f4f0de; border:1px solid #718a9a; }
+
+.countdown-dial { position:relative; width:100%; height:100%; display:grid; place-items:center; }
+.countdown-dial > svg { position:absolute; inset:-3px; width:calc(100% + 6px); height:calc(100% + 6px); margin:0!important; }
+.countdown-dial > span { position:relative; }

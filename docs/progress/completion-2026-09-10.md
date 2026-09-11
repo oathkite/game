@@ -702,3 +702,8 @@ heartbeatはUI共同調整時にPAUSED。本ゴールは現在のタスクで進
 - `pnpm --filter @game/e2e exec playwright test --config=production.config.ts`：Chromium/Firefox/WebKit合計36件成功（1.5分）。イントロ、言語/音設定、取得失敗時の復帰、SVGパイロットの再入場を含む。
 - cold encoded transfer（title / practice累計）：Chromium 1,858,186 / 6,341,492B、Firefox 1,827,876 / 6,311,182B、WebKit 1,828,049 / 6,311,681B。2MB/8MBの条件を各engineで通過。ローカル配信であり実地域・実機の性能測定ではない。
 - 原案との残差：周期模様は緩和したが、地表の階段状輪郭と搭乗パイロット造形は最終比較が必要。人間による正式art承認や本番公開は行っていない。
+
+## 中央タイマーの残り時間リング
+
+- 原案の中央リングを残り時間に接続。共通CountdownDialをプラクティス/オンライン双方で使用し、TURN_SECONDSに対する割合をSVG strokeDasharrayで示す。5秒以下は琥珀色、未進行は空リングとダッシュ。既存の音・期限判定は変更せず、数字の警告点滅を維持。
+- クライアント212テスト成功（7件の割合/境界値テストを追加）。client/e2e型検査成功。実ブラウザで数字とリングの連動を確認（countdown.spec.ts、1件成功）。オンラインの実通信中の見た目は次回の対戦検証で確認する。
