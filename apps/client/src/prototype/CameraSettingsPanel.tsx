@@ -1,3 +1,4 @@
+import "./cameraSettings.css";
 import { useLanguage } from "@/i18n/locale";
 import { useEffect, useState } from "react";
 import type { CameraRig } from "./cameraRig";
