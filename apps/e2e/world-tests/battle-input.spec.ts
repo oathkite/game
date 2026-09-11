@@ -58,10 +58,12 @@ test("touch controls remain usable and a physical gameplay key switches to keybo
     await expect(page.getByTestId("camera-world")).toHaveAttribute("data-loaded", "true");
     const fire = page.getByRole("button", { name: "発射", exact: true });
     await expect(fire).toBeVisible();
+    await expect(page.locator(".battle-weapons button span")).toHaveText(["1", "2"]);
     await page.getByRole("button", { name: "角度を上げる" }).tap();
     await expect(page.getByTestId("camera-angle")).toHaveText("46°");
     await page.keyboard.press("ArrowDown");
     await expect(fire).toHaveCount(0);
+    await expect(page.locator(".battle-weapons button span")).toHaveText(["Q", "E"]);
     await expect(page.getByTestId("camera-angle")).toHaveText("45°");
   } finally { await context.close(); }
 });
