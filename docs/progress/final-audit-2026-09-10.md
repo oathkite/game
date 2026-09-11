@@ -6,18 +6,19 @@
 | 要件 | 現在の証拠 | 判定・次の作業 |
 | --- | --- | --- |
 | cold start操作可能p95 | startup-tests、10Mbps/150ms・cache無効20回、p95 684.1ms | Chromiumローカル配信で3秒条件通過。画像完了・実機CPU・実地域DNS/TLSは別 |
-| 初期タイトル転送2MB | production-tests/entry.spec.ts、cold新context、1,858,105B | ローカル配信buildで通過。実地域の起動時間とは別 |
-| 初回対戦まで8MB | 36b7bcdの3browser練習最大6,069,354B。独立8 contextは岩盤差替前7c8ab77で最大6,330,613B | 練習は最新3browser通過。最新の成績・全員帰還・60秒自動帰還は3browserで通過。実地域の待ち時間とは別 |
+| 初期タイトル転送2MB | production-tests/entry.spec.ts、11bb524のcold新context、最大1,858,186B | ローカル配信buildで通過。実地域の起動時間とは別 |
+| 初回対戦まで8MB | 11bb524の3browser練習最大6,341,492B。4aa427eの独立8context対戦最大6,345,906B | 各記載commitの3browserで通過。60秒自動帰還は以前の検証。実地域の待ち時間とは別 |
 | 独立8クライアントで試合完走 | eight-players.spec.ts、独立8 contextで4v4入室→準備→射撃共有→青4名降参→全員同じ成績→8名帰還選択→部屋復帰 | Chromium/Firefox/WebKit配信build・local edgeで通過。射撃のみの決着は下行で追加確認。実機の証拠とは別 |
 | 射撃だけで8browser完走 | natural-match.config.ts、3browser各8contextの4v4。23/24/24発で勝利、毎turnの受信state一致、全員帰還。履歴をevidence/natural-matchへ保存 | moss-valley・既定2武器・各1シナリオで確認。操作は通常WS発射コマンドを試験用に自動送信。人間の操作/公平感・全条件の証明とは別 |
 | 1時間soak | Node100部屋/800接続・送受信各125ms・実ファイル保存、3600秒完走。再戦3500回/移動187021回 | ローカル試験通過。部屋分離・重複拒否・復帰・保存復元を検証。実DO容量・全client描画一致の保証とは別 |
+| 代表編成の実ブラウザE2E（22.8） | 4v4は検証済み。1v7、8人FFA、2v2v2、1v1v1v2の実ブラウザ完走記録は現状見つからない | 不足。58編成のengineテストを代用せず、代表4編成の入室→対戦→結果→帰還を追加する |
 | 全編成・射程・復元 | engine/map/server tests、進捗記録参照 | 自動検証済み。人間による公平感・バランス観察とは別 |
-| 世界UI最終原案一致 | 浮島背景・岩盤/厚い草地・濃紺パネル・中央timer・円形角度計・100分割/指針・実弾アイコンを実装 | 地形表層や情報密度も含めて最終比較を継続。人間の最終承認は未記録 |
+| 世界UI最終原案一致 | 浮島背景・岩盤/厚い草地・濃紺パネル・残り時間リング・円形角度計・100分割/指針・実弾アイコンを実装 | 横長岩壁、共通カメラ/タッチ配色、画面端の名前/HP補正を追加。地形表層や情報密度も含めて最終比較を継続。人間の最終承認は未記録 |
 | 全参加者の結果表現 | 共通ResultPlayers、勝利/敗北/引き分けの表情。8context全画面の勝敗共有、667px4列/2段、390px縦向き帰還を3browserで確認 | 表情・操作の自動検証済み。最終デザイン承認は別 |
 | クライアント/ゲーム内のパイロット整合 | HUD/結果の緑肌・オリーブ服に合わせた搭乗用SVG16コマをゲーム内/ロビーへ接続。二値alpha・共通足元・大破/復帰を検証。公開buildで3browserの再入場/GPU転送/実画像を確認 | 色/服の不一致を修正。簡略化した横向きの顔とHUDの最終見た目比較・承認は未完 |
-| 統合テスト | 79d198aでpnpm test 803件成功、edge専用2件skip、pnpm -r typecheck成功。production.config.ts 33件成功 | ローカルで確認。実機/実地域/実DO容量の代用にしない |
+| 統合テスト | df303b6でpnpm test 813件成功、edge専用2件skip。pnpm -r typecheck成功。配信36件は11bb524で成功 | ローカルで確認。実機/実地域/実DO容量の代用にしない |
 | 正式art pack | runtime manifest/hash/fidelity check | 原素材の人間承認を自動記録しない。正式pack登録条件を残す |
-| 実機・browser対応 | Chromium/Firefox/WebKit配信全33件と各8接続オンライン対戦（取得失敗の繰返し復帰を含む） | 自動試験通過。実iOS/Android/Safari/Edgeの入室〜結果は別途必要 |
+| 実機・browser対応 | Chromium/Firefox/WebKit配信全36件と各8接続オンライン対戦（取得失敗の繰返し復帰を含む） | 自動試験通過。実iOS/Android/Safari/Edgeの入室〜結果は別途必要 |
 | mobile描画・入力・移動・復帰p95 | 機能E2E、ローカル遅延試験 | 型番/OS固定の実機SLO・地域測定は未完 |
 | DO容量・費用 | local Wrangler復元、Node100部屋 | 実DO容量を証明しない。stage構成・費用予算・alarm・測定が必要 |
 | 運用・法務・公開 | 通報保存/期限/診断/rate limit実装 | 運営主体・保持目的/削除窓口・対象地域/年齢・規約/privacy・監視担当の判断が必要 |
