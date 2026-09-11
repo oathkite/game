@@ -1,3 +1,5 @@
+import type { ResultPresentation } from "./ResultPlayers";
+import { teamColorName } from "./teamColors";
 import { loadScene } from "./loadScene";
 import { SceneBoundary } from "./SceneBoundary";
 import { AudioControls } from "./AudioControls";
@@ -22,13 +24,15 @@ const RoomScreen = lazy(() => loadScene("src/worldUi/RoomScreen.tsx", () => impo
 const NetworkLab = lazy(() => loadScene("src/networkLab/NetworkLab.tsx", () => import("@/networkLab/NetworkLab")).then(module => ({ default: module.NetworkLab })));
 const CameraPrototype = lazy(() => loadScene("src/prototype/CameraPrototype.tsx", () => import("@/prototype/CameraPrototype")).then(module => ({ default: module.CameraPrototype })));
 
+const ResultPlayers = lazy(() => loadScene("src/worldUi/ResultPlayers.tsx", () => import("./ResultPlayers")).then(module => ({ default: module.ResultPlayers })));
+
 type Scene = "start" | "lobby" | "settings" | "battle" | "result" | "network" | "rooms";
 export const WorldScenes = () => {
   const { t, language } = useLanguage();
   useEffect(() => { document.documentElement.lang = language; }, [language]);
   const [scene, setScene] = useState<Scene>(() => inviteRoom(location.href) || new URL(location.href).searchParams.has("room") ? "rooms" : "start"), [closing, setClosing] = useState(false);
   const [introReplay, setIntroReplay] = useState(0);
-  const [result, setResult] = useState("");
+  const [result, setResult] = useState<ResultPresentation | null>(null);
   const timer = useRef<ReturnType<typeof setTimeout> | null>(null);
   const heading = useRef<HTMLDivElement>(null);
   const go = useCallback((next: Scene) => {
@@ -43,7 +47,7 @@ export const WorldScenes = () => {
   useEffect(() => () => { if (timer.current) clearTimeout(timer.current); }, []);
   useEffect(() => { heading.current?.focus({ preventScroll: true }); }, [scene]);
   const exit = useCallback(() => go("lobby"), [go]);
-  const finish = useCallback((label: string) => { setResult(label); go("result"); }, [go]);
+  const finish = useCallback((value: ResultPresentation) => { setResult(value); go("result"); }, [go]);
   const background = scene === "settings" ? worldArt.settings : scene === "lobby" ? worldArt.lobby : scene === "result" ? worldArt.result : worldArt.background;
   return <div className={`world-ui world-scene-${scene} ${closing ? "world-closing" : ""}`} style={{ backgroundImage: `url(${background})` }}>
     <SceneBoundary message={t("画面を読み込めませんでした。通信を確認して再読み込みしてください。")} retryLabel={t("再読み込み")}>
@@ -54,7 +58,7 @@ export const WorldScenes = () => {
         {scene === "start" && <StartScreen key={introReplay} replay={introReplay > 0} onBegin={() => go("lobby")} />}
         {scene === "lobby" && <Lobby go={go} />}
         {scene === "settings" && <Settings onBack={exit} onReplay={() => { setIntroReplay(value => value + 1); go("start"); }} />}
-        {scene === "result" && <section className="world-result-screen"><h1>{result}</h1><p>{t("いい一発だった。またここで。")}</p><TankPortrait /><div><PixelButton onClick={() => go("battle")}>{t("もう一度プレイ")}</PixelButton><PixelButton onClick={exit}>{t("ロビーに戻る")}</PixelButton></div></section>}
+        {scene === "result" && result && <section className="world-result-screen"><h1>{result.result.type === "win" ? t("{player}の勝利", { player: t(teamColorName(Number(result.result.teamId.slice(1)))) }) : t("引き分け")}</h1><p>{t("いい一発だった。またここで。")}</p><ResultPlayers {...result} /><div><PixelButton onClick={() => go("battle")}>{t("もう一度プレイ")}</PixelButton><PixelButton onClick={exit}>{t("ロビーに戻る")}</PixelButton></div></section>}
       </div>
     </>}
     </Suspense>

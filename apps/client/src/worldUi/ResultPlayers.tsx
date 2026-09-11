@@ -4,8 +4,11 @@ import { useLanguage } from "@/i18n/locale";
 import expressions from "../../../../assets/runtime/world-v1/pilot-result-expressions.webp";
 import neutral from "../../../../assets/runtime/world-v1/pilot-portrait.webp";
 import { teamColor } from "./teamColors";
+import "./resultPlayers.css";
 
-export const ResultPlayers = ({ players, result }: Pick<LabFrame, "players" | "result">) => {
+export type ResultPresentation = { readonly players: readonly Pick<LabFrame["players"][number], "playerId" | "teamId" | "nickname">[]; readonly result: LabFrame["result"] };
+
+export const ResultPlayers = ({ players, result }: ResultPresentation) => {
   const { t } = useLanguage();
   if (result.type === "ongoing") return null;
   return <div className="battle-result-players">{players.map(player => {

@@ -1,3 +1,4 @@
+import type { ResultPresentation } from "@/worldUi/ResultPlayers";
 import { AudioControls } from "@/worldUi/AudioControls";
 import { teamColorName } from "@/worldUi/teamColors";
 import { useLanguage } from "@/i18n/locale";
@@ -19,7 +20,7 @@ import { actorPoint, PrototypeCanvas } from "./PrototypeCanvas";
 import { usePrototypeInput } from "./usePrototypeInput";
 import "./prototype.css";
 
-type ThemeProps = { readonly worldArt?: boolean; readonly onExit?: () => void; readonly onResult?: (label: string) => void };
+type ThemeProps = { readonly worldArt?: boolean; readonly onExit?: () => void; readonly onResult?: (result: ResultPresentation) => void };
 export const CameraPrototype = (props: ThemeProps) => {
   const { t } = useLanguage();
   const [store, setStore] = useState<MatchStore | null>(null);
@@ -65,8 +66,11 @@ const Battle = ({ store, worldArt, onExit, onResult }: { readonly store: MatchSt
     return () => { delete window.__fortress; };
   }, [store]);
   useEffect(() => {
-    if (view.phase === "finished" && view.result && onResult) onResult(view.result.winner === null ? t("引き分け") : t("{player}の勝利", { player: t(teamColorName(view.result.winner)) }));
-  }, [view.phase, view.result, onResult]);
+    if (view.phase === "finished" && view.result && view.players && onResult) onResult({
+      result: view.result.winner === null ? { type: "draw" } : { type: "win", teamId: `t${view.result.winner}` },
+      players: view.players.map(player => ({ playerId: String(player.seat), teamId: `t${player.seat}`, nickname: player.nickname })),
+    });
+  }, [view.phase, view.result, view.players, onResult]);
   const hudPlayers = view.players?.map(p => ({ id: String(p.seat), name: p.nickname, hp: p.hp, team: p.seat })) ?? [];
   const pose = view.control ?? actor;
   const ground = view.mask && pose ? tiltOf(view.mask, pose) : 0;

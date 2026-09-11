@@ -59,7 +59,8 @@ for (const size of [{ width: 1440, height: 900 }, { width: 844, height: 390 }, {
         await page.getByRole("button", { name: "設定を開く" }).click();
         await page.getByRole("button", { name: "降参して対戦を終える" }).click();
         await expect(page.getByRole("heading", { name: /の勝利/ })).toBeVisible();
-        await expect(page.locator(".tank-portrait")).toHaveAttribute("data-loaded", "true");
+        await expect(page.locator('.battle-result-player[data-reaction="win"]')).toHaveCount(1);
+        await expect(page.locator('.battle-result-player[data-reaction="lose"]')).toHaveCount(1);
         await page.screenshot({ path: "test-results/world-result-1440.png" });
         await page.getByRole("button", { name: "もう一度プレイ" }).click();
         await expect(page.getByTestId("camera-world")).toHaveAttribute("data-loaded", "true");
