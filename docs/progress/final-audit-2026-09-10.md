@@ -48,3 +48,5 @@
 2026-09-11待ち列修正: quick参加が旧公開listの先頭100件に依存し、それより古い空席を見落とす経路を修正。地域・mode・waiting・期限・参加者と予約席の合計をSQLで条件指定し、候補1件だけを返す。実SQLiteの101新規部屋＋古い空席・満員・期限切れ・対戦中・予約追加の回帰テストを追加（修正前失敗→修正後成功）。server型チェック成功。local Wranglerのedge専用3件も成功し、同時quick割当・開始・再接続・公開ページングを確認。Directory分割と永続outboxは引き続き未実装。
 
 2026-09-11 outbox追記: Roomのsnapshotと最新の一覧用要約を同じSQLite transactionで保存し、外部送信前に再試行alarmを保存する永続outboxを追加。古いackは新しい要約を削除しない。SQLite unitとlocal edge3件・server両対象型チェック成功。詳細と検証限界はevidence/ui/2026-09-11-directory-outbox.md。上記の永続outbox未実装の記録を更新するが、障害注入によるprocess再起動復元は未確認。
+
+2026-09-11 outbox障害検証: verify-directory-outbox.tsでDirectory.update例外→公開未掲載→Wrangler process groupのSIGKILL→同じSQLiteで再起動→部屋への操作なしにalarmで一覧反映→同じtokenでgeneration 2復帰が成功。上記process再起動復元の未確認をlocal workerdの範囲で解消。実Cloudflare障害・容量・地域分割とは区別する。
