@@ -2,6 +2,10 @@ import { playEnglish } from "./playMessages";
 import { roomEnglish } from "./roomMessages";
 export const english: Readonly<Record<string, string>> = {
   ...roomEnglish, ...playEnglish,
+  "ロビーへ戻りますか？": "Return to the lobby?",
+  "対戦を離れると降参扱いになります。確認中も対戦は進行します。": "Leaving counts as surrender. The battle continues while you decide.",
+  "この部屋から退出します。": "You will leave this room.",
+  "現在の練習を終了します。": "Your current practice will end.",
   "はじめる": "Play", "スキップ": "Skip", "出発の準備": "Get ready", "設定": "Settings",
   "湿地の観測所": "Wetland observatory", "名前": "Name", "装備": "Weapon", "ケロポッド": "KEROPOD",
   "タイトルへ": "Title", "オンライン対戦": "Online battle", "プラクティスへ": "Practice",

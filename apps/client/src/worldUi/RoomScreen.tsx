@@ -1,3 +1,4 @@
+import { useBrowserBackAction } from "./browserBack";
 import { setMusic } from "@/app/audio";
 import { teamColor, teamColorName } from "./teamColors";
 import { useLanguage } from "@/i18n/locale";
@@ -65,6 +66,7 @@ export const RoomScreen = ({ onExit, onLab }: { readonly onExit: () => void; rea
   const send = (message: unknown) => { if (socket.current?.readyState === WebSocket.OPEN) { setStatus(""); socket.current.send(JSON.stringify(message)); } };
   const edit = (type: string, fields: object = {}) => { if (room) send({ type, version: 2, roomId: room.roomId, revision: room.revision, ...fields }); };
   const leave = () => { send({ type: "room.leave" }); sessionStorage.removeItem(tokenKey); sessionStorage.removeItem(roomKey); onExit(); };
+  useBrowserBackAction(!battle, leave);
   const cancelQuick = () => { send({ type: "room.leave" }); socket.current?.close(); socket.current = null; attempt.current++; sessionStorage.removeItem(tokenKey); sessionStorage.removeItem(roomKey); setRoom(null); setBattle(null); setStatus(""); };
   const profile = () => { const p = loadProfile(), name = nickname.trim() || "ケロポッド"; saveProfile({ ...p, nickname: name }); return { nickname: name, loadout: p.loadout }; };
   const me = room?.members.find(p => p.playerId === playerId), owner = room?.ownerId === playerId;

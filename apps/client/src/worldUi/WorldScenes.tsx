@@ -1,3 +1,4 @@
+import { useWorldBrowserBack } from "./browserBack";
 import type { ResultPresentation } from "./ResultPlayers";
 import { teamColorName } from "./teamColors";
 import { loadScene } from "./loadScene";
@@ -43,6 +44,7 @@ export const WorldScenes = () => {
     setClosing(true);
     timer.current = setTimeout(() => { setScene(next); setClosing(false); timer.current = null; }, 240);
   }, []);
+  useWorldBrowserBack(scene !== "start", () => go(scene === "lobby" ? "start" : "lobby"));
   useEffect(() => { const profile = loadProfile(); setAudioSettings(profile.volume, profile.muted); }, []);
   useEffect(() => () => { if (timer.current) clearTimeout(timer.current); }, []);
   useEffect(() => { heading.current?.focus({ preventScroll: true }); }, [scene]);
