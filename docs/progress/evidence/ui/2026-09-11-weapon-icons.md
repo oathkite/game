@@ -11,3 +11,16 @@
 - この記録は開発ビルドの限定確認。8武器全種・実機タッチ・productionの総合確認を示すものではない。
 
 UI全体の原案合わせと正式なアート承認は未完了。
+
+## 配信ビルドでの全武器確認
+
+`production-tests/weapon-hud.spec.ts` を追加。4組の装備をロビーで選択して練習へ入り、全8武器の画像decode・1440×900と667×375の画面内配置・Q/E両方向の選択/非選択状態を確認した。Chromium / Firefox / WebKit の12件成功（33.0秒）。client/e2e typecheck成功。前節のQ未assertという確認範囲を、この検証で補った。
+
+拡大画像でトリプル弾の重なりを確認したため、3発を並列配置に修正して上記12件を再実行した。
+
+- [通常弾・トリプル弾](./weapons-cannon-triple.png)
+- [多弾・貫通弾](./weapons-multiple-drill.png)
+- [レーザー・掘削弾](./weapons-laser-digger.png)
+- [浮遊弾・スティンガー](./weapons-floater-stinger.png)
+
+画像はChromiumの実HUD切り出し。全種を視覚確認した。実機タッチ・試合全体・正式アート承認の証拠ではない。

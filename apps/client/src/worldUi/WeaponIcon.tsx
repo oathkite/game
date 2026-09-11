@@ -15,7 +15,7 @@ const bounds: Record<WeaponId, string> = {
 
 export const WeaponIcon = ({ weapon }: { readonly weapon: WeaponId }) => {
   const url = urls[`../../../../assets/runtime/tanks-v1/projectile-${weapon}.png`];
-  const positions = weapon === "triple" ? [[0, 14, 24], [8, 6, 24], [16, 14, 24]]
+  const positions = weapon === "triple" ? [[9, -3, 22], [9, 9, 22], [9, 21, 22]]
     : weapon === "multiple" ? Array.from({ length: 9 }, (_, i) => [1 + (i % 3) * 13, 1 + Math.floor(i / 3) * 13, 12])
     : [[2, 2, 36]];
   return <svg viewBox="0 0 40 40" aria-hidden="true" style={{ imageRendering: "pixelated" }}>
