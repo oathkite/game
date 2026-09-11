@@ -688,3 +688,10 @@ heartbeatはUI共同調整時にPAUSED。本ゴールは現在のタスクで進
 - pilot-lifecycle.spec.tsを追加し、3browserでロビー→対戦→ロビー→再入場を検証。各入場でSVG由来の画像がWebGLへ再転送されること、ロビー素材がロードされること、JavaScript例外がないことを確認（3件、16.2秒）。演出終了後に取得した再入場画像で、すべてのbrowserの緑の搭乗パイロットを確認。
 - テストのthis/window補助プロパティの型注釈を修正し、e2e型チェックとdiff checkも成功。ゲーム内の動作変更はなし。
 - これはローカル配信buildでの確認。実機SLO、原案との造形比較と人間の素材承認は未完了。
+
+### 降参を使わない8ブラウザ対戦の完走
+
+- natural-match.config.tsと専用long-match-testsを追加。UIで部屋作成・参加・4v4配置・準備を行い、受信frameから選んだ射撃を各actorの認証済みWSへ通常コマンドとして送る。HP/地形/勝敗の注入、降参、時計変更はしない。
+- 各shotの再生後、8クライアントの受信state（位置/HP/地形/風/turn/勝敗）が一致すること、結果の発射総数と実行数、全員の部屋帰還を確認。
+- production build / local edgeで3件成功（4.9分）。Chromium23発で青勝利、Firefox24発で赤勝利、WebKit24発で青勝利。保存履歴の発射turnはすべて1からの連番で、途中の時間切れskipはなし。e2e型チェック・diff check成功。
+- JSON履歴と実行logをdocs/progress/evidence/natural-matchへ保存。moss-valley・既定cannon/diggerの各1シナリオの証拠。キーボード/タッチでの発射操作は別の既存E2Eであり、この試験の自動WS送信を人間の操作/バランス評価とは呼ばない。

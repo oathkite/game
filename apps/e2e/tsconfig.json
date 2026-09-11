@@ -29,6 +29,8 @@
     "production.config.ts",
     "startup-tests",
     "startup.config.ts",
-    "production-rooms.config.ts"
+    "production-rooms.config.ts",
+    "long-match-tests",
+    "natural-match.config.ts"
   ]
 }

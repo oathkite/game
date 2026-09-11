@@ -8,7 +8,8 @@
 | cold start操作可能p95 | startup-tests、10Mbps/150ms・cache無効20回、p95 684.1ms | Chromiumローカル配信で3秒条件通過。画像完了・実機CPU・実地域DNS/TLSは別 |
 | 初期タイトル転送2MB | production-tests/entry.spec.ts、cold新context、1,858,105B | ローカル配信buildで通過。実地域の起動時間とは別 |
 | 初回対戦まで8MB | 36b7bcdの3browser練習最大6,069,354B。独立8 contextは岩盤差替前7c8ab77で最大6,330,613B | 練習は最新3browser通過。最新の成績・全員帰還・60秒自動帰還は3browserで通過。実地域の待ち時間とは別 |
-| 独立8クライアントで試合完走 | eight-players.spec.ts、独立8 contextで4v4入室→準備→射撃共有→青4名降参→全員同じ成績→8名帰還選択→部屋復帰 | Chromium/Firefox/WebKit配信build・local edgeで通過。射撃のみで決着する長時間実戦・実機の証拠とは別 |
+| 独立8クライアントで試合完走 | eight-players.spec.ts、独立8 contextで4v4入室→準備→射撃共有→青4名降参→全員同じ成績→8名帰還選択→部屋復帰 | Chromium/Firefox/WebKit配信build・local edgeで通過。射撃のみの決着は下行で追加確認。実機の証拠とは別 |
+| 射撃だけで8browser完走 | natural-match.config.ts、3browser各8contextの4v4。23/24/24発で勝利、毎turnの受信state一致、全員帰還。履歴をevidence/natural-matchへ保存 | moss-valley・既定2武器・各1シナリオで確認。操作は通常WS発射コマンドを試験用に自動送信。人間の操作/公平感・全条件の証明とは別 |
 | 1時間soak | Node100部屋/800接続・送受信各125ms・実ファイル保存、3600秒完走。再戦3500回/移動187021回 | ローカル試験通過。部屋分離・重複拒否・復帰・保存復元を検証。実DO容量・全client描画一致の保証とは別 |
 | 全編成・射程・復元 | engine/map/server tests、進捗記録参照 | 自動検証済み。人間による公平感・バランス観察とは別 |
 | 世界UI最終原案一致 | 浮島背景・岩盤/厚い草地・濃紺パネル・中央timer・円形角度計・100分割/指針・実弾アイコンを実装 | 地形表層や情報密度も含めて最終比較を継続。人間の最終承認は未記録 |
