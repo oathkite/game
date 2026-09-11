@@ -116,7 +116,7 @@ for (const ratio of [1, 3]) test(`terrain art preserves collision alpha and ${ra
         if (pixels[(y * canvas.width + x) * 4 + 3] !== carved.cells[cell]! * 255) matches = false;
       }
       for (const x of [0, canvas.width - 1]) {
-        const expected = (sprite.x * scale + x) % (256 * ratio) < 128 * ratio ? 255 : 0;
+        const expected = (sprite.x * scale + x) % (128 * ratio) < 64 * ratio ? 255 : 0;
         // Sample below the hanging moss (up to 31 art pixels deep).
         if (pixels[(48 * canvas.width + x) * 4] !== expected) continuous = false;
       }
