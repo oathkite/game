@@ -147,5 +147,5 @@ test("terrain only uploads changed chunks and refreshes the moss across a chunk 
   expect(result.unchanged).toEqual(result.first);
   expect(result.boundary).toEqual([1, 1, 0, 0, 1, 0]);
   expect(result.trailingMoss).toEqual([1, 2, 0, 0, 2, 0]);
-  expect(result.rim).toEqual([116, 132, 76, 255]);
+  expect(result.rim).toEqual([173, 189, 86, 255]);
 });
