@@ -17,7 +17,7 @@
 | Directory分割（23.3） | 地域×mode×固定shard 0の9区分へ割当・要約更新を分離。コード発行元は共通 | local edgeとSQLite保存先・再起動復元を確認。共通発行元の容量・既存環境の移行検証は残る。evidence/ui/2026-09-11-directory-partitions.md |
 | 復元失敗の隔離（23.5） | 復元拒否を永続隔離し、元snapshotを保持・無効記録・一覧除外・専用理由を通知 | local SQLiteに未対応versionを注入した再起動と、配信3browserの理由表示・resume情報消去・ロビー帰還を確認。evidence/ui/2026-09-11-room-quarantine.md |
 | 地形checkpointと短いevent log（23.5） | 地形opを別SQL表へ1回ずつ保存し、移動時の本体書込を約17〜19KB→約9〜10KBへ削減 | 旧形式・欠損・rollback・再戦・SIGKILL復元を確認。32opごとの圧縮checkpoint＋末尾op復元を追加し、69/75発の各段階でmask一致を確認。通常射撃でcheckpoint36＋末尾9を保存後、local edge SIGKILL→同じ地形→重複拒否→次射撃の計算一致を確認。evidence/storage/2026-09-11-checkpoint.md |
-| 期限付き招待token（23.7） | 招待URLは6桁roomコードを含み、権限は別sessionで検証 | 十分なentropy・期限付きdeep-link tokenは未実装。コード直参加との共存と失効を設計する |
+| 期限付き招待token（23.7） | UUIDの招待tokenを24時間有効で保存。URL fragmentからWSへ渡し、参加前に検証。コード直参加は維持 | SQLite期限境界、local edgeの発行資格/参加、配信3browserの共有参加と無効案内を確認。evidence/ui/2026-09-11-invitation-token.md |
 | 全編成・射程・復元 | engine/map/server tests、進捗記録参照 | 自動検証済み。人間による公平感・バランス観察とは別 |
 | ブラウザーの戻る（21.7） | メニューの親画面遷移、対戦中の退出確認、入力取消、招待直入室と待機部屋のroom.leaveを接続 | 配信buildの通常/練習/履歴再読込9件、開発版の独立2contextオンライン6件を3browserで確認。履歴は1件の同一documentガード。詳細はevidence/ui/2026-09-11-browser-back.md |
 | 設定中の進行表示（21.4） | 練習/オンライン設定に進行中の表示と残り時間、自分の手番通知を共通化。スクロール中も固定表示 | オンライン2contextで減秒→射撃中の空表示→次手番通知を3browser確認。配信buildの667×375練習設定も3browser成功。確認中もサーバー時刻を使い進行 |

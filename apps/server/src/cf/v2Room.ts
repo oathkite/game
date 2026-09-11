@@ -6,6 +6,7 @@ import { RoomRuntime, serializeRoom, type RoomSnapshot } from "../rooms/runtime.
 import { restoreStoredRoom, UnrecoverableRoom } from "../rooms/restoreFailure.js";
 import { roomFrame, lobbyFrame } from "../rooms/frame.js";
 import { directoryKey, directoryLocation } from "./directoryPartitions.js";
+import { RoomInvites } from "./roomInvites.js";
 import { RoomSqlSnapshot } from "./roomSqlSnapshot.js";
 import { DirectoryOutbox } from "./directoryOutbox.js";
 import type { RoomDirectory } from "./v2Directory.js";
@@ -14,10 +15,12 @@ type Attachment = { readonly connectionId: string; readonly acceptedAt: number; 
 export class RoomObject extends DurableObject<RoomEnv> {
   private runtime: RoomRuntime | null = null;
   private publishedLobby: RoomState["lobby"] = null;
+  private readonly invites: RoomInvites;
   private readonly snapshots: RoomSqlSnapshot;
   private readonly outbox: DirectoryOutbox;
   constructor(ctx: DurableObjectState, env: RoomEnv) {
     super(ctx, env);
+    this.invites = new RoomInvites(ctx.storage.sql);
     this.outbox = new DirectoryOutbox(ctx.storage.sql);
     this.snapshots = new RoomSqlSnapshot(ctx.storage.sql);
     ctx.storage.sql.exec("CREATE TABLE IF NOT EXISTS room_failure (id INTEGER PRIMARY KEY CHECK(id = 1), failed_at INTEGER NOT NULL, reason TEXT NOT NULL, outcome TEXT NOT NULL)");
@@ -37,6 +40,12 @@ export class RoomObject extends DurableObject<RoomEnv> {
         await this.schedule(snapshot.state);
       });
     });
+  }
+  async issueInvite(token: string): Promise<{ token: string; expiresAt: number } | null> {
+    if (!this.probe()) return null;
+    const runtime = await this.recover();
+    if (!runtime?.state.sessions.some(session => session.token === token && session.role === "player" && session.connectionId)) return null;
+    return this.invites.issue(Date.now());
   }
   probe(): boolean {
     return this.ctx.storage.sql.exec("SELECT id FROM room_state WHERE id = 1").toArray().length > 0;
@@ -133,6 +142,9 @@ export class RoomObject extends DurableObject<RoomEnv> {
     if (typeof data !== "string" || data.length > 4096 || count > 30) { ws.close(1008, "rate limit"); return; }
     ws.serializeAttachment({ ...a, count, windowAt: now - a.windowAt >= 1000 ? now : a.windowAt });
     let raw: unknown; try { raw = JSON.parse(data); } catch { this.send(ws, { type: "room.error", reason: "invalid" }); return; }
+    if (typeof raw === "object" && raw !== null && "invite" in raw && !this.invites.valid(raw.invite, now)) {
+      this.send(ws, { type: "room.error", reason: "invalid-invite" }); ws.close(1008, "invalid-invite"); return;
+    }
     const seed = crypto.getRandomValues(new Uint32Array(1))[0]!;
     const runtime = await this.recover();
     if (!runtime) return;

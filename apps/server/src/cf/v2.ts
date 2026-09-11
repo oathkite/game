@@ -11,7 +11,7 @@ export default {
     if (url.pathname === "/health") return Response.json({ status: "ok", protocol: 2 });
     if (!env.ALLOWED_ORIGINS.split(",").includes(origin)) return new Response("origin denied", { status: 403 });
     const headers = { "Access-Control-Allow-Origin": origin, "Vary": "Origin", "Cache-Control": "no-store" };
-    if (request.method === "OPTIONS") return new Response(null, { status: 204, headers: { ...headers, "Access-Control-Allow-Methods": "GET, POST", "Access-Control-Allow-Headers": "Content-Type" } });
+    if (request.method === "OPTIONS") return new Response(null, { status: 204, headers: { ...headers, "Access-Control-Allow-Methods": "GET, POST", "Access-Control-Allow-Headers": "Content-Type, Authorization" } });
     if (request.method === "POST" && ["/v2/rooms", "/v2/quick"].includes(url.pathname)) {
       const { success } = await env.ALLOCATION_LIMITER.limit({ key: request.headers.get("CF-Connecting-IP") ?? "local" });
       if (!success) return new Response("allocation rate limit", { status: 429, headers: { ...headers, "Retry-After": "60" } });
@@ -47,6 +47,15 @@ export default {
       const latest = new Map(lists.flat().sort((a, b) => a.updatedAt - b.updatedAt).map(room => [room.roomId, room]));
       return Response.json([...latest.values()].sort((a, b) => b.updatedAt - a.updatedAt).slice(0, 100), { headers });
     }
+    const inviteRoom = /^\/v2\/rooms\/([A-F0-9]{6})\/invite$/.exec(url.pathname)?.[1];
+    if (inviteRoom && request.method === "POST") {
+      const token = /^Bearer ([a-f0-9-]{36})$/i.exec(request.headers.get("Authorization") ?? "")?.[1];
+      if (!token) return new Response("invite denied", { status: 403, headers });
+      const { success } = await env.ALLOCATION_LIMITER.limit({ key: `invite:${request.headers.get("CF-Connecting-IP") ?? "local"}` });
+      if (!success) return new Response("invite rate limit", { status: 429, headers });
+      const invitation = await env.ROOMS.getByName(inviteRoom).issueInvite(token);
+      return invitation ? Response.json(invitation, { headers }) : new Response("invite denied", { status: 403, headers });
+    }
     const regionProbe = /^\/v2\/regions\/(asia|europe|americas)\/probe$/.exec(url.pathname)?.[1];
     if (regionProbe && request.method === "GET") {
       const input = quickRequestSchema.safeParse({ region: regionProbe, mode: url.searchParams.get("mode") });
@@ -66,6 +75,8 @@ export default {
     }
     const roomId = /^\/v2\/rooms\/([A-F0-9]{6})$/.exec(url.pathname)?.[1];
     if (!roomId || request.method !== "GET") return new Response("not found", { status: 404, headers });
+    const { success } = await env.ALLOCATION_LIMITER.limit({ key: `connect:${request.headers.get("CF-Connecting-IP") ?? "local"}` });
+    if (!success) return new Response("connection rate limit", { status: 429, headers: { ...headers, "Retry-After": "60" } });
     return env.ROOMS.getByName(roomId).fetch(request);
   },
 };
