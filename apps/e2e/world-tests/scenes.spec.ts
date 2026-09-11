@@ -97,7 +97,8 @@ test("terrain art preserves collision alpha after carving and ordinary terrain s
       }
       for (const x of [0, canvas.width - 1]) {
         const expected = (sprite.x * scale + x) % 256 < 128 ? 255 : 0;
-        if (pixels[(24 * canvas.width + x) * 4] !== expected) continuous = false;
+        // Sample below the hanging moss (up to 31 art pixels deep).
+        if (pixels[(48 * canvas.width + x) * 4] !== expected) continuous = false;
       }
       return { scale, width: canvas.width, height: canvas.height };
     });
@@ -137,11 +138,14 @@ test("terrain only uploads changed chunks and refreshes the moss across a chunk 
     const boundary = [...updates];
     const canvas = layer.sprite.children[4].texture.source.resource as HTMLCanvasElement;
     const rim = Array.from(canvas.getContext("2d")!.getImageData(24, 0, 1, 1).data);
+    mask.cells[126 * 300 + 131] = 0; layer.update(mask);
+    const trailingMoss = [...updates];
     layer.destroy();
-    return { first, unchanged, boundary, rim };
+    return { first, unchanged, boundary, rim, trailingMoss };
   });
   expect(result.first).toEqual([1, 0, 0, 0, 0, 0]);
   expect(result.unchanged).toEqual(result.first);
   expect(result.boundary).toEqual([1, 1, 0, 0, 1, 0]);
+  expect(result.trailingMoss).toEqual([1, 2, 0, 0, 2, 0]);
   expect(result.rim).toEqual([116, 132, 76, 255]);
 });

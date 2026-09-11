@@ -30,3 +30,10 @@
 - Original: `exec-dbba4403-fe05-447b-bdf7-7e76626ad4c4.png` in the Codex generated_images directory for this task. Copied without editing. Two equal square panels, left victory and right defeat, same green pilot and olive jacket on navy background. No text or checkerboard.
 - Prompt requested matching identity/pixel density, joyful closed-eye smile on the left, gently disappointed face on the right, bust crop and matching scale.
 - Runtime encoding: lossless WebP through `scripts/assets/encode-world.py`; SVG crops each half without modifying the source. Reviewed in the eight-player result screen; formal user art approval remains pending.
+
+## terrain-cliff-v2.png
+
+- Built-in image generation using desktop-refined-v4.png as reference; no API/CLI generation. Original `exec-26922d20-86fa-4f7c-9c07-5d0c7a5b5f5e.png`, copied unchanged.
+- Prompt: square full-bleed tileable cliff material; 6–8 columns of broad angular basalt slabs, charcoal/olive planes, warm small highlights and sparse moss; no cobblestones, sky, grass border, UI or characters. Readable at a 256px runtime repeat.
+- Selected for runtime after desktop screenshot comparison. Pixel density and the large cliff fractures are closer to the design reference than the small round stones in v1. Repeated motifs remain visible; full scene fidelity and formal human art approval remain pending.
+- Source preserved and encoded losslessly by encode-world.py. Runtime grass is drawn within the collision mask and can hang up to 31 art pixels below a surface.

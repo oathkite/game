@@ -20,13 +20,31 @@ const updateMask = (mask: TerrainMask, region: Region, image: ImageData, above: 
     image.data[offset] = image.data[offset + 1] = image.data[offset + 2] = 255;
     image.data[offset + 3] = alpha;
   }
-  // The top moss rim also depends on the immediately preceding chunk row.
-  for (let x = 0; x < region.width; x++) {
-    const cell = region.y > 0 ? mask.cells[(region.y - 1) * mask.width + region.x + x]! : 0;
-    if (above[x] !== cell) dirty = true;
-    above[x] = cell;
+  // Hanging moss reaches two cells below its surface; include the air above it.
+  for (let row = 1; row <= 3; row++) for (let x = 0; x < region.width; x++) {
+    const cell = region.y >= row ? mask.cells[(region.y - row) * mask.width + region.x + x]! : 0;
+    const index = (row - 1) * region.width + x;
+    if (above[index] !== cell) dirty = true;
+    above[index] = cell;
   }
   return dirty;
+};
+
+const paintMoss = (ctx: CanvasRenderingContext2D, mask: TerrainMask, region: Region, scale: number) => {
+  for (let y = Math.max(0, region.y - 2); y < region.y + region.height; y++) for (let x = 0; x < region.width; x++) {
+    const index = y * mask.width + region.x + x;
+    if (!mask.cells[index] || (y > 0 && mask.cells[index - mask.width])) continue;
+    const top = (y - region.y) * scale;
+    for (let column = 0; column < 4; column++) {
+      const hash = ((region.x + x) * 37 + y * 17 + column * 11) >>> 0;
+      const left = x * scale + column * 3, depth = 16 + hash % 16;
+      ctx.fillStyle = "#294b32"; ctx.fillRect(left, top, 3, depth);
+      ctx.fillStyle = "#527b39"; ctx.fillRect(left, top, 3, depth - 5);
+      ctx.fillStyle = hash % 3 === 0 ? "#adbd56" : "#89a747"; ctx.fillRect(left, top, 3, 5 + hash % 7);
+      ctx.fillStyle = "#89a747"; ctx.fillRect(left, top + depth - 8, 2, 3);
+    }
+    ctx.fillStyle = "#74844c"; ctx.fillRect(x * scale, top, scale, 2);
+  }
 };
 
 const createChunk = (region: Region, scale: number, tile?: HTMLCanvasElement) => {
@@ -42,7 +60,7 @@ const createChunk = (region: Region, scale: number, tile?: HTMLCanvasElement) =>
   const texture = Texture.from(canvas); texture.source.scaleMode = "nearest";
   const sprite = new Sprite(texture);
   sprite.position.set(region.x, region.y); sprite.width = region.width; sprite.height = region.height;
-  const above = new Uint8Array(region.width);
+  const above = new Uint8Array(region.width * 3);
   let painted = false;
   const paint = (mask: TerrainMask) => {
     const dirty = updateMask(mask, region, image, above);
@@ -54,18 +72,10 @@ const createChunk = (region: Region, scale: number, tile?: HTMLCanvasElement) =>
     if (pattern) {
       ctx.globalCompositeOperation = "source-in"; ctx.fillStyle = pattern;
       ctx.fillRect(0, 0, canvas.width, canvas.height); ctx.globalCompositeOperation = "source-over";
-      for (let y = 0; y < region.height; y++) for (let x = 0; x < region.width; x++) {
-        const index = (region.y + y) * mask.width + region.x + x;
-        if (!mask.cells[index] || (region.y + y > 0 && mask.cells[index - mask.width])) continue;
-        // Keep every moss pixel inside its solid cell, including newly carved surfaces.
-        for (let column = 0; column < 4; column++) {
-          const hash = ((region.x + x) * 37 + (region.y + y) * 17 + column * 11) >>> 0;
-          const left = x * scale + column * 3, top = y * scale, depth = 5 + hash % 6;
-          ctx.fillStyle = "#384b32"; ctx.fillRect(left, top, 3, depth);
-          ctx.fillStyle = hash % 3 === 0 ? "#8d9c50" : "#627b3d"; ctx.fillRect(left, top, 3, depth - 2);
-        }
-        ctx.fillStyle = "#74844c"; ctx.fillRect(x * scale, y * scale, scale, 2);
-      }
+      paintMoss(ctx, mask, region, scale);
+      ctx.globalCompositeOperation = "destination-in";
+      ctx.drawImage(maskCanvas, 0, 0, canvas.width, canvas.height);
+      ctx.globalCompositeOperation = "source-over";
     }
     texture.source.update();
   };
