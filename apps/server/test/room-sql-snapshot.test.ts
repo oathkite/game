@@ -4,7 +4,7 @@ import { TEST_ARENA } from "@game/maps";
 import { createBattle, createBattleSession } from "@game/engine/multiplayer";
 import { RoomSqlSnapshot } from "../src/cf/roomSqlSnapshot.js";
 import { createRoomState } from "../src/rooms/core.js";
-import { serializeRoom } from "../src/rooms/runtime.js";
+import { serializeRoom, restoreRoom } from "../src/rooms/runtime.js";
 it("appends terrain once, restores old/new formats, rolls back atomically and resets on rematch", () => {
   const db = new DatabaseSync(":memory:"), writes: string[] = [];
   const sql = { exec: <T extends Record<string, string | number | null>>(query: string, ...args: (string | number | null)[]) => {
@@ -35,5 +35,21 @@ it("appends terrain once, restores old/new formats, rolls back atomically and re
     expect(() => store.read(read())).toThrow("room-unrecoverable");
     const rematch = { ...snapshot, state: { ...snapshot.state, battle: { ...snapshot.state.battle!, state: { ...snapshot.state.battle!.state, matchId: "next", terrainOps: [] } } } };
     store.write(rematch); expect(JSON.parse(store.read(read()))).toEqual(rematch);
+    const withOps = (count: number) => ({ ...rematch, state: { ...rematch.state, battle: { ...rematch.state.battle!, state: { ...rematch.state.battle!.state,
+      terrainOps: Array.from({ length: count }, (_, i) => ({ cx: 40 + i, cy: 80, radius: 5 })),
+    } } } });
+    store.write(withOps(40));
+    const checkpoint = String(db.prepare("SELECT checkpoint FROM room_terrain_checkpoint").get()!.checkpoint);
+    expect(JSON.parse(checkpoint).opCount).toBe(40);
+    store.write(withOps(45));
+    expect(db.prepare("SELECT checkpoint FROM room_terrain_checkpoint").get()!.checkpoint).toBe(checkpoint);
+    expect(restoreRoom(JSON.parse(store.read(read())))).toEqual(restoreRoom(withOps(45)));
+    db.exec("BEGIN"); store.write(withOps(80)); db.exec("ROLLBACK");
+    expect(db.prepare("SELECT checkpoint FROM room_terrain_checkpoint").get()!.checkpoint).toBe(checkpoint);
+    expect(restoreRoom(JSON.parse(store.read(read())))).toEqual(restoreRoom(withOps(45)));
+    db.prepare("UPDATE room_terrain_checkpoint SET checkpoint=?").run(JSON.stringify({ ...JSON.parse(checkpoint), opCount: 1000 }));
+    expect(() => restoreRoom(JSON.parse(store.read(read())))).toThrow();
+    store.write({ ...rematch, state: { ...rematch.state, battle: null } });
+    expect(db.prepare("SELECT COUNT(*) AS n FROM room_terrain_checkpoint").get()!.n).toBe(0);
   } finally { db.close(); }
 });

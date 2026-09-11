@@ -1,15 +1,19 @@
+import { captureTerrainCheckpoint, restoreTerrainCheckpoint, type TerrainCheckpoint } from "@game/engine/multiplayer";
+import { applyOps, maskFromHeights } from "@game/sim";
 import type { RoomSnapshot } from "../rooms/runtime.js";
 import { UnrecoverableRoom } from "../rooms/restoreFailure.js";
 type Sql = { exec<T extends Record<string, string | number | null>>(query: string, ...args: (string | number | null)[]): { toArray(): T[] } };
 /** Caller commits snapshot, appended terrain and deadlines in the same transaction. */
 export class RoomSqlSnapshot {
   constructor(private readonly sql: Sql) {
+    sql.exec("CREATE TABLE IF NOT EXISTS room_terrain_checkpoint (id INTEGER PRIMARY KEY CHECK(id=1), match_id TEXT NOT NULL, checkpoint TEXT NOT NULL)");
     sql.exec("CREATE TABLE IF NOT EXISTS room_terrain_meta (id INTEGER PRIMARY KEY CHECK(id=1), match_id TEXT NOT NULL, op_count INTEGER NOT NULL)");
     sql.exec("CREATE TABLE IF NOT EXISTS room_terrain_ops (seq INTEGER PRIMARY KEY, op TEXT NOT NULL)");
   }
   write(snapshot: RoomSnapshot): void {
     const battle = snapshot.state.battle;
     if (!battle) {
+      this.sql.exec("DELETE FROM room_terrain_checkpoint");
       this.sql.exec("DELETE FROM room_terrain_meta"); this.sql.exec("DELETE FROM room_terrain_ops");
       this.save(snapshot); return;
     }
@@ -18,10 +22,20 @@ export class RoomSqlSnapshot {
     const same = before?.match_id === state.matchId;
     const count = same ? before.op_count : 0;
     if (count > terrainOps.length) throw new Error("terrain history shrank");
-    if (!same) this.sql.exec("DELETE FROM room_terrain_ops");
+    if (!same) { this.sql.exec("DELETE FROM room_terrain_ops"); this.sql.exec("DELETE FROM room_terrain_checkpoint"); }
     for (let i = count; i < terrainOps.length; i++) this.sql.exec("INSERT INTO room_terrain_ops VALUES (?, ?)", i, JSON.stringify(terrainOps[i]));
     if (!same || count !== terrainOps.length) this.sql.exec("INSERT OR REPLACE INTO room_terrain_meta VALUES (1, ?, ?)", state.matchId, terrainOps.length);
+    if (terrainOps.length !== count) this.checkpoint(snapshot);
     this.save({ version: 2, state: { ...snapshot.state, battle: { ...battle, state } }, terrainCount: terrainOps.length });
+  }
+  private checkpoint(snapshot: RoomSnapshot): void {
+    const state = snapshot.state.battle!.state;
+    const row = this.sql.exec<{ checkpoint: string }>("SELECT checkpoint FROM room_terrain_checkpoint WHERE id=1").toArray()[0];
+    const previous = row ? JSON.parse(row.checkpoint) as TerrainCheckpoint : undefined;
+    if (state.terrainOps.length - (previous?.opCount ?? 0) < 32) return;
+    const mask = previous ? restoreTerrainCheckpoint(previous, state.map.width, state.map.height, state.terrainOps)
+      : applyOps(maskFromHeights(state.map.surface, state.map.height), state.terrainOps);
+    this.sql.exec("INSERT OR REPLACE INTO room_terrain_checkpoint VALUES (1, ?, ?)", state.matchId, JSON.stringify(captureTerrainCheckpoint(mask, state.terrainOps.length)));
   }
   private save(value: unknown): void {
     this.sql.exec("INSERT OR REPLACE INTO room_state VALUES (1, ?)", JSON.stringify(value));
@@ -35,10 +49,13 @@ export class RoomSqlSnapshot {
     const meta = this.sql.exec<{ match_id: string; op_count: number }>("SELECT match_id, op_count FROM room_terrain_meta WHERE id=1").toArray()[0];
     const rows = this.sql.exec<{ seq: number; op: string }>("SELECT seq, op FROM room_terrain_ops ORDER BY seq").toArray();
     if (meta?.match_id !== matchId || meta.op_count !== count || rows.length !== count || rows.some((row, i) => row.seq !== i)) throw new UnrecoverableRoom();
+    const row = this.sql.exec<{ match_id: string; checkpoint: string }>("SELECT match_id, checkpoint FROM room_terrain_checkpoint WHERE id=1").toArray()[0];
+    if (row && row.match_id !== matchId) throw new UnrecoverableRoom();
     try {
+      const terrainCheckpoint = row ? JSON.parse(row.checkpoint) : undefined;
       const terrainOps = rows.map(row => JSON.parse(row.op));
       if (terrainOps.some(op => !op || ![op.cx, op.cy, op.radius].every(Number.isSafeInteger) || op.radius < 0)) throw new UnrecoverableRoom();
-      return JSON.stringify({ version: 1, state: { ...saved.state, battle: { ...saved.state.battle, state: { ...saved.state.battle.state, terrainOps } } } });
+      return JSON.stringify({ version: 1, state: { ...saved.state, battle: { ...saved.state.battle, ...(terrainCheckpoint ? { terrainCheckpoint } : {}), state: { ...saved.state.battle.state, terrainOps } } } });
     } catch { throw new UnrecoverableRoom(); }
   }
 }

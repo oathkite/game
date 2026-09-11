@@ -7,7 +7,7 @@ import { CLIENT_BUILD } from "@game/protocol/build";
 import { WEAPON_IDS, type Loadout } from "@game/protocol";
 import { createBattle, createBattleSession, fireInSession, tickSession, serializeBattle, restoreBattle, type BattleSession } from "@game/engine/multiplayer";
 import { createRoomState, reduceRoom } from "../src/rooms/core.js";
-import { serializeRoom } from "../src/rooms/runtime.js";
+import { serializeRoom, restoreRoom } from "../src/rooms/runtime.js";
 const bytes = (value: unknown) => Buffer.byteLength(JSON.stringify(value));
 const results = [];
 for (const map of MULTIPLAYER_MAPS) {
@@ -36,7 +36,9 @@ for (const map of MULTIPLAYER_MAPS) {
     const snapshot = serializeRoom({ ...room, battle: state }), size = bytes(snapshot);
     store.write(snapshot);
     const raw = String(db.prepare("SELECT snapshot FROM room_state").get()!.snapshot);
-    assert.deepEqual(JSON.parse(store.read(raw)), snapshot);
+    const restored = restoreRoom(JSON.parse(store.read(raw)));
+    assert.deepEqual(serializeRoom(restored), snapshot);
+    assert.deepEqual(restored.battle!.mask.cells, state.mask.cells);
     const inserts = terrainInserts;
     store.write(snapshot); assert.equal(terrainInserts, inserts);
     if (state.phase === "acting") maxActingStoredBytes = Math.max(maxActingStoredBytes, Buffer.byteLength(raw));
@@ -56,18 +58,24 @@ for (const map of MULTIPLAYER_MAPS) {
     live = tickSession(live, live.replay!.endsAt); measure(live); shots++;
   }
   assert.equal(live.phase, "finished");
-  const snapshot = JSON.stringify(serializeBattle(live)), times: number[] = [];
+  const snapshot = JSON.stringify(serializeBattle(live)), times: number[] = [], sqlTimes: number[] = [];
+  const persisted = String(db.prepare("SELECT snapshot FROM room_state").get()!.snapshot);
+  const checkpoint = JSON.parse(String(db.prepare("SELECT checkpoint FROM room_terrain_checkpoint").get()!.checkpoint));
   for (let i = 0; i < 110; i++) {
     const start = performance.now(), restored = restoreBattle(JSON.parse(snapshot));
     const elapsed = performance.now() - start;
     assert.deepEqual(restored.mask.cells, live.mask.cells);
-    if (i >= 10) times.push(elapsed);
+    const sqlStart = performance.now(), fromSql = restoreRoom(JSON.parse(store.read(persisted)));
+    const sqlElapsed = performance.now() - sqlStart;
+    assert.deepEqual(fromSql.battle!.mask.cells, live.mask.cells);
+    if (i >= 10) { times.push(elapsed); sqlTimes.push(sqlElapsed); }
   }
-  times.sort((a, b) => a - b);
+  times.sort((a, b) => a - b); sqlTimes.sort((a, b) => a - b);
   results.push({ map: map.id, shots, maxOps, maxActingBytes, maxReplayBytes, maxActingStoredBytes, maxReplayStoredBytes, terrainInserts,
     finalTerrainOpsBytes: bytes(live.terrainOps), finalMapBytes: bytes(live.map),
     columnCheckpointBytes: Buffer.byteLength(encodeColumns(columnsOfMask(live.mask))), rawMaskBytes: live.mask.cells.byteLength,
-    restoreP95Milliseconds: times[Math.ceil(times.length * .95) - 1], samples: times.length });
+    restoreP95Milliseconds: times[Math.ceil(times.length * .95) - 1],
+    sqlCheckpointRestoreP95Milliseconds: sqlTimes[Math.ceil(sqlTimes.length * .95) - 1], checkpointOps: checkpoint.opCount, tailOps: live.terrainOps.length - checkpoint.opCount, samples: times.length });
   db.close();
 }
 const report = { runtime: process.version, scope: "Local Node; deterministic mixed-weapon eight-player fixtures, not maximum-damage or Cloudflare CPU/storage billing", results };
