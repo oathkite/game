@@ -6,11 +6,12 @@ type AudioState = {
   ctx: AudioContext | null;
   /** 全部の音をまとめて通す圧縮器。着弾で 3 つまで重なる音が割れないようにする */
   master: DynamicsCompressorNode | null;
+  output: GainNode | null;
   volume: number;
   muted: boolean;
 };
 
-const state: AudioState = { ctx: null, master: null, volume: 0.5, muted: false };
+const state: AudioState = { ctx: null, master: null, output: null, volume: 0.5, muted: false };
 
 /** 最初のユーザー操作で呼び、自動再生制限を解除する */
 export const unlockAudio = (): void => {
@@ -26,14 +27,19 @@ export const unlockAudio = (): void => {
   master.ratio.value = 8;
   master.attack.value = 0.002;
   master.release.value = 0.1;
-  master.connect(ctx.destination);
+  const output = ctx.createGain();
+  output.gain.value = state.muted ? 0 : state.volume;
+  master.connect(output);
+  output.connect(ctx.destination);
   state.ctx = ctx;
   state.master = master;
+  state.output = output;
 };
 
 export const setAudioSettings = (volume: number, muted: boolean): void => {
   state.volume = volume;
   state.muted = muted;
+  if (state.ctx && state.output) state.output.gain.setValueAtTime(muted ? 0 : volume, state.ctx.currentTime);
 };
 
 type Tone = {
@@ -66,7 +72,7 @@ export const playSound = (name: SoundName): void => {
   osc.type = tone.type;
   osc.frequency.setValueAtTime(tone.from, t0);
   osc.frequency.exponentialRampToValueAtTime(Math.max(1, tone.to), t0 + tone.duration);
-  gain.gain.setValueAtTime(tone.gain * state.volume, t0);
+  gain.gain.setValueAtTime(tone.gain, t0);
   gain.gain.exponentialRampToValueAtTime(0.001, t0 + tone.duration);
   osc.connect(gain).connect(master);
   osc.start(t0);
