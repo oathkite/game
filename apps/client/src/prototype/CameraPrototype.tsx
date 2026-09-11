@@ -1,3 +1,4 @@
+import { BattleMenuStatus } from "@/worldUi/BattleMenuStatus";
 import { useBrowserBackAction } from "@/worldUi/browserBack";
 import { LeaveBattleDialog } from "@/worldUi/LeaveBattleDialog";
 import type { ResultPresentation } from "@/worldUi/ResultPlayers";
@@ -106,7 +107,8 @@ const Battle = ({ store, worldArt, onExit, onResult }: { readonly store: MatchSt
     </footer>}
     {confirmLeave && onExit && <LeaveBattleDialog online={false} playing={view.phase !== "finished"} close={() => setConfirmLeave(false)} leave={onExit} />}
     <dialog ref={dialog} className="kp-dialog" onCancel={(e) => { e.preventDefault(); setMenu(false); }}>
-      <h2>{t("ひと息つこう")}</h2><p>{t("プラクティスは進行中です。")}</p>
+      {menu && view.phase !== "finished" && <BattleMenuStatus activeTurn={enabled}>{view.phase === "acting" ? <Timer deadlineAt={view.deadlineAt} clockOffset={0} myTurn={false} /> : "—"}</BattleMenuStatus>}
+      <h2>{t("ひと息つこう")}</h2>
       <AudioControls />
       <CameraSettingsPanel rig={rig} />
       <p className="kp-shortcuts">{t("A / D・← / →：移動")}<br />{t("W / S・↑ / ↓：角度　Space：発射")}<br />{t("Q / E：武器　Tab：機体を順に見る")}<br />{t("Shift + 矢印：見回す　C：手番へ")}</p>

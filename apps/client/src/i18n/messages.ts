@@ -2,6 +2,7 @@ import { playEnglish } from "./playMessages";
 import { roomEnglish } from "./roomMessages";
 export const english: Readonly<Record<string, string>> = {
   ...roomEnglish, ...playEnglish,
+  "対戦は進行中です。": "The battle is still running.", "残り時間": "Time remaining",
   "操作のヒント": "How to play",
   "風を読む": "Read the wind",
   "流れる葉が風向きと強さの目印。": "Drifting leaves show the wind's direction and strength.",

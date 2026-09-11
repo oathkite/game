@@ -129,6 +129,7 @@ export const NetworkLab = ({ worldArt = false, onExit, connection }: { readonly 
   const presentation = frame ? presentLabReplay(frame, serverNow) : null;
   const shownPlayers = frame?.phase === "replaying" ? presentation!.players : positions.map(p => ({ ...frame!.players.find(player => player.playerId === p.playerId)!, ...p }));
   const loadout = frame?.players.find(p => p.playerId === playerId)?.loadout ?? DEFAULT_LOADOUT;
+  const seconds = frame?.phase === "acting" ? Math.max(0, Math.ceil((frame.deadlineAt - serverNow) / 1000)) : null;
   const phaseLabel = frame?.phase === "replaying" ? "射撃を再生中" : frame?.phase === "finished" ? "対戦終了" : "操作中";
   const observing = spectator || Boolean(frame?.players.find(p => p.playerId === playerId)?.eliminated);
   const canAct = (!worldArt || innerWidth > innerHeight) && frame?.phase === "acting" && frame.actorId === playerId && socket.current?.readyState === WebSocket.OPEN;
@@ -140,7 +141,7 @@ export const NetworkLab = ({ worldArt = false, onExit, connection }: { readonly 
   if (frame?.actorId === playerId) ownFacing.current = frame.movement.facing;
   const ground = useMemo(() => own && presentation && frame ? tiltOf(applyOps(maskFromHeights(frame.map.surface, frame.map.height), presentation.terrainOps), own) : 0, [own?.x, own?.y, frame?.eventSeq, frame?.matchId]);
   if (worldArt) return <main className="network-lab network-world" onPointerDown={() => unlockAudio()} onKeyDown={() => unlockAudio()}>
-    <BattleRoster upcomingPlayerIds={frame?.upcomingPlayerIds ?? []} players={hudPlayers} actorId={frame?.actorId ?? ""} wind={frame?.wind ?? 0} clock={<CountdownDial seconds={frame?.phase === "acting" ? Math.max(0, Math.ceil((frame.deadlineAt - serverNow) / 1000)) : null} />} onMenu={() => { input.cancel(); setMenu(true); }} />
+    <BattleRoster upcomingPlayerIds={frame?.upcomingPlayerIds ?? []} players={hudPlayers} actorId={frame?.actorId ?? ""} wind={frame?.wind ?? 0} clock={<CountdownDial seconds={seconds} />} onMenu={() => { input.cancel(); setMenu(true); }} />
     <span className="battle-sr" data-testid="identity">{playerId}</span><span className="battle-sr" data-testid="phase">{t(phaseLabel)}</span>
     {frame && presentation ? <NetworkField blocked={menu || confirmLeave || input.gauge.charging} frame={frame} players={shownPlayers} presentation={presentation} elevation={elevation} ownId={playerId} followTurns={!observing || !keepView} {...(!observing ? { selectedWeapon: loadout[slot] } : {})} /> : <p role="status">{t(status)}</p>}
     {observing ? <footer className="battle-console"><span role="status">{t("観戦中")}</span><label><input type="checkbox" checked={keepView} onChange={e => setKeepView(e.target.checked)} />{t("手動視点を維持")}</label></footer> : <BattleConsole player={hudPlayers.find(p => p.id === playerId)} steps={frame?.actorId === playerId ? frame.movement.stepsLeft : 0} tilt={ground} elevation={elevation} facing={ownFacing.current} power={input.gauge.value} loadout={loadout} slot={slot} disabled={!canAct || menu || confirmLeave || input.gauge.charging} selectSlot={setSlot}>
@@ -148,7 +149,7 @@ export const NetworkLab = ({ worldArt = false, onExit, connection }: { readonly 
     </BattleConsole>}
     {latency !== null && latency > 300 && <span className="network-latency" role="status">{t("通信遅延")} {latency} ms</span>}
     {confirmLeave && onExit && <LeaveBattleDialog online playing={!observing && frame?.phase !== "finished"} close={() => setConfirmLeave(false)} leave={onExit} />}
-    {menu && <BattleMenu activeTurn={frame?.phase === "acting" && frame.actorId === playerId && !observing} latency={latency} {...(connection && frame ? { report: { players: frame.players.filter(p => p.playerId !== playerId).map(p => ({ id: p.playerId, name: p.nickname ?? p.playerId })), status: reportStatus, send: (targetId: string, reason: "name" | "abuse" | "cheating") => {
+    {menu && <BattleMenu seconds={seconds} activeTurn={frame?.phase === "acting" && frame.actorId === playerId && !observing} latency={latency} {...(connection && frame ? { report: { players: frame.players.filter(p => p.playerId !== playerId).map(p => ({ id: p.playerId, name: p.nickname ?? p.playerId })), status: reportStatus, send: (targetId: string, reason: "name" | "abuse" | "cheating") => {
       if (socket.current?.readyState !== WebSocket.OPEN) { setReportStatus("通報を送信できませんでした。"); return; }
       setReportStatus("送信中…"); socket.current.send(JSON.stringify({ type: "room.report", matchId: frame.matchId, targetId, reason }));
     } } } : {})} {...(frame ? { diagnostics: matchDiagnostics(frame) } : {})} spectator={observing} close={() => setMenu(false)} surrender={() => { action("lab.surrender"); setMenu(false); }} exit={onExit} finished={!frame || frame.phase === "finished"} />}

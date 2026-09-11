@@ -50,3 +50,22 @@ test("reload does not accumulate history guards or leave the game", async ({ pag
   await back(page);
   await expect(page.getByRole("heading", { name: "Previous page" })).toBeVisible();
 });
+
+test("practice settings show a live timer while scrolled on a short screen", async ({ page }) => {
+  await page.setViewportSize({ width: 667, height: 375 });
+  await page.goto("/?prototype=world");
+  await page.getByRole("button", { name: "はじめる", exact: true }).click();
+  await page.getByRole("button", { name: "プラクティスへ", exact: true }).click();
+  await expect(page.getByTestId("camera-world")).toHaveAttribute("data-loaded", "true");
+  await page.getByRole("button", { name: "設定を開く", exact: true }).click();
+  const dialog = page.locator(".kp-dialog[open]");
+  const timer = dialog.getByRole("timer", { name: "残り時間" });
+  await expect(timer).toHaveText(/^[1-9][0-9]*$/);
+  const before = Number(await timer.textContent());
+  await expect.poll(async () => Number(await timer.textContent())).toBeLessThan(before);
+  await dialog.evaluate(element => { element.scrollTop = element.scrollHeight; });
+  const box = (await timer.boundingBox())!;
+  expect(box.y).toBeGreaterThanOrEqual(0);
+  expect(box.y + box.height).toBeLessThanOrEqual(375);
+  await expect(dialog.getByText("あなたの手番です", { exact: true })).toBeVisible();
+});
