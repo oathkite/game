@@ -50,6 +50,8 @@ test("eight independent players complete a 4v4 match and return together", async
     expect(imageBox.y).toBeGreaterThanOrEqual(portraitBox.y);
     expect(imageBox.y + imageBox.height).toBeLessThanOrEqual(portraitBox.y + portraitBox.height + 1);
     await expect(owner.locator(".battle-upcoming")).toHaveCount(3);
+    // Cold loading eight renderers can span a turn; start input checks early in a live turn.
+    await expect.poll(async () => Number(await owner.locator(".countdown-dial > span").innerText()), { timeout: 25000 }).toBeGreaterThanOrEqual(18);
     const nextSeat = owner.locator(".battle-seat").filter({ has: owner.getByLabel("1人後の手番", { exact: true }) });
     const nextName = await nextSeat.locator("strong").textContent();
     const nextPage = pages[Number(nextName!.replace("Pilot", "")) - 1]!;
@@ -59,9 +61,21 @@ test("eight independent players complete a 4v4 match and return together", async
     const actors = await Promise.all(pages.map(page => page.locator(".battle-weapons button").first().isEnabled()));
     expect(actors.filter(Boolean)).toHaveLength(1);
     const shooter = pages[actors.indexOf(true)]!;
+    const ring = () => shooter.locator(".countdown-dial").evaluate(node => ({
+      seconds: Number(node.querySelector("span")!.textContent),
+      arc: Number(node.querySelectorAll("circle")[1]!.getAttribute("stroke-dasharray")!.split(" ")[0]),
+    }));
+    const beforeShot = await ring();
+    expect(beforeShot.seconds).toBeGreaterThan(0);
+    expect(beforeShot.arc).toBe(beforeShot.seconds * 5);
     await shooter.keyboard.down("Space"); await shooter.waitForTimeout(400); await shooter.keyboard.up("Space");
     await Promise.all(pages.map(page => expect(page.getByTestId("phase")).toHaveText("射撃を再生中")));
+    await Promise.all(pages.map(async page => {
+      await expect(page.locator(".countdown-dial > span")).toHaveText("—");
+      await expect(page.locator(".countdown-dial circle").nth(1)).toHaveAttribute("stroke-dasharray", "0 100");
+    }));
     await Promise.all(pages.map(page => expect(page.getByTestId("phase")).toHaveText("操作中", { timeout: 15000 })));
+    await expect.poll(async () => (await ring()).arc).toBeGreaterThan(0);
     await expect(owner.locator(".battle-seat.is-actor strong")).toHaveText(nextName!);
     await expect(nextPage.getByRole("dialog", { name: "対戦設定" })).toBeVisible();
     await expect(nextPage.getByRole("status").filter({ hasText: "あなたの手番です" })).toBeVisible();
