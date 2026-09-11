@@ -49,5 +49,22 @@ test("Suno audio follows scenes and live output settings", async ({ page }) => {
     const probe = (window as unknown as { audioProbe: { sources: AudioBufferSourceNode[] } }).audioProbe;
     return probe.sources.some(source => !source.loop && Math.abs((source.buffer?.duration ?? 0) - 4.8) < 0.02);
   })).toBe(true);
+  await expect.poll(() => page.evaluate(() => {
+    const probe = (window as unknown as { audioProbe: { sources: AudioBufferSourceNode[] } }).audioProbe;
+    return probe.sources.filter(source => source.loop).length;
+  })).toBe(4);
+  const loopEdges = await page.evaluate(() => {
+    const probe = (window as unknown as { audioProbe: { sources: AudioBufferSourceNode[] } }).audioProbe;
+    return probe.sources.filter(source => source.loop).flatMap(source => {
+      const buffer = source.buffer!;
+      return Array.from({ length: buffer.numberOfChannels }, (_, channel) => {
+        const data = buffer.getChannelData(channel);
+        return { first: Math.abs(data[0]!), last: Math.abs(data[data.length - 1]!),
+          hasSignal: data.subarray(1000, 10000).some(sample => Math.abs(sample) > 0.001) };
+      });
+    });
+  });
+  expect(loopEdges).toHaveLength(8);
+  for (const edge of loopEdges) expect(edge).toEqual({ first: 0, last: 0, hasSignal: true });
   expect(errors).toEqual([]);
 });

@@ -1,12 +1,16 @@
 import { afterEach, expect, it, vi } from "vitest";
 import { createSampleAudio } from "../src/app/sampleAudio";
 
-const sourceNode = () => ({ connect: vi.fn(), disconnect: vi.fn(), start: vi.fn(), stop: vi.fn(), loop: false, onended: null });
+const sourceNode = () => ({ connect: vi.fn(), disconnect: vi.fn(), start: vi.fn(), stop: vi.fn(), loop: false, buffer: null as AudioBuffer | null, onended: null });
 const setup = () => {
   const sources: Array<ReturnType<typeof sourceNode>> = [];
   const ctx = {
     currentTime: 1,
-    decodeAudioData: vi.fn(async () => ({ duration: 8 })),
+    decodeAudioData: vi.fn(async () => {
+      const channels = [new Float32Array(480).fill(0.5), new Float32Array(480).fill(-0.25)];
+      return { duration: 0.01, length: 480, sampleRate: 48000, numberOfChannels: 2,
+        getChannelData: (channel: number) => channels[channel]! };
+    }),
     createBufferSource: () => {
       const source = sourceNode();
       sources.push(source); return source;
@@ -77,4 +81,24 @@ it("falls back to the compatible format when the compact codec cannot decode", a
   expect(fetch).toHaveBeenCalledTimes(2);
   expect(String(vi.mocked(fetch).mock.calls[0]![0])).toContain("battle.opus");
   expect(String(vi.mocked(fetch).mock.calls[1]![0])).toContain("battle.mp3");
+});
+
+it("removes decoded loop endpoint steps on both channels without changing the middle or duration", async () => {
+  const { audio, sources } = setup();
+  await audio.setMusic("result");
+  const buffer = sources[0]!.buffer!;
+  expect(buffer.length).toBe(480);
+  for (let channel = 0; channel < 2; channel++) {
+    const data = buffer.getChannelData(channel);
+    expect(Math.abs(data[0]!)).toBe(0);
+    expect(Math.abs(data[data.length - 1]!)).toBe(0);
+    expect(Array.from(data.slice(96, -96))).toEqual(Array(288).fill(channel === 0 ? 0.5 : -0.25));
+  }
+});
+
+it("preserves one-shot effect samples", async () => {
+  const { audio, sources } = setup();
+  await audio.preload();
+  audio.playEffect("fire");
+  expect(Array.from(sources[0]!.buffer!.getChannelData(0))).toEqual(Array(480).fill(0.5));
 });

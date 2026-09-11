@@ -35,6 +35,19 @@ const music = {
 } as const;
 export type MusicName = keyof typeof music;
 
+// Lossy decoding can reintroduce a step across an otherwise crossfaded loop.
+const softenLoopEndpoints = (buffer: AudioBuffer): void => {
+  const frames = Math.min(Math.round(buffer.sampleRate * 0.002), Math.floor(buffer.length / 2));
+  for (let channel = 0; channel < buffer.numberOfChannels; channel++) {
+    const samples = buffer.getChannelData(channel);
+    for (let i = 0; i < frames; i++) {
+      const gain = frames > 1 ? i / (frames - 1) : 0;
+      samples[i] = samples[i]! * gain;
+      samples[samples.length - 1 - i] = samples[samples.length - 1 - i]! * gain;
+    }
+  }
+};
+
 /** Effects are small and preloaded; only the current music buffer is retained. */
 export const createSampleAudio = (ctx: AudioContext, output: AudioNode) => {
   const buffers = new Map<string, AudioBuffer>();
@@ -82,6 +95,7 @@ export const createSampleAudio = (ctx: AudioContext, output: AudioNode) => {
     try {
       const buffer = await decodeCompatible(music[name]);
       if (request !== generation) return;
+      softenLoopEndpoints(buffer);
       const source = ctx.createBufferSource(), gain = ctx.createGain();
       source.buffer = buffer; source.loop = true;
       gain.gain.setValueAtTime(0, ctx.currentTime);

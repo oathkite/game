@@ -34,3 +34,5 @@
 2026-09-11統合検証: d8aeea1の音源・HUD・岩盤v4・パイロット調整を含む現状態で全体テストと配信39件を再実行。タイトル最大1,860,774B、初回練習最大7,831,097B。最新の8人対戦3browser検証は8c2b722時点（岩盤v4と顔調整より前）。テストの対象時点を混同しない。
 
 2026-09-11 edge検証: 7d11de0で通常実行時にskipされるedge専用2件を、独立したlocal Wrangler/SQLite保存先にEDGE_TEST_URLを指定して実行し両方成功。同時quick割当・mode/region分離・4人自動開始、観戦のread-only制限、再接続・重複射撃拒否・次turnを確認。verify-edge-restart.tsも成功し、replaying中のSIGKILL後に同じmatch/terrain・generation 2・重複拒否を確認した。実Cloudflare配備や地域間遅延・容量の検証ではない。検証用8798/8797のプロセスは終了。
+
+2026-09-11音源境界追記: 配信音源の端点差を測定し、result.opusで近傍の通常差より大きな段差を確認。BGMデコード後の両端2msフェードを追加。音声unit 12件、production音声3browser成功。実AudioBufferの全4曲・左右chの端点ゼロを確認。evidence/suno/loop-reviewに測定値と境界試聴用の前後比較を保存。音楽的なループ接続の聴感評価は未完。
