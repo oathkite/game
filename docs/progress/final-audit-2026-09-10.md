@@ -6,8 +6,8 @@
 | 要件 | 現在の証拠 | 判定・次の作業 |
 | --- | --- | --- |
 | cold start操作可能p95 | startup-tests、10Mbps/150ms・cache無効20回、p95 684.1ms | Chromiumローカル配信で3秒条件通過。画像完了・実機CPU・実地域DNS/TLSは別 |
-| 初期タイトル転送2MB | 音源圧縮後のproduction-tests/entry.spec.ts、3browserのcold新context、最大1,862,382B | ローカル配信buildで通過。実地域の起動時間とは別 |
-| 初回対戦まで8MB | 音源追加で11,990,930Bに回帰したためOpus配信を追加。修正後の3browser練習地形v4・初回案内反映後の最大7,833,256B。音源追加・HUD修正後の独立8context対戦も3browserで最大7,682,043B | 圧縮音源対応3browserのローカル配信buildで通過。非対応時はMP3/WAVへ戻るため転送量が増える。実機・実地域は別 |
+| 初期タイトル転送2MB | 音源圧縮後のproduction-tests/entry.spec.ts、3browserのcold新context、最大1,862,785B | ローカル配信buildで通過。実地域の起動時間とは別 |
+| 初回対戦まで8MB | 音源追加で11,990,930Bに回帰したためOpus配信を追加。修正後の3browser練習地形v4・初回案内反映後の最大7,833,653B。音源追加・HUD修正後の独立8context対戦も3browserで最大7,682,043B | 圧縮音源対応3browserのローカル配信buildで通過。非対応時はMP3/WAVへ戻るため転送量が増える。実機・実地域は別 |
 | 独立8クライアントで試合完走 | eight-players.spec.ts、独立8 contextで4v4入室→準備→射撃共有→青4名降参→全員同じ成績→8名帰還選択→部屋復帰 | Chromium/Firefox/WebKit配信build・local edgeで通過。射撃のみの決着は下行で追加確認。実機の証拠とは別 |
 | 射撃だけで8browser完走 | natural-match.config.ts、3browser各8contextの4v4。23/24/24発で勝利、毎turnの受信state一致、全員帰還。履歴をevidence/natural-matchへ保存 | moss-valley・既定2武器・各1シナリオで確認。操作は通常WS発射コマンドを試験用に自動送信。人間の操作/公平感・全条件の証明とは別 |
 | 1時間soak | Node100部屋/800接続・送受信各125ms・実ファイル保存、3600秒完走。再戦3500回/移動187021回 | ローカル試験通過。部屋分離・重複拒否・復帰・保存復元を検証。実DO容量・全client描画一致の保証とは別 |
@@ -15,6 +15,9 @@
 | 開始前の人数差明示（22.1） | チーム色別の現在人数と未配置を表示し、非対称時に人数差ありを明示 | 独立3contextの1対2→FFA→退出を3browserで確認。補正・開始条件は変更しない。evidence/ui/2026-09-11-team-counts.md |
 | 公開部屋一覧 | custom部屋を20件ずつ取得し、一覧参加・対戦中観戦・満員・取得失敗に対応 | local edge21部屋と3browserの独立3contextで確認。evidence/ui/2026-09-11-public-rooms.md |
 | Directory分割（23.3） | 地域×mode×固定shard 0の9区分へ割当・要約更新を分離。コード発行元は共通 | local edgeとSQLite保存先・再起動復元を確認。共通発行元の容量・既存環境の移行検証は残る。evidence/ui/2026-09-11-directory-partitions.md |
+| 復元失敗の隔離（23.5） | 不正version/buildはrestoreRoom/restoreBattleが例外で拒否し、旧snapshotを上書きしない | 復旧不能として記録・専用理由の通知・ロビーへの誘導が未接続。通常の切断表示と区別する実装が必要 |
+| 地形checkpointと短いevent log（23.5） | snapshotはmaskを除き、固定surfaceと全TerrainOpから復元する。状態更新ごとにsnapshotを保存 | checkpoint maskと以後の短いop列への圧縮は未実装。書込量・復元時間の測定から間隔を決める |
+| 期限付き招待token（23.7） | 招待URLは6桁roomコードを含み、権限は別sessionで検証 | 十分なentropy・期限付きdeep-link tokenは未実装。コード直参加との共存と失効を設計する |
 | 全編成・射程・復元 | engine/map/server tests、進捗記録参照 | 自動検証済み。人間による公平感・バランス観察とは別 |
 | ブラウザーの戻る（21.7） | メニューの親画面遷移、対戦中の退出確認、入力取消、招待直入室と待機部屋のroom.leaveを接続 | 配信buildの通常/練習/履歴再読込9件、開発版の独立2contextオンライン6件を3browserで確認。履歴は1件の同一documentガード。詳細はevidence/ui/2026-09-11-browser-back.md |
 | 設定中の進行表示（21.4） | 練習/オンライン設定に進行中の表示と残り時間、自分の手番通知を共通化。スクロール中も固定表示 | オンライン2contextで減秒→射撃中の空表示→次手番通知を3browser確認。配信buildの667×375練習設定も3browser成功。確認中もサーバー時刻を使い進行 |
@@ -22,7 +25,7 @@
 | 世界UI最終原案一致 | 浮島背景・岩盤/厚い草地・濃紺パネル・残り時間リング・円形角度計・100分割/指針・実弾アイコンを実装 | 横長岩壁、共通カメラ/タッチ配色、画面端の名前/HP補正を追加。地形表層や情報密度も含めて最終比較を継続。8人HUDの番号/HP重複を修正し3browserの対戦・帰還と小画面配置を検証。人間の最終承認は未記録 |
 | 全参加者の結果表現 | 共通ResultPlayers、勝利/敗北/引き分けの表情。8context全画面の勝敗共有、667px4列/2段、390px縦向き帰還を3browserで確認 | 表情・操作の自動検証済み。最終デザイン承認は別 |
 | クライアント/ゲーム内のパイロット整合 | HUD/結果の緑肌・オリーブ服に合わせた搭乗用SVG16コマをゲーム内/ロビーへ接続。二値alpha・共通足元・大破/復帰を検証。公開buildで3browserの再入場/GPU転送/実画像を確認 | 色/服の不一致を修正。簡略化した横向きの顔とHUDの最終見た目比較・承認は未完 |
-| 統合テスト | 8dd217bでpnpm test成功（client227件、server72件、edge専用2件skip）、全対象typecheck成功。配信buildのChromium/Firefox/WebKit各21件、計63件成功 | 起動・音・戻る操作・案内・設定中timer・翻訳・pilot再入場を統合検証。実機/実地域/実DO容量の代用にしない |
+| 統合テスト | 9189169でpnpm test成功（client235件、server75件、edge専用3件skip）、全対象typecheck成功。配信buildのChromium/Firefox/WebKit各24件、計72件成功 | 起動・音・戻る操作・案内・設定中timer・翻訳・pilot再入場を統合検証。実機/実地域/実DO容量の代用にしない |
 | BGM・効果音 | Sunoの全20候補を取得・デコード検証。暫定10音源を加工しBGMシーン切替・効果音を組み込み。音声E2EはChromium/Firefox/WebKitで成功 | ユーザーが音楽の方向性を確認。全効果音・ループ接続の最終評価は別。Opus配信と互換fallbackを追加。加工条件・検証はevidence/suno/2026-09-11.md |
 | 正式art pack | runtime manifest/hash/fidelity check | 原素材の人間承認を自動記録しない。正式pack登録条件を残す |
 | 実機・browser対応 | Chromium/Firefox/WebKit配信全36件と各8接続オンライン対戦（取得失敗の繰返し復帰を含む） | 自動試験通過。実iOS/Android/Safari/Edgeの入室〜結果は別途必要 |
@@ -53,3 +56,5 @@
 2026-09-11 outbox障害検証: verify-directory-outbox.tsでDirectory.update例外→公開未掲載→Wrangler process groupのSIGKILL→同じSQLiteで再起動→部屋への操作なしにalarmで一覧反映→同じtokenでgeneration 2復帰が成功。上記process再起動復元の未確認をlocal workerdの範囲で解消。実Cloudflare障害・容量・地域分割とは区別する。
 
 2026-09-11公開一覧統合検証: c4b9e35の配信build＋分割後local edgeで、一覧参加→対戦開始→一覧観戦を独立3context、Chromium/Firefox/WebKitの3件で確認（26.3秒）。同じheadのCI validate成功（run34587630846）。PR25の説明を現実装と対象時点別の検証結果に更新。
+
+2026-09-11統合検証更新: 9189169で全体テスト（protocol24、sim107、maps68、engine141、server75＋edge専用3skip、client235）と全対象typecheck成功。配信72件は2.9分で完走し、追加した公開一覧・地域自動選択と既存の起動/音/戻る操作/練習/設定を3browserで確認。初期タイトル最大1,862,785B、初回練習まで最大7,833,653B。同一headのCI validate成功（run34588450667）。正式art pack未登録の通知は残る。新たに復元失敗隔離・地形checkpoint/短いlog・期限付きdeep-link tokenの不足を正本23章との照合で記録し、正常系の成功で完了扱いしない。
