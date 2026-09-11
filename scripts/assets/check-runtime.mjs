@@ -5,7 +5,7 @@ import { resolve } from 'node:path';
 export function checkRuntime(root = resolve('.')) {
   const directory = resolve(root, 'assets/runtime/world-v1');
   const manifest = JSON.parse(readFileSync(resolve(directory, 'manifest.json'), 'utf8'));
-  if (manifest.version !== 2 || manifest.assets.length !== 12) throw new Error('Incomplete runtime artwork');
+  if (manifest.version !== 2 || manifest.assets.length !== 13) throw new Error('Incomplete runtime artwork');
   for (const asset of manifest.assets) {
     const lossy = ['background', 'button'].includes(asset.id);
     if (asset.encoding !== (lossy ? 'webp-q94' : 'lossless-webp-exact-rgba') ||

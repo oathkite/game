@@ -23,3 +23,10 @@
 - Reference: desktop-refined-v4.png cockpit portrait. Generic green frog pilot in olive jacket, no glasses or scarf; not the owner's personal yellow/blue-glasses/orange-scarf avatar.
 - AI review: face and natural eyes remain readable in a small HUD; navy background integrates with the cockpit. Human final approval pending.
 - Runtime: lossless WebP with exact RGBA validation; shared by roster and self panel. This is a HUD portrait, not a replacement gameplay animation sheet.
+
+## Result expressions v1
+
+- `pilot-result-expressions-v1.png`: built-in image generation, referenced `pilot-portrait-v1.png`; API/CLI generation was not used.
+- Original: `exec-dbba4403-fe05-447b-bdf7-7e76626ad4c4.png` in the Codex generated_images directory for this task. Copied without editing. Two equal square panels, left victory and right defeat, same green pilot and olive jacket on navy background. No text or checkerboard.
+- Prompt requested matching identity/pixel density, joyful closed-eye smile on the left, gently disappointed face on the right, bust crop and matching scale.
+- Runtime encoding: lossless WebP through `scripts/assets/encode-world.py`; SVG crops each half without modifying the source. Reviewed in the eight-player result screen; formal user art approval remains pending.

@@ -3,6 +3,26 @@
   "encoding": "per-asset-webp",
   "assets": [
     {
+      "id": "pilot-result-expressions",
+      "source": "assets/workbench/world-ui-final/pilot-result-expressions-v1.png",
+      "encoding": "lossless-webp-exact-rgba",
+      "channelRms": [
+        0.0,
+        0.0,
+        0.0,
+        0.0
+      ],
+      "file": "pilot-result-expressions.webp",
+      "sourceSha256": "dd373378a0658c5a5da7b0c639fe0f91817f93a9f13db84f2bccf05aebf68a5f",
+      "sha256": "20ae42a24d6af2b4530d60ecdf81e8daea07fa9f513b097671b95bbbeeeb1147",
+      "size": [
+        1774,
+        887
+      ],
+      "sourceBytes": 1330166,
+      "bytes": 1065214
+    },
+    {
       "id": "pilot-portrait",
       "source": "assets/workbench/world-ui-final/pilot-portrait-v1.png",
       "encoding": "lossless-webp-exact-rgba",

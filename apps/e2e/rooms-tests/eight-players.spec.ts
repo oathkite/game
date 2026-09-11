@@ -73,6 +73,8 @@ test("eight independent players complete a 4v4 match and return together", async
     }
     for (const page of pages) await expect(page.getByRole("heading", { name: /赤チームの勝利/ })).toBeVisible();
     const resultTables = await Promise.all(pages.map(async page => {
+      await expect(page.locator('.battle-result-player[data-reaction="win"]')).toHaveCount(4);
+      await expect(page.locator('.battle-result-player[data-reaction="lose"]')).toHaveCount(4);
       const table = page.getByRole("table", { name: "試合成績" });
       await expect(table.locator("tbody tr")).toHaveCount(8);
       return table.locator("tbody").innerText();
