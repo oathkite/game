@@ -6,6 +6,7 @@ import { RoomRuntime, serializeRoom, type RoomSnapshot } from "../rooms/runtime.
 import { restoreStoredRoom, UnrecoverableRoom } from "../rooms/restoreFailure.js";
 import { roomFrame, lobbyFrame } from "../rooms/frame.js";
 import { directoryKey, directoryLocation } from "./directoryPartitions.js";
+import { RoomSqlSnapshot } from "./roomSqlSnapshot.js";
 import { DirectoryOutbox } from "./directoryOutbox.js";
 import type { RoomDirectory } from "./v2Directory.js";
 export type RoomEnv = { readonly ALLOCATION_LIMITER: RateLimit; readonly DIRECTORY: DurableObjectNamespace<RoomDirectory>; readonly ROOMS: DurableObjectNamespace<RoomObject>; readonly ALLOWED_ORIGINS: string };
@@ -13,10 +14,12 @@ type Attachment = { readonly connectionId: string; readonly acceptedAt: number; 
 export class RoomObject extends DurableObject<RoomEnv> {
   private runtime: RoomRuntime | null = null;
   private publishedLobby: RoomState["lobby"] = null;
+  private readonly snapshots: RoomSqlSnapshot;
   private readonly outbox: DirectoryOutbox;
   constructor(ctx: DurableObjectState, env: RoomEnv) {
     super(ctx, env);
     this.outbox = new DirectoryOutbox(ctx.storage.sql);
+    this.snapshots = new RoomSqlSnapshot(ctx.storage.sql);
     ctx.storage.sql.exec("CREATE TABLE IF NOT EXISTS room_failure (id INTEGER PRIMARY KEY CHECK(id = 1), failed_at INTEGER NOT NULL, reason TEXT NOT NULL, outcome TEXT NOT NULL)");
     ctx.storage.sql.exec("CREATE TABLE IF NOT EXISTS room_state (id INTEGER PRIMARY KEY CHECK(id = 1), snapshot TEXT NOT NULL)");
   }
@@ -25,11 +28,11 @@ export class RoomObject extends DurableObject<RoomEnv> {
     if (this.runtime) return this.runtime;
     const stored = this.ctx.storage.sql.exec<{ snapshot: string }>("SELECT snapshot FROM room_state WHERE id = 1").toArray()[0];
     if (!stored && !roomId) throw new Error("missing room state");
-    const state = stored ? restoreStoredRoom(stored.snapshot) : createRoomState(roomId!, mode, region);
+    const state = stored ? restoreStoredRoom(this.snapshots.read(stored.snapshot)) : createRoomState(roomId!, mode, region);
     if (!stored) this.ctx.storage.sql.exec("INSERT INTO room_state VALUES (1, ?)", JSON.stringify(serializeRoom(state)));
     return this.runtime = new RoomRuntime(state, async snapshot => {
       await this.ctx.storage.transaction(async () => {
-        this.ctx.storage.sql.exec("INSERT OR REPLACE INTO room_state VALUES (1, ?)", JSON.stringify(snapshot));
+        this.snapshots.write(snapshot);
         this.queueSummary(snapshot.state);
         await this.schedule(snapshot.state);
       });

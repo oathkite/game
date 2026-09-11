@@ -1,3 +1,5 @@
+import { DatabaseSync } from "node:sqlite";
+import { RoomSqlSnapshot } from "../src/cf/roomSqlSnapshot.js";
 import assert from "node:assert/strict";
 import { writeFile } from "node:fs/promises";
 import { MULTIPLAYER_MAPS, columnsOfMask, encodeColumns } from "@game/maps";
@@ -20,9 +22,25 @@ for (const map of MULTIPLAYER_MAPS) {
   }
   room = { ...room, lobby: { ...room.lobby!, phase: "started", map } };
   let live = createBattleSession(createBattle(members, 123, map), "storage-measurement", 0, loadouts, 123);
+  const db = new DatabaseSync(":memory:");
+  db.exec("CREATE TABLE room_state(id INTEGER PRIMARY KEY, snapshot TEXT)");
+  let terrainInserts = 0;
+  const sql = { exec: <T extends Record<string, string | number | null>>(query: string, ...args: (string | number | null)[]) => {
+    if (query.startsWith("INSERT INTO room_terrain_ops")) terrainInserts++;
+    const result = db.prepare(query).all(...args) as T[]; return { toArray: () => result };
+  } };
+  const store = new RoomSqlSnapshot(sql);
+  let maxActingStoredBytes = 0, maxReplayStoredBytes = 0;
   let shots = 0, maxReplayBytes = 0, maxActingBytes = 0, maxOps = 0;
   const measure = (state: BattleSession) => {
-    const size = bytes(serializeRoom({ ...room, battle: state }));
+    const snapshot = serializeRoom({ ...room, battle: state }), size = bytes(snapshot);
+    store.write(snapshot);
+    const raw = String(db.prepare("SELECT snapshot FROM room_state").get()!.snapshot);
+    assert.deepEqual(JSON.parse(store.read(raw)), snapshot);
+    const inserts = terrainInserts;
+    store.write(snapshot); assert.equal(terrainInserts, inserts);
+    if (state.phase === "acting") maxActingStoredBytes = Math.max(maxActingStoredBytes, Buffer.byteLength(raw));
+    else maxReplayStoredBytes = Math.max(maxReplayStoredBytes, Buffer.byteLength(raw));
     if (state.phase === "acting") maxActingBytes = Math.max(maxActingBytes, size);
     else maxReplayBytes = Math.max(maxReplayBytes, size);
     maxOps = Math.max(maxOps, state.terrainOps.length);
@@ -46,10 +64,11 @@ for (const map of MULTIPLAYER_MAPS) {
     if (i >= 10) times.push(elapsed);
   }
   times.sort((a, b) => a - b);
-  results.push({ map: map.id, shots, maxOps, maxActingBytes, maxReplayBytes,
+  results.push({ map: map.id, shots, maxOps, maxActingBytes, maxReplayBytes, maxActingStoredBytes, maxReplayStoredBytes, terrainInserts,
     finalTerrainOpsBytes: bytes(live.terrainOps), finalMapBytes: bytes(live.map),
     columnCheckpointBytes: Buffer.byteLength(encodeColumns(columnsOfMask(live.mask))), rawMaskBytes: live.mask.cells.byteLength,
     restoreP95Milliseconds: times[Math.ceil(times.length * .95) - 1], samples: times.length });
+  db.close();
 }
 const report = { runtime: process.version, scope: "Local Node; deterministic mixed-weapon eight-player fixtures, not maximum-damage or Cloudflare CPU/storage billing", results };
 const output = process.argv[2];
