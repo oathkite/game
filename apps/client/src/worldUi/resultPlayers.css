@@ -6,3 +6,12 @@
 @keyframes result-cheer { 30% { transform:translateY(-4px); } 65% { transform:translateY(0); } 80% { transform:translateY(-2px); } }
 @media(prefers-reduced-motion:reduce) { .battle-result-player[data-reaction=win] > svg { animation:none; } }
 .world-result-screen .battle-result-player { width:clamp(76px,16vh,132px); }
+@media(max-width:700px) {
+ .network-finished .battle-result-players { display:grid; grid-template-columns:repeat(4,minmax(0,1fr)); width:min(360px,94vw); }
+ .network-finished .battle-result-player { width:auto; }
+}
+.world-ui .network-finished:has(.battle-result-players) { inset:0; }
+.network-world:has(.battle-result-players) > .battle-roster,
+.network-world:has(.battle-result-players) > .battle-console,
+.network-world:has(.battle-result-players) > .network-field { visibility:hidden; }
+.network-world:has(.battle-result-players) > .network-portrait { display:none; }

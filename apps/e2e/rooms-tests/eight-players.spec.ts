@@ -1,7 +1,7 @@
 import { expect, test } from "@playwright/test";
 
 test("eight independent players complete a 4v4 match and return together", async ({ browser }) => {
-  test.setTimeout(120000);
+  test.setTimeout(180000);
   const contexts = await Promise.all(Array.from({ length: 8 }, () => browser.newContext({ locale: "ja-JP", viewport: { width: 1440, height: 900 } })));
   const pages = await Promise.all(contexts.map(context => context.newPage()));
   const errors: string[] = [];
@@ -83,6 +83,35 @@ test("eight independent players complete a 4v4 match and return together", async
     const shotCounts = await owner.getByRole("table", { name: "試合成績" }).locator("tbody tr td:first-of-type").allTextContents();
     expect(shotCounts.reduce((sum, value) => sum + Number(value), 0)).toBe(1);
     await owner.screenshot({ path: "test-results/eight-player-result.png" });
+    await owner.setViewportSize({ width: 667, height: 375 });
+    const resultPanel = owner.locator(".network-finished");
+    const panelBox = (await resultPanel.boundingBox())!;
+    expect(panelBox.y).toBe(0);
+    expect(panelBox.height).toBe(375);
+    await expect(owner.locator(".battle-roster")).toBeHidden();
+    await expect(owner.locator(".battle-console")).toBeHidden();
+    const portraits = owner.locator(".battle-result-player");
+    const positions = await portraits.evaluateAll(nodes => nodes.map(node => {
+      const rect = node.getBoundingClientRect(); return { x: Math.round(rect.x), y: Math.round(rect.y), right: rect.right };
+    }));
+    expect(new Set(positions.map(position => position.x)).size).toBe(4);
+    expect(new Set(positions.map(position => position.y)).size).toBe(2);
+    expect(positions.every(position => position.x >= 0 && position.right <= 667)).toBe(true);
+    await portraits.first().scrollIntoViewIfNeeded();
+    await owner.screenshot({ path: "test-results/eight-player-result-mobile.png" });
+    const returnButton = owner.getByRole("button", { name: "部屋へ戻る", exact: true });
+    await returnButton.scrollIntoViewIfNeeded();
+    const returnBox = (await returnButton.boundingBox())!;
+    expect(returnBox.y).toBeGreaterThanOrEqual(0);
+    expect(returnBox.y + returnBox.height).toBeLessThanOrEqual(375);
+    await owner.screenshot({ path: "test-results/eight-player-result-mobile-actions.png" });
+    await owner.setViewportSize({ width: 390, height: 844 });
+    await expect(owner.locator(".network-portrait")).toBeHidden();
+    await returnButton.scrollIntoViewIfNeeded();
+    const portraitReturn = (await returnButton.boundingBox())!;
+    expect(portraitReturn.y + portraitReturn.height).toBeLessThanOrEqual(844);
+    await owner.screenshot({ path: "test-results/eight-player-result-portrait.png" });
+    await owner.setViewportSize({ width: 1440, height: 900 });
     for (const page of pages.slice(0, -1)) {
       await page.getByRole("button", { name: "部屋へ戻る", exact: true }).click();
       await expect(page.getByRole("button", { name: "帰還待ち", exact: true })).toBeDisabled();
