@@ -1,4 +1,5 @@
 import type { RoomMode, RoomRegion, RoomSummary, RoomPage } from "@game/protocol/v2-rooms";
+import { quickCandidateQuery } from "./directoryQueries.js";
 import { DurableObject } from "cloudflare:workers";
 export type { RoomSummary } from "@game/protocol/v2-rooms";
 export class RoomDirectory extends DurableObject<unknown> {
@@ -23,9 +24,8 @@ export class RoomDirectory extends DurableObject<unknown> {
   quick(mode: Exclude<RoomMode, "custom">, region: RoomRegion): string {
     this.ctx.storage.sql.exec("DELETE FROM reservations WHERE expires < ?", Date.now());
     const capacity = mode === "1v1" ? 2 : 4;
-    const candidate = this.list().find(room => room.mode === mode && room.region === region && room.phase === "waiting" && room.members +
-      this.ctx.storage.sql.exec<{ count: number }>("SELECT COUNT(*) AS count FROM reservations WHERE room_id = ?", room.roomId).one().count < capacity);
-    const roomId = candidate?.roomId ?? this.allocate(mode, region);
+    const candidate = this.ctx.storage.sql.exec<{ id: string }>(quickCandidateQuery, Date.now(), mode, region, capacity).toArray()[0];
+    const roomId = candidate?.id ?? this.allocate(mode, region);
     this.ctx.storage.sql.exec("INSERT INTO reservations VALUES (?, ?)", roomId, Date.now() + 10000);
     return roomId;
   }
