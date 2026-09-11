@@ -1,3 +1,4 @@
+import { directoryKey, directoryLocation, directoryRegions, directoryModes, mergeRoomPages } from "./directoryPartitions.js";
 import { readSmallJson } from "../rooms/readSmallJson.js";
 import { quickRequestSchema, roomPageCursorSchema } from "@game/protocol/v2-rooms";
 import { RoomObject, type RoomEnv } from "./v2Room.js";
@@ -15,16 +16,16 @@ export default {
       const { success } = await env.ALLOCATION_LIMITER.limit({ key: request.headers.get("CF-Connecting-IP") ?? "local" });
       if (!success) return new Response("allocation rate limit", { status: 429, headers: { ...headers, "Retry-After": "60" } });
     }
-    const directory = env.DIRECTORY.getByName("public");
     if (url.pathname === "/v2/rooms" && request.method === "POST") {
-      const roomId = await directory.allocate();
+      const roomId = await env.DIRECTORY.getByName(directoryKey("asia", "custom"), { locationHint: directoryLocation("asia") }).allocate();
       await env.ROOMS.getByName(roomId, { locationHint: "apac" }).initialize(roomId, "custom", "asia");
       return Response.json({ roomId }, { headers });
     }
     if (url.pathname === "/v2/quick" && request.method === "POST") {
       const input = quickRequestSchema.safeParse(await readSmallJson(request));
       if (!input.success) return new Response("invalid mode", { status: 400, headers });
-      const { mode, region } = input.data, roomId = await directory.quick(mode, region);
+      const { mode, region } = input.data;
+      const roomId = await env.DIRECTORY.getByName(directoryKey(region, mode), { locationHint: directoryLocation(region) }).quick(mode, region);
       const locationHint = ({ asia: "apac", europe: "weur", americas: "enam" } as const)[region];
       await env.ROOMS.getByName(roomId, { locationHint }).initialize(roomId, mode, region);
       return Response.json({ roomId }, { headers });
@@ -32,9 +33,20 @@ export default {
     if (url.pathname === "/v2/rooms/page" && request.method === "GET") {
       const after = roomPageCursorSchema.safeParse(url.searchParams.get("after") ?? "");
       if (!after.success) return new Response("invalid cursor", { status: 400, headers });
-      return Response.json(await directory.page(after.data), { headers });
+      const pages = await Promise.all([
+        env.DIRECTORY.getByName("public").page(after.data),
+        ...directoryRegions.map(region => env.DIRECTORY.getByName(directoryKey(region, "custom"), { locationHint: directoryLocation(region) }).page(after.data)),
+      ]);
+      return Response.json(mergeRoomPages(pages), { headers });
     }
-    if (url.pathname === "/v2/rooms" && request.method === "GET") return Response.json(await directory.list(), { headers });
+    if (url.pathname === "/v2/rooms" && request.method === "GET") {
+      const lists = await Promise.all([
+        env.DIRECTORY.getByName("public").list(),
+        ...directoryRegions.flatMap(region => directoryModes.map(mode => env.DIRECTORY.getByName(directoryKey(region, mode), { locationHint: directoryLocation(region) }).list())),
+      ]);
+      const latest = new Map(lists.flat().sort((a, b) => a.updatedAt - b.updatedAt).map(room => [room.roomId, room]));
+      return Response.json([...latest.values()].sort((a, b) => b.updatedAt - a.updatedAt).slice(0, 100), { headers });
+    }
     const roomId = /^\/v2\/rooms\/([A-F0-9]{6})$/.exec(url.pathname)?.[1];
     if (!roomId || request.method !== "GET") return new Response("not found", { status: 404, headers });
     return env.ROOMS.getByName(roomId).fetch(request);

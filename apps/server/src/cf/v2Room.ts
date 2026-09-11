@@ -4,6 +4,7 @@ import { movementSnapshot } from "@game/engine/multiplayer";
 import { createRoomState, disconnectRoom, nextRoomDeadline, reduceRoom, tickRoom, type RoomState } from "../rooms/core.js";
 import { RoomRuntime, restoreRoom, serializeRoom, type RoomSnapshot } from "../rooms/runtime.js";
 import { roomFrame, lobbyFrame } from "../rooms/frame.js";
+import { directoryKey, directoryLocation } from "./directoryPartitions.js";
 import { DirectoryOutbox } from "./directoryOutbox.js";
 import type { RoomDirectory } from "./v2Directory.js";
 export type RoomEnv = { readonly ALLOCATION_LIMITER: RateLimit; readonly DIRECTORY: DurableObjectNamespace<RoomDirectory>; readonly ROOMS: DurableObjectNamespace<RoomObject>; readonly ALLOWED_ORIGINS: string };
@@ -66,7 +67,7 @@ export class RoomObject extends DurableObject<RoomEnv> {
     this.ctx.waitUntil(this.outbox.flush(Date.now(), async () => {
       await this.schedule(this.load().state);
       await this.ctx.storage.sync();
-    }, summary => this.env.DIRECTORY.getByName("public").update(summary))
+    }, summary => this.env.DIRECTORY.getByName(directoryKey(summary.region, summary.mode), { locationHint: directoryLocation(summary.region) }).update(summary))
       .catch(error => console.error("directory update failed", error)));
   }
   private queueSummary(state: Pick<RoomState, "roomId" | "mode" | "region" | "sessions" | "lobby">): void {

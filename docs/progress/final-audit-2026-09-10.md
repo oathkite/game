@@ -14,7 +14,7 @@
 | 代表編成の実ブラウザE2E（22.8） | 4v4は3browser検証済み。formations.spec.tsで1v7、8人FFA、2v2v2、1v1v1v2を追加し、開発版Chromium4件、配信buildのChromium/Firefox/WebKitで各4件成功（WebKitは1件と残り3件の分割実行） | 代表編成の入室→チーム設定→1発の射撃共有→降参による決着→成績/勝敗一致→全員帰還を確認。人間のバランス評価は別 |
 | 開始前の人数差明示（22.1） | チーム色別の現在人数と未配置を表示し、非対称時に人数差ありを明示 | 独立3contextの1対2→FFA→退出を3browserで確認。補正・開始条件は変更しない。evidence/ui/2026-09-11-team-counts.md |
 | 公開部屋一覧 | custom部屋を20件ずつ取得し、一覧参加・対戦中観戦・満員・取得失敗に対応 | local edge21部屋と3browserの独立3contextで確認。evidence/ui/2026-09-11-public-rooms.md |
-| Directory分割（23.3） | 現在は単一public DO。公開一覧ページングを追加 | 地域・モード・shard分割は未実装。実容量評価前の残件 |
+| Directory分割（23.3） | 地域×mode×固定shard 0の9区分へ割当・要約更新を分離。コード発行元は共通 | local edgeとSQLite保存先・再起動復元を確認。共通発行元の容量・既存環境の移行検証は残る。evidence/ui/2026-09-11-directory-partitions.md |
 | 全編成・射程・復元 | engine/map/server tests、進捗記録参照 | 自動検証済み。人間による公平感・バランス観察とは別 |
 | ブラウザーの戻る（21.7） | メニューの親画面遷移、対戦中の退出確認、入力取消、招待直入室と待機部屋のroom.leaveを接続 | 配信buildの通常/練習/履歴再読込9件、開発版の独立2contextオンライン6件を3browserで確認。履歴は1件の同一documentガード。詳細はevidence/ui/2026-09-11-browser-back.md |
 | 設定中の進行表示（21.4） | 練習/オンライン設定に進行中の表示と残り時間、自分の手番通知を共通化。スクロール中も固定表示 | オンライン2contextで減秒→射撃中の空表示→次手番通知を3browser確認。配信buildの667×375練習設定も3browser成功。確認中もサーバー時刻を使い進行 |
