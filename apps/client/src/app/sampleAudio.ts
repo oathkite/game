@@ -1,3 +1,13 @@
+import fireCompact from "../assets/audio/fire.opus";
+import explosionCompact from "../assets/audio/explosion.opus";
+import hitCompact from "../assets/audio/hit.opus";
+import tickCompact from "../assets/audio/tick.opus";
+import hitConfirmCompact from "../assets/audio/hit-confirm.opus";
+import matchFinishCompact from "../assets/audio/match-finish.opus";
+import titleCompact from "../assets/audio/title.opus";
+import lobbyCompact from "../assets/audio/lobby.opus";
+import battleCompact from "../assets/audio/battle.opus";
+import resultCompact from "../assets/audio/result.opus";
 import fire from "../assets/audio/fire.wav";
 import explosion from "../assets/audio/explosion.wav";
 import hit from "../assets/audio/hit.wav";
@@ -9,8 +19,20 @@ import lobby from "../assets/audio/lobby.mp3";
 import battle from "../assets/audio/battle.mp3";
 import result from "../assets/audio/result.mp3";
 
-const effects = { fire, explosion, hit, tick, hitConfirm, matchFinish };
-const music = { title, lobby, battle, result };
+const effects = {
+  fire: [fireCompact, fire],
+  explosion: [explosionCompact, explosion],
+  hit: [hitCompact, hit],
+  tick: [tickCompact, tick],
+  hitConfirm: [hitConfirmCompact, hitConfirm],
+  matchFinish: [matchFinishCompact, matchFinish],
+} as const;
+const music = {
+  title: [titleCompact, title],
+  lobby: [lobbyCompact, lobby],
+  battle: [battleCompact, battle],
+  result: [resultCompact, result],
+} as const;
 export type MusicName = keyof typeof music;
 
 /** Effects are small and preloaded; only the current music buffer is retained. */
@@ -24,9 +46,13 @@ export const createSampleAudio = (ctx: AudioContext, output: AudioNode) => {
     if (!response.ok) throw new Error("Audio download failed");
     return ctx.decodeAudioData(await response.arrayBuffer());
   };
+  const decodeCompatible = async ([compact, fallback]: readonly [string, string]): Promise<AudioBuffer> => {
+    try { return await decode(compact); }
+    catch { return decode(fallback); }
+  };
   const preload = async (): Promise<void> => {
     await Promise.all(Object.entries(effects).map(async ([name, url]) => {
-      try { buffers.set(name, await decode(url)); } catch { /* Keep the synthesized fallback. */ }
+      try { buffers.set(name, await decodeCompatible(url)); } catch { /* Keep the synthesized fallback. */ }
     }));
   };
   const playEffect = (name: string): boolean => {
@@ -54,7 +80,7 @@ export const createSampleAudio = (ctx: AudioContext, output: AudioNode) => {
     stopMusic();
     if (!name) return;
     try {
-      const buffer = await decode(music[name]);
+      const buffer = await decodeCompatible(music[name]);
       if (request !== generation) return;
       const source = ctx.createBufferSource(), gain = ctx.createGain();
       source.buffer = buffer; source.loop = true;

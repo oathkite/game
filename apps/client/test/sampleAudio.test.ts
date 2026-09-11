@@ -62,9 +62,19 @@ it("cancels a pending music start on exit", async () => {
 
 it("retries music after a transient failure", async () => {
   const { audio, sources } = setup();
-  vi.mocked(fetch).mockRejectedValueOnce(new Error("offline"));
+  vi.mocked(fetch).mockRejectedValueOnce(new Error("offline")).mockRejectedValueOnce(new Error("offline"));
   await audio.setMusic("title");
   expect(sources).toHaveLength(0);
   await audio.setMusic("title");
   expect(sources).toHaveLength(1);
+});
+
+it("falls back to the compatible format when the compact codec cannot decode", async () => {
+  const { audio, sources, ctx } = setup();
+  ctx.decodeAudioData.mockRejectedValueOnce(new Error("Unsupported codec"));
+  await audio.setMusic("battle");
+  expect(sources).toHaveLength(1);
+  expect(fetch).toHaveBeenCalledTimes(2);
+  expect(String(vi.mocked(fetch).mock.calls[0]![0])).toContain("battle.opus");
+  expect(String(vi.mocked(fetch).mock.calls[1]![0])).toContain("battle.mp3");
 });

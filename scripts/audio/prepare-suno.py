@@ -18,12 +18,15 @@ records = []
 def render(name, candidate, filters, extension):
     source = SOURCE / f'{candidate}.m4a'
     output = DEST / f'{name}.{extension}'
-    codec = ['-c:a', 'pcm_s16le'] if extension == 'wav' else ['-c:a', 'libmp3lame', '-q:a', '4']
+    codec = (['-c:a', 'libopus', '-b:a', '48k', '-vbr', 'constrained'] if extension == 'opus'
+             else ['-c:a', 'pcm_s16le'] if extension == 'wav' else ['-c:a', 'libmp3lame', '-q:a', '4'])
+    sample_rate = '48000' if extension == 'opus' else '44100'
     subprocess.run([FFMPEG, '-v', 'error', '-y', '-i', str(source),
-                    '-filter_complex', filters, '-map', '[out]', '-ar', '44100', *codec, str(output)], check=True)
+                    '-filter_complex', filters, '-map', '[out]', '-ar', sample_rate, *codec, str(output)], check=True)
     subprocess.run([FFMPEG, '-v', 'error', '-i', str(output), '-f', 'null', '-'], check=True)
     records.append({'file': output.name, 'source': source.name, 'filters': filters,
-                    'sha256': hashlib.sha256(output.read_bytes()).hexdigest(), 'bytes': output.stat().st_size})
+                    'sha256': hashlib.sha256(output.read_bytes()).hexdigest(), 'bytes': output.stat().st_size,
+                    'encoderArguments': codec, 'sampleRate': int(sample_rate)})
 
 
 # A candidates have compact envelopes; tick is the first isolated pulse of a longer sequence.
@@ -43,6 +46,7 @@ for name, candidate, start, duration, peak in [
                f'volume={peak / amplitude},afade=t=in:d=0.003,'
                f'afade=t=out:st={duration - fade}:d={fade}[out]')
     render(name, candidate, filters, 'wav')
+    render(name, candidate, filters, 'opus')
 
 # Crossfade the loop tail into its head offline, then append the untouched middle.
 # BPM is prompt metadata, not a verified beat grid; musical phrasing needs listening review.
@@ -55,9 +59,10 @@ for name, bpm in [('title', 112), ('lobby', 92), ('battle', 126), ('result', 104
                '[tail][head]acrossfade=d=1:c1=tri:c2=tri[seam];'
                '[seam][mid]concat=n=2:v=0:a=1,loudnorm=I=-22:TP=-3:LRA=7[out]')
     render(name, f'{name}-a', filters, 'mp3')
+    render(name, f'{name}-a', filters, 'opus')
 
 (DEST / 'provenance.json').write_text(json.dumps({
-    'status': 'Provisional selection by envelope analysis; listening review pending',
+    'status': 'Music direction accepted by user 2026-09-11; final loop review pending',
     'sourceManifest': 'assets/workbench/audio/suno-2026-09-11/download-manifest.json',
     'files': records,
 }, ensure_ascii=False, indent=2) + '\n')

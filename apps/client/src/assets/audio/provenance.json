@@ -1,5 +1,5 @@
 {
-  "status": "Provisional selection by envelope analysis; listening review pending",
+  "status": "Music direction accepted by user 2026-09-11; final loop review pending",
   "sourceManifest": "assets/workbench/audio/suno-2026-09-11/download-manifest.json",
   "files": [
     {
@@ -7,70 +7,288 @@
       "source": "fire-a.m4a",
       "filters": "[0:a]atrim=start=0.025:duration=1.5,asetpts=PTS-STARTPTS,volume=0.625737888345334,afade=t=in:d=0.003,afade=t=out:st=1.42:d=0.08[out]",
       "sha256": "68c096ca1e2ae971268b69cfd8b757c505f00e19abef7ca7d93d0a4b30c239e7",
-      "bytes": 264772
+      "bytes": 264772,
+      "encoderArguments": [
+        "-c:a",
+        "pcm_s16le"
+      ],
+      "sampleRate": 44100
+    },
+    {
+      "file": "fire.opus",
+      "source": "fire-a.m4a",
+      "filters": "[0:a]atrim=start=0.025:duration=1.5,asetpts=PTS-STARTPTS,volume=0.625737888345334,afade=t=in:d=0.003,afade=t=out:st=1.42:d=0.08[out]",
+      "sha256": "501d734ed4ed07704d0f2db13387c7102a24e86b9e2c6599c3e7e9999b15e892",
+      "bytes": 9060,
+      "encoderArguments": [
+        "-c:a",
+        "libopus",
+        "-b:a",
+        "48k",
+        "-vbr",
+        "constrained"
+      ],
+      "sampleRate": 48000
     },
     {
       "file": "explosion.wav",
       "source": "explosion-a.m4a",
       "filters": "[0:a]atrim=start=0.02:duration=1.8,asetpts=PTS-STARTPTS,volume=0.7720574593289284,afade=t=in:d=0.003,afade=t=out:st=1.72:d=0.08[out]",
       "sha256": "3c661bdad97e46388956971f178ac25cb0eabc96863d8591ce30d78b13625344",
-      "bytes": 317692
+      "bytes": 317692,
+      "encoderArguments": [
+        "-c:a",
+        "pcm_s16le"
+      ],
+      "sampleRate": 44100
+    },
+    {
+      "file": "explosion.opus",
+      "source": "explosion-a.m4a",
+      "filters": "[0:a]atrim=start=0.02:duration=1.8,asetpts=PTS-STARTPTS,volume=0.7720574593289284,afade=t=in:d=0.003,afade=t=out:st=1.72:d=0.08[out]",
+      "sha256": "4bde28d0367c41e7c4ac2bc5b615fa9a2ad4afd5a89b24ae289a549011d43e86",
+      "bytes": 10206,
+      "encoderArguments": [
+        "-c:a",
+        "libopus",
+        "-b:a",
+        "48k",
+        "-vbr",
+        "constrained"
+      ],
+      "sampleRate": 48000
     },
     {
       "file": "hit.wav",
       "source": "hit-a.m4a",
       "filters": "[0:a]atrim=start=0.035:duration=0.85,asetpts=PTS-STARTPTS,volume=0.6712017240664707,afade=t=in:d=0.003,afade=t=out:st=0.77:d=0.08[out]",
       "sha256": "a2965176b101814e522891bad4369d9ef56d99ecdacb88ac94d956cd46433db0",
-      "bytes": 150112
+      "bytes": 150112,
+      "encoderArguments": [
+        "-c:a",
+        "pcm_s16le"
+      ],
+      "sampleRate": 44100
+    },
+    {
+      "file": "hit.opus",
+      "source": "hit-a.m4a",
+      "filters": "[0:a]atrim=start=0.035:duration=0.85,asetpts=PTS-STARTPTS,volume=0.6712017240664707,afade=t=in:d=0.003,afade=t=out:st=0.77:d=0.08[out]",
+      "sha256": "67dc10e9864a32658e0587d770287070c7b66dd6a0c8d8ee63da0da169e699c6",
+      "bytes": 5658,
+      "encoderArguments": [
+        "-c:a",
+        "libopus",
+        "-b:a",
+        "48k",
+        "-vbr",
+        "constrained"
+      ],
+      "sampleRate": 48000
     },
     {
       "file": "tick.wav",
       "source": "tick-a.m4a",
       "filters": "[0:a]atrim=start=0.015:duration=0.16,asetpts=PTS-STARTPTS,volume=0.4824971659241597,afade=t=in:d=0.003,afade=t=out:st=0.12:d=0.04[out]",
       "sha256": "59c82f7133ff2150600c8fa5392635bdf40851ac9a66a89fc3f7962b52aa02da",
-      "bytes": 28396
+      "bytes": 28396,
+      "encoderArguments": [
+        "-c:a",
+        "pcm_s16le"
+      ],
+      "sampleRate": 44100
+    },
+    {
+      "file": "tick.opus",
+      "source": "tick-a.m4a",
+      "filters": "[0:a]atrim=start=0.015:duration=0.16,asetpts=PTS-STARTPTS,volume=0.4824971659241597,afade=t=in:d=0.003,afade=t=out:st=0.12:d=0.04[out]",
+      "sha256": "8a14c5574defd316f642df2bd8b9fa480ee3417bb8b2a45e991ffa9dc733cfe1",
+      "bytes": 1130,
+      "encoderArguments": [
+        "-c:a",
+        "libopus",
+        "-b:a",
+        "48k",
+        "-vbr",
+        "constrained"
+      ],
+      "sampleRate": 48000
     },
     {
       "file": "hit-confirm.wav",
       "source": "hit-confirm-a.m4a",
       "filters": "[0:a]atrim=start=0:duration=1.15,asetpts=PTS-STARTPTS,volume=0.3973182488382788,afade=t=in:d=0.003,afade=t=out:st=1.0699999999999998:d=0.08[out]",
       "sha256": "d97e41205b42a7be6ee41a5c7e479dfa40977b511fcb56e1a3852c26109005cf",
-      "bytes": 203032
+      "bytes": 203032,
+      "encoderArguments": [
+        "-c:a",
+        "pcm_s16le"
+      ],
+      "sampleRate": 44100
+    },
+    {
+      "file": "hit-confirm.opus",
+      "source": "hit-confirm-a.m4a",
+      "filters": "[0:a]atrim=start=0:duration=1.15,asetpts=PTS-STARTPTS,volume=0.3973182488382788,afade=t=in:d=0.003,afade=t=out:st=1.0699999999999998:d=0.08[out]",
+      "sha256": "5a07a9958e473ec687d6a6584abe537c2b44593f583b33c4020db5e6e58203ff",
+      "bytes": 7533,
+      "encoderArguments": [
+        "-c:a",
+        "libopus",
+        "-b:a",
+        "48k",
+        "-vbr",
+        "constrained"
+      ],
+      "sampleRate": 48000
     },
     {
       "file": "match-finish.wav",
       "source": "match-finish-b.m4a",
       "filters": "[0:a]atrim=start=0:duration=4.8,asetpts=PTS-STARTPTS,volume=0.4349536471208001,afade=t=in:d=0.003,afade=t=out:st=4.72:d=0.08[out]",
       "sha256": "a03e6e4627d679dc3ee250a0236486a9761797ba5f8aa23a072be75775f647c6",
-      "bytes": 846892
+      "bytes": 846892,
+      "encoderArguments": [
+        "-c:a",
+        "pcm_s16le"
+      ],
+      "sampleRate": 44100
+    },
+    {
+      "file": "match-finish.opus",
+      "source": "match-finish-b.m4a",
+      "filters": "[0:a]atrim=start=0:duration=4.8,asetpts=PTS-STARTPTS,volume=0.4349536471208001,afade=t=in:d=0.003,afade=t=out:st=4.72:d=0.08[out]",
+      "sha256": "df93fc92961a0882d0b0c4ec74e2d8eaa118031950d0b060dd371440f7bf3030",
+      "bytes": 30089,
+      "encoderArguments": [
+        "-c:a",
+        "libopus",
+        "-b:a",
+        "48k",
+        "-vbr",
+        "constrained"
+      ],
+      "sampleRate": 48000
     },
     {
       "file": "title.mp3",
       "source": "title-a.m4a",
       "filters": "[0:a]atrim=start=8:duration=68.57142857142857,asetpts=PTS-STARTPTS,asplit=3[h][m][t];[h]atrim=end=1,asetpts=PTS-STARTPTS[head];[m]atrim=start=1:end=67.57142857142857,asetpts=PTS-STARTPTS[mid];[t]atrim=start=67.57142857142857,asetpts=PTS-STARTPTS[tail];[tail][head]acrossfade=d=1:c1=tri:c2=tri[seam];[seam][mid]concat=n=2:v=0:a=1,loudnorm=I=-22:TP=-3:LRA=7[out]",
       "sha256": "1b6d13d979bcbf8ddc46a90fbb871420cc5de06c2afc88919e02e5f056516cb0",
-      "bytes": 1216240
+      "bytes": 1216240,
+      "encoderArguments": [
+        "-c:a",
+        "libmp3lame",
+        "-q:a",
+        "4"
+      ],
+      "sampleRate": 44100
+    },
+    {
+      "file": "title.opus",
+      "source": "title-a.m4a",
+      "filters": "[0:a]atrim=start=8:duration=68.57142857142857,asetpts=PTS-STARTPTS,asplit=3[h][m][t];[h]atrim=end=1,asetpts=PTS-STARTPTS[head];[m]atrim=start=1:end=67.57142857142857,asetpts=PTS-STARTPTS[mid];[t]atrim=start=67.57142857142857,asetpts=PTS-STARTPTS[tail];[tail][head]acrossfade=d=1:c1=tri:c2=tri[seam];[seam][mid]concat=n=2:v=0:a=1,loudnorm=I=-22:TP=-3:LRA=7[out]",
+      "sha256": "b13a393d03aea36b95c9d7fc0a42472440daed67a0d69f35a5fd18eb2e40e29e",
+      "bytes": 408501,
+      "encoderArguments": [
+        "-c:a",
+        "libopus",
+        "-b:a",
+        "48k",
+        "-vbr",
+        "constrained"
+      ],
+      "sampleRate": 48000
     },
     {
       "file": "lobby.mp3",
       "source": "lobby-a.m4a",
       "filters": "[0:a]atrim=start=8:duration=83.47826086956522,asetpts=PTS-STARTPTS,asplit=3[h][m][t];[h]atrim=end=1,asetpts=PTS-STARTPTS[head];[m]atrim=start=1:end=82.47826086956522,asetpts=PTS-STARTPTS[mid];[t]atrim=start=82.47826086956522,asetpts=PTS-STARTPTS[tail];[tail][head]acrossfade=d=1:c1=tri:c2=tri[seam];[seam][mid]concat=n=2:v=0:a=1,loudnorm=I=-22:TP=-3:LRA=7[out]",
       "sha256": "5e6e162ebaa90caac4a1303b175534be5e4c56fbc969d7e93f1da14bff0aa294",
-      "bytes": 1544116
+      "bytes": 1544116,
+      "encoderArguments": [
+        "-c:a",
+        "libmp3lame",
+        "-q:a",
+        "4"
+      ],
+      "sampleRate": 44100
+    },
+    {
+      "file": "lobby.opus",
+      "source": "lobby-a.m4a",
+      "filters": "[0:a]atrim=start=8:duration=83.47826086956522,asetpts=PTS-STARTPTS,asplit=3[h][m][t];[h]atrim=end=1,asetpts=PTS-STARTPTS[head];[m]atrim=start=1:end=82.47826086956522,asetpts=PTS-STARTPTS[mid];[t]atrim=start=82.47826086956522,asetpts=PTS-STARTPTS[tail];[tail][head]acrossfade=d=1:c1=tri:c2=tri[seam];[seam][mid]concat=n=2:v=0:a=1,loudnorm=I=-22:TP=-3:LRA=7[out]",
+      "sha256": "6e279f514db9909536daaf92349f15b0b128a95e7492eefbbdc51e93ec0aed9e",
+      "bytes": 499918,
+      "encoderArguments": [
+        "-c:a",
+        "libopus",
+        "-b:a",
+        "48k",
+        "-vbr",
+        "constrained"
+      ],
+      "sampleRate": 48000
     },
     {
       "file": "battle.mp3",
       "source": "battle-a.m4a",
       "filters": "[0:a]atrim=start=8:duration=60.95238095238095,asetpts=PTS-STARTPTS,asplit=3[h][m][t];[h]atrim=end=1,asetpts=PTS-STARTPTS[head];[m]atrim=start=1:end=59.95238095238095,asetpts=PTS-STARTPTS[mid];[t]atrim=start=59.95238095238095,asetpts=PTS-STARTPTS[tail];[tail][head]acrossfade=d=1:c1=tri:c2=tri[seam];[seam][mid]concat=n=2:v=0:a=1,loudnorm=I=-22:TP=-3:LRA=7[out]",
       "sha256": "0411a223fecd93210ec5c302f56c4d66ff9c87edc709480737a69f2a0f24c123",
-      "bytes": 1076628
+      "bytes": 1076628,
+      "encoderArguments": [
+        "-c:a",
+        "libmp3lame",
+        "-q:a",
+        "4"
+      ],
+      "sampleRate": 44100
+    },
+    {
+      "file": "battle.opus",
+      "source": "battle-a.m4a",
+      "filters": "[0:a]atrim=start=8:duration=60.95238095238095,asetpts=PTS-STARTPTS,asplit=3[h][m][t];[h]atrim=end=1,asetpts=PTS-STARTPTS[head];[m]atrim=start=1:end=59.95238095238095,asetpts=PTS-STARTPTS[mid];[t]atrim=start=59.95238095238095,asetpts=PTS-STARTPTS[tail];[tail][head]acrossfade=d=1:c1=tri:c2=tri[seam];[seam][mid]concat=n=2:v=0:a=1,loudnorm=I=-22:TP=-3:LRA=7[out]",
+      "sha256": "fc29c5b4e7bfebbbbb9739682389948314a1b8fc61c9995ec8965489876554f2",
+      "bytes": 361814,
+      "encoderArguments": [
+        "-c:a",
+        "libopus",
+        "-b:a",
+        "48k",
+        "-vbr",
+        "constrained"
+      ],
+      "sampleRate": 48000
     },
     {
       "file": "result.mp3",
       "source": "result-a.m4a",
       "filters": "[0:a]atrim=start=8:duration=73.84615384615384,asetpts=PTS-STARTPTS,asplit=3[h][m][t];[h]atrim=end=1,asetpts=PTS-STARTPTS[head];[m]atrim=start=1:end=72.84615384615384,asetpts=PTS-STARTPTS[mid];[t]atrim=start=72.84615384615384,asetpts=PTS-STARTPTS[tail];[tail][head]acrossfade=d=1:c1=tri:c2=tri[seam];[seam][mid]concat=n=2:v=0:a=1,loudnorm=I=-22:TP=-3:LRA=7[out]",
       "sha256": "ba07e04476d7775f58885c498c4643d335b2870385de2cf939dd98011b31ce26",
-      "bytes": 1333019
+      "bytes": 1333019,
+      "encoderArguments": [
+        "-c:a",
+        "libmp3lame",
+        "-q:a",
+        "4"
+      ],
+      "sampleRate": 44100
+    },
+    {
+      "file": "result.opus",
+      "source": "result-a.m4a",
+      "filters": "[0:a]atrim=start=8:duration=73.84615384615384,asetpts=PTS-STARTPTS,asplit=3[h][m][t];[h]atrim=end=1,asetpts=PTS-STARTPTS[head];[m]atrim=start=1:end=72.84615384615384,asetpts=PTS-STARTPTS[mid];[t]atrim=start=72.84615384615384,asetpts=PTS-STARTPTS[tail];[tail][head]acrossfade=d=1:c1=tri:c2=tri[seam];[seam][mid]concat=n=2:v=0:a=1,loudnorm=I=-22:TP=-3:LRA=7[out]",
+      "sha256": "d3ad679b3e5d7b93afbf738070ee1d152083eff5c64ae889ce09398ae9a79343",
+      "bytes": 440802,
+      "encoderArguments": [
+        "-c:a",
+        "libopus",
+        "-b:a",
+        "48k",
+        "-vbr",
+        "constrained"
+      ],
+      "sampleRate": 48000
     }
   ]
 }
