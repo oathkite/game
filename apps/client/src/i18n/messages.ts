@@ -2,6 +2,15 @@ import { playEnglish } from "./playMessages";
 import { roomEnglish } from "./roomMessages";
 export const english: Readonly<Record<string, string>> = {
   ...roomEnglish, ...playEnglish,
+  "操作のヒント": "How to play",
+  "風を読む": "Read the wind",
+  "流れる葉が風向きと強さの目印。": "Drifting leaves show the wind's direction and strength.",
+  "角度を合わせる": "Set your angle",
+  "＋／−で照準を調整。円形メーターで地面と砲身の角度を確認。": "Aim with + / −. The dial shows the ground and barrel angles.",
+  "W／S・↑／↓で照準を調整。円形メーターで地面と砲身の角度を確認。": "Aim with W / S or ↑ / ↓. The dial shows the ground and barrel angles.",
+  "溜めて、離す": "Hold, then release",
+  "発射ボタンを長押し。狙ったパワーで離す。": "Hold Fire, then release at your chosen power.",
+  "Spaceを長押し。狙ったパワーで離す。": "Hold Space, then release at your chosen power.",
   "ロビーへ戻りますか？": "Return to the lobby?",
   "対戦を離れると降参扱いになります。確認中も対戦は進行します。": "Leaving counts as surrender. The battle continues while you decide.",
   "この部屋から退出します。": "You will leave this room.",

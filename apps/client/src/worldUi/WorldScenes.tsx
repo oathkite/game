@@ -1,3 +1,4 @@
+import { PracticeGuide, dismissPracticeGuide } from "./PracticeGuide";
 import { useWorldBrowserBack } from "./browserBack";
 import type { ResultPresentation } from "./ResultPlayers";
 import { teamColorName } from "./teamColors";
@@ -98,8 +99,9 @@ const Lobby = ({ go }: { readonly go: (scene: Scene) => void }) => {
     <PixelPanel className="world-loadout">
       <label>{t("名前")}<input aria-label={t("名前")} maxLength={12} value={profile.nickname} placeholder={t("ケロポッド")} onChange={e => update({ nickname: e.target.value })} /></label>
       {([0, 1] as const).map(slot => <label key={slot}>{t("装備")} {slot + 1}<select aria-label={`${t("装備")} ${slot + 1}`} value={profile.loadout[slot]} onChange={e => weapon(slot, e.target.value as WeaponId)}>{WEAPON_IDS.map(id => <option key={id} value={id} disabled={id === profile.loadout[slot === 0 ? 1 : 0]}>{t(WEAPON_LABELS[id])}</option>)}</select></label>)}
+      <PracticeGuide />
     </PixelPanel>
-    <footer><PixelButton onClick={() => go("start")}>{t("タイトルへ")}</PixelButton><PixelButton onClick={() => go("rooms")}>{t("オンライン対戦")}</PixelButton><PixelButton onClick={() => go("battle")}>{t("プラクティスへ")}</PixelButton></footer>
+    <footer><PixelButton onClick={() => go("start")}>{t("タイトルへ")}</PixelButton><PixelButton onClick={() => go("rooms")}>{t("オンライン対戦")}</PixelButton><PixelButton onClick={() => { dismissPracticeGuide(); go("battle"); }}>{t("プラクティスへ")}</PixelButton></footer>
   </section>;
 };
 const Settings = ({ onBack, onReplay }: { readonly onBack: () => void; readonly onReplay: () => void }) => {
