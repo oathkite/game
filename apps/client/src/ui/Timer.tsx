@@ -1,4 +1,5 @@
 import { useEffect, useRef, useState } from "react";
+import { CountdownDial } from "./CountdownDial";
 import { playSound } from "@/app/audio";
 
 // 残り時間。設計書 03 の 3.7。サーバー時刻の期限をクライアントの時計に変換して減らす。
@@ -10,9 +11,10 @@ type Props = {
   /** サーバー時刻 − クライアント時刻 */
   readonly clockOffset: number;
   readonly myTurn: boolean;
+  readonly dial?: boolean;
 };
 
-export const Timer = ({ deadlineAt, clockOffset, myTurn }: Props) => {
+export const Timer = ({ deadlineAt, clockOffset, myTurn, dial = false }: Props) => {
   const [seconds, setSeconds] = useState<number | null>(null);
   const lastBeep = useRef<number | null>(null);
 
@@ -36,6 +38,7 @@ export const Timer = ({ deadlineAt, clockOffset, myTurn }: Props) => {
     return () => window.clearInterval(id);
   }, [deadlineAt, clockOffset, myTurn]);
 
+  if (dial) return <CountdownDial seconds={seconds} />;
   if (seconds === null) return null;
   return <div className={`timer${seconds <= 5 ? " blink" : ""}`}>{seconds}</div>;
 };

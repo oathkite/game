@@ -1,0 +1,9 @@
+.world-loadout:has(.practice-guide) { min-height:0; max-height:100%; overflow:auto; }
+.practice-guide { border-top:1px solid #718a9a; margin-top:12px; font-size:12px; }
+.practice-guide summary { min-height:44px; padding:12px 0; cursor:pointer; font-weight:700; }
+.practice-guide summary:focus-visible { outline:3px solid #268392; outline-offset:2px; }
+.practice-guide ol { margin:0; padding:0 0 4px 22px; }
+.practice-guide li { margin:0 0 8px; padding-left:3px; }
+.practice-guide li::marker { color:#ffcf66; font-weight:700; }
+.practice-guide strong,.practice-guide span { display:block; }
+.practice-guide span { margin-top:3px; line-height:1.5; }

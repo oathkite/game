@@ -1,0 +1,266 @@
+{
+  "version": 2,
+  "encoding": "per-asset-webp",
+  "assets": [
+    {
+      "id": "pilot-result-expressions",
+      "source": "assets/workbench/world-ui-final/pilot-result-expressions-v1.png",
+      "encoding": "lossless-webp-exact-rgba",
+      "channelRms": [
+        0.0,
+        0.0,
+        0.0,
+        0.0
+      ],
+      "file": "pilot-result-expressions.webp",
+      "sourceSha256": "dd373378a0658c5a5da7b0c639fe0f91817f93a9f13db84f2bccf05aebf68a5f",
+      "sha256": "20ae42a24d6af2b4530d60ecdf81e8daea07fa9f513b097671b95bbbeeeb1147",
+      "size": [
+        1774,
+        887
+      ],
+      "sourceBytes": 1330166,
+      "bytes": 1065214
+    },
+    {
+      "id": "pilot-portrait",
+      "source": "assets/workbench/world-ui-final/pilot-portrait-v1.png",
+      "encoding": "lossless-webp-exact-rgba",
+      "channelRms": [
+        0.0,
+        0.0,
+        0.0,
+        0.0
+      ],
+      "file": "pilot-portrait.webp",
+      "sourceSha256": "839052884464d454849b61928173aba35c4e7ebba9d792e80964745c7e5926de",
+      "sha256": "c76d95198d627e496704734fed949bb27775364c2467b8b72baee86d52ce53ba",
+      "size": [
+        1254,
+        1254
+      ],
+      "sourceBytes": 1135959,
+      "bytes": 907086
+    },
+    {
+      "id": "logo",
+      "source": "assets/workbench/ui-polish-v1/logo.png",
+      "encoding": "lossless-webp-exact-rgba",
+      "channelRms": [
+        0.0,
+        0.0,
+        0.0,
+        0.0
+      ],
+      "file": "logo.webp",
+      "sourceSha256": "fc3142f265d621b7992e397b234f4fad86aadfc39c9bdb2e2433ab041672d4a8",
+      "sha256": "5818f3c21c70152eee181b9a50fb3edc770473d08a13a713437b1f6fa862ad91",
+      "size": [
+        1536,
+        1024
+      ],
+      "sourceBytes": 1120804,
+      "bytes": 775426
+    },
+    {
+      "id": "background",
+      "source": "assets/workbench/world-ui-final/background-floating-islands-v1.png",
+      "encoding": "webp-q94",
+      "channelRms": [
+        4.18789048533058,
+        1.7274213815144095,
+        5.6749034744545765,
+        0.0
+      ],
+      "file": "background.webp",
+      "sourceSha256": "c019204b6be880ef3071376a1a67dda3756be22b19d4e83cac9900ff4fd6619c",
+      "sha256": "1b577768ee3bf1d9a739bad5b8007d7023e583574a5b268346b0b2746783b4a7",
+      "size": [
+        1536,
+        1024
+      ],
+      "sourceBytes": 2122982,
+      "bytes": 425914
+    },
+    {
+      "id": "lobby",
+      "source": "assets/workbench/world-ui-v1/lobby-v1.png",
+      "encoding": "lossless-webp-exact-rgba",
+      "channelRms": [
+        0.0,
+        0.0,
+        0.0,
+        0.0
+      ],
+      "file": "lobby.webp",
+      "sourceSha256": "6ba8124ce2ca8658ecc7545f4421da488c9f44acc15d160b60f15917a60bb147",
+      "sha256": "4cc7c0d797699b42f1ea9c63b661596e08d9b3d6b5b4bb4bdef0c209443cd726",
+      "size": [
+        1536,
+        1024
+      ],
+      "sourceBytes": 2165716,
+      "bytes": 1810624
+    },
+    {
+      "id": "settings",
+      "source": "assets/workbench/world-ui-v1/settings-v1.png",
+      "encoding": "lossless-webp-exact-rgba",
+      "channelRms": [
+        0.0,
+        0.0,
+        0.0,
+        0.0
+      ],
+      "file": "settings.webp",
+      "sourceSha256": "6da62790c3a573353b93999935d889bb0643ffa5b41e9d41a5ba54c8467fdd61",
+      "sha256": "fd52ba056eb612933aadc2b0d430e8caa8ac1a673debd97e7b625ca7c5dc6cf6",
+      "size": [
+        1536,
+        1024
+      ],
+      "sourceBytes": 1638723,
+      "bytes": 1148648
+    },
+    {
+      "id": "result",
+      "source": "assets/workbench/world-ui-v1/result-v1.png",
+      "encoding": "lossless-webp-exact-rgba",
+      "channelRms": [
+        0.0,
+        0.0,
+        0.0,
+        0.0
+      ],
+      "file": "result.webp",
+      "sourceSha256": "7e7ca2887908980aa7d275401d8508048ae1cf3d16fab71a810bca801417cf8e",
+      "sha256": "33e0724e2ec8b865fcba95cfd975f1be9b7fa2b6213125213df1d4c9661097a1",
+      "size": [
+        1536,
+        1024
+      ],
+      "sourceBytes": 1912703,
+      "bytes": 1575660
+    },
+    {
+      "id": "terrain",
+      "source": "assets/workbench/world-ui-final/terrain-cliff-v4.png",
+      "encoding": "lossless-webp-exact-rgba",
+      "channelRms": [
+        0.0,
+        0.0,
+        0.0,
+        0.0
+      ],
+      "file": "terrain.webp",
+      "sourceSha256": "51897be1fd2d6aab10d3dde610a2b87fcae903ec6dcd890164cce1b681ad6d35",
+      "sha256": "aa875f2498ddca5d66b6f65347f71029169afd03fb37132efd03042ae62b78bb",
+      "size": [
+        2172,
+        724
+      ],
+      "sourceBytes": 2125754,
+      "bytes": 1692992
+    },
+    {
+      "id": "leaf",
+      "source": "assets/workbench/world-ui-v1/leaf-v1.png",
+      "encoding": "lossless-webp-exact-rgba",
+      "channelRms": [
+        0.0,
+        0.0,
+        0.0,
+        0.0
+      ],
+      "file": "leaf.webp",
+      "sourceSha256": "6d3a49b461208566bf01c74861403a7917d90a1ed79006271136f4814b9a3734",
+      "sha256": "00441dfc54008c97a32813b3b4fd7b726982324192c0dcca3d719e242f2a24dd",
+      "size": [
+        1024,
+        1024
+      ],
+      "sourceBytes": 745693,
+      "bytes": 451318
+    },
+    {
+      "id": "panel",
+      "source": "assets/workbench/world-ui-v1/panel-v1.png",
+      "encoding": "lossless-webp-exact-rgba",
+      "channelRms": [
+        0.0,
+        0.0,
+        0.0,
+        0.0
+      ],
+      "file": "panel.webp",
+      "sourceSha256": "25d28d7c81bf4bdbd449d177318b375a093e4d428d23b0e753eee2365793440c",
+      "sha256": "b6587e7336440d290cd4064d495c55fa65eef0be1263bfaea3ad9a30ab501601",
+      "size": [
+        1536,
+        1024
+      ],
+      "sourceBytes": 1091585,
+      "bytes": 751742
+    },
+    {
+      "id": "button",
+      "source": "assets/workbench/world-ui-v1/button-v2.png",
+      "encoding": "webp-q94",
+      "channelRms": [
+        1.6572659813189052,
+        0.9353144283255681,
+        2.819097170768627,
+        0.0
+      ],
+      "file": "button.webp",
+      "sourceSha256": "f7c4e011502d961f88b05a97361ef1b66968bdc42efafd545db03e488d303819",
+      "sha256": "37aab0fcf3d63ec32b3cec5e414a36b84701d2b1b7890bf1bfb0fc27fd745c6f",
+      "size": [
+        1536,
+        1024
+      ],
+      "sourceBytes": 1069225,
+      "bytes": 58846
+    },
+    {
+      "id": "meter",
+      "source": "assets/workbench/world-ui-v1/meter-v1.png",
+      "encoding": "lossless-webp-exact-rgba",
+      "channelRms": [
+        0.0,
+        0.0,
+        0.0,
+        0.0
+      ],
+      "file": "meter.webp",
+      "sourceSha256": "fe56bcd0a4c37c4df90cafc4d315ce65ab52485872d9a6819a1fa120cc16f8e3",
+      "sha256": "0454ccc5cc308b3dde2fca462c8cb3e82f4acff272589dd589c68d975927cf75",
+      "size": [
+        1536,
+        1024
+      ],
+      "sourceBytes": 884158,
+      "bytes": 610650
+    },
+    {
+      "id": "cockpit",
+      "source": "assets/workbench/ui-polish-v1/cockpit.png",
+      "encoding": "lossless-webp-exact-rgba",
+      "channelRms": [
+        0.0,
+        0.0,
+        0.0,
+        0.0
+      ],
+      "file": "cockpit.webp",
+      "sourceSha256": "fa65e03308fe2f5d4b4a94a00dd9ece4caa7af400d54b44044cca1e684c6636f",
+      "sha256": "471675c29913eeb4ae3242e03373aba3ae1c888ee2c09bf04ee050833b4b8a47",
+      "size": [
+        1536,
+        1024
+      ],
+      "sourceBytes": 1360216,
+      "bytes": 884546
+    }
+  ]
+}

@@ -1,0 +1,101 @@
+.kp-root {
+  --ink: #101c2c;
+  --panel: #1b3044;
+  --paper: #f6f1df;
+  --yellow: #ffc345;
+  --muted: #b9c9d3;
+  position: relative;
+  width: 100%; height: 100dvh;
+  overflow: hidden;
+  background: var(--ink); color: var(--paper);
+  font-family: "Hiragino Kaku Gothic ProN", "Noto Sans JP", sans-serif;
+  line-height: 1.35;
+  -webkit-font-smoothing: antialiased;
+}
+.kp-root button, .kp-root a {
+  min-height: 44px; min-width: 44px;
+  border: 0; border-radius: 8px;
+  background: #304659; color: var(--paper);
+  font: inherit; font-weight: 700;
+  padding: 8px 14px; text-decoration: none;
+  touch-action: none;
+}
+.kp-root button:hover:not(:disabled) { background: #456078; }
+.kp-root button:active:not(:disabled) { transform: translateY(1px); }
+.kp-root button:disabled { opacity: .45; color: var(--muted); }
+.kp-root button:focus-visible, .kp-root a:focus-visible { outline: 3px solid var(--yellow); outline-offset: 2px; }
+.kp-root button[aria-pressed="true"] { color: var(--ink); background: var(--yellow); }
+.kp-topbar { height: 56px; display: flex; align-items: center; gap: 24px; padding: 0 20px; background: var(--ink); }
+.kp-brand { font-weight: 900; font-size: 22px; letter-spacing: -.8px; margin-right: auto; }
+.kp-brand span { font-size: 11px; display: block; color: var(--muted); font-weight: 500; letter-spacing: .05em; }
+.kp-turn { display: flex; align-items: center; gap: 12px; }
+.kp-turn i { display: grid; place-items: center; width: 32px; height: 32px; font-style: normal; font-weight: 900; color: var(--ink); background: var(--yellow); border-radius: 8px 8px 3px 8px; }
+.kp-turn strong { font-size: 16px; }
+.kp-turn > span { color: var(--muted); font-size: 12px; }
+.kp-clock { width: 40px; text-align: center; }
+.kp-root .timer { border: 0; background: transparent; padding: 0; min-width: 0; font-family: inherit; font-size: 25px; color: var(--yellow); font-weight: 800; }
+.kp-wind { display: flex; align-items: center; gap: 8px; font-size: 12px; color: var(--muted); }
+.kp-wind-window { width: 70px; height: 28px; overflow: hidden; border-radius: 16px; background: #304b56; display: grid; place-items: center; }
+.kp-wind-window b { color: #a5d4bc; font-size: 22px; display: block; }
+.kp-world { position: relative; width: 100%; overflow: hidden; background: #20394a; }
+.kp-canvas { width: 100%; height: 100%; touch-action: none; cursor: grab; }
+.kp-canvas:active { cursor: grabbing; }
+.kp-canvas canvas { display: block; image-rendering: pixelated; }
+.kp-world-help { position: absolute; top: 16px; left: 20px; font-size: 12px; color: #d8e5de; opacity: .75; pointer-events: none; }
+.kp-camera-actions { position: absolute; left: 20px; display: flex; gap: 8px; }
+.kp-camera-actions button { font-size: 12px; background: #162c3eee; }
+.kp-camera-actions kbd { margin-left: 8px; font-family: inherit; color: var(--muted); }
+.kp-root .kp-minimap { position: absolute; right: 20px; bottom: 14px; padding: 5px; background: #101c2ce8; border-radius: 8px; width: 180px; }
+.kp-minimap canvas { display: block; width: 100%; height: 85px; }
+.kp-minimap span { display: block; font-size: 10px; font-weight: 500; padding-top: 4px; color: var(--muted); }
+.kp-controls { height: 88px; padding: 10px 24px; display: flex; align-items: center; justify-content: center; gap: 28px; background: var(--panel); }
+.kp-control-group { min-width: 96px; }
+.kp-control-group > span { display: flex; justify-content: space-between; font-size: 11px; color: var(--muted); margin-bottom: 4px; }
+.kp-control-group > div { display: flex; gap: 4px; }
+.kp-control-group button { padding: 6px; width: 46px; font-size: 20px; }
+.kp-control-group strong, .kp-control-group small { font-size: 12px; font-variant-numeric: tabular-nums; color: var(--paper); }
+.kp-weapons { display: flex; gap: 6px; max-width: 260px; }
+.kp-weapons button { min-width: 86px; font-size: 12px; }
+.kp-power { width: clamp(110px, 22vw, 330px); }
+.kp-power > div:first-child { display: flex; justify-content: space-between; font-size: 11px; color: var(--muted); }
+.kp-power strong { font-size: 14px; color: var(--yellow); font-variant-numeric: tabular-nums; }
+.kp-power-track { height: 14px; background: #101c2c; border-radius: 4px; overflow: hidden; margin: 5px 0; }
+.kp-power-track i { height: 100%; display: block; background: var(--yellow); }
+.kp-power small { color: var(--muted); font-size: 10px; }
+.kp-root .kp-fire { height: 64px; width: 125px; flex-shrink: 0; background: var(--yellow); color: var(--ink); box-shadow: 0 4px 0 #b88128; font-size: 20px; }
+.kp-root .kp-fire:hover:not(:disabled) { background: #ffd577; }
+.kp-fire small { display: block; font-size: 10px; font-weight: 500; }
+.kp-root .kp-dialog { width: min(420px, 90vw); padding: 28px; border: 0; border-radius: 16px; background: var(--paper); color: var(--ink); max-height: 90dvh; overflow: auto; }
+.kp-dialog::backdrop { background: #101c2cbb; }
+.kp-dialog h2 { font-size: 24px; margin-top: 0; }
+.kp-dialog p { line-height: 1.8; font-size: 14px; }
+.kp-dialog button, .kp-dialog a { display: block; width: 100%; margin-top: 10px; text-align: center; }
+.kp-loading, .kp-result, .kp-portrait { position: absolute; inset: 0; display: flex; justify-content: center; align-items: center; flex-direction: column; gap: 16px; background: #101c2ceb; padding: 24px; text-align: center; }
+.kp-result { z-index: 3; }
+.kp-portrait { z-index: 4; }
+.kp-portrait strong { font-size: 24px; }
+@media (max-height: 499px), (max-width: 999px) {
+  .kp-topbar { height: 44px; padding: 0 10px; gap: 12px; }
+  .kp-brand { font-size: 17px; }
+  .kp-brand span { font-size: 9px; }
+  .kp-turn { gap: 8px; }
+  .kp-turn > span { display: none; }
+  .kp-turn strong { font-size: 13px; }
+  .kp-topbar > button { border-radius: 0; font-size: 12px; }
+  .kp-controls { height: 72px; padding: 4px 10px; gap: 12px; }
+  .kp-control-group > span { margin-bottom: 2px; font-size: 10px; }
+  .kp-control-group { min-width: 92px; }
+  .kp-control-group button { width: 44px; }
+  .kp-weapons { gap: 4px; }
+  .kp-weapons button { padding: 4px 6px; min-width: 66px; font-size: 11px; }
+  .kp-power { flex: 1; min-width: 60px; }
+  .kp-root .kp-fire { width: 96px; height: 56px; font-size: 17px; }
+  .kp-root .kp-minimap { width: 112px; right: 10px; bottom: 8px; }
+  .kp-minimap canvas { height: 48px; }
+  .kp-camera-actions { left: 10px; }
+  .kp-camera-actions button { font-size: 11px; padding: 6px 10px; }
+  .kp-world-help { top: 10px; left: 10px; font-size: 10px; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .kp-root *, .kp-root .blink { animation: none !important; transition: none !important; }
+}

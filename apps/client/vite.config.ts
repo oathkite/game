@@ -8,6 +8,7 @@ const serverTarget = process.env.VITE_DEV_SERVER_TARGET ?? "ws://localhost:8787"
 
 export default defineConfig({
   plugins: [react()],
+  build: { manifest: "assets/chunks.json" },
   resolve: {
     alias: {
       "@": fileURLToPath(new URL("./src", import.meta.url)),

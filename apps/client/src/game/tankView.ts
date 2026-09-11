@@ -1,3 +1,4 @@
+import type { ShotFlash } from "./muzzlePose";
 import { COLOR_HEX, type Facing, type TankColors } from "@game/protocol";
 import { BARREL_BASE_UP, BARREL_LENGTH, HP_MAX } from "@game/sim";
 import { Container, Graphics, Text } from "pixi.js";
@@ -14,6 +15,9 @@ export type TankPose = {
   readonly facing: Facing;
   readonly elevation: number;
   readonly hp: number;
+  readonly falling?: boolean;
+  readonly recoil?: number;
+  readonly shotFlashes?: readonly ShotFlash[];
   /** 減る前の HP。hp より大きいとき、その差を失った区間として描く。省略なら hp と同じ */
   readonly hpGhost?: number;
   /** 失った区間を描くか。明滅に使う */

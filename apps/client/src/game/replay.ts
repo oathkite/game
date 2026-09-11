@@ -1,3 +1,5 @@
+import { shotFlashes } from "./muzzlePose";
+import { shotRecoil } from "./shotRecoil";
 import type { CellPoint, Impact, Seat } from "@game/protocol";
 import { carve, isRingOut, MAP_HEIGHT, ONE, tiltOf, weaponSpec, type ProjectilePath, type TerrainMask } from "@game/sim";
 import type { SoundName } from "@/app/audio";
@@ -136,6 +138,8 @@ const poseAfterHit = (run: Run, seat: Seat, flash: boolean): TankPose => {
   // 落下前なので、撃った側は移動後の地表、相手はターン開始時の地表に立つ
   return poseOf({ ...before, hp: bar.hp, x: after.x, y: groundBeforeFall(run.job, seat), facing: after.facing }, run.job.maskBefore, elevationOf(run, seat), {
     flash,
+    shotFlashes: seat === run.job.shot.input.seat ? shotFlashes(run.elapsed, run.launchAt) : [],
+    recoil: seat === run.job.shot.input.seat ? shotRecoil(run.elapsed, run.launchAt) : 0,
     hpGhost: bar.hpGhost,
     ghostOn: bar.ghostOn,
   });
@@ -238,7 +242,7 @@ const updateImpact = (run: Run, ir: ImpactRun): void => {
   }
   const { cell, terrainOp } = ir.impact;
   const frame = blastFrameAt(t, terrainOp.radius);
-  run.view.setBlast(ir.key, frame ? cell.x : null, cell.y, frame?.radius ?? 0, frame?.on ?? false, frame?.ring ?? false);
+  run.view.setBlast(ir.key, frame ? cell.x : null, cell.y, frame?.radius ?? 0, frame?.on ?? false, frame?.ring ?? false, run.cb.reduceMotion ? 1 : Math.min(3, Math.floor(t / IMPACT_TOTAL_MS * 4)));
   if (frame?.carved && !ir.carved) carveImpact(run, ir);
   if (ir.carved) run.view.setDebris(ir.key, debrisAt(t - CARVE_AT_MS, cell, terrainOp.radius));
 };
@@ -246,7 +250,7 @@ const updateImpact = (run: Run, ir: ImpactRun): void => {
 /** 被弾の見せ方。白はダメージが大きいほど長く続き、HP バーは減っていき、画面が揺れる */
 const updateHits = (run: Run): void => {
   for (const seat of [0, 1] as const) {
-    if (run.drains[seat]) run.renderer.setTank(seat, poseAfterHit(run, seat, run.elapsed < run.flashUntil[seat]));
+    if (run.drains[seat] || seat === run.job.shot.input.seat) run.renderer.setTank(seat, poseAfterHit(run, seat, run.elapsed < run.flashUntil[seat]));
   }
   if (run.cb.reduceMotion) return;
   run.renderer.setShake(run.shake ? shakeOffsetAt(run.elapsed - run.shake.at, run.shake.damage) : { dx: 0, dy: 0 });
@@ -275,7 +279,7 @@ const stepFall = (run: Run): void => {
   for (const f of run.falls) {
     const y = Math.min(f.to, f.from + FALL_CELLS_PER_S * t);
     if (y < f.to) allDone = false;
-    run.renderer.setTank(f.seat, poseOf(run.job.playersAfter[f.seat], run.job.maskBefore, elevationOf(run, f.seat), { y, visible: y < MAP_HEIGHT + 6 }));
+    run.renderer.setTank(f.seat, poseOf(run.job.playersAfter[f.seat], run.job.maskBefore, elevationOf(run, f.seat), { y, falling: y < f.to, visible: y < MAP_HEIGHT + 6 }));
   }
   if (allDone) finish(run);
 };
@@ -318,9 +322,14 @@ export const playReplay = (
     shake: null,
     stopFrames: () => {},
   };
-  for (const seat of [0, 1] as const) renderer.setTank(seat, poseOf(job.playersBefore[seat], job.maskBefore, elevationOf(run, seat)));
-  // 撃つ側の位置は移動後の x で描く
-  renderer.setTank(job.shot.input.seat, poseOf({ ...shooter, x: job.shot.input.x, facing: job.shot.input.facing }, job.maskBefore, job.shot.input.elevation));
+  // 再生初期化から移動後のx/yを使用し、ターン開始位置を一瞬描画しない。
+  for (const seat of [0, 1] as const) {
+    const before = job.playersBefore[seat];
+    const position = seat === job.shot.input.seat
+      ? { ...before, x: job.shot.input.x, y: job.shot.input.y, facing: job.shot.input.facing }
+      : before;
+    renderer.setTank(seat, poseOf(position, job.maskBefore, elevationOf(run, seat)));
+  }
   cb.sound("fire");
   run.stopFrames = renderer.onFrame((deltaMs) => stepFrame(run, deltaMs));
   return () => {

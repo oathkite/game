@@ -1,0 +1,97 @@
+[WebServer] (node:32627) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+[WebServer] (Use `node --trace-warnings ...` to show where the warning was created)
+[WebServer] (node:32641) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+[WebServer] (Use `node --trace-warnings ...` to show where the warning was created)
+[WebServer] $ vite build
+[WebServer] (node:32654) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+[WebServer] (Use `node --trace-warnings ...` to show where the warning was created)
+[WebServer] (node:32660) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+[WebServer] (Use `node --trace-warnings ...` to show where the warning was created)
+[WebServer] $ vite preview --host 127.0.0.1 --port 5186
+[WebServer] (node:32673) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+[WebServer] (Use `node --trace-warnings ...` to show where the warning was created)
+
+Running 3 tests using 1 worker
+
+(node:32679) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+(Use `node --trace-warnings ...` to show where the warning was created)
+Natural match shot 1: 8 alive, acting
+Natural match shot 2: 8 alive, acting
+Natural match shot 3: 8 alive, acting
+Natural match shot 4: 8 alive, acting
+Natural match shot 5: 8 alive, acting
+Natural match shot 6: 8 alive, acting
+Natural match shot 7: 8 alive, acting
+Natural match shot 8: 8 alive, acting
+Natural match shot 9: 8 alive, acting
+Natural match shot 10: 8 alive, acting
+Natural match shot 11: 7 alive, acting
+Natural match shot 12: 7 alive, acting
+Natural match shot 13: 7 alive, acting
+Natural match shot 14: 6 alive, acting
+Natural match shot 15: 5 alive, acting
+Natural match shot 16: 5 alive, acting
+Natural match shot 17: 5 alive, acting
+Natural match shot 18: 5 alive, acting
+Natural match shot 19: 4 alive, acting
+Natural match shot 20: 4 alive, acting
+Natural match shot 21: 4 alive, acting
+Natural match shot 22: 4 alive, acting
+Natural match shot 23: 3 alive, finished
+  ✓  1 [chromium] › long-match-tests/natural-match.spec.ts:6:1 › eight browsers reach a result using real shots without surrender or state injection (1.3m)
+(node:32722) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+(Use `node --trace-warnings ...` to show where the warning was created)
+Natural match shot 1: 8 alive, acting
+Natural match shot 2: 8 alive, acting
+Natural match shot 3: 8 alive, acting
+Natural match shot 4: 8 alive, acting
+Natural match shot 5: 8 alive, acting
+Natural match shot 6: 8 alive, acting
+Natural match shot 7: 8 alive, acting
+Natural match shot 8: 8 alive, acting
+Natural match shot 9: 7 alive, acting
+Natural match shot 10: 7 alive, acting
+Natural match shot 11: 7 alive, acting
+Natural match shot 12: 6 alive, acting
+Natural match shot 13: 5 alive, acting
+Natural match shot 14: 5 alive, acting
+Natural match shot 15: 5 alive, acting
+Natural match shot 16: 4 alive, acting
+Natural match shot 17: 4 alive, acting
+Natural match shot 18: 4 alive, acting
+Natural match shot 19: 3 alive, acting
+Natural match shot 20: 3 alive, acting
+Natural match shot 21: 3 alive, acting
+Natural match shot 22: 3 alive, acting
+Natural match shot 23: 3 alive, acting
+Natural match shot 24: 2 alive, finished
+  ✓  2 [firefox] › long-match-tests/natural-match.spec.ts:6:1 › eight browsers reach a result using real shots without surrender or state injection (1.2m)
+(node:32886) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+(Use `node --trace-warnings ...` to show where the warning was created)
+Natural match shot 1: 8 alive, acting
+Natural match shot 2: 8 alive, acting
+Natural match shot 3: 8 alive, acting
+Natural match shot 4: 8 alive, acting
+Natural match shot 5: 8 alive, acting
+Natural match shot 6: 8 alive, acting
+Natural match shot 7: 8 alive, acting
+Natural match shot 8: 8 alive, acting
+Natural match shot 9: 7 alive, acting
+Natural match shot 10: 7 alive, acting
+Natural match shot 11: 7 alive, acting
+Natural match shot 12: 6 alive, acting
+Natural match shot 13: 6 alive, acting
+Natural match shot 14: 6 alive, acting
+Natural match shot 15: 6 alive, acting
+Natural match shot 16: 6 alive, acting
+Natural match shot 17: 6 alive, acting
+Natural match shot 18: 5 alive, acting
+Natural match shot 19: 5 alive, acting
+Natural match shot 20: 5 alive, acting
+Natural match shot 21: 5 alive, acting
+Natural match shot 22: 5 alive, acting
+Natural match shot 23: 5 alive, acting
+Natural match shot 24: 4 alive, finished
+  ✓  3 [webkit] › long-match-tests/natural-match.spec.ts:6:1 › eight browsers reach a result using real shots without surrender or state injection (2.3m)
+
+  3 passed (4.9m)

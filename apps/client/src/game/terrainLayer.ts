@@ -1,51 +1,117 @@
 import type { TerrainMask } from "@game/sim";
-import { Sprite, Texture } from "pixi.js";
-
-// 地形マスクを 1 セル 1 ピクセルのテクスチャにして、最近傍補間で整数倍に拡大する（設計書 07 の 7.1）。
+import { Container, Sprite, Texture } from "pixi.js";
 
 export type TerrainLayer = {
-  readonly sprite: Sprite;
+  readonly sprite: Container;
   readonly update: (mask: TerrainMask) => void;
   readonly destroy: () => void;
 };
 
-export const createTerrainLayer = (mask: TerrainMask): TerrainLayer => {
-  const canvas = document.createElement("canvas");
-  canvas.width = mask.width;
-  canvas.height = mask.height;
-  const ctx = canvas.getContext("2d");
-  if (!ctx) throw new Error("2d context がない");
-  const image = ctx.createImageData(mask.width, mask.height);
+type Region = { readonly x: number; readonly y: number; readonly width: number; readonly height: number };
+const CHUNK_CELLS = 128;
+const ART_PIXELS_PER_CELL = 12;
 
-  const paint = (m: TerrainMask): void => {
-    const data = image.data;
-    for (let i = 0; i < m.cells.length; i++) {
-      const solid = m.cells[i] === 1;
-      const o = i * 4;
-      data[o] = 255;
-      data[o + 1] = 255;
-      data[o + 2] = 255;
-      data[o + 3] = solid ? 255 : 0;
+const mossNoise = (x: number, y: number): number => {
+  let value = Math.imul(x + 1, 374761393) ^ Math.imul(y + 1, 668265263);
+  value = Math.imul(value ^ (value >>> 13), 1274126177);
+  return (value ^ (value >>> 16)) >>> 0;
+};
+
+const updateMask = (mask: TerrainMask, region: Region, image: ImageData, above: Uint8Array): boolean => {
+  let dirty = false;
+  for (let y = 0; y < region.height; y++) for (let x = 0; x < region.width; x++) {
+    const offset = (y * region.width + x) * 4;
+    const alpha = mask.cells[(region.y + y) * mask.width + region.x + x] === 1 ? 255 : 0;
+    if (image.data[offset + 3] !== alpha) dirty = true;
+    image.data[offset] = image.data[offset + 1] = image.data[offset + 2] = 255;
+    image.data[offset + 3] = alpha;
+  }
+  // Hanging moss reaches two cells below its surface; include the air above it.
+  for (let row = 1; row <= 3; row++) for (let x = 0; x < region.width; x++) {
+    const cell = region.y >= row ? mask.cells[(region.y - row) * mask.width + region.x + x]! : 0;
+    const index = (row - 1) * region.width + x;
+    if (above[index] !== cell) dirty = true;
+    above[index] = cell;
+  }
+  return dirty;
+};
+
+const paintMoss = (ctx: CanvasRenderingContext2D, mask: TerrainMask, region: Region, scale: number) => {
+  for (let y = Math.max(0, region.y - 2); y < region.y + region.height; y++) for (let x = 0; x < region.width; x++) {
+    const index = y * mask.width + region.x + x;
+    if (!mask.cells[index] || (y > 0 && mask.cells[index - mask.width])) continue;
+    const top = (y - region.y) * scale;
+    for (let column = 0; column < 4; column++) {
+      const worldColumn = (region.x + x) * 4 + column;
+      const hash = mossNoise(worldColumn, y), cluster = mossNoise(Math.floor(worldColumn / 7), y);
+      const left = x * scale + column * 3, depth = 12 + cluster % 12 + hash % 8;
+      ctx.fillStyle = "#294b32"; ctx.fillRect(left, top, 3, depth);
+      ctx.fillStyle = "#527b39"; ctx.fillRect(left, top, 3, depth - 5);
+      ctx.fillStyle = cluster % 3 === 0 ? "#adbd56" : "#89a747"; ctx.fillRect(left, top, 3, 3 + hash % 6);
+      ctx.fillStyle = "#89a747"; ctx.fillRect(left, top + depth - 8, 2, 3);
+      if (hash % 4 === 0) { ctx.fillStyle = "#c0c46c"; ctx.fillRect(left, top + hash % 3, 2, 2); }
     }
-    ctx.putImageData(image, 0, 0);
-  };
+  }
+};
 
-  paint(mask);
-  const texture = Texture.from(canvas);
-  texture.source.scaleMode = "nearest";
+const createChunk = (region: Region, scale: number, tile?: HTMLCanvasElement) => {
+  const canvas = document.createElement("canvas"), maskCanvas = document.createElement("canvas");
+  canvas.width = region.width * scale; canvas.height = region.height * scale;
+  maskCanvas.width = region.width; maskCanvas.height = region.height;
+  const ctx = canvas.getContext("2d"), maskContext = maskCanvas.getContext("2d");
+  if (!ctx || !maskContext) throw new Error("2d context がない");
+  ctx.imageSmoothingEnabled = false;
+  const pattern = tile ? ctx.createPattern(tile, "repeat") : null;
+  pattern?.setTransform(new DOMMatrix().translate(-region.x * scale, -region.y * scale));
+  const image = maskContext.createImageData(region.width, region.height);
+  const texture = Texture.from(canvas); texture.source.scaleMode = "nearest";
   const sprite = new Sprite(texture);
-  sprite.width = mask.width;
-  sprite.height = mask.height;
+  sprite.position.set(region.x, region.y); sprite.width = region.width; sprite.height = region.height;
+  const above = new Uint8Array(region.width * 3);
+  let painted = false;
+  const paint = (mask: TerrainMask) => {
+    const dirty = updateMask(mask, region, image, above);
+    if (painted && !dirty) return;
+    painted = true;
+    maskContext.putImageData(image, 0, 0);
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
+    ctx.drawImage(maskCanvas, 0, 0, canvas.width, canvas.height);
+    if (pattern) {
+      ctx.globalCompositeOperation = "source-in"; ctx.fillStyle = pattern;
+      ctx.fillRect(0, 0, canvas.width, canvas.height); ctx.globalCompositeOperation = "source-over";
+      paintMoss(ctx, mask, region, scale);
+      ctx.globalCompositeOperation = "destination-in";
+      ctx.drawImage(maskCanvas, 0, 0, canvas.width, canvas.height);
+      ctx.globalCompositeOperation = "source-over";
+    }
+    texture.source.update();
+  };
+  return { sprite, paint, destroy: () => { sprite.destroy(); texture.destroy(true); } };
+};
 
+export const createTerrainLayer = (mask: TerrainMask, art?: CanvasImageSource): TerrainLayer => {
+  // Match tank artwork density, with each GPU texture bounded to 1536px.
+  const scale = art ? ART_PIXELS_PER_CELL : 1;
+  const tile = art ? document.createElement("canvas") : undefined;
+  if (tile && art) {
+    // Smaller rock formations keep the tank silhouette readable against the cliff.
+    const width = "naturalWidth" in art ? art.naturalWidth : "width" in art && typeof art.width === "number" ? art.width : 256;
+    const height = "naturalHeight" in art ? art.naturalHeight : "height" in art && typeof art.height === "number" ? art.height : 256;
+    tile.height = 128;
+    tile.width = Math.max(1, Math.round(tile.height * width / height));
+    const context = tile.getContext("2d");
+    if (!context) throw new Error("2d context がない");
+    context.imageSmoothingEnabled = false; context.drawImage(art, 0, 0, tile.width, tile.height);
+  }
+  const sprite = new Container();
+  const chunks: ReturnType<typeof createChunk>[] = [];
+  for (let y = 0; y < mask.height; y += CHUNK_CELLS) for (let x = 0; x < mask.width; x += CHUNK_CELLS) {
+    const chunk = createChunk({ x, y, width: Math.min(CHUNK_CELLS, mask.width - x), height: Math.min(CHUNK_CELLS, mask.height - y) }, scale, tile);
+    chunk.paint(mask); sprite.addChild(chunk.sprite); chunks.push(chunk);
+  }
   return {
     sprite,
-    update: (m) => {
-      paint(m);
-      texture.source.update();
-    },
-    destroy: () => {
-      sprite.destroy();
-      texture.destroy(true);
-    },
+    update: next => { for (const chunk of chunks) chunk.paint(next); },
+    destroy: () => { for (const chunk of chunks) chunk.destroy(); sprite.destroy(); },
   };
 };

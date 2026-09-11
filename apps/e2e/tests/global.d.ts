@@ -5,7 +5,7 @@ type FortressPlayer = { readonly x: number; readonly hp: number };
 type FortressAim = { readonly elevation: number; readonly power: number };
 
 type FortressView = {
-  readonly control: { readonly elevation: number } | null;
+  readonly control: { readonly x: number; readonly elevation: number } | null;
   readonly phase: string;
   readonly turnNumber: number;
   readonly currentSeat: 0 | 1;

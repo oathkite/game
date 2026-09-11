@@ -1,0 +1,53 @@
+import { CLIENT_BUILD } from "@game/protocol/build";
+import { expect, it } from "vitest";
+import { WebSocket } from "ws";
+import { roomOutputSchema } from "@game/protocol/v2-rooms";
+const endpoint = process.env.EDGE_TEST_URL;
+it.skipIf(!endpoint)("runs an isolated room through the SQLite Durable Object adapter", async () => {
+  const headers = { Origin: "http://127.0.0.1:5186" }, sockets: WebSocket[] = [];
+  const created = await fetch(`${endpoint}/v2/rooms`, { method: "POST", headers }).then(r => r.json()) as { roomId: string };
+  const connect = async () => {
+    const ws = new WebSocket(`${endpoint!.replace("http", "ws")}/v2/rooms/${created.roomId}`, { headers }), messages: any[] = [];
+    sockets.push(ws);
+    ws.on("message", data => { const raw = JSON.parse(String(data)); roomOutputSchema.parse(raw); messages.push(raw); });
+    await new Promise<void>((r, reject) => { ws.once("open", r); ws.once("error", reject); });
+    return { ws, send: (m: unknown) => ws.send(JSON.stringify(m)), last: (type: string) => messages.filter(m => m.type === type).at(-1) };
+  };
+  try {
+    const a = await connect(), b = await connect();
+    const profile = { nickname: "Edge", loadout: ["cannon", "laser"] };
+    a.send({ type: "room.create", build: CLIENT_BUILD, profile });
+    await expect.poll(() => a.last("room.welcome")).toBeTruthy();
+    b.send({ type: "room.join", build: CLIENT_BUILD, roomId: created.roomId, profile });
+    await expect.poll(() => a.last("room.snapshot").room.members.length).toBe(2);
+    const edit = (client: typeof a, type: string, extra: object) => client.send({ type, version: 2, roomId: created.roomId, revision: a.last("room.snapshot").room.revision, ...extra });
+    edit(a, "room.assignTeam", { playerId: a.last("room.welcome").playerId, teamId: "t0" });
+    await expect.poll(() => a.last("room.snapshot").room.members[0].teamId).toBe("t0");
+    edit(b, "room.assignTeam", { playerId: b.last("room.welcome").playerId, teamId: "t1" });
+    await expect.poll(() => a.last("room.snapshot").room.members[1].teamId).toBe("t1");
+    edit(a, "room.ready", { ready: true }); edit(b, "room.ready", { ready: true });
+    await expect.poll(() => a.last("room.snapshot").room.members.every((p: any) => p.ready)).toBe(true);
+    edit(a, "room.start", {});
+    await expect.poll(() => a.last("lab.frame")).toBeTruthy();
+    const frame = a.last("lab.frame");
+    expect(frame).not.toHaveProperty("windState");
+    const actor = frame.actorId === a.last("room.welcome").playerId ? a : b;
+    const fire = { type: "turn.fire", version: 2, matchId: frame.matchId, turnId: 1, commandId: "edge-shot", ackMoveSeq: 0, slot: 0, facing: 1, elevation: 45, power: 35 };
+    const spectator = await connect(); spectator.send({ type: "room.spectate", build: CLIENT_BUILD, roomId: created.roomId });
+    await expect.poll(() => spectator.last("room.welcome")?.role).toBe("spectator");
+    expect(spectator.last("lab.frame").players).toHaveLength(2);
+    spectator.send(fire);
+    await expect.poll(() => spectator.last("room.error")?.reason).toBe("read-only");
+    actor.send(fire);
+    await expect.poll(() => actor.last("lab.ack")?.reason).toBe("accepted");
+    const token = actor.last("room.welcome").token;
+    actor.ws.close(); await new Promise<void>(r => actor.ws.once("close", r));
+    const resumed = await connect(); resumed.send({ type: "room.resume", build: CLIENT_BUILD, token });
+    await expect.poll(() => resumed.last("room.welcome")?.generation).toBe(2);
+    resumed.send(fire);
+    await expect.poll(() => resumed.last("lab.ack")?.reason).toBe("duplicate");
+    await expect.poll(() => resumed.last("lab.frame")?.turnId, { timeout: 12000 }).toBe(2);
+    const list = await fetch(`${endpoint}/v2/rooms`, { headers }).then(r => r.json()) as any[];
+    expect(list.find(r => r.roomId === created.roomId)).toMatchObject({ members: 2, spectators: 1, phase: "started" });
+  } finally { for (const socket of sockets) socket.close(); }
+}, 20000);

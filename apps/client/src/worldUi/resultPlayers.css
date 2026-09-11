@@ -1,0 +1,17 @@
+.battle-result-players { display:flex; flex-wrap:wrap; justify-content:center; gap:8px; width:min(680px,94vw); }
+.battle-result-player { width:76px; overflow:hidden; background:#142b3d; border:1px solid #526c80; border-bottom:3px solid var(--team); border-radius:4px; }
+.battle-result-player > svg { display:block; width:100%; aspect-ratio:1; margin:0!important; border-radius:0!important; overflow:hidden; image-rendering:pixelated; }
+.battle-result-player strong { display:block; padding:4px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; font-size:11px; color:#fff1d5; }
+.battle-result-player[data-reaction=win] > svg { animation:result-cheer 600ms ease-in-out; }
+@keyframes result-cheer { 30% { transform:translateY(-4px); } 65% { transform:translateY(0); } 80% { transform:translateY(-2px); } }
+@media(prefers-reduced-motion:reduce) { .battle-result-player[data-reaction=win] > svg { animation:none; } }
+.world-result-screen .battle-result-player { width:clamp(76px,16vh,132px); }
+@media(max-width:700px) {
+ .network-finished .battle-result-players { display:grid; grid-template-columns:repeat(4,minmax(0,1fr)); width:min(360px,94vw); }
+ .network-finished .battle-result-player { width:auto; }
+}
+.world-ui .network-finished:has(.battle-result-players) { inset:0; }
+.network-world:has(.battle-result-players) > .battle-roster,
+.network-world:has(.battle-result-players) > .battle-console,
+.network-world:has(.battle-result-players) > .network-field { visibility:hidden; }
+.network-world:has(.battle-result-players) > .network-portrait { display:none; }

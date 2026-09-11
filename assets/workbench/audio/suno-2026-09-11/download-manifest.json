@@ -1,0 +1,287 @@
+{
+  "downloadedOn": "2026-09-11",
+  "status": "downloaded; selection, editing and game integration pending",
+  "candidates": [
+    {
+      "file": "title-a.m4a",
+      "source": "https://suno.com/song/1f0aa8e9-4a51-40a3-b38d-ba2ef5597690",
+      "sha256": "6f6956940e3cd0df3c8c0924993436eac1585c5024f6b9935b77fd876f4421d4",
+      "bytes": 2589485,
+      "durationSeconds": 141.96,
+      "codec": "opus",
+      "sampleRate": 48000,
+      "channels": 2,
+      "fullDecode": "passed",
+      "downloadFilenames": [
+        "KEROPOD - Little Machines, Big Sky.m4a"
+      ]
+    },
+    {
+      "file": "title-b.m4a",
+      "source": "https://suno.com/song/0ca83429-eb8d-4577-9b21-f657bbae9721",
+      "sha256": "abbfced086c5605bd7c4fd91ee38d8d39a07f18ef961f6e6349e52957036668b",
+      "bytes": 2843518,
+      "durationSeconds": 158.28,
+      "codec": "opus",
+      "sampleRate": 48000,
+      "channels": 2,
+      "fullDecode": "passed",
+      "downloadFilenames": [
+        "KEROPOD - Little Machines, Big Sky (1).m4a"
+      ]
+    },
+    {
+      "file": "lobby-a.m4a",
+      "source": "https://suno.com/song/b6d5df2d-49bb-4ffe-bc15-b7d9a0cbb5c3",
+      "sha256": "66e0a2a73cdacf1c99609e8b00456a5335ca930e440581374f5e44a5b3028f9a",
+      "bytes": 1938033,
+      "durationSeconds": 105.6,
+      "codec": "opus",
+      "sampleRate": 48000,
+      "channels": 2,
+      "fullDecode": "passed",
+      "downloadFilenames": [
+        "KEROPOD - Moss Hangar.m4a"
+      ]
+    },
+    {
+      "file": "lobby-b.m4a",
+      "source": "https://suno.com/song/3bbd112d-dd22-4cad-a2ed-290a53846bca",
+      "sha256": "375be92ff460c4a490d84166e56bf817ca97ecb4d5b99c740beff42ba3cde869",
+      "bytes": 2437378,
+      "durationSeconds": 132.0,
+      "codec": "opus",
+      "sampleRate": 48000,
+      "channels": 2,
+      "fullDecode": "passed",
+      "downloadFilenames": [
+        "KEROPOD - Moss Hangar (1).m4a"
+      ]
+    },
+    {
+      "file": "battle-a.m4a",
+      "source": "https://suno.com/song/f28e97b5-4f4d-4b41-a439-c8d586a1af6b",
+      "sha256": "cc3604e3bb0eb28c3ce0cb8bba6bd8547660294f7dc53eb809521b1b4446bed9",
+      "bytes": 2046180,
+      "durationSeconds": 116.32,
+      "codec": "opus",
+      "sampleRate": 48000,
+      "channels": 2,
+      "fullDecode": "passed",
+      "downloadFilenames": [
+        "KEROPOD - Windward Skirmish.m4a"
+      ]
+    },
+    {
+      "file": "battle-b.m4a",
+      "source": "https://suno.com/song/e2ce4818-586c-406b-a571-262b2f01fcea",
+      "sha256": "341df8649cb86cbff034173f51faf559f9d3693d9db31eb2dcd13f09b8eddb47",
+      "bytes": 1805171,
+      "durationSeconds": 104.52,
+      "codec": "opus",
+      "sampleRate": 48000,
+      "channels": 2,
+      "fullDecode": "passed",
+      "downloadFilenames": [
+        "KEROPOD - Windward Skirmish (1).m4a"
+      ]
+    },
+    {
+      "file": "result-a.m4a",
+      "source": "https://suno.com/song/a592b6fd-ebfc-4709-9809-e7542e30c394",
+      "sha256": "0983a73217e3c79d6a94d4fbdca50b933bf85753aef27dbf63e5febbd4e4573a",
+      "bytes": 1963731,
+      "durationSeconds": 106.8,
+      "codec": "opus",
+      "sampleRate": 48000,
+      "channels": 2,
+      "fullDecode": "passed",
+      "downloadFilenames": [
+        "KEROPOD - Home to the Pond (1).m4a",
+        "KEROPOD - Home to the Pond.m4a"
+      ]
+    },
+    {
+      "file": "result-b.m4a",
+      "source": "https://suno.com/song/64076436-80dc-47bc-8ae6-bd64592389ae",
+      "sha256": "d4159c1dee28a83e4c1b5fd356e3c2a75113c68f33162aeb35e2623f44ec11d8",
+      "bytes": 1725457,
+      "durationSeconds": 92.8,
+      "codec": "opus",
+      "sampleRate": 48000,
+      "channels": 2,
+      "fullDecode": "passed",
+      "downloadFilenames": [
+        "KEROPOD - Home to the Pond (2).m4a"
+      ]
+    },
+    {
+      "file": "fire-a.m4a",
+      "source": "https://suno.com/song/6fa5c8e7-c612-43fa-baa1-9e44b23651a3",
+      "sha256": "1305934fbbc13dce7411ba7874b3979be8ca423c0035d1745e52bc5d5146d45e",
+      "bytes": 45055,
+      "durationSeconds": 2.0,
+      "codec": "opus",
+      "sampleRate": 48000,
+      "channels": 2,
+      "fullDecode": "passed",
+      "downloadFilenames": [
+        "Keropod Cannon Fire_ One Isolated Small Cartoon Mechanical Tank Cannon Shot. ....m4a"
+      ]
+    },
+    {
+      "file": "fire-b.m4a",
+      "source": "https://suno.com/song/7906ccde-85a7-4bd4-8278-5a7e26396f1f",
+      "sha256": "2da7f8d1748a1ea865f330cfa5fe99550d73b0314681d3d891f761ae821fe302",
+      "bytes": 44330,
+      "durationSeconds": 2.0,
+      "codec": "opus",
+      "sampleRate": 48000,
+      "channels": 2,
+      "fullDecode": "passed",
+      "downloadFilenames": [
+        "Keropod Cannon Fire_ One Isolated Small Cartoon Mechanical Tank Cannon Shot. ... (1).m4a"
+      ]
+    },
+    {
+      "file": "explosion-a.m4a",
+      "source": "https://suno.com/song/32b85c98-2e48-4580-b865-fb5c985d622b",
+      "sha256": "ed59ee80e1035479171983b9a2d3c01860e24a078948b3fe1ed0f5adab40afa4",
+      "bytes": 39801,
+      "durationSeconds": 2.0,
+      "codec": "opus",
+      "sampleRate": 48000,
+      "channels": 2,
+      "fullDecode": "passed",
+      "downloadFilenames": [
+        "Keropod Explosion_ One Isolated Compact Cartoon Tank-shell Explosion On Rocky....m4a"
+      ]
+    },
+    {
+      "file": "explosion-b.m4a",
+      "source": "https://suno.com/song/0430fe9e-44d4-4c2a-a5e0-c1e72db2be28",
+      "sha256": "d9771e7cbbcb2e3acada6bd33d40f7723326b291f7afa1bda42fb16848810d52",
+      "bytes": 49211,
+      "durationSeconds": 2.0,
+      "codec": "opus",
+      "sampleRate": 48000,
+      "channels": 2,
+      "fullDecode": "passed",
+      "downloadFilenames": [
+        "Keropod Explosion_ One Isolated Compact Cartoon Tank-shell Explosion On Rocky... (1).m4a"
+      ]
+    },
+    {
+      "file": "hit-a.m4a",
+      "source": "https://suno.com/song/487b0cdd-e501-4051-91da-9f5ba7789de7",
+      "sha256": "047588f145240d67798ecbdc919b8c5d2b473e72ad60e91e57f848667aeb94a8",
+      "bytes": 47492,
+      "durationSeconds": 2.0,
+      "codec": "opus",
+      "sampleRate": 48000,
+      "channels": 2,
+      "fullDecode": "passed",
+      "downloadFilenames": [
+        "Keropod Armor Hit_ Single Short Projectile Impact Against A Tiny Rounded Meta....m4a"
+      ]
+    },
+    {
+      "file": "hit-b.m4a",
+      "source": "https://suno.com/song/2fd86e42-f8dd-49ed-829b-bf9b732e884f",
+      "sha256": "6d903d36675a2473523da5c8a542c6ce8f060f24a4040baf01e47d3d15a52473",
+      "bytes": 45274,
+      "durationSeconds": 2.0,
+      "codec": "opus",
+      "sampleRate": 48000,
+      "channels": 2,
+      "fullDecode": "passed",
+      "downloadFilenames": [
+        "Keropod Armor Hit_ Single Short Projectile Impact Against A Tiny Rounded Meta... (1).m4a"
+      ]
+    },
+    {
+      "file": "tick-a.m4a",
+      "source": "https://suno.com/song/a7c6e3b4-b42f-4e6a-955e-7afe3347cded",
+      "sha256": "0726883a3421155972ae5f92f66c1a4c339a8c76953d4d253fba92b6cb41e511",
+      "bytes": 320903,
+      "durationSeconds": 17.16,
+      "codec": "opus",
+      "sampleRate": 48000,
+      "channels": 2,
+      "fullDecode": "passed",
+      "downloadFilenames": [
+        "Keropod Timer Tick_ A Single Tiny Precise Clockwork Electronic Pip, Warm Mute....m4a"
+      ]
+    },
+    {
+      "file": "tick-b.m4a",
+      "source": "https://suno.com/song/f029a224-f2e8-48d2-8b56-4320d6f7fee5",
+      "sha256": "a2a2df59300121853a35e9f4bd26fbaddde8182365302cf541c337bf989d58dd",
+      "bytes": 305258,
+      "durationSeconds": 15.2,
+      "codec": "opus",
+      "sampleRate": 48000,
+      "channels": 2,
+      "fullDecode": "passed",
+      "downloadFilenames": [
+        "Keropod Timer Tick_ A Single Tiny Precise Clockwork Electronic Pip, Warm Mute... (1).m4a"
+      ]
+    },
+    {
+      "file": "hit-confirm-a.m4a",
+      "source": "https://suno.com/song/39c43b2b-1faf-455a-be2c-4d21ae5dbbec",
+      "sha256": "ddde0aa03da8c6bc80efcda398ae7a8fa1eb68a43a97568c8fb7c93eb75c2cbc",
+      "bytes": 78489,
+      "durationSeconds": 3.16,
+      "codec": "opus",
+      "sampleRate": 48000,
+      "channels": 2,
+      "fullDecode": "passed",
+      "downloadFilenames": [
+        "Keropod Hit Confirmation_ One Concise Friendly Ascending Two-tone Electronic ....m4a"
+      ]
+    },
+    {
+      "file": "hit-confirm-b.m4a",
+      "source": "https://suno.com/song/b7e5852e-4ef4-495f-81a8-44058ad8cc2e",
+      "sha256": "83c67606cb1ac5c470fc67106fedab94cd5cbc7c1a53fbb091d7392d4e666b10",
+      "bytes": 95151,
+      "durationSeconds": 4.36,
+      "codec": "opus",
+      "sampleRate": 48000,
+      "channels": 2,
+      "fullDecode": "passed",
+      "downloadFilenames": [
+        "Keropod Hit Confirmation_ One Concise Friendly Ascending Two-tone Electronic ... (1).m4a"
+      ]
+    },
+    {
+      "file": "match-finish-a.m4a",
+      "source": "https://suno.com/song/540f531a-451e-4001-9285-8e936fce32d2",
+      "sha256": "e959715cde521c2fb18dcda020325060b4417ffa492adbcee2beadeb9ff6b804",
+      "bytes": 160685,
+      "durationSeconds": 7.2,
+      "codec": "opus",
+      "sampleRate": 48000,
+      "channels": 2,
+      "fullDecode": "passed",
+      "downloadFilenames": [
+        "Keropod Match Finish_ Compact Cheerful Four-note Chiptune And Marimba Notific....m4a"
+      ]
+    },
+    {
+      "file": "match-finish-b.m4a",
+      "source": "https://suno.com/song/5e07ac39-d2ec-4e05-a6fa-97fc3b4e7976",
+      "sha256": "2b2b8dd0b7c014a135fb730325d4c3295db7698129776a66a18fd87ee2fbf876",
+      "bytes": 127873,
+      "durationSeconds": 5.16,
+      "codec": "opus",
+      "sampleRate": 48000,
+      "channels": 2,
+      "fullDecode": "passed",
+      "downloadFilenames": [
+        "Keropod Match Finish_ Compact Cheerful Four-note Chiptune And Marimba Notific... (1).m4a"
+      ]
+    }
+  ]
+}

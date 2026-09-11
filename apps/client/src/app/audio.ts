@@ -1,38 +1,64 @@
-// 設計書 03 の 3.8。Web Audio のオシレーターで 6 つの音を合成する。矩形波と三角波だけを使う。
+import { createSampleAudio, type MusicName } from "./sampleAudio";
 
-export type SoundName = "tick" | "fire" | "explosion" | "hit" | "hitConfirm" | "finish";
+// Suno音源を再生し、取得前・取得失敗時は従来の合成音を使う。
+
+export type SoundName = "tick" | "fire" | "explosion" | "hit" | "hitConfirm" | "finish" | "matchFinish";
 
 type AudioState = {
   ctx: AudioContext | null;
   /** 全部の音をまとめて通す圧縮器。着弾で 3 つまで重なる音が割れないようにする */
   master: DynamicsCompressorNode | null;
+  output: GainNode | null;
   volume: number;
   muted: boolean;
 };
 
-const state: AudioState = { ctx: null, master: null, volume: 0.5, muted: false };
+const state: AudioState = { ctx: null, master: null, output: null, volume: 0.5, muted: false };
+
+let samples: ReturnType<typeof createSampleAudio> | null = null;
+let desiredMusic: MusicName | null = null;
+
+export const setMusic = (name: MusicName | null): void => {
+  desiredMusic = name;
+  if (samples) void samples.setMusic(name);
+};
+
+export const setAudioActive = (active: boolean): void => {
+  if (!state.ctx) return;
+  void (active ? state.ctx.resume() : state.ctx.suspend()).catch(() => {});
+};
 
 /** 最初のユーザー操作で呼び、自動再生制限を解除する */
 export const unlockAudio = (): void => {
   if (state.ctx) {
-    if (state.ctx.state === "suspended") void state.ctx.resume();
+    if (state.ctx.state === "suspended") void state.ctx.resume().catch(() => {});
+    if (samples) void samples.setMusic(desiredMusic);
     return;
   }
   if (typeof AudioContext === "undefined") return;
-  const ctx = new AudioContext();
+  let ctx: AudioContext;
+  try { ctx = new AudioContext(); } catch { return; }
   const master = ctx.createDynamicsCompressor();
   master.threshold.value = -12;
   master.ratio.value = 8;
   master.attack.value = 0.002;
   master.release.value = 0.1;
-  master.connect(ctx.destination);
+  const output = ctx.createGain();
+  output.gain.value = state.muted ? 0 : state.volume;
+  master.connect(output);
+  output.connect(ctx.destination);
   state.ctx = ctx;
   state.master = master;
+  state.output = output;
+  samples = createSampleAudio(ctx, master);
+  void samples.preload();
+  void samples.setMusic(desiredMusic);
 };
 
 export const setAudioSettings = (volume: number, muted: boolean): void => {
   state.volume = volume;
   state.muted = muted;
+  if (state.ctx && state.output) state.output.gain.setValueAtTime(muted ? 0 : volume, state.ctx.currentTime);
 };
 
 type Tone = {
@@ -44,6 +70,7 @@ type Tone = {
 };
 
 const TONES: Readonly<Record<SoundName, Tone>> = {
+  matchFinish: { type: "triangle", from: 440, to: 880, duration: 0.5, gain: 0.3 },
   tick: { type: "square", from: 1760, to: 1760, duration: 0.06, gain: 0.25 },
   fire: { type: "square", from: 440, to: 80, duration: 0.12, gain: 0.35 },
   explosion: { type: "triangle", from: 160, to: 30, duration: 0.5, gain: 0.6 },
@@ -58,6 +85,7 @@ export const playSound = (name: SoundName): void => {
   const ctx = state.ctx;
   const master = state.master;
   if (!ctx || !master || state.muted || state.volume <= 0) return;
+  if (samples?.playEffect(name)) return;
   const tone = TONES[name];
   const t0 = ctx.currentTime;
   const osc = ctx.createOscillator();
@@ -65,7 +93,7 @@ export const playSound = (name: SoundName): void => {
   osc.type = tone.type;
   osc.frequency.setValueAtTime(tone.from, t0);
   osc.frequency.exponentialRampToValueAtTime(Math.max(1, tone.to), t0 + tone.duration);
-  gain.gain.setValueAtTime(tone.gain * state.volume, t0);
+  gain.gain.setValueAtTime(tone.gain, t0);
   gain.gain.exponentialRampToValueAtTime(0.001, t0 + tone.duration);
   osc.connect(gain).connect(master);
   osc.start(t0);
