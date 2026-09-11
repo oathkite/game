@@ -25,7 +25,7 @@
 | 世界UI最終原案一致 | 浮島背景・岩盤/厚い草地・濃紺パネル・残り時間リング・円形角度計・100分割/指針・実弾アイコンを実装 | 横長岩壁、共通カメラ/タッチ配色、画面端の名前/HP補正を追加。地形表層や情報密度も含めて最終比較を継続。8人HUDの番号/HP重複を修正し3browserの対戦・帰還と小画面配置を検証。人間の最終承認は未記録 |
 | 全参加者の結果表現 | 共通ResultPlayers、勝利/敗北/引き分けの表情。8context全画面の勝敗共有、667px4列/2段、390px縦向き帰還を3browserで確認 | 表情・操作の自動検証済み。最終デザイン承認は別 |
 | クライアント/ゲーム内のパイロット整合 | HUD/結果の緑肌・オリーブ服に合わせた搭乗用SVG16コマをゲーム内/ロビーへ接続。二値alpha・共通足元・大破/復帰を検証。公開buildで3browserの再入場/GPU転送/実画像を確認 | 色/服の不一致を修正。簡略化した横向きの顔とHUDの最終見た目比較・承認は未完 |
-| 統合テスト | 9189169でpnpm test成功（client235件、server75件、edge専用3件skip）、全対象typecheck成功。配信buildのChromium/Firefox/WebKit各24件、計72件成功 | 起動・音・戻る操作・案内・設定中timer・翻訳・pilot再入場を統合検証。実機/実地域/実DO容量の代用にしない |
+| 統合テスト | e530142でpnpm test成功（protocol24、sim107、maps68、engine142、server78＋edge専用4skip、client236）、全対象typecheck成功。配信buildのChromium/Firefox/WebKit各30件、計90件成功 | 起動・音・戻る操作・案内・設定中timer・翻訳・pilot再入場を統合検証。実機/実地域/実DO容量の代用にしない |
 | BGM・効果音 | Sunoの全20候補を取得・デコード検証。暫定10音源を加工しBGMシーン切替・効果音を組み込み。音声E2EはChromium/Firefox/WebKitで成功 | ユーザーが音楽の方向性を確認。全効果音・ループ接続の最終評価は別。Opus配信と互換fallbackを追加。加工条件・検証はevidence/suno/2026-09-11.md |
 | 正式art pack | runtime manifest/hash/fidelity check | 原素材の人間承認を自動記録しない。正式pack登録条件を残す |
 | 実機・browser対応 | Chromium/Firefox/WebKit配信全36件と各8接続オンライン対戦（取得失敗の繰返し復帰を含む） | 自動試験通過。実iOS/Android/Safari/Edgeの入室〜結果は別途必要 |
@@ -60,3 +60,5 @@
 2026-09-11統合検証更新: 9189169で全体テスト（protocol24、sim107、maps68、engine141、server75＋edge専用3skip、client235）と全対象typecheck成功。配信72件は2.9分で完走し、追加した公開一覧・地域自動選択と既存の起動/音/戻る操作/練習/設定を3browserで確認。初期タイトル最大1,862,785B、初回練習まで最大7,833,653B。同一headのCI validate成功（run34588450667）。正式art pack未登録の通知は残る。新たに復元失敗隔離・地形checkpoint/短いlog・期限付きdeep-link tokenの不足を正本23章との照合で記録し、正常系の成功で完了扱いしない。
 
 2026-09-11保存基準測定: 8人混合武器fixtureの69/75発完走で、操作中Room snapshot最大17,058/18,942B、最終地形op8,132/9,200B、列圧縮mask3,914/4,273Bを測定。Node復元100回p95は約3.121/2.512ms。地形履歴の分離保存とcheckpoint実装前の基準をevidence/storageに保存。実DO費用・最悪条件の測定とは区別する。
+
+2026-09-11統合検証更新: e530142（招待token・地域選択・復元隔離・地形checkpoint・全武器HUDを含む）で全体testと全対象typecheck成功。配信90件が3.5分で成功。cold title最大1,862,964B、初回練習まで最大7,833,871B。CI validateも同一headで成功（run34591872097）。今回の配信試験ではRoom error系をstubで確認し、実DO再起動や8人対戦の別検証を再実行したとは扱わない。正式art pack未登録の通知は継続。
