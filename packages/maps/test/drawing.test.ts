@@ -29,7 +29,7 @@ describe("drawing", () => {
   it("洞窟のような 1 列に帯が 2 つある地形は 2 枚以上の板になる", () => {
     const n = slabsFromColumns(columnsOfMask(getMap("cave").build())).length;
     expect(n).toBeGreaterThanOrEqual(2);
-    expect(n).toBeLessThanOrEqual(3);
+    expect(slabs(slabsFromColumns(columnsOfMask(getMap("cave").build()))).cells).toEqual(getMap("cave").build().cells);
   });
 
   it("1 列だけの板（細い柱）も消えずに再現する", () => {

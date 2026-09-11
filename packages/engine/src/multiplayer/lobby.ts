@@ -17,7 +17,7 @@ export type PreparedMatch = {
   readonly members: readonly (LobbyProfile & { readonly playerId: string; readonly teamId: string })[];
   readonly map: MapSpec;
 };
-const copyMap = (map: MapSpec): MapSpec => ({ ...map, surface: [...map.surface],
+const copyMap = (map: MapSpec): MapSpec => ({ ...map, ...(map.voids ? { voids: map.voids.map(op => ({ ...op })) } : {}), surface: [...map.surface],
   spawns: Object.fromEntries(Object.entries(map.spawns).map(([count, xs]) => [count, [...xs!]])) });
 const memberOf = (playerId: string, raw: LobbyProfile): LobbyMember => {
   if (!playerId.trim()) throw new Error("invalid player");

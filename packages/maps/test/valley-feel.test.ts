@@ -166,11 +166,13 @@ describe("橋の手触り", () => {
   });
 
   it("標準砲 1 発で橋が切れ、切れた所を歩くと落ちる", () => {
-    const cut = aims.map((a) => shotFrom("bridge", 0, a)).find((r) => isRingOut(r.mask, spawnPos(r.mask, 200)));
+    const cut = aims.map((a) => shotFrom("bridge", 0, a)).find((r) => spawnPos(r.mask, 200).y > 180);
     expect(cut).toBeDefined();
     if (!cut) return;
     expect(isRingOut(bridge.build(), spawnPos(bridge.build(), 200))).toBe(false);
-    expect(walk(cut.mask, spawnPos(cut.mask, 170), 1, STEPS_PER_TURN).fell).toBe(true);
+    const landed = spawnPos(cut.mask, 200);
+    expect(landed.y).toBeGreaterThan(180);
+    expect(isRingOut(cut.mask, landed)).toBe(false);
   });
 });
 

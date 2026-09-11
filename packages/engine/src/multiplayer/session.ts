@@ -41,7 +41,7 @@ export const createBattleSession = (battle: ReturnType<typeof createBattle>, mat
   stats: Object.fromEntries(battle.players.map(p => [p.playerId, { shots: 0, enemyDamage: 0, friendlyDamage: 0, selfDamage: 0 }])),
   build: matchBuild(battle.map), windState: createBattleWind(windSeed),
   loadouts: copyLoadouts(battle, loadouts), ruleSetVersion: RULE_SET_VERSION,
-  ...battle, matchId, startedAt: now, phase: "acting", result: { type: "ongoing" }, terrainOps: [], replay: null, lastFire: null,
+  ...battle, matchId, startedAt: now, phase: "acting", result: { type: "ongoing" }, replay: null, lastFire: null,
   movement: movementFor({ ...battle, matchId }, now, 1),
 });
 const advance = (state: BattleSession, now: number): BattleSession => {

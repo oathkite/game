@@ -1,3 +1,4 @@
+import { refineTerrain } from "./refine.js";
 import { MAP_NAMES, RANDOM_MAP, type MapChoice, type MapName } from "@game/protocol";
 import { spawnPos, type TankPos, type TerrainMask } from "@game/sim";
 import { heightsFromProfile, merge, slabs, solidBelow } from "./profile.js";
@@ -150,7 +151,8 @@ const towers: MapDefinition = {
     ]),
 };
 
-const definitions: Readonly<Record<MapName, MapDefinition>> = { valley, mountain, island, plain, terrace, bridge, cave, towers };
+const originals: Readonly<Record<MapName, MapDefinition>> = { valley, mountain, island, plain, terrace, bridge, cave, towers };
+const definitions = Object.fromEntries(Object.entries(originals).map(([name, map]) => [name, { ...map, build: () => refineTerrain(map.build(), map.spawns, map.name) }])) as Record<MapName, MapDefinition>;
 
 /** 部屋の設定を対戦のマップに解く。ランダムは rng で 8 枚から等確率に選ぶ。rng は [0, 1) を返す */
 export const resolveMapChoice = (choice: MapChoice, rng: () => number): MapName => {

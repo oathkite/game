@@ -28,7 +28,7 @@ for (const map of MULTIPLAYER_MAPS) for (const count of [2, 3, 4, 5, 6, 7, 8]) {
       const next = tickSession(restored, restored.replay!.endsAt);
       expect(next.phase).not.toBe("replaying");
       expect(next).toEqual(tickSession(shot.state, shot.state.replay!.endsAt));
-      expect(initial.terrainOps).toEqual([]);
+      expect(initial.terrainOps).toEqual(map.voids ?? []);
       expect(initial.players.every(p => p.hp === 100)).toBe(true);
     }
   });
