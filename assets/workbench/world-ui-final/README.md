@@ -37,3 +37,11 @@
 - Prompt: square full-bleed tileable cliff material; 6–8 columns of broad angular basalt slabs, charcoal/olive planes, warm small highlights and sparse moss; no cobblestones, sky, grass border, UI or characters. Readable at a 256px runtime repeat.
 - Selected for runtime after desktop screenshot comparison. Pixel density and the large cliff fractures are closer to the design reference than the small round stones in v1. Repeated motifs remain visible; full scene fidelity and formal human art approval remain pending.
 - Source preserved and encoded losslessly by encode-world.py. Runtime grass is drawn within the collision mask and can hang up to 31 art pixels below a surface.
+
+## terrain-cliff-wide-v3.png
+
+- Built-in image generation, original `exec-f65793c4-23f5-4d76-89bd-de7bdb7af1dd.png`, preserved unchanged (2172×724). No API/CLI generation.
+- Prompt requested a 3:1 continuous angular basalt cliff, varied geological masses, charcoal crevices and warm highlights; no vegetation, objects or UI, uniform pixel density and tileable edges.
+- Runtime uses the source aspect ratio: 768×256 rather than compressing the entire image into 256×256. This spaces horizontal repetition three times farther apart. GPU chunk bounds and collision alpha are unchanged.
+- Desktop screenshot review confirms larger irregular rock faces and fewer repeating columns. Periodic motifs and surface-step geometry remain; seamless generation is a request, not a mathematical guarantee. Human final approval is pending.
+- Lossless WebP: 1,539,808 bytes, an increase of 271,980 bytes over v2. Four viewport scene tests and square/wide pattern continuity tests pass; transfer budgets must be rechecked on the next production build.

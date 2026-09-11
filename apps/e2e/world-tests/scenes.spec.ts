@@ -74,14 +74,14 @@ for (const size of [{ width: 1440, height: 900 }, { width: 844, height: 390 }, {
   });
 }
 
-test("terrain art preserves collision alpha after carving and ordinary terrain stays white", async ({ page }) => {
+for (const ratio of [1, 3]) test(`terrain art preserves collision alpha and ${ratio}:1 tile proportions`, async ({ page }) => {
   await page.goto("/?prototype=world");
-  const result = await page.evaluate(async () => {
+  const result = await page.evaluate(async (ratio) => {
     const modulePath = "/src/game/terrainLayer.ts";
     const { createTerrainLayer } = await import(modulePath);
-    const tile = document.createElement("canvas"); tile.width = tile.height = 8;
-    tile.getContext("2d")!.fillRect(0, 0, 8, 8);
-    tile.getContext("2d")!.fillStyle = "#ff0000"; tile.getContext("2d")!.fillRect(0, 0, 4, 8);
+    const tile = document.createElement("canvas"); tile.width = 8 * ratio; tile.height = 8;
+    tile.getContext("2d")!.fillRect(0, 0, 8 * ratio, 8);
+    tile.getContext("2d")!.fillStyle = "#ff0000"; tile.getContext("2d")!.fillRect(0, 0, 4 * ratio, 8);
     const mask = { width: 300, height: 140, cells: new Uint8Array(300 * 140).fill(1) };
     const carved = { ...mask, cells: new Uint8Array(mask.cells) };
     for (const index of [27, 127, 128, 255, 256, 127 * 300 + 128, 128 * 300 + 128]) carved.cells[index] = 0;
@@ -96,7 +96,7 @@ test("terrain art preserves collision alpha after carving and ordinary terrain s
         if (pixels[(y * canvas.width + x) * 4 + 3] !== carved.cells[cell]! * 255) matches = false;
       }
       for (const x of [0, canvas.width - 1]) {
-        const expected = (sprite.x * scale + x) % 256 < 128 ? 255 : 0;
+        const expected = (sprite.x * scale + x) % (256 * ratio) < 128 * ratio ? 255 : 0;
         // Sample below the hanging moss (up to 31 art pixels deep).
         if (pixels[(48 * canvas.width + x) * 4] !== expected) continuous = false;
       }
@@ -108,7 +108,7 @@ test("terrain art preserves collision alpha after carving and ordinary terrain s
     const white = Array.from(plainCanvas.getContext("2d")!.getImageData(0, 0, 1, 1).data);
     plain.destroy();
     return { matches, continuous, white, chunks };
-  });
+  }, ratio);
   expect(result.matches).toBe(true);
   expect(result.continuous).toBe(true);
   expect(result.white).toEqual([255, 255, 255, 255]);
