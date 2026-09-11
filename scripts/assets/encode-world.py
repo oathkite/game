@@ -14,7 +14,7 @@ FILES = {
     "lobby": "world-ui-v1/lobby-v1.png",
     "settings": "world-ui-v1/settings-v1.png",
     "result": "world-ui-v1/result-v1.png",
-    "terrain": "world-ui-final/terrain-cliff-wide-v3.png",
+    "terrain": "world-ui-final/terrain-cliff-v4.png",
     "leaf": "world-ui-v1/leaf-v1.png",
     "panel": "world-ui-v1/panel-v1.png",
     "button": "world-ui-v1/button-v2.png",

@@ -6,8 +6,8 @@
 | 要件 | 現在の証拠 | 判定・次の作業 |
 | --- | --- | --- |
 | cold start操作可能p95 | startup-tests、10Mbps/150ms・cache無効20回、p95 684.1ms | Chromiumローカル配信で3秒条件通過。画像完了・実機CPU・実地域DNS/TLSは別 |
-| 初期タイトル転送2MB | 音源圧縮後のproduction-tests/entry.spec.ts、3browserのcold新context、最大1,860,703B | ローカル配信buildで通過。実地域の起動時間とは別 |
-| 初回対戦まで8MB | 音源追加で11,990,930Bに回帰したためOpus配信を追加。修正後の3browser練習最大7,677,327B。音源追加・HUD修正後の独立8context対戦も3browserで最大7,682,043B | 圧縮音源対応3browserのローカル配信buildで通過。非対応時はMP3/WAVへ戻るため転送量が増える。実機・実地域は別 |
+| 初期タイトル転送2MB | 音源圧縮後のproduction-tests/entry.spec.ts、3browserのcold新context、最大1,860,696B | ローカル配信buildで通過。実地域の起動時間とは別 |
+| 初回対戦まで8MB | 音源追加で11,990,930Bに回帰したためOpus配信を追加。修正後の3browser練習地形v4反映後の最大7,831,011B。音源追加・HUD修正後の独立8context対戦も3browserで最大7,682,043B | 圧縮音源対応3browserのローカル配信buildで通過。非対応時はMP3/WAVへ戻るため転送量が増える。実機・実地域は別 |
 | 独立8クライアントで試合完走 | eight-players.spec.ts、独立8 contextで4v4入室→準備→射撃共有→青4名降参→全員同じ成績→8名帰還選択→部屋復帰 | Chromium/Firefox/WebKit配信build・local edgeで通過。射撃のみの決着は下行で追加確認。実機の証拠とは別 |
 | 射撃だけで8browser完走 | natural-match.config.ts、3browser各8contextの4v4。23/24/24発で勝利、毎turnの受信state一致、全員帰還。履歴をevidence/natural-matchへ保存 | moss-valley・既定2武器・各1シナリオで確認。操作は通常WS発射コマンドを試験用に自動送信。人間の操作/公平感・全条件の証明とは別 |
 | 1時間soak | Node100部屋/800接続・送受信各125ms・実ファイル保存、3600秒完走。再戦3500回/移動187021回 | ローカル試験通過。部屋分離・重複拒否・復帰・保存復元を検証。実DO容量・全client描画一致の保証とは別 |
@@ -28,3 +28,5 @@
 購入・rank・自由文チャットを今回の完成条件に追加しない。公開前ゲート候補と実装機能は区別する。
 
 2026-09-11追記: 過去の統合テスト総数813件は内訳との整合を確認できないため撤回し、上表は実行結果とclient件数で記載する。276a091で草の均一な縁を斑状の房へ調整。地形alpha・比率・区画境界更新のブラウザ3件とclient/e2e型チェック成功。原案全体への一致を証明するものではない。
+
+2026-09-11地形追記: 内蔵画像生成の岩盤v4を反映。原本はworkbenchに保持し、runtimeのRGBA一致・破壊mask・区画更新・3browserの配信量を検証。詳細はevidence/ui/2026-09-11-terrain.md。完全なseamlessや最終原案一致を証明するものではない。
