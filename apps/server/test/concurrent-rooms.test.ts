@@ -86,6 +86,7 @@ it(`keeps ${roomCount} simultaneous eight-player battles isolated through firing
       expect(performance.now() - probeAt).toBeGreaterThanOrEqual(delayMs * 2 - 2);
       const frame = battle.clients[0]!.last("lab.frame")!;
       const actor = battle.clients.find(client => client.last("room.welcome")!.playerId === frame.actorId)!;
+      await new Promise(resolve => setTimeout(resolve, Math.max(0, (frame.opening?.endsAt ?? 0) - Date.now())));
       actor.send({ version: 2, type: "move.command", matchId: frame.matchId, turnId: frame.turnId, commandId: "same-move-in-each-room", moveSeq: 1, direction: 1, steps: 1 });
       await poll(() => battle.clients.every(client => client.last("lab.frame")?.movement.ackMoveSeq === 1)).toBe(true);
       const shot = { type: "turn.fire", version: 2, matchId: frame.matchId, turnId: frame.turnId,
@@ -151,7 +152,7 @@ it(`keeps ${roomCount} simultaneous eight-player battles isolated through firing
         await poll(() => battle.clients.every(client => client.last("room.pong")?.nonce === nonce)).toBe(true);
         const frame = battle.clients[0]!.last("lab.frame")!;
         expect(frame.phase).toBe("acting");
-        if (frame.movement.stepsLeft > 0 && frame.deadlineAt - Date.now() > 2000) {
+        if (Date.now() >= (frame.opening?.endsAt ?? 0) && frame.movement.stepsLeft > 0 && frame.deadlineAt - Date.now() > 2000) {
           const actor = battle.clients.find(client => client.last("room.welcome")!.playerId === frame.actorId)!;
           const seq = frame.movement.ackMoveSeq + 1;
           soakMoves++;

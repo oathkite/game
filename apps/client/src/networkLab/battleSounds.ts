@@ -1,7 +1,10 @@
+import { weaponSound } from "@/app/weaponSounds";
+import type { WeaponId } from "@game/protocol";
 import type { LabFrame } from "@game/protocol/v2-lab";
 import type { SoundName } from "@/app/audio";
 export type SoundFrame = Pick<LabFrame, "matchId" | "turnId" | "phase"> & {
   readonly replay: null | Pick<NonNullable<LabFrame["replay"]>, "startsAt" | "endsAt" | "ticks"> & {
+    readonly shooter?: { readonly weapon: WeaponId };
     readonly paths: readonly { readonly launchTick: number }[];
     readonly impacts: readonly { readonly tick: number; readonly damage: readonly { readonly amount: number }[] }[];
   };
@@ -27,8 +30,8 @@ export const createBattleSounds = () => {
         const at = start + tick / Math.max(1, replay.ticks) * duration;
         return at > from && at <= now;
       };
-      if (replay.paths.some(path => crossed(path.launchTick))) sounds.add("fire");
-      if (replay.impacts.some(impact => crossed(impact.tick))) sounds.add("explosion");
+      if (replay.paths.some(path => crossed(path.launchTick))) sounds.add(weaponSound(replay.shooter?.weapon ?? "cannon", "fire"));
+      if (replay.impacts.some(impact => crossed(impact.tick))) sounds.add(weaponSound(replay.shooter?.weapon ?? "cannon", "impact"));
       if (replay.impacts.some(impact => crossed(impact.tick) && impact.damage.some(damage => damage.amount > 0))) sounds.add("hit");
     }
     return [...sounds];

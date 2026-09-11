@@ -1,3 +1,6 @@
+import { openingPose } from "./openingTour";
+import { StartSignal } from "./StartSignal";
+import { createFallMotion } from "./fallMotion";
 import { loadProjectileArt } from "@/worldUi/projectileArt";
 import { loadImpactArt } from "./impactSprites";
 import { useLanguage } from "@/i18n/locale";
@@ -18,14 +21,16 @@ import type { presentLabReplay } from "@/networkLab/labReplay";
 import { loadTerrainArt, worldArt } from "./assets";
 import { WindLeaves } from "./WindLeaves";
 
-type Props = { readonly followTurns?: boolean; readonly blocked?: boolean; readonly frame: LabFrame; readonly players: LabFrame["players"]; readonly presentation: ReturnType<typeof presentLabReplay>; readonly elevation: number; readonly ownId: string; readonly selectedWeapon?: WeaponId };
+type Props = { readonly serverNow: number; readonly onSettling?: (settling: boolean) => void; readonly followTurns?: boolean; readonly blocked?: boolean; readonly frame: LabFrame; readonly players: LabFrame["players"]; readonly presentation: ReturnType<typeof presentLabReplay>; readonly elevation: number; readonly ownId: string; readonly selectedWeapon?: WeaponId };
 const baseTerrain = (frame: LabFrame) => maskFromHeights(frame.map.surface, frame.map.height);
 export const NetworkField = (props: Props) => {
   const host = useRef<HTMLDivElement>(null), mini = useRef<HTMLCanvasElement>(null), latest = useRef(props); latest.current = props;
   const rig = useMemo(createCameraRig, []), drag = useRef<{ x: number; y: number; at: number } | null>(null);
   const { t } = useLanguage();
+  const [signal, setSignal] = useState(false);
   const [loaded, setLoaded] = useState(false), [error, setError] = useState(false);
-  const focus = () => { const p = latest.current.players.find(p => p.playerId === latest.current.frame.actorId) ?? latest.current.frame.players.find(p => p.playerId === latest.current.frame.actorId); if (p) rig.focus({ x: p.x, y: p.y - 6 }, "actor", matchMedia("(prefers-reduced-motion: reduce)").matches); };
+  const openingActive = () => Boolean(latest.current.frame.opening && latest.current.serverNow < latest.current.frame.opening.endsAt);
+  const focus = () => { if (openingActive()) return; const p = latest.current.players.find(p => p.playerId === latest.current.frame.actorId) ?? latest.current.frame.players.find(p => p.playerId === latest.current.frame.actorId); if (p) rig.focus({ x: p.x, y: p.y - 6 }, "actor", matchMedia("(prefers-reduced-motion: reduce)").matches); };
   useEffect(() => {
     const element = host.current; if (!element) return;
     let disposed = false, renderer: Renderer | null = null, art: SpriteTankFactory | null = null, stop = () => {};
@@ -38,6 +43,7 @@ export const NetworkField = (props: Props) => {
       effects = await loadImpactArt();
       if (disposed) { art.destroy(); effects.destroy(); return; }
       let mask = baseTerrain(latest.current.frame), previousSize = "", terrainKey = "", turnKey = "", replayKey = -1;
+      const falls = createFallMotion(); let settling = false, wasOpening = false, signalVisible = false, fallMatch = "";
       const facing = new Map<string, -1 | 1>();
       const projectileTextures = await loadProjectileArt();
       if (disposed) return;
@@ -57,14 +63,37 @@ export const NetworkField = (props: Props) => {
         if (frame.phase === "acting" && latest.current.selectedWeapon) art!.setWeapon(frame.players.findIndex(p => p.playerId === ownId), latest.current.selectedWeapon);
         const shot = frame.phase === "replaying" ? frame.replay?.shooter : null;
         if (shot) { facing.set(shot.playerId, shot.facing); art!.setWeapon(frame.players.findIndex(p => p.playerId === shot.playerId), shot.weapon); }
-        players.forEach((p, i) => r.setTank(i, { x: p.x, y: p.y, tilt: tiltOf(mask, { x: Math.round(p.x), y: Math.round(p.y) }), facing: facing.get(p.playerId) ?? 1,
-          elevation: p.playerId === shot?.playerId ? shot.elevation : p.playerId === ownId ? elevation : 45, hp: p.eliminated ? 0 : p.hp, visible: p.y < frame.map.height, falling: presentation.fallingIds.includes(p.playerId), shotFlashes: p.playerId === shot?.playerId ? presentation.shotFlashes : [], recoil: p.playerId === shot?.playerId ? presentation.recoil : 0, aiming: frame.phase === "acting" && p.playerId === ownId && p.playerId === frame.actorId, flash: presentation.effects.some(effect => effect.hitIds.includes(p.playerId)) }));
-        const actor = players.find(p => p.playerId === frame.actorId); if (actor && frame.phase === "acting") rig.actor({ x: actor.x, y: actor.y - 6 });
+        if (fallMatch !== frame.matchId) { falls.reset(); fallMatch = frame.matchId; }
+        const now = performance.now(), reduced = matchMedia("(prefers-reduced-motion: reduce)").matches;
+        let ownFalling = false;
+        const shown = players.map(p => {
+          const motion = falls.sample(p.playerId, p.y, now, reduced || frame.phase !== "acting");
+          if (p.playerId === ownId) ownFalling = motion.falling;
+          return { ...p, ...motion };
+        });
+        if (settling !== ownFalling) { settling = ownFalling; latest.current.onSettling?.(settling); }
+        shown.forEach((p, i) => r.setTank(i, { x: p.x, y: p.y, tilt: tiltOf(mask, { x: Math.round(p.x), y: Math.round(p.y) }), facing: facing.get(p.playerId) ?? 1,
+          elevation: p.playerId === shot?.playerId ? shot.elevation : p.playerId === ownId ? elevation : 45, hp: p.eliminated ? 0 : p.hp, visible: p.y < frame.map.height, falling: p.falling || presentation.fallingIds.includes(p.playerId), shotFlashes: p.playerId === shot?.playerId ? presentation.shotFlashes : [], recoil: p.playerId === shot?.playerId ? presentation.recoil : 0, aiming: frame.phase === "acting" && p.playerId === ownId && p.playerId === frame.actorId, flash: presentation.effects.some(effect => effect.hitIds.includes(p.playerId)) }));
+        const actor = shown.find(p => p.playerId === frame.actorId); if (actor && frame.phase === "acting") rig.actor({ x: actor.x, y: actor.y - 6 });
         if (frame.replay && replayKey !== frame.replay.startsAt) { replayKey = frame.replay.startsAt; bullet = r.projectile("yellow", frame.replay.shooter.weapon); art!.setWeapon(frame.players.findIndex(p => p.playerId === frame.replay!.shooter.playerId), frame.replay.shooter.weapon); const p = presentation.bullets[0]; if (p) rig.focus(p, "shot"); }
         bullet.clear();
         for (let i = 0; i < 9; i++) { const p = presentation.bullets[i]; bullet.setBullet(i, p?.x ?? null, p?.y ?? 0, p?.angle ?? 0); }
         presentation.effects.forEach((effect, index) => bullet.setBlast(String(index), effect.cx, effect.cy, effect.radius, true, false, matchMedia("(prefers-reduced-motion: reduce)").matches ? 1 : effect.frame));
         const first = presentation.bullets[0]; if (first) rig.shot(first);
+        const opening = frame.opening && latest.current.serverNow < frame.opening.endsAt;
+        if (opening) {
+          const order = frame.opening!.playerIds.flatMap(id => players.filter(p => p.playerId === id));
+          const tour = openingPose(latest.current.serverNow - frame.opening!.startsAt, order, frame.map,
+            { width: size.mapWidth, height: size.mapHeight, scale: cell }, reduced);
+          r.setLayout({ ...size, cell: tour.scale });
+          rig.resize({ width: size.mapWidth, height: size.mapHeight, scale: tour.scale }, rig.get().bounds);
+          rig.focus(tour.center, "actor", true);
+          if (signalVisible !== tour.start) { signalVisible = tour.start; setSignal(tour.start); }
+        } else if (wasOpening) {
+          r.setLayout(size); rig.resize({ width: size.mapWidth, height: size.mapHeight, scale: cell }, rig.get().bounds);
+          signalVisible = false; setSignal(false); focus();
+        }
+        wasOpening = Boolean(opening); element.dataset.opening = String(Boolean(opening));
         const center = rig.tick(dt, performance.now(), matchMedia("(prefers-reduced-motion: reduce)").matches);
         const offset = worldToScreen({ x: 0, y: 0 }, center, rig.get().viewport); r.setCameraOffset(Math.round(offset.x), Math.round(offset.y));
         drawOverview(mini.current, mask, players, rig.get());
@@ -79,7 +108,7 @@ export const NetworkField = (props: Props) => {
     let turn = "", selected = "";
     const down = (e: KeyboardEvent) => {
       const { frame, players, blocked } = latest.current;
-      if (e.repeat || e.ctrlKey || e.metaKey || e.altKey || e.shiftKey || blocked || innerHeight > innerWidth || (e.target instanceof HTMLElement && e.target.matches("input,select,textarea,[contenteditable]"))) return;
+      if (e.repeat || e.ctrlKey || e.metaKey || e.altKey || e.shiftKey || (blocked || Boolean(frame.opening && latest.current.serverNow < frame.opening.endsAt)) || innerHeight > innerWidth || (e.target instanceof HTMLElement && e.target.matches("input,select,textarea,[contenteditable]"))) return;
       if (e.code !== "Tab" || frame.phase === "finished") return;
       e.preventDefault();
       if (drag.current) return;
@@ -97,16 +126,17 @@ export const NetworkField = (props: Props) => {
   }, [rig]);
   const point = (e: PointerEvent<HTMLDivElement>) => { const box = e.currentTarget.getBoundingClientRect(); return { x: e.clientX - box.left, y: e.clientY - box.top }; };
   return <div className="network-field" style={{ backgroundImage: `url(${worldArt.background})` }}>
+    <StartSignal visible={signal} />
     <WindLeaves wind={props.frame.wind} />
     <div ref={host} className="network-pixi" data-testid="network-world" data-loaded={loaded} data-positions={JSON.stringify(props.players)} tabIndex={0} aria-label={t("対戦フィールド。ドラッグ・ホイールで見回す、Cで手番へ")} onKeyDown={e => { if (e.key.toLowerCase() === "c") focus(); }}
-      onWheel={e => { if (!drag.current && !e.ctrlKey) wheelPan(rig, e.deltaX, e.deltaY, e.deltaMode); }}
-      onPointerDown={e => { if (!e.isPrimary || e.button !== 0) return; e.currentTarget.setPointerCapture(e.pointerId); drag.current = { ...point(e), at: performance.now() }; rig.stop(); }}
-      onPointerMove={e => { if (!e.isPrimary) return; const p = point(e), now = performance.now(); if (drag.current) { rig.pan({ x: p.x - drag.current.x, y: p.y - drag.current.y }, now - drag.current.at, now); drag.current = { ...p, at: now }; } else if (e.pointerType === "mouse") rig.edge(p, now); }}
+      onWheel={e => { if (!openingActive() && !drag.current && !e.ctrlKey) wheelPan(rig, e.deltaX, e.deltaY, e.deltaMode); }}
+      onPointerDown={e => { if (openingActive() || !e.isPrimary || e.button !== 0) return; e.currentTarget.setPointerCapture(e.pointerId); drag.current = { ...point(e), at: performance.now() }; rig.stop(); }}
+      onPointerMove={e => { if (openingActive() || !e.isPrimary) return; const p = point(e), now = performance.now(); if (drag.current) { rig.pan({ x: p.x - drag.current.x, y: p.y - drag.current.y }, now - drag.current.at, now); drag.current = { ...p, at: now }; } else if (e.pointerType === "mouse") rig.edge(p, now); }}
       onPointerUp={e => { if (!drag.current) return; drag.current = null; rig.releasePan(performance.now()); if (e.currentTarget.hasPointerCapture(e.pointerId)) e.currentTarget.releasePointerCapture(e.pointerId); }}
       onPointerCancel={() => { drag.current = null; rig.stop(); }} onPointerLeave={() => { if (!drag.current) rig.stop(); }} onBlur={() => rig.stop()} />
     {!loaded && <p className="network-loading" role="status">{error ? t("素材を読み込めませんでした。再読み込みしてください。") : t("フィールドを準備しています…")}</p>}
-    <button className="network-focus" onClick={focus} aria-label={t("手番へ戻る")}>◎</button>
-    <button className="network-overview" aria-label={t("全体図からカメラを移動")} onClick={e => { const box = e.currentTarget.getBoundingClientRect(); rig.focus(e.detail === 0 ? { x: props.frame.map.width / 2, y: props.frame.map.height / 2 } : { x: (e.clientX - box.left) / box.width * props.frame.map.width, y: (e.clientY - box.top) / box.height * props.frame.map.height }, "manual", true); }}><canvas ref={mini} width="200" height="90" /></button>
+    <button className="network-focus" disabled={openingActive()} onClick={focus} aria-label={t("手番へ戻る")}>◎</button>
+    <button className="network-overview" disabled={openingActive()} aria-label={t("全体図からカメラを移動")} onClick={e => { const box = e.currentTarget.getBoundingClientRect(); rig.focus(e.detail === 0 ? { x: props.frame.map.width / 2, y: props.frame.map.height / 2 } : { x: (e.clientX - box.left) / box.width * props.frame.map.width, y: (e.clientY - box.top) / box.height * props.frame.map.height }, "manual", true); }}><canvas ref={mini} width="200" height="90" /></button>
   </div>;
 };
 const drawOverview = (canvas: HTMLCanvasElement | null, mask: ReturnType<typeof baseTerrain>, players: LabFrame["players"], camera: ReturnType<ReturnType<typeof createCameraRig>["get"]>) => {

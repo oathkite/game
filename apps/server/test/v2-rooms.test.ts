@@ -45,6 +45,7 @@ it("isolates rooms, authenticates edits, starts chosen equipment and resumes the
     expect(other.last("lab.frame")).toBeUndefined();
     expect(other.last("room.snapshot").room.members).toHaveLength(1);
     const frame = a.last("lab.frame"), shooter = frame.actorId === owner ? a : b;
+    await new Promise(resolve => setTimeout(resolve, Math.max(0, frame.opening.endsAt - Date.now())));
     shooter.send({ type: "turn.fire", version: 2, matchId: frame.matchId, turnId: frame.turnId, commandId: "f1", ackMoveSeq: 0, slot: 0, facing: 1, elevation: 45, power: 50 });
     await expect.poll(() => a.last("lab.frame").phase).toBe("replaying");
     expect(a.last("lab.frame").replay.shooter.weapon).toBe("triple");

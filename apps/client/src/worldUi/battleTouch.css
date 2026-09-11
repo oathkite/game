@@ -1,0 +1,23 @@
+.battle-dpad { display:grid!important; grid-template:repeat(3,32px)/repeat(3,32px); gap:0!important; }
+.world-ui .battle-dpad button { width:32px!important; min-width:32px!important; height:32px!important; min-height:32px!important; padding:0!important; font-size:14px!important; border-radius:3px!important; }
+.dpad-up { grid-area:1/2; }.dpad-left { grid-area:2/1; }.dpad-right { grid-area:2/3; }.dpad-down { grid-area:3/2; }
+.battle-dpad i { grid-area:2/2; background:#1d3346; border:1px solid #526c80; }
+@media(max-width:999px),(max-height:499px) {
+ .world-ui :has(>.battle-console.has-touch) > .battle-roster { height:48px; padding-top:3px; padding-bottom:3px; }
+ .world-ui :has(>.battle-console.has-touch) > .battle-roster .battle-menu { top:4px; height:40px; }
+ .world-ui :has(>.battle-console.has-touch) > .battle-roster .battle-wind { top:60px; }
+}
+ .world-ui .battle-console.has-touch { position:relative; height:112px; grid-template:1fr/96px 72px minmax(0,1fr) 84px; padding:8px; gap:8px; }
+ .battle-console.has-touch .battle-self { display:none; }
+ .battle-console.has-touch .battle-angle { grid-column:2; width:72px; height:72px; }
+ .battle-console.has-touch .battle-power { grid-column:3; }
+ .battle-console.has-touch .battle-weapons { grid-column:4; align-self:start; gap:4px; }
+ .world-ui .battle-console.has-touch .battle-weapons button { width:40px; min-width:40px!important; min-height:44px; height:44px; }
+ .battle-console.has-touch .battle-weapons button > svg { width:24px; height:24px; }
+ .battle-console.has-touch .battle-touch { display:contents; }
+ .battle-console.has-touch .battle-dpad { position:absolute; top:8px; left:8px; }
+ .world-ui .battle-console.has-touch .battle-touch-fire { position:absolute; right:8px; bottom:8px; width:84px; height:44px; padding:0!important; }
+
+.world-ui .network-world:has(.battle-console.has-touch) { grid-template-rows:64px minmax(0,1fr) 112px; }
+@media(min-width:1200px) and (min-height:700px) { .world-ui .network-world:has(.battle-console.has-touch) { grid-template-rows:76px minmax(0,1fr) 112px; } }
+@media(max-width:999px),(max-height:499px) { .world-ui .network-world:has(.battle-console.has-touch) { grid-template-rows:48px minmax(0,1fr) 112px; } }

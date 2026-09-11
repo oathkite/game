@@ -1,3 +1,4 @@
+import { BattleTouchControls } from "@/worldUi/BattleTouchControls";
 import { useBrowserBackAction } from "@/worldUi/browserBack";
 import { LeaveBattleDialog } from "@/worldUi/LeaveBattleDialog";
 import { CountdownDial } from "@/ui/CountdownDial";
@@ -30,6 +31,7 @@ export const NetworkLab = ({ worldArt = false, onExit, connection }: { readonly 
   const { t } = useLanguage();
   const touch = useTouchControls();
   const spectator = connection?.spectator ?? false;
+  const [settling, setSettling] = useState(false);
   const [keepView, setKeepView] = useState(false);
   const [confirmLeave, setConfirmLeave] = useState(false);
   const [menu, setMenu] = useState(false);
@@ -129,10 +131,11 @@ export const NetworkLab = ({ worldArt = false, onExit, connection }: { readonly 
   const presentation = frame ? presentLabReplay(frame, serverNow) : null;
   const shownPlayers = frame?.phase === "replaying" ? presentation!.players : positions.map(p => ({ ...frame!.players.find(player => player.playerId === p.playerId)!, ...p }));
   const loadout = frame?.players.find(p => p.playerId === playerId)?.loadout ?? DEFAULT_LOADOUT;
-  const seconds = frame?.phase === "acting" ? Math.max(0, Math.ceil((frame.deadlineAt - serverNow) / 1000)) : null;
+  const seconds = frame?.phase === "acting" ? Math.max(0, Math.min(20, Math.ceil((frame.deadlineAt - serverNow) / 1000))) : null;
   const phaseLabel = frame?.phase === "replaying" ? "射撃を再生中" : frame?.phase === "finished" ? "対戦終了" : "操作中";
   const observing = spectator || Boolean(frame?.players.find(p => p.playerId === playerId)?.eliminated);
-  const canAct = (!worldArt || innerWidth > innerHeight) && frame?.phase === "acting" && frame.actorId === playerId && socket.current?.readyState === WebSocket.OPEN;
+  const opening = Boolean(frame?.opening && serverNow < frame.opening.endsAt);
+  const canAct = !opening && !settling && (!worldArt || innerWidth > innerHeight) && frame?.phase === "acting" && frame.actorId === playerId && socket.current?.readyState === WebSocket.OPEN;
   const input = useBattleInput(Boolean(worldArt && canAct && !menu && !confirmLeave), move, delta => setElevation(v => Math.max(10, Math.min(90, v + delta))), fire, setSlot);
   useBrowserBackAction(Boolean(worldArt && onExit), () => { input.cancel(); setMenu(false); setConfirmLeave(true); });
   const hudPlayers = frame?.players.map(p => ({ id: p.playerId, name: p.nickname ?? p.playerId, hp: p.hp, team: Number(p.teamId.slice(1)) })) ?? [];
@@ -143,9 +146,9 @@ export const NetworkLab = ({ worldArt = false, onExit, connection }: { readonly 
   if (worldArt) return <main className="network-lab network-world" onPointerDown={() => unlockAudio()} onKeyDown={() => unlockAudio()}>
     <BattleRoster upcomingPlayerIds={frame?.upcomingPlayerIds ?? []} players={hudPlayers} actorId={frame?.actorId ?? ""} wind={frame?.wind ?? 0} clock={<CountdownDial seconds={seconds} />} onMenu={() => { input.cancel(); setMenu(true); }} />
     <span className="battle-sr" data-testid="identity">{playerId}</span><span className="battle-sr" data-testid="phase">{t(phaseLabel)}</span>
-    {frame && presentation ? <NetworkField blocked={menu || confirmLeave || input.gauge.charging} frame={frame} players={shownPlayers} presentation={presentation} elevation={elevation} ownId={playerId} followTurns={!observing || !keepView} {...(!observing ? { selectedWeapon: loadout[slot] } : {})} /> : <p role="status">{t(status)}</p>}
+    {frame && presentation ? <NetworkField serverNow={serverNow} onSettling={setSettling} blocked={menu || confirmLeave || input.gauge.charging} frame={frame} players={shownPlayers} presentation={presentation} elevation={elevation} ownId={playerId} followTurns={!observing || !keepView} {...(!observing ? { selectedWeapon: loadout[slot] } : {})} /> : <p role="status">{t(status)}</p>}
     {observing ? <footer className="battle-console"><span role="status">{t("観戦中")}</span><label><input type="checkbox" checked={keepView} onChange={e => setKeepView(e.target.checked)} />{t("手動視点を維持")}</label></footer> : <BattleConsole player={hudPlayers.find(p => p.id === playerId)} steps={frame?.actorId === playerId ? frame.movement.stepsLeft : 0} tilt={ground} elevation={elevation} facing={ownFacing.current} power={input.gauge.value} loadout={loadout} slot={slot} disabled={!canAct || menu || confirmLeave || input.gauge.charging} selectSlot={setSlot}>
-      {touch && <><div><button disabled={!canAct || confirmLeave || menu} aria-label={t("左へ1歩")} {...input.button("left")}>←</button><button disabled={!canAct || confirmLeave || menu} aria-label={t("右へ1歩")} {...input.button("right")}>→</button></div><div><button disabled={!canAct || confirmLeave || menu} aria-label={t("角度を下げる")} {...input.button("down")}>−</button><button disabled={!canAct || confirmLeave || menu} aria-label={t("角度を上げる")} {...input.button("up")}>＋</button></div><button disabled={!canAct || confirmLeave || menu} aria-label={t("発射")} {...input.button("fire")}>{t("発射")}</button></>}
+      {touch && <BattleTouchControls disabled={!canAct || confirmLeave || menu} button={input.button} steps />}
     </BattleConsole>}
     {latency !== null && latency > 300 && <span className="network-latency" role="status">{t("通信遅延")} {latency} ms</span>}
     {confirmLeave && onExit && <LeaveBattleDialog online playing={!observing && frame?.phase !== "finished"} close={() => setConfirmLeave(false)} leave={onExit} />}

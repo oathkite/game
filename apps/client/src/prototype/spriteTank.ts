@@ -78,20 +78,15 @@ const makeTank = (frame: Frame, nickname: string, color: string): TankView & { s
   weapon.scale.set(1 / 12);
   weapon.position.set(-8, -8);
   gun.position.set(0, -4);
-  const aim = new Graphics();
-  for (let i = 0; i < 5; i++) aim.rect(6 + i * 3, -0.12, 1.4, 0.24).fill(0xffc345);
-  gun.addChild(weapon, aim);
+  gun.addChild(weapon);
   const showFlashes = createTankEffectLayer(gun, "muzzle", frame);
   let weaponId: WeaponId = "cannon";
   body.addChild(gun);
   world.addChild(rig);
-  const name = new Text({ text: nickname, style: { fontFamily: "sans-serif", fontSize: 13, fill: 0xf6f1df } });
+  const name = new Text({ text: nickname, style: { fontFamily: "sans-serif", fontSize: 13, fill: 0xf6f1df, stroke: { color: 0x101c2c, width: 4 } } });
   name.anchor.set(0.5, 1);
-  const plate = new Graphics(), health = new Graphics();
-  const labelWidth = Math.max(96, name.width + 16);
-  plate.roundRect(-labelWidth / 2, -21, labelWidth, 30, 5).fill(0x101c2c);
-  const team = new Graphics().roundRect(-labelWidth / 2, -21, 4, 30, 2).fill(color);
-  label.addChild(plate, team, name, health);
+  const health = new Graphics();
+  label.addChild(name, health);
   const animate = createTankAnimation(), effectsAt = createTankEffects();
   const showEffects = createTankEffectLayer(rig, "tank-effect", frame);
   const grayscale = new ColorMatrixFilter();
@@ -120,7 +115,6 @@ const makeTank = (frame: Frame, nickname: string, color: string): TankView & { s
       if (wreck !== wasWreck) { rig.filters = wreck ? [grayscale] : null; wasWreck = wreck; }
       body.y = (wreck ? 8 : animation.bodyY ?? 0) / 12;
       gun.rotation = (wreck ? 18 : -pose.elevation) * Math.PI / 180;
-      aim.visible = pose.hp > 0 && pose.aiming;
       showFlashes(pose.hp > 0 && !reducedMotion.matches
         ? (pose.shotFlashes ?? []).map(flash => muzzlePose(weaponId, flash, recoil)) : []);
       label.position.set((pose.x + 0.5) * cell, (pose.y - 11.5) * cell);

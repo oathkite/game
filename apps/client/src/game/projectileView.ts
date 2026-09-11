@@ -1,15 +1,14 @@
 import type { CellPoint, WeaponId } from "@game/protocol";
 import { Container, Graphics, Sprite, type Texture } from "pixi.js";
-import { blastCells, bulletSize, type BulletSize } from "./weaponArt";
+import { blastCells, bulletSize, type BulletSize, projectileArtScale } from "./weaponArt";
 
-// 弾、飛行中の尾、爆風、破片、外れの印。設計書 08 の 8.6、10 の 10.5。単位はセル。
+// 弾、爆風、破片、外れの印。設計書 08 の 8.6、10 の 10.5。単位はセル。
 // 1 発の射撃に弾は複数（扇）、爆風も複数（弾道 × 段）ありうるので、弾は添字で、爆風と破片と印は鍵で持つ。
 
 export type ProjectileView = {
   readonly container: Container;
   /** 弾道 index の弾。x が null なら隠す */
   readonly setBullet: (index: number, x: number | null, y: number, angle: number) => void;
-  readonly addTrail: (cx: number, cy: number) => void;
   readonly clear: () => void;
   /** 爆風。半径 r の円をセルで塗る。ring なら縁の 1 セルだけを残す。cx が null か on が偽なら消す */
   readonly setBlast: (key: string, cx: number | null, cy: number, r: number, on: boolean, ring?: boolean, frameIndex?: number) => void;
@@ -44,12 +43,12 @@ const drawBlast = (g: Graphics, color: number, cx: number, cy: number, r: number
 };
 
 /** 弾の列。弾道の数だけ矩形を持ち、足りなければ作る */
-const bulletPool = (parent: Container, size: BulletSize, color: number, texture?: Texture) => {
+const bulletPool = (parent: Container, size: BulletSize, color: number, texture?: Texture, scale = 1 / 12) => {
   const list: (Graphics | Sprite)[] = [];
   return (index: number): Graphics | Sprite => {
     while (list.length <= index) {
       const g = texture ? new Sprite(texture) : new Graphics().rect(-size.w / 2, -size.h / 2, size.w, size.h).fill(color);
-      if (g instanceof Sprite) { g.anchor.set(0.5, 0.6); g.scale.set(1 / 12); }
+      if (g instanceof Sprite) { g.anchor.set(0.5, 0.6); g.scale.set(scale); }
       g.visible = false;
       parent.addChild(g);
       list.push(g);
@@ -64,17 +63,16 @@ const drawMissMark = (g: Graphics, color: number, cx: number, cy: number): void 
 
 export const createProjectileView = (color: number, weapon: WeaponId, texture?: Texture, impactFrames?: readonly Texture[]): ProjectileView => {
   const container = new Container();
-  const trail = new Graphics();
   const blasts = new Container();
   const debris = new Container();
   const misses = new Container();
   const bullets = new Container();
-  container.addChild(trail, blasts, debris, misses, bullets);
+  container.addChild(blasts, debris, misses, bullets);
   const blastLayer = keyedLayer(blasts);
   const impactSprites = new Map<string, Sprite>();
   const debrisLayer = keyedLayer(debris);
   const missLayer = keyedLayer(misses);
-  const bulletAt = bulletPool(bullets, bulletSize(weapon), color, texture);
+  const bulletAt = bulletPool(bullets, bulletSize(weapon), color, texture, projectileArtScale(weapon));
 
   return {
     container,
@@ -85,11 +83,7 @@ export const createProjectileView = (color: number, weapon: WeaponId, texture?: 
       g.position.set(x, y);
       g.rotation = angle;
     },
-    addTrail: (cx, cy) => {
-      trail.rect(cx, cy, 1, 1).fill(color);
-    },
     clear: () => {
-      trail.clear();
       blastLayer.clear();
       for (const sprite of impactSprites.values()) sprite.visible = false;
       debrisLayer.clear();

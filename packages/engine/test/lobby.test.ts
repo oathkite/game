@@ -101,8 +101,12 @@ it("uses the frozen loadout for the match instead of the lab's fixed cannon", as
   const setup = startLobby(room, "p1", room.revision).setup!;
   const session = createPreparedSession(setup, "match1", 42, 1000);
   expect(session.ruleSetVersion).toBe(setup.ruleSetVersion);
+  expect(session.movement.startsAt).toBeGreaterThan(session.startedAt);
+  expect(session.movement.deadlineAt - session.movement.startsAt).toBe(20000);
+  expect(fireInSession(session, session.movement.playerId, { type: "turn.fire", version: 2, matchId: session.matchId,
+    turnId: 1, commandId: "early", ackMoveSeq: 0, slot: 0, facing: 1, elevation: 45, power: 50 }, session.startedAt + 10).reason).toBe("outside-turn");
   const fired = fireInSession(session, session.movement.playerId, { type: "turn.fire", version: 2, matchId: session.matchId,
-    turnId: 1, commandId: "f1", ackMoveSeq: 0, slot: 0, facing: 1, elevation: 45, power: 50 }, 1500);
+    turnId: 1, commandId: "f1", ackMoveSeq: 0, slot: 0, facing: 1, elevation: 45, power: 50 }, session.movement.startsAt);
   expect(fired.reason).toBe("accepted");
   expect(fired.state.replay?.shot.weapon).toBe("triple");
   expect(fired.state.replay?.shot.paths).toHaveLength(3);

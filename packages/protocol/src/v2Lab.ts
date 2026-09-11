@@ -13,6 +13,7 @@ export const labFrameSchema = z.object({
   build: matchBuildSchema,
   type: z.literal("lab.frame"), serverTime: z.number(), eventSeq: z.number().int().nonnegative(),
   matchId: z.string(), turnId: z.number().int(), actorId: z.string(), deadlineAt: z.number(),
+  opening: z.object({ startsAt: z.number(), endsAt: z.number(), playerIds: z.array(z.string()).min(2).max(8) }).optional(),
   returnStatus: z.object({ deadlineAt: z.number(), readyIds: z.array(z.string()).max(8) }).optional(),
   stats: z.record(z.string(), z.object({ shots: z.number().int().nonnegative(), enemyDamage: z.number().int().nonnegative(), friendlyDamage: z.number().int().nonnegative(), selfDamage: z.number().int().nonnegative() })).optional(),
   upcomingPlayerIds: z.array(z.string()).max(3).optional(),
@@ -39,3 +40,5 @@ export const labOutputSchema = z.union([
 ]);
 export type LabFrame = z.infer<typeof labFrameSchema>;
 export type LabOutput = z.infer<typeof labOutputSchema>;
+
+export const openingDuration = (players: number): number => 2400 + (players + 1) * 700;

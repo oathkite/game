@@ -1,3 +1,6 @@
+import { openingPose } from "@/worldUi/openingTour";
+import { StartSignal } from "@/worldUi/StartSignal";
+import { createFallMotion } from "@/worldUi/fallMotion";
 import { loadImpactArt } from "@/worldUi/impactSprites";
 import { loadProjectileArt } from "@/worldUi/projectileArt";
 import { useLanguage } from "@/i18n/locale";
@@ -32,12 +35,13 @@ const posesOf = (v: MatchView, elevations: readonly number[]): readonly TankPose
   });
 };
 
-type Props = { readonly worldArt?: boolean; readonly store: MatchStore; readonly rig: CameraRig; readonly layout: Layout; readonly handlers: HTMLAttributes<HTMLDivElement>; readonly blocked: boolean; readonly followShot: boolean; readonly onReady: (ready: boolean) => void };
-export const PrototypeCanvas = ({ store, rig, layout, handlers, blocked, followShot, onReady, worldArt }: Props) => {
+type Props = { readonly onOpeningComplete: () => void; readonly worldArt?: boolean; readonly store: MatchStore; readonly rig: CameraRig; readonly layout: Layout; readonly handlers: HTMLAttributes<HTMLDivElement>; readonly blocked: boolean; readonly followShot: boolean; readonly onReady: (ready: boolean) => void };
+export const PrototypeCanvas = ({ store, rig, layout, handlers, blocked, followShot, onReady, onOpeningComplete, worldArt }: Props) => {
   const hostRef = useRef<HTMLDivElement>(null), miniRef = useRef<HTMLCanvasElement>(null);
   const latest = useRef({ layout, blocked, followShot });
   latest.current = { layout, blocked, followShot };
   const { t } = useLanguage();
+  const [signal, setSignal] = useState(false);
   const [error, setError] = useState(false), [loaded, setLoaded] = useState(false);
   useEffect(() => {
     const host = hostRef.current;
@@ -46,6 +50,8 @@ export const PrototypeCanvas = ({ store, rig, layout, handlers, blocked, followS
     let stopFrames = () => {}, stopReplay = () => {};
     let replayId: number | null = null, lastTurn = -1, lastMask: MatchView["mask"] = null;
     let activeReplay = false, previousLayout = latest.current.layout;
+    const falls = createFallMotion();
+    let available = true;
     const elevations: [number, number] = [45, 45];
     let effects: Awaited<ReturnType<typeof loadImpactArt>> | null = null;
     const reduced = matchMedia("(prefers-reduced-motion: reduce)");
@@ -64,7 +70,10 @@ export const PrototypeCanvas = ({ store, rig, layout, handlers, blocked, followS
       const r = renderer, sprites = art;
       rig.resize(viewportOf(latest.current.layout), { left: 0, top: -100, right: view.mask.width, bottom: view.mask.height });
       rig.focus(actorPoint(view), "actor", true);
-      setLoaded(true); onReady(true);
+      const openingAt = performance.now();
+      let opening = Boolean(worldArt && view.phase === "loading"), signalVisible = false;
+      const order = [view.players[view.currentSeat], view.players[view.currentSeat === 0 ? 1 : 0]];
+      setLoaded(true); onReady(!opening);
       stopFrames = r.onFrame((dt) => {
         const v = store.getView();
         const current = latest.current;
@@ -72,7 +81,7 @@ export const PrototypeCanvas = ({ store, rig, layout, handlers, blocked, followS
         if (previousLayout !== current.layout) { previousLayout = current.layout; r.setLayout(current.layout); rig.resize(viewportOf(current.layout), rig.get().bounds); }
         if (v.turnNumber !== lastTurn) { lastTurn = v.turnNumber; rig.focus(actorPoint(v), "actor", reduced.matches); }
         if (v.replay && replayId !== v.replay.id) {
-          stopReplay(); replayId = v.replay.id; activeReplay = true;
+          stopReplay(); replayId = v.replay.id; activeReplay = true; falls.reset();
           const job = v.replay;
           elevations[job.shot.input.seat] = job.shot.input.elevation;
           sprites.setWeapon(job.shot.input.seat, job.shot.input.weapon);
@@ -86,10 +95,27 @@ export const PrototypeCanvas = ({ store, rig, layout, handlers, blocked, followS
         if (!v.replay && activeReplay) { stopReplay(); activeReplay = false; }
         if (!activeReplay) {
           if (v.mask && lastMask !== v.mask) { r.setTerrain(v.mask); lastMask = v.mask; }
-          posesOf(v, elevations).forEach((pose, seat) => r.setTank(seat as 0 | 1, pose));
+          let falling = false;
+          const poses = posesOf(v, elevations).map((pose, seat) => {
+            const motion = falls.sample(String(seat), pose.y, performance.now(), reduced.matches);
+            falling ||= motion.falling;
+            r.setTank(seat, { ...pose, ...motion, visible: motion.falling || pose.visible });
+            return { ...pose, ...motion };
+          });
+          if (!opening && available === falling) { available = !falling; onReady(available); }
           if (v.control && v.mySeat !== null && v.players) sprites.setWeapon(v.mySeat, weaponOf(v.players[v.mySeat].loadout, v.control.slot));
-          rig.actor(actorPoint(v));
+          const shown = poses[v.currentSeat];
+          if (shown) rig.actor({ x: shown.x, y: shown.y - 6 });
         }
+        if (opening) {
+          const tour = openingPose(performance.now() - openingAt, order, view.mask!, viewportOf(current.layout), reduced.matches);
+          r.setLayout({ ...current.layout, cell: tour.scale });
+          rig.resize({ ...viewportOf(current.layout), scale: tour.scale }, rig.get().bounds);
+          rig.focus(tour.center, "actor", true);
+          if (signalVisible !== tour.start) { signalVisible = tour.start; setSignal(tour.start); }
+          if (tour.done) { opening = false; available = true; onOpeningComplete(); onReady(true); }
+        }
+        host.dataset.opening = String(opening);
         const center = rig.tick(dt, performance.now(), reduced.matches), vp = rig.get().viewport;
         const offset = worldToScreen({ x: 0, y: 0 }, center, vp), dpr = window.devicePixelRatio || 1;
         r.setCameraOffset(Math.round(offset.x * dpr) / dpr, Math.round(offset.y * dpr) / dpr);
@@ -99,8 +125,9 @@ export const PrototypeCanvas = ({ store, rig, layout, handlers, blocked, followS
     };
     void start().catch((e: unknown) => { console.error(e); if (!disposed) setError(true); });
     return () => { disposed = true; onReady(false); stopFrames(); stopReplay(); renderer?.destroy(); art?.destroy(); effects?.destroy(); };
-  }, [store, rig, onReady, worldArt]);
+  }, [store, rig, onReady, onOpeningComplete, worldArt]);
   return <div className="kp-world" style={{ height: layout.mapHeight, ...(worldArt ? { backgroundImage: `url(${artUrls.background})`, backgroundSize: "cover", backgroundPosition: "center" } : {}) }}>
+    <StartSignal visible={signal} />
     {worldArt && <WindLeaves wind={store.getView().wind.value} />}
     <div ref={hostRef} className="kp-canvas" tabIndex={0} aria-label={t("対戦フィールド")} data-testid="camera-world" data-scale={layout.cell} data-loaded={loaded} {...handlers} />
     {!loaded && <div className="kp-loading" role="status">{error ? t("素材を読み込めませんでした。ページを再読み込みしてください。") : t("マシンを準備しています…")}</div>}

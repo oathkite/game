@@ -1,3 +1,4 @@
+import { weaponSound } from "@/app/weaponSounds";
 import { shotFlashes } from "./muzzlePose";
 import { shotRecoil } from "./shotRecoil";
 import type { CellPoint, Impact, Seat } from "@game/protocol";
@@ -25,7 +26,6 @@ import {
 import type { ProjectileView } from "./projectileView";
 import type { Renderer } from "./renderer";
 import type { TankPose } from "./tankView";
-import { trailStep } from "./weaponArt";
 
 // 射撃結果の再生。設計書 03 の 3.9。弾道は 1 ステップ 1/60 秒で進め、着弾で弾を一瞬止め、爆風の膨張、地形の削り、落下を順に描く。
 // 1 発の射撃に弾道は複数（扇）、着弾も複数（段）ありうる（設計書 10）。弾道はそれぞれの発射の遅れから、着弾はそれぞれの時刻から独立に演出し、
@@ -70,12 +70,9 @@ type Run = {
   /** 弾道ごとの発射の遅れ */
   readonly launchAt: readonly number[];
   readonly impacts: readonly ImpactRun[];
-  readonly trailEvery: number;
   phase: Phase;
   elapsed: number;
   phaseStart: number;
-  /** 弾道ごとに、尾を置いた最後の添字 */
-  readonly trailIndex: number[];
   /** 着弾で削られていく地形 */
   mask: TerrainMask;
   /** 着弾で減っていく HP */
@@ -199,13 +196,7 @@ const updateBullet = (run: Run, p: number): void => {
   if (!a || !b) return;
   const f = frame.index - i;
   run.view.setBullet(p, (a.x + (b.x - a.x) * f) / ONE, (a.y + (b.y - a.y) * f) / ONE, angleAt(points, frame.holding ? i : frame.index));
-  if (run.trailEvery === 0) return;
-  while ((run.trailIndex[p] ?? 0) + run.trailEvery <= i) {
-    const next = (run.trailIndex[p] ?? 0) + run.trailEvery;
-    run.trailIndex[p] = next;
-    const q = points[next];
-    if (q) run.view.addTrail(Math.floor(q.x / ONE), Math.floor(q.y / ONE));
-  }
+
 };
 
 /** 爆風が最大に達した瞬間。地形を削り、被弾した機体を白くし、HP を減らし始め、被弾と手応えの音を鳴らす */
@@ -238,7 +229,7 @@ const updateImpact = (run: Run, ir: ImpactRun): void => {
   if (t < 0) return;
   if (!ir.exploded) {
     ir.exploded = true;
-    run.cb.sound("explosion");
+    run.cb.sound(weaponSound(run.job.shot.input.weapon, "impact"));
   }
   const { cell, terrainOp } = ir.impact;
   const frame = blastFrameAt(t, terrainOp.radius);
@@ -310,11 +301,9 @@ export const playReplay = (
     falls: computeFalls(job),
     launchAt,
     impacts,
-    trailEvery: trailStep(job.shot.input.weapon),
     phase: "shot",
     elapsed: 0,
     phaseStart: 0,
-    trailIndex: job.paths.map(() => 0),
     mask: job.maskBefore,
     hp: [job.playersBefore[0].hp, job.playersBefore[1].hp],
     flashUntil: [0, 0],
@@ -330,7 +319,7 @@ export const playReplay = (
       : before;
     renderer.setTank(seat, poseOf(position, job.maskBefore, elevationOf(run, seat)));
   }
-  cb.sound("fire");
+  cb.sound(weaponSound(job.shot.input.weapon, "fire"));
   run.stopFrames = renderer.onFrame((deltaMs) => stepFrame(run, deltaMs));
   return () => {
     if (run.phase === "done") return;

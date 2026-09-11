@@ -38,6 +38,7 @@ it.skipIf(!endpoint)("runs an isolated room through the SQLite Durable Object ad
     expect(spectator.last("lab.frame").players).toHaveLength(2);
     spectator.send(fire);
     await expect.poll(() => spectator.last("room.error")?.reason).toBe("read-only");
+    await new Promise(resolve => setTimeout(resolve, Math.max(0, frame.opening.endsAt - Date.now())));
     actor.send(fire);
     await expect.poll(() => actor.last("lab.ack")?.reason).toBe("accepted");
     const token = actor.last("room.welcome").token;

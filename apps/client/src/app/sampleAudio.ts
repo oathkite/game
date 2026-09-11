@@ -1,3 +1,4 @@
+import { weaponSample } from "./weaponSounds";
 import fireCompact from "../assets/audio/fire.opus";
 import explosionCompact from "../assets/audio/explosion.opus";
 import hitCompact from "../assets/audio/hit.opus";
@@ -69,10 +70,12 @@ export const createSampleAudio = (ctx: AudioContext, output: AudioNode) => {
     }));
   };
   const playEffect = (name: string): boolean => {
-    const buffer = buffers.get(name);
+    const variant = weaponSample(name);
+    const buffer = buffers.get(variant?.name ?? name);
     if (!buffer) return false;
     const source = ctx.createBufferSource();
     source.buffer = buffer;
+    if (variant) source.playbackRate.value = variant.rate;
     source.connect(output);
     source.onended = () => source.disconnect();
     source.start();

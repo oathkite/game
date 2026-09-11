@@ -64,7 +64,7 @@ export const usePrototypeInput = (store: MatchStore, rig: CameraRig, enabled: bo
       if ((e.code === "KeyQ" || e.code === "KeyE") && !owner.current && latest.current.enabled) { store.selectSlot(e.code === "KeyQ" ? 0 : 1); e.preventDefault(); return; }
       if (e.code === "KeyC" && !owner.current) { rig.focus(actorPoint(store.getView()), "actor", matchMedia("(prefers-reduced-motion: reduce)").matches); e.preventDefault(); return; }
       if (e.shiftKey && e.code.startsWith("Arrow") && !owner.current) { panKey = e.code; e.preventDefault(); return; }
-      if (panKey || (e.code === "Space" && e.target instanceof HTMLElement && e.target.closest("button"))) return;
+      if (panKey) return;
       const action = keyAction(e.code);
       if (action && begin(e.code, action)) e.preventDefault();
     };
