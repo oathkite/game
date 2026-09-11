@@ -695,3 +695,10 @@ heartbeatはUI共同調整時にPAUSED。本ゴールは現在のタスクで進
 - 各shotの再生後、8クライアントの受信state（位置/HP/地形/風/turn/勝敗）が一致すること、結果の発射総数と実行数、全員の部屋帰還を確認。
 - production build / local edgeで3件成功（4.9分）。Chromium23発で青勝利、Firefox24発で赤勝利、WebKit24発で青勝利。保存履歴の発射turnはすべて1からの連番で、途中の時間切れskipはなし。e2e型チェック・diff check成功。
 - JSON履歴と実行logをdocs/progress/evidence/natural-matchへ保存。moss-valley・既定cannon/diggerの各1シナリオの証拠。キーボード/タッチでの発射操作は別の既存E2Eであり、この試験の自動WS送信を人間の操作/バランス評価とは呼ばない。
+
+## 横長岩壁の配信build再検証（11bb524）
+
+- 内蔵生成の2172×724岩壁をlossless WebPへ接続。runtimeは768×256で繰り返し、正方形に圧縮しない。地形マスク・GPU更新の検証はsquare/wide双方で成功。
+- `pnpm --filter @game/e2e exec playwright test --config=production.config.ts`：Chromium/Firefox/WebKit合計36件成功（1.5分）。イントロ、言語/音設定、取得失敗時の復帰、SVGパイロットの再入場を含む。
+- cold encoded transfer（title / practice累計）：Chromium 1,858,186 / 6,341,492B、Firefox 1,827,876 / 6,311,182B、WebKit 1,828,049 / 6,311,681B。2MB/8MBの条件を各engineで通過。ローカル配信であり実地域・実機の性能測定ではない。
+- 原案との残差：周期模様は緩和したが、地表の階段状輪郭と搭乗パイロット造形は最終比較が必要。人間による正式art承認や本番公開は行っていない。
