@@ -1,6 +1,6 @@
-import type { RoomMode, RoomRegion } from "@game/protocol/v2-rooms";
+import type { RoomMode, RoomRegion, RoomSummary, RoomPage } from "@game/protocol/v2-rooms";
 import { DurableObject } from "cloudflare:workers";
-export type RoomSummary = { readonly mode: RoomMode; readonly region: RoomRegion; readonly roomId: string; readonly members: number; readonly spectators: number; readonly phase: "waiting" | "started"; readonly mapId: string; readonly updatedAt: number };
+export type { RoomSummary } from "@game/protocol/v2-rooms";
 export class RoomDirectory extends DurableObject<unknown> {
   constructor(ctx: DurableObjectState, env: unknown) {
     super(ctx, env);
@@ -36,6 +36,13 @@ export class RoomDirectory extends DurableObject<unknown> {
     if (added) this.ctx.storage.sql.exec("DELETE FROM reservations WHERE rowid IN (SELECT rowid FROM reservations WHERE room_id = ? ORDER BY expires LIMIT ?)", summary.roomId, added);
     if (!summary.members && !summary.spectators) { this.ctx.storage.sql.exec("DELETE FROM rooms WHERE id = ?", summary.roomId); return; }
     this.ctx.storage.sql.exec("INSERT OR REPLACE INTO rooms VALUES (?, ?, ?)", summary.roomId, JSON.stringify(summary), Date.now() + 1800000);
+  }
+  page(after: string): RoomPage {
+    const rows = this.ctx.storage.sql.exec<{ summary: string }>(
+      "SELECT summary FROM rooms WHERE id > ? AND expires >= ? AND json_extract(summary, '$.members') > 0 AND json_extract(summary, '$.mode') = 'custom' ORDER BY id LIMIT 21", after, Date.now(),
+    ).toArray().map(row => JSON.parse(row.summary) as RoomSummary);
+    const rooms = rows.slice(0, 20);
+    return { rooms, nextCursor: rows.length > 20 ? rooms.at(-1)!.roomId : null };
   }
   list(): readonly RoomSummary[] {
     return this.ctx.storage.sql.exec<{ summary: string }>("SELECT summary FROM rooms WHERE expires >= ? ORDER BY expires DESC LIMIT 100", Date.now()).toArray().map(row => JSON.parse(row.summary));

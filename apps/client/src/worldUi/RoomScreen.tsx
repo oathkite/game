@@ -1,3 +1,4 @@
+import { PublicRooms } from "./PublicRooms";
 import { RoomTeamSummary } from "./RoomTeamSummary";
 import { useBrowserBackAction } from "./browserBack";
 import { setMusic } from "@/app/audio";
@@ -19,6 +20,7 @@ const tokenKey = "keropod.room-token", roomKey = "keropod.room-id";
 const errors: Record<string, string> = { "version-mismatch": "ゲームの更新が必要です。再読み込みしてください。", "wrong-mode": "この部屋は別の対戦形式です。クイック参加から入り直してください。", "fixed-mode": "クイック対戦の編成は固定です。", "waiting-for-players": "人数が揃うまでお待ちください。", "spectators-full": "観戦席が満員です。", "read-only": "観戦中は対戦操作できません。", "not-found": "部屋が見つかりません。", full: "部屋が満員です。", locked: "対戦中の部屋には参加できません。", "invalid-session": "復帰期限が切れたか、別の画面で接続中です。", "stale-revision": "部屋が更新されました。内容を確認して再操作してください。", "not-ready": "全員の準備完了を待っています。", unassigned: "全員のチームを選んでください。", "not-enough-teams": "2チーム以上に分かれてください。", "not-enough-players": "2人以上で開始できます。", disconnected: "切断中の参加者がいます。", "not-owner": "オーナーだけが操作できます。", "not-owner-or-not-finished": "対戦終了後、オーナーが部屋へ戻せます。" };
 export const RoomScreen = ({ onExit, onLab }: { readonly onExit: () => void; readonly onLab?: () => void }) => {
   const { t } = useLanguage();
+  const [listing, setListing] = useState(false);
   const [room, setRoom] = useState<RoomSnapshot | null>(null), [playerId, setPlayerId] = useState("");
   const [code, setCode] = useState(() => inviteRoom(location.href) ?? ""), [status, setStatus] = useState(() => new URL(location.href).searchParams.has("room") && !inviteRoom(location.href) ? "招待リンクの部屋コードが無効です。" : ""), [busy, setBusy] = useState(false);
   const [quickMode, setQuickMode] = useState<"1v1" | "2v2">("1v1"), [region, setRegion] = useState<"asia" | "europe" | "americas">("asia");
@@ -77,16 +79,18 @@ export const RoomScreen = ({ onExit, onLab }: { readonly onExit: () => void; rea
   return <section key={room?.roomId ?? "entry"} className="room-screen">
     <header><h1>{room ? <>{t("部屋")} <span data-testid="room-code">{room.roomId}</span></> : t("対戦ルーム")}</h1><PixelButton onClick={leave}>{t("ロビーに戻る")}</PixelButton></header>
     <div className="room-body"><PixelPanel>
-      {!room ? <div className="room-entry"><h2>{t("仲間と出発しよう")}</h2><p>{t("部屋コードを共有して、2〜8人で遊べます。")}</p>
+      {!room ? (listing && serverBase ? <PublicRooms base={serverBase} busy={busy} close={() => setListing(false)} join={(roomId, type) => { void connect({ type, roomId, ...(type === "room.join" ? { profile: profile() } : {}) }); }} /> : <div className="room-entry"><h2>{t("仲間と出発しよう")}</h2><p>{t("部屋コードを共有して、2〜8人で遊べます。")}</p>
         <label>{t("名前")}<input aria-label={t("対戦で使う名前")} maxLength={12} value={nickname} onChange={e => setNickname(e.target.value)} /></label>
         <div className="room-quick"><label>{t("対戦形式")}<select aria-label={t("クイック対戦形式")} value={quickMode} onChange={e => setQuickMode(e.target.value as "1v1" | "2v2")}><option value="1v1">1 vs 1</option><option value="2v2">2 vs 2</option></select></label>
           <label>{t("地域")}<select aria-label={t("クイック対戦地域")} value={region} onChange={e => setRegion(e.target.value as typeof region)}><option value="asia">{t("アジア")}</option><option value="europe">{t("ヨーロッパ")}</option><option value="americas">{t("アメリカ")}</option></select></label>
           <PixelButton disabled={busy} onClick={() => connect({ type: "room.quick", roomId: "000000", mode: quickMode, region, profile: profile() })}>{t("クイック参加")}</PixelButton></div>
+        {serverBase && <PixelButton disabled={busy} onClick={() => setListing(true)}>{t("公開部屋を探す")}</PixelButton>}
+        {serverBase && <small>{t("作成した部屋は公開一覧に表示されます。")}</small>}
         <PixelButton disabled={busy} onClick={() => connect({ type: "room.create", profile: profile() })}>{t("部屋を作る")}</PixelButton>
         <label>{t("部屋コード")}<input aria-label={t("部屋コード")} maxLength={6} value={code} onChange={e => setCode(e.target.value.toUpperCase().replace(/[^A-F0-9]/g, ""))} /></label>
         <PixelButton disabled={busy || code.length !== 6} onClick={() => connect({ type: "room.join", roomId: code, profile: profile() })}>{t("部屋に参加")}</PixelButton>
         <PixelButton disabled={busy || code.length !== 6} onClick={() => connect({ type: "room.spectate", roomId: code })}>{t("観戦する")}</PixelButton>
-        {onLab && <button className="room-lab-link" onClick={onLab}>{t("固定8席試験")}</button>}</div> : <>
+        {onLab && <button className="room-lab-link" onClick={onLab}>{t("固定8席試験")}</button>}</div>) : <>
         {spectator && <p role="status">{t("観戦中")}</p>}
         {room.mode !== "custom" && <div><strong>{room.mode === "1v1" ? "1 vs 1" : "2 vs 2"}　{room.members.length} / {room.mode === "1v1" ? 2 : 4}</strong><PixelButton onClick={cancelQuick}>{t("待機をキャンセル")}</PixelButton>{waited && <p role="status">{t("対戦相手を待っています。キャンセルして地域を変更するか、ロビーから練習できます。")}</p>}</div>}
         <PixelButton onClick={() => setSharing(v => !v)}>{t("招待リンク")}</PixelButton>

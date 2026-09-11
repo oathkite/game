@@ -36,3 +36,13 @@ export const roomOutputSchema = z.union([
   z.object({ type: z.literal("room.error"), reason: z.string() }),
 ]);
 export type RoomSnapshot = z.infer<typeof roomSnapshotSchema>["room"];
+
+export const roomSummarySchema = z.object({
+  mode: roomModeSchema, region: roomRegionSchema, roomId: z.string().regex(/^[A-F0-9]{6}$/),
+  members: z.number().int().min(0).max(8), spectators: z.number().int().min(0).max(8),
+  phase: z.enum(["waiting", "started"]), mapId: z.string().min(1).max(64), updatedAt: z.number().int().nonnegative(),
+});
+export type RoomSummary = z.infer<typeof roomSummarySchema>;
+export const roomPageCursorSchema = z.string().regex(/^(?:[A-F0-9]{6})?$/);
+export const roomPageSchema = z.object({ rooms: z.array(roomSummarySchema).max(20), nextCursor: z.string().regex(/^[A-F0-9]{6}$/).nullable() });
+export type RoomPage = z.infer<typeof roomPageSchema>;

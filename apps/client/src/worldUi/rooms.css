@@ -26,3 +26,9 @@
 .room-team-summary ul { display:flex; flex-wrap:wrap; gap:8px 16px; list-style:none; margin:0; padding:0; }
 .room-team-summary li { border-left:5px solid #718a9a; padding-left:8px; font-size:13px; }
 .room-team-summary > strong { display:block; margin-top:8px; color:#ffcf66; font-size:13px; }
+
+.public-rooms header { flex-wrap:wrap; }
+.public-rooms ul { padding:0; list-style:none; }
+.public-rooms li { display:flex; flex-wrap:wrap; align-items:center; justify-content:space-between; gap:12px; padding:16px 0; border-bottom:1px solid #718a9a; }
+.public-rooms li span { display:block; font-size:13px; line-height:1.7; }
+.public-rooms li > div:last-child { display:flex; flex-wrap:wrap; gap:8px; }

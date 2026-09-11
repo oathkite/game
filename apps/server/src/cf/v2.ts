@@ -1,11 +1,12 @@
 import { readSmallJson } from "../rooms/readSmallJson.js";
-import { quickRequestSchema } from "@game/protocol/v2-rooms";
+import { quickRequestSchema, roomPageCursorSchema } from "@game/protocol/v2-rooms";
 import { RoomObject, type RoomEnv } from "./v2Room.js";
 import { RoomDirectory } from "./v2Directory.js";
 export { RoomObject, RoomDirectory };
 export default {
   async fetch(request: Request, env: RoomEnv): Promise<Response> {
-    const url = new URL(request.url), origin = request.headers.get("Origin") ?? "";
+    const url = new URL(request.url);
+    const origin = request.headers.get("Origin") ?? (request.method === "GET" && request.headers.get("Sec-Fetch-Site") === "same-origin" ? url.origin : "");
     if (url.pathname === "/health") return Response.json({ status: "ok", protocol: 2 });
     if (!env.ALLOWED_ORIGINS.split(",").includes(origin)) return new Response("origin denied", { status: 403 });
     const headers = { "Access-Control-Allow-Origin": origin, "Vary": "Origin", "Cache-Control": "no-store" };
@@ -27,6 +28,11 @@ export default {
       const locationHint = ({ asia: "apac", europe: "weur", americas: "enam" } as const)[region];
       await env.ROOMS.getByName(roomId, { locationHint }).initialize(roomId, mode, region);
       return Response.json({ roomId }, { headers });
+    }
+    if (url.pathname === "/v2/rooms/page" && request.method === "GET") {
+      const after = roomPageCursorSchema.safeParse(url.searchParams.get("after") ?? "");
+      if (!after.success) return new Response("invalid cursor", { status: 400, headers });
+      return Response.json(await directory.page(after.data), { headers });
     }
     if (url.pathname === "/v2/rooms" && request.method === "GET") return Response.json(await directory.list(), { headers });
     const roomId = /^\/v2\/rooms\/([A-F0-9]{6})$/.exec(url.pathname)?.[1];

@@ -1,4 +1,10 @@
 export const roomEnglish: Readonly<Record<string, string>> = {
+  "公開部屋": "Public rooms", "一覧を閉じる": "Close list", "一覧を更新": "Refresh rooms",
+  "公開部屋を探す": "Browse public rooms", "もっと見る": "Load more", "部屋一覧を読み込み中…": "Loading rooms…",
+  "作成した部屋は公開一覧に表示されます。": "Rooms you create appear in the public list.",
+  "部屋一覧を取得できませんでした。更新して再試行してください。": "Could not load rooms. Refresh to try again.",
+  "公開部屋はありません。部屋を作るかクイック参加で遊べます。": "No public rooms yet. Create one or try quick play.",
+  "参加者 {count}/8": "Players {count}/8", "対戦中": "In battle",
   "チーム編成": "Team composition", "人数差あり": "Uneven teams",
   "{color}チーム: {count}人": "{color} team: {count}", "未配置: {count}人": "Unassigned: {count}",
   "勝利": "Victory", "敗北": "Defeat",
