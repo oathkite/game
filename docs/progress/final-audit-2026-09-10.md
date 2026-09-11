@@ -6,8 +6,8 @@
 | 要件 | 現在の証拠 | 判定・次の作業 |
 | --- | --- | --- |
 | cold start操作可能p95 | startup-tests、10Mbps/150ms・cache無効20回、p95 684.1ms | Chromiumローカル配信で3秒条件通過。画像完了・実機CPU・実地域DNS/TLSは別 |
-| 初期タイトル転送2MB | 音源圧縮後のproduction-tests/entry.spec.ts、3browserのcold新context、最大1,862,344B | ローカル配信buildで通過。実地域の起動時間とは別 |
-| 初回対戦まで8MB | 音源追加で11,990,930Bに回帰したためOpus配信を追加。修正後の3browser練習地形v4・初回案内反映後の最大7,832,972B。音源追加・HUD修正後の独立8context対戦も3browserで最大7,682,043B | 圧縮音源対応3browserのローカル配信buildで通過。非対応時はMP3/WAVへ戻るため転送量が増える。実機・実地域は別 |
+| 初期タイトル転送2MB | 音源圧縮後のproduction-tests/entry.spec.ts、3browserのcold新context、最大1,862,382B | ローカル配信buildで通過。実地域の起動時間とは別 |
+| 初回対戦まで8MB | 音源追加で11,990,930Bに回帰したためOpus配信を追加。修正後の3browser練習地形v4・初回案内反映後の最大7,833,256B。音源追加・HUD修正後の独立8context対戦も3browserで最大7,682,043B | 圧縮音源対応3browserのローカル配信buildで通過。非対応時はMP3/WAVへ戻るため転送量が増える。実機・実地域は別 |
 | 独立8クライアントで試合完走 | eight-players.spec.ts、独立8 contextで4v4入室→準備→射撃共有→青4名降参→全員同じ成績→8名帰還選択→部屋復帰 | Chromium/Firefox/WebKit配信build・local edgeで通過。射撃のみの決着は下行で追加確認。実機の証拠とは別 |
 | 射撃だけで8browser完走 | natural-match.config.ts、3browser各8contextの4v4。23/24/24発で勝利、毎turnの受信state一致、全員帰還。履歴をevidence/natural-matchへ保存 | moss-valley・既定2武器・各1シナリオで確認。操作は通常WS発射コマンドを試験用に自動送信。人間の操作/公平感・全条件の証明とは別 |
 | 1時間soak | Node100部屋/800接続・送受信各125ms・実ファイル保存、3600秒完走。再戦3500回/移動187021回 | ローカル試験通過。部屋分離・重複拒否・復帰・保存復元を検証。実DO容量・全client描画一致の保証とは別 |
@@ -19,7 +19,7 @@
 | 世界UI最終原案一致 | 浮島背景・岩盤/厚い草地・濃紺パネル・残り時間リング・円形角度計・100分割/指針・実弾アイコンを実装 | 横長岩壁、共通カメラ/タッチ配色、画面端の名前/HP補正を追加。地形表層や情報密度も含めて最終比較を継続。8人HUDの番号/HP重複を修正し3browserの対戦・帰還と小画面配置を検証。人間の最終承認は未記録 |
 | 全参加者の結果表現 | 共通ResultPlayers、勝利/敗北/引き分けの表情。8context全画面の勝敗共有、667px4列/2段、390px縦向き帰還を3browserで確認 | 表情・操作の自動検証済み。最終デザイン承認は別 |
 | クライアント/ゲーム内のパイロット整合 | HUD/結果の緑肌・オリーブ服に合わせた搭乗用SVG16コマをゲーム内/ロビーへ接続。二値alpha・共通足元・大破/復帰を検証。公開buildで3browserの再入場/GPU転送/実画像を確認 | 色/服の不一致を修正。簡略化した横向きの顔とHUDの最終見た目比較・承認は未完 |
-| 統合テスト | d8aeea1でpnpm test成功（client225件、server72件、edge専用2件skip）、全対象typecheck成功。最新配信buildのChromium/Firefox/WebKit合計39件成功 | ローカルで確認。実機/実地域/実DO容量の代用にしない |
+| 統合テスト | 8dd217bでpnpm test成功（client227件、server72件、edge専用2件skip）、全対象typecheck成功。配信buildのChromium/Firefox/WebKit各21件、計63件成功 | 起動・音・戻る操作・案内・設定中timer・翻訳・pilot再入場を統合検証。実機/実地域/実DO容量の代用にしない |
 | BGM・効果音 | Sunoの全20候補を取得・デコード検証。暫定10音源を加工しBGMシーン切替・効果音を組み込み。音声E2EはChromium/Firefox/WebKitで成功 | ユーザーが音楽の方向性を確認。全効果音・ループ接続の最終評価は別。Opus配信と互換fallbackを追加。加工条件・検証はevidence/suno/2026-09-11.md |
 | 正式art pack | runtime manifest/hash/fidelity check | 原素材の人間承認を自動記録しない。正式pack登録条件を残す |
 | 実機・browser対応 | Chromium/Firefox/WebKit配信全36件と各8接続オンライン対戦（取得失敗の繰返し復帰を含む） | 自動試験通過。実iOS/Android/Safari/Edgeの入室〜結果は別途必要 |
@@ -39,3 +39,5 @@
 2026-09-11 edge検証: 7d11de0で通常実行時にskipされるedge専用2件を、独立したlocal Wrangler/SQLite保存先にEDGE_TEST_URLを指定して実行し両方成功。同時quick割当・mode/region分離・4人自動開始、観戦のread-only制限、再接続・重複射撃拒否・次turnを確認。verify-edge-restart.tsも成功し、replaying中のSIGKILL後に同じmatch/terrain・generation 2・重複拒否を確認した。実Cloudflare配備や地域間遅延・容量の検証ではない。検証用8798/8797のプロセスは終了。
 
 2026-09-11音源境界追記: 配信音源の端点差を測定し、result.opusで近傍の通常差より大きな段差を確認。BGMデコード後の両端2msフェードを追加。音声unit 12件、production音声3browser成功。実AudioBufferの全4曲・左右chの端点ゼロを確認。evidence/suno/loop-reviewに測定値と境界試聴用の前後比較を保存。音楽的なループ接続の聴感評価は未完。
+
+2026-09-11統合検証更新: 8dd217bで全体テスト・全対象typecheck・配信63件を完走。通常実行ではedge専用2件はskip（local edgeの別実行結果は上記記録）。CI validateも同一headで成功。正式art pack未登録の通知は残り、アートの最終承認・実機/実地域/運用判断を完了扱いにしない。
