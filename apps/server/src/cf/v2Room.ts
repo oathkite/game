@@ -4,16 +4,17 @@ import { movementSnapshot } from "@game/engine/multiplayer";
 import { createRoomState, disconnectRoom, nextRoomDeadline, reduceRoom, tickRoom, type RoomState } from "../rooms/core.js";
 import { RoomRuntime, restoreRoom, serializeRoom, type RoomSnapshot } from "../rooms/runtime.js";
 import { roomFrame, lobbyFrame } from "../rooms/frame.js";
+import { DirectoryOutbox } from "./directoryOutbox.js";
 import type { RoomDirectory } from "./v2Directory.js";
 export type RoomEnv = { readonly ALLOCATION_LIMITER: RateLimit; readonly DIRECTORY: DurableObjectNamespace<RoomDirectory>; readonly ROOMS: DurableObjectNamespace<RoomObject>; readonly ALLOWED_ORIGINS: string };
 type Attachment = { readonly connectionId: string; readonly acceptedAt: number; readonly joined: boolean; readonly windowAt: number; readonly count: number };
 export class RoomObject extends DurableObject<RoomEnv> {
   private runtime: RoomRuntime | null = null;
   private publishedLobby: RoomState["lobby"] = null;
-  private summaryKey = "";
-  private summaryAt = 0;
+  private readonly outbox: DirectoryOutbox;
   constructor(ctx: DurableObjectState, env: RoomEnv) {
     super(ctx, env);
+    this.outbox = new DirectoryOutbox(ctx.storage.sql);
     ctx.storage.sql.exec("CREATE TABLE IF NOT EXISTS room_state (id INTEGER PRIMARY KEY CHECK(id = 1), snapshot TEXT NOT NULL)");
   }
   private load(roomId?: string, mode: RoomMode = "custom", region: RoomRegion = "asia"): RoomRuntime {
@@ -25,6 +26,7 @@ export class RoomObject extends DurableObject<RoomEnv> {
     return this.runtime = new RoomRuntime(state, async snapshot => {
       await this.ctx.storage.transaction(async () => {
         this.ctx.storage.sql.exec("INSERT OR REPLACE INTO room_state VALUES (1, ?)", JSON.stringify(snapshot));
+        this.queueSummary(snapshot.state);
         await this.schedule(snapshot.state);
       });
     });
@@ -39,7 +41,7 @@ export class RoomObject extends DurableObject<RoomEnv> {
     const battle = state.battle && "version" in state.battle ? state.battle.state : state.battle;
     const deadline = nextRoomDeadline({ sessions: state.sessions, reports: state.reports, battle });
     const handshakes = this.ctx.getWebSockets().filter(ws => ws.readyState === WebSocket.OPEN).map(ws => ws.deserializeAttachment() as Attachment).filter(a => !a.joined).map(a => a.acceptedAt + 10000);
-    const next = [deadline, ...handshakes, ...(state.sessions.length ? [Date.now() + 300000] : [])].filter((n): n is number => n !== null);
+    const next = [deadline, this.outbox.deadline(Date.now()), ...handshakes, ...(state.sessions.length ? [Date.now() + 300000] : [])].filter((n): n is number => n !== null);
     if (next.length) await this.ctx.storage.setAlarm(Math.max(Date.now() + 1, Math.min(...next)));
     else await this.ctx.storage.deleteAlarm();
   }
@@ -60,14 +62,19 @@ export class RoomObject extends DurableObject<RoomEnv> {
       }
     }
     this.publishedLobby = state.lobby;
+    this.queueSummary(state);
+    this.ctx.waitUntil(this.outbox.flush(Date.now(), async () => {
+      await this.schedule(this.load().state);
+      await this.ctx.storage.sync();
+    }, summary => this.env.DIRECTORY.getByName("public").update(summary))
+      .catch(error => console.error("directory update failed", error)));
+  }
+  private queueSummary(state: Pick<RoomState, "roomId" | "mode" | "region" | "sessions" | "lobby">): void {
     if (!state.lobby) return;
-    const summary = { roomId: state.roomId, mode: state.mode, region: state.region, members: state.sessions.filter(s => s.role === "player").length, spectators: state.sessions.filter(s => s.role === "spectator").length, phase: state.lobby?.phase ?? "waiting" as const, mapId: state.lobby?.map.id ?? "moss-valley" };
-    const key = JSON.stringify(summary);
-    if (key !== this.summaryKey || Date.now() - this.summaryAt >= 240000) {
-      this.summaryAt = Math.max(Date.now(), this.summaryAt + 1);
-      this.summaryKey = key;
-      this.ctx.waitUntil(this.env.DIRECTORY.getByName("public").update({ ...summary, updatedAt: this.summaryAt }).catch(error => { this.summaryKey = ""; console.error("directory update failed", error); }));
-    }
+    this.outbox.enqueue({ roomId: state.roomId, mode: state.mode, region: state.region,
+      members: state.sessions.filter(s => s.role === "player").length,
+      spectators: state.sessions.filter(s => s.role === "spectator").length,
+      phase: state.lobby.phase, mapId: state.lobby.map.id }, Date.now());
   }
   override async fetch(request: Request): Promise<Response> {
     const roomId = new URL(request.url).pathname.split("/").at(-1)!;

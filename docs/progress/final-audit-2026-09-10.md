@@ -46,3 +46,5 @@
 2026-09-11統合検証更新: 8dd217bで全体テスト・全対象typecheck・配信63件を完走。通常実行ではedge専用2件はskip（local edgeの別実行結果は上記記録）。CI validateも同一headで成功。正式art pack未登録の通知は残り、アートの最終承認・実機/実地域/運用判断を完了扱いにしない。
 
 2026-09-11待ち列修正: quick参加が旧公開listの先頭100件に依存し、それより古い空席を見落とす経路を修正。地域・mode・waiting・期限・参加者と予約席の合計をSQLで条件指定し、候補1件だけを返す。実SQLiteの101新規部屋＋古い空席・満員・期限切れ・対戦中・予約追加の回帰テストを追加（修正前失敗→修正後成功）。server型チェック成功。local Wranglerのedge専用3件も成功し、同時quick割当・開始・再接続・公開ページングを確認。Directory分割と永続outboxは引き続き未実装。
+
+2026-09-11 outbox追記: Roomのsnapshotと最新の一覧用要約を同じSQLite transactionで保存し、外部送信前に再試行alarmを保存する永続outboxを追加。古いackは新しい要約を削除しない。SQLite unitとlocal edge3件・server両対象型チェック成功。詳細と検証限界はevidence/ui/2026-09-11-directory-outbox.md。上記の永続outbox未実装の記録を更新するが、障害注入によるprocess再起動復元は未確認。
