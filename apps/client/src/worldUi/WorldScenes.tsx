@@ -11,7 +11,7 @@ import { loadDisplayScale, saveDisplayScale } from "./displayScale";
 import { lazy, Suspense, useCallback, useEffect, useRef, useState } from "react";
 import { WEAPON_IDS, WEAPON_LABELS, type WeaponId } from "@game/protocol";
 import { loadProfile, saveProfile } from "@/app/profile";
-import { setAudioSettings, unlockAudio } from "@/app/audio";
+import { setAudioActive, setAudioSettings, setMusic, playSound, unlockAudio } from "@/app/audio";
 import { CameraSettingsPanel } from "@/prototype/CameraSettingsPanel";
 import { createCameraRig } from "@/prototype/cameraRig";
 import { PixelButton, PixelPanel } from "./PixelUi";
@@ -46,6 +46,25 @@ export const WorldScenes = () => {
   useEffect(() => { const profile = loadProfile(); setAudioSettings(profile.volume, profile.muted); }, []);
   useEffect(() => () => { if (timer.current) clearTimeout(timer.current); }, []);
   useEffect(() => { heading.current?.focus({ preventScroll: true }); }, [scene]);
+  useEffect(() => {
+    const unlock = () => unlockAudio();
+    const visibility = () => setAudioActive(!document.hidden);
+    window.addEventListener("pointerdown", unlock);
+    window.addEventListener("keydown", unlock);
+    document.addEventListener("visibilitychange", visibility);
+    return () => {
+      window.removeEventListener("pointerdown", unlock);
+      window.removeEventListener("keydown", unlock);
+      document.removeEventListener("visibilitychange", visibility);
+      setMusic(null);
+    };
+  }, []);
+  useEffect(() => {
+    // Online scenes own their music because their internal phase changes independently.
+    if (scene === "rooms" || scene === "network") return;
+    setMusic(scene === "start" ? "title" : scene === "battle" ? "battle" : scene === "result" ? "result" : "lobby");
+    if (scene === "result") playSound("matchFinish");
+  }, [scene]);
   const exit = useCallback(() => go("lobby"), [go]);
   const finish = useCallback((value: ResultPresentation) => { setResult(value); go("result"); }, [go]);
   const background = scene === "settings" ? worldArt.settings : scene === "lobby" ? worldArt.lobby : scene === "result" ? worldArt.result : worldArt.background;

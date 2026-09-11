@@ -1,3 +1,4 @@
+import { setMusic } from "@/app/audio";
 import { teamColor, teamColorName } from "./teamColors";
 import { useLanguage } from "@/i18n/locale";
 import { CLIENT_BUILD, compatibleMatch } from "@game/protocol/build";
@@ -23,6 +24,7 @@ export const RoomScreen = ({ onExit, onLab }: { readonly onExit: () => void; rea
   const [nickname, setNickname] = useState(() => loadProfile().nickname || "ケロポッド");
   const [sharing, setSharing] = useState(false), [spectator, setSpectator] = useState(false);
   const [battle, setBattle] = useState<RoomConnection | null>(null);
+  useEffect(() => { if (!battle) setMusic("lobby"); }, [battle]);
   const socket = useRef<WebSocket | null>(null), active = useRef(true), attempt = useRef(0);
   const connect = async (initial: { readonly type: string; readonly mode?: "1v1" | "2v2"; readonly region?: "asia" | "europe" | "americas"; readonly roomId?: string; readonly token?: string | null; readonly profile?: ReturnType<typeof profile> }) => {
     const currentAttempt = ++attempt.current;

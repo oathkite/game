@@ -17,7 +17,7 @@
 | 全参加者の結果表現 | 共通ResultPlayers、勝利/敗北/引き分けの表情。8context全画面の勝敗共有、667px4列/2段、390px縦向き帰還を3browserで確認 | 表情・操作の自動検証済み。最終デザイン承認は別 |
 | クライアント/ゲーム内のパイロット整合 | HUD/結果の緑肌・オリーブ服に合わせた搭乗用SVG16コマをゲーム内/ロビーへ接続。二値alpha・共通足元・大破/復帰を検証。公開buildで3browserの再入場/GPU転送/実画像を確認 | 色/服の不一致を修正。簡略化した横向きの顔とHUDの最終見た目比較・承認は未完 |
 | 統合テスト | 078caedでpnpm test成功、edge専用2件skip。clientは218件成功。pnpm -r typecheckとclient build成功。配信36件は11bb524で成功 | ローカルで確認。実機/実地域/実DO容量の代用にしない |
-| BGM・効果音 | SunoでBGM4用途・効果音6用途を各2案生成。リザルト案AのSuno内再生を確認。ebc6508で再生中の消音・音量変更を修正し3テスト追加 | ローカル音源取得、試聴選定、ループ編集、シーンへの組み込みは未完。音源一覧・保存状況はevidence/suno/2026-09-11.md |
+| BGM・効果音 | Sunoの全20候補を取得・デコード検証。暫定10音源を加工しBGMシーン切替・効果音を組み込み。音声E2EはChromium/Firefox/WebKitで成功 | 聴感による最終選定・音楽的なループ接続の評価は残る。加工条件・検証はevidence/suno/2026-09-11.md |
 | 正式art pack | runtime manifest/hash/fidelity check | 原素材の人間承認を自動記録しない。正式pack登録条件を残す |
 | 実機・browser対応 | Chromium/Firefox/WebKit配信全36件と各8接続オンライン対戦（取得失敗の繰返し復帰を含む） | 自動試験通過。実iOS/Android/Safari/Edgeの入室〜結果は別途必要 |
 | mobile描画・入力・移動・復帰p95 | 機能E2E、ローカル遅延試験 | 型番/OS固定の実機SLO・地域測定は未完 |

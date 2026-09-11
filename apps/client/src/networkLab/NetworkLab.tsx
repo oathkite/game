@@ -7,7 +7,7 @@ import { teamColorName } from "@/worldUi/teamColors";
 import { useLanguage } from "@/i18n/locale";
 import { matchDiagnostics } from "@/worldUi/diagnostics";
 import { createBattleSounds } from "./battleSounds";
-import { playSound, unlockAudio } from "@/app/audio";
+import { playSound, setMusic, unlockAudio } from "@/app/audio";
 import { CLIENT_BUILD, compatibleMatch } from "@game/protocol/build";
 import { BattleMenu } from "@/worldUi/BattleMenu";
 import { applyOps, maskFromHeights, tiltOf } from "@game/sim";
@@ -37,6 +37,10 @@ export const NetworkLab = ({ worldArt = false, onExit, connection }: { readonly 
   const [slot, setSlot] = useState<0 | 1>(0);
   const [elevation, setElevation] = useState(45), [power, setPower] = useState(50);
   const [frame, setFrame] = useState<LabFrame | null>(null), [positions, setPositions] = useState<Position[]>([]);
+  useEffect(() => {
+    setMusic(frame?.phase === "finished" ? "result" : "battle");
+    if (frame?.phase === "finished") playSound("matchFinish");
+  }, [frame?.phase === "finished"]);
   const [serverNow, setServerNow] = useState(0);
   const clock = useRef({ time: 0, received: 0 });
   const socket = useRef<WebSocket | null>(null), latest = useRef<LabFrame | null>(null);
