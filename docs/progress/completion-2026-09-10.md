@@ -666,3 +666,11 @@ heartbeatはUI共同調整時にPAUSED。本ゴールは現在のタスクで進
 - 表面の草を16〜31 art pixelの濃淡がある房へ変更。隣の描画chunkから垂れる草のため直上3行の変更を追跡し、描画後に衝突マスクを再適用して空洞へ草がはみ出さないようにした。
 - 追加した境界更新テストの失敗を確認してから実装し、修正後に通過。従来の岩模様連続性テストは、草の伸長でサンプル位置24pxが草に覆われるため48pxへ移動。全画素alphaと白地形の検証は変更せず通過。
 - client typecheck、assets:check、diff check成功。4 viewportのworld scenes成功、地形2件の最終再検証成功。1440pxの地形と667pxの画面を目視確認。初期表示・破壊マスク・不要chunkの非更新は確認したが、公開環境の性能検証や原案全体との一致を完了扱いにはしない。
+
+### 79d198aの統合検証とPR更新
+
+- `pnpm test` 成功：素材86、protocol24、sim107、maps68、engine141、client205、server72＝803件。serverの専用edge2件は通常実行でskip。
+- `pnpm -r typecheck` が全対象で成功（server CF構成を含む）。
+- production.config.tsのChromium/Firefox/WebKit全33件が成功（1.3分）。cold title最大1,862,941B、cold practice累計最大6,074,091B。これはローカル配信のencoded bytesで、地域別の時間SLOの証拠ではない。
+- final-auditを現在の素材/リザルトに合わせ更新。未完のゲーム内パイロット整合、原案全体への一致、正式素材承認、実機/地域/DO容量・費用/運用判断を残す。
+- PR25はOPEN Draft、base codex/2d-update、head codex/2d-world-uiを確認。ここまでの変更と検証範囲を同PRへ反映する。本番/mainへの統合は実施しない。
