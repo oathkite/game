@@ -80,7 +80,8 @@
 @media(max-width:999px),(max-height:499px) { .world-ui .network-world header.battle-roster .battle-seat strong { font-size:10px; } }
 .battle-menu-panel textarea { display:block; box-sizing:border-box; width:100%; margin:8px 0; resize:vertical; font:12px monospace; }
 
-.battle-upcoming { position:absolute; right:3px; bottom:1px; z-index:1; min-width:14px; text-align:center; font-size:10px; line-height:14px; color:#f4f0de; background:#102637; border:1px solid #526c80; border-radius:3px; }
+.battle-seat:has(.battle-upcoming) strong { padding-right:18px; }
+.battle-upcoming { position:absolute; right:3px; top:3px; z-index:1; min-width:14px; text-align:center; font-size:10px; line-height:14px; color:#f4f0de; background:#102637; border:1px solid #526c80; border-radius:3px; }
 
 .battle-turn-notice { padding:10px 12px; color:#fff1d5; background:#274a56; border-left:3px solid #e9ce83; }
 

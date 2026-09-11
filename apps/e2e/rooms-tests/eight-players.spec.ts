@@ -1,3 +1,4 @@
+import { assertRosterReadable } from "./rosterReadability";
 import { expect, test } from "@playwright/test";
 
 test("eight independent players complete a 4v4 match and return together", async ({ browser }) => {
@@ -50,6 +51,13 @@ test("eight independent players complete a 4v4 match and return together", async
     expect(imageBox.y).toBeGreaterThanOrEqual(portraitBox.y);
     expect(imageBox.y + imageBox.height).toBeLessThanOrEqual(portraitBox.y + portraitBox.height + 1);
     await expect(owner.locator(".battle-upcoming")).toHaveCount(3);
+    await assertRosterReadable(owner);
+    for (const width of [844, 667]) {
+      await owner.setViewportSize({ width, height: 390 });
+      await assertRosterReadable(owner);
+      await owner.screenshot({ path: `test-results/eight-player-hud-${width}.png` });
+    }
+    await owner.setViewportSize({ width: 1440, height: 900 });
     // Cold loading eight renderers can span a turn; start input checks early in a live turn.
     await expect.poll(async () => Number(await owner.locator(".countdown-dial > span").innerText()), { timeout: 25000 }).toBeGreaterThanOrEqual(18);
     const nextSeat = owner.locator(".battle-seat").filter({ has: owner.getByLabel("1人後の手番", { exact: true }) });
