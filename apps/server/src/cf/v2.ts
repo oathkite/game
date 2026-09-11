@@ -47,6 +47,16 @@ export default {
       const latest = new Map(lists.flat().sort((a, b) => a.updatedAt - b.updatedAt).map(room => [room.roomId, room]));
       return Response.json([...latest.values()].sort((a, b) => b.updatedAt - a.updatedAt).slice(0, 100), { headers });
     }
+    const regionProbe = /^\/v2\/regions\/(asia|europe|americas)\/probe$/.exec(url.pathname)?.[1];
+    if (regionProbe && request.method === "GET") {
+      const input = quickRequestSchema.safeParse({ region: regionProbe, mode: url.searchParams.get("mode") });
+      if (!input.success) return new Response("invalid mode", { status: 400, headers });
+      const { success } = await env.ALLOCATION_LIMITER.limit({ key: `probe:${request.headers.get("CF-Connecting-IP") ?? "local"}` });
+      if (!success) return new Response("probe rate limit", { status: 429, headers });
+      const { region, mode } = input.data;
+      await env.DIRECTORY.getByName(directoryKey(region, mode), { locationHint: directoryLocation(region) }).probe();
+      return Response.json({ region, mode }, { headers });
+    }
     const probeId = /^\/v2\/rooms\/([A-F0-9]{6})\/probe$/.exec(url.pathname)?.[1];
     if (probeId && request.method === "GET") {
       const { success } = await env.ALLOCATION_LIMITER.limit({ key: `probe:${request.headers.get("CF-Connecting-IP") ?? "local"}` });

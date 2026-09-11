@@ -5,6 +5,12 @@ const endpoint = process.env.EDGE_TEST_URL;
 it.skipIf(!endpoint)("lists occupied custom rooms in stable bounded pages", async () => {
   const headers = { Origin: "http://127.0.0.1:5186" }, sockets: WebSocket[] = [], ids: string[] = [];
   try {
+    for (const region of ["asia", "europe", "americas"]) for (const mode of ["1v1", "2v2"]) {
+      const response = await fetch(`${endpoint}/v2/regions/${region}/probe?mode=${mode}`, { headers });
+      expect(response.status).toBe(200);
+      expect(await response.json()).toEqual({ region, mode });
+    }
+    expect((await fetch(`${endpoint}/v2/regions/asia/probe?mode=invalid`, { headers })).status).toBe(400);
     expect((await fetch(`${endpoint}/v2/rooms/page`, { headers })).status).toBe(200);
     for (let i = 0; i < 21; i++) {
       const { roomId } = await fetch(`${endpoint}/v2/rooms`, { method: "POST", headers }).then(response => response.json()) as { roomId: string };

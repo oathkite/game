@@ -10,6 +10,7 @@ export class RoomDirectory extends DurableObject<{ DIRECTORY: DurableObjectNames
     ctx.storage.sql.exec("CREATE TABLE IF NOT EXISTS rooms (id TEXT PRIMARY KEY, summary TEXT NOT NULL, expires INTEGER NOT NULL)");
     ctx.storage.sql.exec("INSERT OR IGNORE INTO room_codes SELECT id FROM rooms");
   }
+  probe(): boolean { return true; }
   reserveCode(): string {
     let roomId: string;
     do { roomId = crypto.randomUUID().slice(0, 6).toUpperCase(); } while (this.ctx.storage.sql.exec("SELECT id FROM room_codes WHERE id = ?", roomId).toArray().length);

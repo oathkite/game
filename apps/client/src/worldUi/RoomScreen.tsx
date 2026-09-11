@@ -1,3 +1,4 @@
+import { useRegionSelection } from "./useRegionSelection";
 import { measureRoomRtt } from "./roomProbe";
 import { PublicRooms } from "./PublicRooms";
 import { RoomTeamSummary } from "./RoomTeamSummary";
@@ -25,7 +26,8 @@ export const RoomScreen = ({ onExit, onLab }: { readonly onExit: () => void; rea
   const [listing, setListing] = useState(false);
   const [room, setRoom] = useState<RoomSnapshot | null>(null), [playerId, setPlayerId] = useState("");
   const [code, setCode] = useState(() => inviteRoom(location.href) ?? ""), [status, setStatus] = useState(() => new URL(location.href).searchParams.has("room") && !inviteRoom(location.href) ? "招待リンクの部屋コードが無効です。" : ""), [busy, setBusy] = useState(false);
-  const [quickMode, setQuickMode] = useState<"1v1" | "2v2">("1v1"), [region, setRegion] = useState<"asia" | "europe" | "americas">("asia");
+  const [quickMode, setQuickMode] = useState<"1v1" | "2v2">("1v1");
+  const { region, timings, measuring, selectRegion } = useRegionSelection(serverBase, quickMode);
   const [waited, setWaited] = useState(false);
   const [nickname, setNickname] = useState(() => loadProfile().nickname || "ケロポッド");
   const [sharing, setSharing] = useState(false), [spectator, setSpectator] = useState(false);
@@ -89,8 +91,9 @@ export const RoomScreen = ({ onExit, onLab }: { readonly onExit: () => void; rea
       {!room ? (listing && serverBase ? <PublicRooms base={serverBase} busy={busy} close={() => setListing(false)} join={(roomId, type) => { void connect({ type, roomId, ...(type === "room.join" ? { profile: profile() } : {}) }); }} /> : <div className="room-entry"><h2>{t("仲間と出発しよう")}</h2><p>{t("部屋コードを共有して、2〜8人で遊べます。")}</p>
         <label>{t("名前")}<input aria-label={t("対戦で使う名前")} maxLength={12} value={nickname} onChange={e => setNickname(e.target.value)} /></label>
         <div className="room-quick"><label>{t("対戦形式")}<select aria-label={t("クイック対戦形式")} value={quickMode} onChange={e => setQuickMode(e.target.value as "1v1" | "2v2")}><option value="1v1">1 vs 1</option><option value="2v2">2 vs 2</option></select></label>
-          <label>{t("地域")}<select aria-label={t("クイック対戦地域")} value={region} onChange={e => setRegion(e.target.value as typeof region)}><option value="asia">{t("アジア")}</option><option value="europe">{t("ヨーロッパ")}</option><option value="americas">{t("アメリカ")}</option></select></label>
-          <PixelButton disabled={busy} onClick={() => connect({ type: "room.quick", roomId: "000000", mode: quickMode, region, profile: profile() })}>{t("クイック参加")}</PixelButton></div>
+          <label>{t("地域")}<select aria-label={t("クイック対戦地域")} value={region} onChange={e => selectRegion(e.target.value as "asia" | "europe" | "americas")}><option value="" disabled>{t(measuring ? "地域を測定中…" : "地域を選択してください")}</option><option value="asia">{t("アジア")}</option><option value="europe">{t("ヨーロッパ")}</option><option value="americas">{t("アメリカ")}</option></select></label>
+          <PixelButton disabled={busy || !region} onClick={() => region && connect({ type: "room.quick", roomId: "000000", mode: quickMode, region, profile: profile() })}>{t("クイック参加")}</PixelButton></div>
+        {serverBase && <small role="status">{measuring ? t("地域を測定中…") : timings.some(value => value.milliseconds !== null) ? `${t("地域別の応答")} · ${timings.map(value => `${t(({ asia: "アジア", europe: "ヨーロッパ", americas: "アメリカ" })[value.region])} ${value.milliseconds === null ? "—" : `${value.milliseconds} ms`}`).join(" / ")}` : t("地域を測定できません。手動で選択してください。")}</small>}
         {serverBase && <PixelButton disabled={busy} onClick={() => setListing(true)}>{t("公開部屋を探す")}</PixelButton>}
         {serverBase && <small>{t("作成した部屋は公開一覧に表示されます。")}</small>}
         <PixelButton disabled={busy} onClick={() => connect({ type: "room.create", profile: profile() })}>{t("部屋を作る")}</PixelButton>
