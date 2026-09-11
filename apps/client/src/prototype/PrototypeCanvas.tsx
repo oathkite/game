@@ -16,7 +16,7 @@ import type { MatchStore } from "@/match/matchStore";
 import type { MatchView } from "@/match/types";
 import { playSound } from "@/app/audio";
 import { WindLeaves } from "@/worldUi/WindLeaves";
-import { loadTerrainArt, worldArt as artUrls } from "@/worldUi/assets";
+import { loadRockArchArt, worldArt as artUrls } from "@/worldUi/assets";
 import { viewportOf, worldToScreen } from "./camera";
 import type { CameraRig } from "./cameraRig";
 import { loadSpriteTanks, type SpriteTankFactory } from "./spriteTank";
@@ -60,12 +60,12 @@ export const PrototypeCanvas = ({ store, rig, layout, handlers, blocked, followS
       if (!view.mask || !view.players) return;
       art = await loadSpriteTanks();
       if (disposed) { art.destroy(); return; }
-      const terrainArt = worldArt ? await loadTerrainArt() : undefined;
+      const imageTerrain = worldArt ? await loadRockArchArt() : undefined;
       if (disposed) { art.destroy(); return; }
       const projectileTextures = await loadProjectileArt();
       effects = await loadImpactArt();
       if (disposed) { effects.destroy(); return; }
-      renderer = await createRenderer({ projectileTextures, impactTextures: effects.textures, host, layout: latest.current.layout, mask: view.mask, players: [{ ...view.players[0], nickname: view.players[0].nickname }, { ...view.players[1], nickname: view.players[1].nickname }], tankFactory: art.create, background: 0x20394a, terrainTint: worldArt ? 0xffffff : 0x637d71, backgroundAlpha: worldArt ? 0 : 1, ...(terrainArt ? { terrainArt } : {}) });
+      renderer = await createRenderer({ projectileTextures, impactTextures: effects.textures, host, layout: latest.current.layout, mask: view.mask, players: [{ ...view.players[0], nickname: view.players[0].nickname }, { ...view.players[1], nickname: view.players[1].nickname }], tankFactory: art.create, background: 0x20394a, terrainTint: worldArt ? 0xffffff : 0x637d71, backgroundAlpha: worldArt ? 0 : 1, ...(imageTerrain ? { imageTerrain } : {}) });
       if (disposed) { renderer.destroy(); art.destroy(); return; }
       const r = renderer, sprites = art;
       rig.resize(viewportOf(latest.current.layout), { left: 0, top: -100, right: view.mask.width, bottom: view.mask.height });

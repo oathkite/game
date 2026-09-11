@@ -32,7 +32,7 @@ export const CameraPrototype = (props: ThemeProps) => {
   useEffect(() => {
     const p = loadProfile();
     setAudioSettings(p.volume, p.muted);
-    const connection = createLocalConnection({ deferReady: props.worldArt ?? false, mapName: "valley", nickname: p.nickname || "ケロポッド", colors: p.colors, loadout: p.loadout,
+    const connection = createLocalConnection({ deferReady: props.worldArt ?? false, mapName: props.worldArt ? "rock-arch" : "valley", nickname: p.nickname || "ケロポッド", colors: p.colors, loadout: p.loadout,
       opponentColors: defaultOpponentColors(p.colors), opponentLoadout: defaultOpponentLoadout(p.loadout) });
     const created = createMatchStore(connection, { followCurrentSeat: true, mySeat: 0, spectator: false });
     begin.current = connection.releaseReady;

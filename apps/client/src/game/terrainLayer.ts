@@ -1,9 +1,10 @@
+import type { TerrainOp } from "@game/protocol";
 import type { TerrainMask } from "@game/sim";
 import { Container, Sprite, Texture } from "pixi.js";
 
 export type TerrainLayer = {
   readonly sprite: Container;
-  readonly update: (mask: TerrainMask) => void;
+  readonly update: (mask: TerrainMask, cut?: TerrainOp) => void;
   readonly destroy: () => void;
 };
 

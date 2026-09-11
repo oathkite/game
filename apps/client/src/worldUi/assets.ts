@@ -1,3 +1,4 @@
+import rockArch from "../../../../assets/runtime/maps/rock-arch-v1/terrain.webp";
 import logo from "../../../../assets/runtime/world-v1/logo.webp";
 import background from "../../../../assets/runtime/world-v1/background.webp";
 import lobby from "../../../../assets/runtime/world-v1/lobby.webp";
@@ -8,4 +9,8 @@ import leaf from "../../../../assets/runtime/world-v1/leaf.webp";
 export const worldArt = { background, lobby, settings, result, terrain, leaf, logo };
 export const loadTerrainArt = async (): Promise<HTMLImageElement> => {
   const image = new Image(); image.src = terrain; await image.decode(); return image;
+};
+
+export const loadRockArchArt = async (): Promise<HTMLImageElement> => {
+  const image = new Image(); image.src = rockArch; await image.decode(); return image;
 };

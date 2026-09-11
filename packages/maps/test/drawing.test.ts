@@ -5,7 +5,7 @@ import { columnsOfMask, decodeColumns, encodeColumns, getMap, heightsFromProfile
 // お絵かきツールの受け側。絵（列ごとの帯）から作った板が、元のマスクをセル単位で再現することを固定する。
 
 describe("drawing", () => {
-  it("8 枚すべてが 列の帯 → 板 → マスク で元と一致する（往復）", () => {
+  it("登録マップすべてが 列の帯 → 板 → マスク で元と一致する（往復）", () => {
     for (const name of MAP_NAMES) {
       const mask = getMap(name).build();
       const columns = columnsOfMask(mask);

@@ -1,3 +1,5 @@
+import type { TerrainOp } from "@game/protocol";
+import { createImageTerrainLayer } from "./imageTerrainLayer";
 import { fitTankLabel } from "./tankLabelLayout";
 import { COLOR_HEX, type TankColors, type WeaponId } from "@game/protocol";
 import type { TerrainMask } from "@game/sim";
@@ -17,7 +19,7 @@ export type Renderer = {
   readonly setLayout: (layout: Layout) => void;
   /** 表示だけを移動する。物理座標と倍率は変えない */
   readonly setCameraOffset: (x: number, y: number) => void;
-  readonly setTerrain: (mask: TerrainMask) => void;
+  readonly setTerrain: (mask: TerrainMask, cut?: TerrainOp) => void;
   readonly setTank: (seat: number, pose: TankPose) => void;
   /** 弾の層を作り直す。色は撃つ側の主色、大きさは武器で決まる */
   readonly projectile: (color: TankColors["primary"], weapon: WeaponId) => ProjectileView;
@@ -39,6 +41,7 @@ export type RendererInit = {
   readonly background?: number;
   readonly terrainTint?: number;
   readonly backgroundAlpha?: number;
+  readonly imageTerrain?: CanvasImageSource;
   readonly terrainArt?: CanvasImageSource;
   readonly players: readonly { colors: TankColors; nickname: string }[];
 };
@@ -71,7 +74,7 @@ export const createRenderer = async (init: RendererInit): Promise<Renderer> => {
   world.scale.set(cell);
   app.stage.addChild(world, labels);
 
-  const terrain: TerrainLayer = createTerrainLayer(init.mask, init.terrainArt);
+  const terrain: TerrainLayer = init.imageTerrain ? createImageTerrainLayer(init.mask, init.imageTerrain) : createTerrainLayer(init.mask, init.terrainArt);
   world.addChild(terrain.sprite);
   terrain.sprite.tint = init.terrainTint ?? 0xffffff;
 
@@ -120,7 +123,7 @@ export const createRenderer = async (init: RendererInit): Promise<Renderer> => {
       labels.position.set(x, y);
       tanks.forEach((_, index) => placeLabel(index));
     },
-    setTerrain: (mask) => terrain.update(mask),
+    setTerrain: (mask, cut) => terrain.update(mask, cut),
     setTank: (seat, pose) => {
       poses[seat] = pose;
       applyPose(seat);

@@ -10,7 +10,7 @@ const checksum = (cells: Uint8Array): number => {
 };
 
 describe("maps", () => {
-  it("8 枚すべてが定義されている", () => {
+  it("登録マップすべてが定義されている", () => {
     expect(allMaps().map((m) => m.name)).toEqual([...MAP_NAMES]);
   });
 
@@ -120,7 +120,7 @@ describe("resolveMapChoice", () => {
     for (const name of MAP_NAMES) expect(resolveMapChoice(name, () => 0.99)).toBe(name);
   });
 
-  it("ランダムは rng の値で 8 枚のどれかを等間隔に選び、1 に近い値でも範囲を出ない", () => {
+  it("ランダムは rng の値で 登録マップのどれかを等間隔に選び、1 に近い値でも範囲を出ない", () => {
     const picked = MAP_NAMES.map((_, i) => resolveMapChoice("random", () => i / MAP_NAMES.length));
     expect(picked).toEqual([...MAP_NAMES]);
     expect(MAP_NAMES).toContain(resolveMapChoice("random", () => 0.999999));

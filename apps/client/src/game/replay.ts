@@ -204,7 +204,7 @@ const carveImpact = (run: Run, ir: ImpactRun): void => {
   ir.carved = true;
   const { impact } = ir;
   run.mask = carve(run.mask, impact.terrainOp);
-  run.renderer.setTerrain(run.mask);
+  run.renderer.setTerrain(run.mask, impact.terrainOp);
   const shooter = run.job.shot.input.seat;
   const shooterColor = run.job.playersBefore[shooter].colors.primary;
   const hpBefore: [number, number] = [run.hp[0], run.hp[1]];
