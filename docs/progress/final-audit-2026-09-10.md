@@ -62,3 +62,5 @@
 2026-09-11保存基準測定: 8人混合武器fixtureの69/75発完走で、操作中Room snapshot最大17,058/18,942B、最終地形op8,132/9,200B、列圧縮mask3,914/4,273Bを測定。Node復元100回p95は約3.121/2.512ms。地形履歴の分離保存とcheckpoint実装前の基準をevidence/storageに保存。実DO費用・最悪条件の測定とは区別する。
 
 2026-09-11統合検証更新: e530142（招待token・地域選択・復元隔離・地形checkpoint・全武器HUDを含む）で全体testと全対象typecheck成功。配信90件が3.5分で成功。cold title最大1,862,964B、初回練習まで最大7,833,871B。CI validateも同一headで成功（run34591872097）。今回の配信試験ではRoom error系をstubで確認し、実DO再起動や8人対戦の別検証を再実行したとは扱わない。正式art pack未登録の通知は継続。
+
+2026-09-11最新8人検証: 969a3b9の配信build＋local edgeで3browser各8独立contextの4v4、通常射撃共有、降参による勝敗/成績一致、全員帰還を確認（3件/3.8分）。台座・岩盤128px・初回設定CSSを含む。初回対戦までのencoded transfer最大7,840,934B。8人HUD/結果のWebKit画像をevidence/ui/review-2026-09-11へ追加。自然決着・実機・人間のバランス評価とは区別する。
