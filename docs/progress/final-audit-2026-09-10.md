@@ -27,6 +27,7 @@
 | 正式art pack | runtime manifest/hash/fidelity check | 原素材の人間承認を自動記録しない。正式pack登録条件を残す |
 | 実機・browser対応 | Chromium/Firefox/WebKit配信全36件と各8接続オンライン対戦（取得失敗の繰返し復帰を含む） | 自動試験通過。実iOS/Android/Safari/Edgeの入室〜結果は別途必要 |
 | mobile描画・入力・移動・復帰p95 | 機能E2E、ローカル遅延試験 | 型番/OS固定の実機SLO・地域測定は未完 |
+| 入室前の地域・room RTT（23.3） | 対戦中のroom.pingと300ms超表示はあるが、入室前の測定・低RTT地域の自動選択は未接続 | 地域名と実測値を区別し、入室前の測定経路とUIを実装する |
 | DO容量・費用 | local Wrangler復元、Node100部屋 | 実DO容量を証明しない。stage構成・費用予算・alarm・測定が必要 |
 | 運用・法務・公開 | 通報保存/期限/診断/rate limit実装 | 運営主体・保持目的/削除窓口・対象地域/年齢・規約/privacy・監視担当の判断が必要 |
 
@@ -50,3 +51,5 @@
 2026-09-11 outbox追記: Roomのsnapshotと最新の一覧用要約を同じSQLite transactionで保存し、外部送信前に再試行alarmを保存する永続outboxを追加。古いackは新しい要約を削除しない。SQLite unitとlocal edge3件・server両対象型チェック成功。詳細と検証限界はevidence/ui/2026-09-11-directory-outbox.md。上記の永続outbox未実装の記録を更新するが、障害注入によるprocess再起動復元は未確認。
 
 2026-09-11 outbox障害検証: verify-directory-outbox.tsでDirectory.update例外→公開未掲載→Wrangler process groupのSIGKILL→同じSQLiteで再起動→部屋への操作なしにalarmで一覧反映→同じtokenでgeneration 2復帰が成功。上記process再起動復元の未確認をlocal workerdの範囲で解消。実Cloudflare障害・容量・地域分割とは区別する。
+
+2026-09-11公開一覧統合検証: c4b9e35の配信build＋分割後local edgeで、一覧参加→対戦開始→一覧観戦を独立3context、Chromium/Firefox/WebKitの3件で確認（26.3秒）。同じheadのCI validate成功（run34587630846）。PR25の説明を現実装と対象時点別の検証結果に更新。
