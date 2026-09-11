@@ -681,3 +681,10 @@ heartbeatはUI共同調整時にPAUSED。本ゴールは現在のタスクで進
 - build.mjsと生成SVGを原本として保存し、runtime-tanksの個別sourceとhashへ登録。SVGをブラウザ画像としてdecodeし、Pixi textureの既存16コマへ接続。専用sheet textureはfactory破棄時に解放する。ロビーのTankPortraitも同じSVGを使用する。
 - 新しい16コマは旧画像の完全複製ではなく、既存の状態indexに対応する簡略化した表情/姿勢。全コマの二値alpha、緑肌/服色、座席領域、共通足元y100をbrowserで検証。大破/復帰と4 viewportのworld scenesを含む8件成功（23.2秒）。client/e2e型チェック、素材check、diff check成功。
 - 1440pxのゲーム内とロビーの実画像を確認。HUDとの配色・服装の不一致は修正したが、横向きの顔の造形とHUDの詳細画の最終比較・人間承認は未完。新SVGの公開用3browser検証は次工程。
+
+### SVGパイロットの公開build/再入場検証
+
+- 36b7bcdのproduction.config.ts既存33件が3browserで成功（1.3分）。タイトル最大1,858,105B、プラクティス累計最大6,069,354B。
+- pilot-lifecycle.spec.tsを追加し、3browserでロビー→対戦→ロビー→再入場を検証。各入場でSVG由来の画像がWebGLへ再転送されること、ロビー素材がロードされること、JavaScript例外がないことを確認（3件、16.2秒）。演出終了後に取得した再入場画像で、すべてのbrowserの緑の搭乗パイロットを確認。
+- テストのthis/window補助プロパティの型注釈を修正し、e2e型チェックとdiff checkも成功。ゲーム内の動作変更はなし。
+- これはローカル配信buildでの確認。実機SLO、原案との造形比較と人間の素材承認は未完了。

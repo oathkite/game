@@ -6,14 +6,14 @@
 | 要件 | 現在の証拠 | 判定・次の作業 |
 | --- | --- | --- |
 | cold start操作可能p95 | startup-tests、10Mbps/150ms・cache無効20回、p95 684.1ms | Chromiumローカル配信で3秒条件通過。画像完了・実機CPU・実地域DNS/TLSは別 |
-| 初期タイトル転送2MB | production-tests/entry.spec.ts、cold新context、1,862,941B | ローカル配信buildで通過。実地域の起動時間とは別 |
-| 初回対戦まで8MB | 79d198aの3browser練習最大6,074,091B。独立8 contextは岩盤差替前7c8ab77で最大6,330,613B | 練習は最新3browser通過。最新の成績・全員帰還・60秒自動帰還は3browserで通過。実地域の待ち時間とは別 |
+| 初期タイトル転送2MB | production-tests/entry.spec.ts、cold新context、1,858,105B | ローカル配信buildで通過。実地域の起動時間とは別 |
+| 初回対戦まで8MB | 36b7bcdの3browser練習最大6,069,354B。独立8 contextは岩盤差替前7c8ab77で最大6,330,613B | 練習は最新3browser通過。最新の成績・全員帰還・60秒自動帰還は3browserで通過。実地域の待ち時間とは別 |
 | 独立8クライアントで試合完走 | eight-players.spec.ts、独立8 contextで4v4入室→準備→射撃共有→青4名降参→全員同じ成績→8名帰還選択→部屋復帰 | Chromium/Firefox/WebKit配信build・local edgeで通過。射撃のみで決着する長時間実戦・実機の証拠とは別 |
 | 1時間soak | Node100部屋/800接続・送受信各125ms・実ファイル保存、3600秒完走。再戦3500回/移動187021回 | ローカル試験通過。部屋分離・重複拒否・復帰・保存復元を検証。実DO容量・全client描画一致の保証とは別 |
 | 全編成・射程・復元 | engine/map/server tests、進捗記録参照 | 自動検証済み。人間による公平感・バランス観察とは別 |
 | 世界UI最終原案一致 | 浮島背景・岩盤/厚い草地・濃紺パネル・中央timer・円形角度計・100分割/指針・実弾アイコンを実装 | 地形表層や情報密度も含めて最終比較を継続。人間の最終承認は未記録 |
 | 全参加者の結果表現 | 共通ResultPlayers、勝利/敗北/引き分けの表情。8context全画面の勝敗共有、667px4列/2段、390px縦向き帰還を3browserで確認 | 表情・操作の自動検証済み。最終デザイン承認は別 |
-| クライアント/ゲーム内のパイロット整合 | HUD/結果の緑肌・オリーブ服に合わせた搭乗用SVG16コマをゲーム内/ロビーへ接続。二値alpha・共通足元・大破/復帰を検証 | 色/服の不一致を修正。簡略化した横向きの顔とHUDの最終見た目比較・承認は未完 |
+| クライアント/ゲーム内のパイロット整合 | HUD/結果の緑肌・オリーブ服に合わせた搭乗用SVG16コマをゲーム内/ロビーへ接続。二値alpha・共通足元・大破/復帰を検証。公開buildで3browserの再入場/GPU転送/実画像を確認 | 色/服の不一致を修正。簡略化した横向きの顔とHUDの最終見た目比較・承認は未完 |
 | 統合テスト | 79d198aでpnpm test 803件成功、edge専用2件skip、pnpm -r typecheck成功。production.config.ts 33件成功 | ローカルで確認。実機/実地域/実DO容量の代用にしない |
 | 正式art pack | runtime manifest/hash/fidelity check | 原素材の人間承認を自動記録しない。正式pack登録条件を残す |
 | 実機・browser対応 | Chromium/Firefox/WebKit配信全33件と各8接続オンライン対戦（取得失敗の繰返し復帰を含む） | 自動試験通過。実iOS/Android/Safari/Edgeの入室〜結果は別途必要 |
