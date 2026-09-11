@@ -9,6 +9,11 @@ it.skipIf(!endpoint)("lists occupied custom rooms in stable bounded pages", asyn
     for (let i = 0; i < 21; i++) {
       const { roomId } = await fetch(`${endpoint}/v2/rooms`, { method: "POST", headers }).then(response => response.json()) as { roomId: string };
       ids.push(roomId);
+      const probe = await fetch(`${endpoint}/v2/rooms/${roomId}/probe`, { headers });
+      expect(probe.status).toBe(200);
+      expect(await probe.json()).toEqual({ roomId });
+      const before = await fetch(`${endpoint}/v2/rooms`, { headers }).then(response => response.json()) as { roomId: string; members: number }[];
+      expect(before.find(room => room.roomId === roomId)?.members).toBe(0);
       const ws = new WebSocket(`${endpoint!.replace("http", "ws")}/v2/rooms/${roomId}`, { headers }); sockets.push(ws);
       await new Promise<void>((resolve, reject) => { ws.once("open", resolve); ws.once("error", reject); });
       let joined = false;

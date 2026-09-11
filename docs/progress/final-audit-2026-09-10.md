@@ -27,7 +27,7 @@
 | 正式art pack | runtime manifest/hash/fidelity check | 原素材の人間承認を自動記録しない。正式pack登録条件を残す |
 | 実機・browser対応 | Chromium/Firefox/WebKit配信全36件と各8接続オンライン対戦（取得失敗の繰返し復帰を含む） | 自動試験通過。実iOS/Android/Safari/Edgeの入室〜結果は別途必要 |
 | mobile描画・入力・移動・復帰p95 | 機能E2E、ローカル遅延試験 | 型番/OS固定の実機SLO・地域測定は未完 |
-| 入室前の地域・room RTT（23.3） | 対戦中のroom.pingと300ms超表示はあるが、入室前の測定・低RTT地域の自動選択は未接続 | 地域名と実測値を区別し、入室前の測定経路とUIを実装する |
+| 入室前の地域・room RTT（23.3） | 接続先Roomへの入室前HTTP往復測定と300ms超表示を追加。対戦中はroom.ping | local edgeの席を使わないprobeと配信3browserを確認。低RTT地域の自動選択・実地域測定は残る。evidence/ui/2026-09-11-room-probe.md |
 | DO容量・費用 | local Wrangler復元、Node100部屋 | 実DO容量を証明しない。stage構成・費用予算・alarm・測定が必要 |
 | 運用・法務・公開 | 通報保存/期限/診断/rate limit実装 | 運営主体・保持目的/削除窓口・対象地域/年齢・規約/privacy・監視担当の判断が必要 |
 

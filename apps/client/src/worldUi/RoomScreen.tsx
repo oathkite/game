@@ -1,3 +1,4 @@
+import { measureRoomRtt } from "./roomProbe";
 import { PublicRooms } from "./PublicRooms";
 import { RoomTeamSummary } from "./RoomTeamSummary";
 import { useBrowserBackAction } from "./browserBack";
@@ -20,6 +21,7 @@ const tokenKey = "keropod.room-token", roomKey = "keropod.room-id";
 const errors: Record<string, string> = { "version-mismatch": "ゲームの更新が必要です。再読み込みしてください。", "wrong-mode": "この部屋は別の対戦形式です。クイック参加から入り直してください。", "fixed-mode": "クイック対戦の編成は固定です。", "waiting-for-players": "人数が揃うまでお待ちください。", "spectators-full": "観戦席が満員です。", "read-only": "観戦中は対戦操作できません。", "not-found": "部屋が見つかりません。", full: "部屋が満員です。", locked: "対戦中の部屋には参加できません。", "invalid-session": "復帰期限が切れたか、別の画面で接続中です。", "stale-revision": "部屋が更新されました。内容を確認して再操作してください。", "not-ready": "全員の準備完了を待っています。", unassigned: "全員のチームを選んでください。", "not-enough-teams": "2チーム以上に分かれてください。", "not-enough-players": "2人以上で開始できます。", disconnected: "切断中の参加者がいます。", "not-owner": "オーナーだけが操作できます。", "not-owner-or-not-finished": "対戦終了後、オーナーが部屋へ戻せます。" };
 export const RoomScreen = ({ onExit, onLab }: { readonly onExit: () => void; readonly onLab?: () => void }) => {
   const { t } = useLanguage();
+  const [preflightRtt, setPreflightRtt] = useState<number | null>(null);
   const [listing, setListing] = useState(false);
   const [room, setRoom] = useState<RoomSnapshot | null>(null), [playerId, setPlayerId] = useState("");
   const [code, setCode] = useState(() => inviteRoom(location.href) ?? ""), [status, setStatus] = useState(() => new URL(location.href).searchParams.has("room") && !inviteRoom(location.href) ? "招待リンクの部屋コードが無効です。" : ""), [busy, setBusy] = useState(false);
@@ -32,7 +34,7 @@ export const RoomScreen = ({ onExit, onLab }: { readonly onExit: () => void; rea
   const socket = useRef<WebSocket | null>(null), active = useRef(true), attempt = useRef(0);
   const connect = async (initial: { readonly type: string; readonly mode?: "1v1" | "2v2"; readonly region?: "asia" | "europe" | "americas"; readonly roomId?: string; readonly token?: string | null; readonly profile?: ReturnType<typeof profile> }) => {
     const currentAttempt = ++attempt.current;
-    socket.current?.close(); setBusy(true); setStatus("接続しています…");
+    socket.current?.close(); setPreflightRtt(null); setBusy(true); setStatus("接続しています…");
     socket.current = null;
     let url: string;
     try { url = serverBase
@@ -40,6 +42,11 @@ export const RoomScreen = ({ onExit, onLab }: { readonly onExit: () => void; rea
       : `ws://${location.hostname}:8795`; }
     catch { if (active.current && currentAttempt === attempt.current) { setBusy(false); setStatus("対戦サーバーに接続できません。"); } return; }
     if (!active.current || currentAttempt !== attempt.current) return;
+    if (serverBase && initial.type !== "room.resume") {
+      const rtt = await measureRoomRtt(url);
+      if (!active.current || currentAttempt !== attempt.current) return;
+      setPreflightRtt(rtt);
+    }
     const ws = new WebSocket(url); socket.current = ws;
     let identity = "", watching = false, versionMismatch = false;
     ws.onopen = () => { if (active.current && socket.current === ws) ws.send(JSON.stringify({ ...initial, build: CLIENT_BUILD, ...(initial.type === "room.quick" ? { roomId: serverBase ? new URL(url).pathname.split("/").at(-1) : "000000" } : {}) })); };
@@ -107,7 +114,7 @@ export const RoomScreen = ({ onExit, onLab }: { readonly onExit: () => void; rea
         <p className="room-note">{t("マップ・装備・編成が変わると全員の準備が解除されます。")}</p>
       </>}
     </PixelPanel></div>
-    <footer>{status && <span role="status">{t(status)}</span>}{!connected && sessionStorage.getItem(tokenKey) && <PixelButton disabled={busy} onClick={() => connect({ type: "room.resume", token: sessionStorage.getItem(tokenKey) })}>{t("再接続")}</PixelButton>}
+    <footer>{preflightRtt !== null && <span role="status">{t("入室前の応答")} {preflightRtt} ms{preflightRtt > 300 ? ` · ${t("通信遅延が大きい状態です")}` : ""}</span>}{status && <span role="status">{t(status)}</span>}{!connected && sessionStorage.getItem(tokenKey) && <PixelButton disabled={busy} onClick={() => connect({ type: "room.resume", token: sessionStorage.getItem(tokenKey) })}>{t("再接続")}</PixelButton>}
       {room && me && <><PixelButton disabled={!connected} onClick={() => edit("room.ready", { ready: !me?.ready })}>{me?.ready ? t("準備を解除") : t("準備完了")}</PixelButton>{owner && room.mode === "custom" && <PixelButton disabled={!connected || !canStart} onClick={() => edit("room.start")}>{t("対戦開始")}</PixelButton>}</>}
     </footer>
   </section>;

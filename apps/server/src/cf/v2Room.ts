@@ -32,6 +32,9 @@ export class RoomObject extends DurableObject<RoomEnv> {
       });
     });
   }
+  probe(): boolean {
+    return this.ctx.storage.sql.exec("SELECT id FROM room_state WHERE id = 1").toArray().length > 0;
+  }
   async initialize(roomId: string, mode: RoomMode, region: RoomRegion): Promise<void> {
     const runtime = this.load(roomId, mode, region);
     if (runtime.state.mode !== mode || runtime.state.region !== region) throw new Error("room mode mismatch");

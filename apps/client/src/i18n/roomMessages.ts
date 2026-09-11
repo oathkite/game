@@ -1,4 +1,5 @@
 export const roomEnglish: Readonly<Record<string, string>> = {
+  "入室前の応答": "Pre-join response", "通信遅延が大きい状態です": "High connection latency",
   "公開部屋": "Public rooms", "一覧を閉じる": "Close list", "一覧を更新": "Refresh rooms",
   "公開部屋を探す": "Browse public rooms", "もっと見る": "Load more", "部屋一覧を読み込み中…": "Loading rooms…",
   "作成した部屋は公開一覧に表示されます。": "Rooms you create appear in the public list.",

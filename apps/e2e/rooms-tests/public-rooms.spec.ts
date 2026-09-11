@@ -24,6 +24,7 @@ test("a public room can be found and joined without entering its code", async ({
     await guest!.screenshot({ path: testInfo.outputPath("public-rooms.png") });
     await card.getByRole("button", { name: "部屋に参加", exact: true }).click();
     await expect(guest!.getByTestId("room-code")).toHaveText(code);
+    await expect(guest!.getByRole("status").filter({ hasText: "入室前の応答" })).toContainText(/\d+ ms/);
     await expect(owner!.locator(".room-members li")).toHaveCount(2);
     await owner!.getByLabel("参加者1のチーム").selectOption("t0");
     await guest!.getByLabel("参加者2のチーム").selectOption("t1");

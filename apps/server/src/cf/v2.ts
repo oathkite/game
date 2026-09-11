@@ -47,6 +47,13 @@ export default {
       const latest = new Map(lists.flat().sort((a, b) => a.updatedAt - b.updatedAt).map(room => [room.roomId, room]));
       return Response.json([...latest.values()].sort((a, b) => b.updatedAt - a.updatedAt).slice(0, 100), { headers });
     }
+    const probeId = /^\/v2\/rooms\/([A-F0-9]{6})\/probe$/.exec(url.pathname)?.[1];
+    if (probeId && request.method === "GET") {
+      const { success } = await env.ALLOCATION_LIMITER.limit({ key: `probe:${request.headers.get("CF-Connecting-IP") ?? "local"}` });
+      if (!success) return new Response("probe rate limit", { status: 429, headers });
+      return await env.ROOMS.getByName(probeId).probe()
+        ? Response.json({ roomId: probeId }, { headers }) : new Response("room not found", { status: 404, headers });
+    }
     const roomId = /^\/v2\/rooms\/([A-F0-9]{6})$/.exec(url.pathname)?.[1];
     if (!roomId || request.method !== "GET") return new Response("not found", { status: 404, headers });
     return env.ROOMS.getByName(roomId).fetch(request);
