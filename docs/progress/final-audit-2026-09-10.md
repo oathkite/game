@@ -58,3 +58,5 @@
 2026-09-11公開一覧統合検証: c4b9e35の配信build＋分割後local edgeで、一覧参加→対戦開始→一覧観戦を独立3context、Chromium/Firefox/WebKitの3件で確認（26.3秒）。同じheadのCI validate成功（run34587630846）。PR25の説明を現実装と対象時点別の検証結果に更新。
 
 2026-09-11統合検証更新: 9189169で全体テスト（protocol24、sim107、maps68、engine141、server75＋edge専用3skip、client235）と全対象typecheck成功。配信72件は2.9分で完走し、追加した公開一覧・地域自動選択と既存の起動/音/戻る操作/練習/設定を3browserで確認。初期タイトル最大1,862,785B、初回練習まで最大7,833,653B。同一headのCI validate成功（run34588450667）。正式art pack未登録の通知は残る。新たに復元失敗隔離・地形checkpoint/短いlog・期限付きdeep-link tokenの不足を正本23章との照合で記録し、正常系の成功で完了扱いしない。
+
+2026-09-11保存基準測定: 8人混合武器fixtureの69/75発完走で、操作中Room snapshot最大17,058/18,942B、最終地形op8,132/9,200B、列圧縮mask3,914/4,273Bを測定。Node復元100回p95は約3.121/2.512ms。地形履歴の分離保存とcheckpoint実装前の基準をevidence/storageに保存。実DO費用・最悪条件の測定とは区別する。
