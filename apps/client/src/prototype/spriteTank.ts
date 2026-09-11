@@ -11,7 +11,7 @@ import type { TankPose, TankView } from "@/game/tankView";
 const urls = import.meta.glob<string>([
   "../../../../assets/runtime/tanks-v1/cabin-standard.png",
   "../../../../assets/runtime/tanks-v1/tracks-standard.png",
-  "../../../../assets/runtime/tanks-v1/pilot-frog.png",
+  "../../../../assets/runtime/tanks-v1/pilot-frog.svg",
   "../../../../assets/runtime/tanks-v1/weapon-*.png",
   "../../../../assets/runtime/tanks-v1/effect-muzzle.png",
   "../../../../assets/runtime/tanks-v1/effect-smoke.png",
@@ -30,7 +30,11 @@ export type SpriteTankFactory = {
 export const loadSpriteTanks = async (teamIndices?: readonly number[]): Promise<SpriteTankFactory> => {
   const sheets = new Map<string, Texture>();
   await Promise.all(Object.entries(urls).map(async ([path, url]) => {
-    sheets.set(path.split("/").pop()!.replace(".png", ""), await Assets.load<Texture>(url));
+    const id = path.split("/").pop()!.replace(/\.(png|svg)$/, "");
+    if (id === "pilot-frog") {
+      const image = new Image(); image.src = url; await image.decode();
+      sheets.set(id, Texture.from(image));
+    } else sheets.set(id, await Assets.load<Texture>(url));
   }));
   const frames = new Map<string, Texture>();
   const frame = (id: string, index = 0): Texture => {
@@ -52,7 +56,7 @@ export const loadSpriteTanks = async (teamIndices?: readonly number[]): Promise<
       return tank;
     },
     setWeapon: (seat, weapon) => weapons[seat]?.(weapon),
-    destroy: () => { for (const texture of frames.values()) texture.destroy(); },
+    destroy: () => { for (const texture of frames.values()) texture.destroy(); sheets.get("pilot-frog")?.destroy(true); },
   };
 };
 
@@ -66,7 +70,7 @@ const makeTank = (frame: Frame, nickname: string, color: string): TankView & { s
     return sprite;
   };
   const tracks = art("tracks-standard"), pilot = art("pilot-frog");
-  tracks.label = "tracks";
+  tracks.label = "tracks"; pilot.label = "pilot";
   const body = new Container({ label: "body" });
   body.addChild(art("cabin-standard", 0), pilot, art("cabin-standard", 1), art("cabin-standard", 2), art("cabin-standard", 3));
   rig.addChild(tracks, body);

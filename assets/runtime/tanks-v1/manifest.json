@@ -20,10 +20,10 @@
       "sha256": "a54b6b094a304c3f42e55f0d939add44c0d9bfc7202e08343055afc3422598ac"
     },
     {
-      "file": "pilot-frog.png",
-      "source": "assets/workbench/baseline-v2/pilot-frog.png",
-      "bytes": 5711,
-      "sha256": "e03372d898ff90c5cf9c367f3bd469b382280117d2510cc886a52b10cda92c03"
+      "file": "pilot-frog.svg",
+      "source": "assets/workbench/pilot-generic-v2/pilot-frog.svg",
+      "bytes": 17984,
+      "sha256": "2afe9b3ed9bd6568bf661a3776ab719498ca3f1ce6de2e9129746cbe143fc3c6"
     },
     {
       "file": "effect-spark.png",

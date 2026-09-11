@@ -7,8 +7,9 @@ const digest = bytes => createHash('sha256').update(bytes).digest('hex');
 export function runtimeTanks(check = true) {
   const root = resolve('assets/runtime/tanks-v1');
   const entries = files.map(id => {
-    const source = `assets/workbench/baseline-v2/${id}.png`;
-    const bytes = readFileSync(source), file = `${id}.png`;
+    const file = `${id}.${id === 'pilot-frog' ? 'svg' : 'png'}`;
+    const source = `assets/workbench/${id === 'pilot-frog' ? 'pilot-generic-v2' : 'baseline-v2'}/${file}`;
+    const bytes = readFileSync(source);
     if (check) {
       if (!bytes.equals(readFileSync(resolve(root, file)))) throw new Error(`runtime tank differs: ${id}`);
     } else {

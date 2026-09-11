@@ -2,7 +2,7 @@ import { useState } from "react";
 import { useLanguage } from "@/i18n/locale";
 import cabin from "../../../../assets/runtime/tanks-v1/cabin-standard.png";
 import tracks from "../../../../assets/runtime/tanks-v1/tracks-standard.png";
-import pilot from "../../../../assets/runtime/tanks-v1/pilot-frog.png";
+import pilot from "../../../../assets/runtime/tanks-v1/pilot-frog.svg";
 import cannon from "../../../../assets/runtime/tanks-v1/weapon-cannon.png";
 /** Same 12px/cell layers and anchors as the battlefield, without a WebGL context. */
 export const TankPortrait = () => {

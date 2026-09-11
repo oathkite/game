@@ -674,3 +674,10 @@ heartbeatはUI共同調整時にPAUSED。本ゴールは現在のタスクで進
 - production.config.tsのChromium/Firefox/WebKit全33件が成功（1.3分）。cold title最大1,862,941B、cold practice累計最大6,074,091B。これはローカル配信のencoded bytesで、地域別の時間SLOの証拠ではない。
 - final-auditを現在の素材/リザルトに合わせ更新。未完のゲーム内パイロット整合、原案全体への一致、正式素材承認、実機/地域/DO容量・費用/運用判断を残す。
 - PR25はOPEN Draft、base codex/2d-update、head codex/2d-world-uiを確認。ここまでの変更と検証範囲を同PRへ反映する。本番/mainへの統合は実施しない。
+
+### 搭乗用パイロットとHUDの配色・服装を統一
+
+- 黄色い旧搭乗スプライトから、緑肌・淡い口元・オリーブ服のSVG pixel artへ変更。ユーザーのSVG制作許可に基づくコードによる描画で、画像API/CLI生成は使用していない。以前の透過不合格候補とbaseline-v2の旧原本は保持。
+- build.mjsと生成SVGを原本として保存し、runtime-tanksの個別sourceとhashへ登録。SVGをブラウザ画像としてdecodeし、Pixi textureの既存16コマへ接続。専用sheet textureはfactory破棄時に解放する。ロビーのTankPortraitも同じSVGを使用する。
+- 新しい16コマは旧画像の完全複製ではなく、既存の状態indexに対応する簡略化した表情/姿勢。全コマの二値alpha、緑肌/服色、座席領域、共通足元y100をbrowserで検証。大破/復帰と4 viewportのworld scenesを含む8件成功（23.2秒）。client/e2e型チェック、素材check、diff check成功。
+- 1440pxのゲーム内とロビーの実画像を確認。HUDとの配色・服装の不一致は修正したが、横向きの顔の造形とHUDの詳細画の最終比較・人間承認は未完。新SVGの公開用3browser検証は次工程。
