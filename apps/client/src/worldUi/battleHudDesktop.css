@@ -1,4 +1,4 @@
-/* Approved cockpit proportions; compact/touch layouts keep their existing space. */
+/* Cockpit proportions follow the reference; compact layouts keep their existing space. */
 @media (min-width:1200px) and (min-height:700px) {
   .world-ui .battle-roster { height:76px; padding:6px 20px; gap:18px; background:linear-gradient(#203a50,#102333); box-shadow:inset 0 -2px #52748b,0 3px 8px #07172355; }
   .battle-seats { gap:12px; }
@@ -7,7 +7,9 @@
   .battle-seat-portrait { width:44px; height:44px; }
   .battle-seat strong,.world-ui .network-world header.battle-roster .battle-seat strong { font-size:15px; }
   .battle-hp { height:8px; box-shadow:inset 0 1px 2px #07172399; }
-  .battle-countdown { width:64px; height:64px; font-size:32px; background:#102333; box-shadow:0 0 0 8px #102333; }
+  .battle-countdown { position:relative; isolation:isolate; width:64px; height:64px; font-size:32px; background:none; box-shadow:none; }
+  .battle-countdown::before { content:""; position:absolute; z-index:-1; inset:-10px -16px -20px; pointer-events:none; background:#52748b; clip-path:polygon(0 0,100% 0,91% 91%,85% 100%,15% 100%,9% 91%); }
+  .battle-countdown::after { content:""; position:absolute; z-index:-1; inset:-10px -14px -18px; pointer-events:none; background:linear-gradient(#203a50,#102333); clip-path:polygon(0 0,100% 0,91% 91%,85% 100%,15% 100%,9% 91%); }
   .world-ui .battle-menu { top:92px; right:20px; }
   .battle-wind { top:92px; left:20px; }
   .world-ui .battle-console:not(.has-touch) { height:160px; grid-template-columns:280px 156px minmax(0,1fr) 164px; gap:22px; padding:8px 20px; }
