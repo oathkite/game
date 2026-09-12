@@ -1,7 +1,7 @@
 # KEROPOD
 
 自分のキャラクターが共通キャノピーのマシンに乗り、風と地形を読んで一発を競う、2D ドット絵の砲撃対戦ゲームを目指す。
-現在は 1 対 1 の対戦機能を実装済みで、新しいアートと UI は制作段階。設計は [docs/design](./docs/design/README.md) に、開発の進め方は [CLAUDE.md](./CLAUDE.md) にある。
+2Dアップデートの作業ブランチでは最大8人・任意のチーム分割、リアルタイム移動、画像地形の破壊、再接続、練習、BGM・効果音を実装済み。最終的な見た目と実機・公開環境の検証は継続中。設計は [docs/design](./docs/design/README.md) に、開発の進め方は [CLAUDE.md](./CLAUDE.md) にある。
 
 ## アートと UI の制作
 
@@ -30,20 +30,22 @@ https://github.com/user-attachments/assets/95a2c021-a18d-4035-a9db-abe4163ebb62
 |---|---|
 | `packages/sim` | 決定論的な物理、地形、風、ダメージ。golden replay のケースもここに置く |
 | `packages/protocol` | メッセージの型と Zod スキーマ、部屋と対戦のデータモデル |
-| `packages/maps` | 8 枚のマップ。整数演算で地形マスクを生成する |
+| `packages/maps` | 画像地形の3マップと旧8マップ。描画・衝突判定の地形を共有する |
 | `packages/engine` | 対戦の状態遷移。時刻と乱数を注入する純関数と、時計につなぐ host |
-| `apps/server` | Node.js + ws。部屋、ロビー、再接続、engine の橋渡し |
-| `apps/client` | Vite + React + PixiJS。solo モードと、オンライン対戦の画面 |
+| `apps/server` | Workers + Durable Objects の部屋APIと対戦。旧Node.jsサーバーも保持 |
+| `apps/client` | Vite + React + PixiJS。タイトル、ロビー、練習、オンライン対戦、設定、リザルト |
 | `apps/e2e` | Playwright。2 つのブラウザで 1 戦を通す。Node とブラウザの golden 比較 |
 
 ## 動かす
 
 ```sh
 pnpm install
-pnpm dev          # server（:8787）と client（:5173）を同時に起動する
+pnpm dev          # 新Room API（:8796）と client（:5173）をローカル起動
 ```
 
-ブラウザで http://localhost:5173/ を開く。
+ブラウザで http://127.0.0.1:5173/ を開く。
+Wranglerのローカル実行を使い、クラウドへのデプロイは行わない。保存先は `apps/server/.keropod/dev-rooms`。
+この標準コマンドは同じPCのブラウザ向け。ポートが使用中なら既存プロセスの用途を確認する。
 「プラクティス」はサーバーなしで動く。
 オンライン対戦はロビーから部屋を作り、別のブラウザ（または別のプロファイル）でコードを入れて入る。
 
@@ -51,41 +53,26 @@ pnpm dev          # server（:8787）と client（:5173）を同時に起動す�
 
 ```sh
 pnpm test                      # sim、protocol、maps、engine、server、client の単体テスト
-pnpm --filter @game/e2e test:e2e   # Playwright（server と client を自動で起動する）
+pnpm --filter @game/e2e exec playwright test --config dev.config.ts # 標準起動で2人の射撃・再接続
+pnpm --filter @game/e2e exec playwright test --config production.config.ts # production build、3ブラウザ
+pnpm --filter @game/e2e test:e2e   # 旧対戦の回帰テスト
 pnpm typecheck
 ```
 
-サーバーの接続先は `VITE_SERVER_URL`（例 `wss://example.com`）で切り替える。
-開発時は Vite が `/ws` を `ws://localhost:8787` へ中継する。
+新UIの接続先は `VITE_ROOM_SERVER_URL`（HTTPのRoom API URL）。`pnpm dev` は `http://127.0.0.1:8796` を指定する。
+`dev.config.ts` は5173・8796を自動起動するので、検証前に自分の `pnpm dev` を終了する。
 
-## デプロイ
+旧実装の開発は `pnpm dev:legacy`（Node :8787 / client :5173）で起動し、`/?prototype=legacy` を開く。
+旧接続先の設定は `VITE_SERVER_URL` と `/ws` proxy。新Room APIとは別のもの。
 
-本番は Cloudflare に置いている。
+## 公開までの確認
 
-| 対象 | 場所 | 配置コマンド |
-|---|---|---|
-| client | Cloudflare Pages: https://fortress-9hj.pages.dev | `cd apps/client && VITE_SERVER_URL=wss://fortress-server.kita-396.workers.dev pnpm build && pnpm exec wrangler pages deploy dist --project-name fortress --branch main` |
-| server | Cloudflare Workers + Durable Objects: https://fortress-server.kita-396.workers.dev | `cd apps/server && pnpm exec wrangler deploy` |
+2Dアップデートは作業ブランチで検証中。冒頭の公開リンクと紹介動画は旧実装のもので、新実装の公開完了を意味しない。
+`main` へのpushは本番デプロイを起動するため、公開は明示的なリリース指示後に行う。
+新サーバーの設定は `apps/server/wrangler.v2.jsonc`。旧 `deploy:cf` と区別する。
+[最終監査](docs/progress/final-audit-2026-09-10.md)と[判断が必要な項目](docs/progress/owner-decisions-2026-09-12.md)で残る検証・公開条件を確認する。
 
-配置は `main` へのマージで自動的に行う（`.github/workflows/deploy.yml`）。
-typecheck と単体テストを通してから server、次に client の順で配置し、手で `wrangler deploy` を打つのは復旧や検証のときだけにする。
-workflow は GitHub の Actions 画面から手動でも起動できる。
-リポジトリの secrets に次の 2 つを置く。
-
-| secret | 内容 |
-|---|---|
-| `CLOUDFLARE_API_TOKEN` | Workers Scripts、Durable Objects、Cloudflare Pages の編集権限を持つ API トークン |
-| `CLOUDFLARE_ACCOUNT_ID` | Cloudflare のアカウント ID |
-
-server は 1 つの Durable Object が全部屋を持ち、WebSocket Hibernation で接続を受け、制限時間などの起床は alarm で行う。
-状態は命令のたびに storage へ保存し、退避から戻ったときに復元する。
-費用が増える経路は Durable Object の要求数、実行時間、storage 書き込みで、alarm は 1 秒より短い間隔で鳴らさない。
-部屋も接続も無いときは storage を空にし、alarm も持たないので、誰も遊んでいなければ費用はかからない。
-
-Node で動かす場合は `apps/server/Dockerfile` をリポジトリのルートからビルドする。
-待ち受けポートは環境変数 `PORT`、生存確認は `/health` で行う。
-
-ローカルの [動作試験台](./tools/asset-lab/README.md) は新デザインの [baseline-v2](./assets/workbench/baseline-v2/README.md) を表示する。`pnpm assets:lab` で起動し、`pnpm assets:test:browser` と `pnpm assets:capture` で再確認できる。ゲーム本体へのスプライト統合は未実施。
+ローカルの [動作試験台](./tools/asset-lab/README.md) では機体素材を検証できる。ゲーム本体にも2Dスプライトを統合済み。
 
 ## 2Dアップデートの開発
 
