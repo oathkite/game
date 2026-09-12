@@ -27,8 +27,8 @@ export const useBattleInput = (enabled: boolean, move: (direction: -1 | 1) => vo
       if (action) { e.preventDefault(); begin(e.code, action); }
     };
     const up = (e: KeyboardEvent) => { if (owner.current === e.code) { e.preventDefault(); release(e.code); } };
-    window.addEventListener("keydown", down); window.addEventListener("keyup", up); window.addEventListener("blur", cancel); document.addEventListener("visibilitychange", cancel);
-    return () => { cancel(); window.removeEventListener("keydown", down); window.removeEventListener("keyup", up); window.removeEventListener("blur", cancel); document.removeEventListener("visibilitychange", cancel); };
+    window.addEventListener("keydown", down); window.addEventListener("keyup", up); window.addEventListener("blur", cancel); window.addEventListener("resize", cancel); document.addEventListener("visibilitychange", cancel);
+    return () => { cancel(); window.removeEventListener("keydown", down); window.removeEventListener("keyup", up); window.removeEventListener("blur", cancel); window.removeEventListener("resize", cancel); document.removeEventListener("visibilitychange", cancel); };
   }, []);
   const button = (action: Action) => ({
     onPointerDown: (e: PointerEvent<HTMLButtonElement>) => { if (!e.isPrimary || e.button !== 0) return; e.preventDefault(); begin(e.pointerId, action); if (owner.current === e.pointerId) e.currentTarget.setPointerCapture(e.pointerId); },
