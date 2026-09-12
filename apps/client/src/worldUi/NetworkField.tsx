@@ -30,7 +30,7 @@ export const NetworkField = (props: Props) => {
   const [signal, setSignal] = useState(false);
   const [loaded, setLoaded] = useState(false), [error, setError] = useState(false);
   const openingActive = () => Boolean(latest.current.frame.opening && latest.current.serverNow < latest.current.frame.opening.endsAt);
-  const focus = () => { if (openingActive()) return; const p = latest.current.players.find(p => p.playerId === latest.current.frame.actorId) ?? latest.current.frame.players.find(p => p.playerId === latest.current.frame.actorId); if (p) rig.focus({ x: p.x, y: p.y - 6 }, "actor", matchMedia("(prefers-reduced-motion: reduce)").matches); };
+  const focus = (immediate = false) => { if (openingActive()) return; const p = latest.current.players.find(p => p.playerId === latest.current.frame.actorId) ?? latest.current.frame.players.find(p => p.playerId === latest.current.frame.actorId); if (p) rig.focus({ x: p.x, y: p.y - 6 }, "actor", immediate || matchMedia("(prefers-reduced-motion: reduce)").matches); };
   useEffect(() => {
     const element = host.current; if (!element) return;
     let disposed = false, renderer: Renderer | null = null, art: SpriteTankFactory | null = null, stop = () => {};
@@ -58,7 +58,7 @@ export const NetworkField = (props: Props) => {
         const nextTerrain = `${frame.matchId}/${presentation.terrainOps.length}`;
         if (nextTerrain !== terrainKey) { terrainKey = nextTerrain; mask = applyOps(baseTerrain(frame), presentation.terrainOps); r.setTerrain(mask, undefined, presentation.terrainOps); }
         const nextTurn = `${frame.matchId}/${frame.turnId}`;
-        if (nextTurn !== turnKey) { turnKey = nextTurn; if (latest.current.followTurns !== false) focus(); }
+        if (nextTurn !== turnKey) { if (latest.current.followTurns !== false) focus(turnKey === ""); turnKey = nextTurn; }
         facing.set(frame.actorId, frame.movement.facing);
         if (frame.phase === "acting" && latest.current.selectedWeapon) art!.setWeapon(frame.players.findIndex(p => p.playerId === ownId), latest.current.selectedWeapon);
         const shot = frame.phase === "replaying" ? frame.replay?.shooter : null;
@@ -135,7 +135,7 @@ export const NetworkField = (props: Props) => {
       onPointerUp={e => { if (!drag.current) return; drag.current = null; rig.releasePan(performance.now()); if (e.currentTarget.hasPointerCapture(e.pointerId)) e.currentTarget.releasePointerCapture(e.pointerId); }}
       onPointerCancel={() => { drag.current = null; rig.stop(); }} onPointerLeave={() => { if (!drag.current) rig.stop(); }} onBlur={() => rig.stop()} />
     {!loaded && <p className="network-loading" role="status">{error ? t("素材を読み込めませんでした。再読み込みしてください。") : t("フィールドを準備しています…")}</p>}
-    <button className="network-focus" disabled={openingActive()} onClick={focus} aria-label={t("手番へ戻る")}>◎</button>
+    <button className="network-focus" disabled={openingActive()} onClick={() => focus()} aria-label={t("手番へ戻る")}>◎</button>
     <button className="network-overview" disabled={openingActive()} aria-label={t("全体図からカメラを移動")} onClick={e => { const box = e.currentTarget.getBoundingClientRect(); rig.focus(e.detail === 0 ? { x: props.frame.map.width / 2, y: props.frame.map.height / 2 } : { x: (e.clientX - box.left) / box.width * props.frame.map.width, y: (e.clientY - box.top) / box.height * props.frame.map.height }, "manual", true); }}><canvas ref={mini} width="200" height="90" /></button>
   </div>;
 };

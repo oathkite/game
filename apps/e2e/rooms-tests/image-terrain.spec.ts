@@ -47,9 +47,26 @@ test("authored terrain is shared after firing and reconnecting", async ({ browse
     frames[1] = undefined;
     await guest.reload();
     await guest.getByRole("button", { name: "はじめる", exact: true }).click();
+    await guest.evaluate(() => {
+      const observer = new MutationObserver(() => {
+        const field = document.querySelector<HTMLElement>('[data-testid="network-world"]');
+        if (!field?.dataset.cameraX || !field.dataset.cameraY) return;
+        field.dataset.initialCameraX = field.dataset.cameraX;
+        field.dataset.initialCameraY = field.dataset.cameraY;
+        observer.disconnect();
+      });
+      observer.observe(document.body, { subtree: true, attributes: true, attributeFilter: ["data-camera-x", "data-camera-y"] });
+    });
     await guest.getByRole("button", { name: "オンライン対戦", exact: true }).click();
     await expect(guest.getByTestId("network-world")).toHaveAttribute("data-loaded", "true", { timeout: 15000 });
     expect(frames[1]!.map).toEqual(map); expect(frames[1]!.terrainOps).toEqual(ops);
+    const field = guest.getByTestId("network-world");
+    await expect(field).toHaveAttribute("data-initial-camera-x", /[\d.]+/);
+    const box = (await field.boundingBox())!;
+    const currentActor = frames[1]!.players.find(p => p.playerId === frames[1]!.actorId)!;
+    const halfWidth = box.width / 9 / 2, halfHeight = box.height / 9 / 2;
+    expect(Number(await field.getAttribute("data-initial-camera-x"))).toBeCloseTo(Math.max(halfWidth, Math.min(map.width - halfWidth, currentActor.x)), 2);
+    expect(Number(await field.getAttribute("data-initial-camera-y"))).toBeCloseTo(Math.max(-100 + halfHeight, Math.min(map.height - halfHeight, currentActor.y - 6)), 2);
     await guest.screenshot({ path: `test-results/online-${mapId}-${test.info().project.name}.png` });
     expect(errors).toEqual([]);
   } finally { await Promise.allSettled(contexts.map(context => context.close())); }
