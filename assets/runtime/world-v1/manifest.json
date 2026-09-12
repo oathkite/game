@@ -144,23 +144,23 @@
     },
     {
       "id": "terrain",
-      "source": "assets/workbench/world-ui-final/terrain-cliff-v4.png",
-      "encoding": "lossless-webp-exact-rgba",
+      "source": "assets/workbench/ui/terrain-2026-09-12/rock.png",
+      "encoding": "webp-q94",
       "channelRms": [
-        0.0,
-        0.0,
-        0.0,
+        2.2638160873786175,
+        1.4856025961936947,
+        3.051292025776317,
         0.0
       ],
       "file": "terrain.webp",
-      "sourceSha256": "51897be1fd2d6aab10d3dde610a2b87fcae903ec6dcd890164cce1b681ad6d35",
-      "sha256": "aa875f2498ddca5d66b6f65347f71029169afd03fb37132efd03042ae62b78bb",
+      "sourceSha256": "b2a224b19382f67a634fd1a141db024ed3491705cdab80bf053676748d5379e5",
+      "sha256": "e09d15e9b23a3d4c3dbe5138f20a9f9d64449e7209bd6ca555dd8aeb52bb2d90",
       "size": [
         2172,
         724
       ],
-      "sourceBytes": 2125754,
-      "bytes": 1692992
+      "sourceBytes": 1918673,
+      "bytes": 336794
     },
     {
       "id": "leaf",

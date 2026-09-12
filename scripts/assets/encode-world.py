@@ -14,7 +14,7 @@ FILES = {
     "lobby": "world-ui-v1/lobby-v1.png",
     "settings": "world-ui-v1/settings-v1.png",
     "result": "world-ui-v1/result-v1.png",
-    "terrain": "world-ui-final/terrain-cliff-v4.png",
+    "terrain": "ui/terrain-2026-09-12/rock.png",
     "leaf": "world-ui-v1/leaf-v1.png",
     "panel": "world-ui-v1/panel-v1.png",
     "button": "world-ui-v1/button-v2.png",
@@ -35,7 +35,7 @@ def run(check):
         original = ROOT / "assets/workbench" / source
         output = target / f"{name}.webp"
         image = Image.open(original).convert("RGBA")
-        lossy = name in {"background", "button"}
+        lossy = name in {"background", "button", "terrain"}
         encoding = "webp-q94" if lossy else "lossless-webp-exact-rgba"
         if not check:
             image.save(output, "WEBP", quality=94 if lossy else 80, lossless=not lossy, exact=True, method=6)
