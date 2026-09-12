@@ -10,7 +10,7 @@ exports[`maps > mountain > 同じ結果を返す（決定論） 1`] = `804060581
 
 exports[`maps > plain > 同じ結果を返す（決定論） 1`] = `35203234`;
 
-exports[`maps > rock-arch > 同じ結果を返す（決定論） 1`] = `989733164`;
+exports[`maps > rock-arch > 同じ結果を返す（決定論） 1`] = `333296829`;
 
 exports[`maps > terrace > 同じ結果を返す（決定論） 1`] = `27966988`;
 

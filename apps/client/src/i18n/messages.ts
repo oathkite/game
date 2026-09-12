@@ -20,7 +20,7 @@ export const english: Readonly<Record<string, string>> = {
   "湿地の観測所": "Wetland observatory", "名前": "Name", "装備": "Weapon", "ケロポッド": "KEROPOD",
   "タイトルへ": "Title", "オンライン対戦": "Online battle", "プラクティスへ": "Practice",
   "整備と設定": "Settings", "音量": "Volume", "音を出す": "Unmute", "音を消す": "Mute",
-  "機体の表示サイズ": "Tank scale", "等倍": "Native size", "0.75倍（従来）": "75% size",
+  "機体の表示サイズ": "Tank scale", "等倍": "Native size", "0.75倍（標準）": "75% size",
   "イントロを再生": "Replay intro", "この端末に保存されます。": "Saved on this device.", "ロビーに戻る": "Back to lobby",
   "いい一発だった。またここで。": "Good shot. See you out there.", "もう一度プレイ": "Play again",
   "カメラ調整": "Camera", "移動速度": "Pan speed", "倍": "×", "慣性の長さ": "Inertia duration",

@@ -1,4 +1,4 @@
-import rockArch from "../../../../assets/runtime/maps/rock-arch-v1/terrain.webp";
+import rockArch from "../../../../assets/runtime/maps/rock-arch-v2/terrain.webp";
 import logo from "../../../../assets/runtime/world-v1/logo.webp";
 import background from "../../../../assets/runtime/world-v1/background.webp";
 import lobby from "../../../../assets/runtime/world-v1/lobby.webp";

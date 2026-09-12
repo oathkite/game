@@ -5,7 +5,7 @@ import { carve, hasClearance, isRingOut, spawnPos } from "@game/sim";
 import { getMap } from "../src/index";
 import { ROCK_ARCH_COLUMNS, ROCK_ARCH_SOURCE_SHA256 } from "../src/rockArchData";
 it("ties the frozen collision data to the reviewed image", () => {
-  const source = readFileSync(new URL("../../../assets/workbench/maps/rock-arch-v1/terrain.png", import.meta.url));
+  const source = readFileSync(new URL("../../../assets/workbench/maps/rock-arch-v2/terrain.png", import.meta.url));
   expect(createHash("sha256").update(source).digest("hex")).toBe(ROCK_ARCH_SOURCE_SHA256);
   expect(ROCK_ARCH_COLUMNS).toHaveLength(400);
 });

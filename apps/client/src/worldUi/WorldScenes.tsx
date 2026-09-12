@@ -112,7 +112,7 @@ const Settings = ({ onBack, onReplay }: { readonly onBack: () => void; readonly 
     <LanguageSelect />
     <AudioControls />
     <CameraSettingsPanel rig={rig} />
-    <label>{t("機体の表示サイズ")}<select aria-label={t("機体の表示サイズ")} value={displayScale} onChange={e => { const value = Number(e.target.value); setDisplayScale(value); saveDisplayScale(value); }}><option value={12}>{t("等倍")}</option><option value={9}>{t("0.75倍（従来）")}</option></select></label>
+    <label>{t("機体の表示サイズ")}<select aria-label={t("機体の表示サイズ")} value={displayScale} onChange={e => { const value = Number(e.target.value); setDisplayScale(value); saveDisplayScale(value); }}><option value={12}>{t("等倍")}</option><option value={9}>{t("0.75倍（標準）")}</option></select></label>
     <PixelButton onClick={onReplay}>{t("イントロを再生")}</PixelButton>
     <small>{t("この端末に保存されます。")}</small>
   </PixelPanel><PixelButton onClick={onBack}>{t("ロビーに戻る")}</PixelButton></section>;

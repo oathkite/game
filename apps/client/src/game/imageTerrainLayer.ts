@@ -12,8 +12,9 @@ const createChunk = (region: Region, original: TerrainMask, art: CanvasImageSour
   if (!ctx) throw new Error("2d context unavailable");
   const context = ctx;
   context.scale(SCALE, SCALE); context.translate(-region.x, -region.y);
-  context.imageSmoothingEnabled = false;
-  const texture = Texture.from(canvas); texture.source.scaleMode = "nearest";
+  context.imageSmoothingEnabled = true;
+  context.imageSmoothingQuality = "high";
+  const texture = Texture.from(canvas); texture.source.scaleMode = "linear";
   const sprite = new Sprite(texture);
   sprite.position.set(region.x, region.y); sprite.width = region.width; sprite.height = region.height;
   let previous = original;
@@ -36,8 +37,6 @@ const createChunk = (region: Region, original: TerrainMask, art: CanvasImageSour
     if (cut && !restored) {
       // Keep the image silhouette intact; impact circles cut at artwork resolution.
       context.beginPath(); context.arc(cut.cx + 0.5, cut.cy + 0.5, cut.radius + 0.5, 0, Math.PI * 2);
-      context.globalCompositeOperation = "source-atop";
-      context.strokeStyle = "rgba(43,32,27,.8)"; context.lineWidth = 0.65; context.stroke();
       context.globalCompositeOperation = "destination-out"; context.fill();
     } else {
       // Snapshot/restore fallback, without quantizing untouched alpha edges.
