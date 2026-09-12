@@ -1,3 +1,4 @@
+import { REED_HILLS_SPEC } from "./reedHillsSpec.js";
 import { ROCK_ARCH_SPEC } from "./rockArchSpec.js";
 import { archCuts } from "./refine.js";
 import type { MapSpec } from "./spec.js";
@@ -14,7 +15,7 @@ const arena = (id: string, width: number, height: number, valley: boolean): MapS
 });
 export const MULTIPLAYER_MAPS: readonly MapSpec[] = [
   arena("moss-valley", 500, 225, true),
-  arena("reed-hills", 400, 200, false),
+  REED_HILLS_SPEC,
   ROCK_ARCH_SPEC,
 ];
 export const multiplayerMap = (id: string): MapSpec | undefined => MULTIPLAYER_MAPS.find(map => map.id === id);

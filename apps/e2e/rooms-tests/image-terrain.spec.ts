@@ -1,6 +1,7 @@
 import { expect, test } from "@playwright/test";
 import type { LabFrame } from "@game/protocol/v2-lab";
 test("authored terrain is shared after firing and reconnecting", async ({ browser }) => {
+  const mapId = String(test.info().project.metadata.mapId ?? "rock-arch");
   const contexts = await Promise.all([0, 1].map(() => browser.newContext({ locale: "ja-JP", viewport: { width: 1280, height: 800 } })));
   const pages = await Promise.all(contexts.map(context => context.newPage()));
   const frames: (LabFrame | undefined)[] = [], errors: string[] = [];
@@ -22,8 +23,8 @@ test("authored terrain is shared after firing and reconnecting", async ({ browse
     await guest.getByLabel("部屋コード", { exact: true }).fill((await owner.getByTestId("room-code").textContent())!);
     await guest.getByRole("button", { name: "部屋に参加", exact: true }).click();
     await expect(owner.locator(".room-members li")).toHaveCount(2);
-    await owner.getByLabel("マップ", { exact: true }).selectOption("rock-arch");
-    await expect(guest.getByLabel("マップ", { exact: true })).toHaveValue("rock-arch");
+    await owner.getByLabel("マップ", { exact: true }).selectOption(mapId);
+    await expect(guest.getByLabel("マップ", { exact: true })).toHaveValue(mapId);
     await owner.getByLabel("参加者1のチーム").selectOption("t0");
     await expect(guest.getByLabel("参加者1のチーム")).toHaveValue("t0");
     await guest.getByLabel("参加者2のチーム").selectOption("t1");
@@ -48,7 +49,7 @@ test("authored terrain is shared after firing and reconnecting", async ({ browse
     await guest.getByRole("button", { name: "オンライン対戦", exact: true }).click();
     await expect(guest.getByTestId("network-world")).toHaveAttribute("data-loaded", "true", { timeout: 15000 });
     expect(frames[1]!.map).toEqual(map); expect(frames[1]!.terrainOps).toEqual(ops);
-    await guest.screenshot({ path: `test-results/online-rock-arch-${test.info().project.name}.png` });
+    await guest.screenshot({ path: `test-results/online-${mapId}-${test.info().project.name}.png` });
     expect(errors).toEqual([]);
   } finally { await Promise.allSettled(contexts.map(context => context.close())); }
 });

@@ -42,3 +42,5 @@
 2026-09-12更新: matrix試験の長い同期ループがonTaskUpdate通知を止めていたため、ケース間でsetImmediateを待機。比較条件を変えず15件・正常exitを確認（35.8秒、実行時testTimeout60秒）。ROCK_ARCH_SPECの2〜8人配置と左右1歩の安全性を5件の岩橋試験で確認。マップ登録は旧クライアント互換制御と画像loader接続後に行う。
 
 2026-09-12オンライン接続: rock-arch v2を登録、NetworkFieldの画像loaderを接続。protocol build 3で旧クライアントを区別し、旧surface保存buildのみ移行。3browser各2contextの実射撃・再接続で確認。詳細はprogress/evidence/ui/online-rock-arch-2026-09-12。先行する未登録/未接続の記述はこの更新で解消。全マップ素材制作と実機等の残項目は維持。
+
+2026-09-12 葦の丘v3を登録。素材selectorはid@versionで固定し、旧版保存試合はタイルと元のsurfaceを維持する。3browserの2context射撃/再接続成功。詳細はprogress/evidence/ui/reed-hills-2026-09-12。

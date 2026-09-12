@@ -14,8 +14,8 @@ Warm limestone, golden reeds, asymmetric hills, a left-side tunnel with a solid
 lower landing floor. Magenta key removes the flat backdrop and suppresses edge
 spill. RGB rock/grass pixels outside the key hue remain unchanged.
 
-REED_HILLS_SPEC is a candidate; the current online catalog still uses v2.
+REED_HILLS_SPEC is registered as v3 in the online catalog.
 Hash binding, 2..8-player spawn and bilateral movement, cave landing tests pass.
-Before registration, key runtime artwork by map id AND version so a stored v2
+Runtime artwork is keyed by map id AND version so a stored v2
 match continues to use its original tile artwork and frozen geometry.
 The source is not native 4K; standard 75% camera scale remains in effect.

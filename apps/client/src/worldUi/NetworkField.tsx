@@ -18,7 +18,7 @@ import { loadCameraSettings } from "@/prototype/cameraSettings";
 import { worldToScreen } from "@/prototype/camera";
 import { loadSpriteTanks, type SpriteTankFactory } from "@/prototype/spriteTank";
 import type { presentLabReplay } from "@/networkLab/labReplay";
-import { loadTerrainArt, loadRockArchArt, worldArt } from "./assets";
+import { loadMapTerrainArt, worldArt } from "./assets";
 import { WindLeaves } from "./WindLeaves";
 
 type Props = { readonly serverNow: number; readonly onSettling?: (settling: boolean) => void; readonly followTurns?: boolean; readonly blocked?: boolean; readonly frame: LabFrame; readonly players: LabFrame["players"]; readonly presentation: ReturnType<typeof presentLabReplay>; readonly elevation: number; readonly ownId: string; readonly selectedWeapon?: WeaponId };
@@ -39,8 +39,7 @@ export const NetworkField = (props: Props) => {
     const layout = (): Layout => ({ cell, mapWidth: element.clientWidth, mapHeight: element.clientHeight, panelWidth: 0, panelCell: 1 });
     const start = async () => {
       rig.configure(loadCameraSettings());
-      art = await loadSpriteTanks(latest.current.frame.players.map(p => Number(p.teamId.slice(1)))); const authored = latest.current.frame.map.id === "rock-arch";
-      const terrainArt = authored ? await loadRockArchArt() : await loadTerrainArt();
+      art = await loadSpriteTanks(latest.current.frame.players.map(p => Number(p.teamId.slice(1)))); const { authored, image: terrainArt } = await loadMapTerrainArt(latest.current.frame.map);
       effects = await loadImpactArt();
       if (disposed) { art.destroy(); effects.destroy(); return; }
       let mask = baseTerrain(latest.current.frame), previousSize = "", terrainKey = "", turnKey = "", replayKey = -1;

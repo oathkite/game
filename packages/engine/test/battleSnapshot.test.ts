@@ -65,3 +65,14 @@ it("upgrades known height-only stored builds while rejecting authored legacy dat
   expect(restoreBattle(stored)).toEqual(initial);
   expect(() => restoreBattle({ ...stored, state: { ...stored.state, map: { ...stored.state.map, solidColumns: [] } } })).toThrow();
 });
+
+it("restores a frozen reed-hills v2 match without adopting the registered v3 geometry", () => {
+  const oldMap = { ...TEST_ARENA, id: "reed-hills", version: 2, width: 400, height: 200,
+    surface: Array.from({ length: 400 }, (_, x) => Math.round(124 + 8 * Math.cos(4 * Math.PI * x / 399))),
+    spawns: { 2: [90, 310] } };
+  const original = createBattleSession(createBattle([{ playerId: "a", teamId: "t0" }, { playerId: "b", teamId: "t1" }], 42, oldMap), "old-reed", 0);
+  const restored = restoreBattle(JSON.parse(JSON.stringify(serializeBattle(original))));
+  expect(restored.map.version).toBe(2); expect(restored.mask.height).toBe(200);
+  expect(restored.map.solidColumns).toBeUndefined();
+  expect(restored.mask.cells).toEqual(original.mask.cells);
+});
