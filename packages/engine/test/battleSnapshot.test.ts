@@ -1,6 +1,6 @@
 import { LEGACY_CLIENT_BUILD } from "@game/protocol/build";
 import { expect, it } from "vitest";
-import { TEST_ARENA } from "@game/maps";
+import { MULTIPLAYER_MAPS, TEST_ARENA } from "@game/maps";
 import { createBattle } from "../src/multiplayer/create";
 import { createBattleSession, fireInSession, moveInSession, tickSession } from "../src/multiplayer/session";
 import { serializeBattle, restoreBattle } from "../src/multiplayer/snapshot";
@@ -66,7 +66,7 @@ it("upgrades known height-only stored builds while rejecting authored legacy dat
   expect(() => restoreBattle({ ...stored, state: { ...stored.state, map: { ...stored.state.map, solidColumns: [] } } })).toThrow();
 });
 
-it("restores a frozen reed-hills v2 match without adopting the registered v3 geometry", () => {
+it("restores a frozen reed-hills v2 match without adopting the registered geometry", () => {
   const oldMap = { ...TEST_ARENA, id: "reed-hills", version: 2, width: 400, height: 200,
     surface: Array.from({ length: 400 }, (_, x) => Math.round(124 + 8 * Math.cos(4 * Math.PI * x / 399))),
     spawns: { 2: [90, 310] } };
@@ -75,4 +75,17 @@ it("restores a frozen reed-hills v2 match without adopting the registered v3 geo
   expect(restored.map.version).toBe(2); expect(restored.mask.height).toBe(200);
   expect(restored.map.solidColumns).toBeUndefined();
   expect(restored.mask.cells).toEqual(original.mask.cells);
+});
+
+it("keeps v3 reed-hills seats frozen after the v4 reachability adjustment", () => {
+  const current = MULTIPLAYER_MAPS.find(map => map.id === "reed-hills")!;
+  expect(current.version).toBe(4);
+  const oldMap = { ...current, version: 3, spawns: { 2: [55, 345] } };
+  const members = [{ playerId: "a", teamId: "t0" }, { playerId: "b", teamId: "t1" }];
+  const original = createBattleSession(createBattle(members, 42, oldMap), "old-seats", 0);
+  const restored = restoreBattle(JSON.parse(JSON.stringify(serializeBattle(original))));
+  expect(restored.map.version).toBe(3);
+  expect(restored.players.map(player => player.x)).toEqual([55, 345]);
+  expect(restored.mask.cells).toEqual(original.mask.cells);
+  expect(createBattle(members, 42, current).players.map(player => player.x)).toEqual([75, 325]);
 });
