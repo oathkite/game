@@ -40,7 +40,7 @@ const partitions = (remaining: number, minimum = 1): number[][] => {
   return Array.from({ length: Math.max(0, remaining - minimum + 1) }, (_, i) => minimum + i)
     .flatMap(size => partitions(remaining - size, size).map(rest => [size, ...rest]));
 };
-it("every team-size partition up to eight players terminates within the round cap on both maps", async () => {
+it("every team-size partition up to eight players terminates within the round cap on all registered maps", async () => {
   let checked = 0;
   for (const map of MULTIPLAYER_MAPS) for (let count = 2; count <= 8; count++) {
     for (const split of partitions(count).filter(teams => teams.length > 1)) {
@@ -58,5 +58,5 @@ it("every team-size partition up to eight players terminates within the round ca
       await setImmediate();
     }
   }
-  expect(checked).toBe(116);
+  expect(checked).toBe(58 * MULTIPLAYER_MAPS.length);
 });

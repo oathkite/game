@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { allMaps, buildMapSpec, columnsOfMask, MULTIPLAYER_MAPS } from "../src/index.js";
-import { applyOps, carve, maskFromHeights, spawnPos } from "@game/sim";
+import { applyOps, carve, buildInitialTerrain, spawnPos } from "@game/sim";
 
 describe("refined rock arches", () => {
   for (const map of MULTIPLAYER_MAPS) it(`${map.id} has a destructible deck and a landable lower floor`, () => {
@@ -11,7 +11,7 @@ describe("refined rock arches", () => {
     expect(lower.y).toBeGreaterThan(columns[at]![0]![1]);
     const opened = carve(mask, { cx: at, cy: columns[at]![0]![0], radius: 16 });
     expect(opened.cells).not.toEqual(mask.cells);
-    expect(applyOps(maskFromHeights(map.surface, map.height), map.voids ?? []).cells).toEqual(mask.cells);
+    expect(applyOps(buildInitialTerrain(map), map.voids ?? []).cells).toEqual(mask.cells);
   });
   for (const map of allMaps()) it(`${map.name} remains deterministic after refinement`, () => {
     expect(map.build().cells).toEqual(map.build().cells);

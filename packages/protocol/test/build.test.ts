@@ -1,5 +1,5 @@
 import { expect, it } from "vitest";
-import { CLIENT_BUILD, compatibleBuild, matchBuild } from "../src/build";
+import { CLIENT_BUILD, LEGACY_CLIENT_BUILD, compatibleBuild, matchBuild } from "../src/build";
 it("rejects missing and mismatched client versions", () => {
   expect(compatibleBuild(CLIENT_BUILD)).toBe(true);
   expect(compatibleBuild(undefined)).toBe(false);
@@ -7,4 +7,8 @@ it("rejects missing and mismatched client versions", () => {
 });
 it("fixes a match to its map identity and revision", () => {
   expect(matchBuild({ id: "moss-valley", version: 1 })).toEqual({ ...CLIENT_BUILD, map: { id: "moss-valley", version: 1 } });
+});
+
+it("rejects clients that cannot interpret authored terrain", () => {
+  expect(compatibleBuild(LEGACY_CLIENT_BUILD)).toBe(false);
 });

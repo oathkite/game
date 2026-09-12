@@ -1,3 +1,4 @@
+import { LEGACY_CLIENT_BUILD } from "@game/protocol/build";
 import { expect, it } from "vitest";
 import { TEST_ARENA } from "@game/maps";
 import { createBattle } from "../src/multiplayer/create";
@@ -55,4 +56,12 @@ it("preserves authored bridge air and lower rock through JSON restoration", () =
   expect(restored.mask.cells[170 * 500 + 250]).toBe(0);
   expect(restored.mask.cells[195 * 500 + 250]).toBe(1);
   expect(restored.map.solidColumns).toEqual(solidColumns);
+});
+
+it("upgrades known height-only stored builds while rejecting authored legacy data", () => {
+  const initial = start(), snapshot = serializeBattle(initial);
+  const build = { ...LEGACY_CLIENT_BUILD, map: { ...initial.build.map } };
+  const stored = { ...snapshot, state: { ...snapshot.state, build } };
+  expect(restoreBattle(stored)).toEqual(initial);
+  expect(() => restoreBattle({ ...stored, state: { ...stored.state, map: { ...stored.state.map, solidColumns: [] } } })).toThrow();
 });

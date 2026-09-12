@@ -1,3 +1,4 @@
+import { ROCK_ARCH_SPEC } from "./rockArchSpec.js";
 import { archCuts } from "./refine.js";
 import type { MapSpec } from "./spec.js";
 
@@ -14,8 +15,9 @@ const arena = (id: string, width: number, height: number, valley: boolean): MapS
 export const MULTIPLAYER_MAPS: readonly MapSpec[] = [
   arena("moss-valley", 500, 225, true),
   arena("reed-hills", 400, 200, false),
+  ROCK_ARCH_SPEC,
 ];
 export const multiplayerMap = (id: string): MapSpec | undefined => MULTIPLAYER_MAPS.find(map => map.id === id);
 export const MULTIPLAYER_MAP_LABELS: Readonly<Record<string, string>> = {
-  "moss-valley": "苔の谷", "reed-hills": "葦の丘",
+  "rock-arch": "苔むす岩橋", "moss-valley": "苔の谷", "reed-hills": "葦の丘",
 };

@@ -18,7 +18,7 @@ import { loadCameraSettings } from "@/prototype/cameraSettings";
 import { worldToScreen } from "@/prototype/camera";
 import { loadSpriteTanks, type SpriteTankFactory } from "@/prototype/spriteTank";
 import type { presentLabReplay } from "@/networkLab/labReplay";
-import { loadTerrainArt, worldArt } from "./assets";
+import { loadTerrainArt, loadRockArchArt, worldArt } from "./assets";
 import { WindLeaves } from "./WindLeaves";
 
 type Props = { readonly serverNow: number; readonly onSettling?: (settling: boolean) => void; readonly followTurns?: boolean; readonly blocked?: boolean; readonly frame: LabFrame; readonly players: LabFrame["players"]; readonly presentation: ReturnType<typeof presentLabReplay>; readonly elevation: number; readonly ownId: string; readonly selectedWeapon?: WeaponId };
@@ -39,7 +39,8 @@ export const NetworkField = (props: Props) => {
     const layout = (): Layout => ({ cell, mapWidth: element.clientWidth, mapHeight: element.clientHeight, panelWidth: 0, panelCell: 1 });
     const start = async () => {
       rig.configure(loadCameraSettings());
-      art = await loadSpriteTanks(latest.current.frame.players.map(p => Number(p.teamId.slice(1)))); const terrainArt = await loadTerrainArt();
+      art = await loadSpriteTanks(latest.current.frame.players.map(p => Number(p.teamId.slice(1)))); const authored = latest.current.frame.map.id === "rock-arch";
+      const terrainArt = authored ? await loadRockArchArt() : await loadTerrainArt();
       effects = await loadImpactArt();
       if (disposed) { art.destroy(); effects.destroy(); return; }
       let mask = baseTerrain(latest.current.frame), previousSize = "", terrainKey = "", turnKey = "", replayKey = -1;
@@ -47,7 +48,7 @@ export const NetworkField = (props: Props) => {
       const facing = new Map<string, -1 | 1>();
       const projectileTextures = await loadProjectileArt();
       if (disposed) return;
-      renderer = await createRenderer({ projectileTextures, impactTextures: effects.textures, host: element, layout: layout(), mask, terrainArt, backgroundAlpha: 0, tankFactory: art.create,
+      renderer = await createRenderer({ projectileTextures, impactTextures: effects.textures, host: element, layout: layout(), mask, ...(authored ? { imageTerrain: terrainArt } : { terrainArt }), backgroundAlpha: 0, tankFactory: art.create,
         players: latest.current.frame.players.map(p => ({ nickname: p.nickname ?? p.playerId, colors: { primary: p.teamId === "t0" ? "yellow" : "cyan", secondary: "blue" } })) });
       if (disposed) { renderer.destroy(); art.destroy(); return; }
       const r = renderer; let bullet = r.projectile("yellow", "cannon");

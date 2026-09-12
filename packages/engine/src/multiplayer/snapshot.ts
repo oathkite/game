@@ -1,5 +1,5 @@
 import { restoreTerrainCheckpoint, type TerrainCheckpoint } from "./terrainCheckpoint.js";
-import { compatibleMatch, LEGACY_CLIENT_BUILD } from "@game/protocol/build";
+import { compatibleMatch, CLIENT_BUILD, LEGACY_CLIENT_BUILD } from "@game/protocol/build";
 import { applyOps, buildInitialTerrain } from "@game/sim";
 import { RULE_SET_VERSION } from "./lobby.js";
 import type { BattleSession } from "./session.js";
@@ -22,7 +22,9 @@ type LegacyBattleSnapshot = { readonly version: 1; readonly state: Omit<BattleSn
 export const restoreBattle = (snapshot: BattleSnapshot | LegacyBattleSnapshot): BattleSession => {
   if ((snapshot.version !== 1 && snapshot.version !== 2) || snapshot.state.ruleSetVersion !== RULE_SET_VERSION) throw new Error("unsupported battle snapshot version");
   // Explicit migration of the pre-public v1 snapshot; never infer future simulation versions.
-  const state = snapshot.version === 1 ? { ...snapshot.state, build: { ...LEGACY_CLIENT_BUILD, map: { id: snapshot.state.map.id, version: snapshot.state.map.version } } } : snapshot.state;
+  let state = snapshot.version === 1 ? { ...snapshot.state, build: { ...LEGACY_CLIENT_BUILD, map: { id: snapshot.state.map.id, version: snapshot.state.map.version } } } : snapshot.state;
+  const legacy = state.build && (Object.keys(LEGACY_CLIENT_BUILD) as (keyof typeof LEGACY_CLIENT_BUILD)[]).every(key => state.build[key] === LEGACY_CLIENT_BUILD[key]);
+  if (legacy && !state.map.solidColumns) state = { ...state, build: { ...state.build, ...CLIENT_BUILD } };
   if (!state.build || !compatibleMatch(state.build, state.map)) throw new Error("unsupported battle build version");
   const checkpoint = "terrainCheckpoint" in snapshot ? snapshot.terrainCheckpoint : undefined;
   const mask = checkpoint ? restoreTerrainCheckpoint(checkpoint, state.map.width, state.map.height, state.terrainOps) : applyOps(buildInitialTerrain(state.map), state.terrainOps);
