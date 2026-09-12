@@ -23,6 +23,7 @@ test("browser back cancels a charged shot and requires confirmation before leavi
   await page.getByRole("button", { name: "はじめる", exact: true }).click();
   await page.getByRole("button", { name: "プラクティスへ", exact: true }).click();
   await expect(page.getByTestId("camera-world")).toHaveAttribute("data-loaded", "true");
+  await expect(page.getByTestId("camera-world")).toHaveAttribute("data-opening", "false", { timeout: 15000 });
   await page.keyboard.down("Space");
   await expect.poll(async () => Number(await page.getByRole("meter", { name: "パワー" }).getAttribute("aria-valuenow"))).toBeGreaterThan(15);
   await back(page);

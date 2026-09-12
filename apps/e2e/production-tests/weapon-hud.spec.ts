@@ -11,6 +11,7 @@ for (const [first, second] of loadouts) {
     await page.getByRole("combobox", { name: "装備 2", exact: true }).selectOption(second);
     await page.getByRole("button", { name: "プラクティスへ", exact: true }).click();
     await expect(page.getByTestId("camera-world")).toHaveAttribute("data-loaded", "true");
+    await expect(page.getByTestId("camera-world")).toHaveAttribute("data-opening", "false", { timeout: 15000 });
     const buttons = page.locator(".battle-weapons button");
     await expect(buttons).toHaveCount(2);
     for (const width of [1440, 667]) {

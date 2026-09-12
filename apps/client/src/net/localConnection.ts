@@ -79,7 +79,9 @@ export const createLocalConnection = (options: LocalMatchOptions): Connection & 
         host.dispatch({ type: "replayDone", seat: 1 });
         return;
       case "match.surrender":
-        host.dispatch({ type: "surrender", seat });
+        // 開幕演出は操作を待たせるが、練習の終了は妨げない。
+        if (!released) releaseReady();
+        host.dispatch({ type: "surrender", seat: host.state().match.currentSeat });
         return;
       case "result.close":
         startMatch();
