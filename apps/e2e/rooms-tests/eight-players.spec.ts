@@ -82,12 +82,15 @@ test("eight independent players complete a 4v4 match and return together", async
     const beforeShot = await ring();
     expect(beforeShot.seconds).toBeGreaterThan(0);
     expect(beforeShot.arc).toBe(beforeShot.seconds * 5);
+    // Observe the transient replay state atomically, before firing, in every context.
+    const replayChecks = pages.map(page => page.waitForFunction(() =>
+      document.querySelector('[data-testid="phase"]')?.textContent === "射撃を再生中" &&
+      document.querySelector(".countdown-dial > span")?.textContent === "—" &&
+      document.querySelectorAll(".countdown-dial circle")[1]?.getAttribute("stroke-dasharray") === "0 100",
+    undefined, { polling: 50, timeout: 15000 }));
     await shooter.keyboard.down("Space"); await shooter.waitForTimeout(400); await shooter.keyboard.up("Space");
-    await Promise.all(pages.map(page => expect(page.getByTestId("phase")).toHaveText("射撃を再生中")));
-    await Promise.all(pages.map(async page => {
-      await expect(page.locator(".countdown-dial > span")).toHaveText("—");
-      await expect(page.locator(".countdown-dial circle").nth(1)).toHaveAttribute("stroke-dasharray", "0 100");
-    }));
+    const replayHandles = await Promise.all(replayChecks);
+    await Promise.all(replayHandles.map(handle => handle.dispose()));
     await Promise.all(pages.map(page => expect(page.getByTestId("phase")).toHaveText("操作中", { timeout: 15000 })));
     await expect.poll(async () => (await ring()).arc).toBeGreaterThan(0);
     await expect(owner.locator(".battle-seat.is-actor strong")).toHaveText(nextName!);
