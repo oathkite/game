@@ -5,7 +5,7 @@
 
 | 判断事項 | 確認材料・必要な情報 |
 | --- | --- |
-| 最終UIの仕上がり | design/references/battle-hud-approved.pngと、evidence/ui/scene-review-2026-09-12の現画面を比較。パネル、機体、地形、ロビー・設定・結果の統一感 |
+| 最終UIの仕上がり | [原案](../design/references/battle-hud-approved.png)と[最新の計器盤](evidence/ui/cockpit-reserve-2026-09-12/README.md)を比較。他シーンは[5シーン比較](evidence/ui/scene-review-2026-09-12/all-scenes.jpg)。パネル、機体、地形、ロビー・設定・結果の統一感 |
 | 正式素材として採用する範囲 | 現在使用中の一般カエル・機体・3マップ・効果音。試験合格を人間のart承認として記録しない。個人専用アバターの一般配布は行わない |
 | 実機テストの対象 | 使用できるiPhone/iPad/Androidの機種とOS。ブラウザの端末エミュレーションでは実機性能を証明できない |
 | staging測定の条件 | Cloudflareの検証用環境、試験可能な地域、負荷試験の費用上限。localhostでの100部屋試験を実DO容量として扱わない |
@@ -15,3 +15,5 @@
 BGMの方向性とKEROPODの名称・ロゴはすでに採用済み。再選定は求めない。
 カメラは75%、移動2.8倍、慣性1000msで進める。
 チームは色のみ、弾道の軌跡なし、Desktopはキーボード操作という指定も維持する。
+
+公開の段階、任意ログイン、実環境での具体的な測定項目は[公開前の判断と外部検証](release-decisions-2026-09-10.md)を参照。ローカル統合の最新結果は[計器盤変更後のオンライン検証](cockpit-online-2026-09-12.md)。
