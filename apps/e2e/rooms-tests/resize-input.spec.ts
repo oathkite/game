@@ -55,6 +55,12 @@ test("resizing cancels held fire and rotation restores fresh touch input", async
     expect(shots[index]).toBe(0);
     await page.setViewportSize({ width: 844, height: 390 });
     await expect(fire).toBeEnabled();
+    const reserve = page.getByRole("meter", { name: "残り移動", exact: true });
+    await expect(reserve).toHaveAttribute("aria-valuenow", "30");
+    await page.getByRole("button", { name: "右へ1歩", exact: true }).tap();
+    await expect(reserve).toHaveAttribute("aria-valuenow", "29");
+    await expect.poll(() => frames[index]?.movement.stepsLeft).toBe(29);
+    await expect(pages[1 - index]!.getByRole("meter", { name: "残り移動", exact: true })).toHaveAttribute("aria-valuenow", "0");
     await fire.tap();
     await expect.poll(() => shots[index]).toBe(1);
     await expect.poll(() => frames[index]?.phase).toBe("replaying");
