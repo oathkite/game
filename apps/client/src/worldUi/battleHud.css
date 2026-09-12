@@ -25,6 +25,8 @@
 .battle-self span { text-align:right; }
 .battle-angle { display:block; width:108px; height:108px; }
 .battle-power { display:block; width:100%; height:80px; overflow:visible; }
+.battle-console:not(.has-touch) .battle-power { isolation:isolate; }
+.battle-console:not(.has-touch) .battle-power::before { content:""; position:absolute; z-index:-1; inset:-6px -10px; pointer-events:none; border:1px solid #38566b; border-radius:5px; background:linear-gradient(160deg,#152d40,#0a1b28); box-shadow:inset 0 2px 4px #06121cb3,0 1px #7b94a333; }
 .battle-weapons { display:flex; gap:8px; }
 .world-ui .battle-weapons button { position:relative; width:48px; min-width:48px!important; min-height:56px; padding:2px!important; border:2px solid #526c80!important; border-image:none!important; border-radius:6px; color:#fff1d5!important; background:#1d3346!important; }
 .world-ui .battle-weapons button[aria-pressed=true] { border-color:#f8e98d!important; outline:none!important; box-shadow:0 0 0 1px #f8e98d; }
