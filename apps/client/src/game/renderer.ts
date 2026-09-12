@@ -19,7 +19,7 @@ export type Renderer = {
   readonly setLayout: (layout: Layout) => void;
   /** 表示だけを移動する。物理座標と倍率は変えない */
   readonly setCameraOffset: (x: number, y: number) => void;
-  readonly setTerrain: (mask: TerrainMask, cut?: TerrainOp) => void;
+  readonly setTerrain: (mask: TerrainMask, cut?: TerrainOp, history?: readonly TerrainOp[]) => void;
   readonly setTank: (seat: number, pose: TankPose) => void;
   /** 弾の層を作り直す。色は撃つ側の主色、大きさは武器で決まる */
   readonly projectile: (color: TankColors["primary"], weapon: WeaponId) => ProjectileView;
@@ -123,7 +123,7 @@ export const createRenderer = async (init: RendererInit): Promise<Renderer> => {
       labels.position.set(x, y);
       tanks.forEach((_, index) => placeLabel(index));
     },
-    setTerrain: (mask, cut) => terrain.update(mask, cut),
+    setTerrain: (mask, cut, history) => terrain.update(mask, cut, history),
     setTank: (seat, pose) => {
       poses[seat] = pose;
       applyPose(seat);

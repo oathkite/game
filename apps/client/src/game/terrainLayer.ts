@@ -4,7 +4,7 @@ import { Container, Sprite, Texture } from "pixi.js";
 
 export type TerrainLayer = {
   readonly sprite: Container;
-  readonly update: (mask: TerrainMask, cut?: TerrainOp) => void;
+  readonly update: (mask: TerrainMask, cut?: TerrainOp, history?: readonly TerrainOp[]) => void;
   readonly destroy: () => void;
 };
 

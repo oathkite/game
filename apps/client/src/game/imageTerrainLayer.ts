@@ -50,7 +50,7 @@ const createChunk = (region: Region, original: TerrainMask, art: CanvasImageSour
     context.globalCompositeOperation = "source-over";
     previous = next; texture.source.update();
   };
-  return { sprite, paint, destroy: () => { sprite.destroy(); texture.destroy(true); } };
+  return { sprite, paint, reset: () => { restore(); previous = original; texture.source.update(); }, destroy: () => { sprite.destroy(); texture.destroy(true); } };
 };
 
 /** Full map artwork, not a repeated tile. Physics remains a shared immutable mask. */
@@ -60,6 +60,16 @@ export const createImageTerrainLayer = (mask: TerrainMask, art: CanvasImageSourc
     const chunk = createChunk({ x, y, width: Math.min(CHUNK, mask.width - x), height: Math.min(CHUNK, mask.height - y) }, mask, art);
     chunks.push(chunk); sprite.addChild(chunk.sprite);
   }
-  return { sprite, update: (next, cut) => { for (const chunk of chunks) chunk.paint(next, cut); },
+  let applied: readonly TerrainOp[] = [];
+  return { sprite, update: (next, cut, history) => {
+    if (!history) { applied = []; for (const chunk of chunks) chunk.paint(next, cut); return; }
+    const extendsHistory = applied.length <= history.length && applied.every((op, i) => {
+      const other = history[i]!;
+      return op.cx === other.cx && op.cy === other.cy && op.radius === other.radius;
+    });
+    if (!extendsHistory || applied.length === 0) { for (const chunk of chunks) chunk.reset(); applied = []; }
+    for (const op of history.slice(applied.length)) for (const chunk of chunks) chunk.paint(next, op);
+    applied = history.map(op => ({ ...op }));
+  },
     destroy: () => { for (const chunk of chunks) chunk.destroy(); sprite.destroy(); } };
 };
