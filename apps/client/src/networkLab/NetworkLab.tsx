@@ -13,7 +13,7 @@ import { createBattleSounds } from "./battleSounds";
 import { playSound, setMusic, unlockAudio } from "@/app/audio";
 import { CLIENT_BUILD, compatibleMatch } from "@game/protocol/build";
 import { BattleMenu } from "@/worldUi/BattleMenu";
-import { applyOps, maskFromHeights, tiltOf } from "@game/sim";
+import { applyOps, buildInitialTerrain, tiltOf } from "@game/sim";
 import { BattleConsole, BattleRoster } from "@/worldUi/BattleHud";
 import { useTouchControls } from "@/worldUi/useTouchControls";
 import { useBattleInput } from "@/worldUi/useBattleInput";
@@ -142,7 +142,7 @@ export const NetworkLab = ({ worldArt = false, onExit, connection }: { readonly 
   const own = shownPlayers.find(p => p.playerId === playerId);
   const ownFacing = useRef<-1 | 1>(1);
   if (frame?.actorId === playerId) ownFacing.current = frame.movement.facing;
-  const ground = useMemo(() => own && presentation && frame ? tiltOf(applyOps(maskFromHeights(frame.map.surface, frame.map.height), presentation.terrainOps), own) : 0, [own?.x, own?.y, frame?.eventSeq, frame?.matchId]);
+  const ground = useMemo(() => own && presentation && frame ? tiltOf(applyOps(buildInitialTerrain(frame.map), presentation.terrainOps), own) : 0, [own?.x, own?.y, frame?.eventSeq, frame?.matchId]);
   if (worldArt) return <main className="network-lab network-world" onPointerDown={() => unlockAudio()} onKeyDown={() => unlockAudio()}>
     <BattleRoster upcomingPlayerIds={frame?.upcomingPlayerIds ?? []} players={hudPlayers} actorId={frame?.actorId ?? ""} wind={frame?.wind ?? 0} clock={<CountdownDial seconds={seconds} />} onMenu={() => { input.cancel(); setMenu(true); }} />
     <span className="battle-sr" data-testid="identity">{playerId}</span><span className="battle-sr" data-testid="phase">{t(phaseLabel)}</span>
@@ -167,7 +167,7 @@ export const NetworkLab = ({ worldArt = false, onExit, connection }: { readonly 
     <p>固定8席の開発用画面です。別タブを開くと別の席で参加します。射撃終了または20秒の期限で手番が交代します。</p>
     <svg viewBox={`0 0 ${frame?.map.width ?? 500} ${frame?.map.height ?? 225}`} aria-label="移動同期フィールド">
       <defs><mask id="lab-terrain"><rect width={frame?.map.width ?? 500} height={frame?.map.height ?? 225} fill="white" />{presentation?.terrainOps.map((op, i) => <circle key={i} cx={op.cx} cy={op.cy} r={op.radius} fill="black" />)}</mask></defs>
-      <rect width={frame?.map.width ?? 500} height={frame?.map.height ?? 225} fill="#d9e9ef" /><path d={frame ? `M0 ${frame.map.height} ${frame.map.surface.map((y, x) => `L${x} ${y}`).join(" ")} L${frame.map.width} ${frame.map.height}Z` : ""} fill="#657d56" mask="url(#lab-terrain)" />
+      <rect width={frame?.map.width ?? 500} height={frame?.map.height ?? 225} fill="#d9e9ef" /><path d={frame ? (frame.map.solidColumns ? frame.map.solidColumns.flatMap((runs, x) => runs.map(([start, end]) => `M${x} ${start}h1v${end - start}h-1Z`)).join(" ") : `M0 ${frame.map.height} ${frame.map.surface.map((y, x) => `L${x} ${y}`).join(" ")} L${frame.map.width} ${frame.map.height}Z`) : ""} fill="#657d56" mask="url(#lab-terrain)" />
       {presentation?.bullets.map((p, i) => <circle key={i} data-testid="lab-projectile" cx={p.x} cy={p.y} r="2" fill="#cf6b35" />)}
       {shownPlayers.map(p => <g key={p.playerId} data-testid={`tank-${p.playerId}`} opacity={p.eliminated ? .25 : 1} data-x={p.x.toFixed(3)} transform={`translate(${p.x},${p.y - 5})`}>
         <rect x="-5" y="-5" width="10" height="10" rx="2" fill={p.playerId === playerId ? "#cf6b35" : "#304659"} />

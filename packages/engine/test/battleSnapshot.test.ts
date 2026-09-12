@@ -45,3 +45,14 @@ it("keeps statistics unavailable for old snapshots instead of fabricating zero d
   const { stats: _stats, ...state } = stored.state;
   expect(restoreBattle({ ...stored, state }).stats).toBeUndefined();
 });
+
+it("preserves authored bridge air and lower rock through JSON restoration", () => {
+  const solidColumns = Array.from({ length: TEST_ARENA.width }, () => [[150, 160], [190, 210]] as const);
+  const battle = createBattle([{ playerId: "a", teamId: "t0" }, { playerId: "b", teamId: "t1" }], 42, { ...TEST_ARENA, solidColumns });
+  const initial = createBattleSession(battle, "authored", 1000);
+  const restored = restoreBattle(JSON.parse(JSON.stringify(serializeBattle(initial))));
+  expect(restored.mask.cells).toEqual(initial.mask.cells);
+  expect(restored.mask.cells[170 * 500 + 250]).toBe(0);
+  expect(restored.mask.cells[195 * 500 + 250]).toBe(1);
+  expect(restored.map.solidColumns).toEqual(solidColumns);
+});

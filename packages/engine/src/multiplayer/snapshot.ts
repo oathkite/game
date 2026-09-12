@@ -1,6 +1,6 @@
 import { restoreTerrainCheckpoint, type TerrainCheckpoint } from "./terrainCheckpoint.js";
 import { compatibleMatch, LEGACY_CLIENT_BUILD } from "@game/protocol/build";
-import { applyOps, maskFromHeights } from "@game/sim";
+import { applyOps, buildInitialTerrain } from "@game/sim";
 import { RULE_SET_VERSION } from "./lobby.js";
 import type { BattleSession } from "./session.js";
 
@@ -25,6 +25,6 @@ export const restoreBattle = (snapshot: BattleSnapshot | LegacyBattleSnapshot): 
   const state = snapshot.version === 1 ? { ...snapshot.state, build: { ...LEGACY_CLIENT_BUILD, map: { id: snapshot.state.map.id, version: snapshot.state.map.version } } } : snapshot.state;
   if (!state.build || !compatibleMatch(state.build, state.map)) throw new Error("unsupported battle build version");
   const checkpoint = "terrainCheckpoint" in snapshot ? snapshot.terrainCheckpoint : undefined;
-  const mask = checkpoint ? restoreTerrainCheckpoint(checkpoint, state.map.width, state.map.height, state.terrainOps) : applyOps(maskFromHeights(state.map.surface, state.map.height), state.terrainOps);
+  const mask = checkpoint ? restoreTerrainCheckpoint(checkpoint, state.map.width, state.map.height, state.terrainOps) : applyOps(buildInitialTerrain(state.map), state.terrainOps);
   return { ...state, mask, replay: state.replay ? { ...state.replay, shot: { ...state.replay.shot, mask } } : null };
 };

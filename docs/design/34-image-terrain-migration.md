@@ -28,3 +28,15 @@
 高解像度化の完了とは扱わない。全マップの固有造形・素材はこの移行と合わせて制作する。
 旧マップの保存中の試合を新しい造形で復元しない。画像hash・map versionと物理定義を一緒に固定する。
 本番公開/main統合はこの作業に含めない。
+
+## 共通データの実装状況（2026-09-12）
+
+- optional solidColumnsとbuildInitialTerrainを実装。surface形式は従来どおり復元する。
+- MapSpec、通信schema、battleコピー、JSON復元、SQL checkpoint、NetworkField、NetworkLabの角度/表示、自然決着試験の基底maskを接続。
+- 練習rock-archとMapSpecのmask一致、通信schemaの維持/不正範囲拒否、JSON復元、SQLiteの40op checkpointから空洞/下段岩復元を確認。
+- 画像描画は全履歴・巻き戻し・空履歴の復元を実装し、通常破壊とのピクセル一致をブラウザで確認。旧クライアントとの互換制御、新マップの2〜8人配置・登録は未接続。solidColumns付きマップはまだオンライン一覧に登録していない。
+- 既存物理テストは並行実行時に5秒timeoutが4件発生。maxWorkers=1の再検証では110件成功。全対象型検査成功。engine全体の単独実行は継続中。
+
+追加検証: client型検査とe2e型検査成功。client240件成功・weaponDemo1件timeout後、同ファイル17件を単独実行して成功。engineは129件成功・matrix14件timeout後、matrixのみ60秒期限で再実行中。6c29229に画像復元を分離コミット。
+
+2026-09-12更新: matrix試験の長い同期ループがonTaskUpdate通知を止めていたため、ケース間でsetImmediateを待機。比較条件を変えず15件・正常exitを確認（35.8秒、実行時testTimeout60秒）。ROCK_ARCH_SPECの2〜8人配置と左右1歩の安全性を5件の岩橋試験で確認。マップ登録は旧クライアント互換制御と画像loader接続後に行う。

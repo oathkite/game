@@ -53,3 +53,23 @@ it("appends terrain once, restores old/new formats, rolls back atomically and re
     expect(db.prepare("SELECT COUNT(*) AS n FROM room_terrain_checkpoint").get()!.n).toBe(0);
   } finally { db.close(); }
 });
+
+it("checkpoints authored terrain without filling its air gap", () => {
+  const db = new DatabaseSync(":memory:");
+  const sql = { exec: <T extends Record<string, string | number | null>>(query: string, ...args: (string | number | null)[]) => { const rows = db.prepare(query).all(...args) as T[]; return { toArray: () => rows }; } };
+  try {
+    db.exec("CREATE TABLE room_state(id INTEGER PRIMARY KEY, snapshot TEXT)");
+    const store = new RoomSqlSnapshot(sql);
+    const map = { ...TEST_ARENA, solidColumns: Array.from({ length: 500 }, () => [[150, 160], [190, 210]] as const) };
+    const battle = createBattleSession(createBattle([{ playerId: "a", teamId: "t0" }, { playerId: "b", teamId: "t1" }], 42, map), "bridge", 0);
+    const snapshot = serializeRoom({ ...createRoomState("ABCDEF"), battle: { ...battle,
+      terrainOps: Array.from({ length: 40 }, (_, i) => ({ cx: 30 + i, cy: 155, radius: 3 })) } });
+    store.write(snapshot);
+    const stored = String(db.prepare("SELECT snapshot FROM room_state").get()!.snapshot);
+    const restored = restoreRoom(JSON.parse(store.read(stored)));
+    expect(restored.battle!.mask.cells).toEqual(restoreRoom(snapshot).battle!.mask.cells);
+    expect(restored.battle!.mask.cells[170 * 500 + 250]).toBe(0);
+    expect(restored.battle!.mask.cells[195 * 500 + 250]).toBe(1);
+    expect(db.prepare("SELECT COUNT(*) AS n FROM room_terrain_checkpoint").get()!.n).toBe(1);
+  } finally { db.close(); }
+});

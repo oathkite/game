@@ -29,3 +29,27 @@ it("breaking the bridge drops a tank onto the lower rock without altering unrela
   expect(spawnPos(cut, 85)).toEqual(spawnPos(mask, 85));
   expect(spawnPos(mask, 200)).toEqual(top);
 });
+
+it("builds the same authored mask through multiplayer MapSpec", async () => {
+  const { buildMapSpec } = await import("../src/spec");
+  const map = { id: "rock-arch-test", version: 1, width: 400, height: 225, status: "test-only" as const,
+    surface: ROCK_ARCH_COLUMNS.map(runs => runs[0]?.[0] ?? 225), solidColumns: ROCK_ARCH_COLUMNS, spawns: { 2: [85, 305] } };
+  expect(buildMapSpec(map, 2).mask.cells).toEqual(getMap("rock-arch").build().cells);
+});
+
+it("supports 2..8 players on the authored terrain with clear separated spawns", async () => {
+  const { ROCK_ARCH_SPEC } = await import("../src/rockArchSpec");
+  const { buildMapSpec } = await import("../src/spec");
+  const { stepOutcome, TANK_RADIUS } = await import("@game/sim");
+  for (let count = 2; count <= 8; count++) {
+    const { mask, spawns } = buildMapSpec(ROCK_ARCH_SPEC, count);
+    expect(spawns).toHaveLength(count);
+    for (const [i, spawn] of spawns.entries()) {
+      expect(hasClearance(mask, spawn.x, spawn.y)).toBe(true);
+      expect(isRingOut(mask, spawn)).toBe(false);
+      if (i > 0) expect(spawn.x - spawns[i - 1]!.x).toBeGreaterThanOrEqual(TANK_RADIUS * 2);
+      expect(stepOutcome(mask, spawn, -1).kind).toBe("moved");
+      expect(stepOutcome(mask, spawn, 1).kind).toBe("moved");
+    }
+  }
+});

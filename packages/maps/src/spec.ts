@@ -1,5 +1,5 @@
 import type { TerrainOp } from "@game/protocol";
-import { applyOps, hasClearance, isRingOut, maskFromHeights, spawnPos, TANK_RADIUS, type TankPos, type TerrainMask } from "@game/sim";
+import { applyOps, hasClearance, isRingOut, buildInitialTerrain, spawnPos, TANK_RADIUS, type TankPos, type TerrainMask } from "@game/sim";
 
 /** 登録済み定義用。公開用の編成・射程検証を終えるまではtest-onlyとして扱う。 */
 export type MapSpec = {
@@ -9,6 +9,7 @@ export type MapSpec = {
   readonly height: number;
   readonly status: "test-only";
   readonly surface: readonly number[];
+  readonly solidColumns?: readonly (readonly (readonly [number, number])[])[];
   readonly voids?: readonly TerrainOp[];
   readonly spawns: Readonly<Partial<Record<number, readonly number[]>>>;
 };
@@ -39,7 +40,7 @@ export const buildMapSpec = (spec: MapSpec, count: number): { readonly mask: Ter
     throw new Error("invalid or overlapping spawns");
   }
   if (spec.voids?.some(op => !Number.isInteger(op.cx) || !Number.isInteger(op.cy) || !Number.isInteger(op.radius) || op.radius < 1 || op.radius > spec.height || op.cx < 0 || op.cx >= spec.width || op.cy < 0 || op.cy >= spec.height)) throw new Error("invalid rock void");
-  const mask = applyOps(maskFromHeights(spec.surface, spec.height), spec.voids ?? []);
+  const mask = applyOps(buildInitialTerrain(spec), spec.voids ?? []);
   const spawns = xs.map(x => spawnPos(mask, x));
   if (spawns.some(p => isRingOut(mask, p) || p.y < TANK_RADIUS * 2 || !hasClearance(mask, p.x, p.y))) throw new Error("unsafe spawn");
   return { mask, spawns };

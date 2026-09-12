@@ -8,5 +8,5 @@ export const createBattle = (members: readonly RosterMember[], seed: number, spe
   const { mask, spawns } = buildMapSpec(spec, members.length);
   const players = roster.members.map(member => ({ playerId: member.playerId, hp: HP_MAX,
     ...spawns[roster.turnRing.indexOf(member.playerId)]! }));
-  return { roster, players, mask, terrainOps: (spec.voids ?? []).map(op => ({ ...op })), map: { id: spec.id, version: spec.version, width: spec.width, height: spec.height, surface: [...spec.surface] } };
+  return { roster, players, mask, terrainOps: (spec.voids ?? []).map(op => ({ ...op })), map: { id: spec.id, version: spec.version, width: spec.width, height: spec.height, surface: [...spec.surface], ...(spec.solidColumns ? { solidColumns: spec.solidColumns.map(runs => runs.map(([start, end]) => [start, end] as [number, number])) } : {}) } };
 };

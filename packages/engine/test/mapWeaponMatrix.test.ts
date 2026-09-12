@@ -1,3 +1,4 @@
+import { setImmediate } from "node:timers/promises";
 import { expect, it } from "vitest";
 import { MULTIPLAYER_MAPS } from "@game/maps";
 import { WEAPON_IDS, type Loadout } from "@game/protocol";
@@ -6,7 +7,7 @@ import { createBattleSession, fireInSession, tickSession } from "../src/multipla
 import { restoreBattle, serializeBattle } from "../src/multiplayer/snapshot";
 
 for (const map of MULTIPLAYER_MAPS) for (const count of [2, 3, 4, 5, 6, 7, 8]) {
-  it(`${map.id}: ${count} players can use every weapon at low, medium and full power`, () => {
+  it(`${map.id}: ${count} players can use every weapon at low, medium and full power`, async () => {
     const members = Array.from({ length: count }, (_, i) => ({ playerId: `p${i}`, teamId: `t${i % 2}` }));
     for (const weapon of WEAPON_IDS) for (const power of [1, 50, 100]) {
       const loadout: Loadout = [weapon, weapon === "cannon" ? "digger" : "cannon"];
@@ -30,6 +31,7 @@ for (const map of MULTIPLAYER_MAPS) for (const count of [2, 3, 4, 5, 6, 7, 8]) {
       expect(next).toEqual(tickSession(shot.state, shot.state.replay!.endsAt));
       expect(initial.terrainOps).toEqual(map.voids ?? []);
       expect(initial.players.every(p => p.hp === 100)).toBe(true);
+      await setImmediate();
     }
   });
 }
@@ -38,7 +40,7 @@ const partitions = (remaining: number, minimum = 1): number[][] => {
   return Array.from({ length: Math.max(0, remaining - minimum + 1) }, (_, i) => minimum + i)
     .flatMap(size => partitions(remaining - size, size).map(rest => [size, ...rest]));
 };
-it("every team-size partition up to eight players terminates within the round cap on both maps", () => {
+it("every team-size partition up to eight players terminates within the round cap on both maps", async () => {
   let checked = 0;
   for (const map of MULTIPLAYER_MAPS) for (let count = 2; count <= 8; count++) {
     for (const split of partitions(count).filter(teams => teams.length > 1)) {
@@ -53,6 +55,7 @@ it("every team-size partition up to eight players terminates within the round ca
       expect(state.phase).toBe("finished");
       expect(state.result).toEqual({ type: "draw" });
       checked++;
+      await setImmediate();
     }
   }
   expect(checked).toBe(116);

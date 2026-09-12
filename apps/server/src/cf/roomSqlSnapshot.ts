@@ -1,5 +1,5 @@
 import { captureTerrainCheckpoint, restoreTerrainCheckpoint, type TerrainCheckpoint } from "@game/engine/multiplayer";
-import { applyOps, maskFromHeights } from "@game/sim";
+import { applyOps, buildInitialTerrain } from "@game/sim";
 import type { RoomSnapshot } from "../rooms/runtime.js";
 import { UnrecoverableRoom } from "../rooms/restoreFailure.js";
 type Sql = { exec<T extends Record<string, string | number | null>>(query: string, ...args: (string | number | null)[]): { toArray(): T[] } };
@@ -34,7 +34,7 @@ export class RoomSqlSnapshot {
     const previous = row ? JSON.parse(row.checkpoint) as TerrainCheckpoint : undefined;
     if (state.terrainOps.length - (previous?.opCount ?? 0) < 32) return;
     const mask = previous ? restoreTerrainCheckpoint(previous, state.map.width, state.map.height, state.terrainOps)
-      : applyOps(maskFromHeights(state.map.surface, state.map.height), state.terrainOps);
+      : applyOps(buildInitialTerrain(state.map), state.terrainOps);
     this.sql.exec("INSERT OR REPLACE INTO room_terrain_checkpoint VALUES (1, ?, ?)", state.matchId, JSON.stringify(captureTerrainCheckpoint(mask, state.terrainOps.length)));
   }
   private save(value: unknown): void {

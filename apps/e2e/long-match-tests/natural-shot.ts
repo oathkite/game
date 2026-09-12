@@ -1,9 +1,9 @@
-import { applyOps, maskFromHeights, simulateConcurrentCombat } from "@game/sim";
+import { applyOps, buildInitialTerrain, simulateConcurrentCombat } from "@game/sim";
 import type { LabFrame } from "@game/protocol/v2-lab";
 
 export const chooseNaturalShot = (frame: LabFrame) => {
   const shooter = frame.players.find(player => player.playerId === frame.actorId)!;
-  const mask = applyOps(maskFromHeights(frame.map.surface, frame.map.height), frame.terrainOps);
+  const mask = applyOps(buildInitialTerrain(frame.map), frame.terrainOps);
   const combatants = frame.players.map(player => ({ ...player, hp: player.eliminated ? 0 : player.hp }));
   let best = { score: -Infinity, slot: 0, facing: 1, elevation: 45, power: 50 };
   for (const slot of [0, 1] as const) for (const facing of [-1, 1] as const) {

@@ -10,7 +10,7 @@ import { wheelPan } from "@/prototype/wheelPan";
 import { useEffect, useMemo, useRef, useState, type PointerEvent } from "react";
 import type { WeaponId } from "@game/protocol";
 import type { LabFrame } from "@game/protocol/v2-lab";
-import { applyOps, maskFromHeights, tiltOf } from "@game/sim";
+import { applyOps, buildInitialTerrain, tiltOf } from "@game/sim";
 import { createRenderer, type Renderer } from "@/game/renderer";
 import type { Layout } from "@/game/scale";
 import { createCameraRig } from "@/prototype/cameraRig";
@@ -22,7 +22,7 @@ import { loadTerrainArt, worldArt } from "./assets";
 import { WindLeaves } from "./WindLeaves";
 
 type Props = { readonly serverNow: number; readonly onSettling?: (settling: boolean) => void; readonly followTurns?: boolean; readonly blocked?: boolean; readonly frame: LabFrame; readonly players: LabFrame["players"]; readonly presentation: ReturnType<typeof presentLabReplay>; readonly elevation: number; readonly ownId: string; readonly selectedWeapon?: WeaponId };
-const baseTerrain = (frame: LabFrame) => maskFromHeights(frame.map.surface, frame.map.height);
+const baseTerrain = (frame: LabFrame) => buildInitialTerrain(frame.map);
 export const NetworkField = (props: Props) => {
   const host = useRef<HTMLDivElement>(null), mini = useRef<HTMLCanvasElement>(null), latest = useRef(props); latest.current = props;
   const rig = useMemo(createCameraRig, []), drag = useRef<{ x: number; y: number; at: number } | null>(null);
@@ -56,7 +56,7 @@ export const NetworkField = (props: Props) => {
         const size = layout(), key = `${size.mapWidth}/${size.mapHeight}/${frame.map.width}/${frame.map.height}`;
         if (key !== previousSize) { previousSize = key; r.setLayout(size); rig.resize({ width: size.mapWidth, height: size.mapHeight, scale: size.cell }, { left: 0, top: -100, right: frame.map.width, bottom: frame.map.height }); }
         const nextTerrain = `${frame.matchId}/${presentation.terrainOps.length}`;
-        if (nextTerrain !== terrainKey) { terrainKey = nextTerrain; mask = applyOps(baseTerrain(frame), presentation.terrainOps); r.setTerrain(mask); }
+        if (nextTerrain !== terrainKey) { terrainKey = nextTerrain; mask = applyOps(baseTerrain(frame), presentation.terrainOps); r.setTerrain(mask, undefined, presentation.terrainOps); }
         const nextTurn = `${frame.matchId}/${frame.turnId}`;
         if (nextTurn !== turnKey) { turnKey = nextTurn; if (latest.current.followTurns !== false) focus(); }
         facing.set(frame.actorId, frame.movement.facing);
