@@ -35,3 +35,6 @@ Desktopの余白と計器比率、8人カード、縮小時のメーターの読
 
 [5シーンの比較画像](../progress/evidence/ui/scene-review-2026-09-12/all-scenes.jpg)と
 [ユーザー判断事項](../progress/owner-decisions-2026-09-12.md)を参照。
+
+計器盤へ段差のある金属縁・留め具と3区画の移動残量計を追加。モバイルでも残量を表示する。
+Desktopの円形計器は下端の欠けを修正した。[最新の計器盤比較](../progress/evidence/ui/cockpit-reserve-2026-09-12/README.md)を参照。

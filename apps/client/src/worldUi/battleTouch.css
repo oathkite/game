@@ -21,3 +21,7 @@
 .world-ui .network-world:has(.battle-console.has-touch) { grid-template-rows:64px minmax(0,1fr) 112px; }
 @media(min-width:1200px) and (min-height:700px) { .world-ui .network-world:has(.battle-console.has-touch) { grid-template-rows:76px minmax(0,1fr) 112px; } }
 @media(max-width:999px),(max-height:499px) { .world-ui .network-world:has(.battle-console.has-touch) { grid-template-rows:48px minmax(0,1fr) 112px; } }
+
+.battle-console.has-touch .battle-touch-reserve { display:block; position:absolute; left:112px; bottom:6px; width:72px; }
+.battle-touch-reserve .battle-movement { grid-template-columns:14px 2ch minmax(0,1fr); gap:3px; font-size:10px; }
+.world-ui .battle-touch-reserve .battle-movement > svg { height:12px; }

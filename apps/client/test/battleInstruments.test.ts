@@ -1,7 +1,7 @@
 import { createElement } from "react";
 import { describe, expect, it } from "vitest";
 import { renderToStaticMarkup } from "react-dom/server";
-import { AngleDial, PowerRuler } from "../src/worldUi/BattleInstruments";
+import { AngleDial, PowerRuler, MovementReserve } from "../src/worldUi/BattleInstruments";
 
 describe("battle instruments", () => {
   it("keeps 100 equal intervals with 11 major ticks and a precise current value", () => {
@@ -10,6 +10,12 @@ describe("battle instruments", () => {
     expect(html.match(/data-major="true"/g)).toHaveLength(11);
     expect(html).toContain('aria-valuenow="68"');
     expect(html).toContain('data-cursor="68"');
+  });
+  it.each([[30, [30, 30, 30]], [17, [30, 21, 0]], [0, [0, 0, 0]]])("shows exact movement remaining across three ten-step cells (%s)", (steps, widths) => {
+    const html = renderToStaticMarkup(createElement(MovementReserve, { steps }));
+    expect(html).toContain(`aria-valuenow="${steps}"`);
+    expect(html).toContain('aria-valuemax="30"');
+    expect([...html.matchAll(/data-reserve-fill="([0-9]+)"/g)].map(match => Number(match[1]))).toEqual(widths);
   });
   it.each([[10, 35, 1, 45], [10, 35, -1, 155], [-20, 60, 1, 40]])("uses simulation angle conventions (%s,%s,%s)", (tilt, elevation, facing, world) => {
     const html = renderToStaticMarkup(createElement(AngleDial, { tilt, elevation, facing: facing as -1 | 1 }));

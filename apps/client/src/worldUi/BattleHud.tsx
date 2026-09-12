@@ -4,7 +4,7 @@ import pilotPortrait from "../../../../assets/runtime/world-v1/pilot-portrait.we
 import { WeaponIcon } from "./WeaponIcon";
 import type { CSSProperties, ReactNode } from "react";
 import { WEAPON_LABELS, type Loadout } from "@game/protocol";
-import { AngleDial, PowerRuler } from "./BattleInstruments";
+import { AngleDial, PowerRuler, MovementReserve } from "./BattleInstruments";
 import { teamColor, teamColorName } from "./teamColors";
 import "./battleHud.css";
 import "./battleHudDesktop.css";
@@ -24,8 +24,8 @@ export const BattleRoster = ({ players, actorId, upcomingPlayerIds = [], clock, 
 
 type Props = { readonly player?: HudPlayer | undefined; readonly steps: number; readonly tilt: number; readonly elevation: number; readonly facing: -1 | 1; readonly power: number; readonly loadout?: Loadout | undefined; readonly slot: number; readonly disabled: boolean; readonly selectSlot: (slot: 0 | 1) => void; readonly children?: ReactNode };
 export const BattleConsole = (p: Props) => { const { t } = useLanguage(); return <footer className={`battle-console ${p.children ? "has-touch" : ""}`}>
-  <div className="battle-self" style={{ "--team": teamColor(p.player?.team ?? 0) } as CSSProperties}><div className="battle-self-portrait" aria-hidden="true"><img className="battle-pilot-portrait" src={pilotPortrait} alt="" /></div><div className="battle-self-info"><strong>{p.player?.name ?? "—"}</strong><div className="battle-hp"><i style={{ width: `${Math.max(0, Math.min(100, p.player?.hp ?? 0))}%` }} /></div><span>{p.player?.hp ?? 0}/100</span><small aria-label={`${t("残り移動")} ${p.steps}`}>↔ {p.steps}</small></div></div>
+  <div className="battle-self" style={{ "--team": teamColor(p.player?.team ?? 0) } as CSSProperties}><div className="battle-self-portrait" aria-hidden="true"><img className="battle-pilot-portrait" src={pilotPortrait} alt="" /></div><div className="battle-self-info"><strong>{p.player?.name ?? "—"}</strong><div className="battle-hp"><i style={{ width: `${Math.max(0, Math.min(100, p.player?.hp ?? 0))}%` }} /></div><span>{p.player?.hp ?? 0}/100</span><MovementReserve steps={p.steps} /></div></div>
   <AngleDial tilt={p.tilt} elevation={p.elevation} facing={p.facing} /><PowerRuler value={p.power} />
   <div className="battle-weapons">{p.loadout?.map((weapon, slot) => <button key={slot} title={t(WEAPON_LABELS[weapon])} aria-label={t(WEAPON_LABELS[weapon])} aria-pressed={p.slot === slot} disabled={p.disabled} onClick={() => p.selectSlot(slot as 0 | 1)}><WeaponIcon weapon={weapon} /><span>{p.children ? slot + 1 : slot === 0 ? "Q" : "E"}</span></button>)}</div>
-  {p.children && <div className="battle-touch">{p.children}</div>}
+  {p.children && <div className="battle-touch">{p.children}<div className="battle-touch-reserve"><MovementReserve steps={p.steps} /></div></div>}
 </footer>; };

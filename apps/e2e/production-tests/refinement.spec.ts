@@ -18,6 +18,12 @@ test("opening holds input until START and leaves a full turn", async ({ page }) 
   await page.screenshot({ path: "test-results/refinement-start.png" });
   await expect(field).toHaveAttribute("data-opening", "false");
   await expect(page.locator(".battle-weapons button").first()).toBeEnabled();
+  const dialBox = (await page.locator(".battle-angle").boundingBox())!;
+  expect(dialBox.y + dialBox.height).toBeLessThanOrEqual(page.viewportSize()!.height);
+  const reserve = page.getByRole("meter", { name: "残り移動", exact: true });
+  await expect(reserve).toHaveAttribute("aria-valuenow", "30");
+  await page.keyboard.press("ArrowRight");
+  await expect(reserve).toHaveAttribute("aria-valuenow", "29");
   await page.screenshot({ path: "test-results/refinement-desktop.png" });
 });
 test("compact touch cross leaves over half the landscape for the world", async ({ browser }) => {
@@ -33,6 +39,13 @@ test("compact touch cross leaves over half the landscape for the world", async (
   expect(left!.x).toBeLessThan(20);
   expect(up!.y).toBeLessThan(left!.y);
   expect(right!.x).toBeGreaterThan(up!.x);
+  const reserve = page.getByRole("meter", { name: "残り移動", exact: true });
+  await expect(reserve).toHaveAttribute("aria-valuenow", "30");
+  await page.getByRole("button", { name: "右へ移動", exact: true }).tap();
+  await expect(reserve).toHaveAttribute("aria-valuenow", "29");
+  const gaugeBox = (await reserve.boundingBox())!;
+  expect(gaugeBox.y + gaugeBox.height).toBeLessThanOrEqual(375);
+  expect(gaugeBox.y).toBeGreaterThanOrEqual(up!.y);
   await page.screenshot({ path: "test-results/refinement-mobile.png" });
   await context.close();
 });

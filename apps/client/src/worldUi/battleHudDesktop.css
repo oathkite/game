@@ -16,8 +16,8 @@
   .battle-console:not(.has-touch) .battle-self { height:120px; grid-template-columns:86px minmax(0,1fr); gap:12px; padding:8px; background:linear-gradient(135deg,#203c51,#102333); border-color:#47677f; box-shadow:inset 0 1px #718b9b44; }
   .battle-console:not(.has-touch) .battle-self-info { align-content:center; gap:8px; }
   .battle-console:not(.has-touch) .battle-self strong { font-size:19px; }
-  .battle-console:not(.has-touch) .battle-self span,.battle-console:not(.has-touch) .battle-self small { font-size:16px; }
-  .battle-console:not(.has-touch) .battle-angle { width:156px; height:156px; filter:drop-shadow(0 3px 3px #06152099); }
+  .battle-console:not(.has-touch) .battle-self span { font-size:16px; }
+  .battle-console:not(.has-touch) .battle-angle { width:144px; height:144px; justify-self:center; filter:drop-shadow(0 3px 3px #06152099); }
   .battle-console:not(.has-touch) .battle-power { height:100px; padding:0; }
   .battle-console:not(.has-touch) .battle-power > svg { top:32px; height:42px; }
   .battle-console:not(.has-touch) .battle-power-value { font-size:24px; }

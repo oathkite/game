@@ -2,6 +2,17 @@ import { useLanguage } from "@/i18n/locale";
 import { useId } from "react";
 import { fireAngle } from "@game/sim";
 
+export const MovementReserve = ({ steps }: { readonly steps: number }) => {
+  const { t } = useLanguage();
+  return <div className="battle-movement" role="meter" aria-label={t("残り移動")} aria-valuemin={0} aria-valuemax={30} aria-valuenow={steps}>
+    <svg className="battle-movement-icon" viewBox="0 0 24 16" aria-hidden="true"><path d="M5 5h14l3 3v5H2V8Z" fill="#819eae" stroke="#b9ced8" /><path d="M8 2h8v3H8Z" fill="#819eae" />{[6, 12, 18].map(x => <circle key={x} cx={x} cy="10" r="2" fill="#152c3d" />)}</svg>
+    <output aria-hidden="true">{steps}</output>
+    <svg className="battle-movement-cells" viewBox="0 0 100 16" preserveAspectRatio="none" aria-hidden="true">
+      {[0, 1, 2].map(i => <g key={i} transform={`translate(${i * 35} 0)`}><rect y="1" width="30" height="14" rx="2" fill="#081a29" stroke="#365468" /><rect data-reserve-fill={Math.max(0, Math.min(10, steps - i * 10)) * 3} y="2" width={Math.max(0, Math.min(10, steps - i * 10)) * 3} height="12" rx="1" fill="#26bbe6" /><path d="M2 3H28" stroke="#c1f7ff" opacity=".35" /></g>)}
+    </svg>
+  </div>;
+};
+
 export const PowerRuler = ({ value }: { readonly value: number }) => {
   const { t } = useLanguage();
   const gradient = useId(), power = Math.max(0, Math.min(100, value));
