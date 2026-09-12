@@ -8,6 +8,9 @@ test("opening holds input until START and leaves a full turn", async ({ page }) 
   await page.setViewportSize({ width: 1440, height: 900 });
   await enter(page);
   const field = page.getByTestId("camera-world");
+  await expect(page.locator(".battle-weapons button").first()).toBeDisabled();
+  await expect(field).toHaveAttribute("data-loaded", "true", { timeout: 15000 });
+  await expect(field).toHaveAttribute("data-scale", "9");
   await expect(field).toHaveAttribute("data-opening", "true");
   await expect(page.locator(".battle-weapons button").first()).toBeDisabled();
   await page.screenshot({ path: "test-results/refinement-overview.png" });
