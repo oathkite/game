@@ -143,16 +143,16 @@ test("eight independent players complete a 4v4 match and return together", async
     expect(portraitReturn.y + portraitReturn.height).toBeLessThanOrEqual(844);
     await owner.screenshot({ path: "test-results/eight-player-result-portrait.png" });
     await owner.setViewportSize({ width: 1440, height: 900 });
-    for (const page of pages.slice(0, -1)) {
+    await Promise.all(pages.slice(0, -1).map(async page => {
       await page.getByRole("button", { name: "部屋へ戻る", exact: true }).click();
       await expect(page.getByRole("button", { name: "帰還待ち", exact: true })).toBeDisabled();
-    }
+    }));
     await pages[7]!.getByRole("button", { name: "部屋へ戻る", exact: true }).click();
-    for (const page of pages) {
+    await Promise.all(pages.map(async page => {
       await expect(page.getByTestId("room-code")).toHaveText(code!);
       await expect(page.locator(".room-members li")).toHaveCount(8);
       await expect(page.getByRole("button", { name: "準備完了", exact: true })).toBeVisible();
-    }
+    }));
     expect(errors).toEqual([]);
   } finally { await Promise.all(contexts.map(context => context.close())); }
 });

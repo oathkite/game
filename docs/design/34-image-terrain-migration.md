@@ -46,3 +46,5 @@
 2026-09-12 葦の丘v3を登録。素材selectorはid@versionで固定し、旧版保存試合はタイルと元のsurfaceを維持する。3browserの2context射撃/再接続成功。詳細はprogress/evidence/ui/reed-hills-2026-09-12。
 
 2026-09-12 苔の谷v3を登録し、通常オンライン3マップの画像地形接続が完了。500×225を維持し、画像alpha由来の空洞/床を共有。3browserの2context射撃/再接続とserver79件成功。全体ゴールは未完で、苔の谷8browser・最終UI・実機/公開前gateを残す。
+
+2026-09-12 検証更新: 苔の谷8contextのChromium/Firefox成功ログに加えてWebKitを完走。射撃共有・降参決着・全員の成績一致と帰還を確認し、画像をprogress/evidence/ui/moss-valley-eight-2026-09-12へ保存。最終UI・実機/公開前gateは引き続き未完。
