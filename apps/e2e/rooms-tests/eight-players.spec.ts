@@ -25,6 +25,11 @@ test("eight independent players complete a 4v4 match and return together", async
       await expect(page.getByTestId("room-code")).toHaveText(code!);
     }
     await expect(owner.locator(".room-members li")).toHaveCount(8);
+    const mapId = test.info().project.metadata.mapId;
+    if (typeof mapId === "string") {
+      await owner.getByLabel("マップ", { exact: true }).selectOption(mapId);
+      await expect(pages[7]!.getByLabel("マップ", { exact: true })).toHaveValue(mapId);
+    }
     for (let index = 0; index < 8; index++) {
       await owner.getByLabel(`参加者${index + 1}のチーム`).selectOption(index < 4 ? "t0" : "t1");
       await expect(pages[7]!.getByLabel(`参加者${index + 1}のチーム`)).toHaveValue(index < 4 ? "t0" : "t1");
@@ -60,6 +65,7 @@ test("eight independent players complete a 4v4 match and return together", async
     await owner.setViewportSize({ width: 1440, height: 900 });
     // Cold loading eight renderers can span a turn; start input checks early in a live turn.
     await expect.poll(async () => Number(await owner.locator(".countdown-dial > span").innerText()), { timeout: 25000 }).toBeGreaterThanOrEqual(18);
+    await expect.poll(async () => (await Promise.all(pages.map(page => page.locator(".battle-weapons button").first().isEnabled()))).filter(Boolean), { timeout: 15000 }).toHaveLength(1);
     const nextSeat = owner.locator(".battle-seat").filter({ has: owner.getByLabel("1人後の手番", { exact: true }) });
     const nextName = await nextSeat.locator("strong").textContent();
     const nextPage = pages[Number(nextName!.replace("Pilot", "")) - 1]!;
