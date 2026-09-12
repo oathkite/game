@@ -44,3 +44,5 @@
 2026-09-12オンライン接続: rock-arch v2を登録、NetworkFieldの画像loaderを接続。protocol build 3で旧クライアントを区別し、旧surface保存buildのみ移行。3browser各2contextの実射撃・再接続で確認。詳細はprogress/evidence/ui/online-rock-arch-2026-09-12。先行する未登録/未接続の記述はこの更新で解消。全マップ素材制作と実機等の残項目は維持。
 
 2026-09-12 葦の丘v3を登録。素材selectorはid@versionで固定し、旧版保存試合はタイルと元のsurfaceを維持する。3browserの2context射撃/再接続成功。詳細はprogress/evidence/ui/reed-hills-2026-09-12。
+
+2026-09-12 苔の谷v3を登録し、通常オンライン3マップの画像地形接続が完了。500×225を維持し、画像alpha由来の空洞/床を共有。3browserの2context射撃/再接続とserver79件成功。全体ゴールは未完で、苔の谷8browser・最終UI・実機/公開前gateを残す。

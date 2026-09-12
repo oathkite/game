@@ -32,7 +32,8 @@ test("authored terrain is shared after firing and reconnecting", async ({ browse
     for (const page of pages) await page.getByRole("button", { name: "準備完了", exact: true }).click();
     await owner.getByRole("button", { name: "対戦開始", exact: true }).click();
     for (const page of pages) await expect(page.getByTestId("network-world")).toHaveAttribute("data-loaded", "true", { timeout: 15000 });
-    expect(frames[0]!.map.solidColumns).toHaveLength(400);
+    expect(frames[0]!.map.id).toBe(mapId);
+    expect(frames[0]!.map.solidColumns).toHaveLength(mapId === "moss-valley" ? 500 : 400);
     expect(frames[1]!.map).toEqual(frames[0]!.map);
     await expect.poll(() => frames[0]!.opening ? Date.now() >= frames[0]!.opening!.endsAt : true, { timeout: 15000 }).toBe(true);
     const actor = frames[0]!.players.find(p => p.playerId === frames[0]!.actorId)!;
