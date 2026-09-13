@@ -1,3 +1,4 @@
+import { weaponPixels } from "./weaponPixels";
 import type { CellPoint, WeaponId } from "@game/protocol";
 import { Container, Graphics, Sprite, type Texture } from "pixi.js";
 import { blastCells, bulletSize, type BulletSize, projectileArtScale } from "./weaponArt";
@@ -43,11 +44,15 @@ const drawBlast = (g: Graphics, color: number, cx: number, cy: number, r: number
 };
 
 /** 弾の列。弾道の数だけ矩形を持ち、足りなければ作る */
-const bulletPool = (parent: Container, size: BulletSize, color: number, texture?: Texture, scale = 1 / 12) => {
+const bulletPool = (parent: Container, size: BulletSize, color: number, weapon: WeaponId, texture?: Texture, scale = 1 / 12) => {
   const list: (Graphics | Sprite)[] = [];
   return (index: number): Graphics | Sprite => {
     while (list.length <= index) {
-      const g = texture ? new Sprite(texture) : new Graphics().rect(-size.w / 2, -size.h / 2, size.w, size.h).fill(color);
+      const g = texture ? new Sprite(texture) : new Graphics();
+      if (g instanceof Graphics) {
+        const w = Math.max(2, size.w), h = Math.max(1.25, size.h);
+        for (const p of weaponPixels(weapon)) g.rect((p.x / 8 - .5) * w, (p.y / 8 - .5) * h, w / 8, h / 8).fill(p.light ? 0xffffff : color);
+      }
       if (g instanceof Sprite) { g.anchor.set(0.5, 0.6); g.scale.set(scale); }
       g.visible = false;
       parent.addChild(g);
@@ -72,7 +77,7 @@ export const createProjectileView = (color: number, weapon: WeaponId, texture?: 
   const impactSprites = new Map<string, Sprite>();
   const debrisLayer = keyedLayer(debris);
   const missLayer = keyedLayer(misses);
-  const bulletAt = bulletPool(bullets, bulletSize(weapon), color, texture, projectileArtScale(weapon));
+  const bulletAt = bulletPool(bullets, bulletSize(weapon), color, weapon, texture, projectileArtScale(weapon));
 
   return {
     container,

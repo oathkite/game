@@ -8,13 +8,14 @@ import { actorPoint } from "./PrototypeCanvas";
 
 type Action = "left" | "right" | "up" | "down" | "fire";
 type Owner = { readonly id: number | string; readonly action: Action | "pan" };
-export const usePrototypeInput = (store: MatchStore, rig: CameraRig, enabled: boolean, blocked: boolean, toggleMenu: () => void) => {
-  const gauge = usePowerGauge(enabled && !blocked, store.fire);
+export const usePrototypeInput = (store: MatchStore, rig: CameraRig, enabled: boolean, blocked: boolean, toggleMenu: () => void, paused = false) => {
+  const pause = useRef(paused); pause.current = paused;
+  const gauge = usePowerGauge(enabled && !blocked && !paused, store.fire);
   const holds = {
-    left: useHold(() => store.moveStep(-1), 80, enabled && !blocked && !gauge.charging),
-    right: useHold(() => store.moveStep(1), 80, enabled && !blocked && !gauge.charging),
-    up: useHold(() => store.changeElevation(1), 50, enabled && !blocked && !gauge.charging),
-    down: useHold(() => store.changeElevation(-1), 50, enabled && !blocked && !gauge.charging),
+    left: useHold(() => { if (!pause.current) store.moveStep(-1); }, 80, enabled && !blocked && !gauge.charging),
+    right: useHold(() => { if (!pause.current) store.moveStep(1); }, 80, enabled && !blocked && !gauge.charging),
+    up: useHold(() => { if (!pause.current) store.changeElevation(1); }, 50, enabled && !blocked && !gauge.charging),
+    down: useHold(() => { if (!pause.current) store.changeElevation(-1); }, 50, enabled && !blocked && !gauge.charging),
   };
   const owner = useRef<Owner | null>(null);
   const drag = useRef<{ x: number; y: number; active: boolean; at: number } | null>(null);
@@ -25,7 +26,7 @@ export const usePrototypeInput = (store: MatchStore, rig: CameraRig, enabled: bo
     latest.current.gauge.cancel(); owner.current = null; drag.current = null; rig.stop();
   };
   const begin = (id: number | string, action: Action): boolean => {
-    if (owner.current || !latest.current.enabled || latest.current.blocked) return false;
+    if (pause.current || owner.current || !latest.current.enabled || latest.current.blocked) return false;
     owner.current = { id, action }; rig.stop();
     if (action === "fire") latest.current.gauge.begin(typeof id === "number" ? "pointer" : "key");
     else latest.current.holds[action].start();

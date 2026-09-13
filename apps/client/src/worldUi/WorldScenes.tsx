@@ -1,4 +1,3 @@
-import { PracticeGuide, dismissPracticeGuide } from "./PracticeGuide";
 import { useWorldBrowserBack } from "./browserBack";
 import type { ResultPresentation } from "./ResultPlayers";
 import { teamColorName } from "./teamColors";
@@ -11,7 +10,7 @@ import { StartScreen } from "./StartScreen";
 import { inviteRoom } from "./roomInvite";
 import { loadDisplayScale, saveDisplayScale } from "./displayScale";
 import { lazy, Suspense, useCallback, useEffect, useRef, useState } from "react";
-import { WEAPON_IDS, WEAPON_LABELS, type WeaponId } from "@game/protocol";
+import { WEAPON_IDS, WEAPON_LABELS, PLAYER_COLORS, COLOR_HEX, type WeaponId } from "@game/protocol";
 import { loadProfile, saveProfile } from "@/app/profile";
 import { setAudioActive, setAudioSettings, setMusic, playSound, unlockAudio } from "@/app/audio";
 import { CameraSettingsPanel } from "@/prototype/CameraSettingsPanel";
@@ -92,13 +91,15 @@ const Lobby = ({ go }: { readonly go: (scene: Scene) => void }) => {
   const weapon = (slot: 0 | 1, value: WeaponId) => update({ loadout: slot === 0 ? [value, profile.loadout[1]] : [profile.loadout[0], value] });
   return <section className="world-lobby">
     <header><h1>{t("出発の準備")}</h1><PixelButton onClick={() => go("settings")}>{t("設定")}</PixelButton></header>
-    <div className="world-machine"><TankPortrait /></div>
+    <div className="world-machine"><TankPortrait colors={profile.colors} /></div>
     <PixelPanel className="world-loadout">
       <label>{t("名前")}<input aria-label={t("名前")} maxLength={12} value={profile.nickname} placeholder={t("プレイヤー")} onChange={e => update({ nickname: e.target.value })} /></label>
       {([0, 1] as const).map(slot => <label key={slot}>{t("装備")} {slot + 1}<select aria-label={`${t("装備")} ${slot + 1}`} value={profile.loadout[slot]} onChange={e => weapon(slot, e.target.value as WeaponId)}>{WEAPON_IDS.map(id => <option key={id} value={id} disabled={id === profile.loadout[slot === 0 ? 1 : 0]}>{t(WEAPON_LABELS[id])}</option>)}</select></label>)}
-      <PracticeGuide />
+      <div className="tank-colors">{(["primary", "secondary"] as const).map(part => <fieldset key={part}><legend>{t(part === "primary" ? "車体色" : "砲塔色")}</legend><div role="radiogroup" aria-label={t(part === "primary" ? "車体色" : "砲塔色")}>
+        {PLAYER_COLORS.map(color => <button type="button" role="radio" aria-label={color} aria-checked={profile.colors[part] === color} key={color} onClick={() => update({ colors: { ...profile.colors, [part]: color } })}><i style={{ background: COLOR_HEX[color] }} /></button>)}
+      </div></fieldset>)}</div>
     </PixelPanel>
-    <footer><PixelButton onClick={() => go("start")}>{t("タイトルへ")}</PixelButton><PixelButton onClick={() => go("rooms")}>{t("オンライン対戦")}</PixelButton><PixelButton onClick={() => { dismissPracticeGuide(); go("battle"); }}>{t("プラクティスへ")}</PixelButton></footer>
+    <footer><PixelButton onClick={() => go("start")}>{t("タイトルへ")}</PixelButton><PixelButton onClick={() => go("rooms")}>{t("オンライン対戦")}</PixelButton><PixelButton onClick={() => go("battle")}>{t("プラクティスへ")}</PixelButton></footer>
   </section>;
 };
 const Settings = ({ onBack, onReplay }: { readonly onBack: () => void; readonly onReplay: () => void }) => {

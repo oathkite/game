@@ -1,9 +1,11 @@
+import { playSound } from "@/app/audio";
+import { TANK_PIXELS, treadPixels } from "./tankPixels";
 import type { ShotFlash } from "./muzzlePose";
 import { COLOR_HEX, type Facing, type TankColors } from "@game/protocol";
 import { BARREL_BASE_UP, BARREL_LENGTH, HP_MAX } from "@game/sim";
 import { Container, Graphics, Text } from "pixi.js";
 
-// 戦車のドット絵。設計書 08 の 8.6。幅 7、高さ 5 の正方形の集まりと主砲を 1 つのコンテナにまとめて回す。
+// 待機画面と共通のドット絵と主砲を 1 つのコンテナにまとめて回す。
 // 武器で形は変えない（設計書 10 の 10.5）。
 // 座標の単位はセルで、親のコンテナで整数倍に拡大する。
 
@@ -37,16 +39,12 @@ export type TankView = {
 };
 
 const DEG = Math.PI / 180;
-const BODY_W = 7;
 const hex = (c: string): number => Number.parseInt(c.slice(1), 16);
 
-const drawBody = (g: Graphics, colors: { readonly primary: string; readonly secondary: string }, white: boolean): void => {
+const drawBody = (g: Graphics, colors: { readonly primary: string; readonly secondary: string }, white: boolean, distance: number): void => {
   g.clear();
-  const primary = white ? 0xffffff : hex(colors.primary);
-  const secondary = white ? 0xffffff : hex(colors.secondary);
-  // 下 3 段が車体（主色）、上 2 段が砲塔（副色）
-  g.rect(-BODY_W / 2, -3, BODY_W, 3).fill(primary);
-  g.rect(-2.5, -5, 5, 2).fill(secondary);
+  for (const p of TANK_PIXELS) g.rect((p.x - 38) / 8, (p.y - 53) / 8, p.w / 8, p.h / 8).fill(white ? 0xffffff : hex(p.part === "body" ? colors.primary : colors.secondary));
+  for (const p of treadPixels(distance)) g.rect((p.x - 38) / 8, (p.y - 53) / 8, p.w / 8, p.h / 8).fill(0x000000);
 };
 
 const hpCells = (hp: number): number => Math.min(10, Math.ceil(Math.max(0, hp) / (HP_MAX / 10)));
@@ -61,10 +59,10 @@ const drawHpBar = (g: Graphics, colors: { readonly primary: string; readonly sec
 };
 
 export const createTankView = (selection: TankColors, nickname: string, team?: string): TankView => {
-  const colors = { primary: team ?? COLOR_HEX[selection.primary], secondary: team ?? COLOR_HEX[selection.secondary] };
+  const colors = { primary: COLOR_HEX[selection.primary], secondary: COLOR_HEX[selection.secondary] };
   const world = new Container();
   const body = new Graphics();
-  drawBody(body, colors, false);
+  drawBody(body, colors, false, 0);
   // 主砲。1 セル幅で長さは物理の主砲（4 セル）に揃える
   const barrel = new Graphics();
   barrel.rect(0, -0.5, BARREL_LENGTH, 1).fill(hex(colors.secondary));
@@ -81,13 +79,13 @@ export const createTankView = (selection: TankColors, nickname: string, team?: s
   const label = new Container();
   const text = new Text({
     text: nickname,
-    style: { fontFamily: "DotGothic16, monospace", fontSize: 16, fill: colors.primary },
+    style: { fontFamily: "DotGothic16, monospace", fontSize: 16, fill: team ?? colors.primary },
     resolution: 1,
   });
   text.anchor.set(0.5, 1);
   label.addChild(text);
 
-  let wasWhite = false;
+  let wasWhite = false, distance = 0, previousX: number | null = null;
 
   const setPose = (pose: TankPose, cell: number): void => {
     world.visible = pose.visible;
@@ -96,11 +94,16 @@ export const createTankView = (selection: TankColors, nickname: string, team?: s
     rotating.rotation = -pose.tilt * DEG;
     const local = pose.facing === 1 ? pose.elevation : 180 - pose.elevation;
     barrel.rotation = -local * DEG;
-    if (pose.flash !== wasWhite) {
-      drawBody(body, colors, pose.flash);
+    const signedDelta = previousX === null ? 0 : pose.x - previousX;
+    const delta = Math.abs(signedDelta);
+    previousX = pose.x;
+    const moving = pose.visible && !pose.falling && delta > .001 && delta <= 2.5;
+    if (moving) { distance += signedDelta; playSound("move"); }
+    if (moving || pose.flash !== wasWhite) {
+      drawBody(body, colors, pose.flash, distance);
       wasWhite = pose.flash;
     }
-    drawHpBar(hpBar, colors, pose);
+    drawHpBar(hpBar, { ...colors, primary: team ?? colors.primary }, pose);
 
     label.position.set((pose.x + 0.5) * cell, (pose.y - 12) * cell);
   };

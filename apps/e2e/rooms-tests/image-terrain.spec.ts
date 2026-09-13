@@ -14,6 +14,8 @@ test("authored terrain is shared after firing and reconnecting", async ({ browse
       }));
       await page.goto("/");
       await page.getByRole("button", { name: "はじめる", exact: true }).click();
+      await page.getByRole("radiogroup", { name:"車体色" }).getByRole("radio", { name:i === 0 ? "purple" : "cyan", exact:true }).click();
+      await page.getByRole("radiogroup", { name:"砲塔色" }).getByRole("radio", { name:"orange", exact:true }).click();
       await page.getByRole("button", { name: "オンライン対戦", exact: true }).click();
       await page.getByLabel("対戦で使う名前").fill(`Arch${i}`);
     }
@@ -35,6 +37,7 @@ test("authored terrain is shared after firing and reconnecting", async ({ browse
     expect(frames[0]!.map.id).toBe(mapId);
     expect(frames[0]!.map.solidColumns).toHaveLength(mapId === "moss-valley" ? 500 : 400);
     expect(frames[1]!.map).toEqual(frames[0]!.map);
+    for (const frame of frames) expect(frame!.players.find(p => p.nickname === "Arch0")!.colors).toEqual({ primary:"purple", secondary:"orange" });
     await expect.poll(() => frames[0]!.opening ? Date.now() >= frames[0]!.opening!.endsAt : true, { timeout: 15000 }).toBe(true);
     const actor = frames[0]!.players.find(p => p.playerId === frames[0]!.actorId)!;
     const shooter = pages[Number(actor.nickname!.slice(-1))]!;
@@ -59,6 +62,7 @@ test("authored terrain is shared after firing and reconnecting", async ({ browse
     });
     await guest.getByRole("button", { name: "オンライン対戦", exact: true }).click();
     await expect(guest.getByTestId("network-world")).toHaveAttribute("data-loaded", "true", { timeout: 15000 });
+    expect(frames[1]!.players.find(p => p.nickname === "Arch0")!.colors).toEqual({ primary:"purple", secondary:"orange" });
     expect(frames[1]!.map).toEqual(map); expect(frames[1]!.terrainOps).toEqual(ops);
     const field = guest.getByTestId("network-world");
     await expect(field).toHaveAttribute("data-initial-camera-x", /[\d.]+/);

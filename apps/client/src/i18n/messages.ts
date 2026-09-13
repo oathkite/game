@@ -29,5 +29,5 @@ export const english: Readonly<Record<string, string>> = {
   "カメラを初期値に戻す": "Reset camera", "変更は即時反映され、このブラウザに保存されます。": "Changes apply immediately and are saved in this browser.",
   "標準砲": "Cannon", "トリプル弾": "Triple", "マルチ弾": "Multiple", "貫通弾": "Drill",
   "レーザー弾": "Laser", "掘削弾": "Digger", "浮遊弾": "Floater", "針弾": "Stinger",
-  "プレイヤー": "Player", "機体": "Tank", "KEROPOD（ケロポッド）": "KEROPOD", "カエルのパイロットと黄色いケロポッド": "Frog pilot and yellow KEROPOD",
+  "車体色": "Body color", "砲塔色": "Turret color", "プレイヤー": "Player", "機体": "Tank", "KEROPOD（ケロポッド）": "KEROPOD", "カエルのパイロットと黄色いケロポッド": "Frog pilot and yellow KEROPOD",
 };

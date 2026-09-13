@@ -1,6 +1,6 @@
 import { z } from "zod";
 export const LEGACY_CLIENT_BUILD = { protocol: 2, sim: "keropod-sim-v2.1", assets: "keropod-world-v1", rules: "keropod-v2.1" } as const;
-export const CLIENT_BUILD = { ...LEGACY_CLIENT_BUILD, protocol: 3 } as const;
+export const CLIENT_BUILD = { ...LEGACY_CLIENT_BUILD, protocol: 3, sim: "keropod-sim-v2.2", rules: "keropod-v2.2" } as const;
 export const clientBuildSchema = z.object({ protocol: z.number().int(), sim: z.string(), assets: z.string(), rules: z.string() }).strict();
 export type ClientBuild = z.infer<typeof clientBuildSchema>;
 export const matchBuildSchema = clientBuildSchema.extend({ map: z.object({ id: z.string(), version: z.number().int().positive() }).strict() });

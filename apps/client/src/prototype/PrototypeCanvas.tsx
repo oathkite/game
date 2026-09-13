@@ -89,6 +89,7 @@ export const PrototypeCanvas = ({ store, rig, layout, handlers, blocked, followS
             r.setTank(seat, { ...pose, ...motion, visible: motion.falling || pose.visible });
             return { ...pose, ...motion };
           });
+          host.dataset.falling = String(falling);
           if (!opening && available === falling) { available = !falling; onReady(available); }
           const shown = poses[v.currentSeat];
           if (shown) rig.actor({ x: shown.x, y: shown.y - 6 });

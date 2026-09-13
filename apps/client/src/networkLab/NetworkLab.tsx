@@ -135,10 +135,11 @@ export const NetworkLab = ({ worldArt = false, onExit, connection }: { readonly 
   const phaseLabel = frame?.phase === "replaying" ? "射撃を再生中" : frame?.phase === "finished" ? "対戦終了" : "操作中";
   const observing = spectator || Boolean(frame?.players.find(p => p.playerId === playerId)?.eliminated);
   const opening = Boolean(frame?.opening && serverNow < frame.opening.endsAt);
-  const canAct = !opening && !settling && (!worldArt || innerWidth > innerHeight) && frame?.phase === "acting" && frame.actorId === playerId && socket.current?.readyState === WebSocket.OPEN;
-  const input = useBattleInput(Boolean(worldArt && canAct && !menu && !confirmLeave), move, delta => setElevation(v => Math.max(10, Math.min(90, v + delta))), fire, setSlot);
+  const canControl = !opening && (!worldArt || innerWidth > innerHeight) && frame?.phase === "acting" && frame.actorId === playerId && socket.current?.readyState === WebSocket.OPEN;
+  const canAct = canControl && !settling;
+  const input = useBattleInput(Boolean(worldArt && canControl && !menu && !confirmLeave), move, delta => setElevation(v => Math.max(10, Math.min(90, v + delta))), fire, setSlot, settling);
   useBrowserBackAction(Boolean(worldArt && onExit), () => { input.cancel(); setMenu(false); setConfirmLeave(true); });
-  const hudPlayers = frame?.players.map(p => ({ id: p.playerId, name: p.nickname ?? p.playerId, hp: p.hp, team: Number(p.teamId.slice(1)) })) ?? [];
+  const hudPlayers = frame?.players.map(p => ({ id: p.playerId, name: p.nickname ?? p.playerId, hp: p.hp, colors: p.colors, team: Number(p.teamId.slice(1)) })) ?? [];
   const own = shownPlayers.find(p => p.playerId === playerId);
   const ownFacing = useRef<-1 | 1>(1);
   if (frame?.actorId === playerId) ownFacing.current = frame.movement.facing;

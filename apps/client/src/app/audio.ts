@@ -3,7 +3,7 @@ import { createChipMusic, type MusicName } from "./chipMusic";
 
 // ドットテーマ向けの合成音とシーン別チップチューン。外部音源の取得は不要。
 
-export type SoundName = WeaponSound | "tick" | "fire" | "explosion" | "hit" | "hitConfirm" | "finish" | "matchFinish";
+export type SoundName = WeaponSound | "move" | "tick" | "fire" | "explosion" | "hit" | "hitConfirm" | "finish" | "matchFinish";
 
 type AudioState = {
   ctx: AudioContext | null;
@@ -69,7 +69,9 @@ type Tone = {
   readonly gain: number;
 };
 
+let lastMoveAt = -Infinity;
 const TONES: Readonly<Record<SoundName, Tone>> = {
+  move: { type: "triangle", from: 95, to: 55, duration: .055, gain: .12 },
   "laser-fire": { type: "sawtooth", from: 2200, to: 180, duration: 0.24, gain: 0.18 },
   "laser-impact": { type: "triangle", from: 1200, to: 90, duration: 0.18, gain: 0.3 },
   "floater-fire": { type: "sine", from: 180, to: 780, duration: 0.5, gain: 0.4 },
@@ -99,6 +101,7 @@ export const playSound = (name: SoundName): void => {
   const ctx = state.ctx;
   const master = state.master;
   if (!ctx || !master || state.muted || state.volume <= 0) return;
+  if (name === "move") { if (ctx.currentTime - lastMoveAt < .075) return; lastMoveAt = ctx.currentTime; }
   const tone = TONES[name];
   const t0 = ctx.currentTime;
   const osc = ctx.createOscillator();

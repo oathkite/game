@@ -75,3 +75,12 @@ it("commits lethal movement to battle state and permits its duplicate acknowledg
   const retry = moveBattle(result.roster, result.players, mask, result.state, actor, command(), 1100);
   expect(retry.snapshot).toEqual(result.snapshot);
 });
+
+it("continues on the lower ground after a nonlethal fall with the remaining budget", async () => {
+  const { maskFromHeights } = await import("@game/sim");
+  const mask = maskFromHeights(Array.from({ length: 400 }, (_,x) => x <= 60 ? 150 : 160), 225);
+  const fall = handleMove(start(), mask, "p", command(), 1000);
+  expect(fall.state).toMatchObject({ x:61, y:160, stoppedByFall:true, stepsLeft:29 });
+  const next = handleMove(fall.state, mask, "p", command(2), 1500);
+  expect(next.state).toMatchObject({ x:63, y:160, stoppedByFall:false, stepsLeft:27 });
+});

@@ -28,14 +28,14 @@ const applyMove = (state: MovementState, mask: TerrainMask, command: MoveCommand
   const creditAt = Math.max(state.creditAt, now);
   const credit = Math.min(2, state.credit + (creditAt - state.creditAt) / 100);
   const allowed = Math.min(command.steps, state.stepsLeft, Math.floor(credit));
-  const stopped = state.locked || state.stoppedByFall || state.eliminated;
+  const stopped = state.locked || state.eliminated;
   const moved = walk(mask, state, command.direction, stopped ? 0 : allowed);
   const reason: MoveReason = stopped ? "stopped" : state.stepsLeft === 0 ? "no-budget" : allowed === 0 ? "rate-limited" :
     moved.stepsUsed === 0 ? "blocked" : moved.stepsUsed < command.steps ? "partial" : "accepted";
   const next: MovementState = { ...state, x: moved.x, y: moved.y,
     facing: moved.stepsUsed > 0 ? command.direction : state.facing,
     stepsLeft: state.stepsLeft - moved.stepsUsed, credit: credit - moved.stepsUsed, creditAt,
-    stoppedByFall: state.stoppedByFall || moved.fell, eliminated: state.eliminated || isRingOut(mask, moved),
+    stoppedByFall: moved.fell, eliminated: state.eliminated || isRingOut(mask, moved),
     ackMoveSeq: command.moveSeq, eventSeq: state.eventSeq + 1 };
   const snapshot = movementSnapshot(next, now);
   return { state: { ...next, receipts: [...state.receipts, { command, snapshot, reason }] }, reason, snapshot };

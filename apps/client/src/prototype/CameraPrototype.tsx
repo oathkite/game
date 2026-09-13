@@ -60,7 +60,7 @@ const Battle = ({ store, begin, worldArt, onExit, onResult }: { readonly store: 
   const layout = useMemo(() => { const base = cameraLayout(size.width, size.height, worldArt ? loadDisplayScale() : 9); return worldArt ? { ...base, mapHeight: Math.max(1, size.height - hudTop - hudBottom) } : base; }, [size, worldArt, hudTop, hudBottom]);
   const portrait = size.height > size.width;
   const enabled = sceneReady && view.phase === "acting" && view.control !== null && !portrait;
-  const input = usePrototypeInput(store, rig, enabled, !sceneReady || menu || confirmLeave || portrait, () => { if (confirmLeave) setConfirmLeave(false); else setMenu((open) => !open); });
+  const input = usePrototypeInput(store, rig, view.phase === "acting" && view.control !== null && !portrait, menu || confirmLeave || portrait, () => { if (confirmLeave) setConfirmLeave(false); else setMenu((open) => !open); }, !sceneReady);
   useBrowserBackAction(Boolean(worldArt && onExit), () => { input.cancel(); setMenu(false); setConfirmLeave(true); });
   const ready = view.mask !== null && view.players !== null;
   const actor = view.players?.[view.currentSeat], slot = view.control?.slot ?? view.lastSlot;
@@ -83,7 +83,7 @@ const Battle = ({ store, begin, worldArt, onExit, onResult }: { readonly store: 
       players: view.players.map(player => ({ playerId: String(player.seat), teamId: `t${player.seat}`, nickname: player.nickname })),
     });
   }, [view.phase, view.result, view.players, onResult]);
-  const hudPlayers = view.players?.map(p => ({ id: String(p.seat), name: p.nickname, hp: p.hp, team: p.seat })) ?? [];
+  const hudPlayers = view.players?.map(p => ({ id: String(p.seat), name: p.nickname, hp: p.hp, colors: p.colors, team: p.seat })) ?? [];
   const pose = view.control ?? actor;
   const ground = view.mask && pose ? tiltOf(view.mask, pose) : 0;
   const focusActor = (): void => rig.focus(actorPoint(view), "actor", matchMedia("(prefers-reduced-motion: reduce)").matches);

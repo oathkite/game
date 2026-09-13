@@ -91,7 +91,7 @@ export const RoomScreen = ({ onExit, onLab }: { readonly onExit: () => void; rea
   const leave = () => { send({ type: "room.leave" }); sessionStorage.removeItem(tokenKey); sessionStorage.removeItem(roomKey); onExit(); };
   useBrowserBackAction(!battle, leave);
   const cancelQuick = () => { send({ type: "room.leave" }); socket.current?.close(); socket.current = null; attempt.current++; sessionStorage.removeItem(tokenKey); sessionStorage.removeItem(roomKey); setRoom(null); setBattle(null); setStatus(""); };
-  const profile = () => { const p = loadProfile(), name = nickname.trim() || "プレイヤー"; saveProfile({ ...p, nickname: name }); return { nickname: name, loadout: p.loadout }; };
+  const profile = () => { const p = loadProfile(), name = nickname.trim() || "プレイヤー"; saveProfile({ ...p, nickname: name }); return { nickname: name, loadout: p.loadout, colors: p.colors }; };
   const me = room?.members.find(p => p.playerId === playerId), owner = room?.ownerId === playerId;
   const canStart = owner && room!.members.length >= 2 && room!.members.every(p => p.ready && p.connected && p.teamId) && new Set(room!.members.map(p => p.teamId)).size >= 2;
   const connected = socket.current?.readyState === WebSocket.OPEN;

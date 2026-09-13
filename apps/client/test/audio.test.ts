@@ -50,3 +50,17 @@ describe("audio output settings", () => {
     expect(gains[0]!.gain.value).toBe(0);
   });
 });
+
+it("throttles tread sounds and still honors mute", async () => {
+  const { audio, gains, ctx } = await setup();
+  audio.unlockAudio();
+  audio.playSound("move"); audio.playSound("move");
+  expect(gains).toHaveLength(2);
+  ctx.currentTime += .1;
+  audio.playSound("move");
+  expect(gains).toHaveLength(3);
+  audio.setAudioSettings(.5, true);
+  ctx.currentTime += .1;
+  audio.playSound("move");
+  expect(gains).toHaveLength(3);
+});

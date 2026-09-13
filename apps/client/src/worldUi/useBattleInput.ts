@@ -3,13 +3,14 @@ import { useHold } from "@/ui/useHold";
 import { usePowerGauge } from "@/ui/usePowerGauge";
 
 type Action = "left" | "right" | "up" | "down" | "fire";
-export const useBattleInput = (enabled: boolean, move: (direction: -1 | 1) => void, aim: (delta: number) => void, fire: (power: number) => void, slot: (value: 0 | 1) => void) => {
-  const gauge = usePowerGauge(enabled, fire), owner = useRef<string | number | null>(null);
-  const holds = { left: useHold(() => move(-1), 100, enabled && !gauge.charging), right: useHold(() => move(1), 100, enabled && !gauge.charging), up: useHold(() => aim(1), 50, enabled && !gauge.charging), down: useHold(() => aim(-1), 50, enabled && !gauge.charging) };
+export const useBattleInput = (enabled: boolean, move: (direction: -1 | 1) => void, aim: (delta: number) => void, fire: (power: number) => void, slot: (value: 0 | 1) => void, paused = false) => {
+  const pause = useRef(paused); pause.current = paused;
+  const gauge = usePowerGauge(enabled && !paused, fire), owner = useRef<string | number | null>(null);
+  const holds = { left: useHold(() => { if (!pause.current) move(-1); }, 100, enabled && !gauge.charging), right: useHold(() => { if (!pause.current) move(1); }, 100, enabled && !gauge.charging), up: useHold(() => { if (!pause.current) aim(1); }, 50, enabled && !gauge.charging), down: useHold(() => { if (!pause.current) aim(-1); }, 50, enabled && !gauge.charging) };
   const latest = useRef({ enabled, holds, gauge, slot }); latest.current = { enabled, holds, gauge, slot };
   const cancel = () => { Object.values(latest.current.holds).forEach(h => h.stop()); latest.current.gauge.cancel(); owner.current = null; };
   const begin = (id: string | number, action: Action) => {
-    if (!latest.current.enabled || owner.current !== null) return;
+    if (pause.current || !latest.current.enabled || owner.current !== null) return;
     owner.current = id;
     if (action === "fire") latest.current.gauge.begin(typeof id === "number" ? "pointer" : "key"); else latest.current.holds[action].start();
   };

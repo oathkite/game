@@ -39,7 +39,7 @@ export const NetworkField = (props: Props) => {
       const facing = new Map<string, -1 | 1>();
       let tankIndex = 0;
       renderer = await createRenderer({ tankFactory: (colors, name) => createTankView(colors, name, teamColor(Number(latest.current.frame.players[tankIndex++]!.teamId.slice(1)))), host: element, layout: layout(), mask, background: 0x000000,
-        players: latest.current.frame.players.map(p => ({ nickname: p.nickname ?? p.playerId, colors: { primary: p.teamId === "t0" ? "yellow" : "cyan", secondary: "blue" } })) });
+        players: latest.current.frame.players.map(p => ({ nickname: p.nickname ?? p.playerId, colors: p.colors ?? { primary: p.teamId === "t0" ? "yellow" : "cyan", secondary: "blue" } })) });
       if (disposed) { renderer.destroy(); return; }
       const r = renderer; let bullet = r.projectile("yellow", "cannon");
       stop = r.onFrame(dt => {

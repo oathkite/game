@@ -1,3 +1,4 @@
+import { tankColorsSchema } from "./schemas.js";
 import { clientBuildSchema, matchBuildSchema } from "./build.js";
 import { z } from "zod";
 import { WEAPON_IDS } from "./weapons.js";
@@ -8,7 +9,7 @@ export const labJoinSchema = z.object({ type: z.literal("lab.join"), build: clie
 export const labInputSchema = z.union([labJoinSchema, moveCommandSchema, fireCommandSchema,
   z.object({ type: z.literal("lab.rematch"), matchId: z.string() }).strict(),
   z.object({ type: z.literal("lab.surrender"), matchId: z.string() }).strict()]);
-const labPlayerSchema = z.object({ playerId: z.string(), x: z.number(), y: z.number(), hp: z.number(), teamId: z.string(), eliminated: z.boolean(), nickname: z.string().optional(), loadout: z.tuple([z.enum(WEAPON_IDS), z.enum(WEAPON_IDS)]).optional() });
+const labPlayerSchema = z.object({ playerId: z.string(), x: z.number(), y: z.number(), hp: z.number(), teamId: z.string(), eliminated: z.boolean(), nickname: z.string().optional(), colors: tankColorsSchema.optional(), loadout: z.tuple([z.enum(WEAPON_IDS), z.enum(WEAPON_IDS)]).optional() });
 export const labFrameSchema = z.object({
   build: matchBuildSchema,
   type: z.literal("lab.frame"), serverTime: z.number(), eventSeq: z.number().int().nonnegative(),

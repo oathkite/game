@@ -28,3 +28,12 @@
 
 .world-ui.world-ui::before,.world-ui.world-ui .kp-world::before,.world-ui.world-ui .network-field::before { display:none; }
 .world-ui.world-ui :is(.world-lobby h1,.world-settings h1,.world-result-screen h1,.world-machine .tank-portrait,.world-result-screen .tank-portrait) { background:#000; border-color:#0f4d24; box-shadow:none; }
+
+.tank-colors { display:flex; gap:8px; margin-top:10px; }
+.tank-colors fieldset { padding:4px; margin:0; min-width:0; border:1px solid #0f4d24; }
+.tank-colors legend { font-size:11px; }
+.tank-colors [role=radiogroup] { display:flex; gap:2px; flex-wrap:wrap; }
+.world-ui.world-ui .tank-colors button { padding:3px; min-width:24px; min-height:28px; border:1px solid #0f4d24; }
+.tank-colors i { display:block; width:14px; height:16px; }
+.world-ui.world-ui .tank-colors button[aria-checked=true] { border-color:#fff; }
+@media (max-height:550px) { .tank-colors { margin-top:4px; gap:4px; } }

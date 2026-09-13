@@ -1,10 +1,10 @@
 import { CLIENT_BUILD } from "@game/protocol/build";
-import type { Loadout } from "@game/protocol";
+import type { Loadout, TankColors } from "@game/protocol";
 import { lobbyCommandSchema, lobbyProfileSchema } from "@game/protocol/v2";
 import { multiplayerMap, buildMapSpec, type MapSpec } from "@game/maps";
 
 export const RULE_SET_VERSION = CLIENT_BUILD.rules;
-export type LobbyProfile = { readonly nickname: string; readonly loadout: Loadout };
+export type LobbyProfile = { readonly nickname: string; readonly loadout: Loadout; readonly colors?: TankColors | undefined };
 export type LobbyMember = LobbyProfile & {
   readonly playerId: string; readonly teamId: string | null; readonly connected: boolean; readonly ready: boolean;
 };
@@ -91,5 +91,5 @@ export const startLobby = (room: LobbyState, authenticatedId: string, revision: 
   try { buildMapSpec(room.map, room.members.length); } catch { return reject("unsupported-map"); }
   return { room: { ...room, phase: "started" }, reason: "started", setup: {
     roomId: room.roomId, revision, ruleSetVersion: RULE_SET_VERSION, map: copyMap(room.map),
-    members: room.members.map(p => ({ playerId: p.playerId, teamId: p.teamId!, nickname: p.nickname, loadout: [...p.loadout] })) } };
+    members: room.members.map(p => ({ playerId: p.playerId, teamId: p.teamId!, nickname: p.nickname, ...(p.colors ? { colors: { ...p.colors } } : {}), loadout: [...p.loadout] })) } };
 };

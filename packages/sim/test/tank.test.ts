@@ -167,12 +167,12 @@ describe("移動", () => {
     expect(walk(m, at(m, MAP_WIDTH - 1), 1, 15)).toEqual({ x: MAP_WIDTH - 1, y: 150, stepsUsed: 0, fell: false });
   });
 
-  it("落下したらそのターンの移動は終わり、検証も落下先までしか許さない", () => {
+  it("落下でコマンドは止まるが着地後の移動先まで検証できる", () => {
     const drop7 = heights((x) => (x < 100 ? 150 : 157));
     const first = walk(drop7, at(drop7, 95), 1, 15);
     expect(first).toEqual({ x: 100, y: 157, stepsUsed: 5, fell: true });
-    // クライアントは fell を見て以降の移動を止める。止めずに 1 歩進めた位置はサーバーが拒否する
-    expect(validateMove(drop7, at(drop7, 95), 101)).toBeNull();
+    // 着地後に残り移動量を使って進める。
+    expect(validateMove(drop7, at(drop7, 95), 101)).toEqual({ x:101, y:157 });
   });
 
   it("移動の検証は正味の移動を同じ規則で歩き直し、移動後の位置を返す（行って戻る経路は見ない）", () => {
@@ -186,6 +186,6 @@ describe("移動", () => {
     expect(validateMove(step7, at(step7, 95), 99)).toEqual({ x: 99, y: 150 });
     const drop7 = heights((x) => (x < 100 ? 150 : 157));
     expect(validateMove(drop7, at(drop7, 95), 100)).toEqual({ x: 100, y: 157 });
-    expect(validateMove(drop7, at(drop7, 95), 101)).toBeNull();
+    expect(validateMove(drop7, at(drop7, 95), 101)).toEqual({ x:101, y:157 });
   });
 });

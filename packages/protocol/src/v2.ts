@@ -1,3 +1,4 @@
+import { tankColorsSchema } from "./schemas.js";
 import { z } from "zod";
 import { WEAPON_IDS } from "./weapons.js";
 
@@ -28,7 +29,7 @@ export type FireCommand = z.infer<typeof fireCommandSchema>;
 // Match preparation commands carry the composition revision acknowledged by the member.
 const lobbyBase = { version: z.literal(2), roomId: id, revision: sequence.min(1) };
 const lobbyLoadout = z.tuple([z.enum(WEAPON_IDS), z.enum(WEAPON_IDS)]).refine(pair => pair[0] !== pair[1]);
-export const lobbyProfileSchema = z.object({ nickname: z.string().trim().min(1).max(12), loadout: lobbyLoadout }).strict();
+export const lobbyProfileSchema = z.object({ nickname: z.string().trim().min(1).max(12), loadout: lobbyLoadout, colors: tankColorsSchema.optional() }).strict();
 export const lobbyCommandSchema = z.discriminatedUnion("type", [
   z.object({ ...lobbyBase, type: z.literal("room.map"), mapId: id }).strict(),
   z.object({ ...lobbyBase, type: z.literal("room.ready"), ready: z.boolean() }).strict(),

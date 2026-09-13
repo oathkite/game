@@ -18,7 +18,7 @@ it("requires two assigned teams and every member ready at the current revision",
   const started = startLobby(room, "p1", room.revision);
   expect(started.reason).toBe("started");
   expect(started.setup?.members).toHaveLength(2);
-  expect(started.setup?.ruleSetVersion).toBe("keropod-v2.1");
+  expect(started.setup?.ruleSetVersion).toBe("keropod-v2.2");
   expect(started.setup?.map).toEqual(TEST_ARENA);
   expect(started.setup?.map).not.toBe(TEST_ARENA);
   expect(editLobby(started.room, "p1", command(started.room, "room.assignTeam", { playerId: "p2", teamId: "t0" })).reason).toBe("locked");
@@ -123,4 +123,15 @@ it("allows only the owner to select a registered map and clears every ready stat
   expect(next.revision).toBe(room.revision + 1);
   expect(next.members.every(p => !p.ready)).toBe(true);
   expect(editLobby(next, "p1", change).reason).toBe("stale-revision");
+});
+
+it("keeps validated custom colors through match preparation and accepts legacy profiles", () => {
+  const colors = { primary: "purple", secondary: "orange" } as const;
+  let room = joinLobby(createLobby("color-room", "p1", { ...profile, colors }, TEST_ARENA), "p2", profile);
+  room = editLobby(room, "p1", command(room, "room.assignTeam", { playerId:"p1", teamId:"t0" })).room;
+  room = editLobby(room, "p2", command(room, "room.assignTeam", { playerId:"p2", teamId:"t1" })).room;
+  const prepared = startLobby(ready(room), "p1", room.revision);
+  expect(prepared.setup?.members[0]?.colors).toEqual(colors);
+  expect(prepared.setup?.members[1]?.colors).toBeUndefined();
+  expect(() => createLobby("bad", "p1", { ...profile, colors: { primary:"invalid", secondary:"red" } as never }, TEST_ARENA)).toThrow();
 });
