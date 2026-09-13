@@ -1,7 +1,7 @@
 import type { WeaponSound } from "./weaponSounds";
-import { createSampleAudio, type MusicName } from "./sampleAudio";
+import { createChipMusic, type MusicName } from "./chipMusic";
 
-// Suno音源を再生し、取得前・取得失敗時は従来の合成音を使う。
+// ドットテーマ向けの合成音とシーン別チップチューン。外部音源の取得は不要。
 
 export type SoundName = WeaponSound | "tick" | "fire" | "explosion" | "hit" | "hitConfirm" | "finish" | "matchFinish";
 
@@ -16,12 +16,12 @@ type AudioState = {
 
 const state: AudioState = { ctx: null, master: null, output: null, volume: 0.5, muted: false };
 
-let samples: ReturnType<typeof createSampleAudio> | null = null;
+let music: ReturnType<typeof createChipMusic> | null = null;
 let desiredMusic: MusicName | null = null;
 
 export const setMusic = (name: MusicName | null): void => {
   desiredMusic = name;
-  if (samples) void samples.setMusic(name);
+  if (music) void music.setMusic(name);
 };
 
 export const setAudioActive = (active: boolean): void => {
@@ -33,7 +33,7 @@ export const setAudioActive = (active: boolean): void => {
 export const unlockAudio = (): void => {
   if (state.ctx) {
     if (state.ctx.state === "suspended") void state.ctx.resume().catch(() => {});
-    if (samples) void samples.setMusic(desiredMusic);
+    if (music) void music.setMusic(desiredMusic);
     return;
   }
   if (typeof AudioContext === "undefined") return;
@@ -51,9 +51,8 @@ export const unlockAudio = (): void => {
   state.ctx = ctx;
   state.master = master;
   state.output = output;
-  samples = createSampleAudio(ctx, master);
-  void samples.preload();
-  void samples.setMusic(desiredMusic);
+  music = createChipMusic(ctx, master);
+  void music.setMusic(desiredMusic);
 };
 
 export const setAudioSettings = (volume: number, muted: boolean): void => {
@@ -100,7 +99,6 @@ export const playSound = (name: SoundName): void => {
   const ctx = state.ctx;
   const master = state.master;
   if (!ctx || !master || state.muted || state.volume <= 0) return;
-  if (samples?.playEffect(name)) return;
   const tone = TONES[name];
   const t0 = ctx.currentTime;
   const osc = ctx.createOscillator();

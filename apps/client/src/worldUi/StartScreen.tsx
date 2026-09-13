@@ -3,7 +3,6 @@ import { useLanguage } from "@/i18n/locale";
 import { useCallback, useEffect, useState } from "react";
 import { PixelButton } from "./PixelUi";
 import { TankPortrait } from "./TankPortrait";
-import { worldArt } from "./assets";
 import "./intro.css";
 const seenKey = "keropod.intro-seen";
 const shouldAnimate = (replay: boolean): boolean => {
@@ -29,7 +28,7 @@ export const StartScreen = ({ onBegin, replay }: { readonly onBegin: () => void;
   return <section className={`world-start ${intro ? "world-intro" : ""}`} data-intro={intro}>
     {intro && <div className="world-intro-machine" aria-hidden="true"><TankPortrait /></div>}
     <div className="world-language"><LanguageSelect /></div>
-    <h1><img className="world-title-logo" src={worldArt.logo} alt={t("KEROPOD（ケロポッド）")} width="1536" height="1024" fetchPriority="high" /></h1>
+    <h1><span className="world-title-text">ARTILLERY</span></h1>
     <PixelButton onClick={() => { finish(); onBegin(); }}>{t("はじめる")}</PixelButton>
     {intro && <button className="world-intro-skip" onClick={finish}>{t("スキップ")}</button>}
   </section>;

@@ -1,19 +1,14 @@
-import { useState } from "react";
 import { useLanguage } from "@/i18n/locale";
-import cabin from "../../../../assets/runtime/tanks-v1/cabin-standard.png";
-import tracks from "../../../../assets/runtime/tanks-v1/tracks-standard.png";
-import pilot from "../../../../assets/runtime/tanks-v1/pilot-frog.svg";
-import cannon from "../../../../assets/runtime/tanks-v1/weapon-cannon.png";
-/** Same 12px/cell layers and anchors as the battlefield, without a WebGL context. */
+
+/** A small pixel silhouette, shared by the lobby and introductory screen. */
 export const TankPortrait = () => {
   const { t } = useLanguage();
-  const [loaded, setLoaded] = useState<ReadonlySet<string>>(() => new Set());
-  const ready = (source: string) => setLoaded(previous => previous.has(source) ? previous : new Set([...previous, source]));
-  const layer = (source: string, frame: number, height = 160) => <svg x="40" y="10" width="240" height="200" viewBox={`${frame * 192} 0 192 160`} overflow="hidden"><image onLoad={() => ready(source)} href={source} width="768" height={height} /></svg>;
-  return <div className="tank-portrait" data-loaded={loaded.size === 4} role="img" aria-label={t("カエルのパイロットと黄色いケロポッド")}>
-    <svg viewBox="0 0 320 220" aria-hidden="true" style={{ width: "100%", height: "100%", display: "block", imageRendering: "pixelated" }}>
-      {layer(tracks, 0)}{layer(cabin, 0)}{layer(pilot, 0, 640)}{layer(cabin, 1)}{layer(cabin, 2)}{layer(cabin, 3)}
-      <g transform="translate(160 130) rotate(-10)"><image onLoad={() => ready(cannon)} href={cannon} x="-120" y="-120" width="240" height="200" /></g>
+  return <div className="tank-portrait" data-loaded="true" role="img" aria-label={t("機体")}>
+    <svg viewBox="0 0 80 55" aria-hidden="true" shapeRendering="crispEdges" style={{ width: "100%", height: "100%", display: "block" }}>
+      <g fill="#33ff66">
+        <path d="M12 35h52v4h4v10h-4v4H12v-4H8V39h4z M20 27h36v8H20z M28 19h20v8H28z M44 19h24v4H44z" />
+      </g>
+      <path d="M16 41h8v6h-8z M28 41h8v6h-8z M40 41h8v6h-8z M52 41h8v6h-8z" fill="#000" />
     </svg>
   </div>;
 };

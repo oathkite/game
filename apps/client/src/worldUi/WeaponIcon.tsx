@@ -1,28 +1,17 @@
 import type { WeaponId } from "@game/protocol";
 
-const urls = import.meta.glob<string>("../../../../assets/runtime/tanks-v1/projectile-*.png", { eager: true, query: "?url", import: "default" });
-// Transparent margins in the gameplay sheets are excluded from the HUD viewport.
-const bounds: Record<WeaponId, string> = {
-  cannon: "84 90 24 11",
-  triple: "92 94 9 4",
-  multiple: "93 93 6 6",
-  drill: "84 90 24 13",
-  laser: "79 93 34 5",
-  digger: "86 78 26 29",
-  floater: "87 87 18 17",
-  stinger: "80 92 32 7",
+// Integer-aligned silhouettes stay legible without external artwork.
+const shapes: Record<WeaponId, string> = {
+  cannon: "M6 16h22v-4l8 8-8 8v-4H6z",
+  triple: "M4 5h22v6H4z M10 17h26v6H10z M4 29h22v6H4z",
+  multiple: "M5 5h6v6H5z M17 5h6v6h-6z M29 5h6v6h-6z M5 17h6v6H5z M17 17h6v6h-6z M29 17h6v6h-6z M5 29h6v6H5z M17 29h6v6h-6z M29 29h6v6h-6z",
+  drill: "M4 14h10v12H4z M18 10l6 4v12l-6 4z M28 14l10 6-10 6z",
+  laser: "M2 18h36v4H2z M8 8h4v6H8z M8 26h4v6H8z M28 8h4v6h-4z M28 26h4v6h-4z",
+  digger: "M16 4h8v16h10L20 36 6 20h10z",
+  floater: "M14 6h12v4h6v4h4v12h-4v4h-6v4H14v-4H8v-4H4V14h4v-4h6z M14 16v8h12v-8z",
+  stinger: "M4 10l32 10L4 30l8-10z",
 };
-
-export const WeaponIcon = ({ weapon }: { readonly weapon: WeaponId }) => {
-  const url = urls[`../../../../assets/runtime/tanks-v1/projectile-${weapon}.png`];
-  const positions = weapon === "triple" ? [[9, -3, 22], [9, 9, 22], [9, 21, 22]]
-    : weapon === "multiple" ? Array.from({ length: 9 }, (_, i) => [1 + (i % 3) * 13, 1 + Math.floor(i / 3) * 13, 12])
-    : [[2, 2, 36]];
-  return <svg viewBox="0 0 40 40" aria-hidden="true" style={{ imageRendering: "pixelated" }}>
-    <g transform={weapon === "multiple" || weapon === "floater" || weapon === "digger" ? undefined : "rotate(-35 20 20)"}>
-    {positions.map(([x, y, size], index) => <svg key={index} x={x} y={y} width={size} height={size} viewBox={bounds[weapon]}>
-      <image href={url} width="192" height="160" />
-    </svg>)}
-    </g>
+export const WeaponIcon = ({ weapon }: { readonly weapon: WeaponId }) =>
+  <svg viewBox="0 0 40 40" aria-hidden="true" shapeRendering="crispEdges">
+    <path d={shapes[weapon]} fill="currentColor" fillRule="evenodd" />
   </svg>;
-};

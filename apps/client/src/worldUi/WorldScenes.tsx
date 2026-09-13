@@ -18,9 +18,8 @@ import { CameraSettingsPanel } from "@/prototype/CameraSettingsPanel";
 import { createCameraRig } from "@/prototype/cameraRig";
 import { PixelButton, PixelPanel } from "./PixelUi";
 import { TankPortrait } from "./TankPortrait";
-import { WindLeaves } from "./WindLeaves";
-import { worldArt } from "./assets";
 import "./worldUi.css";
+import "./simpleTheme.css";
 
 const RoomScreen = lazy(() => loadScene("src/worldUi/RoomScreen.tsx", () => import("./RoomScreen")).then(module => ({ default: module.RoomScreen })));
 const NetworkLab = lazy(() => loadScene("src/networkLab/NetworkLab.tsx", () => import("@/networkLab/NetworkLab")).then(module => ({ default: module.NetworkLab })));
@@ -70,12 +69,10 @@ export const WorldScenes = () => {
   }, [scene]);
   const exit = useCallback(() => go("lobby"), [go]);
   const finish = useCallback((value: ResultPresentation) => { setResult(value); go("result"); }, [go]);
-  const background = scene === "settings" ? worldArt.settings : scene === "lobby" ? worldArt.lobby : scene === "result" ? worldArt.result : worldArt.background;
-  return <div className={`world-ui world-scene-${scene} ${closing ? "world-closing" : ""}`} style={{ backgroundImage: `url(${background})` }}>
+  return <div className={`world-ui world-scene-${scene} ${closing ? "world-closing" : ""}`}>
     <SceneBoundary message={t("画面を読み込めませんでした。通信を確認して再読み込みしてください。")} retryLabel={t("再読み込み")}>
     <Suspense fallback={<p role="status">{t("フィールドを準備しています…")}</p>}>
     {scene === "battle" ? <CameraPrototype worldArt onExit={exit} onResult={finish} /> : scene === "rooms" ? <RoomScreen onExit={exit} {...(import.meta.env.DEV ? { onLab: () => go("network") } : {})} /> : scene === "network" ? <NetworkLab worldArt onExit={exit} /> : <>
-      {scene === "start" && <WindLeaves />}
       <div key={scene} ref={heading} tabIndex={-1} className="world-content">
         {scene === "start" && <StartScreen key={introReplay} replay={introReplay > 0} onBegin={() => go("lobby")} />}
         {scene === "lobby" && <Lobby go={go} />}
@@ -95,9 +92,9 @@ const Lobby = ({ go }: { readonly go: (scene: Scene) => void }) => {
   const weapon = (slot: 0 | 1, value: WeaponId) => update({ loadout: slot === 0 ? [value, profile.loadout[1]] : [profile.loadout[0], value] });
   return <section className="world-lobby">
     <header><h1>{t("出発の準備")}</h1><PixelButton onClick={() => go("settings")}>{t("設定")}</PixelButton></header>
-    <div className="world-machine"><TankPortrait /><p>{t("湿地の観測所")}</p></div>
+    <div className="world-machine"><TankPortrait /></div>
     <PixelPanel className="world-loadout">
-      <label>{t("名前")}<input aria-label={t("名前")} maxLength={12} value={profile.nickname} placeholder={t("ケロポッド")} onChange={e => update({ nickname: e.target.value })} /></label>
+      <label>{t("名前")}<input aria-label={t("名前")} maxLength={12} value={profile.nickname} placeholder={t("プレイヤー")} onChange={e => update({ nickname: e.target.value })} /></label>
       {([0, 1] as const).map(slot => <label key={slot}>{t("装備")} {slot + 1}<select aria-label={`${t("装備")} ${slot + 1}`} value={profile.loadout[slot]} onChange={e => weapon(slot, e.target.value as WeaponId)}>{WEAPON_IDS.map(id => <option key={id} value={id} disabled={id === profile.loadout[slot === 0 ? 1 : 0]}>{t(WEAPON_LABELS[id])}</option>)}</select></label>)}
       <PracticeGuide />
     </PixelPanel>

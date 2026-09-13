@@ -32,7 +32,7 @@ export const CameraPrototype = (props: ThemeProps) => {
   useEffect(() => {
     const p = loadProfile();
     setAudioSettings(p.volume, p.muted);
-    const connection = createLocalConnection({ deferReady: props.worldArt ?? false, mapName: props.worldArt ? "rock-arch" : "valley", nickname: p.nickname || "ケロポッド", colors: p.colors, loadout: p.loadout,
+    const connection = createLocalConnection({ deferReady: props.worldArt ?? false, mapName: props.worldArt ? "rock-arch" : "valley", nickname: p.nickname || "プレイヤー", colors: p.colors, loadout: p.loadout,
       opponentColors: defaultOpponentColors(p.colors), opponentLoadout: defaultOpponentLoadout(p.loadout) });
     const created = createMatchStore(connection, { followCurrentSeat: true, mySeat: 0, spectator: false });
     begin.current = connection.releaseReady;
@@ -89,7 +89,7 @@ const Battle = ({ store, begin, worldArt, onExit, onResult }: { readonly store: 
   const focusActor = (): void => rig.focus(actorPoint(view), "actor", matchMedia("(prefers-reduced-motion: reduce)").matches);
   return <main className="kp-root" onContextMenu={(e) => e.preventDefault()} onPointerDown={() => unlockAudio()}>
     {worldArt ? <BattleRoster players={hudPlayers} actorId={String(view.currentSeat)} clock={<Timer dial deadlineAt={view.deadlineAt} clockOffset={0} myTurn={enabled} />} wind={view.wind.value} onMenu={() => { input.cancel(); setMenu(true); }} /> : <header className="kp-topbar">
-      <div className="kp-brand">KEROPOD <span>{t("プラクティス")}</span></div>
+      <div className="kp-brand">ARTILLERY <span>{t("プラクティス")}</span></div>
       <div className="kp-turn"><i>{t(teamColorName(view.currentSeat))}</i><strong>{view.phase === "replaying" ? t("弾を見届けよう") : view.phase === "finished" ? t("対戦終了") : t("あなたの番")}</strong><span>{t("次は")} {t(teamColorName(view.currentSeat === 0 ? 1 : 0))}</span></div>
       <div className="kp-wind" aria-label={t("風向き")}><span>{t("風")}</span><div className="kp-wind-window"><b style={{ transform: `translateX(${view.wind.value * 1.5}px) rotate(${view.wind.value * 4}deg)` }}>〰</b></div></div>
       <div className="kp-clock"><Timer deadlineAt={view.deadlineAt} clockOffset={0} myTurn={enabled} /></div>

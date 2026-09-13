@@ -1,7 +1,7 @@
 .battle-dpad { display:grid!important; grid-template:repeat(3,32px)/repeat(3,32px); gap:0!important; }
-.world-ui .battle-dpad button { width:32px!important; min-width:32px!important; height:32px!important; min-height:32px!important; padding:0!important; font-size:14px!important; border-radius:3px!important; }
+.world-ui .battle-dpad button { width:32px!important; min-width:32px!important; height:32px!important; min-height:32px!important; padding:0!important; font-size:14px!important; border-radius:0; }
 .dpad-up { grid-area:1/2; }.dpad-left { grid-area:2/1; }.dpad-right { grid-area:2/3; }.dpad-down { grid-area:3/2; }
-.battle-dpad i { grid-area:2/2; background:#1d3346; border:1px solid #526c80; }
+.battle-dpad i { grid-area:2/2; background:#000; border:1px solid #526c80; }
 @media(max-width:999px),(max-height:499px) {
  .world-ui :has(>.battle-console.has-touch) > .battle-roster { height:48px; padding-top:3px; padding-bottom:3px; }
  .world-ui :has(>.battle-console.has-touch) > .battle-roster .battle-menu { top:4px; height:40px; }

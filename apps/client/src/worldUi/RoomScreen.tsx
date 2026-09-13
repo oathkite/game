@@ -30,7 +30,7 @@ export const RoomScreen = ({ onExit, onLab }: { readonly onExit: () => void; rea
   const [quickMode, setQuickMode] = useState<"1v1" | "2v2">("1v1");
   const { region, timings, measuring, selectRegion } = useRegionSelection(serverBase, quickMode);
   const [waited, setWaited] = useState(false);
-  const [nickname, setNickname] = useState(() => loadProfile().nickname || "ケロポッド");
+  const [nickname, setNickname] = useState(() => loadProfile().nickname || "プレイヤー");
   const [sharing, setSharing] = useState(false), [spectator, setSpectator] = useState(false);
   const [battle, setBattle] = useState<RoomConnection | null>(null);
   useEffect(() => { if (!battle) setMusic("lobby"); }, [battle]);
@@ -91,7 +91,7 @@ export const RoomScreen = ({ onExit, onLab }: { readonly onExit: () => void; rea
   const leave = () => { send({ type: "room.leave" }); sessionStorage.removeItem(tokenKey); sessionStorage.removeItem(roomKey); onExit(); };
   useBrowserBackAction(!battle, leave);
   const cancelQuick = () => { send({ type: "room.leave" }); socket.current?.close(); socket.current = null; attempt.current++; sessionStorage.removeItem(tokenKey); sessionStorage.removeItem(roomKey); setRoom(null); setBattle(null); setStatus(""); };
-  const profile = () => { const p = loadProfile(), name = nickname.trim() || "ケロポッド"; saveProfile({ ...p, nickname: name }); return { nickname: name, loadout: p.loadout }; };
+  const profile = () => { const p = loadProfile(), name = nickname.trim() || "プレイヤー"; saveProfile({ ...p, nickname: name }); return { nickname: name, loadout: p.loadout }; };
   const me = room?.members.find(p => p.playerId === playerId), owner = room?.ownerId === playerId;
   const canStart = owner && room!.members.length >= 2 && room!.members.every(p => p.ready && p.connected && p.teamId) && new Set(room!.members.map(p => p.teamId)).size >= 2;
   const connected = socket.current?.readyState === WebSocket.OPEN;

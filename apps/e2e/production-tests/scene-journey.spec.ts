@@ -10,9 +10,11 @@ for (const viewport of [{ width: 1440, height: 900 }, { width: 667, height: 375 
     test.use({ viewport, hasTouch: viewport.width < 1000 });
     test("settings persist through practice, results and lobby return", async ({ page }) => {
       const errors: string[] = [];
+      const rasterRequests: string[] = [];
+      page.on("request", request => { if (/\.(png|webp)(?:[?#]|$)/.test(request.url())) rasterRequests.push(request.url()); });
       page.on("pageerror", error => errors.push(error.message));
       await page.goto("/");
-      await expect(page.getByRole("img", { name: "KEROPOD（ケロポッド）", exact: true })).toBeVisible();
+      await expect(page.getByRole("heading", { name: "ARTILLERY", exact: true })).toBeVisible();
       await expect(page.locator(".world-start")).toHaveAttribute("data-intro", "false");
       await capture(page, "title");
       await page.getByRole("button", { name: "はじめる", exact: true }).click();
@@ -45,6 +47,7 @@ for (const viewport of [{ width: 1440, height: 900 }, { width: 667, height: 375 
       await page.getByRole("button", { name: "設定", exact: true }).click();
       await expect(page.getByRole("button", { name: "音を出す", exact: true })).toHaveAttribute("aria-pressed", "true");
       expect(errors).toEqual([]);
+      expect(rasterRequests).toEqual([]);
     });
   });
 }

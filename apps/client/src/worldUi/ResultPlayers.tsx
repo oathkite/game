@@ -1,8 +1,6 @@
 import type { CSSProperties } from "react";
 import type { LabFrame } from "@game/protocol/v2-lab";
 import { useLanguage } from "@/i18n/locale";
-import expressions from "../../../../assets/runtime/world-v1/pilot-result-expressions.webp";
-import neutral from "../../../../assets/runtime/world-v1/pilot-portrait.webp";
 import { teamColor } from "./teamColors";
 import "./resultPlayers.css";
 
@@ -17,7 +15,7 @@ export const ResultPlayers = ({ players, result }: ResultPresentation) => {
     const label = t(reaction === "win" ? "勝利" : reaction === "lose" ? "敗北" : "引き分け");
     return <div className="battle-result-player" key={player.playerId} data-reaction={reaction} style={{ "--team": teamColor(Number(player.teamId.slice(1))) } as CSSProperties}>
       <svg viewBox="0 0 1 1" role="img" aria-label={`${name}：${label}`}>
-        <image href={reaction === "draw" ? neutral : expressions} x={reaction === "lose" ? -1 : 0} width={reaction === "draw" ? 1 : 2} height="1" />
+        <path d="M.1 .6H.9V.9H.1Z M.3 .4H.7V.6H.3Z M.6 .4H.95V.48H.6Z" fill="var(--team)" />
       </svg><strong>{name}</strong>
     </div>;
   })}</div>;

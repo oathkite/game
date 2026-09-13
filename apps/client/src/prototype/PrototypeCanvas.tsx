@@ -1,13 +1,11 @@
+import { createTankView } from "@/game/tankView";
 import { openingPose } from "@/worldUi/openingTour";
 import { StartSignal } from "@/worldUi/StartSignal";
 import { createFallMotion } from "@/worldUi/fallMotion";
-import { loadImpactArt } from "@/worldUi/impactSprites";
-import { loadProjectileArt } from "@/worldUi/projectileArt";
 import { useLanguage } from "@/i18n/locale";
 import { teamColor } from "@/worldUi/teamColors";
 import { useEffect, useRef, useState, type HTMLAttributes } from "react";
 import { isRingOut, tiltOf } from "@game/sim";
-import { weaponOf } from "@game/protocol";
 import { createRenderer, type Renderer } from "@/game/renderer";
 import { playReplay } from "@/game/replay";
 import type { TankPose } from "@/game/tankView";
@@ -15,11 +13,8 @@ import type { Layout } from "@/game/scale";
 import type { MatchStore } from "@/match/matchStore";
 import type { MatchView } from "@/match/types";
 import { playSound } from "@/app/audio";
-import { WindLeaves } from "@/worldUi/WindLeaves";
-import { loadRockArchArt, worldArt as artUrls } from "@/worldUi/assets";
 import { viewportOf, worldToScreen } from "./camera";
 import type { CameraRig } from "./cameraRig";
-import { loadSpriteTanks, type SpriteTankFactory } from "./spriteTank";
 
 export const actorPoint = (view: MatchView) => {
   const actor = view.control ?? view.players?.[view.currentSeat] ?? { x: 90, y: 130 };
@@ -46,28 +41,21 @@ export const PrototypeCanvas = ({ store, rig, layout, handlers, blocked, followS
   useEffect(() => {
     const host = hostRef.current;
     if (!host) return;
-    let disposed = false, renderer: Renderer | null = null, art: SpriteTankFactory | null = null;
+    let disposed = false, renderer: Renderer | null = null;
     let stopFrames = () => {}, stopReplay = () => {};
     let replayId: number | null = null, lastTurn = -1, lastMask: MatchView["mask"] = null;
     let activeReplay = false, previousLayout = latest.current.layout;
     const falls = createFallMotion();
     let available = true;
     const elevations: [number, number] = [45, 45];
-    let effects: Awaited<ReturnType<typeof loadImpactArt>> | null = null;
     const reduced = matchMedia("(prefers-reduced-motion: reduce)");
     const start = async (): Promise<void> => {
       const view = store.getView();
       if (!view.mask || !view.players) return;
-      art = await loadSpriteTanks();
-      if (disposed) { art.destroy(); return; }
-      const imageTerrain = worldArt ? await loadRockArchArt() : undefined;
-      if (disposed) { art.destroy(); return; }
-      const projectileTextures = await loadProjectileArt();
-      effects = await loadImpactArt();
-      if (disposed) { effects.destroy(); return; }
-      renderer = await createRenderer({ projectileTextures, impactTextures: effects.textures, host, layout: latest.current.layout, mask: view.mask, players: [{ ...view.players[0], nickname: view.players[0].nickname }, { ...view.players[1], nickname: view.players[1].nickname }], tankFactory: art.create, background: 0x20394a, terrainTint: worldArt ? 0xffffff : 0x637d71, backgroundAlpha: worldArt ? 0 : 1, ...(imageTerrain ? { imageTerrain } : {}) });
-      if (disposed) { renderer.destroy(); art.destroy(); return; }
-      const r = renderer, sprites = art;
+      let tankIndex = 0;
+      renderer = await createRenderer({ tankFactory: (colors, name) => createTankView(colors, name, teamColor(tankIndex++)), host, layout: latest.current.layout, mask: view.mask, players: view.players, background: 0x000000, terrainTint: 0xffffff });
+      if (disposed) { renderer.destroy(); return; }
+      const r = renderer;
       rig.resize(viewportOf(latest.current.layout), { left: 0, top: -100, right: view.mask.width, bottom: view.mask.height });
       rig.focus(actorPoint(view), "actor", true);
       const openingAt = performance.now();
@@ -84,7 +72,6 @@ export const PrototypeCanvas = ({ store, rig, layout, handlers, blocked, followS
           stopReplay(); replayId = v.replay.id; activeReplay = true; falls.reset();
           const job = v.replay;
           elevations[job.shot.input.seat] = job.shot.input.elevation;
-          sprites.setWeapon(job.shot.input.seat, job.shot.input.weapon);
           if (current.followShot) rig.focus(job.shot.input, "shot", reduced.matches);
           const replayRenderer: Renderer = { ...r, projectile: (color, weapon) => {
             const projectile = r.projectile(color, weapon);
@@ -103,7 +90,6 @@ export const PrototypeCanvas = ({ store, rig, layout, handlers, blocked, followS
             return { ...pose, ...motion };
           });
           if (!opening && available === falling) { available = !falling; onReady(available); }
-          if (v.control && v.mySeat !== null && v.players) sprites.setWeapon(v.mySeat, weaponOf(v.players[v.mySeat].loadout, v.control.slot));
           const shown = poses[v.currentSeat];
           if (shown) rig.actor({ x: shown.x, y: shown.y - 6 });
         }
@@ -124,11 +110,10 @@ export const PrototypeCanvas = ({ store, rig, layout, handlers, blocked, followS
       });
     };
     void start().catch((e: unknown) => { console.error(e); if (!disposed) setError(true); });
-    return () => { disposed = true; onReady(false); stopFrames(); stopReplay(); renderer?.destroy(); art?.destroy(); effects?.destroy(); };
+    return () => { disposed = true; onReady(false); stopFrames(); stopReplay(); renderer?.destroy(); };
   }, [store, rig, onReady, onOpeningComplete, worldArt]);
-  return <div className="kp-world" style={{ height: layout.mapHeight, ...(worldArt ? { backgroundImage: `url(${artUrls.background})`, backgroundSize: "cover", backgroundPosition: "center" } : {}) }}>
+  return <div className="kp-world" style={{ height: layout.mapHeight }}>
     <StartSignal visible={signal} />
-    {worldArt && <WindLeaves wind={store.getView().wind.value} />}
     <div ref={hostRef} className="kp-canvas" tabIndex={0} aria-label={t("対戦フィールド")} data-testid="camera-world" data-scale={layout.cell} data-loaded={loaded} {...handlers} />
     {!loaded && <div className="kp-loading" role="status">{error ? t("素材を読み込めませんでした。ページを再読み込みしてください。") : t("マシンを準備しています…")}</div>}
     <span className="kp-world-help">{t("ドラッグ・ホイールで見回す / Cで手番へ")}</span>

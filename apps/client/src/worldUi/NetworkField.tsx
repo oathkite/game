@@ -1,8 +1,7 @@
+import { createTankView } from "@/game/tankView";
 import { openingPose } from "./openingTour";
 import { StartSignal } from "./StartSignal";
 import { createFallMotion } from "./fallMotion";
-import { loadProjectileArt } from "@/worldUi/projectileArt";
-import { loadImpactArt } from "./impactSprites";
 import { useLanguage } from "@/i18n/locale";
 import { teamColor } from "./teamColors";
 import { loadDisplayScale } from "./displayScale";
@@ -16,10 +15,7 @@ import type { Layout } from "@/game/scale";
 import { createCameraRig } from "@/prototype/cameraRig";
 import { loadCameraSettings } from "@/prototype/cameraSettings";
 import { worldToScreen } from "@/prototype/camera";
-import { loadSpriteTanks, type SpriteTankFactory } from "@/prototype/spriteTank";
 import type { presentLabReplay } from "@/networkLab/labReplay";
-import { loadMapTerrainArt, worldArt } from "./assets";
-import { WindLeaves } from "./WindLeaves";
 
 type Props = { readonly serverNow: number; readonly onSettling?: (settling: boolean) => void; readonly followTurns?: boolean; readonly blocked?: boolean; readonly frame: LabFrame; readonly players: LabFrame["players"]; readonly presentation: ReturnType<typeof presentLabReplay>; readonly elevation: number; readonly ownId: string; readonly selectedWeapon?: WeaponId };
 const baseTerrain = (frame: LabFrame) => buildInitialTerrain(frame.map);
@@ -33,23 +29,18 @@ export const NetworkField = (props: Props) => {
   const focus = (immediate = false) => { if (openingActive()) return; const p = latest.current.players.find(p => p.playerId === latest.current.frame.actorId) ?? latest.current.frame.players.find(p => p.playerId === latest.current.frame.actorId); if (p) rig.focus({ x: p.x, y: p.y - 6 }, "actor", immediate || matchMedia("(prefers-reduced-motion: reduce)").matches); };
   useEffect(() => {
     const element = host.current; if (!element) return;
-    let disposed = false, renderer: Renderer | null = null, art: SpriteTankFactory | null = null, stop = () => {};
-    let effects: Awaited<ReturnType<typeof loadImpactArt>> | null = null;
+    let disposed = false, renderer: Renderer | null = null, stop = () => {};
     const cell = loadDisplayScale();
     const layout = (): Layout => ({ cell, mapWidth: element.clientWidth, mapHeight: element.clientHeight, panelWidth: 0, panelCell: 1 });
     const start = async () => {
       rig.configure(loadCameraSettings());
-      art = await loadSpriteTanks(latest.current.frame.players.map(p => Number(p.teamId.slice(1)))); const { authored, image: terrainArt } = await loadMapTerrainArt(latest.current.frame.map);
-      effects = await loadImpactArt();
-      if (disposed) { art.destroy(); effects.destroy(); return; }
       let mask = baseTerrain(latest.current.frame), previousSize = "", terrainKey = "", turnKey = "", replayKey = -1;
       const falls = createFallMotion(); let settling = false, wasOpening = false, signalVisible = false, fallMatch = "";
       const facing = new Map<string, -1 | 1>();
-      const projectileTextures = await loadProjectileArt();
-      if (disposed) return;
-      renderer = await createRenderer({ projectileTextures, impactTextures: effects.textures, host: element, layout: layout(), mask, ...(authored ? { imageTerrain: terrainArt } : { terrainArt }), backgroundAlpha: 0, tankFactory: art.create,
+      let tankIndex = 0;
+      renderer = await createRenderer({ tankFactory: (colors, name) => createTankView(colors, name, teamColor(Number(latest.current.frame.players[tankIndex++]!.teamId.slice(1)))), host: element, layout: layout(), mask, background: 0x000000,
         players: latest.current.frame.players.map(p => ({ nickname: p.nickname ?? p.playerId, colors: { primary: p.teamId === "t0" ? "yellow" : "cyan", secondary: "blue" } })) });
-      if (disposed) { renderer.destroy(); art.destroy(); return; }
+      if (disposed) { renderer.destroy(); return; }
       const r = renderer; let bullet = r.projectile("yellow", "cannon");
       stop = r.onFrame(dt => {
         const { frame, players, presentation, elevation, ownId } = latest.current;
@@ -60,9 +51,8 @@ export const NetworkField = (props: Props) => {
         const nextTurn = `${frame.matchId}/${frame.turnId}`;
         if (nextTurn !== turnKey) { if (latest.current.followTurns !== false) focus(turnKey === ""); turnKey = nextTurn; }
         facing.set(frame.actorId, frame.movement.facing);
-        if (frame.phase === "acting" && latest.current.selectedWeapon) art!.setWeapon(frame.players.findIndex(p => p.playerId === ownId), latest.current.selectedWeapon);
         const shot = frame.phase === "replaying" ? frame.replay?.shooter : null;
-        if (shot) { facing.set(shot.playerId, shot.facing); art!.setWeapon(frame.players.findIndex(p => p.playerId === shot.playerId), shot.weapon); }
+        if (shot) { facing.set(shot.playerId, shot.facing);  }
         if (fallMatch !== frame.matchId) { falls.reset(); fallMatch = frame.matchId; }
         const now = performance.now(), reduced = matchMedia("(prefers-reduced-motion: reduce)").matches;
         let ownFalling = false;
@@ -75,7 +65,7 @@ export const NetworkField = (props: Props) => {
         shown.forEach((p, i) => r.setTank(i, { x: p.x, y: p.y, tilt: tiltOf(mask, { x: Math.round(p.x), y: Math.round(p.y) }), facing: facing.get(p.playerId) ?? 1,
           elevation: p.playerId === shot?.playerId ? shot.elevation : p.playerId === ownId ? elevation : 45, hp: p.eliminated ? 0 : p.hp, visible: p.y < frame.map.height, falling: p.falling || presentation.fallingIds.includes(p.playerId), shotFlashes: p.playerId === shot?.playerId ? presentation.shotFlashes : [], recoil: p.playerId === shot?.playerId ? presentation.recoil : 0, aiming: frame.phase === "acting" && p.playerId === ownId && p.playerId === frame.actorId, flash: presentation.effects.some(effect => effect.hitIds.includes(p.playerId)) }));
         const actor = shown.find(p => p.playerId === frame.actorId); if (actor && frame.phase === "acting") rig.actor({ x: actor.x, y: actor.y - 6 });
-        if (frame.replay && replayKey !== frame.replay.startsAt) { replayKey = frame.replay.startsAt; bullet = r.projectile("yellow", frame.replay.shooter.weapon); art!.setWeapon(frame.players.findIndex(p => p.playerId === frame.replay!.shooter.playerId), frame.replay.shooter.weapon); const p = presentation.bullets[0]; if (p) rig.focus(p, "shot"); }
+        if (frame.replay && replayKey !== frame.replay.startsAt) { replayKey = frame.replay.startsAt; bullet = r.projectile("yellow", frame.replay.shooter.weapon);  const p = presentation.bullets[0]; if (p) rig.focus(p, "shot"); }
         bullet.clear();
         for (let i = 0; i < 9; i++) { const p = presentation.bullets[i]; bullet.setBullet(i, p?.x ?? null, p?.y ?? 0, p?.angle ?? 0); }
         presentation.effects.forEach((effect, index) => bullet.setBlast(String(index), effect.cx, effect.cy, effect.radius, true, false, matchMedia("(prefers-reduced-motion: reduce)").matches ? 1 : effect.frame));
@@ -102,7 +92,7 @@ export const NetworkField = (props: Props) => {
       setLoaded(true);
     };
     void start().catch(e => { console.error(e); if (!disposed) setError(true); });
-    return () => { disposed = true; stop(); renderer?.destroy(); art?.destroy(); effects?.destroy(); };
+    return () => { disposed = true; stop(); renderer?.destroy();   };
   }, [rig]);
   useEffect(() => {
     let turn = "", selected = "";
@@ -125,9 +115,8 @@ export const NetworkField = (props: Props) => {
     return () => window.removeEventListener("keydown", down);
   }, [rig]);
   const point = (e: PointerEvent<HTMLDivElement>) => { const box = e.currentTarget.getBoundingClientRect(); return { x: e.clientX - box.left, y: e.clientY - box.top }; };
-  return <div className="network-field" style={{ backgroundImage: `url(${worldArt.background})` }}>
+  return <div className="network-field">
     <StartSignal visible={signal} />
-    <WindLeaves wind={props.frame.wind} />
     <div ref={host} className="network-pixi" data-testid="network-world" data-loaded={loaded} data-positions={JSON.stringify(props.players)} tabIndex={0} aria-label={t("対戦フィールド。ドラッグ・ホイールで見回す、Cで手番へ")} onKeyDown={e => { if (e.key.toLowerCase() === "c") focus(); }}
       onWheel={e => { if (!openingActive() && !drag.current && !e.ctrlKey) wheelPan(rig, e.deltaX, e.deltaY, e.deltaMode); }}
       onPointerDown={e => { if (openingActive() || !e.isPrimary || e.button !== 0) return; e.currentTarget.setPointerCapture(e.pointerId); drag.current = { ...point(e), at: performance.now() }; rig.stop(); }}
