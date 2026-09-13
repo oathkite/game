@@ -16,6 +16,7 @@ concurrency:
 
 env:
   SERVER_URL: wss://fortress-server.kita-396.workers.dev
+  ROOM_SERVER_URL: https://keropod-server-v2.kita-396.workers.dev
   PAGES_PROJECT: fortress
 
 jobs:
@@ -45,11 +46,19 @@ jobs:
           CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
           CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
 
+      - name: deploy room server (Workers)
+        working-directory: apps/server
+        run: pnpm exec wrangler deploy --config wrangler.v2.jsonc --var ALLOWED_ORIGINS:https://fortress-9hj.pages.dev
+        env:
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+
       - name: build client
         working-directory: apps/client
         run: pnpm build
         env:
           VITE_SERVER_URL: ${{ env.SERVER_URL }}
+          VITE_ROOM_SERVER_URL: ${{ env.ROOM_SERVER_URL }}
 
       # wrangler は server の devDependency にだけあるので、そこから client の dist を配置する
       - name: deploy client (Pages)
