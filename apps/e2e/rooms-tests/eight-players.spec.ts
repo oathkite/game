@@ -52,7 +52,7 @@ test("eight independent players complete a 4v4 match and return together", async
     }
     const portrait = owner.locator(".battle-seat-portrait").first();
     const portraitBox = (await portrait.boundingBox())!;
-    const imageBox = (await portrait.locator("img").boundingBox())!;
+    const imageBox = (await portrait.locator("svg").boundingBox())!;
     expect(imageBox.y).toBeGreaterThanOrEqual(portraitBox.y);
     expect(imageBox.y + imageBox.height).toBeLessThanOrEqual(portraitBox.y + portraitBox.height + 1);
     await expect(owner.locator(".battle-upcoming")).toHaveCount(3);

@@ -19,3 +19,8 @@
 ![設定](journey-webkit-667-settings.png)
 ![対戦](journey-webkit-667-battle.png)
 ![リザルト](journey-webkit-667-result.png)
+
+## 8人対戦（WebKit・ローカルWrangler）
+
+![8人・844px](eight-player-hud-844.png)
+![8人・667px](eight-player-hud-667.png)
