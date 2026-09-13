@@ -14,7 +14,7 @@ exports[`maps > ridgeline > 同じ結果を返す（決定論） 1`] = `72699719
 
 exports[`maps > rock-arch > 同じ結果を返す（決定論） 1`] = `333296829`;
 
-exports[`maps > sky-islands > 同じ結果を返す（決定論） 1`] = `816888775`;
+exports[`maps > sky-islands > 同じ結果を返す（決定論） 1`] = `951452065`;
 
 exports[`maps > stone-bridge > 同じ結果を返す（決定論） 1`] = `220168228`;
 

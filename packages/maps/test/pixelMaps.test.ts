@@ -58,3 +58,18 @@ it("tapers both ends of the bridge opening without abrupt vertical cuts", () => 
     expect(Math.abs(gaps[x]! - gaps[x - 1]!)).toBeLessThanOrEqual(8);
   }
 });
+
+it("preserves the floating islands' pronounced height differences and varied sizes", () => {
+  const map = MULTIPLAYER_MAPS.find(m => m.id === "sky-islands")!;
+  const { spawns } = buildMapSpec(map, 8);
+  expect(Math.max(...spawns.map(p => p.y)) - Math.min(...spawns.map(p => p.y))).toBeGreaterThanOrEqual(100);
+  const widths: number[] = [];
+  let width = 0;
+  for (const runs of map.solidColumns!) {
+    if (runs.length) width++;
+    else if (width) { widths.push(width); width = 0; }
+  }
+  if (width) widths.push(width);
+  expect(widths).toHaveLength(6);
+  expect(Math.max(...widths) / Math.min(...widths)).toBeGreaterThan(3);
+});

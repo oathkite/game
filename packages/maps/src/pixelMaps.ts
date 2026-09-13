@@ -8,9 +8,9 @@ const heightAt = (points: readonly Point[], x: number): number => {
   const [ax, ay] = points[right - 1]!, [bx, by] = points[right]!;
   return Math.round(ay + (by - ay) * (x - ax) / (bx - ax));
 };
-const makeMap = (id: string, width: number, profile: readonly Point[], column: (x: number, y: number) => readonly Span[], seats: readonly number[], scale = 0.7): MapSpec => {
+const makeMap = (id: string, width: number, profile: readonly Point[], column: (x: number, y: number) => readonly Span[], seats: readonly number[]): MapSpec => {
   const sourceWidth = width;
-  width = Math.round(width * scale);
+  width = Math.round(width * 0.7);
   const solidColumns = Array.from({ length: width }, (_, index) => {
     const x = Math.floor(index * sourceWidth / width);
     const safe = seats.some(seat => Math.abs(seat - x) < 12);
@@ -57,8 +57,8 @@ export const SKY_ISLANDS = makeMap("sky-islands", 480,
   [[0, 142], [479, 142]],
   (x) => {
     const island = [
-      [12, 102, 155, 40], [120, 176, 135, 24], [194, 286, 120, 42],
-      [305, 340, 145, 18], [360, 420, 135, 35], [438, 467, 165, 14],
+      [12, 102, 155, 40], [120, 176, 102, 24], [194, 286, 65, 55],
+      [305, 340, 145, 18], [360, 420, 115, 35], [438, 467, 178, 14],
     ].find(([left, right]) => x >= left! && x <= right!);
     if (!island) return [];
     const [left, right, top, depth] = island as [number, number, number, number];
@@ -68,4 +68,4 @@ export const SKY_ISLANDS = makeMap("sky-islands", 480,
     const taper = Math.max(0, 1 - Math.abs(x - point) / ((right - left) * 0.65));
     const bottom = top + 10 + Math.round(depth * taper + 2 * Math.sin(x / 4));
     return [[crest, Math.max(crest + 6, bottom)]];
-  }, [40, 75, 145, 220, 260, 322, 390, 452], 0.62);
+  }, [40, 75, 145, 220, 260, 322, 390, 452]);

@@ -2,7 +2,8 @@ import { expect, it } from "vitest";
 import { MULTIPLAYER_MAPS } from "@game/maps";
 import { createBattle } from "../src/multiplayer/create";
 import { resolveBattleShot } from "../src/multiplayer/combat";
-for (const map of MULTIPLAYER_MAPS) for (const wind of [-10, 0, 10]) it(`${map.id}: every initial seat can damage every other seat with cannon in wind ${wind}`, () => {
+// Floating islands intentionally obstruct direct shots; their safe starts and complete matches are tested separately.
+for (const map of MULTIPLAYER_MAPS.filter(map => map.id !== "sky-islands")) for (const wind of [-10, 0, 10]) it(`${map.id}: every initial seat can damage every other seat with cannon in wind ${wind}`, () => {
   for (let count = 2; count <= 8; count++) {
     const members = Array.from({ length: count }, (_, i) => ({ playerId: `p${i}`, teamId: `t${i}` }));
     const state = createBattle(members, 42, map);
