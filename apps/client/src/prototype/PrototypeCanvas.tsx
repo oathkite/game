@@ -1,6 +1,4 @@
 import { useWindowEdgePan } from "./useWindowEdgePan";
-import { WindLeaves } from "@/worldUi/WindLeaves";
-import { useSyncExternalStore } from "react";
 import { createTankView } from "@/game/tankView";
 import { openingPose } from "@/worldUi/openingTour";
 import { StartSignal } from "@/worldUi/StartSignal";
@@ -56,7 +54,7 @@ export const PrototypeCanvas = ({ store, rig, layout, handlers, blocked, followS
       const view = store.getView();
       if (!view.mask || !view.players) return;
       let tankIndex = 0;
-      renderer = await createRenderer({ tankFactory: (colors, name) => createTankView(colors, name, teamColor(tankIndex++)), host, layout: latest.current.layout, mask: view.mask, players: view.players, background: 0x000000, backgroundAlpha:0, terrainTint: 0xffffff });
+      renderer = await createRenderer({ wind: () => store.getView().wind.value, tankFactory: (colors, name) => createTankView(colors, name, teamColor(tankIndex++)), host, layout: latest.current.layout, mask: view.mask, players: view.players, background: 0x000000, backgroundAlpha:0, terrainTint: 0xffffff });
       if (disposed) { renderer.destroy(); return; }
       const r = renderer;
       rig.resize(viewportOf(latest.current.layout), { left: 0, top: -100, right: view.mask.width, bottom: view.mask.height });
@@ -121,9 +119,7 @@ export const PrototypeCanvas = ({ store, rig, layout, handlers, blocked, followS
     return () => { disposed = true; onReady(false); stopFrames(); stopReplay(); renderer?.destroy(); };
   }, [store, rig, onReady, onOpeningComplete, worldArt]);
   useWindowEdgePan(hostRef, rig, blocked || !loaded);
-  const wind = useSyncExternalStore(store.subscribe, () => store.getView().wind.value);
   return <div className="kp-world" style={{ height: layout.mapHeight }}>
-    <WindLeaves wind={wind} />
     <StartSignal visible={signal} />
     <div ref={hostRef} className="kp-canvas" tabIndex={0} aria-label={t("対戦フィールド")} data-testid="camera-world" data-scale={layout.cell} data-loaded={loaded} {...handlers} />
     {!loaded && <div className="kp-loading" role="status">{error ? t("素材を読み込めませんでした。ページを再読み込みしてください。") : t("マシンを準備しています…")}</div>}

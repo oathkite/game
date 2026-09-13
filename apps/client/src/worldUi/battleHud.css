@@ -62,7 +62,7 @@
 @media(prefers-reduced-motion:reduce) { .battle-seat { animation:none; } }
 .battle-menu-panel { padding:24px; max-width:90vw; background:#000; border:2px solid #c7b478; color:#33ff66; }
 .battle-menu-panel p { font-size:12px; }
-.battle-power { position:relative; font-variant-numeric:tabular-nums; }
+.battle-power { position:relative; font-variant-numeric:tabular-nums; cursor:crosshair; user-select:none; }
 .world-ui .battle-power > svg { position:absolute; top:25px; left:0; width:100%; height:35px; margin:0; border-radius:0; overflow:visible; }
 .battle-power-value { position:absolute; top:0; transform:translateX(-50%); font-size:19px; color:#33ff66; }
 .battle-power-labels { position:absolute; top:62px; left:0; width:100%; font-size:12px; }

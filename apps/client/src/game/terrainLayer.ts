@@ -77,6 +77,17 @@ const createChunk = (region: Region, scale: number, tile?: HTMLCanvasElement) =>
     maskContext.putImageData(image, 0, 0);
     ctx.clearRect(0, 0, canvas.width, canvas.height);
     ctx.drawImage(maskCanvas, 0, 0, canvas.width, canvas.height);
+    if (!pattern) {
+      for (let y = 0; y < region.height; y++) for (let x = 0; x < region.width; x++) {
+        const wx = region.x + x, wy = region.y + y;
+        if (!mask.cells[wy * mask.width + wx]) continue;
+        const exposed = wy === 0 || !mask.cells[(wy - 1) * mask.width + wx];
+        const seam = (wy + Math.floor(3 * Math.sin(wx / 19))) % 17 === 0;
+        const fleck = mossNoise(wx, wy) % 41 === 0;
+        ctx.fillStyle = exposed ? "#33ff66" : seam ? "#164e29" : fleck ? "#27673a" : "#103c22";
+        ctx.fillRect(x, y, 1, 1);
+      }
+    }
     if (pattern) {
       ctx.globalCompositeOperation = "source-in"; ctx.fillStyle = pattern;
       ctx.fillRect(0, 0, canvas.width, canvas.height); ctx.globalCompositeOperation = "source-over";

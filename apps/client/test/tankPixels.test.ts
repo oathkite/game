@@ -1,6 +1,6 @@
 import { expect, it } from "vitest";
 import { TANK_PIXELS, treadPixels } from "../src/game/tankPixels";
-import { weaponPixels } from "../src/game/weaponPixels";
+import { weaponPixels, weaponPixelHeight } from "../src/game/weaponPixels";
 import { WEAPON_IDS } from "@game/protocol";
 it("animates treads by displacement without escaping the track housing", () => {
   expect(treadPixels(0)).toEqual(treadPixels(1.5));
@@ -13,8 +13,8 @@ it("animates treads by displacement without escaping the track housing", () => {
 it("gives every weapon a distinct integer pixel silhouette", () => {
   const patterns = WEAPON_IDS.map(id => weaponPixels(id));
   expect(new Set(patterns.map(p => JSON.stringify(p))).size).toBe(WEAPON_IDS.length);
-  for (const pattern of patterns) {
+  for (const [index, pattern] of patterns.entries()) {
     expect(pattern.length).toBeGreaterThan(8);
-    for (const p of pattern) { expect(Number.isInteger(p.x) && Number.isInteger(p.y)).toBe(true); expect(p.x).toBeLessThan(12); expect(p.y).toBeLessThan(8); }
+    for (const p of pattern) { expect(Number.isInteger(p.x) && Number.isInteger(p.y)).toBe(true); expect(p.x).toBeLessThan(12); expect(p.y).toBeLessThan(weaponPixelHeight(WEAPON_IDS[index]!)); }
   }
 });

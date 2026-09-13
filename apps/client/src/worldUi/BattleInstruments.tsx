@@ -1,3 +1,4 @@
+import { useState } from "react";
 import { dialPoint, pixelLine, type DialPoint } from "./dialPixels";
 import { useLanguage } from "@/i18n/locale";
 import { fireAngle } from "@game/sim";
@@ -12,7 +13,13 @@ export const MovementReserve = ({ steps }: { readonly steps: number }) => {
 export const PowerRuler = ({ value }: { readonly value: number }) => {
   const { t } = useLanguage();
   const power = Math.max(0, Math.min(100, value));
-  return <div className="battle-power" role="meter" aria-label={t("パワー")} aria-valuemin={0} aria-valuemax={100} aria-valuenow={Math.round(power)} data-testid="prototype-power">
+  const [memo, setMemo] = useState<number | null>(null);
+  return <div className="battle-power" role="meter" aria-label={t("パワー")} aria-valuemin={0} aria-valuemax={100} aria-valuenow={Math.round(power)} data-testid="prototype-power" onClick={event => {
+    const bounds = event.currentTarget.getBoundingClientRect();
+    if (bounds.width <= 0) return;
+    const next = Math.max(0, Math.min(100, Math.round((event.clientX - bounds.left) / bounds.width * 100)));
+    setMemo(previous => previous === next ? null : next);
+  }}>
     <strong className="battle-power-value" style={{ left: `clamp(10px, ${power}%, calc(100% - 10px))` }}>{Math.round(power)}</strong>
     <svg viewBox="0 0 1000 40" preserveAspectRatio="none" aria-hidden="true" shapeRendering="crispEdges">
         <rect y="5" width="1000" height="22" fill="#000" />
@@ -21,6 +28,10 @@ export const PowerRuler = ({ value }: { readonly value: number }) => {
       <path d="M0 5H1000M0 27H1000" stroke="#33ff66" />
       {Array.from({ length: 101 }, (_, i) => <line key={i} data-power-tick={i} data-major={i % 10 === 0} x1={i * 10} x2={i * 10} y1="28" y2={i % 10 === 0 ? 39 : 33} stroke={i % 10 === 0 ? "#33ff66" : "#33ff66"} strokeWidth={i % 10 === 0 ? 2 : 1} />)}
       <g data-cursor={power} fill="#33ff66"><rect x={Math.round(power*10)-6} y="-3" width="12" height="3" /><rect x={Math.round(power*10)-3} width="6" height="3" /><rect x={Math.round(power*10)-1} y="3" width="2" height="37" /></g>
+      {memo !== null && <g data-power-memo={memo} pointerEvents="none">
+        <line x1={memo * 10} x2={memo * 10} y1="2" y2="40" stroke="#000" strokeWidth="4" vectorEffect="non-scaling-stroke" />
+        <line x1={memo * 10} x2={memo * 10} y1="2" y2="40" stroke="#33ff66" strokeWidth="2" vectorEffect="non-scaling-stroke" />
+      </g>}
     </svg>
     <div className="battle-power-labels">{Array.from({ length: 11 }, (_, i) => <span key={i} style={{ left: `${i * 10}%` }}>{i * 10}</span>)}</div>
   </div>;

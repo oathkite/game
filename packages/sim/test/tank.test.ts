@@ -94,27 +94,27 @@ describe("移動", () => {
     expect(walk(m, at(m, 100), -1, 3)).toEqual({ x: 97, y: 150, stepsUsed: 3, fell: false });
   });
 
-  it("車体の高さ（6 セル）までの上りは進めて、7 セルの上りは壁で進めない", () => {
-    const step6 = heights((x) => (x < 100 ? 150 : 150 - CLIMB_MAX));
-    const step7 = heights((x) => (x < 100 ? 150 : 150 - CLIMB_MAX - 1));
-    expect(CLIMB_MAX).toBe(6);
-    expect(stepOutcome(step6, at(step6, 99), 1)).toEqual({ kind: "moved", y: 144 });
-    expect(stepOutcome(step7, at(step7, 99), 1)).toEqual({ kind: "blocked", y: 150 });
-    expect(walk(step7, at(step7, 95), 1, 15)).toEqual({ x: 99, y: 150, stepsUsed: 4, fell: false });
+  it("4セルまでの上りは進めて、5セルの上りは壁で進めない", () => {
+    const allowedStep = heights((x) => (x < 100 ? 150 : 150 - CLIMB_MAX));
+    const blockedStep = heights((x) => (x < 100 ? 150 : 150 - CLIMB_MAX - 1));
+    expect(CLIMB_MAX).toBe(4);
+    expect(stepOutcome(allowedStep, at(allowedStep, 99), 1)).toEqual({ kind: "moved", y: 146 });
+    expect(stepOutcome(blockedStep, at(blockedStep, 99), 1)).toEqual({ kind: "blocked", y: 150 });
+    expect(walk(blockedStep, at(blockedStep, 95), 1, 15)).toEqual({ x: 99, y: 150, stepsUsed: 4, fell: false });
   });
 
-  it("車体の高さまでの下りは進めて、それより深い下りは落下で止まる", () => {
-    const drop6 = heights((x) => (x < 100 ? 150 : 150 + CLIMB_MAX));
-    const drop7 = heights((x) => (x < 100 ? 150 : 150 + CLIMB_MAX + 1));
-    expect(stepOutcome(drop6, at(drop6, 99), 1)).toEqual({ kind: "moved", y: 156 });
-    expect(stepOutcome(drop7, at(drop7, 99), 1)).toEqual({ kind: "fell", y: 157 });
-    expect(walk(drop7, at(drop7, 95), 1, 15)).toEqual({ x: 100, y: 157, stepsUsed: 5, fell: true });
+  it("4セルまでの下りは進めて、それより深い下りは落下で止まる", () => {
+    const allowedDrop = heights((x) => (x < 100 ? 150 : 150 + CLIMB_MAX));
+    const fallingDrop = heights((x) => (x < 100 ? 150 : 150 + CLIMB_MAX + 1));
+    expect(stepOutcome(allowedDrop, at(allowedDrop, 99), 1)).toEqual({ kind: "moved", y: 154 });
+    expect(stepOutcome(fallingDrop, at(fallingDrop, 99), 1)).toEqual({ kind: "fell", y: 155 });
+    expect(walk(fallingDrop, at(fallingDrop, 95), 1, 15)).toEqual({ x: 100, y: 155, stepsUsed: 5, fell: true });
   });
 
   it("降りられた段差は同じ道を登って戻れる（上りと下りの閾値が同じ）", () => {
-    const step6 = heights((x) => (x < 100 ? 150 : 150 - CLIMB_MAX));
-    expect(stepOutcome(step6, at(step6, 99), 1).kind).toBe("moved");
-    expect(stepOutcome(step6, at(step6, 100), -1).kind).toBe("moved");
+    const allowedStep = heights((x) => (x < 100 ? 150 : 150 - CLIMB_MAX));
+    expect(stepOutcome(allowedStep, at(allowedStep, 99), 1).kind).toBe("moved");
+    expect(stepOutcome(allowedStep, at(allowedStep, 100), -1).kind).toBe("moved");
   });
 
   it("単発のクレーターは縁を越えて通り抜けられ、2 発重なった崖は登れない", () => {
@@ -168,11 +168,11 @@ describe("移動", () => {
   });
 
   it("落下でコマンドは止まるが着地後の移動先まで検証できる", () => {
-    const drop7 = heights((x) => (x < 100 ? 150 : 157));
-    const first = walk(drop7, at(drop7, 95), 1, 15);
+    const fallingDrop = heights((x) => (x < 100 ? 150 : 157));
+    const first = walk(fallingDrop, at(fallingDrop, 95), 1, 15);
     expect(first).toEqual({ x: 100, y: 157, stepsUsed: 5, fell: true });
     // 着地後に残り移動量を使って進める。
-    expect(validateMove(drop7, at(drop7, 95), 101)).toEqual({ x:101, y:157 });
+    expect(validateMove(fallingDrop, at(fallingDrop, 95), 101)).toEqual({ x:101, y:157 });
   });
 
   it("移動の検証は正味の移動を同じ規則で歩き直し、移動後の位置を返す（行って戻る経路は見ない）", () => {
@@ -181,11 +181,11 @@ describe("移動", () => {
     expect(validateMove(mask, at(mask, 100), 100 + STEPS_PER_TURN)).toEqual({ x: 100 + STEPS_PER_TURN, y: 150 });
     expect(validateMove(mask, at(mask, 100), 100 - STEPS_PER_TURN)).toEqual({ x: 100 - STEPS_PER_TURN, y: 150 });
     expect(validateMove(mask, at(mask, 100), 100 + STEPS_PER_TURN + 1)).toBeNull();
-    const step7 = heights((x) => (x < 100 ? 150 : 143));
-    expect(validateMove(step7, at(step7, 95), 100)).toBeNull();
-    expect(validateMove(step7, at(step7, 95), 99)).toEqual({ x: 99, y: 150 });
-    const drop7 = heights((x) => (x < 100 ? 150 : 157));
-    expect(validateMove(drop7, at(drop7, 95), 100)).toEqual({ x: 100, y: 157 });
-    expect(validateMove(drop7, at(drop7, 95), 101)).toEqual({ x:101, y:157 });
+    const blockedStep = heights((x) => (x < 100 ? 150 : 143));
+    expect(validateMove(blockedStep, at(blockedStep, 95), 100)).toBeNull();
+    expect(validateMove(blockedStep, at(blockedStep, 95), 99)).toEqual({ x: 99, y: 150 });
+    const fallingDrop = heights((x) => (x < 100 ? 150 : 157));
+    expect(validateMove(fallingDrop, at(fallingDrop, 95), 100)).toEqual({ x: 100, y: 157 });
+    expect(validateMove(fallingDrop, at(fallingDrop, 95), 101)).toEqual({ x:101, y:157 });
   });
 });

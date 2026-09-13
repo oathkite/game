@@ -1,0 +1,39 @@
+/* Shared non-battle page geometry. Width excludes the outer page gutters. */
+.world-ui {
+  --page-content-width:1000px;
+  --page-gutter:24px;
+  --page-gap:24px;
+}
+@media (max-width:699px),(max-height:550px) {
+  .world-ui { --page-gutter:16px; --page-gap:16px; }
+}
+.world-ui.world-ui :is(.world-start,.world-lobby,.room-screen,.world-result-screen,.network-finished:has(.result-table)) {
+  box-sizing:border-box;
+  width:100%;
+  max-width:none;
+  padding:var(--page-gutter) max(var(--page-gutter),calc((100% - var(--page-content-width)) / 2));
+  gap:var(--page-gap);
+}
+.world-ui.world-ui :is(.world-start,.world-lobby) { overflow:auto; }
+.world-ui.world-ui .world-lobby { grid-template-columns:minmax(0,1fr) minmax(0,400px); }
+@media (orientation:portrait) {
+  .world-ui.world-ui .world-lobby { grid-template-columns:minmax(0,1fr); }
+}
+.world-ui.world-ui :is(.world-lobby > header,.room-screen > header,.room-screen > footer,.result-header) {
+  min-height:44px;
+  gap:16px;
+  padding:0;
+}
+.world-ui.world-ui :is(.room-screen > .room-header,.room-screen > .room-body,.room-screen > footer,.result-header,.world-result-screen > h1) {
+  width:100%;
+  max-width:var(--page-content-width);
+  min-width:0;
+  margin-inline:auto;
+}
+.world-ui.world-ui :is(.world-lobby > header h1,.room-screen > header h1,.result-header h2,.world-result-screen > h1) {
+  margin:0;
+  padding:0;
+  font-size:clamp(24px,3vw,32px);
+  text-align:left;
+}
+.world-ui.world-ui .room-body > .pixel-panel { padding:0; }

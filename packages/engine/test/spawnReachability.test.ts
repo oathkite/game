@@ -11,8 +11,8 @@ for (const map of MULTIPLAYER_MAPS) for (const wind of [-10, 0, 10]) it(`${map.i
       for (const target of state.players.filter(candidate => candidate.playerId !== player.playerId)) {
         let reachable = false;
         for (const facing of [-1, 1] as const) {
-          for (const elevation of [15, 30, 45, 60, 75]) {
-            for (let power = 10; power <= 100; power += 5) {
+          for (let elevation = 5; elevation <= 85; elevation += 5) {
+            for (let power = 10; power <= 100; power += 1) {
               const shot = resolveBattleShot(roster, state.mask, state.players, { playerId: player.playerId, weapon: "cannon", wind, facing, elevation, power });
               if (shot.impacts.some(impact => impact.damage.some(damage => damage.playerId === target.playerId && damage.amount > 0))) { reachable = true; break; }
             }

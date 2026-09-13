@@ -1,3 +1,5 @@
+import { RIDGELINE, STONE_BRIDGE, TERRACES, SKY_ISLANDS } from "./pixelMaps.js";
+import { buildInitialTerrain } from "@game/sim";
 import { buildRockArch } from "./rockArch.js";
 import { refineTerrain } from "./refine.js";
 import { MAP_NAMES, RANDOM_MAP, type MapChoice, type MapName } from "@game/protocol";
@@ -8,6 +10,7 @@ import { heightsFromProfile, merge, slabs, solidBelow } from "./profile.js";
 
 export type MapDefinition = {
   readonly name: MapName;
+  readonly spawnCandidates?: readonly number[];
   /** 2 箇所のスポーン x。左と右。どの席がどちらに立つかは対戦開始時に engine が決める */
   readonly spawns: readonly [number, number];
   /** スポーンの探索開始 y。この高さから下へ見て最初の地面に立つ（設計書 02 の 2.7）。省略は 0（上から最初の地面）。天井の下に置く洞窟で使う */
@@ -152,9 +155,18 @@ const towers: MapDefinition = {
     ]),
 };
 
-const originals: Readonly<Record<Exclude<MapName, "rock-arch">, MapDefinition>> = { valley, mountain, island, plain, terrace, bridge, cave, towers };
+const originals: Readonly<Record<Exclude<MapName, "rock-arch" | "ridgeline" | "stone-bridge" | "terraces" | "sky-islands">, MapDefinition>> = { valley, mountain, island, plain, terrace, bridge, cave, towers };
+const pixelDefinitions = Object.fromEntries([RIDGELINE, STONE_BRIDGE, TERRACES, SKY_ISLANDS].map((spec, i) => {
+  const name = (["ridgeline", "stone-bridge", "terraces", "sky-islands"] as const)[i]!;
+  const offset = Math.floor((400 - spec.width) / 2);
+  const columns = Array.from({ length: 400 }, (_, x) => spec.solidColumns![Math.max(0, Math.min(spec.width - 1, x - offset))]!);
+  return [name, { name, spawnCandidates: spec.spawns[8]!.map(x => x + offset), spawns: [spec.spawns[2]![0]! + offset, spec.spawns[2]![1]! + offset] as const,
+    build: () => buildInitialTerrain({ width: 400, height: 225, surface: columns.map(runs => runs[0]?.[0] ?? 225), solidColumns: columns }) } as MapDefinition];
+})) as Record<"ridgeline" | "stone-bridge" | "terraces" | "sky-islands", MapDefinition>;
+
 const definitions: Readonly<Record<MapName, MapDefinition>> = {
-  ...Object.fromEntries(Object.entries(originals).map(([name, map]) => [name, { ...map, build: () => refineTerrain(map.build(), map.spawns, map.name) }])) as Record<Exclude<MapName, "rock-arch">, MapDefinition>,
+  ...pixelDefinitions,
+  ...Object.fromEntries(Object.entries(originals).map(([name, map]) => [name, { ...map, build: () => refineTerrain(map.build(), map.spawns, map.name) }])) as Record<Exclude<MapName, "rock-arch" | "ridgeline" | "stone-bridge" | "terraces" | "sky-islands">, MapDefinition>,
   "rock-arch": { name: "rock-arch", spawns: [85, 305], build: buildRockArch },
 };
 

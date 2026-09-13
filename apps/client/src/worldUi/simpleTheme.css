@@ -119,7 +119,6 @@
 .world-ui.world-ui .battle-console .battle-self { grid-template-columns:minmax(0,1fr); }
 
 .world-ui .kp-canvas { position:relative; }
-.world-ui .world-leaves { image-rendering:pixelated; }
 .world-ui.world-ui .battle-roster,
 .world-ui.world-ui .battle-roster .battle-countdown { background:transparent; }
 
@@ -171,3 +170,17 @@
 .room-ready-status,.room-ready-button { display:inline-flex; align-items:center; justify-content:center; gap:8px; }
 .world-ui.world-ui button.room-ready-button[aria-pressed=true] { background:#33ff66; color:#000; border-color:#33ff66; }
 .world-ui.world-ui button.room-ready-button[aria-pressed=true]:hover:not(:disabled) { background:#80ff9f; color:#000; border-color:#80ff9f; }
+
+.lobby-settings { width:min(560px,calc(100vw - 32px)); max-height:calc(100dvh - 32px); padding:24px; background:#000; color:#33ff66; font:inherit; }
+.lobby-settings > h2 { font-size:22px; }
+.world-ui .lobby-settings .world-settings { height:auto; padding:0; }
+
+.world-ui.world-ui button.practice-start { width:100%; background:#33ff66; color:#000; }
+.world-ui.world-ui button.practice-start:hover:not(:disabled) { background:#80ff9f; color:#000; border-color:#80ff9f; }
+
+/* Modal actions fill the content width; close icons and option grids keep their size. */
+.world-ui.world-ui dialog > button:not(.modal-close),
+.world-ui.world-ui dialog :is(.room-filters,.room-create-form,.practice-settings-actions,.audio-controls) > button:not(.modal-close) {
+  width:100%;
+  grid-column:1 / -1;
+}

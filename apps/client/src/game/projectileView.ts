@@ -1,4 +1,4 @@
-import { weaponPixels, WEAPON_PIXEL_WIDTH, WEAPON_PIXEL_HEIGHT } from "./weaponPixels";
+import { weaponPixels, WEAPON_PIXEL_WIDTH, weaponPixelHeight } from "./weaponPixels";
 import type { CellPoint, WeaponId } from "@game/protocol";
 import { Container, Graphics, Sprite, type Texture } from "pixi.js";
 import { blastCells, bulletSize, type BulletSize, projectileArtScale } from "./weaponArt";
@@ -50,8 +50,9 @@ const bulletPool = (parent: Container, size: BulletSize, weapon: WeaponId, textu
     while (list.length <= index) {
       const g = texture ? new Sprite(texture) : new Graphics();
       if (g instanceof Graphics) {
-        const pixel = Math.max(.25, size.w / WEAPON_PIXEL_WIDTH, size.h / WEAPON_PIXEL_HEIGHT);
-        for (const p of weaponPixels(weapon)) g.rect((p.x - WEAPON_PIXEL_WIDTH / 2) * pixel, (p.y - WEAPON_PIXEL_HEIGHT / 2) * pixel, pixel, pixel).fill(p.color);
+        const height = weaponPixelHeight(weapon);
+        const pixel = Math.max(.25, size.w / WEAPON_PIXEL_WIDTH, size.h / height);
+        for (const p of weaponPixels(weapon)) g.rect((p.x - WEAPON_PIXEL_WIDTH / 2) * pixel, (p.y - height / 2) * pixel, pixel, pixel).fill(p.color);
       }
       if (g instanceof Sprite) { g.anchor.set(0.5, 0.6); g.scale.set(scale); }
       g.visible = false;

@@ -17,7 +17,7 @@ export const COLOR_HEX: Readonly<Record<(typeof PLAYER_COLORS)[number], string>>
 };
 
 /** 設計書 02 の 2.9 の 8 枚。順序はロビーの選択肢の順 */
-export const MAP_NAMES = ["valley", "mountain", "island", "plain", "terrace", "bridge", "cave", "towers", "rock-arch"] as const;
+export const MAP_NAMES = ["valley", "mountain", "island", "plain", "terrace", "bridge", "cave", "towers", "rock-arch", "ridgeline", "stone-bridge", "terraces", "sky-islands"] as const;
 
 export const MAP_LABELS: Readonly<Record<(typeof MAP_NAMES)[number], string>> = {
   valley: "谷",
@@ -28,6 +28,7 @@ export const MAP_LABELS: Readonly<Record<(typeof MAP_NAMES)[number], string>> = 
   bridge: "橋",
   cave: "洞窟",
   towers: "双塔",
+  "ridgeline": "稜線", "stone-bridge": "石橋", "terraces": "段丘", "sky-islands": "浮島",
   "rock-arch": "苔むす岩橋",
 };
 

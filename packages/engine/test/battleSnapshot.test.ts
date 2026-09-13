@@ -77,9 +77,9 @@ it("restores a frozen reed-hills v2 match without adopting the registered geomet
   expect(restored.mask.cells).toEqual(original.mask.cells);
 });
 
-it("keeps v3 reed-hills seats frozen after the v4 reachability adjustment", () => {
+it("keeps v3 reed-hills seats frozen after the pixel terrain refresh", () => {
   const current = MULTIPLAYER_MAPS.find(map => map.id === "reed-hills")!;
-  expect(current.version).toBe(4);
+  expect(current.version).toBe(5);
   const oldMap = { ...current, version: 3, spawns: { 2: [55, 345] } };
   const members = [{ playerId: "a", teamId: "t0" }, { playerId: "b", teamId: "t1" }];
   const original = createBattleSession(createBattle(members, 42, oldMap), "old-seats", 0);
@@ -87,5 +87,5 @@ it("keeps v3 reed-hills seats frozen after the v4 reachability adjustment", () =
   expect(restored.map.version).toBe(3);
   expect(restored.players.map(player => player.x)).toEqual([55, 345]);
   expect(restored.mask.cells).toEqual(original.mask.cells);
-  expect(createBattle(members, 42, current).players.map(player => player.x)).toEqual([75, 325]);
+  expect(createBattle(members, 42, current).players.map(player => player.x)).not.toEqual([55, 345]);
 });

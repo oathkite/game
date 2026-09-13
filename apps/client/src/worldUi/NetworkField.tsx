@@ -1,5 +1,4 @@
 import { useWindowEdgePan } from "@/prototype/useWindowEdgePan";
-import { WindLeaves } from "./WindLeaves";
 import { createTankView } from "@/game/tankView";
 import { openingPose } from "./openingTour";
 import { StartSignal } from "./StartSignal";
@@ -40,7 +39,7 @@ export const NetworkField = (props: Props) => {
       const falls = createFallMotion(); let settling = false, wasOpening = false, signalVisible = false, fallMatch = "";
       const facing = new Map<string, -1 | 1>();
       let tankIndex = 0;
-      renderer = await createRenderer({ tankFactory: (colors, name) => createTankView(colors, name, teamColor(Number(latest.current.frame.players[tankIndex++]!.teamId.slice(1)))), host: element, layout: layout(), mask, background: 0x000000, backgroundAlpha:0,
+      renderer = await createRenderer({ wind: () => latest.current.frame.wind, tankFactory: (colors, name) => createTankView(colors, name, teamColor(Number(latest.current.frame.players[tankIndex++]!.teamId.slice(1)))), host: element, layout: layout(), mask, background: 0x000000, backgroundAlpha:0,
         players: latest.current.frame.players.map(p => ({ nickname: p.nickname ?? p.playerId, colors: p.colors ?? { primary: p.teamId === "t0" ? "yellow" : "cyan", secondary: "blue" } })) });
       if (disposed) { renderer.destroy(); return; }
       const r = renderer; let bullet = r.projectile("yellow", "cannon");
@@ -123,7 +122,6 @@ export const NetworkField = (props: Props) => {
   useWindowEdgePan(host, rig, Boolean(props.blocked) || !loaded);
   const point = (e: PointerEvent<HTMLDivElement>) => { const box = e.currentTarget.getBoundingClientRect(); return { x: e.clientX - box.left, y: e.clientY - box.top }; };
   return <div className="network-field">
-    <WindLeaves wind={props.frame.wind} />
     <StartSignal visible={signal} />
     <div ref={host} className="network-pixi" data-testid="network-world" data-loaded={loaded} data-positions={JSON.stringify(props.players)} tabIndex={0} aria-label={t("対戦フィールド。ドラッグ・ホイールで見回す、Cで手番へ")} onKeyDown={e => { if (e.key.toLowerCase() === "c") focus(); }}
       onWheel={e => { if (!openingActive() && !drag.current && !e.ctrlKey) wheelPan(rig, e.deltaX, e.deltaY, e.deltaMode); }}

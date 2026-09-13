@@ -1,6 +1,7 @@
+import { randomSpawns } from "./randomSpawns.js";
 import { getMap, spawnAt } from "@game/maps";
 import type { Loadout, MapName, PlayerState, Seat, ServerMessageOf, TankColors } from "@game/protocol";
-import { HP_MAX } from "@game/sim";
+import { HP_MAX, spawnPos } from "@game/sim";
 import type { EngineConfig, EngineState } from "./types.js";
 
 export type MatchPlayerSpec = {
@@ -24,7 +25,10 @@ export const createEngine = (config: EngineConfig, params: CreateParams): Engine
   const swap = roll(config.rng);
   const firstSeat: Seat = roll(config.rng) ? 1 : 0;
   const side = (seat: Seat): 0 | 1 => ((seat === 0) !== swap ? 0 : 1);
-  const spawnOf = (seat: Seat) => spawnAt(map, mask, side(seat));
+  const anchors = [spawnAt(map, mask, 0), spawnAt(map, mask, 1)];
+  const positions = map.spawnCandidates
+    ? randomSpawns(map.spawnCandidates.map(x => spawnPos(mask, x)), 2, config.rng) : anchors;
+  const spawnOf = (seat: Seat) => positions[side(seat)]!;
   const player = (seat: Seat): PlayerState => ({
     seat,
     nickname: params.players[seat].nickname,

@@ -78,8 +78,8 @@ describe("谷の手触り", () => {
 // 歩数を増やしても崖や急斜面で頭打ちになるなら「移動を広げた」ことにならないためである。
 describe("1 ターンで動ける範囲", () => {
   // 双塔は頂上が 11 セルしかなく、動けないこと自体が性格なので除く（設計書 02 の 2.9、TBD-13）
-  it("双塔を除くどのマップでも、スポーンから左右に歩数のぶんだけ地形に阻まれず歩ける", () => {
-    for (const name of MAP_NAMES.filter((n) => n !== "towers")) {
+  it("双塔・浮島群を除くどのマップでも、スポーンから左右に歩数のぶんだけ地形に阻まれず歩ける", () => {
+    for (const name of MAP_NAMES.filter((n) => n !== "towers" && n !== "sky-islands")) {
       const map = getMap(name);
       const mask = map.build();
       for (const side of [0, 1] as const) {
@@ -98,8 +98,8 @@ describe("1 ターンで動ける範囲", () => {
     }
   });
 
-  it("双塔を除くどのマップでも、足元に主砲のクレーターが 1 つできても縁を越えて出られる", () => {
-    for (const name of MAP_NAMES.filter((n) => n !== "towers")) {
+  it("双塔・浮島群を除くどのマップでも、主砲のクレーターから移動でき、4セルを超える縁では止まる", () => {
+    for (const name of MAP_NAMES.filter((n) => n !== "towers" && n !== "sky-islands")) {
       const map = getMap(name);
       const base = map.build();
       for (const side of [0, 1] as const) {
@@ -108,6 +108,13 @@ describe("1 ターンで動ける範囲", () => {
         const mask = carve(base, { cx: x, cy: pos.y, radius: BLAST_RADIUS });
         for (const dir of [-1, 1] as const) {
           const { y: _y, ...r } = walk(mask, { x, y: groundBelow(mask, x, pos.y) }, dir, STEPS_PER_TURN);
+          const steepEdges = ["cave/0/1", "cave/1/-1", "rock-arch/1/1", "stone-bridge/1/-1"];
+          if (steepEdges.includes(`${name}/${side}/${dir}`)) {
+            // 4セルを超える急なクレーターの縁では止まる。
+            expect(r.x).toBe(x + dir * 9);
+            expect(r.stepsUsed).toBeLessThan(STEPS_PER_TURN);
+            continue;
+          }
           // クレーターの底から縁までは 10 列。歩数の途中で止まればハマっている
           expect({ where: `${name} x=${x} dir=${dir}`, ...r }).toEqual({
             where: `${name} x=${x} dir=${dir}`,

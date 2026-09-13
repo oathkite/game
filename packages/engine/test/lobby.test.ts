@@ -119,7 +119,8 @@ it("allows only the owner to select a registered map and clears every ready stat
   expect(editLobby(room, "p2", change).reason).toBe("not-owner");
   expect(editLobby(room, "p1", { ...change, mapId: "unknown" }).reason).toBe("unsupported-map");
   const next = editLobby(room, "p1", change).room;
-  expect(next.map.width).toBe(400);
+  expect(next.map.id).toBe("reed-hills");
+  expect(next.map.width).toBe(350);
   expect(next.revision).toBe(room.revision + 1);
   expect(next.members.every(p => !p.ready)).toBe(true);
   expect(editLobby(next, "p1", change).reason).toBe("stale-revision");

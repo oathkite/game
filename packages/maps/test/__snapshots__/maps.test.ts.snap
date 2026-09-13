@@ -10,9 +10,17 @@ exports[`maps > mountain > 同じ結果を返す（決定論） 1`] = `804060581
 
 exports[`maps > plain > 同じ結果を返す（決定論） 1`] = `35203234`;
 
+exports[`maps > ridgeline > 同じ結果を返す（決定論） 1`] = `726997190`;
+
 exports[`maps > rock-arch > 同じ結果を返す（決定論） 1`] = `333296829`;
 
+exports[`maps > sky-islands > 同じ結果を返す（決定論） 1`] = `816888775`;
+
+exports[`maps > stone-bridge > 同じ結果を返す（決定論） 1`] = `220168228`;
+
 exports[`maps > terrace > 同じ結果を返す（決定論） 1`] = `27966988`;
+
+exports[`maps > terraces > 同じ結果を返す（決定論） 1`] = `628842467`;
 
 exports[`maps > towers > 同じ結果を返す（決定論） 1`] = `498823977`;
 

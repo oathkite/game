@@ -38,7 +38,7 @@ it("isolates rooms, authenticates edits, starts chosen equipment and resumes the
     await expect.poll(() => a.last("lab.frame")).toBeTruthy();
     expect(a.last("lab.frame").players).toHaveLength(2);
     expect(a.last("lab.frame").map.id).toBe("moss-valley");
-    expect(a.last("lab.frame").map.surface).toHaveLength(500);
+    expect(a.last("lab.frame").map.surface).toHaveLength(350);
     expect(a.last("lab.frame")).not.toHaveProperty("windState");
     expect(a.last("lab.frame").wind).toBeGreaterThanOrEqual(-10);
     expect(a.last("lab.frame").wind).toBeLessThanOrEqual(10);

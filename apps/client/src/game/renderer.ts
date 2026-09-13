@@ -1,3 +1,5 @@
+import { createPixelWind } from "./pixelWind";
+import { createPixelBackdrop } from "./pixelBackdrop";
 import type { TerrainOp } from "@game/protocol";
 import { createImageTerrainLayer } from "./imageTerrainLayer";
 import { fitTankLabel } from "./tankLabelLayout";
@@ -32,6 +34,7 @@ export type Renderer = {
 };
 
 export type RendererInit = {
+  readonly wind?: () => number;
   readonly host: HTMLElement;
   readonly layout: Layout;
   readonly mask: TerrainMask;
@@ -72,7 +75,11 @@ export const createRenderer = async (init: RendererInit): Promise<Renderer> => {
   const world = new Container();
   const labels = new Container();
   world.scale.set(cell);
-  app.stage.addChild(world, labels);
+  const backdrop = createPixelBackdrop(init.mask.cells.reduce((sum, cell) => sum + cell, 0) % 997);
+  const wind = createPixelWind();
+  app.stage.addChild(backdrop.container, wind.container, world, labels);
+  const reduced = matchMedia("(prefers-reduced-motion: reduce)");
+  app.ticker.add(() => wind.update(app.ticker.deltaMS, init.wind?.() ?? 0, app.screen.width, app.screen.height, reduced.matches || !init.wind));
 
   const terrain: TerrainLayer = init.imageTerrain ? createImageTerrainLayer(init.mask, init.imageTerrain) : createTerrainLayer(init.mask, init.terrainArt);
   world.addChild(terrain.sprite);
@@ -120,6 +127,7 @@ export const createRenderer = async (init: RendererInit): Promise<Renderer> => {
     },
     setCameraOffset: (x, y) => {
       world.position.set(x, y);
+      backdrop.update(x, y, cell, app.screen.width, app.screen.height);
       labels.position.set(x, y);
       tanks.forEach((_, index) => placeLabel(index));
     },

@@ -14,7 +14,7 @@ export type TeamOutcome = { readonly type: "ongoing" } | { readonly type: "draw"
   { readonly type: "win"; readonly teamId: TeamId };
 
 const compareIds = (a: string, b: string): number => a < b ? -1 : a > b ? 1 : 0;
-const random = (seed: number): (() => number) => {
+export const seededRandom = (seed: number): (() => number) => {
   let value = seed;
   return () => {
     value = (value + 0x6d2b79f5) >>> 0;
@@ -42,7 +42,7 @@ const validateRoster = (members: readonly RosterMember[], seed: number): void =>
 export const createRoster = (input: readonly RosterMember[], seed: number): RosterState => {
   validateRoster(input, seed);
   const members = input.map(p => ({ ...p })).sort((a, b) => compareIds(a.playerId, b.playerId));
-  const rng = random(seed);
+  const rng = seededRandom(seed);
   const teams = shuffle([...new Set(members.map(p => p.teamId))].sort(compareIds), rng);
   const queues = teams.map(id => shuffle(members.filter(p => p.teamId === id), rng));
   const turnRing = Array.from({ length: Math.max(...queues.map(q => q.length)) }, (_, i) =>

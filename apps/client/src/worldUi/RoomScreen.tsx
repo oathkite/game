@@ -110,7 +110,7 @@ export const RoomScreen = ({ onExit }: { readonly onExit: () => void; readonly o
         {serverBase && <PublicRooms initialCode={inviteRoom(location.href) ?? ""} base={serverBase} busy={busy} filtersOpen={filtersOpen} closeFilters={() => setFiltersOpen(false)} join={(roomId, type, locked) => { if (locked) { setPasswordJoin({ roomId, type }); return; } void connect({ type, roomId, ...(type === "room.join" ? { profile: profile() } : {}) }); }} />}
 </> : <>
         {spectator && <p role="status">{t("観戦中")}</p>}
-        {room.mode !== "custom" && <div><strong>{room.mode === "1v1" ? "1 vs 1" : "2 vs 2"}　{room.members.length} / {room.mode === "1v1" ? 2 : 4}</strong><PixelButton onClick={returnToList}>{t("待機をキャンセル")}</PixelButton>{waited && <p role="status">{t("対戦相手を待っています。キャンセルして地域を変更するか、ロビーから練習できます。")}</p>}</div>}
+        {room.mode !== "custom" && <div><strong>{room.mode === "1v1" ? "1 vs 1" : "2 vs 2"}　{room.members.length} / {room.mode === "1v1" ? 2 : 4}</strong><PixelButton onClick={returnToList}>{t("待機をキャンセル")}</PixelButton>{waited && <p role="status">{t("対戦相手を待っています。キャンセルして地域を変更するか、出撃準備からプラクティスを開始できます。")}</p>}</div>}
         {sharing && <RoomInviteLink key={room.roomId} base={serverBase} roomId={room.roomId} token={sessionStorage.getItem(tokenKey)} />}
         <div className="room-table-scroll"><table className="room-player-table">
           <thead><tr><th scope="col">{t("プレイヤー名")}</th><th scope="col">{t("チーム")}</th><th scope="col">{t("武器")}</th><th scope="col">{t("状態")}</th></tr></thead>

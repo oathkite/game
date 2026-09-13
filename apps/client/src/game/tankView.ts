@@ -49,7 +49,7 @@ const drawBody = (g: Graphics, colors: { readonly primary: string; readonly seco
 
 const hpCells = (hp: number): number => Math.min(10, Math.ceil(Math.max(0, hp) / (HP_MAX / 10)));
 
-/** HP バー。横 12、縦 3 の黒い下地の中に、主色で 10 HP を 1 セルとして描く。失った区間は明滅で見せる */
+/** 接地点の2セル下に、10 HP を1セルとして描く。失った区間は明滅で見せる */
 const drawHpBar = (g: Graphics, colors: { readonly primary: string; readonly secondary: string }, pose: TankPose): void => {
   g.clear();
   const cells = hpCells(pose.hp);
@@ -71,9 +71,8 @@ export const createTankView = (selection: TankColors, nickname: string, team?: s
   rotating.addChild(body, barrel);
   world.addChild(rotating);
 
-  // HP バー。横 12、縦 3 の黒い下地の中に、主色で 10 HP を 1 セルとして描く
+  // 地形や車体の傾きに合わせて回転せず、タンクの下に水平表示する
   const hpBar = new Graphics();
-  hpBar.position.y = -11;
   world.addChild(hpBar);
 
   const label = new Container();
