@@ -7,7 +7,7 @@ it("separates all nine initial queues and merges bounded pages with newest summa
   const merged = mergeRoomPages([{ rooms: rooms.slice(0, 10), nextCursor: null }, { rooms: rooms.slice(10), nextCursor: null }, { rooms: [{ ...rooms[0]!, members: 2, updatedAt: 2 }], nextCursor: null }]);
   expect(merged.rooms).toHaveLength(20);
   expect(merged.rooms[0]!.members).toBe(2);
-  expect(merged.nextCursor).toBe(rooms[19]!.roomId);
-  expect(mergeRoomPages([{ rooms: rooms.slice(0, 20), nextCursor: rooms[19]!.roomId }]).nextCursor).toBe(rooms[19]!.roomId);
+  expect(merged.nextCursor).toBe(`0:${rooms[19]!.roomId}`);
+  expect(mergeRoomPages([{ rooms: rooms.slice(0, 20), nextCursor: `0:${rooms[19]!.roomId}` }]).nextCursor).toBe(`0:${rooms[19]!.roomId}`);
   expect(mergeRoomPages([{ rooms: [], nextCursor: null }])).toEqual({ rooms: [], nextCursor: null });
 });

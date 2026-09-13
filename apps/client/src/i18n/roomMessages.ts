@@ -1,4 +1,6 @@
 export const roomEnglish: Readonly<Record<string, string>> = {
+  "プレイヤー名": "Player name", "状態": "Status", "準備完了済み": "Ready", "変更": "Change", "結果": "Result", "退出する": "Leave", "部屋に戻る": "Return to room", "武器変更": "Change weapons", "部屋一覧に戻る": "Back to rooms", "部屋一覧": "Room list", "閉じる": "Close", "すべて": "All", "対戦状態": "Match status", "空席": "Availability", "参加可能": "Joinable", "クリア": "Clear", "条件に一致する部屋はありません。": "No rooms match your filters.",
+
   "入室前の応答": "Pre-join response", "通信遅延が大きい状態です": "High connection latency",
   "地域を測定中…": "Measuring regions…", "地域を選択してください": "Select a region", "地域別の応答": "Regional response", "地域を測定できません。手動で選択してください。": "Could not measure regions. Select one manually.",
   "部屋のデータを復元できませんでした。この試合は無効です。ロビーへ戻ってください。": "The room could not be restored. This match is invalid. Please return to the lobby.",
@@ -36,7 +38,7 @@ export const roomEnglish: Readonly<Record<string, string>> = {
   "部屋コードを共有して、2〜8人で遊べます。": "Share a room code to play with 2–8 players.",
   "対戦で使う名前": "Player name", "対戦形式": "Mode", "クイック対戦形式": "Quick match mode",
   "地域": "Region", "クイック対戦地域": "Quick match region", "アジア": "Asia", "ヨーロッパ": "Europe", "アメリカ": "Americas",
-  "クイック参加": "Quick play", "部屋を作る": "Create room", "部屋コード": "Room code", "部屋に参加": "Join room",
+  "クイック参加": "Quick play", "部屋を作る": "Create room", "部屋を探す": "Find rooms", "部屋コード": "Room code", "部屋に参加": "Join room",
   "観戦する": "Spectate", "固定8席試験": "Eight-seat test", "観戦中": "Spectating", "待機をキャンセル": "Cancel waiting",
   "対戦相手を待っています。キャンセルして地域を変更するか、ロビーから練習できます。": "Waiting for players. Cancel to change region or return to the lobby to practice.",
   "招待リンク": "Invite link", "コピー": "Copy", "招待リンクをコピーしました。": "Invite link copied.",

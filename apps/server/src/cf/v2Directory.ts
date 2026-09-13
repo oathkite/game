@@ -1,5 +1,6 @@
-import type { RoomMode, RoomRegion, RoomSummary, RoomPage } from "@game/protocol/v2-rooms";
-import { quickCandidateQuery } from "./directoryQueries.js";
+import { roomPageCursor } from "@game/protocol/v2-rooms";
+import type { RoomMode, RoomRegion, RoomSummary, RoomPage, RoomListFilter } from "@game/protocol/v2-rooms";
+import { quickCandidateQuery, roomPageQuery } from "./directoryQueries.js";
 import { DurableObject } from "cloudflare:workers";
 export type { RoomSummary } from "@game/protocol/v2-rooms";
 export class RoomDirectory extends DurableObject<{ DIRECTORY: DurableObjectNamespace<RoomDirectory> }> {
@@ -8,6 +9,7 @@ export class RoomDirectory extends DurableObject<{ DIRECTORY: DurableObjectNames
     ctx.storage.sql.exec("CREATE TABLE IF NOT EXISTS reservations (room_id TEXT NOT NULL, expires INTEGER NOT NULL)");
     ctx.storage.sql.exec("CREATE TABLE IF NOT EXISTS room_codes (id TEXT PRIMARY KEY)");
     ctx.storage.sql.exec("CREATE TABLE IF NOT EXISTS rooms (id TEXT PRIMARY KEY, summary TEXT NOT NULL, expires INTEGER NOT NULL)");
+    ctx.storage.sql.exec("CREATE INDEX IF NOT EXISTS rooms_created ON rooms(COALESCE(json_extract(summary, '$.createdAt'), 0) DESC, id ASC)");
     ctx.storage.sql.exec("INSERT OR IGNORE INTO room_codes SELECT id FROM rooms");
   }
   probe(): boolean { return true; }
@@ -24,7 +26,7 @@ export class RoomDirectory extends DurableObject<{ DIRECTORY: DurableObjectNames
     this.ctx.storage.sql.exec("DELETE FROM rooms WHERE expires < ?", Date.now());
     if (this.ctx.storage.sql.exec<{ total: number }>("SELECT COUNT(*) AS total FROM rooms").one().total >= 1000) throw new Error("directory capacity");
     const roomId = await this.env.DIRECTORY.getByName("public").reserveCode();
-    const summary: RoomSummary = { roomId, mode, region, members: 0, spectators: 0, phase: "waiting", mapId: "moss-valley", updatedAt: Date.now() };
+    const summary: RoomSummary = { roomId, mode, region, members: 0, spectators: 0, phase: "waiting", mapId: "moss-valley", createdAt: Date.now(), updatedAt: Date.now() };
     this.ctx.storage.sql.exec("INSERT INTO rooms VALUES (?, ?, ?)", roomId, JSON.stringify(summary), Date.now() + 120000);
     return roomId;
   }
@@ -45,14 +47,14 @@ export class RoomDirectory extends DurableObject<{ DIRECTORY: DurableObjectNames
     const added = Math.max(0, summary.members - (before ? JSON.parse(before.summary).members : 0));
     if (added) this.ctx.storage.sql.exec("DELETE FROM reservations WHERE rowid IN (SELECT rowid FROM reservations WHERE room_id = ? ORDER BY expires LIMIT ?)", summary.roomId, added);
     if (!summary.members && !summary.spectators) { this.ctx.storage.sql.exec("DELETE FROM rooms WHERE id = ?", summary.roomId); return; }
-    this.ctx.storage.sql.exec("INSERT OR REPLACE INTO rooms VALUES (?, ?, ?)", summary.roomId, JSON.stringify(summary), Date.now() + 1800000);
+    this.ctx.storage.sql.exec("INSERT OR REPLACE INTO rooms VALUES (?, ?, ?)", summary.roomId, JSON.stringify({ ...summary, createdAt: before ? JSON.parse(before.summary).createdAt ?? 0 : summary.createdAt ?? Date.now() }), Date.now() + 1800000);
   }
-  page(after: string): RoomPage {
-    const rows = this.ctx.storage.sql.exec<{ summary: string }>(
-      "SELECT summary FROM rooms WHERE id > ? AND expires >= ? AND json_extract(summary, '$.members') > 0 AND json_extract(summary, '$.mode') = 'custom' ORDER BY id LIMIT 21", after, Date.now(),
-    ).toArray().map(row => JSON.parse(row.summary) as RoomSummary);
+  page(after: string, filter: RoomListFilter = {}): RoomPage {
+    const query = roomPageQuery(after, Date.now(), filter);
+    const rows = this.ctx.storage.sql.exec<{ summary: string }>(query.sql, ...query.bindings)
+      .toArray().map(row => JSON.parse(row.summary) as RoomSummary);
     const rooms = rows.slice(0, 20);
-    return { rooms, nextCursor: rows.length > 20 ? rooms.at(-1)!.roomId : null };
+    return { rooms, nextCursor: rows.length > 20 ? roomPageCursor(rooms.at(-1)!) : null };
   }
   list(): readonly RoomSummary[] {
     return this.ctx.storage.sql.exec<{ summary: string }>("SELECT summary FROM rooms WHERE expires >= ? ORDER BY expires DESC LIMIT 100", Date.now()).toArray().map(row => JSON.parse(row.summary));

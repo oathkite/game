@@ -1,3 +1,4 @@
+import { DotIcon } from "./DotIcon";
 import { closeOnBackdrop } from "@/worldUi/dialogBackdrop";
 import { BattleMenuStatus } from "./BattleMenuStatus";
 import { ReportControls, type ReportOptions } from "./ReportControls";
@@ -11,8 +12,9 @@ export const BattleMenu = ({ seconds, close, surrender, exit, finished, report, 
   const dialog = useRef<HTMLDialogElement>(null);
   useEffect(() => { dialog.current?.showModal(); }, []);
   return <dialog onClick={event => closeOnBackdrop(event, () => close())} ref={dialog} className="battle-menu-panel" aria-label={t("対戦設定")} onCancel={e => { e.preventDefault(); close(); }}>
+    <h2>{t("対戦設定")}</h2>
     {!finished && <BattleMenuStatus activeTurn={activeTurn && !spectator}>{seconds === null ? "—" : `${seconds}s`}</BattleMenuStatus>}
-    <button autoFocus onClick={close}>{t("対戦に戻る")}</button>{!spectator && <button disabled={finished} onClick={surrender}>{t("降参")}</button>}<button onClick={exit}>{t("ロビーに戻る")}</button>
+    <button className="modal-close" aria-label={t("閉じる")} autoFocus onClick={close}><DotIcon name="close" /></button>{!spectator && <button disabled={finished} onClick={surrender}>{t("降参")}</button>}<button onClick={exit}>{t("ロビーに戻る")}</button>
     <AudioControls />
     {latency != null && <p>{t("通信遅延")} {latency} ms</p>}
     {!spectator && <p>{t("A / D・← / →：移動　W / S・↑ / ↓：角度")}<br />{t("Space：溜めて発射　Q / E：武器　Tab：機体を順に見る")}</p>}

@@ -90,7 +90,7 @@
 .world-ui.world-ui .world-lobby .lobby-deploy:hover:not(:disabled) { background:#80ff9f; color:#000; border-color:#80ff9f; }
 
 /* Shared page rule: borders identify controls or state, not content wrappers. */
-.world-ui.world-ui :is(h1,h2,h3,.pixel-panel,dialog,.world-build-note,.world-result-screen p,.world-result-screen .tank-portrait,.room-team-summary,.battle-self,.battle-countdown,.battle-wind,.battle-result-player,.battle-result-stats,.battle-turn-notice,.battle-menu-progress,.battle-upcoming,.network-latency,.network-finished > p) { border:0; box-shadow:none; }
+.world-ui.world-ui :is(h1,h2,h3,.pixel-panel,.world-build-note,.world-result-screen p,.world-result-screen .tank-portrait,.room-team-summary,.battle-self,.battle-countdown,.battle-wind,.battle-result-player,.battle-result-stats,.battle-turn-notice,.battle-menu-progress,.battle-upcoming,.network-latency,.network-finished > p) { border:0; box-shadow:none; }
 .world-ui.world-ui :is(.battle-console,.battle-roster,.kp-topbar,.kp-controls,.network-world > header,.network-world > footer) { border:0; box-shadow:none; }
 .world-ui.world-ui .battle-seat:not(.is-actor) { border-color:transparent; box-shadow:none; }
 .world-ui.world-ui :is(.room-members li,.public-rooms li,.battle-result-stats th,.battle-result-stats td) { border-bottom:0; }
@@ -148,3 +148,26 @@
 }
 
 .world-ui.world-ui .battle-console.battle-console { border-top:2px solid #33ff66; }
+
+.world-ui.world-ui.world-ui select {
+  appearance:none;
+  padding-right:32px;
+  background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='14' height='8' viewBox='0 0 14 8'%3E%3Cpath fill='%2333ff66' d='M0 0h2v2H0zM12 0h2v2h-2zM2 2h2v2H2zM10 2h2v2h-2zM4 4h2v2H4zM8 4h2v2H8zM6 6h2v2H6z'/%3E%3C/svg%3E");
+  background-repeat:no-repeat;
+  background-position:right 10px center;
+  background-size:14px 8px;
+}
+.world-ui.world-ui button.room-create { background:#33ff66; color:#000; }
+.world-ui.world-ui button.room-create:hover:not(:disabled) { background:#80ff9f; color:#000; border-color:#80ff9f; }
+.world-ui.world-ui.world-ui dialog { border:2px solid #33ff66; }
+
+.world-ui.world-ui.world-ui dialog { padding-top:24px; }
+.world-ui.world-ui.world-ui dialog .modal-close { position:absolute; top:12px; right:12px; width:auto; min-width:64px; height:40px; min-height:40px; margin:0; padding:6px 12px; font-size:14px; }
+
+.world-ui.world-ui.world-ui dialog > h2 { display:flex; align-items:center; min-height:40px; margin:0 48px 20px 0; }
+.world-ui.world-ui.world-ui dialog .modal-close { top:24px; right:16px; width:40px; min-width:40px; padding:8px; display:flex; align-items:center; justify-content:center; }
+.world-ui.world-ui.world-ui dialog .modal-close .dot-icon { width:20px; height:20px; }
+
+.room-ready-status,.room-ready-button { display:inline-flex; align-items:center; justify-content:center; gap:8px; }
+.world-ui.world-ui button.room-ready-button[aria-pressed=true] { background:#33ff66; color:#000; border-color:#33ff66; }
+.world-ui.world-ui button.room-ready-button[aria-pressed=true]:hover:not(:disabled) { background:#80ff9f; color:#000; border-color:#80ff9f; }

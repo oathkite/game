@@ -135,3 +135,12 @@ it("keeps validated custom colors through match preparation and accepts legacy p
   expect(prepared.setup?.members[1]?.colors).toBeUndefined();
   expect(() => createLobby("bad", "p1", { ...profile, colors: { primary:"invalid", secondary:"red" } as never }, TEST_ARENA)).toThrow();
 });
+it("lets a custom-room owner start once guests are ready", () => {
+  let room = two();
+  room = editLobby(room, "p1", command(room, "room.assignTeam", { playerId: "p1", teamId: "t0" })).room;
+  room = editLobby(room, "p2", command(room, "room.assignTeam", { playerId: "p2", teamId: "t1" })).room;
+  expect(startLobby(room, "p1", room.revision, false).reason).toBe("not-ready");
+  room = editLobby(room, "p2", command(room, "room.ready", { ready: true })).room;
+  expect(startLobby(room, "p1", room.revision, false).reason).toBe("started");
+  expect(startLobby(room, "p1", room.revision).reason).toBe("not-ready");
+});

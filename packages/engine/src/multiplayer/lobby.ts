@@ -78,7 +78,7 @@ export const editLobby = (room: LobbyState, authenticatedId: string, raw: unknow
   if (target.teamId === command.teamId) return reject("unchanged");
   return { room: changed(room, room.members.map(p => p === target ? { ...p, teamId: command.teamId } : p)), reason: "accepted" };
 };
-export const startLobby = (room: LobbyState, authenticatedId: string, revision: number): { room: LobbyState; reason: string; setup?: PreparedMatch } => {
+export const startLobby = (room: LobbyState, authenticatedId: string, revision: number, requireOwnerReady = true): { room: LobbyState; reason: string; setup?: PreparedMatch } => {
   const reject = (reason: string) => ({ room, reason });
   if (room.ownerId !== authenticatedId) return reject("not-owner");
   if (room.phase !== "waiting") return reject("locked");
@@ -87,7 +87,7 @@ export const startLobby = (room: LobbyState, authenticatedId: string, revision: 
   if (room.members.some(p => !p.connected)) return reject("disconnected");
   if (room.members.some(p => p.teamId === null)) return reject("unassigned");
   if (new Set(room.members.map(p => p.teamId)).size < 2) return reject("not-enough-teams");
-  if (room.members.some(p => !p.ready)) return reject("not-ready");
+  if (room.members.some(p => !p.ready && (requireOwnerReady || p.playerId !== room.ownerId))) return reject("not-ready");
   try { buildMapSpec(room.map, room.members.length); } catch { return reject("unsupported-map"); }
   return { room: { ...room, phase: "started" }, reason: "started", setup: {
     roomId: room.roomId, revision, ruleSetVersion: RULE_SET_VERSION, map: copyMap(room.map),

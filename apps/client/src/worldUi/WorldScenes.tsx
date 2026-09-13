@@ -1,3 +1,4 @@
+import { DotIcon } from "./DotIcon";
 import { closeOnBackdrop } from "@/worldUi/dialogBackdrop";
 import { useWorldBrowserBack } from "./browserBack";
 import type { ResultPresentation } from "./ResultPlayers";
@@ -76,7 +77,7 @@ export const WorldScenes = () => {
         {scene === "start" && <StartScreen onBegin={() => go("lobby")} />}
         {scene === "lobby" && <Lobby go={go} practiceMap={practiceMap} setPracticeMap={setPracticeMap} />}
         {scene === "settings" && <Settings onBack={exit} />}
-        {scene === "result" && result && <section className="world-result-screen"><h1>{result.result.type === "win" ? t("{player}の勝利", { player: t(teamColorName(Number(result.result.teamId.slice(1)))) }) : t("引き分け")}</h1><p>{t("いい一発だった。またここで。")}</p><ResultPlayers {...result} /><div><PixelButton onClick={() => go("battle")}>{t("もう一度プレイ")}</PixelButton><PixelButton onClick={exit}>{t("ロビーに戻る")}</PixelButton></div></section>}
+        {scene === "result" && result && <section className="world-result-screen"><h1>{result.result.type === "win" ? t("{player}の勝利", { player: t(teamColorName(Number(result.result.teamId.slice(1)))) }) : t("引き分け")}</h1><ResultPlayers {...result} /><div className="result-actions"><PixelButton onClick={exit}>{t("出撃準備")}</PixelButton><PixelButton className="result-primary" onClick={() => go("battle")}>{t("もう一度プレイ")}</PixelButton></div></section>}
       </div>
     </>}
     </Suspense>
@@ -106,7 +107,7 @@ const Lobby = ({ go, practiceMap, setPracticeMap }: { readonly go: (scene: Scene
       <h2 id="practice-settings-title">{t("プラクティス設定")}</h2>
       <label>{t("ステージ")}<select aria-label={t("ステージ")} value={practiceMap} onChange={e => setPracticeMap(e.target.value as MapName)}>{MAP_NAMES.map(map => <option key={map} value={map}>{t(MAP_LABELS[map])}</option>)}</select></label>
       {([0, 1] as const).map(slot => <label key={slot}>{t("装備")} {slot + 1}<select aria-label={`${t("装備")} ${slot + 1}`} value={profile.loadout[slot]} onChange={e => weapon(slot, e.target.value as WeaponId)}>{WEAPON_IDS.map(id => <option key={id} value={id} disabled={id === profile.loadout[slot === 0 ? 1 : 0]}>{t(WEAPON_LABELS[id])}</option>)}</select></label>)}
-      <div className="practice-settings-actions"><PixelButton onClick={() => practiceDialog.current?.close()}>{t("戻る")}</PixelButton><PixelButton onClick={() => { practiceDialog.current?.close(); go("battle"); }}>{t("練習開始")}</PixelButton></div>
+      <div className="practice-settings-actions"><PixelButton className="modal-close" aria-label={t("閉じる")} onClick={() => practiceDialog.current?.close()}><DotIcon name="close" /></PixelButton><PixelButton onClick={() => { practiceDialog.current?.close(); go("battle"); }}>{t("練習開始")}</PixelButton></div>
     </dialog>
   </section>;
 };

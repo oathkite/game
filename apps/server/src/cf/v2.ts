@@ -1,6 +1,6 @@
 import { directoryKey, directoryLocation, directoryRegions, directoryModes, mergeRoomPages } from "./directoryPartitions.js";
 import { readSmallJson } from "../rooms/readSmallJson.js";
-import { quickRequestSchema, roomPageCursorSchema } from "@game/protocol/v2-rooms";
+import { quickRequestSchema, roomPageCursorSchema, roomListFilterSchema } from "@game/protocol/v2-rooms";
 import { RoomObject, type RoomEnv } from "./v2Room.js";
 import { RoomDirectory } from "./v2Directory.js";
 export { RoomObject, RoomDirectory };
@@ -12,6 +12,13 @@ export default {
     if (!env.ALLOWED_ORIGINS.split(",").includes(origin)) return new Response("origin denied", { status: 403 });
     const headers = { "Access-Control-Allow-Origin": origin, "Vary": "Origin", "Cache-Control": "no-store" };
     if (request.method === "OPTIONS") return new Response(null, { status: 204, headers: { ...headers, "Access-Control-Allow-Methods": "GET, POST", "Access-Control-Allow-Headers": "Content-Type, Authorization" } });
+    if (url.pathname === "/v2/region" && request.method === "GET") {
+      const continent = request.cf?.continent;
+      const region = continent === "NA" || continent === "SA" ? "americas"
+        : continent === "EU" || continent === "AF" ? "europe"
+        : continent === "AS" || continent === "OC" ? "asia" : null;
+      return Response.json({ region }, { headers });
+    }
     if (request.method === "POST" && ["/v2/rooms", "/v2/quick"].includes(url.pathname)) {
       const { success } = await env.ALLOCATION_LIMITER.limit({ key: request.headers.get("CF-Connecting-IP") ?? "local" });
       if (!success) return new Response("allocation rate limit", { status: 429, headers: { ...headers, "Retry-After": "60" } });
@@ -33,9 +40,11 @@ export default {
     if (url.pathname === "/v2/rooms/page" && request.method === "GET") {
       const after = roomPageCursorSchema.safeParse(url.searchParams.get("after") ?? "");
       if (!after.success) return new Response("invalid cursor", { status: 400, headers });
+      const filter = roomListFilterSchema.safeParse(Object.fromEntries(url.searchParams));
+      if (!filter.success) return new Response("invalid filter", { status: 400, headers });
       const pages = await Promise.all([
-        env.DIRECTORY.getByName("public").page(after.data),
-        ...directoryRegions.map(region => env.DIRECTORY.getByName(directoryKey(region, "custom"), { locationHint: directoryLocation(region) }).page(after.data)),
+        env.DIRECTORY.getByName("public").page(after.data, filter.data),
+        ...directoryRegions.map(region => env.DIRECTORY.getByName(directoryKey(region, "custom"), { locationHint: directoryLocation(region) }).page(after.data, filter.data)),
       ]);
       return Response.json(mergeRoomPages(pages), { headers });
     }

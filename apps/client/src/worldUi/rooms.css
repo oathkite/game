@@ -32,3 +32,60 @@
 .public-rooms li { display:flex; flex-wrap:wrap; align-items:center; justify-content:space-between; gap:12px; padding:16px 0; border-bottom:2px solid #718a9a; }
 .public-rooms li span { display:block; font-size:13px; line-height:1.7; }
 .public-rooms li > div:last-child { display:flex; flex-wrap:wrap; gap:8px; }
+
+ .room-header { flex-wrap:wrap; }
+.room-header-actions { display:flex; flex-wrap:wrap; align-items:center; justify-content:flex-end; gap:12px; margin-left:auto; }
+.world-ui .room-header-actions select { width:auto; min-width:140px; margin:0; }
+.public-rooms + .room-entry { margin-top:32px; }
+@media(max-width:499px) { .room-header-actions { gap:8px; width:100%; } .room-header-actions > * { flex:1; min-width:0; } .world-ui .room-header-actions select { min-width:0; } }
+.world-ui .room-header :is(button,select) { box-sizing:border-box; height:44px; min-height:44px; margin-top:0; padding-top:6px; padding-bottom:6px; white-space:nowrap; }
+
+.room-filters { display:flex; flex-wrap:wrap; align-items:flex-end; gap:12px; margin-bottom:20px; }
+.room-filters label { flex:1; min-width:140px; }
+.room-filters button { height:44px; min-height:44px; }
+
+.room-filter-dialog { width:min(440px,calc(100vw - 32px)); box-sizing:border-box; max-height:calc(100dvh - 32px); overflow:auto; padding:24px; background:#000; color:#33ff66; border:0; font:inherit; }
+.room-filter-dialog::backdrop { background:#000c; }
+.room-filter-dialog h2 { margin:0 0 20px; }
+.room-filter-dialog .room-filters { display:grid; grid-template-columns:1fr 1fr; margin:0; }
+.room-filter-dialog .room-filters label { grid-column:1/-1; min-width:0; }
+.world-ui.world-ui .public-rooms.public-rooms li { border:2px solid #33ff66; padding:16px; margin-bottom:12px; }
+.room-screen > .room-header,.room-screen > .room-body { width:100%; max-width:1000px; min-width:0; margin-inline:auto; box-sizing:border-box; }
+.room-screen .room-body > .pixel-panel { padding-inline:0; }
+.public-rooms > ul { display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:12px; }
+.world-ui.world-ui .public-rooms.public-rooms li { margin-bottom:0; min-width:0; }
+@media(max-width:699px) { .public-rooms > ul { grid-template-columns:minmax(0,1fr); } }
+
+.room-screen > footer { width:100%; max-width:1000px; margin-inline:auto; }
+.room-screen footer .room-back { margin-right:auto; }
+
+.room-member-weapons { grid-column:1/-1; display:flex; align-items:center; gap:12px; }
+.room-members .room-member-weapons > span { display:flex; }
+.room-member-weapons svg { width:48px; height:48px; }
+.room-weapon-slots { display:flex; gap:12px; margin-bottom:20px; padding-bottom:20px; border-bottom:2px solid #33ff66; }
+.room-weapon-slots button { flex:1; display:flex; align-items:center; justify-content:center; gap:8px; }
+.room-weapon-options { display:grid; grid-template-columns:repeat(4,minmax(0,1fr)); gap:8px; margin-bottom:20px; }
+.room-weapon-options button { display:flex; flex-direction:column; align-items:center; font-size:14px; padding:8px; }
+
+.room-detail-actions { width:auto; }
+@media(max-width:699px) { .room-detail-actions { width:100%; } }
+
+.room-table-scroll { overflow-x:auto; }
+.room-player-table { width:100%; border-collapse:collapse; text-align:left; }
+.room-player-table th,.room-player-table td { padding:16px 12px; border:0; border-bottom:2px solid #33ff66; vertical-align:middle; }
+.room-player-table th:first-child { padding-left:0; }
+.room-player-table td:last-child { padding-right:0; white-space:nowrap; }
+.room-player-table th[scope=row] { white-space:nowrap; min-width:100px; }
+.room-player-table small { display:inline; margin-left:8px; font-size:11px; }
+.room-team-swatches { display:grid; grid-template-columns:repeat(8,32px); gap:4px; }
+.world-ui.world-ui .room-team-swatches button { width:32px; height:32px; min-width:32px; min-height:32px; padding:4px; border:2px solid transparent; background:#000; }
+.world-ui.world-ui .room-team-swatches button[aria-pressed=true] { border-color:#33ff66; }
+.room-team-swatches button span { display:block; width:20px; height:20px; }
+.room-player-table .room-member-weapons { flex-wrap:nowrap; gap:8px; white-space:nowrap; }
+@media(max-width:699px) { .room-player-table { min-width:540px; } .room-player-table th,.room-player-table td { padding:12px 8px; } }
+
+.room-weapon-dialog { width:min(720px,calc(100vw - 32px)); }
+.room-weapon-options button { min-width:0; overflow-wrap:anywhere; }
+@media(max-width:499px) { .room-weapon-dialog { padding:16px; } .room-weapon-options button { padding:4px; font-size:12px; } }
+
+.room-weapon-slot-label { display:flex; flex-direction:column; gap:4px; text-align:left; }

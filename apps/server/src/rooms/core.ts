@@ -109,7 +109,7 @@ export const reduceRoom = (state: RoomState, connectionId: string, raw: unknown,
   if (state.mode !== "custom" && (message.type === "room.assignTeam" || message.type === "room.map")) return reply(state, "fixed-mode");
   if (message.type === "room.start") {
     if (state.mode !== "custom" && state.lobby!.members.length !== (state.mode === "1v1" ? 2 : 4)) return reply(state, "waiting-for-players");
-    const result = startLobby(state.lobby!, session.playerId, message.revision);
+    const result = startLobby(state.lobby!, session.playerId, message.revision, state.mode !== "custom");
     return result.setup ? reply({ ...state, lobby: result.room, battle: createPreparedSession(result.setup, id.matchId, id.seed, now) }) : reply(state, result.reason);
   }
   if (message.type.startsWith("room.")) {
