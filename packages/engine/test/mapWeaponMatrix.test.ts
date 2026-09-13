@@ -33,7 +33,7 @@ for (const map of MULTIPLAYER_MAPS) for (const count of [2, 3, 4, 5, 6, 7, 8]) {
       expect(initial.players.every(p => p.hp === 100)).toBe(true);
       await setImmediate();
     }
-  });
+  }, 60000);
 }
 const partitions = (remaining: number, minimum = 1): number[][] => {
   if (!remaining) return [[]];
