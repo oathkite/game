@@ -1,0 +1,75 @@
+{
+  "sourceCommit": "38542ba88f07cbb751b0c04120f8293d13b3d432",
+  "browser": "Chromium",
+  "date": "2026-09-13",
+  "captures": [
+    {
+      "file": "captures/image-terrain-after-chromium.png",
+      "sha256": "1b838f24e5dd046f71c851190068da7523383ffdd348ac2b79206cce24b6806c"
+    },
+    {
+      "file": "captures/image-terrain-before-chromium.png",
+      "sha256": "4264272571821a698e0f0506560ec1891da2601e1eacd3b45a5ca1f1551eeb88"
+    },
+    {
+      "file": "captures/image-terrain-overview-chromium.png",
+      "sha256": "36df96c04816802a7ff48754a80d237ff0828a85c89743189efb49a5d949a33e"
+    },
+    {
+      "file": "captures/journey-chromium-1440-battle.png",
+      "sha256": "2afedaed120cb45d6502986d9ed3cf7f753eee732afbf2032e78f003e81d5fb8"
+    },
+    {
+      "file": "captures/journey-chromium-1440-lobby.png",
+      "sha256": "803fd654a59829dc3e035fc56f781d87a3a6dcd35d1662013fefadeaeca12e21"
+    },
+    {
+      "file": "captures/journey-chromium-1440-result.png",
+      "sha256": "d7bbd95ef3d40d64412cf1b83195cf27245fa2b02a5cab7258bf08c99f0a7349"
+    },
+    {
+      "file": "captures/journey-chromium-1440-settings.png",
+      "sha256": "a30cda9803904eaa91f7f173d2ac9a98d36bbcb18ab0c90961ff4f19a9ef4b6e"
+    },
+    {
+      "file": "captures/journey-chromium-1440-title.png",
+      "sha256": "8b4aead1f8eaad8382303049ca52ad23abb242def4a12658adf9fc99039125ce"
+    },
+    {
+      "file": "captures/journey-chromium-667-battle.png",
+      "sha256": "8847c51f0307d3c37bc158ce5d89f03b432b29b9c1d19816e62e5e1ea275be72"
+    },
+    {
+      "file": "captures/journey-chromium-667-lobby.png",
+      "sha256": "71d1f41b7db40392b5a71b91857b417310f5e232be7d6cc6e835ccc7159e6d0d"
+    },
+    {
+      "file": "captures/journey-chromium-667-result.png",
+      "sha256": "d448077823e6580b0b5e4107092d5e6a4c9917f7326c27f10bee36ab221224f1"
+    },
+    {
+      "file": "captures/journey-chromium-667-settings.png",
+      "sha256": "027e5593444966500f4d7883be0472b92667fbfe30808f833df7d48d121d97f1"
+    },
+    {
+      "file": "captures/journey-chromium-667-title.png",
+      "sha256": "a251555a5506767d67857ffe455ffb479885e4c7502a7845166e234ca56496a2"
+    },
+    {
+      "file": "captures/refinement-desktop.png",
+      "sha256": "0cb4286588fd4e8542c0f59f25fb3dfaddcc685520b1bb993fbd3f21ffc2cfcc"
+    },
+    {
+      "file": "captures/refinement-mobile.png",
+      "sha256": "beab25eca1a7db1a0e8d961ff6f9f5344faf3989b06924cfebb6e0d6a6f012f7"
+    },
+    {
+      "file": "captures/refinement-overview.png",
+      "sha256": "25a4741b5964175027df545aca6ce17697f93a2103e2931d9144b74e55bf9b7e"
+    },
+    {
+      "file": "captures/refinement-start.png",
+      "sha256": "b0ab92a892d0443e2da1355cf410302bdc581a9aa7daa91e464777ccbe2d55c9"
+    }
+  ]
+}
