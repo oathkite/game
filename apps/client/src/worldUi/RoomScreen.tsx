@@ -1,3 +1,6 @@
+import { CreateRoomDialog } from "./CreateRoomDialog";
+import { RoomPasswordDialog } from "./RoomPasswordDialog";
+import type { CreateRoomOptions } from "@game/protocol/v2-rooms";
 import { DotIcon } from "./DotIcon";
 import { RoomInviteLink } from "./RoomInviteLink";
 import { useRegionSelection } from "./useRegionSelection";
@@ -19,9 +22,11 @@ import { inviteRoom } from "./roomInvite";
 import { resolveRoomUrl } from "./roomTransport";
 const serverBase = import.meta.env.VITE_ROOM_SERVER_URL || (import.meta.env.PROD ? location.origin : "");
 const tokenKey = "keropod.room-token", roomKey = "keropod.room-id";
-const errors: Record<string, string> = { "invalid-invite": "招待リンクが無効か期限切れです。新しいリンクを共有してもらってください。", "room-unrecoverable": "部屋のデータを復元できませんでした。この試合は無効です。ロビーへ戻ってください。", "version-mismatch": "ゲームの更新が必要です。再読み込みしてください。", "wrong-mode": "この部屋は別の対戦形式です。クイック参加から入り直してください。", "fixed-mode": "クイック対戦の編成は固定です。", "waiting-for-players": "人数が揃うまでお待ちください。", "spectators-full": "観戦席が満員です。", "read-only": "観戦中は対戦操作できません。", "not-found": "部屋が見つかりません。", full: "部屋が満員です。", locked: "対戦中の部屋には参加できません。", "invalid-session": "復帰期限が切れたか、別の画面で接続中です。", "stale-revision": "部屋が更新されました。内容を確認して再操作してください。", "not-ready": "全員の準備完了を待っています。", unassigned: "全員のチームを選んでください。", "not-enough-teams": "2チーム以上に分かれてください。", "not-enough-players": "2人以上で開始できます。", disconnected: "切断中の参加者がいます。", "not-owner": "オーナーだけが操作できます。", "not-owner-or-not-finished": "対戦終了後、オーナーが部屋へ戻せます。" };
+const errors: Record<string, string> = { "wrong-password": "パスワードが違います。", "password-rate-limit": "しばらく待ってから再試行してください。", "invalid-invite": "招待リンクが無効か期限切れです。新しいリンクを共有してもらってください。", "room-unrecoverable": "部屋のデータを復元できませんでした。この試合は無効です。ロビーへ戻ってください。", "version-mismatch": "ゲームの更新が必要です。再読み込みしてください。", "wrong-mode": "この部屋は別の対戦形式です。クイック参加から入り直してください。", "fixed-mode": "クイック対戦の編成は固定です。", "waiting-for-players": "人数が揃うまでお待ちください。", "spectators-full": "観戦席が満員です。", "read-only": "観戦中は対戦操作できません。", "not-found": "部屋が見つかりません。", full: "部屋が満員です。", locked: "対戦中の部屋には参加できません。", "invalid-session": "復帰期限が切れたか、別の画面で接続中です。", "stale-revision": "部屋が更新されました。内容を確認して再操作してください。", "not-ready": "全員の準備完了を待っています。", unassigned: "全員のチームを選んでください。", "not-enough-teams": "2チーム以上に分かれてください。", "not-enough-players": "2人以上で開始できます。", disconnected: "切断中の参加者がいます。", "not-owner": "オーナーだけが操作できます。", "not-owner-or-not-finished": "対戦終了後、オーナーが部屋へ戻せます。" };
 export const RoomScreen = ({ onExit }: { readonly onExit: () => void; readonly onLab?: () => void }) => {
   const { t } = useLanguage();
+  const [creating, setCreating] = useState(false);
+  const [passwordJoin, setPasswordJoin] = useState<{ roomId: string; type: "room.join" | "room.spectate" } | null>(null);
   const [filtersOpen, setFiltersOpen] = useState(false);
   const [room, setRoom] = useState<RoomSnapshot | null>(null), [playerId, setPlayerId] = useState("");
   const [status, setStatus] = useState(() => new URL(location.href).searchParams.has("room") && !inviteRoom(location.href) ? "招待リンクの部屋コードが無効です。" : ""), [busy, setBusy] = useState(false);
@@ -31,7 +36,8 @@ export const RoomScreen = ({ onExit }: { readonly onExit: () => void; readonly o
   const [battle, setBattle] = useState<RoomConnection | null>(null);
   useEffect(() => { if (!battle) setMusic("lobby"); }, [battle]);
   const socket = useRef<WebSocket | null>(null), active = useRef(true), attempt = useRef(0);
-  const connect = async (initial: { readonly type: string; readonly mode?: "1v1" | "2v2"; readonly region?: "asia" | "europe" | "americas"; readonly roomId?: string; readonly token?: string | null; readonly profile?: ReturnType<typeof profile> }) => {
+  const connect = async (initial: { readonly options?: CreateRoomOptions; readonly password?: string; readonly type: string; readonly mode?: "1v1" | "2v2"; readonly region?: "asia" | "europe" | "americas"; readonly roomId?: string; readonly token?: string | null; readonly profile?: ReturnType<typeof profile> }) => {
+    const { options: _options, ...handshake } = initial;
     const currentAttempt = ++attempt.current;
     socket.current?.close(); setBusy(true); setStatus("接続しています…");
     socket.current = null;
@@ -45,13 +51,13 @@ export const RoomScreen = ({ onExit }: { readonly onExit: () => void; readonly o
       ? new URLSearchParams(new URL(location.href).hash.slice(1)).get("invite") : null;
     const ws = new WebSocket(url); socket.current = ws;
     let identity = "", watching = false, versionMismatch = false;
-    ws.onopen = () => { if (active.current && socket.current === ws) ws.send(JSON.stringify({ ...initial, ...(invitation !== null ? { invite: invitation } : {}), build: CLIENT_BUILD, ...(initial.type === "room.quick" ? { roomId: serverBase ? new URL(url).pathname.split("/").at(-1) : "000000" } : {}) })); };
+    ws.onopen = () => { if (active.current && socket.current === ws) ws.send(JSON.stringify({ ...handshake, ...(invitation !== null ? { invite: invitation } : {}), build: CLIENT_BUILD, ...(initial.type === "room.quick" ? { roomId: serverBase ? new URL(url).pathname.split("/").at(-1) : "000000" } : {}) })); };
     ws.onmessage = event => {
       if (!active.current || socket.current !== ws) return;
       let raw: unknown; try { raw = JSON.parse(String(event.data)); } catch { return; }
       const result = roomOutputSchema.safeParse(raw); if (!result.success) return;
       const message = result.data;
-      if (message.type === "room.welcome") { identity = message.playerId; watching = message.role === "spectator"; setSpectator(watching); setPlayerId(identity); sessionStorage.setItem(tokenKey, message.token); setBusy(false); setStatus(""); }
+      if (message.type === "room.welcome") { setCreating(false); identity = message.playerId; watching = message.role === "spectator"; setSpectator(watching); setPlayerId(identity); sessionStorage.setItem(tokenKey, message.token); setBusy(false); setStatus(""); }
       if (message.type === "room.snapshot") { sessionStorage.setItem(roomKey, message.room.roomId); setRoom(message.room); if (message.room.phase === "waiting") setBattle(null); }
       if (message.type === "lab.frame" && !compatibleMatch(message.build, message.map)) { versionMismatch = true; setStatus("ゲームの更新が必要です。再読み込みしてください。"); ws.close(); return; }
       if (message.type === "lab.frame") setBattle(current => current?.socket === ws ? current : { socket: ws, playerId: identity, spectator: watching, frame: message });
@@ -63,7 +69,7 @@ export const RoomScreen = ({ onExit }: { readonly onExit: () => void; readonly o
       if (message.type === "room.error" && message.reason === "invalid-invite") {
         versionMismatch = true; setBusy(false); setStatus(errors["invalid-invite"]!); socket.current = null; ws.close(); return;
       }
-      if (message.type === "room.error") { versionMismatch = message.reason === "version-mismatch"; setBusy(false); setStatus(errors[message.reason] ?? "操作を受け付けられませんでした。部屋の状態を確認してください。");
+      if (message.type === "room.error") { versionMismatch = ["version-mismatch", "wrong-password", "password-rate-limit"].includes(message.reason); setBusy(false); setStatus(errors[message.reason] ?? "操作を受け付けられませんでした。部屋の状態を確認してください。");
         if (message.reason === "invalid-session") { sessionStorage.removeItem(tokenKey); sessionStorage.removeItem(roomKey); socket.current = null; setRoom(null); setBattle(null); ws.close(); } }
     };
     ws.onclose = () => { if (versionMismatch) return; if (active.current && socket.current === ws) { setBusy(false); setStatus("接続が切れました。再接続で復帰できます（60秒以内）。"); } };
@@ -88,18 +94,20 @@ export const RoomScreen = ({ onExit }: { readonly onExit: () => void; readonly o
   const connected = socket.current?.readyState === WebSocket.OPEN;
   if (battle) return <><NetworkLab connection={battle} worldArt onExit={leave} />{status && <div className="room-battle-status" role="status">{t(status)}{!connected && <PixelButton disabled={busy} onClick={() => connect({ type: "room.resume", token: sessionStorage.getItem(tokenKey) })}>{t("再接続")}</PixelButton>}</div>}</>;
   return <section key={room?.roomId ?? "entry"} className="room-screen">
+    {creating && <CreateRoomDialog region={region} busy={busy} close={() => setCreating(false)} create={options => { void connect({ type: "room.create", options, password: options.password, profile: profile() }); }} />}
+    {passwordJoin && <RoomPasswordDialog close={() => setPasswordJoin(null)} submit={password => { void connect({ ...passwordJoin, password, ...(passwordJoin.type === "room.join" ? { profile: profile() } : {}) }); setPasswordJoin(null); }} />}
     <header className="room-header">
       {!room && <PixelButton onClick={leave}>{t("出撃準備")}</PixelButton>}
-      {room ? <h1>{t("部屋")} <span data-testid="room-code">{room.roomId}</span></h1> : <div className="room-header-actions">
+      {room ? <h1>{room.name || t("部屋")} <span data-testid="room-code">{room.roomId}</span></h1> : <div className="room-header-actions">
         <select aria-label={t("クイック対戦地域")} value={region} onChange={e => selectRegion(e.target.value as "asia" | "europe" | "americas")}><option value="" disabled>{t(measuring ? "地域を測定中…" : "地域を選択してください")}</option><option value="asia">{t("アジア")}</option><option value="europe">{t("ヨーロッパ")}</option><option value="americas">{t("アメリカ")}</option></select>
         {serverBase && <PixelButton disabled={busy} aria-expanded={filtersOpen} aria-controls="room-filters" onClick={() => setFiltersOpen(value => !value)}>{t("部屋を探す")}</PixelButton>}
-        <PixelButton className="room-create" disabled={busy} onClick={() => connect({ type: "room.create", profile: profile() })}>{t("部屋を作る")}</PixelButton>
+        <PixelButton className="room-create" disabled={busy} onClick={() => setCreating(true)}>{t("部屋を作る")}</PixelButton>
       </div>}
       {room && <div className="room-header-actions room-detail-actions"><select aria-label={t("マップ")} value={room.map.id} disabled={room.mode !== "custom" || !connected || !owner} onChange={e => edit("room.map", { mapId: e.target.value })}>{MULTIPLAYER_MAPS.map(map => <option key={map.id} value={map.id}>{t(MULTIPLAYER_MAP_LABELS[map.id] ?? map.id)}</option>)}</select><PixelButton disabled={!!serverBase && (!me || !connected)} onClick={() => setSharing(v => !v)}>{t("招待リンク")}</PixelButton></div>}
     </header>
     <div className="room-body"><PixelPanel>
       {!room ? <>
-        {serverBase && <PublicRooms initialCode={inviteRoom(location.href) ?? ""} base={serverBase} busy={busy} filtersOpen={filtersOpen} closeFilters={() => setFiltersOpen(false)} join={(roomId, type) => { void connect({ type, roomId, ...(type === "room.join" ? { profile: profile() } : {}) }); }} />}
+        {serverBase && <PublicRooms initialCode={inviteRoom(location.href) ?? ""} base={serverBase} busy={busy} filtersOpen={filtersOpen} closeFilters={() => setFiltersOpen(false)} join={(roomId, type, locked) => { if (locked) { setPasswordJoin({ roomId, type }); return; } void connect({ type, roomId, ...(type === "room.join" ? { profile: profile() } : {}) }); }} />}
 </> : <>
         {spectator && <p role="status">{t("観戦中")}</p>}
         {room.mode !== "custom" && <div><strong>{room.mode === "1v1" ? "1 vs 1" : "2 vs 2"}　{room.members.length} / {room.mode === "1v1" ? 2 : 4}</strong><PixelButton onClick={returnToList}>{t("待機をキャンセル")}</PixelButton>{waited && <p role="status">{t("対戦相手を待っています。キャンセルして地域を変更するか、ロビーから練習できます。")}</p>}</div>}

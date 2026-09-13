@@ -12,5 +12,5 @@ export const battleFrame = (room: RoomState, now: number): LabFrame => {
     movement: movementSnapshot(state.movement, now), phase: state.phase, result: state.result,
     terrainOps: [...state.terrainOps], wind: state.windState.value, map: state.map, replay: replayFrame(state) };
 };
-export const lobbyFrame = (room: RoomState) => ({ type: "room.snapshot", room: { ...room.lobby!, mode: room.mode, region: room.region } });
+export const lobbyFrame = (room: RoomState) => ({ type: "room.snapshot", room: { ...room.lobby!, name: room.name, passwordProtected: room.passwordProtected, mode: room.mode, region: room.region } });
 export const roomFrame = (room: RoomState, now: number) => room.battle ? battleFrame(room, now) : lobbyFrame(room);

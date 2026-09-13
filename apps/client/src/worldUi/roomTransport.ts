@@ -1,5 +1,6 @@
+import type { CreateRoomOptions } from "@game/protocol/v2-rooms";
 export const resolveRoomUrl = async (
-  initial: { readonly type: string; readonly roomId?: string; readonly mode?: string; readonly region?: string }, base: string, savedRoomId: string | null, request: typeof fetch = fetch,
+  initial: { readonly options?: CreateRoomOptions; readonly type: string; readonly roomId?: string; readonly mode?: string; readonly region?: string }, base: string, savedRoomId: string | null, request: typeof fetch = fetch,
 ): Promise<string> => {
   const url = new URL(base);
   if (url.protocol !== "https:" && url.protocol !== "http:") throw new Error("invalid room server");
@@ -10,7 +11,7 @@ export const resolveRoomUrl = async (
     roomId = (await response.json() as { roomId?: string }).roomId;
   }
   if (initial.type === "room.create") {
-    const response = await request(new URL("/v2/rooms", url).href, { method: "POST" });
+    const response = await request(new URL("/v2/rooms", url).href, { method: "POST", ...(initial.options ? { headers: { "Content-Type": "application/json" }, body: JSON.stringify(initial.options) } : {}) });
     if (!response.ok) throw new Error("room allocation failed");
     roomId = (await response.json() as { roomId?: string }).roomId;
   }

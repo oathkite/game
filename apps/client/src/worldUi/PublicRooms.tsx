@@ -7,7 +7,7 @@ import { PixelButton } from "./PixelUi";
 
 export const PublicRooms = ({ initialCode = "", base, busy, filtersOpen, closeFilters, join }: {
   readonly initialCode?: string; readonly base: string; readonly busy: boolean; readonly filtersOpen: boolean; readonly closeFilters: () => void;
-  readonly join: (roomId: string, role: "room.join" | "room.spectate") => void;
+  readonly join: (roomId: string, role: "room.join" | "room.spectate", locked: boolean) => void;
 }) => {
   const { t } = useLanguage();
   const dialog = useRef<HTMLDialogElement>(null);
@@ -81,12 +81,12 @@ export const PublicRooms = ({ initialCode = "", base, busy, filtersOpen, closeFi
     </dialog>
     {filtering && !loading && !failed && page.rooms.length === 0 && <p role="status">{t("条件に一致する部屋はありません。")}</p>}
     {failed && <p role="alert">{t("部屋一覧を取得できませんでした。更新して再試行してください。")}</p>}
-    {!failed && !loading && !filtering && page.rooms.length === 0 && <p>{t("公開部屋はありません。部屋を作るかクイック参加で遊べます。")}</p>}
+    {!failed && !loading && !filtering && page.rooms.length === 0 && <p>{t("部屋がありません。「部屋を作る」から作成できます。")}</p>}
     <ul>{page.rooms.map(room => <li key={room.roomId}>
-      <div><strong>{room.roomId}</strong><span>{t(MULTIPLAYER_MAP_LABELS[room.mapId] ?? room.mapId)} · {t(({ asia: "アジア", europe: "ヨーロッパ", americas: "アメリカ" })[room.region])}</span>
+      <div><strong>{room.passwordProtected && <span role="img" aria-label={t("パスワードルーム")}><DotIcon name="lock" /></span>}{room.name || room.roomId}</strong>{room.name && <span>{room.roomId}</span>}<span>{t(MULTIPLAYER_MAP_LABELS[room.mapId] ?? room.mapId)} · {t(({ asia: "アジア", europe: "ヨーロッパ", americas: "アメリカ" })[room.region])}</span>
         <span>{t("参加者 {count}/8", { count: room.members })} · {t(room.phase === "waiting" ? "準備中" : "対戦中")}</span></div>
-      <div>{room.phase === "waiting" && <PixelButton disabled={busy || room.members >= 8} onClick={() => join(room.roomId, "room.join")}>{t("部屋に参加")}</PixelButton>}
-        <PixelButton disabled={busy || room.spectators >= 8} onClick={() => join(room.roomId, "room.spectate")}>{t("観戦する")}</PixelButton></div>
+      <div>{room.phase === "waiting" && <PixelButton disabled={busy || room.members >= 8} onClick={() => join(room.roomId, "room.join", Boolean(room.passwordProtected))}>{t("部屋に参加")}</PixelButton>}
+        <PixelButton disabled={busy || room.spectators >= 8} onClick={() => join(room.roomId, "room.spectate", Boolean(room.passwordProtected))}>{t("観戦する")}</PixelButton></div>
     </li>)}</ul>
     {loading && <p role="status">{t("部屋一覧を読み込み中…")}</p>}
     {page.nextCursor && <PixelButton disabled={loading || busy} onClick={() => { void load(page.nextCursor!); }}>{t("もっと見る")}</PixelButton>}

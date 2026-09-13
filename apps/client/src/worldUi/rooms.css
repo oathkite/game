@@ -89,3 +89,5 @@
 @media(max-width:499px) { .room-weapon-dialog { padding:16px; } .room-weapon-options button { padding:4px; font-size:12px; } }
 
 .room-weapon-slot-label { display:flex; flex-direction:column; gap:4px; text-align:left; }
+
+.room-create-form { display:grid; gap:20px; }

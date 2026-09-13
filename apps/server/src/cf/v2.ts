@@ -1,6 +1,7 @@
+import { MULTIPLAYER_MAPS } from "@game/maps";
 import { directoryKey, directoryLocation, directoryRegions, directoryModes, mergeRoomPages } from "./directoryPartitions.js";
 import { readSmallJson } from "../rooms/readSmallJson.js";
-import { quickRequestSchema, roomPageCursorSchema, roomListFilterSchema } from "@game/protocol/v2-rooms";
+import { quickRequestSchema, roomPageCursorSchema, roomListFilterSchema, createRoomOptionsSchema } from "@game/protocol/v2-rooms";
 import { RoomObject, type RoomEnv } from "./v2Room.js";
 import { RoomDirectory } from "./v2Directory.js";
 export { RoomObject, RoomDirectory };
@@ -24,8 +25,11 @@ export default {
       if (!success) return new Response("allocation rate limit", { status: 429, headers: { ...headers, "Retry-After": "60" } });
     }
     if (url.pathname === "/v2/rooms" && request.method === "POST") {
-      const roomId = await env.DIRECTORY.getByName(directoryKey("asia", "custom"), { locationHint: directoryLocation("asia") }).allocate();
-      await env.ROOMS.getByName(roomId, { locationHint: "apac" }).initialize(roomId, "custom", "asia");
+      const input = createRoomOptionsSchema.safeParse(request.body ? await readSmallJson(request) : {});
+      if (!input.success || !MULTIPLAYER_MAPS.some(map => map.id === input.data.mapId)) return new Response("invalid room settings", { status: 400, headers });
+      const options = input.data;
+      const roomId = await env.DIRECTORY.getByName(directoryKey(options.region, "custom"), { locationHint: directoryLocation(options.region) }).allocate("custom", options.region);
+      await env.ROOMS.getByName(roomId, { locationHint: directoryLocation(options.region) }).initialize(roomId, "custom", options.region, options);
       return Response.json({ roomId }, { headers });
     }
     if (url.pathname === "/v2/quick" && request.method === "POST") {

@@ -1,3 +1,5 @@
+import { hashRoomPassword, verifyRoomPassword, type PasswordDigest } from "./roomPassword.js";
+import { roomInputSchema, type CreateRoomOptions } from "@game/protocol/v2-rooms";
 import type { RoomMode, RoomRegion } from "@game/protocol/v2-rooms";
 import { DurableObject } from "cloudflare:workers";
 import { movementSnapshot } from "@game/engine/multiplayer";
@@ -20,6 +22,7 @@ export class RoomObject extends DurableObject<RoomEnv> {
   private readonly outbox: DirectoryOutbox;
   constructor(ctx: DurableObjectState, env: RoomEnv) {
     super(ctx, env);
+    ctx.storage.sql.exec("CREATE TABLE IF NOT EXISTS room_password (id INTEGER PRIMARY KEY CHECK(id=1), salt TEXT NOT NULL, hash TEXT NOT NULL)");
     this.invites = new RoomInvites(ctx.storage.sql);
     this.outbox = new DirectoryOutbox(ctx.storage.sql);
     this.snapshots = new RoomSqlSnapshot(ctx.storage.sql);
@@ -50,9 +53,16 @@ export class RoomObject extends DurableObject<RoomEnv> {
   probe(): boolean {
     return this.ctx.storage.sql.exec("SELECT id FROM room_state WHERE id = 1").toArray().length > 0;
   }
-  async initialize(roomId: string, mode: RoomMode, region: RoomRegion): Promise<void> {
+  async initialize(roomId: string, mode: RoomMode, region: RoomRegion, options?: CreateRoomOptions): Promise<void> {
     const runtime = this.load(roomId, mode, region);
     if (runtime.state.mode !== mode || runtime.state.region !== region) throw new Error("room mode mismatch");
+    if (options && !runtime.state.lobby) {
+      if (options.password) {
+        const stored = await hashRoomPassword(options.password);
+        this.ctx.storage.sql.exec("INSERT OR REPLACE INTO room_password VALUES (1, ?, ?)", stored.salt, stored.hash);
+      }
+      await runtime.update(state => ({ state: { ...state, name: options.name, passwordProtected: Boolean(options.password), initialMapId: options.mapId }, reason: "configured" }));
+    }
     await this.ctx.storage.sync();
   }
   private async schedule(state: Pick<RoomState, "sessions" | "reports"> & { readonly battle: RoomSnapshot["state"]["battle"] | RoomState["battle"] }): Promise<void> {
@@ -91,9 +101,9 @@ export class RoomObject extends DurableObject<RoomEnv> {
     }, summary => this.env.DIRECTORY.getByName(directoryKey(summary.region, summary.mode), { locationHint: directoryLocation(summary.region) }).update(summary))
       .catch(error => console.error("directory update failed", error)));
   }
-  private queueSummary(state: Pick<RoomState, "roomId" | "mode" | "region" | "sessions" | "lobby">): void {
+  private queueSummary(state: Pick<RoomState, "roomId" | "mode" | "region" | "sessions" | "lobby" | "name" | "passwordProtected">): void {
     if (!state.lobby) return;
-    this.outbox.enqueue({ roomId: state.roomId, mode: state.mode, region: state.region,
+    this.outbox.enqueue({ name: state.name, passwordProtected: state.passwordProtected, roomId: state.roomId, mode: state.mode, region: state.region,
       members: state.sessions.filter(s => s.role === "player").length,
       spectators: state.sessions.filter(s => s.role === "spectator").length,
       phase: state.lobby.phase, mapId: state.lobby.map.id }, Date.now());
@@ -144,6 +154,19 @@ export class RoomObject extends DurableObject<RoomEnv> {
     let raw: unknown; try { raw = JSON.parse(data); } catch { this.send(ws, { type: "room.error", reason: "invalid" }); return; }
     if (typeof raw === "object" && raw !== null && "invite" in raw && !this.invites.valid(raw.invite, now)) {
       this.send(ws, { type: "room.error", reason: "invalid-invite" }); ws.close(1008, "invalid-invite"); return;
+    }
+    const parsed = roomInputSchema.safeParse(raw);
+    if (!parsed.success) { this.send(ws, { type: "room.error", reason: "invalid" }); return; }
+    if (["room.create", "room.join", "room.spectate", "room.quick"].includes(parsed.data.type)) {
+      const stored = this.ctx.storage.sql.exec<PasswordDigest>("SELECT salt, hash FROM room_password WHERE id=1").toArray()[0];
+      if (stored) {
+        const { success } = await this.env.ALLOCATION_LIMITER.limit({ key: `password:${this.ctx.id.toString()}` });
+        const password = "password" in parsed.data ? parsed.data.password : undefined;
+        if (!success || !password || !await verifyRoomPassword(password, stored)) {
+          this.send(ws, { type: "room.error", reason: success ? "wrong-password" : "password-rate-limit" });
+          ws.close(1008, "password rejected"); return;
+        }
+      }
     }
     const seed = crypto.getRandomValues(new Uint32Array(1))[0]!;
     const runtime = await this.recover();
