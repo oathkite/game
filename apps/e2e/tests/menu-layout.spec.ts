@@ -16,7 +16,7 @@ const screenshot = async (page: Page, name: string) => {
 };
 
 const setup = async (page: Page, nickname: string) => {
-  await page.goto("/");
+  await page.goto("/?prototype=legacy");
   await inView(page.getByTestId("enter-lobby"));
   await inView(page.getByTestId("solo"));
   await page.getByLabel("nickname").fill(nickname);

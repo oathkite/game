@@ -1,0 +1,644 @@
+{
+  "build": {
+    "protocol": 2,
+    "sim": "keropod-sim-v2.1",
+    "assets": "keropod-world-v1",
+    "rules": "keropod-v2.1",
+    "map": {
+      "id": "moss-valley",
+      "version": 1
+    }
+  },
+  "map": "moss-valley",
+  "result": {
+    "type": "win",
+    "teamId": "t1"
+  },
+  "shots": 24,
+  "transcript": [
+    {
+      "shot": 1,
+      "command": {
+        "version": 2,
+        "type": "turn.fire",
+        "matchId": "f0472c6d-f36b-4ae8-a883-f42f1c6aca53",
+        "turnId": 1,
+        "commandId": "natural-0",
+        "ackMoveSeq": 0,
+        "slot": 0,
+        "facing": 1,
+        "elevation": 15,
+        "power": 50
+      },
+      "hp": [
+        100,
+        100,
+        100,
+        100,
+        100,
+        65,
+        100,
+        100
+      ],
+      "terrainOps": 1
+    },
+    {
+      "shot": 2,
+      "command": {
+        "version": 2,
+        "type": "turn.fire",
+        "matchId": "f0472c6d-f36b-4ae8-a883-f42f1c6aca53",
+        "turnId": 2,
+        "commandId": "natural-1",
+        "ackMoveSeq": 0,
+        "slot": 0,
+        "facing": -1,
+        "elevation": 30,
+        "power": 50
+      },
+      "hp": [
+        100,
+        100,
+        100,
+        100,
+        65,
+        65,
+        100,
+        100
+      ],
+      "terrainOps": 2
+    },
+    {
+      "shot": 3,
+      "command": {
+        "version": 2,
+        "type": "turn.fire",
+        "matchId": "f0472c6d-f36b-4ae8-a883-f42f1c6aca53",
+        "turnId": 3,
+        "commandId": "natural-2",
+        "ackMoveSeq": 0,
+        "slot": 0,
+        "facing": -1,
+        "elevation": 15,
+        "power": 40
+      },
+      "hp": [
+        100,
+        100,
+        100,
+        100,
+        65,
+        30,
+        100,
+        100
+      ],
+      "terrainOps": 3
+    },
+    {
+      "shot": 4,
+      "command": {
+        "version": 2,
+        "type": "turn.fire",
+        "matchId": "f0472c6d-f36b-4ae8-a883-f42f1c6aca53",
+        "turnId": 4,
+        "commandId": "natural-3",
+        "ackMoveSeq": 0,
+        "slot": 0,
+        "facing": -1,
+        "elevation": 15,
+        "power": 40
+      },
+      "hp": [
+        100,
+        65,
+        100,
+        100,
+        65,
+        30,
+        100,
+        100
+      ],
+      "terrainOps": 4
+    },
+    {
+      "shot": 5,
+      "command": {
+        "version": 2,
+        "type": "turn.fire",
+        "matchId": "f0472c6d-f36b-4ae8-a883-f42f1c6aca53",
+        "turnId": 5,
+        "commandId": "natural-4",
+        "ackMoveSeq": 0,
+        "slot": 0,
+        "facing": -1,
+        "elevation": 15,
+        "power": 40
+      },
+      "hp": [
+        65,
+        65,
+        100,
+        100,
+        65,
+        30,
+        100,
+        100
+      ],
+      "terrainOps": 5
+    },
+    {
+      "shot": 6,
+      "command": {
+        "version": 2,
+        "type": "turn.fire",
+        "matchId": "f0472c6d-f36b-4ae8-a883-f42f1c6aca53",
+        "turnId": 6,
+        "commandId": "natural-5",
+        "ackMoveSeq": 0,
+        "slot": 0,
+        "facing": -1,
+        "elevation": 15,
+        "power": 40
+      },
+      "hp": [
+        65,
+        65,
+        100,
+        100,
+        65,
+        30,
+        100,
+        65
+      ],
+      "terrainOps": 6
+    },
+    {
+      "shot": 7,
+      "command": {
+        "version": 2,
+        "type": "turn.fire",
+        "matchId": "f0472c6d-f36b-4ae8-a883-f42f1c6aca53",
+        "turnId": 7,
+        "commandId": "natural-6",
+        "ackMoveSeq": 0,
+        "slot": 0,
+        "facing": -1,
+        "elevation": 15,
+        "power": 50
+      },
+      "hp": [
+        65,
+        65,
+        100,
+        65,
+        65,
+        30,
+        100,
+        65
+      ],
+      "terrainOps": 7
+    },
+    {
+      "shot": 8,
+      "command": {
+        "version": 2,
+        "type": "turn.fire",
+        "matchId": "f0472c6d-f36b-4ae8-a883-f42f1c6aca53",
+        "turnId": 8,
+        "commandId": "natural-7",
+        "ackMoveSeq": 0,
+        "slot": 0,
+        "facing": -1,
+        "elevation": 15,
+        "power": 40
+      },
+      "hp": [
+        65,
+        65,
+        100,
+        65,
+        65,
+        30,
+        65,
+        65
+      ],
+      "terrainOps": 8
+    },
+    {
+      "shot": 9,
+      "command": {
+        "version": 2,
+        "type": "turn.fire",
+        "matchId": "f0472c6d-f36b-4ae8-a883-f42f1c6aca53",
+        "turnId": 9,
+        "commandId": "natural-8",
+        "ackMoveSeq": 0,
+        "slot": 0,
+        "facing": 1,
+        "elevation": 45,
+        "power": 30
+      },
+      "hp": [
+        65,
+        65,
+        100,
+        65,
+        65,
+        -5,
+        65,
+        65
+      ],
+      "terrainOps": 9
+    },
+    {
+      "shot": 10,
+      "command": {
+        "version": 2,
+        "type": "turn.fire",
+        "matchId": "f0472c6d-f36b-4ae8-a883-f42f1c6aca53",
+        "turnId": 10,
+        "commandId": "natural-9",
+        "ackMoveSeq": 0,
+        "slot": 0,
+        "facing": 1,
+        "elevation": 75,
+        "power": 40
+      },
+      "hp": [
+        30,
+        65,
+        100,
+        65,
+        65,
+        0,
+        65,
+        65
+      ],
+      "terrainOps": 10
+    },
+    {
+      "shot": 11,
+      "command": {
+        "version": 2,
+        "type": "turn.fire",
+        "matchId": "f0472c6d-f36b-4ae8-a883-f42f1c6aca53",
+        "turnId": 11,
+        "commandId": "natural-10",
+        "ackMoveSeq": 0,
+        "slot": 0,
+        "facing": -1,
+        "elevation": 60,
+        "power": 40
+      },
+      "hp": [
+        30,
+        30,
+        100,
+        65,
+        65,
+        0,
+        65,
+        65
+      ],
+      "terrainOps": 11
+    },
+    {
+      "shot": 12,
+      "command": {
+        "version": 2,
+        "type": "turn.fire",
+        "matchId": "f0472c6d-f36b-4ae8-a883-f42f1c6aca53",
+        "turnId": 12,
+        "commandId": "natural-11",
+        "ackMoveSeq": 0,
+        "slot": 0,
+        "facing": -1,
+        "elevation": 45,
+        "power": 40
+      },
+      "hp": [
+        -5,
+        30,
+        100,
+        65,
+        65,
+        0,
+        65,
+        65
+      ],
+      "terrainOps": 12
+    },
+    {
+      "shot": 13,
+      "command": {
+        "version": 2,
+        "type": "turn.fire",
+        "matchId": "f0472c6d-f36b-4ae8-a883-f42f1c6aca53",
+        "turnId": 13,
+        "commandId": "natural-12",
+        "ackMoveSeq": 0,
+        "slot": 0,
+        "facing": -1,
+        "elevation": 30,
+        "power": 60
+      },
+      "hp": [
+        0,
+        -5,
+        100,
+        65,
+        65,
+        0,
+        65,
+        65
+      ],
+      "terrainOps": 13
+    },
+    {
+      "shot": 14,
+      "command": {
+        "version": 2,
+        "type": "turn.fire",
+        "matchId": "f0472c6d-f36b-4ae8-a883-f42f1c6aca53",
+        "turnId": 14,
+        "commandId": "natural-13",
+        "ackMoveSeq": 0,
+        "slot": 0,
+        "facing": -1,
+        "elevation": 30,
+        "power": 30
+      },
+      "hp": [
+        0,
+        0,
+        100,
+        30,
+        65,
+        0,
+        65,
+        65
+      ],
+      "terrainOps": 14
+    },
+    {
+      "shot": 15,
+      "command": {
+        "version": 2,
+        "type": "turn.fire",
+        "matchId": "f0472c6d-f36b-4ae8-a883-f42f1c6aca53",
+        "turnId": 15,
+        "commandId": "natural-14",
+        "ackMoveSeq": 0,
+        "slot": 0,
+        "facing": -1,
+        "elevation": 15,
+        "power": 70
+      },
+      "hp": [
+        0,
+        0,
+        100,
+        30,
+        65,
+        0,
+        65,
+        30
+      ],
+      "terrainOps": 15
+    },
+    {
+      "shot": 16,
+      "command": {
+        "version": 2,
+        "type": "turn.fire",
+        "matchId": "f0472c6d-f36b-4ae8-a883-f42f1c6aca53",
+        "turnId": 16,
+        "commandId": "natural-15",
+        "ackMoveSeq": 0,
+        "slot": 0,
+        "facing": 1,
+        "elevation": 75,
+        "power": 90
+      },
+      "hp": [
+        0,
+        0,
+        100,
+        -5,
+        65,
+        0,
+        65,
+        30
+      ],
+      "terrainOps": 16
+    },
+    {
+      "shot": 17,
+      "command": {
+        "version": 2,
+        "type": "turn.fire",
+        "matchId": "f0472c6d-f36b-4ae8-a883-f42f1c6aca53",
+        "turnId": 17,
+        "commandId": "natural-16",
+        "ackMoveSeq": 0,
+        "slot": 0,
+        "facing": 1,
+        "elevation": 75,
+        "power": 70
+      },
+      "hp": [
+        0,
+        0,
+        86,
+        0,
+        65,
+        0,
+        65,
+        30
+      ],
+      "terrainOps": 17
+    },
+    {
+      "shot": 18,
+      "command": {
+        "version": 2,
+        "type": "turn.fire",
+        "matchId": "f0472c6d-f36b-4ae8-a883-f42f1c6aca53",
+        "turnId": 18,
+        "commandId": "natural-17",
+        "ackMoveSeq": 0,
+        "slot": 0,
+        "facing": 1,
+        "elevation": 30,
+        "power": 50
+      },
+      "hp": [
+        0,
+        0,
+        51,
+        0,
+        65,
+        0,
+        65,
+        30
+      ],
+      "terrainOps": 18
+    },
+    {
+      "shot": 19,
+      "command": {
+        "version": 2,
+        "type": "turn.fire",
+        "matchId": "f0472c6d-f36b-4ae8-a883-f42f1c6aca53",
+        "turnId": 19,
+        "commandId": "natural-18",
+        "ackMoveSeq": 0,
+        "slot": 0,
+        "facing": -1,
+        "elevation": 45,
+        "power": 60
+      },
+      "hp": [
+        0,
+        0,
+        51,
+        0,
+        65,
+        0,
+        65,
+        -5
+      ],
+      "terrainOps": 19
+    },
+    {
+      "shot": 20,
+      "command": {
+        "version": 2,
+        "type": "turn.fire",
+        "matchId": "f0472c6d-f36b-4ae8-a883-f42f1c6aca53",
+        "turnId": 20,
+        "commandId": "natural-19",
+        "ackMoveSeq": 0,
+        "slot": 0,
+        "facing": -1,
+        "elevation": 30,
+        "power": 30
+      },
+      "hp": [
+        0,
+        0,
+        51,
+        0,
+        65,
+        0,
+        65,
+        0
+      ],
+      "terrainOps": 20
+    },
+    {
+      "shot": 21,
+      "command": {
+        "version": 2,
+        "type": "turn.fire",
+        "matchId": "f0472c6d-f36b-4ae8-a883-f42f1c6aca53",
+        "turnId": 21,
+        "commandId": "natural-20",
+        "ackMoveSeq": 0,
+        "slot": 0,
+        "facing": 1,
+        "elevation": 75,
+        "power": 40
+      },
+      "hp": [
+        0,
+        0,
+        16,
+        0,
+        65,
+        0,
+        65,
+        0
+      ],
+      "terrainOps": 21
+    },
+    {
+      "shot": 22,
+      "command": {
+        "version": 2,
+        "type": "turn.fire",
+        "matchId": "f0472c6d-f36b-4ae8-a883-f42f1c6aca53",
+        "turnId": 22,
+        "commandId": "natural-21",
+        "ackMoveSeq": 0,
+        "slot": 0,
+        "facing": -1,
+        "elevation": 60,
+        "power": 40
+      },
+      "hp": [
+        0,
+        0,
+        16,
+        0,
+        65,
+        0,
+        30,
+        0
+      ],
+      "terrainOps": 22
+    },
+    {
+      "shot": 23,
+      "command": {
+        "version": 2,
+        "type": "turn.fire",
+        "matchId": "f0472c6d-f36b-4ae8-a883-f42f1c6aca53",
+        "turnId": 23,
+        "commandId": "natural-22",
+        "ackMoveSeq": 0,
+        "slot": 0,
+        "facing": -1,
+        "elevation": 30,
+        "power": 30
+      },
+      "hp": [
+        0,
+        0,
+        16,
+        0,
+        65,
+        0,
+        30,
+        0
+      ],
+      "terrainOps": 23
+    },
+    {
+      "shot": 24,
+      "command": {
+        "version": 2,
+        "type": "turn.fire",
+        "matchId": "f0472c6d-f36b-4ae8-a883-f42f1c6aca53",
+        "turnId": 24,
+        "commandId": "natural-23",
+        "ackMoveSeq": 0,
+        "slot": 0,
+        "facing": 1,
+        "elevation": 60,
+        "power": 40
+      },
+      "hp": [
+        0,
+        0,
+        -16,
+        0,
+        65,
+        0,
+        30,
+        0
+      ],
+      "terrainOps": 24
+    }
+  ]
+}

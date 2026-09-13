@@ -1,20 +1,11 @@
-import type { CellPoint, Facing, Impact, Seat, ShotResult, TerrainOp, TrajectoryInput } from "@game/protocol";
-import {
-  BARREL_BASE_UP,
-  BARREL_LENGTH,
-  GRAVITY,
-  MAX_SPEED,
-  MAX_STEPS,
-  ONE,
-  POWER_MAX,
-  TANK_RADIUS,
-  TANK_RADIUS_SQ,
-  WIND_ACCEL_PER_UNIT,
-} from "./constants.js";
-import { cellOf, cosFixed, isqrt, mulFixed, sinFixed } from "./fixed.js";
-import { isRingOut, settle as settleTank, tankCenterY, tiltOf, type TankPos } from "./tank.js";
-import { carve, isSolid, type TerrainMask } from "./terrain.js";
-import { firstStage, scalePercent, weaponSpec, type FanSpec, type StageSpec, type WeaponSpec } from "./weapons.js";
+import type { CellPoint, Impact, Seat, ShotResult, TerrainOp, TrajectoryInput } from "@game/protocol";
+import { TANK_RADIUS } from "./constants.js";
+import { isqrt } from "./fixed.js";
+import { isRingOut, settle as settleTank, tankCenterY, type TankPos } from "./tank.js";
+import { carve, type TerrainMask } from "./terrain.js";
+import { firstStage, weaponSpec, type StageSpec, type WeaponSpec } from "./weapons.js";
+import { checkCell, fly, launch, motionOf, muzzleOf, settle, type FixedPoint, type Flight, type Hit, type Motion, type ProjectilePath } from "./flight.js";
+export { fireAngle, muzzleOf, type FixedPoint, type Muzzle, type ProjectilePath } from "./flight.js";
 
 // 弾道と着弾の処理。設計書 06 の 6.7 決定論の契約に従い、整数と固定小数点だけを使う。
 // 爆風半径、ダメージ、初速と重力と風の倍率、弾道の本数と着弾の段数は武器ごとに違う（設計書 10）。入力の weapon から引く。
@@ -25,158 +16,6 @@ export type Combatant = {
   readonly x: number;
   readonly y: number;
   readonly hp: number;
-};
-
-export type FixedPoint = {
-  readonly x: number;
-  readonly y: number;
-};
-
-/** 発射角（度）。右向きは 傾き + 仰角、左向きは 180 + 傾き − 仰角 */
-export const fireAngle = (tilt: number, elevation: number, facing: Facing): number =>
-  facing === 1 ? tilt + elevation : 180 + tilt - elevation;
-
-export type Muzzle = {
-  readonly position: FixedPoint;
-  readonly angle: number;
-};
-
-/**
- * 主砲の先端（固定小数点）。付け根は接地点から車体基準で真上 4 セルの点を傾きで回したもの。
- * 上向きの単位ベクトルを傾き t で回すと、画面座標（y 下向き）で (−sin t, −cos t) になる。
- */
-export const muzzleOf = (mask: TerrainMask, pos: TankPos, facing: Facing, elevation: number): Muzzle => {
-  const tilt = tiltOf(mask, pos);
-  const contactX = pos.x * ONE + ONE / 2;
-  const contactY = pos.y * ONE;
-  const up = BARREL_BASE_UP * ONE;
-  const baseX = contactX - mulFixed(up, sinFixed(tilt));
-  const baseY = contactY - mulFixed(up, cosFixed(tilt));
-  const angle = fireAngle(tilt, elevation, facing);
-  const len = BARREL_LENGTH * ONE;
-  return {
-    position: { x: baseX + mulFixed(len, cosFixed(angle)), y: baseY - mulFixed(len, sinFixed(angle)) },
-    angle,
-  };
-};
-
-const hitsTank = (cell: CellPoint, centers: readonly CellPoint[]): boolean =>
-  centers.some((c) => {
-    const dx = cell.x - c.x;
-    const dy = cell.y - c.y;
-    return dx * dx + dy * dy <= TANK_RADIUS_SQ;
-  });
-
-type CellCheck = "free" | "terrain" | "tank" | "vanish";
-
-const checkCell = (mask: TerrainMask, cell: CellPoint, centers: readonly CellPoint[]): CellCheck => {
-  if (cell.x < 0 || cell.x >= mask.width || cell.y >= mask.height) return "vanish";
-  if (cell.y < 0) return "free";
-  if (isSolid(mask, cell.x, cell.y)) return "terrain";
-  if (hitsTank(cell, centers)) return "tank";
-  return "free";
-};
-
-/**
- * from の次のセルから to までを、縦か横に 1 セルずつ進む 4 連結の整数直線で順に返す。
- * 斜めに抜けると 1 セル幅の斜めの壁をすり抜けるので、対角には進まない。
- */
-const cellsBetween = (from: CellPoint, to: CellPoint): CellPoint[] => {
-  const out: CellPoint[] = [];
-  const dx = Math.abs(to.x - from.x);
-  const dy = Math.abs(to.y - from.y);
-  const sx = to.x > from.x ? 1 : -1;
-  const sy = to.y > from.y ? 1 : -1;
-  let err = dx - dy;
-  let x = from.x;
-  let y = from.y;
-  for (let i = 0; i < dx + dy; i++) {
-    if (err > 0) {
-      x += sx;
-      err -= 2 * dy;
-    } else {
-      y += sy;
-      err += 2 * dx;
-    }
-    out.push({ x, y });
-  }
-  return out;
-};
-
-const cellCenter = (cell: CellPoint): FixedPoint => ({ x: cell.x * ONE + ONE / 2, y: cell.y * ONE + ONE / 2 });
-
-/** 弾道 1 本の位置列。着弾した段があれば、その位置は points の impactAt[段] 番目（着弾セルの中心） */
-export type ProjectilePath = {
-  readonly points: readonly FixedPoint[];
-  readonly impactAt: readonly number[];
-};
-
-/** 飛行中の弾の可変状態 */
-type Flight = {
-  px: number;
-  py: number;
-  vx: number;
-  vy: number;
-  prev: CellPoint;
-  steps: number;
-};
-
-type Motion = {
-  readonly gravity: number;
-  readonly windAccel: number;
-};
-
-const motionOf = (spec: WeaponSpec, wind: number): Motion => ({
-  gravity: scalePercent(GRAVITY, spec.gravityPercent),
-  windAccel: scalePercent(WIND_ACCEL_PER_UNIT, spec.windPercent) * wind,
-});
-
-/** 扇のずれを掛けて撃ち出す。角度のずれは砲を上げる向きが正で、左向きなら鏡像にする */
-const launch = (muzzle: Muzzle, spec: WeaponSpec, input: TrajectoryInput, fan: FanSpec): Flight => {
-  const speed = Math.trunc((scalePercent(scalePercent(MAX_SPEED, spec.speedPercent), fan.speedPercent) * input.power) / POWER_MAX);
-  const angle = muzzle.angle + fan.deg * input.facing;
-  const px = muzzle.position.x;
-  const py = muzzle.position.y;
-  return { px, py, vx: mulFixed(speed, cosFixed(angle)), vy: -mulFixed(speed, sinFixed(angle)), prev: { x: cellOf(px), y: cellOf(py) }, steps: 0 };
-};
-
-/** 着弾。何に当たったかを持つ。機体に当たった弾は食い込んで止まり、残りの段は同じセルで起きる */
-type Hit = {
-  readonly cell: CellPoint;
-  readonly tank: boolean;
-};
-
-/** 弾を着弾セルの中心に置く。地形に当たった貫通の続きはここから同じ速度で飛ぶ */
-const settle = (f: Flight, cell: CellPoint, tank: boolean, points: FixedPoint[]): Hit => {
-  const c = cellCenter(cell);
-  points.push(c);
-  f.px = c.x;
-  f.py = c.y;
-  f.prev = cell;
-  return { cell, tank };
-};
-
-/**
- * 次の衝突まで飛ぶ。着弾を返し、消失（画面の外か歩数の上限）なら null。
- * 位置は points に足していく。着弾したら弾は着弾セルの中心に置かれる。
- */
-const fly = (mask: TerrainMask, centers: readonly CellPoint[], f: Flight, m: Motion, points: FixedPoint[]): Hit | null => {
-  while (f.steps < MAX_STEPS) {
-    f.steps++;
-    f.vx += m.windAccel;
-    f.vy += m.gravity;
-    f.px += f.vx;
-    f.py += f.vy;
-    const next: CellPoint = { x: cellOf(f.px), y: cellOf(f.py) };
-    for (const cell of cellsBetween(f.prev, next)) {
-      const check = checkCell(mask, cell, centers);
-      if (check === "terrain" || check === "tank") return settle(f, cell, check === "tank", points);
-      if (check === "vanish") return null;
-    }
-    points.push({ x: f.px, y: f.py });
-    f.prev = next;
-  }
-  return null;
 };
 
 /** 1 発の射撃が seat に与えたダメージの合計（全弾道、全段） */
@@ -224,22 +63,16 @@ const ringOuts = (mask: TerrainMask, ps: readonly [TankPos, TankPos]): Seat[] =>
 /** 射撃の間だけ持つ可変状態。地形は着弾のたびに削られ、HP は着弾のたびに減る */
 type Volley = {
   mask: TerrainMask;
-  hp: [number, number];
-  readonly impacts: Impact[];
+  hp: number[];
+  readonly impacts: CombatImpact[];
+  readonly removeDefeated: boolean;
   readonly paths: ProjectilePath[];
   /** 判定円の中心。射撃の間は動かないので、射撃前の地形から一度だけ求める。奈落の機体は null */
   readonly centers: readonly (CellPoint | null)[];
-  /** 当たり判定を持つ機体の中心だけ */
-  readonly hitCenters: readonly CellPoint[];
 };
 
-const damageOf = (v: Volley, cell: CellPoint, stage: StageSpec): [number, number] => {
-  const at = (seat: Seat): number => {
-    const c = v.centers[seat];
-    return c ? damageAt(cell, c, stage) : 0;
-  };
-  return [at(0), at(1)];
-};
+const damageOf = (v: Volley, cell: CellPoint, stage: StageSpec): number[] =>
+  v.centers.map((c, i) => c && (!v.removeDefeated || v.hp[i]! > 0) ? damageAt(cell, c, stage) : 0);
 
 /**
  * 弾道 1 本を最後の段まで飛ばし、着弾を v に足す。
@@ -248,7 +81,7 @@ const damageOf = (v: Volley, cell: CellPoint, stage: StageSpec): [number, number
 const flyProjectile = (v: Volley, index: number, f: Flight, m: Motion, spec: WeaponSpec): void => {
   const points: FixedPoint[] = [{ x: f.px, y: f.py }];
   const impactAt: number[] = [];
-  const centers = v.hitCenters;
+  const centers = v.centers.filter((c, i): c is CellPoint => c !== null && (!v.removeDefeated || v.hp[i]! > 0));
   // 砲口のセル自体が壁や機体の中なら、その場で最初の段が着弾する
   const first = checkCell(v.mask, f.prev, centers);
   let hit: Hit | null = null;
@@ -265,9 +98,9 @@ const flyProjectile = (v: Volley, index: number, f: Flight, m: Motion, spec: Wea
     const damage = damageOf(v, hit.cell, s);
     v.impacts.push({ projectile: index, stage, cell: hit.cell, terrainOp, damage });
     v.mask = carve(v.mask, terrainOp);
-    v.hp = [v.hp[0] - damage[0], v.hp[1] - damage[1]];
+    v.hp = v.hp.map((hp, i) => hp - damage[i]!);
     if (stage + 1 >= spec.stages.length) break;
-    if (!hit.tank) hit = fly(v.mask, centers, f, m, points);
+    if (!hit.tank) hit = fly(v.mask, v.centers.filter((c, i): c is CellPoint => c !== null && (!v.removeDefeated || v.hp[i]! > 0)), f, m, points);
   }
   v.paths.push({ points, impactAt });
 };
@@ -285,22 +118,40 @@ export const simulateShot = (
   const shooter: TankPos = { x: input.x, y: input.y };
   const other: TankPos = input.seat === 0 ? players[1] : players[0];
   const before: readonly [TankPos, TankPos] = input.seat === 0 ? [shooter, other] : [other, shooter];
-  // 奈落に落ちている機体は当たり判定を持たず、ダメージも受けない
-  const centerOf = (seat: Seat): CellPoint | null => (isRingOut(mask, before[seat]) ? null : { x: before[seat].x, y: tankCenterY(before[seat]) });
-  const centers = [centerOf(0), centerOf(1)];
-  const v: Volley = { mask, hp: [players[0].hp, players[1].hp], impacts: [], paths: [], centers, hitCenters: centers.filter((c): c is CellPoint => c !== null) };
-  const spec = weaponSpec(input.weapon);
-  const muzzle = muzzleOf(mask, shooter, input.facing, input.elevation);
-  const m = motionOf(spec, input.wind);
-  for (let volley = 0; volley < spec.volleys; volley++) {
-    spec.fan.forEach((f, fan) => flyProjectile(v, volley * spec.fan.length + fan, launch(muzzle, spec, input, f), m, spec));
-  }
+  const v = simulateCombat(mask, before.map((pos, i) => ({ ...pos, hp: players[i]!.hp })), input, false);
   // 落下は削り終わった地形に対して、真下の次の地面まで。地面がなければ奈落
-  const after: readonly [TankPos, TankPos] = [settleTank(v.mask, before[0]), settleTank(v.mask, before[1])];
+  const after: readonly [TankPos, TankPos] = [v.positions[0]!, v.positions[1]!];
   const ringOut = ringOuts(v.mask, after);
   return {
     mask: v.mask,
     paths: v.paths,
-    result: { input, impacts: v.impacts, hpAfter: v.hp, xAfter: [after[0].x, after[1].x], yAfter: [after[0].y, after[1].y], ringOut, finished: judge(v.hp, ringOut) },
+    result: { input, impacts: v.impacts.map(i => ({ ...i, damage: [i.damage[0]!, i.damage[1]!] })), hpAfter: [v.hpAfter[0]!, v.hpAfter[1]!], xAfter: [after[0].x, after[1].x], yAfter: [after[0].y, after[1].y], ringOut, finished: judge([v.hpAfter[0]!, v.hpAfter[1]!], ringOut) },
   };
+};
+
+export type CombatImpact = Omit<Impact, "damage"> & { readonly damage: readonly number[] };
+export type CombatOutcome = {
+  readonly mask: TerrainMask;
+  readonly paths: readonly ProjectilePath[];
+  readonly impacts: readonly CombatImpact[];
+  readonly hpAfter: readonly number[];
+  readonly positions: readonly TankPos[];
+  readonly ringOut: readonly number[];
+};
+
+/** 内部用の可変人数物理。全員の確定位置を渡す。勝敗は呼び出し側でチームから判定する。 */
+export const simulateCombat = (
+  mask: TerrainMask, players: readonly Combatant[], input: Omit<TrajectoryInput, "seat">, removeDefeated = true,
+): CombatOutcome => {
+  const centers = players.map(p => isRingOut(mask, p) ? null : { x: p.x, y: tankCenterY(p) });
+  const v: Volley = { mask, hp: players.map(p => p.hp), impacts: [], paths: [], centers, removeDefeated };
+  const spec = weaponSpec(input.weapon);
+  const muzzle = muzzleOf(mask, input, input.facing, input.elevation);
+  const m = motionOf(spec, input.wind);
+  for (let volley = 0; volley < spec.volleys; volley++) {
+    spec.fan.forEach((f, fan) => flyProjectile(v, volley * spec.fan.length + fan, launch(muzzle, spec, input, f), m, spec));
+  }
+  const positions = players.map(p => settleTank(v.mask, p));
+  return { mask: v.mask, paths: v.paths, impacts: v.impacts, hpAfter: v.hp, positions,
+    ringOut: positions.flatMap((p, i) => isRingOut(v.mask, p) ? [i] : []) };
 };

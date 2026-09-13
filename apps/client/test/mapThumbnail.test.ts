@@ -21,12 +21,12 @@ describe("mapThumbnail", () => {
     expect(at(t, 40, THUMB_HEIGHT - 1)).toBe(1);
   });
 
-  it("橋の厚さ 8 セルは 5 セル刻みでも 1 点以上残り、橋の下は空", () => {
+  it("橋と下の岩の間に空洞を残して縮小する", () => {
     const t = mapThumbnail("bridge");
     const column = Array.from({ length: THUMB_HEIGHT }, (_, y) => at(t, 40, y));
     expect(column.filter((v) => v === 1).length).toBeGreaterThanOrEqual(1);
-    expect(column.filter((v) => v === 1).length).toBeLessThanOrEqual(3);
-    expect(at(t, 40, THUMB_HEIGHT - 1)).toBe(0);
+    expect(at(t, 40, 32)).toBe(0);
+    expect(at(t, 40, THUMB_HEIGHT - 1)).toBe(1);
   });
 
   it("洞窟は上端が天井、中ほどが空洞、下端が床", () => {

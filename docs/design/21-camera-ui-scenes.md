@@ -72,7 +72,7 @@ HUDと入力対象はCSS pxで配置し、カメラやDPRで拡大縮小しな�
 pointerleave、blur、visibility hidden、modal表示で即停止。cursorがHUD上なら停止する。
 coarse pointerでは端スクロールを使わない。ペンはドラッグパンを基本にする。
 
-パン開始の閾値は8 CSS px。初期版は慣性・pinch zoomなし。touch-action:noneは対戦の操作領域に限定する。
+パン開始の閾値は8 CSS px。2026-09-10のユーザー指定で短い慣性を追加する。スワイプを離すか端スクロール帯から内側へ戻すと約0.3秒で減速し、HUDへ出る・取消・focus喪失では即停止する。pinch zoomは持たない。touch-action:noneは対戦の操作領域に限定する。
 メニューや部屋のリストは通常スクロールを維持する。画面端のOSジェスチャーに必須操作を置かない。
 入力開始時にWorldPan / Aim / Move / Fire / UIの所有者を固定し、終了まで乗り換えない。
 2本目の指は新しいゲーム操作を始めない。fire中にパンを混ぜず、発射入力の誤確定を避ける。

@@ -1,17 +1,19 @@
 // Vitest Snapshot v1, https://vitest.dev/guide/snapshot.html
 
-exports[`maps > bridge > 同じ結果を返す（決定論） 1`] = `536669345`;
+exports[`maps > bridge > 同じ結果を返す（決定論） 1`] = `846185035`;
 
-exports[`maps > cave > 同じ結果を返す（決定論） 1`] = `239097475`;
+exports[`maps > cave > 同じ結果を返す（決定論） 1`] = `78670916`;
 
-exports[`maps > island > 同じ結果を返す（決定論） 1`] = `214345726`;
+exports[`maps > island > 同じ結果を返す（決定論） 1`] = `570489330`;
 
-exports[`maps > mountain > 同じ結果を返す（決定論） 1`] = `303358865`;
+exports[`maps > mountain > 同じ結果を返す（決定論） 1`] = `804060581`;
 
-exports[`maps > plain > 同じ結果を返す（決定論） 1`] = `629684714`;
+exports[`maps > plain > 同じ結果を返す（決定論） 1`] = `35203234`;
 
-exports[`maps > terrace > 同じ結果を返す（決定論） 1`] = `234411737`;
+exports[`maps > rock-arch > 同じ結果を返す（決定論） 1`] = `333296829`;
 
-exports[`maps > towers > 同じ結果を返す（決定論） 1`] = `244261906`;
+exports[`maps > terrace > 同じ結果を返す（決定論） 1`] = `27966988`;
 
-exports[`maps > valley > 同じ結果を返す（決定論） 1`] = `205157919`;
+exports[`maps > towers > 同じ結果を返す（決定論） 1`] = `498823977`;
+
+exports[`maps > valley > 同じ結果を返す（決定論） 1`] = `86778613`;

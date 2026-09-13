@@ -88,8 +88,8 @@ export type WalkResult = {
 
 /**
  * pos から dir 方向へ最大 steps 歩進んだ結果。ブロックか落下で止まる。
- * 落下したらそのターンの移動は終わりで、クライアントはそれ以上の移動入力を受け付けない。
- * クライアントの表示とサーバーの検証（validateMove）が同じ関数を使う。
+ * 落下したらこの移動コマンドを終える。着地後は次のコマンドで移動を続けられる。
+ * クライアントの表示とサーバーの検証（validateMove）は stepOutcome で接地を判定する。
  */
 export const walk = (mask: TerrainMask, pos: TankPos, dir: -1 | 1, steps: number): WalkResult => {
   let { x, y } = pos;
@@ -115,6 +115,11 @@ export const validateMove = (mask: TerrainMask, from: TankPos, x1: number): Tank
   const dir: -1 | 1 = x1 > from.x ? 1 : -1;
   const wanted = Math.abs(x1 - from.x);
   if (wanted > STEPS_PER_TURN) return null;
-  const r = walk(mask, from, dir, wanted);
-  return r.x === x1 ? { x: r.x, y: r.y } : null;
+  let pos = from;
+  for (let i = 0; i < wanted; i++) {
+    const next = stepOutcome(mask, pos, dir);
+    if (next.kind === "blocked" || next.y >= mask.height) return null;
+    pos = { x: pos.x + dir, y: next.y };
+  }
+  return pos;
 };

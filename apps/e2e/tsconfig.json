@@ -14,6 +14,23 @@
     "scripts",
     "playwright.config.ts",
     "asset-lab",
-    "asset-lab.config.ts"
+    "asset-lab.config.ts",
+    "camera-tests",
+    "camera.config.ts",
+    "world-tests",
+    "world.config.ts",
+    "network-tests",
+    "network.config.ts",
+    "world-network-tests",
+    "world-network.config.ts",
+    "rooms-tests",
+    "rooms.config.ts",
+    "production-tests",
+    "production.config.ts",
+    "startup-tests",
+    "startup.config.ts",
+    "production-rooms.config.ts",
+    "long-match-tests",
+    "natural-match.config.ts"
   ]
 }

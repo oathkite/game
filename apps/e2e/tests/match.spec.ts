@@ -40,7 +40,7 @@ const waitFor = async (page: Page, pred: (s: Snapshot) => boolean, timeout = 30_
 };
 
 const setup = async (page: Page, nickname: string, colorIndex: number): Promise<void> => {
-  await page.goto("/");
+  await page.goto("/?prototype=legacy");
   await page.getByLabel("nickname").fill(nickname);
   await page.getByRole("button", { name: "色を変更" }).click();
   await page.getByRole("radio", { name: /^カラー2/ }).nth(colorIndex).click();

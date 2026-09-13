@@ -5,3 +5,6 @@ coverage/
 test-results/
 playwright-report/
 .env.imagegen.local
+
+.keropod/
+.wrangler/

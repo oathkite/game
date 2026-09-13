@@ -7,6 +7,7 @@ import { createListeners, type Connection, type ConnectionStatus } from "./conne
 // 設計書 07 の開発順序 2「サーバーなしで 1 人で撃って、地形が削れる様子を見る」のための接続。
 
 export type LocalMatchOptions = {
+  readonly deferReady?: boolean;
   /** ランダムなら対戦を作るたび（再戦を含む）に抽選する */
   readonly mapName: MapChoice;
   readonly nickname: string;
@@ -27,11 +28,18 @@ export const defaultOpponentLoadout = (loadout: Loadout): Loadout => {
   return [a ?? "triple", b ?? "drill"];
 };
 
-export const createLocalConnection = (options: LocalMatchOptions): Connection => {
+export const createLocalConnection = (options: LocalMatchOptions): Connection & { readonly releaseReady: () => void } => {
   const messages = createListeners<ServerMessage>();
   const statuses = createListeners<ConnectionStatus>();
   let status: ConnectionStatus = "open";
   let host: MatchHost | null = null;
+  let released = !options.deferReady, requested = false;
+  const releaseReady = (): void => {
+    released = true;
+    if (!requested || !host) return;
+    host.dispatch({ type: "loaded", seat: 0 });
+    host.dispatch({ type: "loaded", seat: 1 });
+  };
 
   const deliver = (message: ServerMessage): void => {
     // 呼び出し元の処理と分けるため、次のマイクロタスクで配る
@@ -60,8 +68,8 @@ export const createLocalConnection = (options: LocalMatchOptions): Connection =>
     const seat = host.state().match.currentSeat;
     switch (message.type) {
       case "match.ready":
-        host.dispatch({ type: "loaded", seat: 0 });
-        host.dispatch({ type: "loaded", seat: 1 });
+        requested = true;
+        if (released) releaseReady();
         return;
       case "turn.fire":
         host.dispatch({ type: "fire", seat, fire: message });
@@ -71,7 +79,9 @@ export const createLocalConnection = (options: LocalMatchOptions): Connection =>
         host.dispatch({ type: "replayDone", seat: 1 });
         return;
       case "match.surrender":
-        host.dispatch({ type: "surrender", seat });
+        // 開幕演出は操作を待たせるが、練習の終了は妨げない。
+        if (!released) releaseReady();
+        host.dispatch({ type: "surrender", seat: host.state().match.currentSeat });
         return;
       case "result.close":
         startMatch();
@@ -87,6 +97,8 @@ export const createLocalConnection = (options: LocalMatchOptions): Connection =>
   startMatch();
 
   return {
+    releaseReady,
+    reportMoveRingOut: x => { if (host) host.dispatch({ type:"moveRingOut", seat:host.state().match.currentSeat, x }); },
     send,
     subscribe: messages.add,
     onStatus: statuses.add,

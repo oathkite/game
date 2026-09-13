@@ -1,0 +1,10 @@
+{
+  "model": "gpt-image-2.5-sunburst",
+  "date": "2026-09-10",
+  "status": "review-candidates",
+  "assets": {
+    "logo.png": { "operation": "edit", "source": "assets/brand/keropod/logo-outlined.png", "prompt": "prompts/logo.txt", "size": "1536x1024", "background": "transparent" },
+    "cockpit.png": { "operation": "generate", "prompt": "prompts/cockpit.txt", "size": "1536x1024", "usage": "CSS border-image, empty center remains live UI" },
+    "terrain.png": { "operation": "generate", "prompt": "prompts/terrain.txt", "size": "1024x1024", "usage": "8 texels per simulation cell, collision mask preserved" }
+  }
+}

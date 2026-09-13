@@ -1,3 +1,6 @@
+import { weaponSound } from "@/app/weaponSounds";
+import { shotFlashes } from "./muzzlePose";
+import { shotRecoil } from "./shotRecoil";
 import type { CellPoint, Impact, Seat } from "@game/protocol";
 import { carve, isRingOut, MAP_HEIGHT, ONE, tiltOf, weaponSpec, type ProjectilePath, type TerrainMask } from "@game/sim";
 import type { SoundName } from "@/app/audio";
@@ -23,7 +26,6 @@ import {
 import type { ProjectileView } from "./projectileView";
 import type { Renderer } from "./renderer";
 import type { TankPose } from "./tankView";
-import { trailStep } from "./weaponArt";
 
 // 射撃結果の再生。設計書 03 の 3.9。弾道は 1 ステップ 1/60 秒で進め、着弾で弾を一瞬止め、爆風の膨張、地形の削り、落下を順に描く。
 // 1 発の射撃に弾道は複数（扇）、着弾も複数（段）ありうる（設計書 10）。弾道はそれぞれの発射の遅れから、着弾はそれぞれの時刻から独立に演出し、
@@ -68,12 +70,9 @@ type Run = {
   /** 弾道ごとの発射の遅れ */
   readonly launchAt: readonly number[];
   readonly impacts: readonly ImpactRun[];
-  readonly trailEvery: number;
   phase: Phase;
   elapsed: number;
   phaseStart: number;
-  /** 弾道ごとに、尾を置いた最後の添字 */
-  readonly trailIndex: number[];
   /** 着弾で削られていく地形 */
   mask: TerrainMask;
   /** 着弾で減っていく HP */
@@ -136,6 +135,8 @@ const poseAfterHit = (run: Run, seat: Seat, flash: boolean): TankPose => {
   // 落下前なので、撃った側は移動後の地表、相手はターン開始時の地表に立つ
   return poseOf({ ...before, hp: bar.hp, x: after.x, y: groundBeforeFall(run.job, seat), facing: after.facing }, run.job.maskBefore, elevationOf(run, seat), {
     flash,
+    shotFlashes: seat === run.job.shot.input.seat ? shotFlashes(run.elapsed, run.launchAt) : [],
+    recoil: seat === run.job.shot.input.seat ? shotRecoil(run.elapsed, run.launchAt) : 0,
     hpGhost: bar.hpGhost,
     ghostOn: bar.ghostOn,
   });
@@ -195,13 +196,7 @@ const updateBullet = (run: Run, p: number): void => {
   if (!a || !b) return;
   const f = frame.index - i;
   run.view.setBullet(p, (a.x + (b.x - a.x) * f) / ONE, (a.y + (b.y - a.y) * f) / ONE, angleAt(points, frame.holding ? i : frame.index));
-  if (run.trailEvery === 0) return;
-  while ((run.trailIndex[p] ?? 0) + run.trailEvery <= i) {
-    const next = (run.trailIndex[p] ?? 0) + run.trailEvery;
-    run.trailIndex[p] = next;
-    const q = points[next];
-    if (q) run.view.addTrail(Math.floor(q.x / ONE), Math.floor(q.y / ONE));
-  }
+
 };
 
 /** 爆風が最大に達した瞬間。地形を削り、被弾した機体を白くし、HP を減らし始め、被弾と手応えの音を鳴らす */
@@ -209,7 +204,7 @@ const carveImpact = (run: Run, ir: ImpactRun): void => {
   ir.carved = true;
   const { impact } = ir;
   run.mask = carve(run.mask, impact.terrainOp);
-  run.renderer.setTerrain(run.mask);
+  run.renderer.setTerrain(run.mask, impact.terrainOp);
   const shooter = run.job.shot.input.seat;
   const shooterColor = run.job.playersBefore[shooter].colors.primary;
   const hpBefore: [number, number] = [run.hp[0], run.hp[1]];
@@ -234,11 +229,11 @@ const updateImpact = (run: Run, ir: ImpactRun): void => {
   if (t < 0) return;
   if (!ir.exploded) {
     ir.exploded = true;
-    run.cb.sound("explosion");
+    run.cb.sound(weaponSound(run.job.shot.input.weapon, "impact"));
   }
   const { cell, terrainOp } = ir.impact;
   const frame = blastFrameAt(t, terrainOp.radius);
-  run.view.setBlast(ir.key, frame ? cell.x : null, cell.y, frame?.radius ?? 0, frame?.on ?? false, frame?.ring ?? false);
+  run.view.setBlast(ir.key, frame ? cell.x : null, cell.y, frame?.radius ?? 0, frame?.on ?? false, frame?.ring ?? false, run.cb.reduceMotion ? 1 : Math.min(3, Math.floor(t / IMPACT_TOTAL_MS * 4)));
   if (frame?.carved && !ir.carved) carveImpact(run, ir);
   if (ir.carved) run.view.setDebris(ir.key, debrisAt(t - CARVE_AT_MS, cell, terrainOp.radius));
 };
@@ -246,7 +241,7 @@ const updateImpact = (run: Run, ir: ImpactRun): void => {
 /** 被弾の見せ方。白はダメージが大きいほど長く続き、HP バーは減っていき、画面が揺れる */
 const updateHits = (run: Run): void => {
   for (const seat of [0, 1] as const) {
-    if (run.drains[seat]) run.renderer.setTank(seat, poseAfterHit(run, seat, run.elapsed < run.flashUntil[seat]));
+    if (run.drains[seat] || seat === run.job.shot.input.seat) run.renderer.setTank(seat, poseAfterHit(run, seat, run.elapsed < run.flashUntil[seat]));
   }
   if (run.cb.reduceMotion) return;
   run.renderer.setShake(run.shake ? shakeOffsetAt(run.elapsed - run.shake.at, run.shake.damage) : { dx: 0, dy: 0 });
@@ -275,7 +270,7 @@ const stepFall = (run: Run): void => {
   for (const f of run.falls) {
     const y = Math.min(f.to, f.from + FALL_CELLS_PER_S * t);
     if (y < f.to) allDone = false;
-    run.renderer.setTank(f.seat, poseOf(run.job.playersAfter[f.seat], run.job.maskBefore, elevationOf(run, f.seat), { y, visible: y < MAP_HEIGHT + 6 }));
+    run.renderer.setTank(f.seat, poseOf(run.job.playersAfter[f.seat], run.job.maskBefore, elevationOf(run, f.seat), { y, falling: y < f.to, visible: y < MAP_HEIGHT + 6 }));
   }
   if (allDone) finish(run);
 };
@@ -306,11 +301,9 @@ export const playReplay = (
     falls: computeFalls(job),
     launchAt,
     impacts,
-    trailEvery: trailStep(job.shot.input.weapon),
     phase: "shot",
     elapsed: 0,
     phaseStart: 0,
-    trailIndex: job.paths.map(() => 0),
     mask: job.maskBefore,
     hp: [job.playersBefore[0].hp, job.playersBefore[1].hp],
     flashUntil: [0, 0],
@@ -318,10 +311,15 @@ export const playReplay = (
     shake: null,
     stopFrames: () => {},
   };
-  for (const seat of [0, 1] as const) renderer.setTank(seat, poseOf(job.playersBefore[seat], job.maskBefore, elevationOf(run, seat)));
-  // 撃つ側の位置は移動後の x で描く
-  renderer.setTank(job.shot.input.seat, poseOf({ ...shooter, x: job.shot.input.x, facing: job.shot.input.facing }, job.maskBefore, job.shot.input.elevation));
-  cb.sound("fire");
+  // 再生初期化から移動後のx/yを使用し、ターン開始位置を一瞬描画しない。
+  for (const seat of [0, 1] as const) {
+    const before = job.playersBefore[seat];
+    const position = seat === job.shot.input.seat
+      ? { ...before, x: job.shot.input.x, y: job.shot.input.y, facing: job.shot.input.facing }
+      : before;
+    renderer.setTank(seat, poseOf(position, job.maskBefore, elevationOf(run, seat)));
+  }
+  cb.sound(weaponSound(job.shot.input.weapon, "fire"));
   run.stopFrames = renderer.onFrame((deltaMs) => stepFrame(run, deltaMs));
   return () => {
     if (run.phase === "done") return;

@@ -1,0 +1,24 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1440" height="120" viewBox="0 0 1440 120" preserveAspectRatio="none">
+  <defs>
+    <linearGradient id="metal" x2="0" y2="1">
+      <stop stop-color="#466477"/><stop offset=".05" stop-color="#1e394d"/>
+      <stop offset=".16" stop-color="#142b3c"/><stop offset="1" stop-color="#0b1d2b"/>
+    </linearGradient>
+    <linearGradient id="rim" x2="0" y2="1">
+      <stop stop-color="#afc4ce"/><stop offset=".35" stop-color="#5b7a8c"/><stop offset="1" stop-color="#243e50"/>
+    </linearGradient>
+  </defs>
+  <path d="M0 0H1440V120H0Z" fill="url(#metal)"/>
+  <path d="M0 0H1440V6H1424L1418 10H22L16 6H0ZM0 120H1440V114H1424L1418 110H22L16 114H0Z" fill="url(#rim)"/>
+  <path d="M22 11H1418M22 109H1418" stroke="#061622" stroke-width="2"/>
+  <path d="M22 13H1418M22 107H1418" stroke="#7293a3" stroke-opacity=".22"/>
+  <path d="M0 2H1440M0 118H1440" stroke="#cad7d8" stroke-opacity=".5"/>
+  <g fill="#365467" stroke="#7893a2" stroke-width="1">
+    <path d="M4 8H14L18 12V20H4ZM1436 8H1426L1422 12V20H1436ZM4 112H14L18 108V100H4ZM1436 112H1426L1422 108V100H1436Z"/>
+  </g>
+  <g fill="#172e40" stroke="#8ba4b0" stroke-width="1">
+    <circle cx="10" cy="14" r="3"/><circle cx="1430" cy="14" r="3"/>
+    <circle cx="10" cy="106" r="3"/><circle cx="1430" cy="106" r="3"/>
+  </g>
+  <path d="M8 14H12M1428 14H1432M8 106H12M1428 106H1432" stroke="#9aafb9"/>
+</svg>

@@ -9,6 +9,7 @@ export type Profile = {
   /** 装備する 2 つの武器。設計書 10 */
   readonly loadout: Loadout;
   readonly volume: number;
+  readonly bgmVolume?: number;
   readonly muted: boolean;
   readonly swapPanels: boolean;
 };
@@ -28,6 +29,7 @@ const defaults = (): Profile => ({
   colors: { primary: "red", secondary: "yellow" },
   loadout: DEFAULT_LOADOUT,
   volume: 0.5,
+  bgmVolume: 0.5,
   muted: false,
   swapPanels: false,
 });
@@ -59,6 +61,7 @@ export const loadProfile = (): Profile => {
     },
     loadout: parseLoadout(r.loadout) ?? DEFAULT_LOADOUT,
     volume: typeof r.volume === "number" ? Math.min(1, Math.max(0, r.volume)) : base.volume,
+    bgmVolume: typeof r.bgmVolume === "number" ? Math.min(1, Math.max(0, r.bgmVolume)) : typeof r.volume === "number" ? Math.min(1, Math.max(0, r.volume)) : 0.5,
     muted: typeof r.muted === "boolean" ? r.muted : base.muted,
     swapPanels: typeof r.swapPanels === "boolean" ? r.swapPanels : base.swapPanels,
   };

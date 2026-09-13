@@ -1,8 +1,11 @@
+import { playSound } from "@/app/audio";
+import { TANK_PIXELS, treadPixels } from "./tankPixels";
+import type { ShotFlash } from "./muzzlePose";
 import { COLOR_HEX, type Facing, type TankColors } from "@game/protocol";
 import { BARREL_BASE_UP, BARREL_LENGTH, HP_MAX } from "@game/sim";
 import { Container, Graphics, Text } from "pixi.js";
 
-// 戦車のドット絵。設計書 08 の 8.6。幅 7、高さ 5 の正方形の集まりと主砲を 1 つのコンテナにまとめて回す。
+// 待機画面と共通のドット絵と主砲を 1 つのコンテナにまとめて回す。
 // 武器で形は変えない（設計書 10 の 10.5）。
 // 座標の単位はセルで、親のコンテナで整数倍に拡大する。
 
@@ -14,6 +17,9 @@ export type TankPose = {
   readonly facing: Facing;
   readonly elevation: number;
   readonly hp: number;
+  readonly falling?: boolean;
+  readonly recoil?: number;
+  readonly shotFlashes?: readonly ShotFlash[];
   /** 減る前の HP。hp より大きいとき、その差を失った区間として描く。省略なら hp と同じ */
   readonly hpGhost?: number;
   /** 失った区間を描くか。明滅に使う */
@@ -33,77 +39,53 @@ export type TankView = {
 };
 
 const DEG = Math.PI / 180;
-const BODY_W = 7;
-/** 発射角の線の長さ（セル）。弾の届く距離とは無関係の、向きだけを示す長さにする */
-const AIM_LENGTH = 24;
-/** 砲口から線を離す長さ（セル）。砲身と線がつながって見えないようにする */
-const AIM_GAP = 2;
-/** 破線の本数 */
-const AIM_DASHES = 5;
-/** 破線の太さ（セル） */
-const AIM_WIDTH = 1.2;
-
 const hex = (c: string): number => Number.parseInt(c.slice(1), 16);
 
-const drawBody = (g: Graphics, colors: TankColors, white: boolean): void => {
+const drawBody = (g: Graphics, colors: { readonly primary: string; readonly secondary: string }, white: boolean, distance: number): void => {
   g.clear();
-  const primary = white ? 0xffffff : hex(COLOR_HEX[colors.primary]);
-  const secondary = white ? 0xffffff : hex(COLOR_HEX[colors.secondary]);
-  // 下 3 段が車体（主色）、上 2 段が砲塔（副色）
-  g.rect(-BODY_W / 2, -3, BODY_W, 3).fill(primary);
-  g.rect(-2.5, -5, 5, 2).fill(secondary);
+  for (const p of TANK_PIXELS) g.rect((p.x - 38) / 8, (p.y - 53) / 8, p.w / 8, p.h / 8).fill(white ? 0xffffff : hex(p.part === "body" ? colors.primary : colors.secondary));
+  for (const p of treadPixels(distance)) g.rect((p.x - 38) / 8, (p.y - 53) / 8, p.w / 8, p.h / 8).fill(0x000000);
 };
 
 const hpCells = (hp: number): number => Math.min(10, Math.ceil(Math.max(0, hp) / (HP_MAX / 10)));
 
 /** HP バー。横 12、縦 3 の黒い下地の中に、主色で 10 HP を 1 セルとして描く。失った区間は明滅で見せる */
-const drawHpBar = (g: Graphics, colors: TankColors, pose: TankPose): void => {
+const drawHpBar = (g: Graphics, colors: { readonly primary: string; readonly secondary: string }, pose: TankPose): void => {
   g.clear();
-  g.rect(-6, 1, 12, 3).fill(0x000000);
   const cells = hpCells(pose.hp);
-  if (cells > 0) g.rect(-5, 2, cells, 1).fill(hex(COLOR_HEX[colors.primary]));
+  if (cells > 0) g.rect(-5, 2, cells, 1).fill(hex(colors.primary));
   const ghost = hpCells(pose.hpGhost ?? pose.hp);
-  if (pose.ghostOn && ghost > cells) g.rect(-5 + cells, 2, ghost - cells, 1).fill(hex(COLOR_HEX[colors.primary]));
+  if (pose.ghostOn && ghost > cells) g.rect(-5 + cells, 2, ghost - cells, 1).fill(hex(colors.primary));
 };
 
-export const createTankView = (colors: TankColors, nickname: string): TankView => {
+export const createTankView = (selection: TankColors, nickname: string, team?: string): TankView => {
+  const colors = { primary: COLOR_HEX[selection.primary], secondary: COLOR_HEX[selection.secondary] };
   const world = new Container();
   const body = new Graphics();
-  drawBody(body, colors, false);
+  drawBody(body, colors, false, 0);
   // 主砲。1 セル幅で長さは物理の主砲（4 セル）に揃える
   const barrel = new Graphics();
-  barrel.rect(0, -0.5, BARREL_LENGTH, 1).fill(hex(COLOR_HEX[colors.secondary]));
+  barrel.rect(0, -0.5, BARREL_LENGTH, 1).fill(hex(colors.secondary));
   barrel.position.set(0, -BARREL_BASE_UP);
-  // 発射角の線。砲身の延長に破線を引き、どの向きへ飛び出すかだけを示す。弾道の予測ではない
-  const aim = new Graphics();
-  // 破線にする。実線だと弾道の予測に見えるため、飛び出す向きだけを示す点線にする
-  for (let i = 0; i < AIM_DASHES; i++) {
-    const from = BARREL_LENGTH + AIM_GAP + i * (AIM_LENGTH / AIM_DASHES);
-    aim.rect(from, -AIM_WIDTH / 2, AIM_LENGTH / (AIM_DASHES * 2), AIM_WIDTH);
-  }
-  aim.fill(hex(COLOR_HEX[colors.secondary]));
-  aim.alpha = 0.7;
-  aim.position.set(0, -BARREL_BASE_UP);
-  aim.visible = false;
   const rotating = new Container();
-  rotating.addChild(body, barrel, aim);
+  rotating.addChild(body, barrel);
   world.addChild(rotating);
 
   // HP バー。横 12、縦 3 の黒い下地の中に、主色で 10 HP を 1 セルとして描く
   const hpBar = new Graphics();
+  hpBar.position.y = -11;
   world.addChild(hpBar);
 
   const label = new Container();
-  const labelBg = new Graphics();
   const text = new Text({
     text: nickname,
-    style: { fontFamily: "DotGothic16, monospace", fontSize: 16, fill: COLOR_HEX[colors.primary] },
+    style: { fontFamily: "DotGothic16, monospace", fontSize: 16, fill: team ?? colors.primary },
     resolution: 1,
   });
   text.anchor.set(0.5, 1);
-  label.addChild(labelBg, text);
+  label.addChild(text);
 
-  let wasWhite = false;
+  let wasWhite = false, distance = 0, previousX: number | null = null;
 
   const setPose = (pose: TankPose, cell: number): void => {
     world.visible = pose.visible;
@@ -112,17 +94,18 @@ export const createTankView = (colors: TankColors, nickname: string): TankView =
     rotating.rotation = -pose.tilt * DEG;
     const local = pose.facing === 1 ? pose.elevation : 180 - pose.elevation;
     barrel.rotation = -local * DEG;
-    aim.rotation = barrel.rotation;
-    aim.visible = pose.aiming;
-    if (pose.flash !== wasWhite) {
-      drawBody(body, colors, pose.flash);
+    const signedDelta = previousX === null ? 0 : pose.x - previousX;
+    const delta = Math.abs(signedDelta);
+    previousX = pose.x;
+    const moving = pose.visible && !pose.falling && delta > .001 && delta <= 2.5;
+    if (moving) { distance += signedDelta; playSound("move"); }
+    if (moving || pose.flash !== wasWhite) {
+      drawBody(body, colors, pose.flash, distance);
       wasWhite = pose.flash;
     }
-    drawHpBar(hpBar, colors, pose);
+    drawHpBar(hpBar, { ...colors, primary: team ?? colors.primary }, pose);
 
-    label.position.set((pose.x + 0.5) * cell, (pose.y - 9) * cell);
-    labelBg.clear();
-    labelBg.rect(-text.width / 2 - 2, -text.height, text.width + 4, text.height).fill(0x000000);
+    label.position.set((pose.x + 0.5) * cell, (pose.y - 12) * cell);
   };
 
   return {

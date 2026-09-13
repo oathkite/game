@@ -1,8 +1,10 @@
+import { buildRockArch } from "./rockArch.js";
+import { refineTerrain } from "./refine.js";
 import { MAP_NAMES, RANDOM_MAP, type MapChoice, type MapName } from "@game/protocol";
 import { spawnPos, type TankPos, type TerrainMask } from "@game/sim";
 import { heightsFromProfile, merge, slabs, solidBelow } from "./profile.js";
 
-// 設計書 02 の 2.9 の 8 枚。形状はコードで生成し、PNG は持たない。
+// 従来の手描き形状と、画像のalphaから確定した岩橋マップ。
 
 export type MapDefinition = {
   readonly name: MapName;
@@ -150,9 +152,13 @@ const towers: MapDefinition = {
     ]),
 };
 
-const definitions: Readonly<Record<MapName, MapDefinition>> = { valley, mountain, island, plain, terrace, bridge, cave, towers };
+const originals: Readonly<Record<Exclude<MapName, "rock-arch">, MapDefinition>> = { valley, mountain, island, plain, terrace, bridge, cave, towers };
+const definitions: Readonly<Record<MapName, MapDefinition>> = {
+  ...Object.fromEntries(Object.entries(originals).map(([name, map]) => [name, { ...map, build: () => refineTerrain(map.build(), map.spawns, map.name) }])) as Record<Exclude<MapName, "rock-arch">, MapDefinition>,
+  "rock-arch": { name: "rock-arch", spawns: [85, 305], build: buildRockArch },
+};
 
-/** 部屋の設定を対戦のマップに解く。ランダムは rng で 8 枚から等確率に選ぶ。rng は [0, 1) を返す */
+/** 部屋の設定を対戦のマップに解く。ランダムは rng で登録マップから等確率に選ぶ。rng は [0, 1) を返す */
 export const resolveMapChoice = (choice: MapChoice, rng: () => number): MapName => {
   if (choice !== RANDOM_MAP) return choice;
   const index = Math.min(MAP_NAMES.length - 1, Math.floor(rng() * MAP_NAMES.length));
@@ -168,3 +174,6 @@ export const allMaps = (): readonly MapDefinition[] => MAP_NAMES.map((n) => defi
 
 export { heightsFromProfile, merge, slabs, solidBelow, type ProfilePoint, type Slab } from "./profile.js";
 export { columnsOfMask, decodeColumns, encodeColumns, simplify, slabsFromColumns, validateDrawing, type Drawing, type Run } from "./drawing.js";
+export { buildMapSpec, TEST_ARENA, type MapSpec } from "./spec.js";
+
+export { MULTIPLAYER_MAPS, MULTIPLAYER_MAP_LABELS, multiplayerMap } from "./catalog.js";

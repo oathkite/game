@@ -1,0 +1,5 @@
+Built-in image generation, 2026-09-11. No API/CLI fallback.
+References: output/imagegen/game-screen-functional-v1/desktop-refined-v4.png; assets/workbench/world-ui-final/terrain-cliff-wide-v3.png.
+Output: exec-112e560d-fe78-4bfa-bc1e-0ff6d762f872.png, copied unchanged to terrain-cliff-v4.png.
+
+Requested one opaque wide 3:1 rock-only pixel-art texture for KEROPOD. Match approved foreground cliff styling, replacing giant repetitive vertical polygon columns with small and medium interlocking fractured rock ledges, irregular horizontal layers, cool slate-grey shadows and warm taupe facets. Crisp square pixel clusters and restrained ochre highlights. No sky, water, grass, objects, text, frames, gradients or photographic grit. Uniform upper-left lighting. Grass remains dynamically painted by the terrain renderer. Requested seamless repetition on both axes; exact edge identity was not guaranteed by the generated output.

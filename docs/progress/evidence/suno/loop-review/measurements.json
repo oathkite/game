@@ -1,0 +1,74 @@
+[
+  {
+    "file": "title.opus",
+    "seconds": 66.571438,
+    "seamJumpDbFS": -24.0,
+    "nearSeamDifferenceP99DbFS": -27.32,
+    "tail100msRmsDbFS": -23.84,
+    "head100msRmsDbFS": -24.88,
+    "peakDbFS": -10.66
+  },
+  {
+    "file": "title.mp3",
+    "seconds": 66.571458,
+    "seamJumpDbFS": -34.83,
+    "nearSeamDifferenceP99DbFS": -27.54,
+    "tail100msRmsDbFS": -23.92,
+    "head100msRmsDbFS": -24.57,
+    "peakDbFS": -10.93
+  },
+  {
+    "file": "lobby.opus",
+    "seconds": 81.47825,
+    "seamJumpDbFS": -39.54,
+    "nearSeamDifferenceP99DbFS": -39.14,
+    "tail100msRmsDbFS": -22.76,
+    "head100msRmsDbFS": -27.22,
+    "peakDbFS": -10.67
+  },
+  {
+    "file": "lobby.mp3",
+    "seconds": 81.478271,
+    "seamJumpDbFS": -47.26,
+    "nearSeamDifferenceP99DbFS": -38.99,
+    "tail100msRmsDbFS": -22.58,
+    "head100msRmsDbFS": -26.88,
+    "peakDbFS": -11.13
+  },
+  {
+    "file": "battle.opus",
+    "seconds": 58.952375,
+    "seamJumpDbFS": -22.72,
+    "nearSeamDifferenceP99DbFS": -26.48,
+    "tail100msRmsDbFS": -25.28,
+    "head100msRmsDbFS": -26.2,
+    "peakDbFS": -8.44
+  },
+  {
+    "file": "battle.mp3",
+    "seconds": 58.952396,
+    "seamJumpDbFS": -25.11,
+    "nearSeamDifferenceP99DbFS": -27.01,
+    "tail100msRmsDbFS": -25.36,
+    "head100msRmsDbFS": -25.64,
+    "peakDbFS": -9.14
+  },
+  {
+    "file": "result.opus",
+    "seconds": 71.846146,
+    "seamJumpDbFS": -17.08,
+    "nearSeamDifferenceP99DbFS": -29.38,
+    "tail100msRmsDbFS": -24.2,
+    "head100msRmsDbFS": -24.84,
+    "peakDbFS": -10.92
+  },
+  {
+    "file": "result.mp3",
+    "seconds": 71.846146,
+    "seamJumpDbFS": -19.03,
+    "nearSeamDifferenceP99DbFS": -29.93,
+    "tail100msRmsDbFS": -24.25,
+    "head100msRmsDbFS": -24.43,
+    "peakDbFS": -11.68
+  }
+]

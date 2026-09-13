@@ -1,0 +1,173 @@
+{
+  "version": 1,
+  "artPixelsPerCell": 12,
+  "frameSize": [
+    192,
+    160
+  ],
+  "visualApproval": "pending",
+  "entries": [
+    {
+      "file": "cabin-standard.png",
+      "source": "assets/workbench/baseline-v2/cabin-standard.png",
+      "bytes": 2263,
+      "sha256": "efee005a8f6c3b8a5ea2b6f62e73abba8fa32974c7db1515a811a9570e1e62e9"
+    },
+    {
+      "file": "tracks-standard.png",
+      "source": "assets/workbench/baseline-v2/tracks-standard.png",
+      "bytes": 4101,
+      "sha256": "a54b6b094a304c3f42e55f0d939add44c0d9bfc7202e08343055afc3422598ac"
+    },
+    {
+      "file": "pilot-frog.svg",
+      "source": "assets/workbench/pilot-generic-v2/pilot-frog.svg",
+      "bytes": 19649,
+      "sha256": "a34f44cc9f9c95183b37f5763f462460d81e5f7f49d012ca901e8ef00c582012"
+    },
+    {
+      "file": "effect-spark.png",
+      "source": "assets/workbench/baseline-v2/effect-spark.png",
+      "bytes": 652,
+      "sha256": "eaaa42125b1558183c9f1e274c055797a67c447069b5b2b6135d58712d829347"
+    },
+    {
+      "file": "effect-smoke.png",
+      "source": "assets/workbench/baseline-v2/effect-smoke.png",
+      "bytes": 1606,
+      "sha256": "80dfa1e7e81c022a8a2c5b33ddf7cf034c98430b6ce162cda4040aff5d63e5b7"
+    },
+    {
+      "file": "effect-dust.png",
+      "source": "assets/workbench/baseline-v2/effect-dust.png",
+      "bytes": 1782,
+      "sha256": "7fb33aae990e811a9144d9247fc853e4121ba69b3affa329a5e29943889894a3"
+    },
+    {
+      "file": "effect-muzzle.png",
+      "source": "assets/workbench/baseline-v2/effect-muzzle.png",
+      "bytes": 642,
+      "sha256": "c4f8187d0b0c0c3484c884d8d5e9b5afae42675da977e88c6b150b0c179c4479"
+    },
+    {
+      "file": "effect-explosion.png",
+      "source": "assets/workbench/baseline-v2/effect-explosion.png",
+      "bytes": 3664,
+      "sha256": "a6ed7cef987301dc778f8c378852f8b81d0fd43bfbbd40362552f566e959ad0b"
+    },
+    {
+      "file": "effect-energy.png",
+      "source": "assets/workbench/baseline-v2/effect-energy.png",
+      "bytes": 1232,
+      "sha256": "3680d003532e36de5bcccae5d42143d9174d79453df53a5a8a488a37152266aa"
+    },
+    {
+      "file": "effect-drill.png",
+      "source": "assets/workbench/baseline-v2/effect-drill.png",
+      "bytes": 1196,
+      "sha256": "7b75a9f145550b631e407eaff0371035f4ab598239f99b304e9b6e1b27af9bb6"
+    },
+    {
+      "file": "effect-dig.png",
+      "source": "assets/workbench/baseline-v2/effect-dig.png",
+      "bytes": 1457,
+      "sha256": "5299f1a9fd6903640ca57a04a0edef7ffd4a8fa462e36f487f0b2504710bbeda"
+    },
+    {
+      "file": "weapon-cannon.png",
+      "source": "assets/workbench/baseline-v2/weapon-cannon.png",
+      "bytes": 652,
+      "sha256": "afac7b5b02bb46354e65141e45d110b2d867b459c803b91c306085cbcbc7d09d"
+    },
+    {
+      "file": "projectile-cannon.png",
+      "source": "assets/workbench/baseline-v2/projectile-cannon.png",
+      "bytes": 393,
+      "sha256": "381245272675a156ceb0fb15701966606abf200c327f9b75e24c2078e568a5f1"
+    },
+    {
+      "file": "weapon-triple.png",
+      "source": "assets/workbench/baseline-v2/weapon-triple.png",
+      "bytes": 736,
+      "sha256": "9acd1430cbe70de825e9ebbfe77943f4ffd019f08dc0f4d882ce8003deca0acc"
+    },
+    {
+      "file": "projectile-triple.png",
+      "source": "assets/workbench/baseline-v2/projectile-triple.png",
+      "bytes": 304,
+      "sha256": "1ce74a6d814e32ea33c421415c50a118a700a1a724ce835a1be0f0297f64c5a3"
+    },
+    {
+      "file": "weapon-multiple.png",
+      "source": "assets/workbench/baseline-v2/weapon-multiple.png",
+      "bytes": 812,
+      "sha256": "e2932dfb95484e2aa6d22cb66429a9dccc0e324f59cb5635d4c87afe842fa28e"
+    },
+    {
+      "file": "projectile-multiple.png",
+      "source": "assets/workbench/baseline-v2/projectile-multiple.png",
+      "bytes": 311,
+      "sha256": "94e227e03efec8d6d728124b9896dea7467e24ea0e96b6d9bf2849b5a68e4daa"
+    },
+    {
+      "file": "weapon-drill.png",
+      "source": "assets/workbench/baseline-v2/weapon-drill.png",
+      "bytes": 772,
+      "sha256": "4b0ad669089e470998afcbd01caccefbc034b7add45d13c7ee5abe95512e2ef8"
+    },
+    {
+      "file": "projectile-drill.png",
+      "source": "assets/workbench/baseline-v2/projectile-drill.png",
+      "bytes": 403,
+      "sha256": "2bbeba6ec81f70d53f14e896fa2806f90ee5e42792704a0ddb014c75e5919987"
+    },
+    {
+      "file": "weapon-laser.png",
+      "source": "assets/workbench/baseline-v2/weapon-laser.png",
+      "bytes": 791,
+      "sha256": "800c2576b61138b0b97fa4a055e4a615dc1e7b09815ee5e5094918c7fd3c92f5"
+    },
+    {
+      "file": "projectile-laser.png",
+      "source": "assets/workbench/baseline-v2/projectile-laser.png",
+      "bytes": 301,
+      "sha256": "a13599d91b15d05462388ea317045a6d8d919446d5ce052129f1f54c53cb0558"
+    },
+    {
+      "file": "weapon-digger.png",
+      "source": "assets/workbench/baseline-v2/weapon-digger.png",
+      "bytes": 758,
+      "sha256": "38a2f53329251eed25b3ee78c6d91c8e6c5b709bda812bb113056f70ebc308ca"
+    },
+    {
+      "file": "projectile-digger.png",
+      "source": "assets/workbench/baseline-v2/projectile-digger.png",
+      "bytes": 413,
+      "sha256": "e1aabbfec2bf33625b93d4a5ef27b05da08ea0f0b8d09f9e42340777c8d6d085"
+    },
+    {
+      "file": "weapon-floater.png",
+      "source": "assets/workbench/baseline-v2/weapon-floater.png",
+      "bytes": 990,
+      "sha256": "a0bbac9b611aa97dde4d66f77782a9b33fb39764160e254020da8176be62d269"
+    },
+    {
+      "file": "projectile-floater.png",
+      "source": "assets/workbench/baseline-v2/projectile-floater.png",
+      "bytes": 396,
+      "sha256": "8a07ba4d97af051e25ff1b590658d2ddc986ef93307d31c25a8e3af043dcbfce"
+    },
+    {
+      "file": "weapon-stinger.png",
+      "source": "assets/workbench/baseline-v2/weapon-stinger.png",
+      "bytes": 606,
+      "sha256": "da6a889452d38924d12665f28ff4c8c11f585b8a951ebf32301df25449e42331"
+    },
+    {
+      "file": "projectile-stinger.png",
+      "source": "assets/workbench/baseline-v2/projectile-stinger.png",
+      "bytes": 352,
+      "sha256": "1b500ae9472a93ca7c047955fc0df635d05bfe346a8393f1f8aa6edcd1f1fff6"
+    }
+  ]
+}

@@ -10,7 +10,7 @@ const checksum = (cells: Uint8Array): number => {
 };
 
 describe("maps", () => {
-  it("8 枚すべてが定義されている", () => {
+  it("登録マップすべてが定義されている", () => {
     expect(allMaps().map((m) => m.name)).toEqual([...MAP_NAMES]);
   });
 
@@ -81,13 +81,14 @@ describe("maps", () => {
     expect(landing).toBeLessThan(surfaceY(mask, map.spawns[1]));
   });
 
-  it("橋は 1 枚の板で、その下は奈落", () => {
+  it("橋の下は空洞で、その下段の岩にも乗れる", () => {
     const mask = getMap("bridge").build();
     expect(isRingOut(mask, spawnPos(mask, 200))).toBe(false);
-    expect(surfaceY(mask, 200)).toBe(surfaceY(mask, 90));
+    expect(Math.abs(surfaceY(mask, 200) - surfaceY(mask, 90))).toBeLessThanOrEqual(2);
     // 橋の直下は空
     expect(mask.cells[130 * MAP_WIDTH + 200]).toBe(0);
-    expect(mask.cells[200 * MAP_WIDTH + 200]).toBe(0);
+    expect(mask.cells[200 * MAP_WIDTH + 200]).toBe(1);
+    expect(spawnPos(mask, 200, 140).y).toBeGreaterThan(180);
   });
 
   it("洞窟は機体が天井と床の間に立ち、頭上に機体の高さ以上の空きがある", () => {
@@ -119,7 +120,7 @@ describe("resolveMapChoice", () => {
     for (const name of MAP_NAMES) expect(resolveMapChoice(name, () => 0.99)).toBe(name);
   });
 
-  it("ランダムは rng の値で 8 枚のどれかを等間隔に選び、1 に近い値でも範囲を出ない", () => {
+  it("ランダムは rng の値で 登録マップのどれかを等間隔に選び、1 に近い値でも範囲を出ない", () => {
     const picked = MAP_NAMES.map((_, i) => resolveMapChoice("random", () => i / MAP_NAMES.length));
     expect(picked).toEqual([...MAP_NAMES]);
     expect(MAP_NAMES).toContain(resolveMapChoice("random", () => 0.999999));

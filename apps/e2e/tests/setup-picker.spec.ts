@@ -3,7 +3,7 @@ import { expect, test } from "@playwright/test";
 for (const viewport of [{ width: 360, height: 640 }, { width: 667, height: 375 }, { width: 1400, height: 800 }]) {
   test(`設定の選択肢はモーダルで変更する ${viewport.width}`, async ({ page }) => {
     await page.setViewportSize(viewport);
-    await page.goto("/");
+    await page.goto("/?prototype=legacy");
     await expect(page.getByText(/矢印キー:/)).toHaveCount(0);
     if (viewport.width > 640) {
       const panes = page.locator(".setup .screen-split > .pane");
@@ -50,7 +50,7 @@ for (const viewport of [{ width: 360, height: 640 }, { width: 667, height: 375 }
 }
 
 test("プラクティスは谷マップの独立画面で開く", async ({ page }) => {
-  await page.goto("/");
+  await page.goto("/?prototype=legacy");
   await page.getByTestId("solo").click();
   await expect(page.locator(".game-root .map-area canvas")).toBeVisible();
   await expect(page.locator(".setup")).toHaveCount(0);

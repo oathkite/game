@@ -1,0 +1,20 @@
+export const playEnglish: Readonly<Record<string, string>> = {
+  "対戦フィールド": "Battlefield",
+  "素材を読み込めませんでした。ページを再読み込みしてください。": "Unable to load artwork. Please reload.",
+  "マシンを準備しています…": "Preparing your tank\u2026",
+  "ドラッグ・ホイールで見回す / Cで手番へ": "Drag or scroll to look around / C: active tank",
+  "フィールド全体": "Field overview",
+
+  "パワー": "Power", "地面 {tilt}度、射角 {elevation}度、水平から {world}度": "Ground {tilt} degrees, elevation {elevation} degrees, world angle {world} degrees",
+  "対戦フィールド。ドラッグ・ホイールで見回す、Cで手番へ": "Battlefield. Drag or scroll to look around. C returns to the active tank.",
+  "素材を読み込めませんでした。再読み込みしてください。": "Unable to load artwork. Please reload.", "フィールドを準備しています…": "Preparing the battlefield…",
+  "手番へ戻る": "Focus active tank", "全体図からカメラを移動": "Pan using the overview", "準備しています…": "Preparing…",
+  "プラクティス": "Practice", "弾を見届けよう": "Watch your shot", "あなたの番": "Your turn", "風向き": "Wind direction",
+  "弾の追従": "Follow shot", "左へ移動": "Move left", "右へ移動": "Move right", "移動": "Move", "角度": "Angle", "武器": "Weapons",
+  "長押しして、離す": "Hold, then release", "離して発射": "Release to fire", "ひと息つこう": "Take a breather",
+  "プラクティスは進行中です。": "Practice continues while this menu is open.", "サウンド": "Sound", "降参して対戦を終える": "Surrender and finish",
+  "ガレージへ戻る": "Back to garage", "機体と照準を見やすくするため、端末を回転してください。": "Rotate your device for a clearer view of the tank and aiming controls.",
+  "もう一度": "Play again", "{player}の勝利": "{player} wins", "次は": "Next",
+  "A / D・← / →：移動": "A / D or ← / →: move", "W / S・↑ / ↓：角度　Space：発射": "W / S or ↑ / ↓: aim. Space: fire",
+  "Q / E：武器　Tab：機体を順に見る": "Q / E: weapon. Tab: cycle tanks", "Shift + 矢印：見回す　C：手番へ": "Shift + arrows: pan. C: active tank",
+};

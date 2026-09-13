@@ -1,0 +1,221 @@
+
+ RUN  v3.2.7 /Users/takehitokita/.codex/worktrees/319f/game-world-ui/apps/server
+
+stdout | test/concurrent-rooms.test.ts > keeps 100 simultaneous eight-player battles isolated through firing and abrupt reconnects
+soak elapsed=52s rooms=100 rssMB=433 heapMB=113
+
+stdout | test/concurrent-rooms.test.ts > keeps 100 simultaneous eight-player battles isolated through firing and abrupt reconnects
+soak elapsed=105s rooms=100 rssMB=493 heapMB=189
+
+stdout | test/concurrent-rooms.test.ts > keeps 100 simultaneous eight-player battles isolated through firing and abrupt reconnects
+soak elapsed=155s rooms=100 rssMB=407 heapMB=77
+
+stdout | test/concurrent-rooms.test.ts > keeps 100 simultaneous eight-player battles isolated through firing and abrupt reconnects
+soak elapsed=208s rooms=100 rssMB=578 heapMB=161
+
+stdout | test/concurrent-rooms.test.ts > keeps 100 simultaneous eight-player battles isolated through firing and abrupt reconnects
+soak elapsed=258s rooms=100 rssMB=465 heapMB=74
+
+stdout | test/concurrent-rooms.test.ts > keeps 100 simultaneous eight-player battles isolated through firing and abrupt reconnects
+soak elapsed=312s rooms=100 rssMB=589 heapMB=143
+
+stdout | test/concurrent-rooms.test.ts > keeps 100 simultaneous eight-player battles isolated through firing and abrupt reconnects
+soak elapsed=361s rooms=100 rssMB=433 heapMB=85
+
+stdout | test/concurrent-rooms.test.ts > keeps 100 simultaneous eight-player battles isolated through firing and abrupt reconnects
+soak elapsed=415s rooms=100 rssMB=458 heapMB=195
+
+stdout | test/concurrent-rooms.test.ts > keeps 100 simultaneous eight-player battles isolated through firing and abrupt reconnects
+soak elapsed=464s rooms=100 rssMB=344 heapMB=88
+
+stdout | test/concurrent-rooms.test.ts > keeps 100 simultaneous eight-player battles isolated through firing and abrupt reconnects
+soak elapsed=519s rooms=100 rssMB=461 heapMB=219
+
+stdout | test/concurrent-rooms.test.ts > keeps 100 simultaneous eight-player battles isolated through firing and abrupt reconnects
+soak elapsed=568s rooms=100 rssMB=400 heapMB=107
+
+stdout | test/concurrent-rooms.test.ts > keeps 100 simultaneous eight-player battles isolated through firing and abrupt reconnects
+soak elapsed=622s rooms=100 rssMB=470 heapMB=212
+
+stdout | test/concurrent-rooms.test.ts > keeps 100 simultaneous eight-player battles isolated through firing and abrupt reconnects
+soak elapsed=672s rooms=100 rssMB=431 heapMB=107
+
+stdout | test/concurrent-rooms.test.ts > keeps 100 simultaneous eight-player battles isolated through firing and abrupt reconnects
+soak elapsed=725s rooms=100 rssMB=491 heapMB=209
+
+stdout | test/concurrent-rooms.test.ts > keeps 100 simultaneous eight-player battles isolated through firing and abrupt reconnects
+soak elapsed=775s rooms=100 rssMB=396 heapMB=101
+
+stdout | test/concurrent-rooms.test.ts > keeps 100 simultaneous eight-player battles isolated through firing and abrupt reconnects
+soak elapsed=829s rooms=100 rssMB=520 heapMB=212
+
+stdout | test/concurrent-rooms.test.ts > keeps 100 simultaneous eight-player battles isolated through firing and abrupt reconnects
+soak elapsed=879s rooms=100 rssMB=411 heapMB=120
+
+stdout | test/concurrent-rooms.test.ts > keeps 100 simultaneous eight-player battles isolated through firing and abrupt reconnects
+soak elapsed=932s rooms=100 rssMB=558 heapMB=187
+
+stdout | test/concurrent-rooms.test.ts > keeps 100 simultaneous eight-player battles isolated through firing and abrupt reconnects
+soak elapsed=983s rooms=100 rssMB=414 heapMB=107
+
+stdout | test/concurrent-rooms.test.ts > keeps 100 simultaneous eight-player battles isolated through firing and abrupt reconnects
+soak elapsed=1037s rooms=100 rssMB=508 heapMB=220
+
+stdout | test/concurrent-rooms.test.ts > keeps 100 simultaneous eight-player battles isolated through firing and abrupt reconnects
+soak elapsed=1087s rooms=100 rssMB=407 heapMB=137
+
+stdout | test/concurrent-rooms.test.ts > keeps 100 simultaneous eight-player battles isolated through firing and abrupt reconnects
+soak elapsed=1140s rooms=100 rssMB=521 heapMB=237
+
+stdout | test/concurrent-rooms.test.ts > keeps 100 simultaneous eight-player battles isolated through firing and abrupt reconnects
+soak elapsed=1190s rooms=100 rssMB=422 heapMB=135
+
+stdout | test/concurrent-rooms.test.ts > keeps 100 simultaneous eight-player battles isolated through firing and abrupt reconnects
+soak elapsed=1244s rooms=100 rssMB=493 heapMB=234
+
+stdout | test/concurrent-rooms.test.ts > keeps 100 simultaneous eight-player battles isolated through firing and abrupt reconnects
+soak elapsed=1294s rooms=100 rssMB=286 heapMB=140
+
+stdout | test/concurrent-rooms.test.ts > keeps 100 simultaneous eight-player battles isolated through firing and abrupt reconnects
+soak elapsed=1347s rooms=100 rssMB=508 heapMB=246
+
+stdout | test/concurrent-rooms.test.ts > keeps 100 simultaneous eight-player battles isolated through firing and abrupt reconnects
+soak elapsed=1397s rooms=100 rssMB=313 heapMB=138
+
+stdout | test/concurrent-rooms.test.ts > keeps 100 simultaneous eight-player battles isolated through firing and abrupt reconnects
+soak elapsed=1451s rooms=100 rssMB=501 heapMB=245
+
+stdout | test/concurrent-rooms.test.ts > keeps 100 simultaneous eight-player battles isolated through firing and abrupt reconnects
+soak elapsed=1500s rooms=100 rssMB=356 heapMB=144
+
+stdout | test/concurrent-rooms.test.ts > keeps 100 simultaneous eight-player battles isolated through firing and abrupt reconnects
+soak elapsed=1554s rooms=100 rssMB=520 heapMB=254
+
+stdout | test/concurrent-rooms.test.ts > keeps 100 simultaneous eight-player battles isolated through firing and abrupt reconnects
+soak elapsed=1605s rooms=100 rssMB=317 heapMB=130
+
+stdout | test/concurrent-rooms.test.ts > keeps 100 simultaneous eight-player battles isolated through firing and abrupt reconnects
+soak elapsed=1659s rooms=100 rssMB=499 heapMB=260
+
+stdout | test/concurrent-rooms.test.ts > keeps 100 simultaneous eight-player battles isolated through firing and abrupt reconnects
+soak elapsed=1708s rooms=100 rssMB=311 heapMB=156
+
+stdout | test/concurrent-rooms.test.ts > keeps 100 simultaneous eight-player battles isolated through firing and abrupt reconnects
+soak elapsed=1762s rooms=100 rssMB=521 heapMB=253
+
+stdout | test/concurrent-rooms.test.ts > keeps 100 simultaneous eight-player battles isolated through firing and abrupt reconnects
+soak elapsed=1812s rooms=100 rssMB=394 heapMB=139
+
+stdout | test/concurrent-rooms.test.ts > keeps 100 simultaneous eight-player battles isolated through firing and abrupt reconnects
+soak elapsed=1865s rooms=100 rssMB=529 heapMB=267
+
+stdout | test/concurrent-rooms.test.ts > keeps 100 simultaneous eight-player battles isolated through firing and abrupt reconnects
+soak elapsed=1915s rooms=100 rssMB=391 heapMB=143
+
+stdout | test/concurrent-rooms.test.ts > keeps 100 simultaneous eight-player battles isolated through firing and abrupt reconnects
+soak elapsed=1969s rooms=100 rssMB=513 heapMB=259
+
+stdout | test/concurrent-rooms.test.ts > keeps 100 simultaneous eight-player battles isolated through firing and abrupt reconnects
+soak elapsed=2019s rooms=100 rssMB=500 heapMB=172
+
+stdout | test/concurrent-rooms.test.ts > keeps 100 simultaneous eight-player battles isolated through firing and abrupt reconnects
+soak elapsed=2073s rooms=100 rssMB=555 heapMB=275
+
+stdout | test/concurrent-rooms.test.ts > keeps 100 simultaneous eight-player battles isolated through firing and abrupt reconnects
+soak elapsed=2123s rooms=100 rssMB=479 heapMB=177
+
+stdout | test/concurrent-rooms.test.ts > keeps 100 simultaneous eight-player battles isolated through firing and abrupt reconnects
+soak elapsed=2176s rooms=100 rssMB=580 heapMB=266
+
+stdout | test/concurrent-rooms.test.ts > keeps 100 simultaneous eight-player battles isolated through firing and abrupt reconnects
+soak elapsed=2226s rooms=100 rssMB=474 heapMB=167
+
+stdout | test/concurrent-rooms.test.ts > keeps 100 simultaneous eight-player battles isolated through firing and abrupt reconnects
+soak elapsed=2280s rooms=100 rssMB=572 heapMB=275
+
+stdout | test/concurrent-rooms.test.ts > keeps 100 simultaneous eight-player battles isolated through firing and abrupt reconnects
+soak elapsed=2330s rooms=100 rssMB=541 heapMB=178
+
+stdout | test/concurrent-rooms.test.ts > keeps 100 simultaneous eight-player battles isolated through firing and abrupt reconnects
+soak elapsed=2383s rooms=100 rssMB=561 heapMB=284
+
+stdout | test/concurrent-rooms.test.ts > keeps 100 simultaneous eight-player battles isolated through firing and abrupt reconnects
+soak elapsed=2433s rooms=100 rssMB=467 heapMB=185
+
+stdout | test/concurrent-rooms.test.ts > keeps 100 simultaneous eight-player battles isolated through firing and abrupt reconnects
+soak elapsed=2486s rooms=100 rssMB=570 heapMB=282
+
+stdout | test/concurrent-rooms.test.ts > keeps 100 simultaneous eight-player battles isolated through firing and abrupt reconnects
+soak elapsed=2537s rooms=100 rssMB=463 heapMB=169
+
+stdout | test/concurrent-rooms.test.ts > keeps 100 simultaneous eight-player battles isolated through firing and abrupt reconnects
+soak elapsed=2591s rooms=100 rssMB=571 heapMB=291
+
+stdout | test/concurrent-rooms.test.ts > keeps 100 simultaneous eight-player battles isolated through firing and abrupt reconnects
+soak elapsed=2640s rooms=100 rssMB=519 heapMB=195
+
+stdout | test/concurrent-rooms.test.ts > keeps 100 simultaneous eight-player battles isolated through firing and abrupt reconnects
+soak elapsed=2694s rooms=100 rssMB=600 heapMB=304
+
+stdout | test/concurrent-rooms.test.ts > keeps 100 simultaneous eight-player battles isolated through firing and abrupt reconnects
+soak elapsed=2744s rooms=100 rssMB=507 heapMB=200
+
+stdout | test/concurrent-rooms.test.ts > keeps 100 simultaneous eight-player battles isolated through firing and abrupt reconnects
+soak elapsed=2798s rooms=100 rssMB=605 heapMB=298
+
+stdout | test/concurrent-rooms.test.ts > keeps 100 simultaneous eight-player battles isolated through firing and abrupt reconnects
+soak elapsed=2848s rooms=100 rssMB=573 heapMB=196
+
+stdout | test/concurrent-rooms.test.ts > keeps 100 simultaneous eight-player battles isolated through firing and abrupt reconnects
+soak elapsed=2901s rooms=100 rssMB=607 heapMB=312
+
+stdout | test/concurrent-rooms.test.ts > keeps 100 simultaneous eight-player battles isolated through firing and abrupt reconnects
+soak elapsed=2951s rooms=100 rssMB=531 heapMB=202
+
+stdout | test/concurrent-rooms.test.ts > keeps 100 simultaneous eight-player battles isolated through firing and abrupt reconnects
+soak elapsed=3005s rooms=100 rssMB=595 heapMB=315
+
+stdout | test/concurrent-rooms.test.ts > keeps 100 simultaneous eight-player battles isolated through firing and abrupt reconnects
+soak elapsed=3055s rooms=100 rssMB=511 heapMB=204
+
+stdout | test/concurrent-rooms.test.ts > keeps 100 simultaneous eight-player battles isolated through firing and abrupt reconnects
+soak elapsed=3108s rooms=100 rssMB=603 heapMB=302
+
+stdout | test/concurrent-rooms.test.ts > keeps 100 simultaneous eight-player battles isolated through firing and abrupt reconnects
+soak elapsed=3159s rooms=100 rssMB=382 heapMB=211
+
+stdout | test/concurrent-rooms.test.ts > keeps 100 simultaneous eight-player battles isolated through firing and abrupt reconnects
+soak elapsed=3213s rooms=100 rssMB=567 heapMB=323
+
+stdout | test/concurrent-rooms.test.ts > keeps 100 simultaneous eight-player battles isolated through firing and abrupt reconnects
+soak elapsed=3263s rooms=100 rssMB=359 heapMB=219
+
+stdout | test/concurrent-rooms.test.ts > keeps 100 simultaneous eight-player battles isolated through firing and abrupt reconnects
+soak elapsed=3317s rooms=100 rssMB=610 heapMB=337
+
+stdout | test/concurrent-rooms.test.ts > keeps 100 simultaneous eight-player battles isolated through firing and abrupt reconnects
+soak elapsed=3367s rooms=100 rssMB=509 heapMB=247
+
+stdout | test/concurrent-rooms.test.ts > keeps 100 simultaneous eight-player battles isolated through firing and abrupt reconnects
+soak elapsed=3420s rooms=100 rssMB=633 heapMB=311
+
+stdout | test/concurrent-rooms.test.ts > keeps 100 simultaneous eight-player battles isolated through firing and abrupt reconnects
+soak elapsed=3470s rooms=100 rssMB=525 heapMB=225
+
+stdout | test/concurrent-rooms.test.ts > keeps 100 simultaneous eight-player battles isolated through firing and abrupt reconnects
+soak elapsed=3524s rooms=100 rssMB=623 heapMB=338
+
+stdout | test/concurrent-rooms.test.ts > keeps 100 simultaneous eight-player battles isolated through firing and abrupt reconnects
+soak elapsed=3574s rooms=100 rssMB=533 heapMB=234
+
+stdout | test/concurrent-rooms.test.ts > keeps 100 simultaneous eight-player battles isolated through firing and abrupt reconnects
+soak complete seconds=3600 rematches=3500 moves=187021
+
+ ✓ test/concurrent-rooms.test.ts (1 test) 3608092ms
+   ✓ keeps 100 simultaneous eight-player battles isolated through firing and abrupt reconnects  3608091ms
+
+ Test Files  1 passed (1)
+      Tests  1 passed (1)
+   Start at  13:37:44
+   Duration  3608.74s (transform 165ms, setup 0ms, collect 281ms, tests 3608.09s, environment 0ms, prepare 60ms)
+

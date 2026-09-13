@@ -1,0 +1,108 @@
+{
+  "model": "gpt-image-2.5-sunburst",
+  "created": "2026-09-10",
+  "reference": "assets/concepts/original-v1/03-direction-refined.png",
+  "scope": "DEV preview only; user approval pending",
+  "review": "button-v2 reduces v1 glow; gradients and soft shadows remain on several assets. Terrain is clipped to runtime collision mask. Background-v2 replaces glaring yellow sky with subdued turquoise after in-game review.",
+  "files": [
+    {
+      "file": "background-v1.png",
+      "width": 1536,
+      "height": 1024,
+      "sha256": "9a8f4586a2024770d0a7aa90a3b105c0b75c840540fb53774ba429351703f063",
+      "prompt": "prompts/background.txt",
+      "promptSha256": "9946a04b0d1dcd6a121bce28b11f7228968bbce596a094d00d7813c6ee5d21a6",
+      "status": "superseded"
+    },
+    {
+      "file": "button-v1.png",
+      "width": 1536,
+      "height": 1024,
+      "sha256": "b296547c8467a87002e3f4d001b88665183dd23053f05869ab9aa461ac30311e",
+      "prompt": "prompts/button.txt",
+      "promptSha256": "62f66696853c8ad5cc60e828acbd120e1e7784230316f941ed7c07c693606fe4",
+      "status": "superseded"
+    },
+    {
+      "file": "button-v2.png",
+      "width": 1536,
+      "height": 1024,
+      "sha256": "f7c4e011502d961f88b05a97361ef1b66968bdc42efafd545db03e488d303819",
+      "prompt": "prompts/button-v2.txt",
+      "promptSha256": "5d6ddf859d1d702275fd4563a4b158ec317aaf035bc825ccbef3686241b317ac",
+      "status": "review-candidate"
+    },
+    {
+      "file": "leaf-v1.png",
+      "width": 1024,
+      "height": 1024,
+      "sha256": "6d3a49b461208566bf01c74861403a7917d90a1ed79006271136f4814b9a3734",
+      "prompt": "prompts/leaf.txt",
+      "promptSha256": "3253d60c30323856fab0935efc8f37612a8946d2f2996e0e856767759d24ebec",
+      "status": "review-candidate"
+    },
+    {
+      "file": "lobby-v1.png",
+      "width": 1536,
+      "height": 1024,
+      "sha256": "6ba8124ce2ca8658ecc7545f4421da488c9f44acc15d160b60f15917a60bb147",
+      "prompt": "prompts/lobby.txt",
+      "promptSha256": "2e2f60fee809e37151ba206080254c03a07abcc706c1cc273a2adee57a4c8eb3",
+      "status": "review-candidate"
+    },
+    {
+      "file": "meter-v1.png",
+      "width": 1536,
+      "height": 1024,
+      "sha256": "fe56bcd0a4c37c4df90cafc4d315ce65ab52485872d9a6819a1fa120cc16f8e3",
+      "prompt": "prompts/meter.txt",
+      "promptSha256": "eb7275108379dd158b2c8cb79588a9a6363fe7daee7c2d6d922fb576546fa1a6",
+      "status": "review-candidate"
+    },
+    {
+      "file": "panel-v1.png",
+      "width": 1536,
+      "height": 1024,
+      "sha256": "25d28d7c81bf4bdbd449d177318b375a093e4d428d23b0e753eee2365793440c",
+      "prompt": "prompts/panel.txt",
+      "promptSha256": "a40aaca4b4ca7b1d8ec6597c1c497e2e51607004ab210e24649204799920eb56",
+      "status": "review-candidate"
+    },
+    {
+      "file": "result-v1.png",
+      "width": 1536,
+      "height": 1024,
+      "sha256": "7e7ca2887908980aa7d275401d8508048ae1cf3d16fab71a810bca801417cf8e",
+      "prompt": "prompts/result.txt",
+      "promptSha256": "af3c446a1c7d0c8b19a076245f7ef18150fd5dde200c3bcd3dc3e48afe6bcc3b",
+      "status": "review-candidate"
+    },
+    {
+      "file": "settings-v1.png",
+      "width": 1536,
+      "height": 1024,
+      "sha256": "6da62790c3a573353b93999935d889bb0643ffa5b41e9d41a5ba54c8467fdd61",
+      "prompt": "prompts/settings.txt",
+      "promptSha256": "43fc83c3f97c1483320bd7530fcce451aabc1aca6f8fceb713d252ce80405dc1",
+      "status": "review-candidate"
+    },
+    {
+      "file": "terrain-v1.png",
+      "width": 1024,
+      "height": 1024,
+      "sha256": "16e8601f844471cac2e5cd7f8dce2d9d5e578392e9864fe67bd2b53977c18e0b",
+      "prompt": "prompts/terrain.txt",
+      "promptSha256": "d9038e7cc09ce144a42c2293cfe9dc7a412400392be7abaef386ec9bc4a75213",
+      "status": "review-candidate"
+    },
+    {
+      "file": "background-v2.png",
+      "width": 1536,
+      "height": 1024,
+      "sha256": "6396e2b29a24997de6d2b565bab4bb4e7363c92d846298e5039d2d35c980dc6f",
+      "prompt": "prompts/background-v2.txt",
+      "promptSha256": "08145c2edfdfd48334a92e5980b2d28dcf6648b12ec63c01ccf0581ab784df26",
+      "status": "review-candidate"
+    }
+  ]
+}

@@ -1,0 +1,38 @@
+{
+  "runtime": "v26.0.0",
+  "scope": "Local Node; deterministic mixed-weapon eight-player fixtures, not maximum-damage or Cloudflare CPU/storage billing",
+  "results": [
+    {
+      "map": "moss-valley",
+      "shots": 75,
+      "maxOps": 296,
+      "maxActingBytes": 18942,
+      "maxReplayBytes": 58126,
+      "maxActingStoredBytes": 9811,
+      "maxReplayStoredBytes": 52421,
+      "terrainInserts": 296,
+      "finalTerrainOpsBytes": 9200,
+      "finalMapBytes": 2069,
+      "columnCheckpointBytes": 4273,
+      "rawMaskBytes": 112500,
+      "restoreP95Milliseconds": 3.655207999999959,
+      "samples": 100
+    },
+    {
+      "map": "reed-hills",
+      "shots": 69,
+      "maxOps": 262,
+      "maxActingBytes": 17058,
+      "maxReplayBytes": 39230,
+      "maxActingStoredBytes": 8995,
+      "maxReplayStoredBytes": 38551,
+      "terrainInserts": 262,
+      "finalTerrainOpsBytes": 8132,
+      "finalMapBytes": 1668,
+      "columnCheckpointBytes": 3914,
+      "rawMaskBytes": 80000,
+      "restoreP95Milliseconds": 2.3053750000000264,
+      "samples": 100
+    }
+  ]
+}

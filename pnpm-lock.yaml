@@ -60,6 +60,9 @@ importers:
 
   apps/e2e:
     devDependencies:
+      '@game/protocol':
+        specifier: workspace:*
+        version: link:../../packages/protocol
       '@game/sim':
         specifier: workspace:*
         version: link:../../packages/sim

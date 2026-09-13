@@ -8,7 +8,7 @@ import type { MatchView } from "./types";
 export const applyStep = (view: MatchView, dir: Facing): MatchView => {
   const c = view.control;
   if (view.phase !== "acting" || !c || !view.mask) return view;
-  if (c.stepsLeft <= 0 || c.fell) return { ...view, control: { ...c, facing: dir } };
+  if (c.stepsLeft <= 0 || c.y >= view.mask.height) return { ...view, control: { ...c, facing: dir } };
   const outcome = stepOutcome(view.mask, { x: c.x, y: c.y }, dir);
   if (outcome.kind === "blocked") return { ...view, control: { ...c, facing: dir } };
   return { ...view, control: { ...c, facing: dir, x: c.x + dir, y: outcome.y, stepsLeft: c.stepsLeft - 1, fell: outcome.kind === "fell" } };
@@ -18,7 +18,7 @@ export const applyStep = (view: MatchView, dir: Facing): MatchView => {
 export const canStep = (view: MatchView, dir: Facing): boolean => {
   const c = view.control;
   if (view.phase !== "acting" || !c || !view.mask) return false;
-  if (c.stepsLeft <= 0 || c.fell) return false;
+  if (c.stepsLeft <= 0 || c.y >= view.mask.height) return false;
   return stepOutcome(view.mask, { x: c.x, y: c.y }, dir).kind !== "blocked";
 };
 

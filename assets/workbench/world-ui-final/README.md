@@ -1,0 +1,47 @@
+# Final UI alignment artwork
+
+## background-floating-islands-v1.png
+
+- Generated with the built-in image generation tool on 2026-09-10.
+- Reference: approved `output/imagegen/game-screen-functional-v1/desktop-refined-v4.png`.
+- Brief: background-only, crisp pixel art; blue sky, distant floating stone islands, ivory castle, thin bridges, waterfalls and a low water horizon. Atmospheric cool colors so yellow tanks remain distinct. No UI, text, characters, tanks, projectiles or foreground destructible platforms.
+- Original generation: `exec-12163271-ffae-46da-a90f-ed5b121502f6.png`.
+- AI visual review: the generated image follows the reference environment and excludes gameplay/UI elements. Human final approval remains pending.
+- Runtime encoding: `scripts/assets/encode-world.py`, WebP quality 94 with exact alpha/dimensions and RGB RMS error checks. Previous background sources are retained.
+
+## terrain-rock-v1.png (candidate)
+
+- Generated with the built-in image tool on 2026-09-10, reference desktop-refined-v4.png foreground cliffs.
+- Source: exec-a782864c-e915-46e6-a617-352641393b39.png. Original retained; 1254x1254 output despite 1024 requested.
+- Brief: full-bleed repeating rock material, charcoal/olive fractured slabs and sparse moss, no sky/UI/characters/grass border. Runtime supplies the arbitrary destruction mask and surface rim.
+- AI review: rock/moss material matches the foreground direction more closely than brown soil. Repeat seams and apparent pixel density require in-game comparison. Not yet selected as runtime terrain; human approval pending.
+- Runtime comparison: selected for the next iteration after desktop/mobile screenshots. A 256-art-pixel repeat tile makes the generated clusters close to tank pixels; the initial 1024 tile made the rock pixels visibly too large. Lossless WebP preserves the source before runtime nearest-neighbor resampling. Surface moss and repetitive material variation still need refinement; this is not final human approval.
+
+## pilot-portrait-v1.png
+
+- Generated with built-in image generation on 2026-09-10. Source: exec-d8593b04-fac3-4baf-b293-a6dbb4cf9acf.png, retained unchanged.
+- Reference: desktop-refined-v4.png cockpit portrait. Generic green frog pilot in olive jacket, no glasses or scarf; not the owner's personal yellow/blue-glasses/orange-scarf avatar.
+- AI review: face and natural eyes remain readable in a small HUD; navy background integrates with the cockpit. Human final approval pending.
+- Runtime: lossless WebP with exact RGBA validation; shared by roster and self panel. This is a HUD portrait, not a replacement gameplay animation sheet.
+
+## Result expressions v1
+
+- `pilot-result-expressions-v1.png`: built-in image generation, referenced `pilot-portrait-v1.png`; API/CLI generation was not used.
+- Original: `exec-dbba4403-fe05-447b-bdf7-7e76626ad4c4.png` in the Codex generated_images directory for this task. Copied without editing. Two equal square panels, left victory and right defeat, same green pilot and olive jacket on navy background. No text or checkerboard.
+- Prompt requested matching identity/pixel density, joyful closed-eye smile on the left, gently disappointed face on the right, bust crop and matching scale.
+- Runtime encoding: lossless WebP through `scripts/assets/encode-world.py`; SVG crops each half without modifying the source. Reviewed in the eight-player result screen; formal user art approval remains pending.
+
+## terrain-cliff-v2.png
+
+- Built-in image generation using desktop-refined-v4.png as reference; no API/CLI generation. Original `exec-26922d20-86fa-4f7c-9c07-5d0c7a5b5f5e.png`, copied unchanged.
+- Prompt: square full-bleed tileable cliff material; 6–8 columns of broad angular basalt slabs, charcoal/olive planes, warm small highlights and sparse moss; no cobblestones, sky, grass border, UI or characters. Readable at a 256px runtime repeat.
+- Selected for runtime after desktop screenshot comparison. Pixel density and the large cliff fractures are closer to the design reference than the small round stones in v1. Repeated motifs remain visible; full scene fidelity and formal human art approval remain pending.
+- Source preserved and encoded losslessly by encode-world.py. Runtime grass is drawn within the collision mask and can hang up to 31 art pixels below a surface.
+
+## terrain-cliff-wide-v3.png
+
+- Built-in image generation, original `exec-f65793c4-23f5-4d76-89bd-de7bdb7af1dd.png`, preserved unchanged (2172×724). No API/CLI generation.
+- Prompt requested a 3:1 continuous angular basalt cliff, varied geological masses, charcoal crevices and warm highlights; no vegetation, objects or UI, uniform pixel density and tileable edges.
+- Runtime uses the source aspect ratio: 768×256 rather than compressing the entire image into 256×256. This spaces horizontal repetition three times farther apart. GPU chunk bounds and collision alpha are unchanged.
+- Desktop screenshot review confirms larger irregular rock faces and fewer repeating columns. Periodic motifs and surface-step geometry remain; seamless generation is a request, not a mathematical guarantee. Human final approval is pending.
+- Lossless WebP: 1,539,808 bytes, an increase of 271,980 bytes over v2. Four viewport scene tests and square/wide pattern continuity tests pass; transfer budgets must be rechecked on the next production build.
