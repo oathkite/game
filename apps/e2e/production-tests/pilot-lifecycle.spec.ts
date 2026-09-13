@@ -1,6 +1,6 @@
 import { expect, test } from "@playwright/test";
 
-test("SVG pilot uploads again after leaving and reentering practice", async ({ page }, info) => {
+test("dot renderer reinitializes without image uploads after leaving practice", async ({ page }, info) => {
   await page.setViewportSize({ width: 1440, height: 900 });
   const errors: string[] = [];
   page.on("pageerror", error => errors.push(error.message));
@@ -18,11 +18,14 @@ test("SVG pilot uploads again after leaving and reentering practice", async ({ p
   await page.goto("/");
   await page.getByRole("button", { name: "はじめる", exact: true }).click();
   for (let visit = 0; visit < 2; visit++) {
-    await expect(page.locator(".tank-portrait")).toHaveAttribute("data-loaded", "true");
+    await expect(page.locator(".world-lobby .tank-portrait")).toHaveAttribute("data-loaded", "true");
     const before = await page.evaluate(() => (window as Window & { pilotUploads?: number }).pilotUploads!);
     await page.getByRole("button", { name: "プラクティスへ", exact: true }).click();
     await expect(page.getByTestId("camera-world")).toHaveAttribute("data-loaded", "true");
-    await expect.poll(() => page.evaluate(() => (window as Window & { pilotUploads?: number }).pilotUploads!)).toBeGreaterThan(before);
+    expect(await page.evaluate(() => (window as Window & { pilotUploads?: number }).pilotUploads!)).toBe(before);
+    await expect(page.getByTestId("camera-world")).toHaveAttribute("data-opening", "false", { timeout: 15000 });
+    await page.keyboard.press("ArrowRight");
+    await expect(page.getByRole("meter", { name: "残り移動", exact: true })).toHaveAttribute("aria-valuenow", "29");
     await page.locator(".world-shutter").evaluate(element => Promise.all(element.getAnimations({ subtree: true }).map(animation => animation.finished)));
     await page.screenshot({ path: `test-results/pilot-${info.project.name}-${visit}.png` });
     await page.getByRole("button", { name: "設定を開く", exact: true }).click();

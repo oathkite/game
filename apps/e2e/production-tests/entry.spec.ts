@@ -1,5 +1,5 @@
 import { expect, test } from "@playwright/test";
-test("production root opens KEROPOD and practice with real assets", async ({ page }) => {
+test("production root opens the dot theme and practice", async ({ page }) => {
   const errors: string[] = [];
   page.on("pageerror", error => errors.push(error.message));
   await page.addInitScript(() => {
@@ -11,10 +11,9 @@ test("production root opens KEROPOD and practice with real assets", async ({ pag
     } as typeof original;
   });
   await page.goto("/");
-  await expect(page).toHaveTitle("KEROPOD");
-  const logo = page.getByRole("img", { name: "KEROPOD（ケロポッド）", exact: true });
+  await expect(page).toHaveTitle("ARTILLERY");
+  const logo = page.getByRole("heading", { name: "ARTILLERY", exact: true });
   await expect(logo).toBeVisible();
-  await expect.poll(() => logo.evaluate(image => (image as HTMLImageElement).naturalWidth)).toBe(1536);
   await expect(page.getByText("2Dプレビュー", { exact: true })).toHaveCount(0);
   expect(await page.evaluate(() => (window as Window & { webglRequests?: number }).webglRequests)).toBe(0);
   await page.waitForLoadState("networkidle");

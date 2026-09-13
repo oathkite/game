@@ -1,6 +1,6 @@
 import { expect, test } from "@playwright/test";
 
-test("Suno audio follows scenes and live output settings", async ({ page }) => {
+test("chip loops follow scenes and live output settings", async ({ page }) => {
   await page.addInitScript(() => {
     const probe = { gains: [] as GainNode[], sources: [] as AudioBufferSourceNode[], ended: new Set<AudioBufferSourceNode>() };
     Object.assign(window, { audioProbe: probe });
@@ -24,7 +24,7 @@ test("Suno audio follows scenes and live output settings", async ({ page }) => {
   await page.goto("/?prototype=world");
   await expect(page.getByRole("button", { name: "はじめる", exact: true })).toBeVisible();
   expect(await activeMusic()).toEqual([]);
-  await page.getByRole("heading", { name: "KEROPOD（ケロポッド）", exact: true }).click();
+  await page.getByRole("heading", { name: "ARTILLERY", exact: true }).click();
   await expect.poll(async () => (await activeMusic()).length).toBe(1);
   const title = (await activeMusic())[0];
   await page.getByRole("button", { name: "はじめる", exact: true }).click();
@@ -47,10 +47,6 @@ test("Suno audio follows scenes and live output settings", async ({ page }) => {
   await expect(page.getByRole("heading", { name: /の勝利/ })).toBeVisible();
   await expect.poll(() => page.evaluate(() => {
     const probe = (window as unknown as { audioProbe: { sources: AudioBufferSourceNode[] } }).audioProbe;
-    return probe.sources.some(source => !source.loop && Math.abs((source.buffer?.duration ?? 0) - 4.8) < 0.02);
-  })).toBe(true);
-  await expect.poll(() => page.evaluate(() => {
-    const probe = (window as unknown as { audioProbe: { sources: AudioBufferSourceNode[] } }).audioProbe;
     return probe.sources.filter(source => source.loop).length;
   })).toBe(4);
   const loopEdges = await page.evaluate(() => {
@@ -64,7 +60,7 @@ test("Suno audio follows scenes and live output settings", async ({ page }) => {
       });
     });
   });
-  expect(loopEdges).toHaveLength(8);
+  expect(loopEdges).toHaveLength(4);
   for (const edge of loopEdges) expect(edge).toEqual({ first: 0, last: 0, hasSignal: true });
   expect(errors).toEqual([]);
 });
