@@ -6,7 +6,7 @@ test("back from an invited battle preserves the session until confirmed, then su
   try {
     await owner!.goto(`${baseURL}/?prototype=world`);
     await owner!.getByRole("button", { name: "はじめる", exact: true }).click();
-    await owner!.getByRole("button", { name: "オンライン対戦", exact: true }).click();
+    await owner!.getByRole("button", { name: "出撃", exact: true }).click();
     await owner!.getByRole("button", { name: "部屋を作る", exact: true }).click();
     await expect(owner!.getByTestId("room-code")).toHaveText(/^[A-F0-9]{6}$/);
     const code = await owner!.getByTestId("room-code").textContent();
@@ -43,7 +43,7 @@ test("back from an invited battle preserves the session until confirmed, then su
     await expect(owner!.getByRole("heading", { name: /チームの勝利/ })).toHaveCount(0);
     await guest!.evaluate(() => history.back());
     await dialog.getByRole("button", { name: "ロビーに戻る", exact: true }).click();
-    await expect(guest!.getByRole("heading", { name: "出発の準備" })).toBeVisible();
+    await expect(guest!.getByRole("heading", { name: "出撃準備" })).toBeVisible();
     expect(await guest!.evaluate(() => sessionStorage.getItem("keropod.room-token"))).toBeNull();
     await expect(owner!.getByRole("heading", { name: "青チームの勝利", exact: true })).toBeVisible();
   } finally { await Promise.all(contexts.map(context => context.close())); }
@@ -55,7 +55,7 @@ test("back from a waiting room releases the seat and clears the resume token", a
   try {
     await owner!.goto(`${baseURL}/?prototype=world`);
     await owner!.getByRole("button", { name: "はじめる", exact: true }).click();
-    await owner!.getByRole("button", { name: "オンライン対戦", exact: true }).click();
+    await owner!.getByRole("button", { name: "出撃", exact: true }).click();
     await owner!.getByRole("button", { name: "部屋を作る", exact: true }).click();
     await expect(owner!.getByTestId("room-code")).toHaveText(/^[A-F0-9]{6}$/);
     const code = await owner!.getByTestId("room-code").textContent();
@@ -63,7 +63,7 @@ test("back from a waiting room releases the seat and clears the resume token", a
     await guest!.getByRole("button", { name: "部屋に参加", exact: true }).click();
     await expect(owner!.locator(".room-members li")).toHaveCount(2);
     await guest!.evaluate(() => history.back());
-    await expect(guest!.getByRole("heading", { name: "出発の準備" })).toBeVisible();
+    await expect(guest!.getByRole("heading", { name: "出撃準備" })).toBeVisible();
     await expect(owner!.locator(".room-members li")).toHaveCount(1);
     expect(await guest!.evaluate(() => sessionStorage.getItem("keropod.room-token"))).toBeNull();
   } finally { await Promise.all(contexts.map(context => context.close())); }

@@ -52,7 +52,10 @@ export const createMatchStore = (connection: Connection, initialOptions: ReduceO
 
   const moveStep = (dir: Facing): void => {
     const next = applyStep(view, dir);
-    if (next !== view) set(next);
+    if (next !== view) {
+      set(next);
+      if (next.control && next.mask && next.control.y >= next.mask.height) connection.reportMoveRingOut?.(next.control.x);
+    }
   };
 
   const changeElevation = (delta: number): void => {

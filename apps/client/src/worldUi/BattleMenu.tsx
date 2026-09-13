@@ -1,3 +1,4 @@
+import { closeOnBackdrop } from "@/worldUi/dialogBackdrop";
 import { BattleMenuStatus } from "./BattleMenuStatus";
 import { ReportControls, type ReportOptions } from "./ReportControls";
 import { AudioControls } from "./AudioControls";
@@ -9,7 +10,7 @@ export const BattleMenu = ({ seconds, close, surrender, exit, finished, report, 
   const text = useRef<HTMLTextAreaElement>(null);
   const dialog = useRef<HTMLDialogElement>(null);
   useEffect(() => { dialog.current?.showModal(); }, []);
-  return <dialog ref={dialog} className="battle-menu-panel" aria-label={t("対戦設定")} onCancel={e => { e.preventDefault(); close(); }}>
+  return <dialog onClick={event => closeOnBackdrop(event, () => close())} ref={dialog} className="battle-menu-panel" aria-label={t("対戦設定")} onCancel={e => { e.preventDefault(); close(); }}>
     {!finished && <BattleMenuStatus activeTurn={activeTurn && !spectator}>{seconds === null ? "—" : `${seconds}s`}</BattleMenuStatus>}
     <button autoFocus onClick={close}>{t("対戦に戻る")}</button>{!spectator && <button disabled={finished} onClick={surrender}>{t("降参")}</button>}<button onClick={exit}>{t("ロビーに戻る")}</button>
     <AudioControls />

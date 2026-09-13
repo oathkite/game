@@ -1,3 +1,4 @@
+import { stepOutcome, STEPS_PER_TURN } from "@game/sim";
 import type { Seat } from "@game/protocol";
 import { computeWakeAt, finish, pass, resolveFire, startTurn } from "./turn.js";
 import { otherSeat, type Effect, type EngineEvent, type EngineState, type Step } from "./types.js";
@@ -106,8 +107,27 @@ const onTick = (state: EngineState, now: number): Step => {
   return noop(state);
 };
 
+const onMoveRingOut = (state: EngineState, seat: Seat, x: number): Step => {
+  if (state.match.phase !== "acting" || state.match.currentSeat !== seat || !Number.isInteger(x)) return noop(state);
+  let pos = state.match.players[seat];
+  const steps = Math.abs(x-pos.x), dir = x > pos.x ? 1 : -1;
+  if (!steps || steps > STEPS_PER_TURN) return noop(state);
+  for (let i=0;i<steps;i++) {
+    const next = stepOutcome(state.mask,pos,dir);
+    if (next.kind === "blocked") return noop(state);
+    pos = { ...pos, x:pos.x+dir, y:next.y };
+    if (pos.y >= state.mask.height) {
+      const players = setPair(state.match.players,seat,{...pos,hp:0});
+      return finish({...state,match:{...state.match,players}},otherSeat(seat),"ringOut");
+    }
+  }
+  return noop(state);
+};
+
 export const handle = (state: EngineState, event: EngineEvent, now: number): Step => {
   switch (event.type) {
+    case "moveRingOut":
+      return onMoveRingOut(state,event.seat,event.x);
     case "loaded":
       return onLoaded(state, event.seat, now);
     case "fire":

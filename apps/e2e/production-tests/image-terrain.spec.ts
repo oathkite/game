@@ -8,7 +8,7 @@ test("authored terrain survives loading and loses collision cells after a real s
   });
   await page.goto("/");
   await page.getByRole("button", { name: "はじめる", exact: true }).click();
-  await page.getByRole("button", { name: "プラクティスへ", exact: true }).click();
+  await page.getByRole("button", { name: "プラクティス", exact: true }).click(); await page.getByRole("button", { name: "練習開始", exact: true }).click();
   const field = page.getByTestId("camera-world");
   await expect(field).toHaveAttribute("data-opening", "true");
   await page.screenshot({ path: `test-results/image-terrain-overview-${test.info().project.name}.png` });

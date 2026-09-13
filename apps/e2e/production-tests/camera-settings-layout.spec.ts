@@ -15,7 +15,7 @@ test("camera settings have their layout before practice has loaded", async ({ pa
   expect(labels).toEqual(["space-between", "space-between"]);
   await page.getByRole("button", { name: "ロビーに戻る", exact: true }).click();
   await page.setViewportSize({ width: 667, height: 375 });
-  await page.getByRole("button", { name: "プラクティスへ", exact: true }).click();
+  await page.getByRole("button", { name: "プラクティス", exact: true }).click(); await page.getByRole("button", { name: "練習開始", exact: true }).click();
   await expect(page.getByTestId("camera-world")).toHaveAttribute("data-loaded", "true");
   await page.getByRole("button", { name: "設定を開く", exact: true }).click();
   await expect(page.locator(".kp-camera-settings small").last()).toHaveCSS("display", "block");

@@ -38,7 +38,7 @@ describe("audio output settings", () => {
     audio.setAudioSettings(0.2, false);
     expect(gains[0]!.gain.setValueAtTime).toHaveBeenLastCalledWith(0.2, 12);
     // Individual envelopes must not apply the output volume a second time.
-    expect(gains[1]!.gain.setValueAtTime).toHaveBeenCalledWith(0.6, 12);
+    expect(gains[2]!.gain.setValueAtTime).toHaveBeenCalledWith(0.6, 12);
   });
 
   it("does not start a sound when muted", async () => {
@@ -46,7 +46,7 @@ describe("audio output settings", () => {
     audio.setAudioSettings(0.5, true);
     audio.unlockAudio();
     audio.playSound("fire");
-    expect(gains).toHaveLength(1);
+    expect(gains).toHaveLength(2);
     expect(gains[0]!.gain.value).toBe(0);
   });
 });
@@ -55,12 +55,26 @@ it("throttles tread sounds and still honors mute", async () => {
   const { audio, gains, ctx } = await setup();
   audio.unlockAudio();
   audio.playSound("move"); audio.playSound("move");
-  expect(gains).toHaveLength(2);
+  expect(gains).toHaveLength(3);
   ctx.currentTime += .1;
   audio.playSound("move");
-  expect(gains).toHaveLength(3);
+  expect(gains).toHaveLength(4);
   audio.setAudioSettings(.5, true);
   ctx.currentTime += .1;
   audio.playSound("move");
-  expect(gains).toHaveLength(3);
+  expect(gains).toHaveLength(4);
+});
+
+it("keeps music and effects volumes independent across mute", async () => {
+  const { audio, gains } = await setup();
+  audio.setAudioSettings(.7, false, .2);
+  audio.unlockAudio();
+  expect(gains[0]!.gain.value).toBe(.7);
+  expect(gains[1]!.gain.value).toBe(.2);
+  audio.setAudioSettings(.7, true, .2);
+  expect(gains[0]!.gain.setValueAtTime).toHaveBeenLastCalledWith(0,12);
+  expect(gains[1]!.gain.setValueAtTime).toHaveBeenLastCalledWith(0,12);
+  audio.setAudioSettings(.7, false, .2);
+  expect(gains[0]!.gain.setValueAtTime).toHaveBeenLastCalledWith(.7,12);
+  expect(gains[1]!.gain.setValueAtTime).toHaveBeenLastCalledWith(.2,12);
 });

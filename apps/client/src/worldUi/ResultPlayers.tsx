@@ -3,8 +3,9 @@ import type { LabFrame } from "@game/protocol/v2-lab";
 import { useLanguage } from "@/i18n/locale";
 import { teamColor } from "./teamColors";
 import "./resultPlayers.css";
+import { TankPortrait } from "./TankPortrait";
 
-export type ResultPresentation = { readonly players: readonly Pick<LabFrame["players"][number], "playerId" | "teamId" | "nickname">[]; readonly result: LabFrame["result"] };
+export type ResultPresentation = { readonly players: readonly Pick<LabFrame["players"][number], "playerId" | "teamId" | "nickname" | "colors">[]; readonly result: LabFrame["result"] };
 
 export const ResultPlayers = ({ players, result }: ResultPresentation) => {
   const { t } = useLanguage();
@@ -14,9 +15,7 @@ export const ResultPlayers = ({ players, result }: ResultPresentation) => {
     const name = player.nickname ?? player.playerId;
     const label = t(reaction === "win" ? "勝利" : reaction === "lose" ? "敗北" : "引き分け");
     return <div className="battle-result-player" key={player.playerId} data-reaction={reaction} style={{ "--team": teamColor(Number(player.teamId.slice(1))) } as CSSProperties}>
-      <svg viewBox="0 0 1 1" role="img" aria-label={`${name}：${label}`}>
-        <path d="M.1 .6H.9V.9H.1Z M.3 .4H.7V.6H.3Z M.6 .4H.95V.48H.6Z" fill="var(--team)" />
-      </svg><strong>{name}</strong>
+      <TankPortrait colors={player.colors} label={`${name}：${label}`} /><strong>{name}</strong>
     </div>;
   })}</div>;
 };

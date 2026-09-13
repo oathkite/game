@@ -10,11 +10,13 @@ type AudioState = {
   /** 全部の音をまとめて通す圧縮器。着弾で 3 つまで重なる音が割れないようにする */
   master: DynamicsCompressorNode | null;
   output: GainNode | null;
+  musicOutput: GainNode | null;
+  bgmVolume: number;
   volume: number;
   muted: boolean;
 };
 
-const state: AudioState = { ctx: null, master: null, output: null, volume: 0.5, muted: false };
+const state: AudioState = { ctx: null, master: null, output: null, musicOutput: null, bgmVolume: 0.5, volume: 0.5, muted: false };
 
 let music: ReturnType<typeof createChipMusic> | null = null;
 let desiredMusic: MusicName | null = null;
@@ -51,13 +53,19 @@ export const unlockAudio = (): void => {
   state.ctx = ctx;
   state.master = master;
   state.output = output;
-  music = createChipMusic(ctx, master);
+  const musicOutput = ctx.createGain();
+  musicOutput.gain.value = state.muted ? 0 : state.bgmVolume;
+  musicOutput.connect(ctx.destination);
+  state.musicOutput = musicOutput;
+  music = createChipMusic(ctx, musicOutput);
   void music.setMusic(desiredMusic);
 };
 
-export const setAudioSettings = (volume: number, muted: boolean): void => {
+export const setAudioSettings = (volume: number, muted: boolean, bgmVolume = volume): void => {
   state.volume = volume;
+  state.bgmVolume = bgmVolume;
   state.muted = muted;
+  if (state.ctx && state.musicOutput) state.musicOutput.gain.setValueAtTime(muted ? 0 : bgmVolume, state.ctx.currentTime);
   if (state.ctx && state.output) state.output.gain.setValueAtTime(muted ? 0 : volume, state.ctx.currentTime);
 };
 

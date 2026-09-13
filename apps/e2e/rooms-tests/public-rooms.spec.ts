@@ -6,7 +6,7 @@ test("a public room can be found and joined without entering its code", async ({
     for (const page of [owner!, guest!]) {
       await page.goto(`${baseURL}/?prototype=world`);
       await page.getByRole("button", { name: "はじめる", exact: true }).click();
-      await page.getByRole("button", { name: "オンライン対戦", exact: true }).click();
+      await page.getByRole("button", { name: "出撃", exact: true }).click();
     }
     await owner!.getByRole("button", { name: "部屋を作る", exact: true }).click();
     await expect(owner!.getByTestId("room-code")).toHaveText(/^[A-F0-9]{6}$/);
@@ -34,7 +34,7 @@ test("a public room can be found and joined without entering its code", async ({
     await expect(owner!.getByTestId("network-world")).toHaveAttribute("data-loaded", "true");
     await spectator!.goto(`${baseURL}/?prototype=world`);
     await spectator!.getByRole("button", { name: "はじめる", exact: true }).click();
-    await spectator!.getByRole("button", { name: "オンライン対戦", exact: true }).click();
+    await spectator!.getByRole("button", { name: "出撃", exact: true }).click();
     await spectator!.getByRole("button", { name: "公開部屋を探す", exact: true }).click();
     const started = spectator!.locator(".public-rooms li").filter({ hasText: code });
     await expect(started).toContainText("対戦中");

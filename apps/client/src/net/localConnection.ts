@@ -98,6 +98,7 @@ export const createLocalConnection = (options: LocalMatchOptions): Connection & 
 
   return {
     releaseReady,
+    reportMoveRingOut: x => { if (host) host.dispatch({ type:"moveRingOut", seat:host.state().match.currentSeat, x }); },
     send,
     subscribe: messages.add,
     onStatus: statuses.add,

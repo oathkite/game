@@ -12,5 +12,5 @@ test("invalid invitations show the reason without becoming ordinary disconnectio
   await expect.poll(() => invitation).toBe("00000000-0000-4000-8000-000000000001");
   await expect(page.getByRole("status").filter({ hasText: "招待リンクが無効か期限切れです。" })).toBeVisible();
   await page.getByRole("button", { name: "ロビーに戻る", exact: true }).click();
-  await expect(page.getByRole("button", { name: "オンライン対戦", exact: true })).toBeVisible();
+  await expect(page.getByRole("button", { name: "出撃", exact: true })).toBeVisible();
 });

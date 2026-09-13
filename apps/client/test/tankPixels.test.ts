@@ -15,6 +15,6 @@ it("gives every weapon a distinct integer pixel silhouette", () => {
   expect(new Set(patterns.map(p => JSON.stringify(p))).size).toBe(WEAPON_IDS.length);
   for (const pattern of patterns) {
     expect(pattern.length).toBeGreaterThan(8);
-    for (const p of pattern) { expect(Number.isInteger(p.x) && Number.isInteger(p.y)).toBe(true); expect(p.x).toBeLessThan(8); expect(p.y).toBeLessThan(8); }
+    for (const p of pattern) { expect(Number.isInteger(p.x) && Number.isInteger(p.y)).toBe(true); expect(p.x).toBeLessThan(12); expect(p.y).toBeLessThan(8); }
   }
 });

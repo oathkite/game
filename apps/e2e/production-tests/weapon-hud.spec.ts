@@ -6,10 +6,11 @@ for (const [first, second] of loadouts) {
     await page.setViewportSize({ width: 1440, height: 900 });
     await page.goto("/");
     await page.getByRole("button", { name: "はじめる", exact: true }).click();
+    await page.getByRole("button", { name: "プラクティス", exact: true }).click();
     // Select through the real loadout UI, including replacing a conflicting default slot.
     await page.getByRole("combobox", { name: "装備 1", exact: true }).selectOption(first);
     await page.getByRole("combobox", { name: "装備 2", exact: true }).selectOption(second);
-    await page.getByRole("button", { name: "プラクティスへ", exact: true }).click();
+    await page.getByRole("button", { name: "練習開始", exact: true }).click();
     await expect(page.getByTestId("camera-world")).toHaveAttribute("data-loaded", "true");
     await expect(page.getByTestId("camera-world")).toHaveAttribute("data-opening", "false", { timeout: 15000 });
     const buttons = page.locator(".battle-weapons button");

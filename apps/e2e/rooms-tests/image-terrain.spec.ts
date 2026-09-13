@@ -16,7 +16,7 @@ test("authored terrain is shared after firing and reconnecting", async ({ browse
       await page.getByRole("button", { name: "はじめる", exact: true }).click();
       await page.getByRole("radiogroup", { name:"車体色" }).getByRole("radio", { name:i === 0 ? "purple" : "cyan", exact:true }).click();
       await page.getByRole("radiogroup", { name:"砲塔色" }).getByRole("radio", { name:"orange", exact:true }).click();
-      await page.getByRole("button", { name: "オンライン対戦", exact: true }).click();
+      await page.getByRole("button", { name: "出撃", exact: true }).click();
       await page.getByLabel("対戦で使う名前").fill(`Arch${i}`);
     }
     const owner = pages[0]!, guest = pages[1]!;
@@ -60,7 +60,7 @@ test("authored terrain is shared after firing and reconnecting", async ({ browse
       });
       observer.observe(document.body, { subtree: true, attributes: true, attributeFilter: ["data-camera-x", "data-camera-y"] });
     });
-    await guest.getByRole("button", { name: "オンライン対戦", exact: true }).click();
+    await guest.getByRole("button", { name: "出撃", exact: true }).click();
     await expect(guest.getByTestId("network-world")).toHaveAttribute("data-loaded", "true", { timeout: 15000 });
     expect(frames[1]!.players.find(p => p.nickname === "Arch0")!.colors).toEqual({ primary:"purple", secondary:"orange" });
     expect(frames[1]!.map).toEqual(map); expect(frames[1]!.terrainOps).toEqual(ops);

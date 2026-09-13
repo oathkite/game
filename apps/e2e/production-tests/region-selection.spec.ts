@@ -2,7 +2,7 @@ import { expect, test } from "@playwright/test";
 const enter = async (page: import("@playwright/test").Page) => {
   await page.goto("/?prototype=world");
   await page.getByRole("button", { name: "はじめる", exact: true }).click();
-  await page.getByRole("button", { name: "オンライン対戦", exact: true }).click();
+  await page.getByRole("button", { name: "出撃", exact: true }).click();
 };
 test("selects the fastest measured region but preserves a manual choice", async ({ page }) => {
   await page.route("**/v2/regions/*/probe?*", async route => {

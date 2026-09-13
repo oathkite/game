@@ -14,7 +14,10 @@ export type PlayerColor =
   | "cyan"
   | "blue"
   | "pink"
-  | "purple";
+  | "purple"
+  | "green"
+  | "mint"
+  | "white";
 
 export type TankColors = {
   readonly primary: PlayerColor;

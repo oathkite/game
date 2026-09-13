@@ -7,7 +7,7 @@ test("all members see team counts update on reassignment and departure", async (
     for (const page of pages) {
       await page.goto(`${baseURL}/?prototype=world`);
       await page.getByRole("button", { name: "はじめる", exact: true }).click();
-      await page.getByRole("button", { name: "オンライン対戦", exact: true }).click();
+      await page.getByRole("button", { name: "出撃", exact: true }).click();
     }
     const owner = pages[0]!;
     await owner.getByRole("button", { name: "部屋を作る", exact: true }).click();

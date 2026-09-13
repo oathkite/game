@@ -9,13 +9,14 @@ import { actorPoint } from "./PrototypeCanvas";
 type Action = "left" | "right" | "up" | "down" | "fire";
 type Owner = { readonly id: number | string; readonly action: Action | "pan" };
 export const usePrototypeInput = (store: MatchStore, rig: CameraRig, enabled: boolean, blocked: boolean, toggleMenu: () => void, paused = false) => {
+  const aimOwner = useRef<{ id: string | number; action: "up" | "down" } | null>(null);
   const pause = useRef(paused); pause.current = paused;
   const gauge = usePowerGauge(enabled && !blocked && !paused, store.fire);
   const holds = {
     left: useHold(() => { if (!pause.current) store.moveStep(-1); }, 80, enabled && !blocked && !gauge.charging),
     right: useHold(() => { if (!pause.current) store.moveStep(1); }, 80, enabled && !blocked && !gauge.charging),
-    up: useHold(() => { if (!pause.current) store.changeElevation(1); }, 50, enabled && !blocked && !gauge.charging),
-    down: useHold(() => { if (!pause.current) store.changeElevation(-1); }, 50, enabled && !blocked && !gauge.charging),
+    up: useHold(() => { if (!pause.current) store.changeElevation(1); }, 50, enabled && !blocked),
+    down: useHold(() => { if (!pause.current) store.changeElevation(-1); }, 50, enabled && !blocked),
   };
   const owner = useRef<Owner | null>(null);
   const drag = useRef<{ x: number; y: number; active: boolean; at: number } | null>(null);
@@ -23,16 +24,25 @@ export const usePrototypeInput = (store: MatchStore, rig: CameraRig, enabled: bo
   latest.current = { gauge, holds, enabled, blocked, toggleMenu };
   const cancel = (): void => {
     Object.values(latest.current.holds).forEach((h) => h.stop());
-    latest.current.gauge.cancel(); owner.current = null; drag.current = null; rig.stop();
+    latest.current.gauge.cancel(); owner.current = null; aimOwner.current = null; drag.current = null; rig.stop();
   };
   const begin = (id: number | string, action: Action): boolean => {
-    if (pause.current || owner.current || !latest.current.enabled || latest.current.blocked) return false;
+    if (pause.current || !latest.current.enabled || latest.current.blocked) return false;
+    if (action === "up" || action === "down") {
+      if (aimOwner.current || (owner.current && owner.current.action !== "fire")) return false;
+      aimOwner.current = { id, action }; rig.stop(); latest.current.holds[action].start();
+      return true;
+    }
+    if (owner.current || (aimOwner.current && action !== "fire")) return false;
     owner.current = { id, action }; rig.stop();
     if (action === "fire") latest.current.gauge.begin(typeof id === "number" ? "pointer" : "key");
     else latest.current.holds[action].start();
     return true;
   };
   const release = (id: number | string): void => {
+    if (aimOwner.current?.id === id) {
+      latest.current.holds[aimOwner.current.action].stop(); aimOwner.current = null; return;
+    }
     if (owner.current?.id !== id) return;
     if (owner.current.action === "fire") latest.current.gauge.release(typeof id === "number" ? "pointer" : "key");
     else if (owner.current.action !== "pan") latest.current.holds[owner.current.action].stop();
@@ -51,7 +61,7 @@ export const usePrototypeInput = (store: MatchStore, rig: CameraRig, enabled: bo
       if (latest.current.blocked || (e.target instanceof HTMLElement && e.target.matches("input, select, textarea, [contenteditable]"))) return;
       if (e.code === "Tab" && !e.shiftKey) {
         e.preventDefault();
-        if (owner.current) return;
+        if (owner.current || aimOwner.current) return;
         const view = store.getView();
         const seats = view.players?.filter(p => p.hp > 0 && p.y < (view.mask?.height ?? 225)) ?? [];
         if (!seats.length) return;
@@ -62,16 +72,16 @@ export const usePrototypeInput = (store: MatchStore, rig: CameraRig, enabled: bo
         rig.focus({ x: position.x, y: position.y - 6 }, "manual", matchMedia("(prefers-reduced-motion: reduce)").matches);
         return;
       }
-      if ((e.code === "KeyQ" || e.code === "KeyE") && !owner.current && latest.current.enabled) { store.selectSlot(e.code === "KeyQ" ? 0 : 1); e.preventDefault(); return; }
-      if (e.code === "KeyC" && !owner.current) { rig.focus(actorPoint(store.getView()), "actor", matchMedia("(prefers-reduced-motion: reduce)").matches); e.preventDefault(); return; }
-      if (e.shiftKey && e.code.startsWith("Arrow") && !owner.current) { panKey = e.code; e.preventDefault(); return; }
+      if ((e.code === "KeyQ" || e.code === "KeyE") && !owner.current && !aimOwner.current && latest.current.enabled) { store.selectSlot(e.code === "KeyQ" ? 0 : 1); e.preventDefault(); return; }
+      if (e.code === "KeyC" && !owner.current && !aimOwner.current) { rig.focus(actorPoint(store.getView()), "actor", matchMedia("(prefers-reduced-motion: reduce)").matches); e.preventDefault(); return; }
+      if (e.shiftKey && e.code.startsWith("Arrow") && !owner.current && !aimOwner.current) { panKey = e.code; e.preventDefault(); return; }
       if (panKey) return;
       const action = keyAction(e.code);
       if (action && begin(e.code, action)) e.preventDefault();
     };
     const up = (e: KeyboardEvent): void => {
       if (e.code === panKey || e.code.startsWith("Shift")) panKey = null;
-      if (owner.current?.id === e.code) { release(e.code); e.preventDefault(); }
+      if (owner.current?.id === e.code || aimOwner.current?.id === e.code) { release(e.code); e.preventDefault(); }
     };
     const frame = (now: number): void => {
       const delta = Math.min(50, now - previous) * 0.48; previous = now;
@@ -95,18 +105,18 @@ export const usePrototypeInput = (store: MatchStore, rig: CameraRig, enabled: bo
       if (e.isPrimary && e.button === 0 && begin(e.pointerId, action)) e.currentTarget.setPointerCapture(e.pointerId);
     },
     onPointerUp: (e: ReactPointerEvent<HTMLButtonElement>) => release(e.pointerId),
-    onPointerCancel: (e: ReactPointerEvent<HTMLButtonElement>) => { if (owner.current?.id === e.pointerId) cancel(); },
-    onLostPointerCapture: (e: ReactPointerEvent<HTMLButtonElement>) => { if (owner.current?.id === e.pointerId) cancel(); },
+    onPointerCancel: (e: ReactPointerEvent<HTMLButtonElement>) => { if (owner.current?.id === e.pointerId || aimOwner.current?.id === e.pointerId) cancel(); },
+    onLostPointerCapture: (e: ReactPointerEvent<HTMLButtonElement>) => { if (owner.current?.id === e.pointerId || aimOwner.current?.id === e.pointerId) cancel(); },
     onKeyDown: (e: React.KeyboardEvent<HTMLButtonElement>) => { if (!e.repeat && (e.code === "Space" || e.code === "Enter")) { e.preventDefault(); begin(e.code, action); } },
     onKeyUp: (e: React.KeyboardEvent<HTMLButtonElement>) => { if (e.code === "Space" || e.code === "Enter") { e.preventDefault(); release(e.code); } },
     onBlur: cancel,
   });
   const world = {
     onWheel: (e: React.WheelEvent<HTMLDivElement>) => {
-      if (!latest.current.blocked && !owner.current && !e.ctrlKey) wheelPan(rig, e.deltaX, e.deltaY, e.deltaMode);
+      if (!latest.current.blocked && !owner.current && !aimOwner.current && !e.ctrlKey) wheelPan(rig, e.deltaX, e.deltaY, e.deltaMode);
     },
     onPointerDown: (e: ReactPointerEvent<HTMLDivElement>) => {
-      if (!e.isPrimary || e.button !== 0 || owner.current || latest.current.blocked) return;
+      if (!e.isPrimary || e.button !== 0 || owner.current || aimOwner.current || latest.current.blocked) return;
       e.preventDefault(); e.currentTarget.focus({ preventScroll: true }); owner.current = { id: e.pointerId, action: "pan" }; rig.stop();
       drag.current = { x: e.clientX, y: e.clientY, active: false, at: performance.now() }; e.currentTarget.setPointerCapture(e.pointerId);
     },
@@ -118,14 +128,14 @@ export const usePrototypeInput = (store: MatchStore, rig: CameraRig, enabled: bo
         if (!from.active && Math.hypot(x, y) < 8) return;
         const now = performance.now();
         rig.pan({ x, y }, now - from.at, now); drag.current = { x: e.clientX, y: e.clientY, active: true, at: now };
-      } else if (!owner.current && e.pointerType === "mouse") {
+      } else if (!owner.current && !aimOwner.current && e.pointerType === "mouse") {
         const rect = e.currentTarget.getBoundingClientRect();
         rig.edge({ x: e.clientX - rect.left, y: e.clientY - rect.top }, performance.now());
       }
     },
     onPointerUp: (e: ReactPointerEvent<HTMLDivElement>) => release(e.pointerId),
-    onPointerCancel: (e: ReactPointerEvent<HTMLDivElement>) => { if (owner.current?.id === e.pointerId) cancel(); },
-    onLostPointerCapture: (e: ReactPointerEvent<HTMLDivElement>) => { if (owner.current?.id === e.pointerId) cancel(); },
+    onPointerCancel: (e: ReactPointerEvent<HTMLDivElement>) => { if (owner.current?.id === e.pointerId || aimOwner.current?.id === e.pointerId) cancel(); },
+    onLostPointerCapture: (e: ReactPointerEvent<HTMLDivElement>) => { if (owner.current?.id === e.pointerId || aimOwner.current?.id === e.pointerId) cancel(); },
     onPointerLeave: () => rig.stop(),
   };
   return { gauge, button, world, cancel };

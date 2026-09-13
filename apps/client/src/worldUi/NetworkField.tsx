@@ -1,10 +1,12 @@
+import { useWindowEdgePan } from "@/prototype/useWindowEdgePan";
+import { WindLeaves } from "./WindLeaves";
 import { createTankView } from "@/game/tankView";
 import { openingPose } from "./openingTour";
 import { StartSignal } from "./StartSignal";
 import { createFallMotion } from "./fallMotion";
 import { useLanguage } from "@/i18n/locale";
 import { teamColor } from "./teamColors";
-import { loadDisplayScale } from "./displayScale";
+import { loadCameraScale } from "./displayScale";
 import { wheelPan } from "@/prototype/wheelPan";
 import { useEffect, useMemo, useRef, useState, type PointerEvent } from "react";
 import type { WeaponId } from "@game/protocol";
@@ -30,7 +32,7 @@ export const NetworkField = (props: Props) => {
   useEffect(() => {
     const element = host.current; if (!element) return;
     let disposed = false, renderer: Renderer | null = null, stop = () => {};
-    const cell = loadDisplayScale();
+    const cell = loadCameraScale();
     const layout = (): Layout => ({ cell, mapWidth: element.clientWidth, mapHeight: element.clientHeight, panelWidth: 0, panelCell: 1 });
     const start = async () => {
       rig.configure(loadCameraSettings());
@@ -38,10 +40,11 @@ export const NetworkField = (props: Props) => {
       const falls = createFallMotion(); let settling = false, wasOpening = false, signalVisible = false, fallMatch = "";
       const facing = new Map<string, -1 | 1>();
       let tankIndex = 0;
-      renderer = await createRenderer({ tankFactory: (colors, name) => createTankView(colors, name, teamColor(Number(latest.current.frame.players[tankIndex++]!.teamId.slice(1)))), host: element, layout: layout(), mask, background: 0x000000,
+      renderer = await createRenderer({ tankFactory: (colors, name) => createTankView(colors, name, teamColor(Number(latest.current.frame.players[tankIndex++]!.teamId.slice(1)))), host: element, layout: layout(), mask, background: 0x000000, backgroundAlpha:0,
         players: latest.current.frame.players.map(p => ({ nickname: p.nickname ?? p.playerId, colors: p.colors ?? { primary: p.teamId === "t0" ? "yellow" : "cyan", secondary: "blue" } })) });
       if (disposed) { renderer.destroy(); return; }
       const r = renderer; let bullet = r.projectile("yellow", "cannon");
+      let previousMoveX: number | undefined;
       stop = r.onFrame(dt => {
         const { frame, players, presentation, elevation, ownId } = latest.current;
         const size = layout(), key = `${size.mapWidth}/${size.mapHeight}/${frame.map.width}/${frame.map.height}`;
@@ -50,6 +53,9 @@ export const NetworkField = (props: Props) => {
         if (nextTerrain !== terrainKey) { terrainKey = nextTerrain; mask = applyOps(baseTerrain(frame), presentation.terrainOps); r.setTerrain(mask, undefined, presentation.terrainOps); }
         const nextTurn = `${frame.matchId}/${frame.turnId}`;
         if (nextTurn !== turnKey) { if (latest.current.followTurns !== false) focus(turnKey === ""); turnKey = nextTurn; }
+        const own = players.find(p => p.playerId === ownId);
+        if (!openingActive() && frame.phase === "acting" && frame.actorId === ownId && own && previousMoveX !== undefined && own.x !== previousMoveX) rig.moveActor({ x: own.x, y: own.y - 6 }, matchMedia("(prefers-reduced-motion: reduce)").matches);
+        previousMoveX = own?.x;
         facing.set(frame.actorId, frame.movement.facing);
         const shot = frame.phase === "replaying" ? frame.replay?.shooter : null;
         if (shot) { facing.set(shot.playerId, shot.facing);  }
@@ -114,8 +120,10 @@ export const NetworkField = (props: Props) => {
     window.addEventListener("keydown", down);
     return () => window.removeEventListener("keydown", down);
   }, [rig]);
+  useWindowEdgePan(host, rig, Boolean(props.blocked) || !loaded);
   const point = (e: PointerEvent<HTMLDivElement>) => { const box = e.currentTarget.getBoundingClientRect(); return { x: e.clientX - box.left, y: e.clientY - box.top }; };
   return <div className="network-field">
+    <WindLeaves wind={props.frame.wind} />
     <StartSignal visible={signal} />
     <div ref={host} className="network-pixi" data-testid="network-world" data-loaded={loaded} data-positions={JSON.stringify(props.players)} tabIndex={0} aria-label={t("対戦フィールド。ドラッグ・ホイールで見回す、Cで手番へ")} onKeyDown={e => { if (e.key.toLowerCase() === "c") focus(); }}
       onWheel={e => { if (!openingActive() && !drag.current && !e.ctrlKey) wheelPan(rig, e.deltaX, e.deltaY, e.deltaMode); }}
@@ -124,7 +132,6 @@ export const NetworkField = (props: Props) => {
       onPointerUp={e => { if (!drag.current) return; drag.current = null; rig.releasePan(performance.now()); if (e.currentTarget.hasPointerCapture(e.pointerId)) e.currentTarget.releasePointerCapture(e.pointerId); }}
       onPointerCancel={() => { drag.current = null; rig.stop(); }} onPointerLeave={() => { if (!drag.current) rig.stop(); }} onBlur={() => rig.stop()} />
     {!loaded && <p className="network-loading" role="status">{error ? t("素材を読み込めませんでした。再読み込みしてください。") : t("フィールドを準備しています…")}</p>}
-    <button className="network-focus" disabled={openingActive()} onClick={() => focus()} aria-label={t("手番へ戻る")}>◎</button>
     <button className="network-overview" disabled={openingActive()} aria-label={t("全体図からカメラを移動")} onClick={e => { const box = e.currentTarget.getBoundingClientRect(); rig.focus(e.detail === 0 ? { x: props.frame.map.width / 2, y: props.frame.map.height / 2 } : { x: (e.clientX - box.left) / box.width * props.frame.map.width, y: (e.clientY - box.top) / box.height * props.frame.map.height }, "manual", true); }}><canvas ref={mini} width="200" height="90" /></button>
   </div>;
 };
@@ -135,5 +142,5 @@ const drawOverview = (canvas: HTMLCanvasElement | null, mask: ReturnType<typeof 
   for (let y = 0; y < mask.height; y += 5) for (let x = 0; x < mask.width; x += 5) if (mask.cells[y * mask.width + x]) ctx.fillRect(x * sx, y * sy, 5 * sx, 5 * sy);
   for (const p of players) if (!p.eliminated) { ctx.fillStyle = teamColor(Number(p.teamId.slice(1))); ctx.fillRect(p.x * sx - 1, p.y * sy - 3, 3, 3); }
   const w = camera.viewport.width / camera.viewport.scale, h = camera.viewport.height / camera.viewport.scale;
-  ctx.strokeStyle = "#fff1d5"; ctx.strokeRect((camera.center.x - w / 2) * sx, (camera.center.y - h / 2) * sy, w * sx, h * sy);
+  ctx.strokeStyle = "#33ff66"; ctx.lineWidth = 2 * canvas.width / (canvas.clientWidth || canvas.width); ctx.strokeRect((camera.center.x - w / 2) * sx, (camera.center.y - h / 2) * sy, w * sx, h * sy);
 };

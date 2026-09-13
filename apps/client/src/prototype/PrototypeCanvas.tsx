@@ -1,3 +1,6 @@
+import { useWindowEdgePan } from "./useWindowEdgePan";
+import { WindLeaves } from "@/worldUi/WindLeaves";
+import { useSyncExternalStore } from "react";
 import { createTankView } from "@/game/tankView";
 import { openingPose } from "@/worldUi/openingTour";
 import { StartSignal } from "@/worldUi/StartSignal";
@@ -53,7 +56,7 @@ export const PrototypeCanvas = ({ store, rig, layout, handlers, blocked, followS
       const view = store.getView();
       if (!view.mask || !view.players) return;
       let tankIndex = 0;
-      renderer = await createRenderer({ tankFactory: (colors, name) => createTankView(colors, name, teamColor(tankIndex++)), host, layout: latest.current.layout, mask: view.mask, players: view.players, background: 0x000000, terrainTint: 0xffffff });
+      renderer = await createRenderer({ tankFactory: (colors, name) => createTankView(colors, name, teamColor(tankIndex++)), host, layout: latest.current.layout, mask: view.mask, players: view.players, background: 0x000000, backgroundAlpha:0, terrainTint: 0xffffff });
       if (disposed) { renderer.destroy(); return; }
       const r = renderer;
       rig.resize(viewportOf(latest.current.layout), { left: 0, top: -100, right: view.mask.width, bottom: view.mask.height });
@@ -62,9 +65,13 @@ export const PrototypeCanvas = ({ store, rig, layout, handlers, blocked, followS
       let opening = Boolean(worldArt && view.phase === "loading"), signalVisible = false;
       const order = [view.players[view.currentSeat], view.players[view.currentSeat === 0 ? 1 : 0]];
       setLoaded(true); onReady(!opening);
+      let previousMoveX: number | undefined;
       stopFrames = r.onFrame((dt) => {
         const v = store.getView();
         const current = latest.current;
+        const moveX = v.control?.x;
+        if (!opening && v.phase === "acting" && moveX !== undefined && previousMoveX !== undefined && moveX !== previousMoveX) rig.moveActor(actorPoint(v), reduced.matches);
+        previousMoveX = moveX;
         if (current.blocked) rig.stop();
         if (previousLayout !== current.layout) { previousLayout = current.layout; r.setLayout(current.layout); rig.resize(viewportOf(current.layout), rig.get().bounds); }
         if (v.turnNumber !== lastTurn) { lastTurn = v.turnNumber; rig.focus(actorPoint(v), "actor", reduced.matches); }
@@ -113,7 +120,10 @@ export const PrototypeCanvas = ({ store, rig, layout, handlers, blocked, followS
     void start().catch((e: unknown) => { console.error(e); if (!disposed) setError(true); });
     return () => { disposed = true; onReady(false); stopFrames(); stopReplay(); renderer?.destroy(); };
   }, [store, rig, onReady, onOpeningComplete, worldArt]);
+  useWindowEdgePan(hostRef, rig, blocked || !loaded);
+  const wind = useSyncExternalStore(store.subscribe, () => store.getView().wind.value);
   return <div className="kp-world" style={{ height: layout.mapHeight }}>
+    <WindLeaves wind={wind} />
     <StartSignal visible={signal} />
     <div ref={hostRef} className="kp-canvas" tabIndex={0} aria-label={t("対戦フィールド")} data-testid="camera-world" data-scale={layout.cell} data-loaded={loaded} {...handlers} />
     {!loaded && <div className="kp-loading" role="status">{error ? t("素材を読み込めませんでした。ページを再読み込みしてください。") : t("マシンを準備しています…")}</div>}
@@ -144,6 +154,6 @@ const drawMinimap = (canvas: HTMLCanvasElement | null, v: MatchView, rig: Camera
     ctx.fillRect(point.x * sx - 2, point.y * sy - 3, 4, 4);
   });
   const { center, viewport } = rig.get(), w = viewport.width / viewport.scale, h = viewport.height / viewport.scale;
-  ctx.strokeStyle = "#f6f1df"; ctx.lineWidth = 1;
+  ctx.strokeStyle = "#33ff66"; ctx.lineWidth = 2 * canvas.width / (canvas.clientWidth || canvas.width);
   ctx.strokeRect((center.x - w / 2) * sx, (center.y - h / 2) * sy, w * sx, h * sy);
 };

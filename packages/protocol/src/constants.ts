@@ -1,6 +1,6 @@
 // サーバーとクライアントが共有する語彙。設計書 08、09。
 
-export const PLAYER_COLORS = ["red", "orange", "yellow", "cyan", "blue", "pink", "purple"] as const;
+export const PLAYER_COLORS = ["red", "orange", "yellow", "cyan", "blue", "pink", "purple", "green", "mint", "white"] as const;
 
 /** 設計書 08 の 8.2 の色。主色と副色の候補 */
 export const COLOR_HEX: Readonly<Record<(typeof PLAYER_COLORS)[number], string>> = {
@@ -11,6 +11,9 @@ export const COLOR_HEX: Readonly<Record<(typeof PLAYER_COLORS)[number], string>>
   blue: "#4D7CFF",
   pink: "#FF66C4",
   purple: "#B070FF",
+  green: "#33FF66",
+  mint: "#80FFD4",
+  white: "#F0F4FF",
 };
 
 /** 設計書 02 の 2.9 の 8 枚。順序はロビーの選択肢の順 */

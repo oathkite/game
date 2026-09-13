@@ -10,7 +10,7 @@ test("custom colors persist, hints are absent, and a held key continues after a 
   await page.reload();
   await page.getByRole("button", { name:"はじめる", exact:true }).click();
   await expect(page.getByRole("radiogroup", { name:"車体色" }).getByRole("radio", { name:"purple", exact:true })).toHaveAttribute("aria-checked","true");
-  await page.getByRole("button", { name:"プラクティスへ", exact:true }).click();
+  await page.getByRole("button", { name:"プラクティス", exact:true }).click(); await page.getByRole("button", { name: "練習開始", exact: true }).click();
   const field = page.getByTestId("camera-world");
   await expect(field).toHaveAttribute("data-opening","false",{ timeout:15000 });
   expect(await page.evaluate(() => window.__fortress!.getView().players![0].colors)).toEqual({ primary:"purple", secondary:"orange" });

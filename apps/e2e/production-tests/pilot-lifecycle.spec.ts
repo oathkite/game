@@ -20,7 +20,7 @@ test("dot renderer reinitializes without image uploads after leaving practice", 
   for (let visit = 0; visit < 2; visit++) {
     await expect(page.locator(".world-lobby .tank-portrait")).toHaveAttribute("data-loaded", "true");
     const before = await page.evaluate(() => (window as Window & { pilotUploads?: number }).pilotUploads!);
-    await page.getByRole("button", { name: "プラクティスへ", exact: true }).click();
+    await page.getByRole("button", { name: "プラクティス", exact: true }).click(); await page.getByRole("button", { name: "練習開始", exact: true }).click();
     await expect(page.getByTestId("camera-world")).toHaveAttribute("data-loaded", "true");
     expect(await page.evaluate(() => (window as Window & { pilotUploads?: number }).pilotUploads!)).toBe(before);
     await expect(page.getByTestId("camera-world")).toHaveAttribute("data-opening", "false", { timeout: 15000 });

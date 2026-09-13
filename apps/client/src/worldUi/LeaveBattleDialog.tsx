@@ -1,3 +1,4 @@
+import { closeOnBackdrop } from "@/worldUi/dialogBackdrop";
 import { useEffect, useRef } from "react";
 import { useLanguage } from "@/i18n/locale";
 
@@ -12,7 +13,7 @@ export const LeaveBattleDialog = ({ online, playing, close, leave }: {
     dialog.current?.showModal();
     return () => { previous?.focus({ preventScroll: true }); };
   }, []);
-  return <dialog ref={dialog} className="battle-menu-panel" aria-label={t("ロビーへ戻りますか？")} onCancel={event => { event.preventDefault(); close(); }}>
+  return <dialog onClick={event => closeOnBackdrop(event, () => close())} ref={dialog} className="battle-menu-panel" aria-label={t("ロビーへ戻りますか？")} onCancel={event => { event.preventDefault(); close(); }}>
     <h2>{t("ロビーへ戻りますか？")}</h2>
     <p>{t(online && playing ? "対戦を離れると降参扱いになります。確認中も対戦は進行します。" : online ? "この部屋から退出します。" : "現在の練習を終了します。")}</p>
     <button autoFocus onClick={close}>{t("対戦に戻る")}</button>

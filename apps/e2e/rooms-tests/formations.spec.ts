@@ -14,7 +14,7 @@ async function participants(browser: Browser, count: number, frames: (LabFrame |
     }));
     await page.goto("/");
     await page.getByRole("button", { name: "はじめる", exact: true }).click();
-    await page.getByRole("button", { name: "オンライン対戦", exact: true }).click();
+    await page.getByRole("button", { name: "出撃", exact: true }).click();
     await page.getByLabel("対戦で使う名前").fill(`Formation${index + 1}`);
   }));
   return { contexts, pages };

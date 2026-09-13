@@ -207,3 +207,24 @@ describe("createMatchStore", () => {
     store.dispose();
   });
 });
+
+it("reports a walking ring-out without firing and receives the loss", () => {
+  const f = fakeConnection(), e = startedEngine();
+  const actor=e.state.match.currentSeat;
+  const reports: number[] = [];
+  const store=createMatchStore({...f.connection,reportMoveRingOut:x=>{
+    reports.push(x);
+    f.push({type:"match.finished",result:{winner:actor===0?1:0,reason:"ringOut",turns:1,stats:e.state.stats}});
+  }},{followCurrentSeat:true,mySeat:actor,spectator:false});
+  f.push(e.setup); f.push(e.start);
+  const v=store.getView(), pos=v.control!, mask=v.mask!;
+  const cells=new Uint8Array(mask.width*mask.height);
+  for(let y=pos.y;y<mask.height;y++) for(let x=0;x<=pos.x;x++) cells[y*mask.width+x]=1;
+  Object.assign(v,{mask:{...mask,cells}});
+  store.moveStep(1);
+  expect(reports).toEqual([pos.x+1]);
+  expect(store.getView().result).toMatchObject({winner:actor===0?1:0,reason:"ringOut"});
+  expect(store.getView().phase).toBe("finished");
+  expect(f.sent.some(m=>m.type==="turn.fire")).toBe(false);
+  store.dispose();
+});

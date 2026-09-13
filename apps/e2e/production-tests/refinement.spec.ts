@@ -2,7 +2,7 @@ import { expect, test } from "@playwright/test";
 const enter = async (page: import("@playwright/test").Page) => {
   await page.goto("/");
   await page.getByRole("button", { name: "はじめる", exact: true }).click();
-  await page.getByRole("button", { name: "プラクティスへ", exact: true }).click();
+  await page.getByRole("button", { name: "プラクティス", exact: true }).click(); await page.getByRole("button", { name: "練習開始", exact: true }).click();
 };
 test("opening holds input until START and leaves a full turn", async ({ page }) => {
   await page.setViewportSize({ width: 1440, height: 900 });

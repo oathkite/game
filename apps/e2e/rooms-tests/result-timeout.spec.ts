@@ -9,7 +9,7 @@ test("a disconnected participant cannot hold the result beyond its server deadli
       page.on("pageerror", error => errors.push(error.message));
       await page.goto("/");
       await page.getByRole("button", { name: "はじめる", exact: true }).click();
-      await page.getByRole("button", { name: "オンライン対戦", exact: true }).click();
+      await page.getByRole("button", { name: "出撃", exact: true }).click();
       await page.getByLabel("対戦で使う名前").fill(`Return${index + 1}`);
     }
     await owner!.getByRole("button", { name: "部屋を作る", exact: true }).click();

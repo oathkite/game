@@ -38,6 +38,7 @@ export type EngineState = {
 };
 
 export type EngineEvent =
+  | { readonly type: "moveRingOut"; readonly seat: Seat; readonly x: number }
   | { readonly type: "loaded"; readonly seat: Seat }
   | { readonly type: "fire"; readonly seat: Seat; readonly fire: ClientMessageOf<"turn.fire"> }
   | { readonly type: "replayDone"; readonly seat: Seat }

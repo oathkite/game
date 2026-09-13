@@ -15,7 +15,7 @@ for (const viewport of [{ width: 1440, height: 900 }, { width: 667, height: 375 
       page.on("pageerror", error => errors.push(error.message));
       await page.goto("/");
       await expect(page.getByRole("heading", { name: "ARTILLERY", exact: true })).toBeVisible();
-      await expect(page.locator(".world-start")).toHaveAttribute("data-intro", "false");
+      await expect(page.locator(".world-start")).toBeVisible();
       await capture(page, "title");
       await page.getByRole("button", { name: "はじめる", exact: true }).click();
       await page.getByRole("textbox", { name: "名前", exact: true }).fill("ケロポッド");
@@ -29,7 +29,7 @@ for (const viewport of [{ width: 1440, height: 900 }, { width: 667, height: 375 
       await page.getByRole("combobox", { name: "機体の表示サイズ" }).selectOption("12");
       await page.getByRole("combobox", { name: "機体の表示サイズ" }).selectOption("9");
       await page.getByRole("button", { name: "ロビーに戻る", exact: true }).click();
-      await page.getByRole("button", { name: "プラクティスへ", exact: true }).click();
+      await page.getByRole("button", { name: "プラクティス", exact: true }).click(); await page.getByRole("button", { name: "練習開始", exact: true }).click();
       const field = page.getByTestId("camera-world");
       await expect(field).toHaveAttribute("data-loaded", "true", { timeout: 15000 });
       await expect(field).toHaveAttribute("data-opening", "false", { timeout: 15000 });

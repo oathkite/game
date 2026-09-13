@@ -1,21 +1,20 @@
 .pixel-panel { border:2px solid #718a9a; padding:40px; color:#33ff66; background:#000; box-shadow:none; }
-.pixel-button,.world-ui .network-world button,.world-ui .kp-camera-settings button,.world-ui .kp-root button:not(.kp-minimap) { border:10px solid transparent; border-image:none; border-radius:0; min-height:48px; min-width:48px; padding:6px 20px; color:#33ff66; background:#000; font:inherit; font-weight:800; cursor:pointer; touch-action:manipulation; image-rendering:pixelated; box-shadow:none; }
+.pixel-button,.world-ui .network-world button,.world-ui .kp-camera-settings button,.world-ui .kp-root button:not(.kp-minimap) { border:2px solid transparent; border-image:none; border-radius:0; min-height:48px; min-width:48px; padding:6px 20px; color:#33ff66; background:#000; font:inherit; font-weight:800; cursor:pointer; touch-action:manipulation; image-rendering:pixelated; box-shadow:none; }
 .pixel-button:hover:not(:disabled),.world-ui .kp-root button:hover:not(:disabled) { filter:brightness(1.09); background:#000; }
-.pixel-button:active:not(:disabled),.world-ui .kp-root button:active:not(:disabled) { transform:translateY(2px); }
 .pixel-button:focus-visible,.world-ui .kp-root button:focus-visible { outline:3px solid #77dbe0; outline-offset:2px; }
 .pixel-button:disabled,.world-ui .kp-root button:disabled { opacity:.45; cursor:default; }
-.world-ui .kp-root .kp-control-group button { padding:0; min-height:44px; min-width:44px; border-width:6px; border-image-width:8px; }
-.world-ui .kp-root .kp-topbar button { min-height:44px; padding:0 10px; border-width:6px; }
-.world-ui .kp-root .kp-weapons button { padding:4px 6px; border-width:6px; font-size:11px; }
+.world-ui .kp-root .kp-control-group button { padding:0; min-height:44px; min-width:44px; border-width:2px; border-image-width:2px; }
+.world-ui .kp-root .kp-topbar button { min-height:44px; padding:0 10px; border-width:2px; }
+.world-ui .kp-root .kp-weapons button { padding:4px 6px; border-width:2px; font-size:11px; }
 .world-ui .kp-root button[aria-pressed=true] { filter:brightness(1.18); outline:2px solid #77dbe0; outline-offset:-2px; }
 .world-ui .kp-root .kp-fire { min-height:56px; height:64px; color:#33ff66; padding:0; }
-.world-ui .kp-root .kp-camera-actions button,.world-ui .network-world button.network-focus { font-size:20px; padding:0 8px; border:1px solid #718b9b; border-image:none; border-radius:0; color:#33ff66; background:#000; box-shadow:none; }
+.world-ui .kp-root .kp-camera-actions button,.world-ui .network-world button.network-focus { font-size:20px; padding:0 8px; border:2px solid #718b9b; border-image:none; border-radius:0; color:#33ff66; background:#000; box-shadow:none; }
 .world-ui .kp-root .kp-camera-actions button:hover:not(:disabled),.world-ui .network-world button.network-focus:hover:not(:disabled) { background:#000; }
 .world-ui .kp-root .kp-camera-actions button[aria-pressed=true] { border-color:#9edbe5; background:#000; filter:none; outline:none; }
 .world-ui .kp-root .kp-camera-actions button:focus-visible,.world-ui .network-world button.network-focus:focus-visible { outline:3px solid #77dbe0; outline-offset:2px; }
 
-.world-ui :is(.kp-root,.network-world) .battle-console .battle-touch button { border:1px solid #718b9b; border-image:none; border-radius:0; color:#33ff66; background:#000; font-size:20px; box-shadow:none; }
+.world-ui :is(.kp-root,.network-world) .battle-console .battle-touch button { border:2px solid #718b9b; border-image:none; border-radius:0; color:#33ff66; background:#000; font-size:20px; box-shadow:none; }
 .world-ui :is(.kp-root,.network-world) .battle-console .battle-touch > button { color:#33ff66; border-color:#d3ae64; background:#000; font-size:16px; min-width:80px!important; box-shadow:none; }
 .world-ui :is(.kp-root,.network-world) .battle-console .battle-touch button:hover:not(:disabled) { filter:brightness(1.12); }
-.world-ui :is(.kp-root,.network-world) .battle-console .battle-touch button:active:not(:disabled) { transform:translateY(1px); box-shadow:none; }
+.world-ui :is(.kp-root,.network-world) .battle-console .battle-touch button:active:not(:disabled) { box-shadow:none; }
 .world-ui :is(.kp-root,.network-world) .battle-console .battle-touch button:focus-visible { outline:3px solid #77dbe0; outline-offset:2px; }

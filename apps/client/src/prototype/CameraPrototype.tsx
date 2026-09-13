@@ -1,3 +1,5 @@
+import { closeOnBackdrop } from "@/worldUi/dialogBackdrop";
+import type { MapName } from "@game/protocol";
 import { BattleTouchControls } from "@/worldUi/BattleTouchControls";
 import { BattleMenuStatus } from "@/worldUi/BattleMenuStatus";
 import { useBrowserBackAction } from "@/worldUi/browserBack";
@@ -7,9 +9,9 @@ import { AudioControls } from "@/worldUi/AudioControls";
 import { teamColorName } from "@/worldUi/teamColors";
 import { useLanguage } from "@/i18n/locale";
 import { tiltOf } from "@game/sim";
-import { BattleRoster, BattleConsole } from "@/worldUi/BattleHud";
+import { BattleOverlay, BattleConsole } from "@/worldUi/BattleHud";
 import { useTouchControls } from "@/worldUi/useTouchControls";
-import { loadDisplayScale } from "@/worldUi/displayScale";
+import { loadCameraScale } from "@/worldUi/displayScale";
 import { useEffect, useMemo, useRef, useState, useSyncExternalStore } from "react";
 import { WEAPON_LABELS, WEAPON_SLOTS } from "@game/protocol";
 import { loadProfile } from "@/app/profile";
@@ -20,19 +22,19 @@ import { Timer } from "@/ui/Timer";
 import { CameraSettingsPanel } from "./CameraSettingsPanel";
 import { cameraLayout } from "./camera";
 import { createCameraRig } from "./cameraRig";
-import { actorPoint, PrototypeCanvas } from "./PrototypeCanvas";
+import { PrototypeCanvas } from "./PrototypeCanvas";
 import { usePrototypeInput } from "./usePrototypeInput";
 import "./prototype.css";
 
-type ThemeProps = { readonly worldArt?: boolean; readonly onExit?: () => void; readonly onResult?: (result: ResultPresentation) => void };
+type ThemeProps = { readonly mapName?: MapName; readonly worldArt?: boolean; readonly onExit?: () => void; readonly onResult?: (result: ResultPresentation) => void };
 export const CameraPrototype = (props: ThemeProps) => {
   const { t } = useLanguage();
   const begin = useRef<() => void>(() => {});
   const [store, setStore] = useState<MatchStore | null>(null);
   useEffect(() => {
     const p = loadProfile();
-    setAudioSettings(p.volume, p.muted);
-    const connection = createLocalConnection({ deferReady: props.worldArt ?? false, mapName: props.worldArt ? "rock-arch" : "valley", nickname: p.nickname || "プレイヤー", colors: p.colors, loadout: p.loadout,
+    setAudioSettings(p.volume, p.muted, p.bgmVolume ?? p.volume);
+    const connection = createLocalConnection({ deferReady: props.worldArt ?? false, mapName: props.mapName ?? (props.worldArt ? "rock-arch" : "valley"), nickname: p.nickname || "プレイヤー", colors: p.colors, loadout: p.loadout,
       opponentColors: defaultOpponentColors(p.colors), opponentLoadout: defaultOpponentLoadout(p.loadout) });
     const created = createMatchStore(connection, { followCurrentSeat: true, mySeat: 0, spectator: false });
     begin.current = connection.releaseReady;
@@ -48,16 +50,15 @@ const Battle = ({ store, begin, worldArt, onExit, onResult }: { readonly store: 
   const view = useSyncExternalStore(store.subscribe, store.getView, store.getView);
   const [size, setSize] = useState({ width: innerWidth, height: innerHeight });
   const [sceneReady, setSceneReady] = useState(false);
-  const [menu, setMenu] = useState(false), [followShot, setFollowShot] = useState(true);
+  const [menu, setMenu] = useState(false);
   const [confirmLeave, setConfirmLeave] = useState(false);
   const wasMenuOpen = useRef(false);
   const dialog = useRef<HTMLDialogElement>(null), menuButton = useRef<HTMLButtonElement>(null);
   const rig = useMemo(createCameraRig, []);
   const largeHud = size.width >= 1200 && size.height >= 700;
-  const compactTouch = touch && (size.width < 1000 || size.height < 500);
-  const hudTop = compactTouch ? 48 : largeHud ? 76 : 64;
+  const hudTop = 0;
   const hudBottom = touch ? 112 : largeHud ? 160 : size.height < 500 || size.width < 1000 ? 96 : 120;
-  const layout = useMemo(() => { const base = cameraLayout(size.width, size.height, worldArt ? loadDisplayScale() : 9); return worldArt ? { ...base, mapHeight: Math.max(1, size.height - hudTop - hudBottom) } : base; }, [size, worldArt, hudTop, hudBottom]);
+  const layout = useMemo(() => { const base = cameraLayout(size.width, size.height, worldArt ? loadCameraScale() : 9); return worldArt ? { ...base, mapHeight: Math.max(1, size.height - hudTop - hudBottom) } : base; }, [size, worldArt, hudTop, hudBottom]);
   const portrait = size.height > size.width;
   const enabled = sceneReady && view.phase === "acting" && view.control !== null && !portrait;
   const input = usePrototypeInput(store, rig, view.phase === "acting" && view.control !== null && !portrait, menu || confirmLeave || portrait, () => { if (confirmLeave) setConfirmLeave(false); else setMenu((open) => !open); }, !sceneReady);
@@ -80,26 +81,21 @@ const Battle = ({ store, begin, worldArt, onExit, onResult }: { readonly store: 
   useEffect(() => {
     if (view.phase === "finished" && view.result && view.players && onResult) onResult({
       result: view.result.winner === null ? { type: "draw" } : { type: "win", teamId: `t${view.result.winner}` },
-      players: view.players.map(player => ({ playerId: String(player.seat), teamId: `t${player.seat}`, nickname: player.nickname })),
+      players: view.players.map(player => ({ playerId: String(player.seat), teamId: `t${player.seat}`, nickname: player.nickname, colors: player.colors })),
     });
   }, [view.phase, view.result, view.players, onResult]);
   const hudPlayers = view.players?.map(p => ({ id: String(p.seat), name: p.nickname, hp: p.hp, colors: p.colors, team: p.seat })) ?? [];
   const pose = view.control ?? actor;
   const ground = view.mask && pose ? tiltOf(view.mask, pose) : 0;
-  const focusActor = (): void => rig.focus(actorPoint(view), "actor", matchMedia("(prefers-reduced-motion: reduce)").matches);
   return <main className="kp-root" onContextMenu={(e) => e.preventDefault()} onPointerDown={() => unlockAudio()}>
-    {worldArt ? <BattleRoster players={hudPlayers} actorId={String(view.currentSeat)} clock={<Timer dial deadlineAt={view.deadlineAt} clockOffset={0} myTurn={enabled} />} wind={view.wind.value} onMenu={() => { input.cancel(); setMenu(true); }} /> : <header className="kp-topbar">
+    {worldArt ? <BattleOverlay clock={<Timer dial deadlineAt={view.deadlineAt} clockOffset={0} myTurn={enabled} />} onMenu={() => { input.cancel(); setMenu(true); }} /> : <header className="kp-topbar">
       <div className="kp-brand">ARTILLERY <span>{t("プラクティス")}</span></div>
       <div className="kp-turn"><i>{t(teamColorName(view.currentSeat))}</i><strong>{view.phase === "replaying" ? t("弾を見届けよう") : view.phase === "finished" ? t("対戦終了") : t("あなたの番")}</strong><span>{t("次は")} {t(teamColorName(view.currentSeat === 0 ? 1 : 0))}</span></div>
       <div className="kp-wind" aria-label={t("風向き")}><span>{t("風")}</span><div className="kp-wind-window"><b style={{ transform: `translateX(${view.wind.value * 1.5}px) rotate(${view.wind.value * 4}deg)` }}>〰</b></div></div>
       <div className="kp-clock"><Timer deadlineAt={view.deadlineAt} clockOffset={0} myTurn={enabled} /></div>
       <button ref={menuButton} aria-label={t("設定を開く")} onClick={() => { input.cancel(); setMenu(true); }}>{t("設定")}</button>
     </header>}
-    {ready ? <PrototypeCanvas onOpeningComplete={begin} worldArt={worldArt ?? false} store={store} rig={rig} layout={layout} handlers={input.world} blocked={menu || confirmLeave || portrait || input.gauge.charging} followShot={followShot} onReady={setSceneReady} /> : <div style={{ height: layout.mapHeight }}>{t("フィールドを準備しています…")}</div>}
-    <div className="kp-camera-actions" style={{ bottom: size.height - layout.mapHeight - (worldArt ? hudTop : size.height < 500 || size.width < 1000 ? 44 : 56) + 14 }}>
-      <button disabled={!sceneReady || input.gauge.charging || menu || confirmLeave || portrait} aria-label={t("手番へ戻る")} onClick={focusActor}>{worldArt ? "◎" : <>{t("手番へ戻る")} <kbd>C</kbd></>}</button>
-      <button disabled={!sceneReady || input.gauge.charging || menu || confirmLeave || portrait} aria-pressed={followShot} onClick={() => { setFollowShot(!followShot); if (followShot) rig.focus(rig.get().center, "manual", true); }} aria-label={t("弾の追従")}>{worldArt ? "↗" : `${t("弾の追従")} ${followShot ? "ON" : "OFF"}`}</button>
-    </div>
+    {ready ? <PrototypeCanvas onOpeningComplete={begin} worldArt={worldArt ?? false} store={store} rig={rig} layout={layout} handlers={input.world} blocked={menu || confirmLeave || portrait || input.gauge.charging} followShot={true} onReady={setSceneReady} /> : <div style={{ height: layout.mapHeight }}>{t("フィールドを準備しています…")}</div>}
     {worldArt ? <BattleConsole player={hudPlayers[view.currentSeat]} steps={view.control?.stepsLeft ?? 0} tilt={ground} elevation={view.control?.elevation ?? view.lastElevation} facing={pose?.facing ?? 1} power={input.gauge.value} loadout={actor?.loadout} slot={slot} disabled={!enabled || confirmLeave || menu || input.gauge.charging} selectSlot={store.selectSlot}>
       {touch && <BattleTouchControls disabled={!enabled || confirmLeave || menu} button={input.button} />}
     </BattleConsole> : <footer className="kp-controls">
@@ -110,11 +106,11 @@ const Battle = ({ store, begin, worldArt, onExit, onResult }: { readonly store: 
       <button className="kp-fire" aria-label={t("発射")} disabled={!enabled || confirmLeave || menu} data-testid="prototype-fire" {...input.button("fire")}>{input.gauge.charging ? t("離して発射") : t("発射")}<small>Space</small></button>
     </footer>}
     {confirmLeave && onExit && <LeaveBattleDialog online={false} playing={view.phase !== "finished"} close={() => setConfirmLeave(false)} leave={onExit} />}
-    <dialog ref={dialog} className="kp-dialog" onCancel={(e) => { e.preventDefault(); setMenu(false); }}>
+    <dialog onClick={event => closeOnBackdrop(event, () => setMenu(false))} ref={dialog} className="kp-dialog" onCancel={(e) => { e.preventDefault(); setMenu(false); }}>
       {menu && view.phase !== "finished" && <BattleMenuStatus activeTurn={enabled}>{view.phase === "acting" ? <Timer deadlineAt={view.deadlineAt} clockOffset={0} myTurn={false} /> : "—"}</BattleMenuStatus>}
       <h2>{t("ひと息つこう")}</h2>
       <AudioControls />
-      <CameraSettingsPanel rig={rig} />
+      {import.meta.env.DEV && new URLSearchParams(location.search).get("debug") === "1" && <CameraSettingsPanel rig={rig} />}
       <p className="kp-shortcuts">{t("A / D・← / →：移動")}<br />{t("W / S・↑ / ↓：角度　Space：発射")}<br />{t("Q / E：武器　Tab：機体を順に見る")}<br />{t("Shift + 矢印：見回す　C：手番へ")}</p>
       {onResult && <button onClick={() => store.surrender()}>{t("降参して対戦を終える")}</button>}
       <button onClick={() => setMenu(false)}>{t("対戦に戻る")}</button>{onExit ? <button onClick={onExit}>{t("ロビーに戻る")}</button> : <a href="/">{t("ガレージへ戻る")}</a>}

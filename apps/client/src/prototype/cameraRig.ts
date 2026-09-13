@@ -37,6 +37,13 @@ export const createCameraRig = () => {
     get: () => ({ center, viewport, bounds, mode }),
     resize: (v: Viewport, b: Bounds) => { stop(); viewport = v; bounds = b; center = clampCamera(center, v, b); origin = center; duration = remaining; target = clampCamera(target, v, b); },
     focus: (point: Point, next: CameraMode = "actor", reduced = false) => { stop(); mode = next; setTarget(point, reduced ? 0 : 300, true); if (reduced) center = target; edge = null; },
+    moveActor: (point: Point, reduced = false) => {
+      stop();
+      if (mode !== "actor" || remaining === 0) setTarget(point, reduced ? 0 : 300, true);
+      else target = clampCamera(point, viewport, bounds);
+      mode = "actor";
+      if (reduced) center = target;
+    },
     actor: (point: Point) => { if (mode === "actor" && remaining === 0) { center = followCamera(center, point, viewport, bounds); target = center; easeFocus = false; } },
     shot: (point: Point) => { if (mode === "shot") setTarget(point, 80); },
     pan: (delta: Point, sampleMs?: number, now = 0) => {

@@ -25,7 +25,7 @@ export const App = () => {
 
   useEffect(() => {
     saveProfile(profile);
-    setAudioSettings(profile.volume, profile.muted);
+    setAudioSettings(profile.volume, profile.muted, profile.bgmVolume ?? profile.volume);
   }, [profile]);
 
   // 最初の画面での最初の操作で音声コンテキストを起動する

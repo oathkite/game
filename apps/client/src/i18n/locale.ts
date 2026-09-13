@@ -2,10 +2,18 @@ import { useSyncExternalStore } from "react";
 import { english } from "./messages";
 export type Language = "ja" | "en";
 const key = "keropod.language";
-export const resolveLanguage = (saved: string | null, browser: string): Language => saved === "ja" || saved === "en" ? saved : browser.toLowerCase().startsWith("ja") ? "ja" : "en";
+export const resolveLanguage = (saved: string | null, browser: string | readonly string[]): Language => {
+  if (saved === "ja" || saved === "en") return saved;
+  for (const tag of typeof browser === "string" ? [browser] : browser) {
+    const base = tag.toLowerCase().split("-")[0];
+    if (base === "ja" || base === "en") return base;
+  }
+  return "en";
+};
 const initial = (): Language => {
   if (typeof window === "undefined") return "ja";
-  try { return resolveLanguage(localStorage.getItem(key), navigator.language); } catch { return resolveLanguage(null, navigator.language); }
+  const browser = navigator.languages.length ? navigator.languages : [navigator.language];
+  try { return resolveLanguage(localStorage.getItem(key), browser); } catch { return resolveLanguage(null, browser); }
 };
 let language = initial();
 const listeners = new Set<() => void>();

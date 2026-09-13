@@ -5,7 +5,7 @@ test("a participant creates an expiring link that another browser can join", asy
   try {
     await owner!.goto(`${baseURL}/?prototype=world`);
     await owner!.getByRole("button", { name: "はじめる", exact: true }).click();
-    await owner!.getByRole("button", { name: "オンライン対戦", exact: true }).click();
+    await owner!.getByRole("button", { name: "出撃", exact: true }).click();
     await owner!.getByRole("button", { name: "部屋を作る", exact: true }).click();
     const code = owner!.getByTestId("room-code"); await expect(code).toHaveText(/^[A-F0-9]{6}$/);
     await owner!.getByRole("button", { name: "招待リンク", exact: true }).click();

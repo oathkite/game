@@ -8,9 +8,9 @@
   width: 100%; height: 100dvh;
   overflow: hidden;
   background: var(--ink); color: var(--paper);
-  font-family: "Hiragino Kaku Gothic ProN", "Noto Sans JP", sans-serif;
+  font-family: var(--font-jp);
   line-height: 1.35;
-  -webkit-font-smoothing: antialiased;
+  -webkit-font-smoothing: none;
 }
 .kp-root button, .kp-root a {
   min-height: 44px; min-width: 44px;
@@ -21,7 +21,6 @@
   touch-action: none;
 }
 .kp-root button:hover:not(:disabled) { background: #456078; }
-.kp-root button:active:not(:disabled) { transform: translateY(1px); }
 .kp-root button:disabled { opacity: .45; color: var(--muted); }
 .kp-root button:focus-visible, .kp-root a:focus-visible { outline: 3px solid var(--yellow); outline-offset: 2px; }
 .kp-root button[aria-pressed="true"] { color: var(--ink); background: var(--yellow); }

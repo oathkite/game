@@ -18,7 +18,7 @@ test("resizing cancels held fire and rotation restores fresh touch input", async
       });
       await page.goto("/");
       await page.getByRole("button", { name: "はじめる", exact: true }).click();
-      await page.getByRole("button", { name: "オンライン対戦", exact: true }).click();
+      await page.getByRole("button", { name: "出撃", exact: true }).click();
       await page.getByLabel("対戦で使う名前").fill(`Rotate${i}`);
     }
     const [owner, guest] = pages;

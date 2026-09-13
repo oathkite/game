@@ -1,10 +1,10 @@
 .battle-result-players { display:flex; flex-wrap:wrap; justify-content:center; gap:8px; width:min(680px,94vw); }
-.battle-result-player { width:76px; overflow:hidden; background:#000; border:1px solid #526c80; border-bottom:3px solid var(--team); border-radius:0; }
-.battle-result-player > svg { display:block; width:100%; aspect-ratio:1; margin:0!important; border-radius:0; overflow:hidden; image-rendering:pixelated; }
+.battle-result-player { width:76px; overflow:hidden; background:#000; border:2px solid #526c80; border-bottom:3px solid var(--team); border-radius:0; }
+.battle-result-player > .tank-portrait { display:block; width:100%; aspect-ratio:1; margin:0!important; border-radius:0; overflow:hidden; image-rendering:pixelated; }
 .battle-result-player strong { display:block; padding:4px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; font-size:11px; color:#33ff66; }
-.battle-result-player[data-reaction=win] > svg { animation:result-cheer 600ms ease-in-out; }
+.battle-result-player[data-reaction=win] > .tank-portrait { animation:result-cheer 600ms ease-in-out; }
 @keyframes result-cheer { 30% { transform:translateY(-4px); } 65% { transform:translateY(0); } 80% { transform:translateY(-2px); } }
-@media(prefers-reduced-motion:reduce) { .battle-result-player[data-reaction=win] > svg { animation:none; } }
+@media(prefers-reduced-motion:reduce) { .battle-result-player[data-reaction=win] > .tank-portrait { animation:none; } }
 .world-result-screen .battle-result-player { width:clamp(76px,16vh,132px); }
 @media(max-width:700px) {
  .network-finished .battle-result-players { display:grid; grid-template-columns:repeat(4,minmax(0,1fr)); width:min(360px,94vw); }

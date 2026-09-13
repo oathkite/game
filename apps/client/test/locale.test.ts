@@ -16,3 +16,11 @@ it("interpolates dynamic labels without translating player-supplied values", () 
   expect(translate("参加者{n}のチーム", "en", { n: 2 })).toBe("Player 2 team");
   expect(translate("{team}チームの勝利", "en", { team: "赤" })).toBe("Team 赤 wins");
 });
+
+it("uses the first supported browser preference", () => {
+  expect(resolveLanguage(null, ["fr-FR", "ja-JP", "en-US"])).toBe("ja");
+  expect(resolveLanguage(null, ["en-GB", "ja-JP"])).toBe("en");
+  expect(resolveLanguage(null, ["JA-jp", "en"])).toBe("ja");
+  expect(resolveLanguage(null, [])).toBe("en");
+  expect(resolveLanguage("en", ["ja-JP"])).toBe("en");
+});

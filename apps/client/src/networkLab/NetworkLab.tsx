@@ -14,7 +14,7 @@ import { playSound, setMusic, unlockAudio } from "@/app/audio";
 import { CLIENT_BUILD, compatibleMatch } from "@game/protocol/build";
 import { BattleMenu } from "@/worldUi/BattleMenu";
 import { applyOps, buildInitialTerrain, tiltOf } from "@game/sim";
-import { BattleConsole, BattleRoster } from "@/worldUi/BattleHud";
+import { BattleConsole, BattleOverlay } from "@/worldUi/BattleHud";
 import { useTouchControls } from "@/worldUi/useTouchControls";
 import { useBattleInput } from "@/worldUi/useBattleInput";
 import { DEFAULT_LOADOUT, WEAPON_LABELS } from "@game/protocol";
@@ -145,7 +145,7 @@ export const NetworkLab = ({ worldArt = false, onExit, connection }: { readonly 
   if (frame?.actorId === playerId) ownFacing.current = frame.movement.facing;
   const ground = useMemo(() => own && presentation && frame ? tiltOf(applyOps(buildInitialTerrain(frame.map), presentation.terrainOps), own) : 0, [own?.x, own?.y, frame?.eventSeq, frame?.matchId]);
   if (worldArt) return <main className="network-lab network-world" onPointerDown={() => unlockAudio()} onKeyDown={() => unlockAudio()}>
-    <BattleRoster upcomingPlayerIds={frame?.upcomingPlayerIds ?? []} players={hudPlayers} actorId={frame?.actorId ?? ""} wind={frame?.wind ?? 0} clock={<CountdownDial seconds={seconds} />} onMenu={() => { input.cancel(); setMenu(true); }} />
+    <BattleOverlay clock={<CountdownDial seconds={seconds} />} onMenu={() => { input.cancel(); setMenu(true); }} />
     <span className="battle-sr" data-testid="identity">{playerId}</span><span className="battle-sr" data-testid="phase">{t(phaseLabel)}</span>
     {frame && presentation ? <NetworkField key={frame.matchId} serverNow={serverNow} onSettling={setSettling} blocked={menu || confirmLeave || input.gauge.charging} frame={frame} players={shownPlayers} presentation={presentation} elevation={elevation} ownId={playerId} followTurns={!observing || !keepView} {...(!observing ? { selectedWeapon: loadout[slot] } : {})} /> : <p role="status">{t(status)}</p>}
     {observing ? <footer className="battle-console"><span role="status">{t("観戦中")}</span><label><input type="checkbox" checked={keepView} onChange={e => setKeepView(e.target.checked)} />{t("手動視点を維持")}</label></footer> : <BattleConsole player={hudPlayers.find(p => p.id === playerId)} steps={frame?.actorId === playerId ? frame.movement.stepsLeft : 0} tilt={ground} elevation={elevation} facing={ownFacing.current} power={input.gauge.value} loadout={loadout} slot={slot} disabled={!canAct || menu || confirmLeave || input.gauge.charging} selectSlot={setSlot}>
