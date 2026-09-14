@@ -1,0 +1,20 @@
+.battle-console { position:relative; }
+.delay-dialog { width:min(420px,calc(100vw - 32px)); padding:24px; max-height:calc(100dvh - 32px); overflow:auto; background:#000; color:#33ff66; }
+.delay-dialog table { width:100%; border-collapse:collapse; }
+.delay-dialog th,.delay-dialog td { padding:8px 0; border-bottom:2px solid #33ff66; text-align:left; }
+.delay-dialog td { text-align:right; }
+.delay-dialog p { font-size:12px; }
+
+/* Turn changes animate from the previous row positions without delaying input. */
+.turn-order-list { position:fixed; top:76px; left:12px; z-index:20; width:clamp(172px,20vw,220px); margin:0; padding:0; list-style:none; pointer-events:none; font-family:var(--font-jp); }
+.turn-order-name { position:absolute; top:0; left:0; box-sizing:border-box; width:100%; height:22px; padding:2px 6px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; font-size:12px; line-height:18px; color:#33ff66; background:#000c; }
+.turn-order-name[data-first=true] { color:#000; background:#33ff66; font-weight:bold; }
+
+
+.turn-order-name { display:flex; align-items:center; gap:8px; }
+.turn-order-player { min-width:0; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+.turn-order-name .turn-order-cost { flex-shrink:0; margin-left:auto; padding:0; min-height:0; border:0; background:transparent; color:inherit; font:inherit; line-height:18px; pointer-events:auto; }
+.turn-order-name button.turn-order-cost:hover { text-decoration:underline; text-decoration-thickness:2px; }
+.turn-order-name .turn-order-cost:focus-visible { outline-offset:-2px; }
+
+.turn-order-name span.turn-order-cost { pointer-events:none; }

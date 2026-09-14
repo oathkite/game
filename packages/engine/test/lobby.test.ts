@@ -1,5 +1,5 @@
-import { expect, it } from "vitest";
-import { TEST_ARENA } from "@game/maps";
+import { expect, it, vi } from "vitest";
+import { TEST_ARENA, MULTIPLAYER_MAPS } from "@game/maps";
 import { createLobby, joinLobby, leaveLobby, editLobby, setLobbyConnection, startLobby } from "../src/multiplayer/lobby";
 const profile = { nickname: "Kero", loadout: ["cannon", "digger"] as const };
 const two = () => joinLobby(createLobby("room-a", "p1", profile, TEST_ARENA), "p2", profile);
@@ -18,7 +18,7 @@ it("requires two assigned teams and every member ready at the current revision",
   const started = startLobby(room, "p1", room.revision);
   expect(started.reason).toBe("started");
   expect(started.setup?.members).toHaveLength(2);
-  expect(started.setup?.ruleSetVersion).toBe("keropod-v2.2");
+  expect(started.setup?.ruleSetVersion).toBe("keropod-v2.4-delay");
   expect(started.setup?.map).toEqual(TEST_ARENA);
   expect(started.setup?.map).not.toBe(TEST_ARENA);
   expect(editLobby(started.room, "p1", command(started.room, "room.assignTeam", { playerId: "p2", teamId: "t0" })).reason).toBe("locked");
@@ -144,4 +144,24 @@ it("lets a custom-room owner start once guests are ready", () => {
   room = editLobby(room, "p2", command(room, "room.ready", { ready: true })).room;
   expect(startLobby(room, "p1", room.revision, false).reason).toBe("started");
   expect(startLobby(room, "p1", room.revision).reason).toBe("not-ready");
+});
+
+it("resolves random maps once at start and preserves the random setting", () => {
+  let room = two();
+  room = editLobby(room,"p1",command(room,"room.assignTeam",{playerId:"p1",teamId:"t0"})).room;
+  room = editLobby(room,"p2",command(room,"room.assignTeam",{playerId:"p2",teamId:"t1"})).room;
+  expect(editLobby(room,"p2",command(room,"room.map",{mapId:"random"})).reason).toBe("not-owner");
+  room = ready(editLobby(room,"p1",command(room,"room.map",{mapId:"random"})).room);
+  const random = vi.spyOn(Math,"random");
+  try {
+    MULTIPLAYER_MAPS.forEach((map,index) => {
+      random.mockReturnValue((index+.5)/MULTIPLAYER_MAPS.length);
+      const started = startLobby(room,"p1",room.revision);
+      expect(started.setup?.map.id).toBe(map.id);
+      expect(started.room.map).toEqual(started.setup?.map);
+      expect(started.room.randomMap).toBe(true);
+    });
+  } finally { random.mockRestore(); }
+  const fixed = editLobby(room,"p1",command(room,"room.map",{mapId:MULTIPLAYER_MAPS[0]!.id}));
+  expect(fixed.room.randomMap).toBe(false);
 });

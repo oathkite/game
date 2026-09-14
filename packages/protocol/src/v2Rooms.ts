@@ -30,6 +30,7 @@ export const roomSnapshotSchema = z.object({ type: z.literal("room.snapshot"), r
   mode: roomModeSchema.default("custom"), region: roomRegionSchema.default("asia"),
   name: z.string().optional(), passwordProtected: z.boolean().optional(), roomId, ownerId: z.string().nullable(), revision: z.number().int(), phase: z.enum(["waiting", "started"]),
   members: z.array(lobbyProfileSchema.extend({ playerId: z.string(), teamId: z.string().nullable(), connected: z.boolean(), ready: z.boolean() })).max(8),
+  randomMap: z.boolean().optional(),
   map: z.object({ id: z.string(), version: z.number(), width: z.number(), height: z.number() }),
 }) });
 export const roomOutputSchema = z.union([

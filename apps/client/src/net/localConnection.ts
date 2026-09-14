@@ -49,7 +49,7 @@ export const createLocalConnection = (options: LocalMatchOptions): Connection & 
   const startMatch = (): void => {
     if (host) host.stop();
     const state = createEngine(
-      { ...DEFAULT_ENGINE_TIMING, rng: Math.random },
+      { ...DEFAULT_ENGINE_TIMING, delayEnabled: true, rng: Math.random },
       {
         roomCode: "SOLO00",
         mapName: resolveMapChoice(options.mapName, Math.random),
@@ -98,6 +98,7 @@ export const createLocalConnection = (options: LocalMatchOptions): Connection & 
 
   return {
     releaseReady,
+    reportMoveCost: steps => { host?.dispatch({ type: "practiceMoveCost", steps }); },
     reportMoveRingOut: x => { if (host) host.dispatch({ type:"moveRingOut", seat:host.state().match.currentSeat, x }); },
     send,
     subscribe: messages.add,

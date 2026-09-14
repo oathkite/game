@@ -106,7 +106,7 @@ export class RoomObject extends DurableObject<RoomEnv> {
     this.outbox.enqueue({ name: state.name, passwordProtected: state.passwordProtected, roomId: state.roomId, mode: state.mode, region: state.region,
       members: state.sessions.filter(s => s.role === "player").length,
       spectators: state.sessions.filter(s => s.role === "spectator").length,
-      phase: state.lobby.phase, mapId: state.lobby.map.id }, Date.now());
+      phase: state.lobby.phase, mapId: state.lobby.randomMap ? "random" : state.lobby.map.id }, Date.now());
   }
   private async recover(roomId?: string): Promise<RoomRuntime | null> {
     try { return this.load(roomId); }

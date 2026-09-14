@@ -83,7 +83,7 @@ export const PublicRooms = ({ initialCode = "", base, busy, filtersOpen, closeFi
     {failed && <p role="alert">{t("部屋一覧を取得できませんでした。更新して再試行してください。")}</p>}
     {!failed && !loading && !filtering && page.rooms.length === 0 && <p>{t("部屋がありません。「部屋を作る」から作成できます。")}</p>}
     <ul>{page.rooms.map(room => <li key={room.roomId}>
-      <div><strong>{room.passwordProtected && <span role="img" aria-label={t("パスワードルーム")}><DotIcon name="lock" /></span>}{room.name || room.roomId}</strong>{room.name && <span>{room.roomId}</span>}<span>{t(MULTIPLAYER_MAP_LABELS[room.mapId] ?? room.mapId)} · {t(({ asia: "アジア", europe: "ヨーロッパ", americas: "アメリカ" })[room.region])}</span>
+      <div><strong className="room-list-name">{room.passwordProtected && <span className="room-list-lock" role="img" aria-label={t("パスワードルーム")}><DotIcon name="lock" /></span>}{room.name || room.roomId}</strong>{room.name && <span>{room.roomId}</span>}<span>{t(room.mapId === "random" ? "ランダム" : MULTIPLAYER_MAP_LABELS[room.mapId] ?? room.mapId)} · {t(({ asia: "アジア", europe: "ヨーロッパ", americas: "アメリカ" })[room.region])}</span>
         <span>{t("参加者 {count}/8", { count: room.members })} · {t(room.phase === "waiting" ? "準備中" : "対戦中")}</span></div>
       <div>{room.phase === "waiting" && <PixelButton disabled={busy || room.members >= 8} onClick={() => join(room.roomId, "room.join", Boolean(room.passwordProtected))}>{t("部屋に参加")}</PixelButton>}
         <PixelButton disabled={busy || room.spectators >= 8} onClick={() => join(room.roomId, "room.spectate", Boolean(room.passwordProtected))}>{t("観戦する")}</PixelButton></div>

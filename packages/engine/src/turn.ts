@@ -1,3 +1,4 @@
+import { ROUND_REVEAL_MS, finishDelay, nextDelayTurn, actionCost } from "@game/protocol";
 import { weaponOf, type ClientMessageOf, type FinishReason, type MatchResult, type PassReason, type Seat, type ServerMessageOf } from "@game/protocol";
 import { damageDealtTo, initialWind, nextWind, simulateShot, validateMove, weaponSpec, WIND_DELTA_MAX, WIND_MAX } from "@game/sim";
 import { otherSeat, type Effect, type EngineState, type Step } from "./types.js";
@@ -26,7 +27,13 @@ export const startTurn = (state: EngineState, now: number): Step => {
     const winner: Seat | null = a.hp === b.hp ? null : a.hp > b.hp ? 0 : 1;
     return finish(state, winner, "turnLimit");
   }
-  const seat = otherSeat(state.match.currentSeat);
+  let delay = state.delay;
+  if (delay && state.match.turnNumber > 0) {
+    const id = String(state.match.currentSeat);
+    if (delay.costs[id] === undefined) delay = finishDelay(delay, id, actionCost(state.movedSteps ?? 0));
+    delay = { ...nextDelayTurn(delay), revealUntil: now + ROUND_REVEAL_MS };
+  }
+  const seat = delay ? Number(delay.order[0]) as Seat : otherSeat(state.match.currentSeat);
   const rng = state.config.rng;
   const draw =
     turnNumber === 1
@@ -38,11 +45,13 @@ export const startTurn = (state: EngineState, now: number): Step => {
         });
   // 手番側が切断中なら制限時間を止めたまま始める
   const paused = !state.match.players[seat].connected;
-  const deadlineAt = now + state.config.turnMs;
-  const message: ServerMessageOf<"turn.start"> = { type: "turn.start", turnNumber, seat, wind: draw.wind, deadlineAt };
+  const deadlineAt = Math.max(now, delay?.revealUntil ?? now) + state.config.turnMs;
+  const message: ServerMessageOf<"turn.start"> = { type: "turn.start", turnNumber, seat, wind: draw.wind, deadlineAt, ...(delay ? { delay } : {}) };
   const next: EngineState = {
     ...state,
     match: { ...state.match, phase: "acting", turnNumber, currentSeat: seat, wind: draw.wind, deadlineAt: paused ? null : deadlineAt },
+    ...(delay ? { delay } : {}),
+    movedSteps: 0,
     fired: false,
     replayDone: [false, false],
     replayWakeAt: null,
@@ -85,9 +94,11 @@ export const resolveFire = (state: EngineState, seat: Seat, fire: ClientMessageO
   const finished: MatchResult | null = r.finished
     ? { winner: r.finished.winner, reason: r.finished.reason, turns: state.match.turnNumber, stats }
     : null;
-  const message: ServerMessageOf<"turn.result"> = { type: "turn.result", turnNumber: state.match.turnNumber, shot: r, finished };
+  const delay = state.delay ? finishDelay(state.delay, String(seat), actionCost(state.movedSteps ?? Math.abs(moved.x - player.x), weapon)) : undefined;
+  const message: ServerMessageOf<"turn.result"> = { type: "turn.result", turnNumber: state.match.turnNumber, shot: r, finished, ...(delay ? { delay } : {}) };
   const resolved: EngineState = {
     ...state,
+    ...(delay ? { delay } : {}),
     mask: outcome.mask,
     stats,
     fired: true,

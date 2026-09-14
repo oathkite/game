@@ -1,3 +1,4 @@
+import { drawTankWreck } from "./tankWreck";
 import { playSound } from "@/app/audio";
 import { TANK_PIXELS, treadPixels } from "./tankPixels";
 import type { ShotFlash } from "./muzzlePose";
@@ -84,9 +85,14 @@ export const createTankView = (selection: TankColors, nickname: string, team?: s
   text.anchor.set(0.5, 1);
   label.addChild(text);
 
+  let wasWrecked = false;
   let wasWhite = false, distance = 0, previousX: number | null = null;
 
   const setPose = (pose: TankPose, cell: number): void => {
+    const wrecked = pose.hp <= 0;
+    barrel.visible = !wrecked;
+    hpBar.visible = !wrecked;
+    text.style.fill = wrecked ? 0x929b96 : team ?? colors.primary;
     world.visible = pose.visible;
     label.visible = pose.visible;
     world.position.set(pose.x + 0.5, pose.y);
@@ -96,10 +102,12 @@ export const createTankView = (selection: TankColors, nickname: string, team?: s
     const signedDelta = previousX === null ? 0 : pose.x - previousX;
     const delta = Math.abs(signedDelta);
     previousX = pose.x;
-    const moving = pose.visible && !pose.falling && delta > .001 && delta <= 2.5;
+    const moving = !wrecked && pose.visible && !pose.falling && delta > .001 && delta <= 2.5;
     if (moving) { distance += signedDelta; playSound("move"); }
-    if (moving || pose.flash !== wasWhite) {
-      drawBody(body, colors, pose.flash, distance);
+    if (moving || pose.flash !== wasWhite || wrecked !== wasWrecked) {
+      if (wrecked) drawTankWreck(body);
+      else drawBody(body, colors, pose.flash, distance);
+      wasWrecked = wrecked;
       wasWhite = pose.flash;
     }
     drawHpBar(hpBar, { ...colors, primary: team ?? colors.primary }, pose);

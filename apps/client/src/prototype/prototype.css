@@ -22,7 +22,6 @@
 }
 .kp-root button:hover:not(:disabled) { background: #456078; }
 .kp-root button:disabled { opacity: .45; color: var(--muted); }
-.kp-root button:focus-visible, .kp-root a:focus-visible { outline: 3px solid var(--yellow); outline-offset: 2px; }
 .kp-root button[aria-pressed="true"] { color: var(--ink); background: var(--yellow); }
 .kp-topbar { height: 56px; display: flex; align-items: center; gap: 24px; padding: 0 20px; background: var(--ink); }
 .kp-brand { font-weight: 900; font-size: 22px; letter-spacing: -.8px; margin-right: auto; }

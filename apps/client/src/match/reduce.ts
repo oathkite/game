@@ -119,6 +119,7 @@ export const reduce = (view: MatchView, message: ServerMessage, options: ReduceO
         mySeat,
         currentSeat: message.seat,
         turnNumber: message.turnNumber,
+        delay: message.delay,
         wind: message.wind,
         deadlineAt: message.deadlineAt,
         control: acting ? freshControl(settled.players[message.seat], settled.lastElevation, settled.lastSlot) : null,
@@ -127,7 +128,7 @@ export const reduce = (view: MatchView, message: ServerMessage, options: ReduceO
     }
     case "turn.result":
       if (view.skipNextResult) return just({ ...view, skipNextResult: false, phase: "waiting" }, "turn.replayDone");
-      return onResult(view, message.shot, replayId);
+      return onResult({ ...view, delay: message.delay ?? view.delay }, message.shot, replayId);
     case "turn.pass":
       // 移動はサーバーに届いていないので、表示上の位置をターン開始時に戻す
       return just({ ...view, phase: "waiting", control: null, deadlineAt: null });

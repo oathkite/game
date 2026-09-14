@@ -80,24 +80,15 @@ describe("武器の数値", () => {
     }
   });
 
-  it("全弾直撃の合計は 針弾 > レーザー > トリプル = マルチ > 貫通 > 標準砲 > 浮遊弾 > 掘削弾", () => {
-    const full = (w: WeaponId) => fullHitDamage(weaponSpec(w));
-    expect(full("stinger")).toBeGreaterThan(full("laser"));
-    expect(full("laser")).toBeGreaterThan(full("triple"));
-    expect(full("triple")).toBe(full("multiple"));
-    expect(full("multiple")).toBeGreaterThan(full("drill"));
-    expect(full("drill")).toBeGreaterThan(full("cannon"));
-    expect(full("cannon")).toBeGreaterThan(full("floater"));
-    expect(full("floater")).toBeGreaterThan(full("digger"));
-  });
-
-  it("浮遊弾は最も当てにくいぶん、直撃は標準砲の 8 割以上で爆風は標準砲と同じ", () => {
-    expect(firstStage("floater").damageMax).toBeGreaterThanOrEqual(firstStage("cannon").damageMax * 0.8);
-    expect(firstStage("floater").blastRadius).toBe(firstStage("cannon").blastRadius);
+  it("高コストの連射と狙撃が高火力、浮遊弾は標準砲より強く広い", () => {
+    const order: WeaponId[] = ["multiple", "stinger", "laser", "triple", "drill", "floater", "cannon", "digger"];
+    for (let i = 1; i < order.length; i++) expect(fullHitDamage(weaponSpec(order[i-1]!))).toBeGreaterThan(fullHitDamage(weaponSpec(order[i]!)));
+    expect(firstStage("floater").blastRadius).toBeGreaterThan(firstStage("cannon").blastRadius);
+    expect(firstStage("digger").blastRadius).toBeGreaterThan(firstStage("floater").blastRadius);
   });
 
   it("弾数が多い武器は 1 発が小さく、爆風も狭い", () => {
-    expect(firstStage("triple").damageMax).toBeLessThan(firstStage("cannon").damageMax / 2);
+    expect(firstStage("triple").damageMax).toBeLessThan(firstStage("cannon").damageMax);
     expect(firstStage("multiple").damageMax).toBeLessThan(firstStage("triple").damageMax / 2);
     expect(firstStage("triple").blastRadius).toBeLessThan(firstStage("cannon").blastRadius);
     expect(firstStage("multiple").blastRadius).toBeLessThan(firstStage("triple").blastRadius);
@@ -211,7 +202,7 @@ describe("1 発 1 段の武器の性格", () => {
   it("掘削弾は爆風が最も広く、直撃でも標準砲のかすり程度しか効かない", () => {
     const digger = firstStage("digger");
     for (const w of WEAPONS) if (w !== "digger") expect(digger.blastRadius).toBeGreaterThan(firstStage(w).blastRadius);
-    expect(digger.damageMax).toBeLessThanOrEqual(DAMAGE_MAX - DAMAGE_PER_CELL * 6);
+    expect(digger.damageMax).toBeLessThanOrEqual(DAMAGE_MAX * 0.7);
   });
 
   it("浮遊弾は標準砲と同じくらいの距離と高さを、3 割以上長い時間をかけて飛び、風 10 のずれは 3 倍以上", () => {

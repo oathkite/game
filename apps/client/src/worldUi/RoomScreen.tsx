@@ -1,3 +1,4 @@
+import { TankPortrait } from "./TankPortrait";
 import { CreateRoomDialog } from "./CreateRoomDialog";
 import { RoomPasswordDialog } from "./RoomPasswordDialog";
 import type { CreateRoomOptions } from "@game/protocol/v2-rooms";
@@ -103,7 +104,7 @@ export const RoomScreen = ({ onExit }: { readonly onExit: () => void; readonly o
         {serverBase && <PixelButton disabled={busy} aria-expanded={filtersOpen} aria-controls="room-filters" onClick={() => setFiltersOpen(value => !value)}>{t("部屋を探す")}</PixelButton>}
         <PixelButton className="room-create" disabled={busy} onClick={() => setCreating(true)}>{t("部屋を作る")}</PixelButton>
       </div>}
-      {room && <div className="room-header-actions room-detail-actions"><select aria-label={t("マップ")} value={room.map.id} disabled={room.mode !== "custom" || !connected || !owner} onChange={e => edit("room.map", { mapId: e.target.value })}>{MULTIPLAYER_MAPS.map(map => <option key={map.id} value={map.id}>{t(MULTIPLAYER_MAP_LABELS[map.id] ?? map.id)}</option>)}</select><PixelButton disabled={!!serverBase && (!me || !connected)} onClick={() => setSharing(v => !v)}>{t("招待リンク")}</PixelButton></div>}
+      {room && <div className="room-header-actions room-detail-actions"><select aria-label={t("マップ")} value={room.randomMap ? "random" : room.map.id} disabled={room.mode !== "custom" || !connected || !owner} onChange={e => edit("room.map", { mapId: e.target.value })}><option value="random">{t("ランダム")}</option>{MULTIPLAYER_MAPS.map(map => <option key={map.id} value={map.id}>{t(MULTIPLAYER_MAP_LABELS[map.id] ?? map.id)}</option>)}</select><PixelButton disabled={!!serverBase && (!me || !connected)} onClick={() => setSharing(v => !v)}>{t("招待リンク")}</PixelButton></div>}
     </header>
     <div className="room-body"><PixelPanel>
       {!room ? <>
@@ -115,7 +116,7 @@ export const RoomScreen = ({ onExit }: { readonly onExit: () => void; readonly o
         <div className="room-table-scroll"><table className="room-player-table">
           <thead><tr><th scope="col">{t("プレイヤー名")}</th><th scope="col">{t("チーム")}</th><th scope="col">{t("武器")}</th><th scope="col">{t("状態")}</th></tr></thead>
           <tbody>{room.members.map((p, i) => <tr key={p.playerId}>
-            <th scope="row">{p.nickname}{p.playerId === playerId ? t("（あなた）") : ""}{p.playerId === room.ownerId && <small>OWNER</small>}</th>
+            <th scope="row"><div className="room-player-identity"><TankPortrait colors={p.colors} /><span>{p.nickname}{p.playerId === playerId ? t("（あなた）") : ""}</span></div></th>
             <td><div className="room-team-swatches" role="group" aria-label={t("参加者{n}のチーム", { n: i + 1 })}>
               {Array.from({ length: 8 }, (_, team) => <button key={team} type="button" aria-label={t("{color}チーム", { color: t(teamColorName(team)) })} title={t("{color}チーム", { color: t(teamColorName(team)) })} aria-pressed={p.teamId === `t${team}`} disabled={room.mode !== "custom" || !connected || (!owner && p.playerId !== playerId)} onClick={() => edit("room.assignTeam", { playerId: p.playerId, teamId: `t${team}` })}><span style={{ backgroundColor: teamColor(team) }} /></button>)}
             </div></td>

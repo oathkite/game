@@ -1,3 +1,4 @@
+import { createDelay } from "@game/protocol";
 import { randomSpawns } from "./randomSpawns.js";
 import { getMap, spawnAt } from "@game/maps";
 import type { Loadout, MapName, PlayerState, Seat, ServerMessageOf, TankColors } from "@game/protocol";
@@ -43,6 +44,7 @@ export const createEngine = (config: EngineConfig, params: CreateParams): Engine
   });
   return {
     config,
+    ...(config.delayEnabled ? { delay: createDelay([String(firstSeat), String(firstSeat === 0 ? 1 : 0)]) } : {}),
     match: {
       roomCode: params.roomCode,
       mapName: params.mapName,

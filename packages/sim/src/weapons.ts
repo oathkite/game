@@ -53,29 +53,22 @@ const STANDARD_FLIGHT = { speedPercent: 100, gravityPercent: 100, windPercent: 1
 
 export const WEAPON_SPECS: Readonly<Record<WeaponId, WeaponSpec>> = {
   cannon: { ...ONE_SHOT, stages: single(BLAST_RADIUS, DAMAGE_MAX, DAMAGE_PER_CELL), ...STANDARD_FLIGHT },
-  // 3 発が前後に散る。1 発は標準砲の 3 等分より少し強く、至近か背面打ちで揃えば標準砲を超える
-  triple: { fan: TRIPLE_FAN, volleys: 1, stages: single(6, 15, 3), ...STANDARD_FLIGHT },
-  // 小さな 9 発。3 本の線を 3 発ずつが時間差で辿る。1 本命中で 15 とトリプル弾と同じ期待値
-  multiple: { fan: TRIPLE_FAN, volleys: 3, stages: single(3, 5, 2), ...STANDARD_FLIGHT },
+  triple: { fan: TRIPLE_FAN, volleys: 1, stages: single(6, 18, 3), ...STANDARD_FLIGHT },
+  multiple: { fan: TRIPLE_FAN, volleys: 3, stages: single(3, 8, 2), ...STANDARD_FLIGHT },
   // 着弾しても止まらず 3 段掘り進む。段ごとに半径とダメージが小さくなる
   drill: {
     ...ONE_SHOT,
     stages: [
-      { blastRadius: 8, damageMax: 22, damagePerCell: 3 },
-      { blastRadius: 6, damageMax: 14, damagePerCell: 3 },
-      { blastRadius: 4, damageMax: 8, damagePerCell: 3 },
+      { blastRadius: 8, damageMax: 26, damagePerCell: 3 },
+      { blastRadius: 6, damageMax: 16, damagePerCell: 3 },
+      { blastRadius: 4, damageMax: 10, damagePerCell: 3 },
     ],
     ...STANDARD_FLIGHT,
   },
-  // 重力が軽く伸びる弾が 7 段抜けて線のように削る。当初 5 段（合計 40）だったが、貫通弾（44）との差が薄かったので 7 段（合計 56）に増やした。全弾直撃の最大は針弾（70）に残す。風の作用は標準のまま（風を読む遊びから外さない）。
-  // 爆風は当初 2 だったが、遠くまで飛ぶぶん当てにくいので 3 に広げた（針弾と同じ）。
   // 到達距離は初速の 2 乗を重力で割った値に比例するので、重力 70% で標準砲の 1.4 倍ほど伸びる。初速も上げると届きすぎる
   laser: { ...ONE_SHOT, stages: Array.from({ length: 7 }, () => ({ blastRadius: 3, damageMax: 8, damagePerCell: 4 })), speedPercent: 100, gravityPercent: 70, windPercent: 100 },
-  // 地形を崩す道具。爆風は当初 16 だったが、個性を強めるため 18 に広げた。ダメージは据え置き
-  digger: { ...ONE_SHOT, stages: single(18, 16, 1), speedPercent: 90, gravityPercent: 100, windPercent: 100 },
-  // 風 200% で最も当てにくいので、当初の 25 / 半径 8 から 30 / 半径 10 に上げた。標準砲の 35 は超えない
-  floater: { ...ONE_SHOT, stages: single(10, 30, 2), speedPercent: 70, gravityPercent: 50, windPercent: 200 },
-  // 直撃は全武器で最大。当初 55 / 減衰 15 だったが、レーザー弾を 7 段（合計 56）にしたので 70 / 減衰 21 に上げて最大を保った（標準砲の 2 倍）。3 セルで 1 割、4 セルで 0 は変えていない
+  digger: { ...ONE_SHOT, stages: single(20, 22, 1), speedPercent: 90, gravityPercent: 100, windPercent: 100 },
+  floater: { ...ONE_SHOT, stages: single(12, 46, 3), speedPercent: 70, gravityPercent: 50, windPercent: 200 },
   stinger: { ...ONE_SHOT, stages: single(3, 70, 21), speedPercent: 105, gravityPercent: 100, windPercent: 100 },
 };
 

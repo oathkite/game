@@ -596,3 +596,24 @@ a {
     grid-template-columns: repeat(2, 1fr);
   }
 }
+
+/* Keyboard focus uses the same square, 2px green edge across all scenes. */
+:is(button, a[href], input, select, textarea, summary, [role=button]):focus-visible {
+  outline:2px solid var(--ui)!important;
+  outline-offset:4px;
+  border-radius:0;
+}
+:is(button, a[href], input, select, textarea, summary, [role=button]):focus:not(:focus-visible) {
+  outline:none!important;
+}
+/* The field keeps keyboard focus for controls without outlining the game pane. */
+:is(.kp-canvas, .network-pixi, .world-content):focus {
+  outline:none!important;
+  box-shadow:none!important;
+}
+/* The volume control has a visually hidden range; highlight its visible bars. */
+.volume-segments:has(input:focus-visible) {
+  outline:2px solid var(--ui);
+  outline-offset:4px;
+}
+.volume-segments input:focus-visible { outline:none!important; }

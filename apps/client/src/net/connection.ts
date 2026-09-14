@@ -5,6 +5,7 @@ import type { ClientMessage, ServerMessage } from "@game/protocol";
 export type ConnectionStatus = "connecting" | "open" | "closed";
 
 export type Connection = {
+  readonly reportMoveCost?: (steps: number) => void;
   /** Local practice reports a walking ring-out without firing a shot. */
   readonly reportMoveRingOut?: (x: number) => void;
   readonly send: (message: ClientMessage) => void;

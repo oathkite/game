@@ -1,8 +1,8 @@
+import { resultTitle } from "./resultTitle";
 import { DotIcon } from "./DotIcon";
 import { closeOnBackdrop } from "@/worldUi/dialogBackdrop";
 import { useWorldBrowserBack } from "./browserBack";
 import type { ResultPresentation } from "./ResultPlayers";
-import { teamColorName } from "./teamColors";
 import { loadScene } from "./loadScene";
 import { SceneBoundary } from "./SceneBoundary";
 import { AudioControls } from "./AudioControls";
@@ -12,7 +12,7 @@ import { StartScreen } from "./StartScreen";
 import { inviteRoom } from "./roomInvite";
 import { loadDisplayScale, saveDisplayScale } from "./displayScale";
 import { lazy, Suspense, useCallback, useEffect, useRef, useState } from "react";
-import { MAP_LABELS, type MapName, WEAPON_IDS, WEAPON_LABELS, PLAYER_COLORS, COLOR_HEX, type WeaponId } from "@game/protocol";
+import { WEAPON_DELAY, MAP_LABELS, type MapName, WEAPON_IDS, WEAPON_LABELS, PLAYER_COLORS, COLOR_HEX, type WeaponId } from "@game/protocol";
 import { loadProfile, saveProfile } from "@/app/profile";
 import { setAudioActive, setAudioSettings, setMusic, playSound, unlockAudio } from "@/app/audio";
 import { CameraSettingsPanel } from "@/prototype/CameraSettingsPanel";
@@ -22,6 +22,7 @@ import { TankPortrait } from "./TankPortrait";
 import "./worldUi.css";
 import "./simpleTheme.css";
 import "./pageLayout.css";
+import "./dock.css";
 
 const RoomScreen = lazy(() => loadScene("src/worldUi/RoomScreen.tsx", () => import("./RoomScreen")).then(module => ({ default: module.RoomScreen })));
 const NetworkLab = lazy(() => loadScene("src/networkLab/NetworkLab.tsx", () => import("@/networkLab/NetworkLab")).then(module => ({ default: module.NetworkLab })));
@@ -34,7 +35,7 @@ export const WorldScenes = () => {
   const { t, language } = useLanguage();
   useEffect(() => { document.documentElement.lang = language; }, [language]);
   const [scene, setScene] = useState<Scene>(() => inviteRoom(location.href) || new URL(location.href).searchParams.has("room") ? "rooms" : "start"), [closing, setClosing] = useState(false);
-  const [practiceMap, setPracticeMap] = useState<MapName>("ridgeline");
+  const [practiceMap, setPracticeMap] = useState<MapName | "random">("ridgeline");
   const [result, setResult] = useState<ResultPresentation | null>(null);
   const timer = useRef<ReturnType<typeof setTimeout> | null>(null);
   const heading = useRef<HTMLDivElement>(null);
@@ -77,7 +78,7 @@ export const WorldScenes = () => {
       <div key={scene} ref={heading} tabIndex={-1} className="world-content">
         {scene === "start" && <StartScreen onBegin={() => go("lobby")} />}
         {scene === "lobby" && <Lobby go={go} practiceMap={practiceMap} setPracticeMap={setPracticeMap} />}
-        {scene === "result" && result && <section className="world-result-screen"><h1>{result.result.type === "win" ? t("{player}の勝利", { player: t(teamColorName(Number(result.result.teamId.slice(1)))) }) : t("引き分け")}</h1><ResultPlayers {...result} /><div className="result-actions"><PixelButton onClick={exit}>{t("出撃準備")}</PixelButton><PixelButton className="result-primary" onClick={() => go("battle")}>{t("もう一度プレイ")}</PixelButton></div></section>}
+        {scene === "result" && result && <section className="world-result-screen"><h1>{t(resultTitle(result.result, result.players.find(p => p.playerId === result.ownId)?.teamId))}</h1><ResultPlayers {...result} /><div className="result-actions"><PixelButton onClick={exit}>{t("出撃準備")}</PixelButton><PixelButton className="result-primary" onClick={() => go("battle")}>{t("もう一度プレイ")}</PixelButton></div></section>}
       </div>
     </>}
     </Suspense>
@@ -85,7 +86,7 @@ export const WorldScenes = () => {
     <div className="world-shutter" aria-hidden="true" />
   </div>;
 };
-const Lobby = ({ go, practiceMap, setPracticeMap }: { readonly go: (scene: Scene) => void; readonly practiceMap: MapName; readonly setPracticeMap: (map: MapName) => void }) => {
+const Lobby = ({ go, practiceMap, setPracticeMap }: { readonly go: (scene: Scene) => void; readonly practiceMap: MapName | "random"; readonly setPracticeMap: (map: MapName | "random") => void }) => {
   const { t } = useLanguage();
   const [profile, setProfile] = useState(loadProfile);
   const update = (patch: Partial<typeof profile>) => { const next = { ...loadProfile(), ...patch }; setProfile(next); saveProfile(next); };
@@ -93,7 +94,7 @@ const Lobby = ({ go, practiceMap, setPracticeMap }: { readonly go: (scene: Scene
   const settingsDialog = useRef<HTMLDialogElement>(null);
   const weapon = (slot: 0 | 1, value: WeaponId) => update({ loadout: slot === 0 ? [value, profile.loadout[1]] : [profile.loadout[0], value] });
   return <section className="world-lobby">
-    <header><h1>{t("出撃準備")}</h1><PixelButton onClick={() => settingsDialog.current?.showModal()}>{t("設定")}</PixelButton></header>
+    <header><PixelButton onClick={() => settingsDialog.current?.showModal()}>{t("設定")}</PixelButton></header>
     <div className="world-machine"><TankPortrait colors={profile.colors} /></div>
     <div className="world-loadout">
       <label>{t("名前")}<input aria-label={t("名前")} maxLength={12} value={profile.nickname} placeholder={t("プレイヤー")} onChange={e => update({ nickname: e.target.value })} /></label>
@@ -111,8 +112,8 @@ const Lobby = ({ go, practiceMap, setPracticeMap }: { readonly go: (scene: Scene
     </dialog>
     <dialog onClick={event => closeOnBackdrop(event, () => practiceDialog.current?.close())} ref={practiceDialog} className="practice-settings" aria-labelledby="practice-settings-title">
       <h2 id="practice-settings-title">{t("プラクティス設定")}</h2>
-      <label>{t("ステージ")}<select aria-label={t("ステージ")} value={practiceMap} onChange={e => setPracticeMap(e.target.value as MapName)}>{(["ridgeline", "stone-bridge", "terraces", "sky-islands"] as const).map(map => <option key={map} value={map}>{t(MAP_LABELS[map])}</option>)}</select></label>
-      {([0, 1] as const).map(slot => <label key={slot}>{t("装備")} {slot + 1}<select aria-label={`${t("装備")} ${slot + 1}`} value={profile.loadout[slot]} onChange={e => weapon(slot, e.target.value as WeaponId)}>{WEAPON_IDS.map(id => <option key={id} value={id} disabled={id === profile.loadout[slot === 0 ? 1 : 0]}>{t(WEAPON_LABELS[id])}</option>)}</select></label>)}
+      <label>{t("ステージ")}<select aria-label={t("ステージ")} value={practiceMap} onChange={e => setPracticeMap(e.target.value as MapName | "random")}><option value="random">{t("ランダム")}</option>{(["ridgeline", "stone-bridge", "terraces", "sky-islands"] as const).map(map => <option key={map} value={map}>{t(MAP_LABELS[map])}</option>)}</select></label>
+      {([0, 1] as const).map(slot => <label key={slot}>{t("装備")} {slot + 1}<select aria-label={`${t("装備")} ${slot + 1}`} value={profile.loadout[slot]} onChange={e => weapon(slot, e.target.value as WeaponId)}>{WEAPON_IDS.map(id => <option key={id} value={id} disabled={id === profile.loadout[slot === 0 ? 1 : 0]}>{t(WEAPON_LABELS[id])} · {t("コスト")} {WEAPON_DELAY[id]}</option>)}</select></label>)}
       <div className="practice-settings-actions"><PixelButton className="modal-close" aria-label={t("閉じる")} onClick={() => practiceDialog.current?.close()}><DotIcon name="close" /></PixelButton><PixelButton className="practice-start" onClick={() => { practiceDialog.current?.close(); go("battle"); }}>{t("プラクティス開始")}</PixelButton></div>
     </dialog>
   </section>;

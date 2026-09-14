@@ -1,0 +1,44 @@
+<svg id="still" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 640 360" shape-rendering="crispEdges">
+<style>
+ .dock-lamp { animation:dock-light 7s ease-in-out infinite; }
+ .dock-lamp-right { animation-delay:-3s; }
+ .dock-indicator { animation:dock-status 4s steps(2,end) infinite; }
+ .dock-crane { animation:dock-travel 20s ease-in-out infinite; }
+ .dock-cable { transform-origin:204px 40px; animation:dock-cable 20s ease-in-out infinite; }
+ .dock-hook { animation:dock-hoist 20s ease-in-out infinite; }
+ @keyframes dock-travel { 0%,10%,90%,100% { transform:translateX(0); } 40%,60% { transform:translateX(132px); } }
+ @keyframes dock-cable { 0%,40%,60%,100% { transform:scaleY(1); } 48%,52% { transform:scaleY(1.75); } }
+ @keyframes dock-hoist { 0%,40%,60%,100% { transform:translateY(0); } 48%,52% { transform:translateY(24px); } }
+ @keyframes dock-light { 0%,100% { opacity:.65; } 50% { opacity:1; } }
+ @keyframes dock-status { 0%,100% { opacity:.4; } 50% { opacity:1; } }
+ svg:target .dock-lamp,svg:target .dock-indicator,svg:target .dock-crane,svg:target .dock-cable,svg:target .dock-hook { animation:none; }
+ @media(prefers-reduced-motion:reduce) { .dock-lamp,.dock-indicator,.dock-crane,.dock-cable,.dock-hook { animation:none; } }
+</style>
+<defs>
+ <pattern id="wall" width="80" height="40" patternUnits="userSpaceOnUse"><rect width="80" height="40" fill="#06110b"/><path d="M0 39H80M79 0V40" stroke="#10291a" stroke-width="1"/><rect x="4" y="4" width="2" height="2" fill="#1b3824"/></pattern>
+ <pattern id="grate" width="8" height="8" patternUnits="userSpaceOnUse"><rect width="8" height="8" fill="#102719"/><rect x="2" y="2" width="4" height="4" fill="#020805"/></pattern>
+</defs>
+<rect width="640" height="360" fill="#020805"/><rect width="640" height="270" fill="url(#wall)"/>
+<!-- Recessed maintenance bay -->
+<path d="M104 264V64H116V52H382V64H394V264Z" fill="#173422"/><path d="M116 264V72H128V64H370V72H382V264Z" fill="#020805"/>
+<path d="M124 80H374M124 112H374M124 144H374M124 176H374M124 208H374M124 240H374" stroke="#0b1b11" stroke-width="2"/>
+<rect x="132" y="74" width="230" height="4" fill="#1b4b2c"/>
+<!-- Ceiling rails and overhead lifting crane -->
+<rect y="18" width="640" height="16" fill="#163422"/><rect y="20" width="640" height="2" fill="#265138"/><rect y="29" width="640" height="3" fill="#020805"/>
+<g class="dock-crane"><rect x="172" y="12" width="72" height="28" fill="#244b30"/><rect x="180" y="18" width="56" height="12" fill="url(#grate)"/><rect class="dock-cable" x="204" y="40" width="4" height="32" fill="#305a3b"/><path class="dock-hook" d="M202 72H210V88H202V84H198V80H202Z" fill="#477954"/></g>
+<!-- Wall pillars and utility pipes -->
+<g fill="#173824"><rect x="32" y="34" width="16" height="236"/><rect x="588" y="34" width="18" height="236"/></g>
+<g fill="#285039"><rect x="34" y="34" width="3" height="236"/><rect x="590" y="34" width="3" height="236"/></g>
+<path d="M8 52H70V172H84V258M630 44H560V146H574V258" fill="none" stroke="#244c31" stroke-width="6"/>
+<g fill="#366844"><rect x="62" y="94" width="14" height="6"/><rect x="554" y="82" width="14" height="6"/><rect x="76" y="216" width="14" height="6"/></g>
+<!-- Pixel lamps with stepped pools of light -->
+<path d="M112 48H156V52H164V60H172V72H96V60H104V52H112Z" fill="#10261a"/><rect x="112" y="44" width="44" height="6" fill="#427d50"/><rect class="dock-lamp" x="116" y="44" width="36" height="2" fill="#8db783"/>
+<path d="M462 48H506V52H514V60H522V72H446V60H454V52H462Z" fill="#10261a"/><rect x="462" y="44" width="44" height="6" fill="#427d50"/><rect class="dock-lamp dock-lamp-right" x="466" y="44" width="36" height="2" fill="#8db783"/>
+<!-- Side equipment -->
+<rect x="8" y="188" width="52" height="70" fill="#142e1e"/><rect x="14" y="194" width="40" height="26" fill="#010704"/><path class="dock-indicator" d="M18 214V204H26V210H34V200H42V206H50" fill="none" stroke="#326b40" stroke-width="2"/><rect x="16" y="230" width="32" height="18" fill="url(#grate)"/>
+<rect x="606" y="182" width="30" height="76" fill="#183724"/><rect x="612" y="190" width="18" height="42" fill="url(#grate)"/><rect class="dock-indicator" x="614" y="240" width="4" height="4" fill="#427d50"/>
+<!-- Floor and maintenance platform -->
+<rect y="264" width="640" height="96" fill="#0a1a11"/><rect y="264" width="640" height="4" fill="#244731"/>
+<path d="M0 292H640M0 326H640M84 268L20 360M182 268L152 360M458 268L488 360M556 268L620 360" stroke="#173523" stroke-width="2"/>
+<rect y="346" width="640" height="14" fill="url(#grate)"/>
+</svg>

@@ -1,3 +1,4 @@
+import { delaySchema } from "./delay.js";
 import { tankColorsSchema } from "./schemas.js";
 import { clientBuildSchema, matchBuildSchema } from "./build.js";
 import { z } from "zod";
@@ -11,6 +12,7 @@ export const labInputSchema = z.union([labJoinSchema, moveCommandSchema, fireCom
   z.object({ type: z.literal("lab.surrender"), matchId: z.string() }).strict()]);
 const labPlayerSchema = z.object({ playerId: z.string(), x: z.number(), y: z.number(), hp: z.number(), teamId: z.string(), eliminated: z.boolean(), nickname: z.string().optional(), colors: tankColorsSchema.optional(), loadout: z.tuple([z.enum(WEAPON_IDS), z.enum(WEAPON_IDS)]).optional() });
 export const labFrameSchema = z.object({
+  delay: delaySchema.optional(),
   build: matchBuildSchema,
   type: z.literal("lab.frame"), serverTime: z.number(), eventSeq: z.number().int().nonnegative(),
   matchId: z.string(), turnId: z.number().int(), actorId: z.string(), deadlineAt: z.number(),

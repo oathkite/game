@@ -91,3 +91,17 @@
 .room-weapon-slot-label { display:flex; flex-direction:column; gap:4px; text-align:left; }
 
 .room-create-form { display:grid; gap:20px; }
+.room-weapon-options button { gap:4px; }
+.room-weapon-options small { font-size:12px; }
+
+.public-rooms .room-list-name { display:flex; align-items:center; gap:8px; line-height:1.5; }
+.public-rooms li .room-list-lock { display:inline-flex; align-items:center; flex-shrink:0; width:16px; height:16px; line-height:1; }
+.public-rooms .room-list-lock .dot-icon { display:block; width:16px; height:16px; }
+
+.room-player-identity { display:flex; align-items:center; gap:8px; }
+.room-player-identity .tank-portrait { width:64px; height:44px; flex:0 0 64px; margin:0; }
+@media(max-width:699px) { .room-player-identity .tank-portrait { width:48px; height:33px; flex-basis:48px; } }
+
+.room-weapon-slot { flex:1; min-width:0; }
+.room-weapon-slot h3 { margin:0 0 8px; font-size:14px; font-weight:normal; }
+.room-weapon-slots .room-weapon-slot button { width:100%; }

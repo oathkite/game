@@ -23,7 +23,8 @@ export const createBattleSounds = () => {
     const replay = frame.replay;
     if (frame.phase === "replaying" && replay) {
       const start = replay.startsAt;
-      const duration = Math.max(1, replay.endsAt - 300 - start);
+      const damageReadMs = replay.impacts.some(i => i.damage.some(d => d.amount > 0)) ? 1300 : 0;
+      const duration = Math.max(1, replay.endsAt - 300 - damageReadMs - start);
       const fresh = before.frame.phase !== "replaying" || before.frame.turnId !== frame.turnId || before.frame.replay?.startsAt !== start;
       const from = fresh && now - start <= 500 ? Math.min(before.now, start - 0.001) : before.now;
       const crossed = (tick: number) => {

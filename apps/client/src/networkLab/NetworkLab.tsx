@@ -1,3 +1,6 @@
+import { resultTitle } from "@/worldUi/resultTitle";
+import { YourTurn } from "@/worldUi/YourTurn";
+import { TurnOrderList } from "@/worldUi/TurnOrderList";
 import { BattleTouchControls } from "@/worldUi/BattleTouchControls";
 import { useBrowserBackAction } from "@/worldUi/browserBack";
 import { LeaveBattleDialog } from "@/worldUi/LeaveBattleDialog";
@@ -5,7 +8,6 @@ import { CountdownDial } from "@/ui/CountdownDial";
 import { ResultPlayers } from "@/worldUi/ResultPlayers";
 import { measureLatency } from "./latency";
 import { roomOutputSchema } from "@game/protocol/v2-rooms";
-import { teamColorName } from "@/worldUi/teamColors";
 import { useLanguage } from "@/i18n/locale";
 import { matchDiagnostics } from "@/worldUi/diagnostics";
 import { createBattleSounds } from "./battleSounds";
@@ -134,7 +136,7 @@ export const NetworkLab = ({ worldArt = false, onExit, connection }: { readonly 
   const phaseLabel = frame?.phase === "replaying" ? "射撃を再生中" : frame?.phase === "finished" ? "対戦終了" : "操作中";
   const observing = spectator || Boolean(frame?.players.find(p => p.playerId === playerId)?.eliminated);
   const opening = Boolean(frame?.opening && serverNow < frame.opening.endsAt);
-  const canControl = !opening && (!worldArt || innerWidth > innerHeight) && frame?.phase === "acting" && frame.actorId === playerId && socket.current?.readyState === WebSocket.OPEN;
+  const canControl = !opening && serverNow >= (frame?.delay?.revealUntil ?? 0) && (!worldArt || innerWidth > innerHeight) && frame?.phase === "acting" && frame.actorId === playerId && socket.current?.readyState === WebSocket.OPEN;
   const canAct = canControl && !settling;
   const input = useBattleInput(Boolean(worldArt && canControl && !menu && !confirmLeave), move, delta => setElevation(v => Math.max(10, Math.min(90, v + delta))), fire, setSlot, settling);
   useBrowserBackAction(Boolean(worldArt && onExit), () => { input.cancel(); setMenu(false); setConfirmLeave(true); });
@@ -144,10 +146,12 @@ export const NetworkLab = ({ worldArt = false, onExit, connection }: { readonly 
   if (frame?.actorId === playerId) ownFacing.current = frame.movement.facing;
   const ground = useMemo(() => own && presentation && frame ? tiltOf(applyOps(buildInitialTerrain(frame.map), presentation.terrainOps), own) : 0, [own?.x, own?.y, frame?.eventSeq, frame?.matchId]);
   if (worldArt) return <main className="network-lab network-world" onPointerDown={() => unlockAudio()} onKeyDown={() => unlockAudio()}>
+    <YourTurn turnKey={`${frame?.matchId}/${frame?.turnId}`} active={Boolean(!observing && canControl)} />
     <BattleOverlay clock={<CountdownDial seconds={seconds} />} onMenu={() => { input.cancel(); setMenu(true); }} />
     <span className="battle-sr" data-testid="identity">{playerId}</span><span className="battle-sr" data-testid="phase">{t(phaseLabel)}</span>
-    {frame && presentation ? <NetworkField key={frame.matchId} serverNow={serverNow} onSettling={setSettling} blocked={menu || confirmLeave || input.gauge.charging} frame={frame} players={shownPlayers} presentation={presentation} elevation={elevation} ownId={playerId} followTurns={!observing || !keepView} {...(!observing ? { selectedWeapon: loadout[slot] } : {})} /> : <p role="status">{t(status)}</p>}
-    {observing ? <footer className="battle-console"><span role="status">{t("観戦中")}</span><label><input type="checkbox" checked={keepView} onChange={e => setKeepView(e.target.checked)} />{t("手動視点を維持")}</label></footer> : <BattleConsole player={hudPlayers.find(p => p.id === playerId)} steps={frame?.actorId === playerId ? frame.movement.stepsLeft : 0} tilt={ground} elevation={elevation} facing={ownFacing.current} power={input.gauge.value} loadout={loadout} slot={slot} disabled={!canAct || menu || confirmLeave || input.gauge.charging} selectSlot={setSlot}>
+    {frame && presentation ? <NetworkField key={frame.matchId} serverNow={serverNow} onSettling={setSettling} blocked={menu || confirmLeave || input.gauge.charging || serverNow < (frame.delay?.revealUntil ?? 0)} frame={frame} players={shownPlayers} presentation={presentation} elevation={elevation} ownId={playerId} followTurns={!observing || !keepView} {...(!observing ? { selectedWeapon: loadout[slot] } : {})} /> : <p role="status">{t(status)}</p>}
+    {observing && frame?.delay && <TurnOrderList info={{ onOpen: input.cancel, serverNow, state: frame.delay, playerId, acting: false, players: frame.players.map(p => ({ id: p.playerId, name: p.nickname ?? p.playerId, colors: p.colors, eliminated: p.eliminated })) }} />}
+    {observing ? <footer className="battle-console"><span role="status">{t("観戦中")}</span><label><input type="checkbox" checked={keepView} onChange={e => setKeepView(e.target.checked)} />{t("手動視点を維持")}</label></footer> : <BattleConsole delay={frame?.delay ? { onOpen: input.cancel, serverNow, state: frame.delay, playerId, acting: frame.actorId === playerId && frame.phase === "acting", players: frame.players.map(p => ({ id: p.playerId, name: p.nickname ?? p.playerId, colors: p.colors, eliminated: p.eliminated })) } : undefined} player={hudPlayers.find(p => p.id === playerId)} steps={frame?.actorId === playerId ? frame.movement.stepsLeft : 0} tilt={ground} elevation={elevation} facing={ownFacing.current} power={input.gauge.value} loadout={loadout} slot={slot} disabled={!canAct || menu || confirmLeave || input.gauge.charging} selectSlot={setSlot}>
       {touch && <BattleTouchControls disabled={!canAct || confirmLeave || menu} button={input.button} steps />}
     </BattleConsole>}
     {latency !== null && latency > 300 && <span className="network-latency" role="status">{t("通信遅延")} {latency} ms</span>}
@@ -156,7 +160,7 @@ export const NetworkLab = ({ worldArt = false, onExit, connection }: { readonly 
       if (socket.current?.readyState !== WebSocket.OPEN) { setReportStatus("通報を送信できませんでした。"); return; }
       setReportStatus("送信中…"); socket.current.send(JSON.stringify({ type: "room.report", matchId: frame.matchId, targetId, reason }));
     } } } : {})} {...(frame ? { diagnostics: matchDiagnostics(frame) } : {})} spectator={observing} close={() => setMenu(false)} surrender={() => { action("lab.surrender"); setMenu(false); }} exit={onExit} finished={!frame || frame.phase === "finished"} />}
-    {frame?.phase === "finished" && <section className="network-finished"><header className="result-header"><h2>{frame.result.type === "win" ? t("{team}チームの勝利", { team: t(teamColorName(Number(frame.result.teamId.slice(1)))) }) : t("引き分け")}</h2>{frame.returnStatus && <p className="result-return-timer" role="timer">{t("部屋へ戻るまで {seconds}秒", { seconds: Math.max(0, Math.ceil((frame.returnStatus.deadlineAt - serverNow) / 1000)) })}</p>}</header><ResultPlayers players={frame.players} result={frame.result} {...(frame.stats ? { stats: frame.stats } : {})} /><div className="result-actions"><button onClick={onExit}>{t("退出する")}</button>{!spectator && connection && <button className="result-primary" disabled={Boolean(connection && frame.returnStatus?.readyIds.includes(playerId))} onClick={() => action("lab.rematch")}>{frame.returnStatus?.readyIds.includes(playerId) ? t("帰還待ち") : t("部屋に戻る")}</button>}</div></section>}
+    {frame?.phase === "finished" && <section className="network-finished"><header className="result-header"><h2>{t(resultTitle(frame.result, spectator ? undefined : frame.players.find(p => p.playerId === playerId)?.teamId))}</h2>{frame.returnStatus && <p className="result-return-timer" role="timer">{t("部屋へ戻るまで {seconds}秒", { seconds: Math.max(0, Math.ceil((frame.returnStatus.deadlineAt - serverNow) / 1000)) })}</p>}</header><ResultPlayers players={frame.players} result={frame.result} {...(frame.stats ? { stats: frame.stats } : {})} /><div className="result-actions"><button onClick={onExit}>{t("退出する")}</button>{!spectator && connection && <button className="result-primary" disabled={Boolean(connection && frame.returnStatus?.readyIds.includes(playerId))} onClick={() => action("lab.rematch")}>{frame.returnStatus?.readyIds.includes(playerId) ? t("帰還待ち") : t("部屋に戻る")}</button>}</div></section>}
     {status === "invalid-session" && <div className="network-finished"><p>{t("接続の有効期限が切れました。")}</p><button onClick={() => { sessionStorage.removeItem("keropod.network-lab-token"); location.reload(); }}>{t("新しい接続で参加")}</button></div>}
     <div className="network-portrait"><h2>{t("横向きでプレイしよう")}</h2><p>{t("端末を回転するとフィールドと操作が見やすくなります。")}</p><button onClick={onExit}>{t("ロビーに戻る")}</button></div>
     {!connection && status.startsWith("切断") && <p className="network-connection" role="status">{t("切断されました。再読み込みで復帰できます。")}</p>}

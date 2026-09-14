@@ -29,7 +29,7 @@ exports[`golden replay > トリプル弾 平地 至近で 3 発をまとめて�
     "finished": null,
     "hpAfter": [
       100,
-      55,
+      46,
     ],
     "impacts": [
       {
@@ -39,7 +39,7 @@ exports[`golden replay > トリプル弾 平地 至近で 3 発をまとめて�
         },
         "damage": [
           0,
-          15,
+          18,
         ],
         "projectile": 0,
         "stage": 0,
@@ -56,7 +56,7 @@ exports[`golden replay > トリプル弾 平地 至近で 3 発をまとめて�
         },
         "damage": [
           0,
-          15,
+          18,
         ],
         "projectile": 1,
         "stage": 0,
@@ -73,7 +73,7 @@ exports[`golden replay > トリプル弾 平地 至近で 3 発をまとめて�
         },
         "damage": [
           0,
-          15,
+          18,
         ],
         "projectile": 2,
         "stage": 0,
@@ -1196,8 +1196,8 @@ exports[`golden replay > 掘削弾 平地 直撃 1`] = `
   "result": {
     "finished": null,
     "hpAfter": [
-      93,
-      84,
+      87,
+      78,
     ],
     "impacts": [
       {
@@ -1206,15 +1206,15 @@ exports[`golden replay > 掘削弾 平地 直撃 1`] = `
           "y": 144,
         },
         "damage": [
-          7,
-          16,
+          13,
+          22,
         ],
         "projectile": 0,
         "stage": 0,
         "terrainOp": {
           "cx": 72,
           "cy": 144,
-          "radius": 18,
+          "radius": 20,
         },
       },
     ],
@@ -1234,8 +1234,8 @@ exports[`golden replay > 掘削弾 平地 直撃 1`] = `
       72,
     ],
     "yAfter": [
-      158,
-      163,
+      161,
+      165,
     ],
   },
 }
@@ -1373,7 +1373,7 @@ exports[`golden replay > 浮遊弾 谷 向かい風 10 1`] = `
         "terrainOp": {
           "cx": 184,
           "cy": 189,
-          "radius": 10,
+          "radius": 12,
         },
       },
     ],
@@ -1709,7 +1709,7 @@ exports[`golden replay > 貫通弾 壁の中で爆発 自爆 1`] = `
   "result": {
     "finished": null,
     "hpAfter": [
-      81,
+      77,
       100,
     ],
     "impacts": [
@@ -1719,7 +1719,7 @@ exports[`golden replay > 貫通弾 壁の中で爆発 自爆 1`] = `
           "y": 145,
         },
         "damage": [
-          19,
+          23,
           0,
         ],
         "projectile": 0,
@@ -1803,7 +1803,7 @@ exports[`golden replay > 貫通弾 平地 直撃 1`] = `
     "finished": null,
     "hpAfter": [
       100,
-      56,
+      48,
     ],
     "impacts": [
       {
@@ -1813,7 +1813,7 @@ exports[`golden replay > 貫通弾 平地 直撃 1`] = `
         },
         "damage": [
           0,
-          22,
+          26,
         ],
         "projectile": 0,
         "stage": 0,
@@ -1830,7 +1830,7 @@ exports[`golden replay > 貫通弾 平地 直撃 1`] = `
         },
         "damage": [
           0,
-          14,
+          16,
         ],
         "projectile": 0,
         "stage": 1,
@@ -1847,7 +1847,7 @@ exports[`golden replay > 貫通弾 平地 直撃 1`] = `
         },
         "damage": [
           0,
-          8,
+          10,
         ],
         "projectile": 0,
         "stage": 2,

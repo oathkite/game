@@ -1,0 +1,28 @@
+.world-ui.world-ui section.world-lobby {
+  background:#020805 url("./dock.svg") center / cover no-repeat;
+  isolation:isolate;
+}
+.world-ui.world-ui section.world-lobby .world-machine .tank-portrait { background:transparent; }
+.world-ui.world-ui section.world-lobby .world-loadout {
+  background:#000;
+  border:2px solid #33ff66!important;
+  padding:20px!important;
+}
+.world-ui.world-ui .world-lobby > header { justify-content:flex-end; }
+@media(max-height:550px) { .world-ui.world-ui section.world-lobby .world-loadout { padding:12px!important; } }
+@media(orientation:portrait) { .world-ui.world-ui section.world-lobby { background-position:32% center; } }
+
+@media(prefers-reduced-motion:reduce) { .world-ui.world-ui section.world-lobby { background-image:url("./dock.svg#still"); } }
+
+/* The tank silhouette ends at y=53 in its 55-unit SVG. Anchor the deck there. */
+.world-ui.world-ui section.world-lobby .world-machine .tank-portrait { position:relative; overflow:visible; }
+.world-lobby .world-machine .tank-portrait::after {
+  content:"";
+  position:absolute;
+  left:0;
+  top:96.363636%;
+  width:100%;
+  aspect-ratio:300/44;
+  background:url("./dockPlatform.svg") center / 100% 100% no-repeat;
+  pointer-events:none;
+}

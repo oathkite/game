@@ -1,0 +1,23 @@
+.your-turn {
+  position:fixed;
+  top:38%;
+  left:50%;
+  transform:translate(-50%,-50%);
+  z-index:40;
+  pointer-events:none;
+  padding:12px 24px;
+  border:2px solid #33ff66;
+  background:#000;
+  color:#33ff66;
+  font-family:var(--font-jp);
+  font-size:clamp(24px,5vw,44px);
+  line-height:1.4;
+  white-space:nowrap;
+  animation:your-turn-appear 1800ms linear both;
+}
+@keyframes your-turn-appear {
+  0% { opacity:0; }
+  8%,80% { opacity:1; }
+  100% { opacity:0; }
+}
+@media(prefers-reduced-motion:reduce) { .your-turn { animation:none; } }

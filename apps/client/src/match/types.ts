@@ -1,3 +1,4 @@
+import type { DelayState } from "@game/protocol";
 import { type Facing, type Loadout, type MatchResult, type Seat, type ShotResult, type TankColors, TURN_LIMIT, type WeaponSlot, type Wind } from "@game/protocol";
 import type { ProjectilePath, TerrainMask } from "@game/sim";
 
@@ -55,6 +56,7 @@ export type ReplayJob = {
 };
 
 export type MatchView = {
+  readonly delay?: DelayState | undefined;
   readonly phase: ClientPhase;
   readonly mask: TerrainMask | null;
   readonly players: readonly [PlayerView, PlayerView] | null;

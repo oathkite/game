@@ -2,6 +2,15 @@ import { playEnglish } from "./playMessages";
 import { roomEnglish } from "./roomMessages";
 export const english: Readonly<Record<string, string>> = {
   ...roomEnglish, ...playEnglish,
+  "あなた": "You",
+  "ランダム": "Random",
+  "対戦結果": "Match result",
+  "あなたのターン": "Your turn",
+  "行動コストを確認": "View action cost", "行動コスト": "Action cost", "コスト": "Cost", "行動順": "Turn order",
+  "次の出番まで": "Until next turn",
+  "各プレイヤーの次の出番": "Each player’s next turn",
+  "次の出番までの待ち時間。同点なら先に予約した人を優先。": "Time until each next turn. Earlier reservations win ties.",
+  "行動後に基本50・武器・移動のコストを加算します。": "Each action adds base 50, weapon and movement costs.",
   "BGM音量": "Music volume", "効果音量": "Sound effects volume",
   "ステージ": "Stage",
   "出撃": "Deploy", "プラクティス設定": "Practice setup", "プラクティス開始": "Start practice",

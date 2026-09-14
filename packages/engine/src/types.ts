@@ -1,3 +1,4 @@
+import type { DelayState } from "@game/protocol";
 import type { ClientMessageOf, MatchState, Seat, SeatStats, ServerMessage, ServerMessageOf } from "@game/protocol";
 import type { TerrainMask } from "@game/sim";
 
@@ -5,6 +6,7 @@ import type { TerrainMask } from "@game/sim";
 // エンジンは時刻を読まず、呼び出し側が now を渡す。乱数も呼び出し側が rng として渡す。
 
 export type EngineConfig = {
+  readonly delayEnabled?: boolean;
   readonly turnMs: number;
   /** 期限後に射撃確定を受け付ける猶予 */
   readonly graceMs: number;
@@ -16,6 +18,8 @@ export type EngineConfig = {
 };
 
 export type EngineState = {
+  readonly delay?: DelayState;
+  readonly movedSteps?: number;
   readonly config: EngineConfig;
   readonly match: MatchState;
   readonly mask: TerrainMask;
@@ -38,6 +42,7 @@ export type EngineState = {
 };
 
 export type EngineEvent =
+  | { readonly type: "practiceMoveCost"; readonly steps: number }
   | { readonly type: "moveRingOut"; readonly seat: Seat; readonly x: number }
   | { readonly type: "loaded"; readonly seat: Seat }
   | { readonly type: "fire"; readonly seat: Seat; readonly fire: ClientMessageOf<"turn.fire"> }

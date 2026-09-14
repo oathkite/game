@@ -6,7 +6,7 @@ const frame = labFrameSchema.parse({ type: "lab.frame", build: { protocol: 2, si
   players: Array.from({ length: 8 }, (_, i) => ({ ...player, playerId: `p${i + 1}`, y: 170, hp: 65 })),
   movement: { version: 2, type: "move.snapshot", matchId: "m", turnId: 1, playerId: "p1", eventSeq: 2, serverTime: 1000, x: 20, y: 150, facing: 1, stepsLeft: 30, ackMoveSeq: 0, stoppedByFall: false, eliminated: false },
   phase: "replaying", result: { type: "ongoing" }, terrainOps: [{ cx: 20, cy: 150, radius: 10 }],
-  replay: { startsAt: 1000, endsAt: 2000, terrainOpsBefore: 0, playersBefore: Array.from({ length: 8 }, (_, i) => ({ ...player, playerId: `p${i + 1}` })), ticks: 42, shooter: { playerId: "p1", facing: 1, elevation: 45, weapon: "cannon" }, impacts: [{ tick: 42, damage: [{ playerId: "p1", amount: 35 }] }], paths: [{ launchTick: 0, endTick: 42, points: [{ x: 20, y: 140, tick: 0 }, { x: 80, y: 130, tick: 42 }] }] } });
+  replay: { startsAt: 1000, endsAt: 3300, terrainOpsBefore: 0, playersBefore: Array.from({ length: 8 }, (_, i) => ({ ...player, playerId: `p${i + 1}` })), ticks: 42, shooter: { playerId: "p1", facing: 1, elevation: 45, weapon: "cannon" }, impacts: [{ tick: 42, damage: [{ playerId: "p1", amount: 35 }] }], paths: [{ launchTick: 0, endTick: 42, points: [{ x: 20, y: 140, tick: 0 }, { x: 80, y: 130, tick: 42 }] }] } });
 it("holds committed pre-shot positions and terrain until impact, then settles before the deadline", () => {
   const start = presentLabReplay(frame, 1000);
   expect(start.players[0]).toMatchObject({ x: 20, y: 150, hp: 100 }); expect(start.terrainOps).toEqual([]);
@@ -65,4 +65,11 @@ it("derives recoil from the shared replay clock including a later launch", () =>
   expect(presentLabReplay(repeated, 1290).recoil).toBe(3);
   expect(presentLabReplay(repeated, 1380).recoil).toBe(0);
   expect(presentLabReplay(repeated, 2000).recoil).toBe(0);
+});
+
+it("keeps damage reading time after settlement without stretching projectile flight", () => {
+  expect(presentLabReplay(frame, 1350).bullets[0]!.x).toBeCloseTo(50);
+  expect(presentLabReplay(frame, 2500).players).toEqual(frame.players);
+  expect(presentLabReplay(frame, 2500).fallingIds).toEqual([]);
+  expect(presentLabReplay(frame, 2500).bullets).toEqual([]);
 });

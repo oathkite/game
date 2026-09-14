@@ -1,3 +1,5 @@
+import { YourTurn } from "@/worldUi/YourTurn";
+import { useDelayReveal } from "@/worldUi/useDelayReveal";
 import { closeOnBackdrop } from "@/worldUi/dialogBackdrop";
 import type { MapName } from "@game/protocol";
 import { BattleTouchControls } from "@/worldUi/BattleTouchControls";
@@ -26,7 +28,7 @@ import { PrototypeCanvas } from "./PrototypeCanvas";
 import { usePrototypeInput } from "./usePrototypeInput";
 import "./prototype.css";
 
-type ThemeProps = { readonly mapName?: MapName; readonly worldArt?: boolean; readonly onExit?: () => void; readonly onResult?: (result: ResultPresentation) => void };
+type ThemeProps = { readonly mapName?: MapName | "random"; readonly worldArt?: boolean; readonly onExit?: () => void; readonly onResult?: (result: ResultPresentation) => void };
 export const CameraPrototype = (props: ThemeProps) => {
   const { t } = useLanguage();
   const begin = useRef<() => void>(() => {});
@@ -34,7 +36,7 @@ export const CameraPrototype = (props: ThemeProps) => {
   useEffect(() => {
     const p = loadProfile();
     setAudioSettings(p.volume, p.muted, p.bgmVolume ?? p.volume);
-    const connection = createLocalConnection({ deferReady: props.worldArt ?? false, mapName: props.mapName ?? (props.worldArt ? "rock-arch" : "valley"), nickname: p.nickname || "プレイヤー", colors: p.colors, loadout: p.loadout,
+    const connection = createLocalConnection({ deferReady: props.worldArt ?? false, mapName: (props.mapName === "random" ? (["ridgeline", "stone-bridge", "terraces", "sky-islands"] as const)[Math.floor(Math.random() * 4)]! : props.mapName) ?? (props.worldArt ? "rock-arch" : "valley"), nickname: p.nickname || "プレイヤー", colors: p.colors, loadout: p.loadout,
       opponentColors: defaultOpponentColors(p.colors), opponentLoadout: defaultOpponentLoadout(p.loadout) });
     const created = createMatchStore(connection, { followCurrentSeat: true, mySeat: 0, spectator: false });
     begin.current = connection.releaseReady;
@@ -60,8 +62,9 @@ const Battle = ({ store, begin, worldArt, onExit, onResult }: { readonly store: 
   const hudBottom = touch ? 112 : largeHud ? 160 : size.height < 500 || size.width < 1000 ? 96 : 120;
   const layout = useMemo(() => { const base = cameraLayout(size.width, size.height, worldArt ? loadCameraScale() : 9); return worldArt ? { ...base, mapHeight: Math.max(1, size.height - hudTop - hudBottom) } : base; }, [size, worldArt, hudTop, hudBottom]);
   const portrait = size.height > size.width;
-  const enabled = sceneReady && view.phase === "acting" && view.control !== null && !portrait;
-  const input = usePrototypeInput(store, rig, view.phase === "acting" && view.control !== null && !portrait, menu || confirmLeave || portrait, () => { if (confirmLeave) setConfirmLeave(false); else setMenu((open) => !open); }, !sceneReady);
+  const revealing = useDelayReveal(view.delay?.revealUntil);
+  const enabled = !revealing && sceneReady && view.phase === "acting" && view.control !== null && !portrait;
+  const input = usePrototypeInput(store, rig, enabled, menu || confirmLeave || portrait || revealing, () => { if (confirmLeave) setConfirmLeave(false); else setMenu((open) => !open); }, !sceneReady);
   useBrowserBackAction(Boolean(worldArt && onExit), () => { input.cancel(); setMenu(false); setConfirmLeave(true); });
   const ready = view.mask !== null && view.players !== null;
   const actor = view.players?.[view.currentSeat], slot = view.control?.slot ?? view.lastSlot;
@@ -80,6 +83,7 @@ const Battle = ({ store, begin, worldArt, onExit, onResult }: { readonly store: 
   }, [store]);
   useEffect(() => {
     if (view.phase === "finished" && view.result && view.players && onResult) onResult({
+      ownId: String(view.mySeat ?? 0),
       result: view.result.winner === null ? { type: "draw" } : { type: "win", teamId: `t${view.result.winner}` },
       players: view.players.map(player => ({ playerId: String(player.seat), teamId: `t${player.seat}`, nickname: player.nickname, colors: player.colors })),
     });
@@ -88,15 +92,16 @@ const Battle = ({ store, begin, worldArt, onExit, onResult }: { readonly store: 
   const pose = view.control ?? actor;
   const ground = view.mask && pose ? tiltOf(view.mask, pose) : 0;
   return <main className="kp-root" onContextMenu={(e) => e.preventDefault()} onPointerDown={() => unlockAudio()}>
-    {worldArt ? <BattleOverlay clock={<Timer dial deadlineAt={view.deadlineAt} clockOffset={0} myTurn={enabled} />} onMenu={() => { input.cancel(); setMenu(true); }} /> : <header className="kp-topbar">
+    <YourTurn turnKey={String(view.turnNumber)} active={enabled} />
+    {worldArt ? <BattleOverlay clock={<Timer dial deadlineAt={revealing ? null : view.deadlineAt} clockOffset={0} myTurn={enabled} />} onMenu={() => { input.cancel(); setMenu(true); }} /> : <header className="kp-topbar">
       <div className="kp-brand">ARTILLERY <span>{t("プラクティス")}</span></div>
       <div className="kp-turn"><i>{t(teamColorName(view.currentSeat))}</i><strong>{view.phase === "replaying" ? t("弾を見届けよう") : view.phase === "finished" ? t("対戦終了") : t("あなたの番")}</strong><span>{t("次は")} {t(teamColorName(view.currentSeat === 0 ? 1 : 0))}</span></div>
       <div className="kp-wind" aria-label={t("風向き")}><span>{t("風")}</span><div className="kp-wind-window"><b style={{ transform: `translateX(${view.wind.value * 1.5}px) rotate(${view.wind.value * 4}deg)` }}>〰</b></div></div>
-      <div className="kp-clock"><Timer deadlineAt={view.deadlineAt} clockOffset={0} myTurn={enabled} /></div>
+      <div className="kp-clock"><Timer deadlineAt={revealing ? null : view.deadlineAt} clockOffset={0} myTurn={enabled} /></div>
       <button ref={menuButton} aria-label={t("設定を開く")} onClick={() => { input.cancel(); setMenu(true); }}>{t("設定")}</button>
     </header>}
     {ready ? <PrototypeCanvas onOpeningComplete={begin} worldArt={worldArt ?? false} store={store} rig={rig} layout={layout} handlers={input.world} blocked={menu || confirmLeave || portrait || input.gauge.charging} followShot={true} onReady={setSceneReady} /> : <div style={{ height: layout.mapHeight }}>{t("フィールドを準備しています…")}</div>}
-    {worldArt ? <BattleConsole player={hudPlayers[view.currentSeat]} steps={view.control?.stepsLeft ?? 0} tilt={ground} elevation={view.control?.elevation ?? view.lastElevation} facing={pose?.facing ?? 1} power={input.gauge.value} loadout={actor?.loadout} slot={slot} disabled={!enabled || confirmLeave || menu || input.gauge.charging} selectSlot={store.selectSlot}>
+    {worldArt ? <BattleConsole delay={view.delay ? { onOpen: input.cancel, state: view.delay, playerId: String(view.currentSeat), acting: view.phase === "acting", players: (view.players ?? []).map(p => ({ id: String(p.seat), name: p.nickname, colors: p.colors })) } : undefined} player={hudPlayers[view.currentSeat]} steps={view.control?.stepsLeft ?? 0} tilt={ground} elevation={view.control?.elevation ?? view.lastElevation} facing={pose?.facing ?? 1} power={input.gauge.value} loadout={actor?.loadout} slot={slot} disabled={!enabled || confirmLeave || menu || input.gauge.charging} selectSlot={store.selectSlot}>
       {touch && <BattleTouchControls disabled={!enabled || confirmLeave || menu} button={input.button} />}
     </BattleConsole> : <footer className="kp-controls">
       <div className="kp-control-group"><span>{t("移動")} <small>{view.control?.stepsLeft ?? 0}</small></span><div><button aria-label={t("左へ移動")} disabled={!enabled || confirmLeave || menu} {...input.button("left")}>←</button><button aria-label={t("右へ移動")} disabled={!enabled || confirmLeave || menu} {...input.button("right")}>→</button></div></div>
@@ -107,7 +112,7 @@ const Battle = ({ store, begin, worldArt, onExit, onResult }: { readonly store: 
     </footer>}
     {confirmLeave && onExit && <LeaveBattleDialog online={false} playing={view.phase !== "finished"} close={() => setConfirmLeave(false)} leave={onExit} />}
     <dialog onClick={event => closeOnBackdrop(event, () => setMenu(false))} ref={dialog} className="kp-dialog" onCancel={(e) => { e.preventDefault(); setMenu(false); }}>
-      {menu && view.phase !== "finished" && <BattleMenuStatus activeTurn={enabled}>{view.phase === "acting" ? <Timer deadlineAt={view.deadlineAt} clockOffset={0} myTurn={false} /> : "—"}</BattleMenuStatus>}
+      {menu && view.phase !== "finished" && <BattleMenuStatus activeTurn={enabled}>{view.phase === "acting" ? <Timer deadlineAt={revealing ? null : view.deadlineAt} clockOffset={0} myTurn={false} /> : "—"}</BattleMenuStatus>}
       <h2>{t("ひと息つこう")}</h2>
       <AudioControls />
       {import.meta.env.DEV && new URLSearchParams(location.search).get("debug") === "1" && <CameraSettingsPanel rig={rig} />}

@@ -1,3 +1,4 @@
+import { damageSummary } from "./damageSummary";
 import { weaponSound } from "@/app/weaponSounds";
 import { shotFlashes } from "./muzzlePose";
 import { shotRecoil } from "./shotRecoil";
@@ -10,7 +11,6 @@ import {
   CARVE_AT_MS,
   damageLabelText,
   damageSounds,
-  damageTier,
   debrisAt,
   flashMsOf,
   hpBarAt,
@@ -34,6 +34,7 @@ import type { TankPose } from "./tankView";
 export type ReplayCallbacks = {
   readonly sound: (name: SoundName) => void;
   readonly done: () => void;
+  readonly roundEnd?: boolean;
   /** 利用者が動きを減らす設定にしている。画面揺れを出さない */
   readonly reduceMotion: boolean;
 };
@@ -70,6 +71,7 @@ type Run = {
   /** 弾道ごとの発射の遅れ */
   readonly launchAt: readonly number[];
   readonly impacts: readonly ImpactRun[];
+  summaryAt: number | null;
   phase: Phase;
   elapsed: number;
   phaseStart: number;
@@ -217,7 +219,7 @@ const carveImpact = (run: Run, ir: ImpactRun): void => {
     const shown = prev ? hpBarAt(run.elapsed - prev.at, prev.before, prev.after).hp : hpBefore[seat];
     run.drains[seat] = { before: shown, after: run.hp[seat], at: run.elapsed };
     run.flashUntil[seat] = Math.max(run.flashUntil[seat], run.elapsed + flashMsOf(damage));
-    run.renderer.showDamage(seat, damageLabelText(damage), shooterColor, damageTier(damage) === 3);
+    run.renderer.showDamage(seat, damageLabelText(damage), shooterColor, damage >= 50);
   }
   if (impact.damage[0] > 0 || impact.damage[1] > 0) run.shake = { at: run.elapsed, damage: impact.damage };
   for (const name of damageSounds(impact.damage, hpBefore, run.hp, shooter, run.mySeat)) run.cb.sound(name);
@@ -249,7 +251,7 @@ const updateHits = (run: Run): void => {
 
 /** すべての弾道が終わり、すべての着弾の演出と外れの印が消えたか */
 const shotDone = (run: Run): boolean => {
-  const impactsDone = run.impacts.every((ir) => run.elapsed - ir.at >= IMPACT_TOTAL_MS);
+  const impactsDone = run.impacts.every((ir) => run.elapsed - ir.at >= (run.cb.roundEnd ? CARVE_AT_MS + 100 : IMPACT_TOTAL_MS));
   const pathsDone = run.job.paths.every((path, p) => {
     const flightMs = (run.launchAt[p] ?? 0) + impactTimeMs(path.impactAt.length, [...path.impactAt, path.points.length - 1]);
     return run.elapsed >= flightMs + (path.impactAt.length === 0 ? MISS_MS : 0);
@@ -261,7 +263,15 @@ const stepShot = (run: Run): void => {
   for (let p = 0; p < run.job.paths.length; p++) updateBullet(run, p);
   for (const ir of run.impacts) updateImpact(run, ir);
   updateHits(run);
-  if (shotDone(run)) enterFall(run);
+  if (run.summaryAt === null && run.impacts.every(ir => ir.carved) && shotDone(run)) {
+    run.summaryAt = run.elapsed;
+    for (const seat of [0, 1] as const) {
+      const summary = damageSummary(run.impacts.map(ir => ir.impact.damage[seat]));
+      if (summary.hits > 1) run.renderer.showDamage(seat, String(summary.total), "green", summary.big, true);
+    }
+  }
+  const hit = run.impacts.some(ir => ir.impact.damage.some(amount => amount > 0));
+  if (run.summaryAt !== null && run.elapsed - run.summaryAt >= (hit ? 1000 : 0)) enterFall(run);
 };
 
 const stepFall = (run: Run): void => {
@@ -301,6 +311,7 @@ export const playReplay = (
     falls: computeFalls(job),
     launchAt,
     impacts,
+    summaryAt: null,
     phase: "shot",
     elapsed: 0,
     phaseStart: 0,

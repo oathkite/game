@@ -16,7 +16,8 @@ const projectileAt = (path: Replay["paths"][number], tick: number) => {
 export const presentLabReplay = (frame: LabFrame, now: number) => {
   const replay = frame.replay;
   if (frame.phase !== "replaying" || !replay || now >= replay.endsAt) return { players: frame.players, terrainOps: frame.terrainOps, bullets: [], effects: [], fallingIds: [] as string[], recoil: 0, shotFlashes: [] as readonly ShotFlash[] };
-  const settleAt = replay.endsAt - 300;
+  const damageReadMs = replay.impacts.some(i => i.damage.some(d => d.amount > 0)) ? 1300 : 0;
+  const settleAt = replay.endsAt - 300 - damageReadMs;
   const t = Math.max(0, Math.min(1, (now - replay.startsAt) / Math.max(1, settleAt - replay.startsAt)));
   const tick = t * replay.ticks;
   const impacts = replay.impacts.filter(i => i.tick <= tick);
@@ -32,7 +33,7 @@ export const presentLabReplay = (frame: LabFrame, now: number) => {
     const age = now - at, op = frame.terrainOps[replay.terrainOpsBefore + index];
     return age >= 0 && age < 300 && op ? [{ ...op, frame: Math.min(3, Math.floor(age / 75)), hitIds: age < 150 ? impact.damage.filter(damage => damage.amount > 0).map(damage => damage.playerId) : [] }] : [];
   });
-  const fallingIds = now >= settleAt ? replay.playersBefore.filter(before => (frame.players.find(p => p.playerId === before.playerId)?.y ?? before.y) > before.y).map(p => p.playerId) : [];
+  const fallingIds = now >= settleAt && now < settleAt + 300 ? replay.playersBefore.filter(before => (frame.players.find(p => p.playerId === before.playerId)?.y ?? before.y) > before.y).map(p => p.playerId) : [];
   const launches = replay.paths.map(path => replay.startsAt + path.launchTick / Math.max(1, replay.ticks) * (settleAt - replay.startsAt));
   return { players, effects, fallingIds, shotFlashes: shotFlashes(now, launches), recoil: shotRecoil(now, launches), bullets: now >= settleAt ? [] : replay.paths.flatMap(path => projectileAt(path, tick)),
     terrainOps: frame.terrainOps.slice(0, replay.terrainOpsBefore + impacts.length) };

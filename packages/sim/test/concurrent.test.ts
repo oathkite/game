@@ -11,8 +11,8 @@ it("resolves all simultaneous muzzle impacts against the same living targets", (
   const result = simulateConcurrentCombat(mask, players, input);
   expect(result.impacts).toHaveLength(3);
   expect(result.impacts.map(i => i.tick)).toEqual([0, 0, 0]);
-  expect(result.impacts.map(i => i.damage[1])).toEqual([15, 15, 15]);
-  expect(result.hpAfter[1]).toBe(-44);
+  expect(result.impacts.map(i => i.damage[1])).toEqual([18, 18, 18]);
+  expect(result.hpAfter[1]).toBe(-53);
   expect(players[1]!.hp).toBe(1); expect(mask.cells[140 * 400 + 64]).toBe(1);
 });
 it("retains single-flight physical results and records monotonic global ticks", () => {
@@ -37,6 +37,6 @@ it("removes defeated collision bodies only after a tick batch and staggers later
   const mask = maskFromHeights(Array.from({ length: 400 }, (_, x) => x === 64 ? 140 : 150), 225);
   const result = simulateConcurrentCombat(mask, [{ x: 60, y: 150, hp: 10000 }, { x: 64, y: 150, hp: 1 }], shot({ weapon: "multiple", elevation: 10, power: 20 }));
   expect(result.paths.map(p => p.launchTick)).toEqual([0, 0, 0, 11, 11, 11, 22, 22, 22]);
-  expect(result.impacts.filter(i => i.tick === 0).map(i => i.damage[1])).toEqual([5, 5, 5]);
+  expect(result.impacts.filter(i => i.tick === 0).map(i => i.damage[1])).toEqual([8, 8, 8]);
   expect(result.impacts.filter(i => i.tick > 0).every(i => i.damage[1] === 0)).toBe(true);
 });

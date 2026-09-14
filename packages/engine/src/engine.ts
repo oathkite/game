@@ -32,7 +32,7 @@ const onFire = (state: EngineState, event: Extract<EngineEvent, { type: "fire" }
   const { match } = state;
   if (match.phase !== "acting" || event.seat !== match.currentSeat || state.fired) return noop(state);
   // 手番側が切断中（制限時間を止めている）の射撃は届かないはずだが、届いても無視する
-  if (match.deadlineAt === null) return noop(state);
+  if (match.deadlineAt === null || now < (state.delay?.revealUntil ?? 0)) return noop(state);
   if (now > match.deadlineAt + state.config.graceMs) return noop(state);
   return resolveFire(state, event.seat, event.fire, now);
 };
@@ -126,6 +126,8 @@ const onMoveRingOut = (state: EngineState, seat: Seat, x: number): Step => {
 
 export const handle = (state: EngineState, event: EngineEvent, now: number): Step => {
   switch (event.type) {
+    case "practiceMoveCost":
+      return noop(state.config.delayEnabled && state.match.phase === "acting" && now >= (state.delay?.revealUntil ?? 0) ? { ...state, movedSteps: Math.max(state.movedSteps ?? 0, Math.min(30, event.steps)) } : state);
     case "moveRingOut":
       return onMoveRingOut(state,event.seat,event.x);
     case "loaded":

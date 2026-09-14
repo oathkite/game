@@ -29,7 +29,7 @@ export type Renderer = {
   /** 画面全体を整数セルだけずらす。着弾の揺れに使う */
   readonly setShake: (offset: Offset) => void;
   /** 機体の上にダメージ数字を出す。数字は自分で浮いて消える */
-  readonly showDamage: (seat: number, text: string, color: TankColors["primary"], big: boolean) => void;
+  readonly showDamage: (seat: number, text: string, color: TankColors["primary"], big: boolean, summary?: boolean) => void;
   readonly destroy: () => void;
 };
 
@@ -152,12 +152,12 @@ export const createRenderer = async (init: RendererInit): Promise<Renderer> => {
     setShake: (offset) => {
       app.stage.position.set(offset.dx * cell, offset.dy * cell);
     },
-    showDamage: (seat, text, color, big) => {
+    showDamage: (seat, text, color, big, summary = false) => {
       const pose = poses[seat];
       if (!pose) return;
       // 名前の文字の上端から隙間を空けて出す。名前は px で描かれるので px で積む
       const y = tanks[seat]!.label.getBounds().minY - labels.getGlobalPosition().y - DAMAGE_LABEL_GAP_PX;
-      const stop = spawnDamageLabel({ parent: labels, ticker: app.ticker, text, color, big, x: (pose.x + 0.5) * cell, y, onEnd: () => labelStops.delete(stop) });
+      const stop = spawnDamageLabel({ parent: labels, ticker: app.ticker, text, color, big, summary, x: (pose.x + 0.5) * cell, y, onEnd: () => labelStops.delete(stop) });
       labelStops.add(stop);
     },
     destroy: () => {

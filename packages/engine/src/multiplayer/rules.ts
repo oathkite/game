@@ -1,8 +1,10 @@
+import { nextDelayTurn, type DelayState } from "@game/protocol";
 // v2のルール基盤。物理・通信から独立し、確定した脱落をまとめて適用する。
 export type PlayerId = string;
 export type TeamId = string;
 export type RosterMember = { readonly playerId: PlayerId; readonly teamId: TeamId };
 export type RosterState = {
+  readonly delay?: DelayState;
   readonly members: readonly RosterMember[];
   readonly turnRing: readonly PlayerId[];
   readonly eliminated: readonly PlayerId[];
@@ -66,6 +68,11 @@ export const eliminatePlayers = (state: RosterState, playerIds: readonly PlayerI
 
 export const nextTurn = (state: RosterState): RosterState => {
   if (outcome(state).type !== "ongoing") return state;
+  if (state.delay) {
+    const delay = nextDelayTurn(state.delay, state.eliminated);
+    return { ...state, delay, turnRing: delay.order, cursor: 0,
+      round: Math.floor(state.turnId / state.members.length) + 1, turnId: state.turnId + 1 };
+  }
   for (let offset = 1; offset <= state.turnRing.length; offset++) {
     const index = state.cursor + offset;
     const cursor = index % state.turnRing.length;
@@ -79,6 +86,6 @@ export const nextTurn = (state: RosterState): RosterState => {
 /** Next distinct participants; the current actor is not repeated in short matches. */
 export const upcomingPlayers = (state: RosterState): readonly PlayerId[] => {
   if (outcome(state).type !== "ongoing") return [];
-  return [...state.turnRing.slice(state.cursor + 1), ...state.turnRing.slice(0, state.cursor)]
+  return [...state.turnRing.slice(state.cursor + 1), ...(state.delay ? [] : state.turnRing.slice(0, state.cursor))]
     .filter(id => !state.eliminated.includes(id)).slice(0, 3);
 };

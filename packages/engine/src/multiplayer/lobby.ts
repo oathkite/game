@@ -1,7 +1,7 @@
 import { CLIENT_BUILD } from "@game/protocol/build";
 import type { Loadout, TankColors } from "@game/protocol";
 import { lobbyCommandSchema, lobbyProfileSchema } from "@game/protocol/v2";
-import { multiplayerMap, buildMapSpec, type MapSpec } from "@game/maps";
+import { MULTIPLAYER_MAPS, multiplayerMap, buildMapSpec, type MapSpec } from "@game/maps";
 
 export const RULE_SET_VERSION = CLIENT_BUILD.rules;
 export type LobbyProfile = { readonly nickname: string; readonly loadout: Loadout; readonly colors?: TankColors | undefined };
@@ -10,7 +10,7 @@ export type LobbyMember = LobbyProfile & {
 };
 export type LobbyState = {
   readonly roomId: string; readonly ownerId: string | null; readonly revision: number;
-  readonly phase: "waiting" | "started"; readonly members: readonly LobbyMember[]; readonly map: MapSpec;
+  readonly randomMap?: boolean; readonly phase: "waiting" | "started"; readonly members: readonly LobbyMember[]; readonly map: MapSpec;
 };
 export type PreparedMatch = {
   readonly roomId: string; readonly revision: number; readonly ruleSetVersion: typeof RULE_SET_VERSION;
@@ -61,10 +61,11 @@ export const editLobby = (room: LobbyState, authenticatedId: string, raw: unknow
   if (command.revision !== room.revision) return reject("stale-revision");
   if (command.type === "room.map") {
     if (room.ownerId !== authenticatedId) return reject("not-owner");
+    if (command.mapId === "random") return room.randomMap ? reject("unchanged") : { room: { ...changed(room, room.members), randomMap: true }, reason: "accepted" };
     const map = multiplayerMap(command.mapId);
     if (!map) return reject("unsupported-map");
-    if (map.id === room.map.id && map.version === room.map.version) return reject("unchanged");
-    return { room: { ...changed(room, room.members), map: copyMap(map) }, reason: "accepted" };
+    if (!room.randomMap && map.id === room.map.id && map.version === room.map.version) return reject("unchanged");
+    return { room: { ...changed(room, room.members), map: copyMap(map), randomMap: false }, reason: "accepted" };
   }
   if (command.type === "room.ready") return { room: { ...room, members: room.members.map(p => p === actor ? { ...p, ready: command.ready } : p) }, reason: "accepted" };
   if (command.type === "room.profile") return { room: { ...room, members: room.members.map(p => p === actor ? { ...p, nickname: command.nickname } : p) }, reason: "accepted" };
@@ -88,8 +89,9 @@ export const startLobby = (room: LobbyState, authenticatedId: string, revision: 
   if (room.members.some(p => p.teamId === null)) return reject("unassigned");
   if (new Set(room.members.map(p => p.teamId)).size < 2) return reject("not-enough-teams");
   if (room.members.some(p => !p.ready && (requireOwnerReady || p.playerId !== room.ownerId))) return reject("not-ready");
-  try { buildMapSpec(room.map, room.members.length); } catch { return reject("unsupported-map"); }
-  return { room: { ...room, phase: "started" }, reason: "started", setup: {
-    roomId: room.roomId, revision, ruleSetVersion: RULE_SET_VERSION, map: copyMap(room.map),
+  const map = room.randomMap ? MULTIPLAYER_MAPS[Math.floor(Math.random() * MULTIPLAYER_MAPS.length)]! : room.map;
+  try { buildMapSpec(map, room.members.length); } catch { return reject("unsupported-map"); }
+  return { room: { ...room, map: copyMap(map), phase: "started" }, reason: "started", setup: {
+    roomId: room.roomId, revision, ruleSetVersion: RULE_SET_VERSION, map: copyMap(map),
     members: room.members.map(p => ({ playerId: p.playerId, teamId: p.teamId!, nickname: p.nickname, ...(p.colors ? { colors: { ...p.colors } } : {}), loadout: [...p.loadout] })) } };
 };

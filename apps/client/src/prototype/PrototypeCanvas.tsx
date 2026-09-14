@@ -68,11 +68,11 @@ export const PrototypeCanvas = ({ store, rig, layout, handlers, blocked, followS
         const v = store.getView();
         const current = latest.current;
         const moveX = v.control?.x;
-        if (!opening && v.phase === "acting" && moveX !== undefined && previousMoveX !== undefined && moveX !== previousMoveX) rig.moveActor(actorPoint(v), reduced.matches);
+        if (!opening && Date.now() >= (v.delay?.revealUntil ?? 0) && v.phase === "acting" && moveX !== undefined && previousMoveX !== undefined && moveX !== previousMoveX) rig.moveActor(actorPoint(v), reduced.matches);
         previousMoveX = moveX;
         if (current.blocked) rig.stop();
         if (previousLayout !== current.layout) { previousLayout = current.layout; r.setLayout(current.layout); rig.resize(viewportOf(current.layout), rig.get().bounds); }
-        if (v.turnNumber !== lastTurn) { lastTurn = v.turnNumber; rig.focus(actorPoint(v), "actor", reduced.matches); }
+        if (v.turnNumber !== lastTurn && Date.now() >= (v.delay?.revealUntil ?? 0) - 600) { lastTurn = v.turnNumber; rig.focus(actorPoint(v), "actor", reduced.matches); }
         if (v.replay && replayId !== v.replay.id) {
           stopReplay(); replayId = v.replay.id; activeReplay = true; falls.reset();
           const job = v.replay;
@@ -82,7 +82,7 @@ export const PrototypeCanvas = ({ store, rig, layout, handlers, blocked, followS
             const projectile = r.projectile(color, weapon);
             return { ...projectile, setBullet: (index, x, y, angle) => { projectile.setBullet(index, x, y, angle); if (index === 0 && x !== null) rig.shot({ x, y }); } };
           } };
-          stopReplay = playReplay(replayRenderer, job, elevations, v.mySeat, { sound: playSound, reduceMotion: reduced.matches, done: () => { activeReplay = false; store.completeReplay(job.id); } });
+          stopReplay = playReplay(replayRenderer, job, elevations, v.mySeat, { sound: playSound, reduceMotion: reduced.matches, roundEnd: Boolean(v.delay), done: () => { activeReplay = false; store.completeReplay(job.id); } });
         }
         if (!v.replay && activeReplay) { stopReplay(); activeReplay = false; }
         if (!activeReplay) {

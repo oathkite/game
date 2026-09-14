@@ -54,6 +54,7 @@ export const createMatchStore = (connection: Connection, initialOptions: ReduceO
     const next = applyStep(view, dir);
     if (next !== view) {
       set(next);
+      if (next.control) connection.reportMoveCost?.(30 - next.control.stepsLeft);
       if (next.control && next.mask && next.control.y >= next.mask.height) connection.reportMoveRingOut?.(next.control.x);
     }
   };

@@ -70,6 +70,7 @@ const join = (state: RoomState, connectionId: string, message: Extract<Input, { 
   if (state.battle) return reply(state, "locked");
   if (state.sessions.filter(s => s.role === "player").length >= (state.mode === "1v1" ? 2 : state.mode === "2v2" ? 4 : 8)) return reply(state, "full");
   let lobby = state.lobby ? joinLobby(state.lobby, id.playerId, message.profile) : createLobby(state.roomId, id.playerId, message.profile, MULTIPLAYER_MAPS.find(map => map.id === state.initialMapId) ?? MULTIPLAYER_MAPS[0]!);
+  if (!state.lobby && state.initialMapId === "random") lobby = { ...lobby, randomMap: true };
   if (state.mode !== "custom") {
     const count = (team: string) => lobby.members.filter(p => p.teamId === team).length;
     lobby = editLobby(lobby, id.playerId, { version: 2, type: "room.assignTeam", roomId: state.roomId, revision: lobby.revision,

@@ -18,7 +18,7 @@ export const CreateRoomDialog = ({ region, busy, close, create }: {
     <form className="room-create-form" onSubmit={event => { event.preventDefault(); create({ name, password, mapId, region }); }}>
       <label>{t("部屋名（任意）")}<input maxLength={32} value={name} onChange={event => setName(event.target.value)} /></label>
       <label>{t("パスワード（任意）")}<input type="password" autoComplete="new-password" maxLength={64} value={password} onChange={event => setPassword(event.target.value)} /></label>
-      <label>{t("マップ")}<select value={mapId} onChange={event => setMapId(event.target.value)}>{MULTIPLAYER_MAPS.map(map => <option key={map.id} value={map.id}>{t(MULTIPLAYER_MAP_LABELS[map.id] ?? map.id)}</option>)}</select></label>
+      <label>{t("マップ")}<select value={mapId} onChange={event => setMapId(event.target.value)}><option value="random">{t("ランダム")}</option>{MULTIPLAYER_MAPS.map(map => <option key={map.id} value={map.id}>{t(MULTIPLAYER_MAP_LABELS[map.id] ?? map.id)}</option>)}</select></label>
       <PixelButton className="room-create" type="submit" disabled={busy}>{t("部屋を作る")}</PixelButton>
     </form>
   </dialog>;

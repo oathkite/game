@@ -1,3 +1,4 @@
+import type { DelayState } from "./delay.js";
 import type { MatchResult, Seat, ShotResult, TankColors, Wind } from "./match.js";
 import type { Loadout } from "./weapons.js";
 import type {
@@ -46,8 +47,8 @@ export type ServerMessage =
       readonly firstSeat: Seat;
       readonly turnLimit: number;
     }
-  | { readonly type: "turn.start"; readonly turnNumber: number; readonly seat: Seat; readonly wind: Wind; readonly deadlineAt: number }
-  | { readonly type: "turn.result"; readonly turnNumber: number; readonly shot: ShotResult; readonly finished: MatchResult | null }
+  | { readonly type: "turn.start"; readonly delay?: DelayState; readonly turnNumber: number; readonly seat: Seat; readonly wind: Wind; readonly deadlineAt: number }
+  | { readonly type: "turn.result"; readonly delay?: DelayState; readonly turnNumber: number; readonly shot: ShotResult; readonly finished: MatchResult | null }
   | { readonly type: "turn.pass"; readonly turnNumber: number; readonly reason: PassReason }
   | { readonly type: "match.finished"; readonly result: MatchResult }
   | { readonly type: "conn.opponentDisconnected"; readonly deadlineAt: number }

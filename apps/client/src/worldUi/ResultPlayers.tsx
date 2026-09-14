@@ -1,10 +1,11 @@
+import { DotIcon } from "./DotIcon";
 import type { LabFrame } from "@game/protocol/v2-lab";
 import { useLanguage } from "@/i18n/locale";
 import { teamColor, teamColorName } from "./teamColors";
 import "./resultPlayers.css";
 import { TankPortrait } from "./TankPortrait";
 
-export type ResultPresentation = { readonly players: readonly Pick<LabFrame["players"][number], "playerId" | "teamId" | "nickname" | "colors">[]; readonly result: LabFrame["result"] };
+export type ResultPresentation = { readonly ownId?: string; readonly players: readonly Pick<LabFrame["players"][number], "playerId" | "teamId" | "nickname" | "colors">[]; readonly result: LabFrame["result"] };
 
 export const ResultPlayers = ({ players, result, stats }: ResultPresentation & { readonly stats?: LabFrame["stats"] }) => {
   const { t } = useLanguage();
@@ -20,7 +21,7 @@ export const ResultPlayers = ({ players, result, stats }: ResultPresentation & {
       return <tr key={player.playerId} data-reaction={reaction}>
         <th scope="row"><div className="result-player-name"><TankPortrait colors={player.colors} label={`${name}：${label}`} /><span>{name}</span></div></th>
         <td><span className="result-team" role="img" aria-label={t(teamColorName(team))} title={t(teamColorName(team))} style={{ backgroundColor: teamColor(team) }} /></td>
-        <td className="result-outcome">{label}</td>
+        <td className="result-outcome"><span className="result-outcome-label">{reaction === "win" && <DotIcon name="crown" />}{label}</span></td>
         {stats && <><td>{score?.shots ?? "—"}</td><td>{score?.enemyDamage ?? "—"}</td><td>{score?.friendlyDamage ?? "—"}</td><td>{score?.selfDamage ?? "—"}</td></>}
       </tr>;
     })}</tbody>

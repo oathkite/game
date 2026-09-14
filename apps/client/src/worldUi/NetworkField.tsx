@@ -1,3 +1,4 @@
+import { damageSummary } from "@/game/damageSummary";
 import { useWindowEdgePan } from "@/prototype/useWindowEdgePan";
 import { createTankView } from "@/game/tankView";
 import { openingPose } from "./openingTour";
@@ -44,6 +45,7 @@ export const NetworkField = (props: Props) => {
       if (disposed) { renderer.destroy(); return; }
       const r = renderer; let bullet = r.projectile("yellow", "cannon");
       let previousMoveX: number | undefined;
+      const damageEvents = new Set<string>();
       stop = r.onFrame(dt => {
         const { frame, players, presentation, elevation, ownId } = latest.current;
         const size = layout(), key = `${size.mapWidth}/${size.mapHeight}/${frame.map.width}/${frame.map.height}`;
@@ -51,9 +53,9 @@ export const NetworkField = (props: Props) => {
         const nextTerrain = `${frame.matchId}/${presentation.terrainOps.length}`;
         if (nextTerrain !== terrainKey) { terrainKey = nextTerrain; mask = applyOps(baseTerrain(frame), presentation.terrainOps); r.setTerrain(mask, undefined, presentation.terrainOps); }
         const nextTurn = `${frame.matchId}/${frame.turnId}`;
-        if (nextTurn !== turnKey) { if (latest.current.followTurns !== false) focus(turnKey === ""); turnKey = nextTurn; }
+        if (nextTurn !== turnKey && latest.current.serverNow >= (frame.delay?.revealUntil ?? 0) - 600) { if (latest.current.followTurns !== false) focus(turnKey === ""); turnKey = nextTurn; }
         const own = players.find(p => p.playerId === ownId);
-        if (!openingActive() && frame.phase === "acting" && frame.actorId === ownId && own && previousMoveX !== undefined && own.x !== previousMoveX) rig.moveActor({ x: own.x, y: own.y - 6 }, matchMedia("(prefers-reduced-motion: reduce)").matches);
+        if (!openingActive() && latest.current.serverNow >= (frame.delay?.revealUntil ?? 0) && frame.phase === "acting" && frame.actorId === ownId && own && previousMoveX !== undefined && own.x !== previousMoveX) rig.moveActor({ x: own.x, y: own.y - 6 }, matchMedia("(prefers-reduced-motion: reduce)").matches);
         previousMoveX = own?.x;
         facing.set(frame.actorId, frame.movement.facing);
         const shot = frame.phase === "replaying" ? frame.replay?.shooter : null;
@@ -71,6 +73,29 @@ export const NetworkField = (props: Props) => {
           elevation: p.playerId === shot?.playerId ? shot.elevation : p.playerId === ownId ? elevation : 45, hp: p.eliminated ? 0 : p.hp, visible: p.y < frame.map.height, falling: p.falling || presentation.fallingIds.includes(p.playerId), shotFlashes: p.playerId === shot?.playerId ? presentation.shotFlashes : [], recoil: p.playerId === shot?.playerId ? presentation.recoil : 0, aiming: frame.phase === "acting" && p.playerId === ownId && p.playerId === frame.actorId, flash: presentation.effects.some(effect => effect.hitIds.includes(p.playerId)) }));
         const actor = shown.find(p => p.playerId === frame.actorId); if (actor && frame.phase === "acting") rig.actor({ x: actor.x, y: actor.y - 6 });
         if (frame.replay && replayKey !== frame.replay.startsAt) { replayKey = frame.replay.startsAt; bullet = r.projectile("yellow", frame.replay.shooter.weapon);  const p = presentation.bullets[0]; if (p) rig.focus(p, "shot"); }
+        const replay = frame.phase === "replaying" ? frame.replay : null;
+        if (replay) {
+          const hit = replay.impacts.some(i => i.damage.some(d => d.amount > 0));
+          const flightMs = Math.max(1, replay.endsAt - replay.startsAt - 300 - (hit ? 1300 : 0));
+          const elapsed = latest.current.serverNow - replay.startsAt;
+          replay.impacts.forEach((impact, index) => {
+            const event = `${replay.startsAt}/${index}`;
+            if (elapsed < impact.tick / Math.max(1, replay.ticks) * flightMs || damageEvents.has(event)) return;
+            damageEvents.add(event);
+            impact.damage.forEach(d => {
+              const seat = players.findIndex(p => p.playerId === d.playerId);
+              if (seat >= 0 && d.amount > 0) r.showDamage(seat, String(d.amount), "green", d.amount >= 50);
+            });
+          });
+          const event = `${replay.startsAt}/total`;
+          if (elapsed >= flightMs + 300 && !damageEvents.has(event)) {
+            damageEvents.add(event);
+            players.forEach((p, seat) => {
+              const summary = damageSummary(replay.impacts.map(i => i.damage.find(d => d.playerId === p.playerId)?.amount ?? 0));
+              if (summary.hits > 1) r.showDamage(seat, String(summary.total), "green", summary.big, true);
+            });
+          }
+        } else damageEvents.clear();
         bullet.clear();
         for (let i = 0; i < 9; i++) { const p = presentation.bullets[i]; bullet.setBullet(i, p?.x ?? null, p?.y ?? 0, p?.angle ?? 0); }
         presentation.effects.forEach((effect, index) => bullet.setBlast(String(index), effect.cx, effect.cy, effect.radius, true, false, matchMedia("(prefers-reduced-motion: reduce)").matches ? 1 : effect.frame));

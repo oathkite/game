@@ -26,3 +26,6 @@
 .world-ui.world-ui .result-header h2 { margin:0; padding:0; background:transparent; color:#33ff66; font-size:clamp(24px,4vw,40px); }
 .world-ui.world-ui .result-header .result-return-timer { margin:0; padding:0; background:transparent; color:#33ff66; white-space:nowrap; text-align:right; font-size:14px; }
 @media(max-width:499px) { .result-header { flex-wrap:wrap; } .result-return-timer { margin-left:auto!important; } }
+
+.result-outcome-label { display:inline-flex; align-items:center; gap:8px; }
+.result-outcome-label .dot-icon { width:16px; height:16px; flex-shrink:0; color:#33ff66; }
