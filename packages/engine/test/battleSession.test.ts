@@ -43,3 +43,21 @@ it("simultaneous disconnect expiries produce a draw, not the first team's victor
   const ended = forfeitInSession(state, state.roster.members.map(p => p.playerId), 62000);
   expect(ended.phase).toBe("finished"); expect(ended.result).toEqual({ type: "draw" });
 });
+
+it("ends after the configured turns per initial participant", () => {
+  let state = { ...start(), turnLimit: 2 };
+  for (let i = 0; i < 15; i++) {
+    state = tickSession(state, state.movement.deadlineAt) as typeof state;
+    expect(state.phase).toBe("acting");
+  }
+  state = tickSession(state, state.movement.deadlineAt) as typeof state;
+  expect(state.phase).toBe("finished");
+  expect(state.result.type).toBe("draw");
+});
+
+it("unlimited turns pass the old cap but retain the time limit", () => {
+  const initial = start();
+  const state = { ...initial, turnLimit: 0, roster: { ...initial.roster, turnId: 96, round: 12 } };
+  expect(tickSession(state, state.movement.deadlineAt).phase).toBe("acting");
+  expect(tickSession(state, state.startedAt + 1200000).phase).toBe("finished");
+});

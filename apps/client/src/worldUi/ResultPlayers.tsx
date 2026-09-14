@@ -3,6 +3,8 @@ import type { LabFrame } from "@game/protocol/v2-lab";
 import { useLanguage } from "@/i18n/locale";
 import { teamColor, teamColorName } from "./teamColors";
 import "./resultPlayers.css";
+import "./lobbyTerminal.css";
+import "./terminalScreens.css";
 import { TankPortrait } from "./TankPortrait";
 
 export type ResultPresentation = { readonly ownId?: string; readonly players: readonly Pick<LabFrame["players"][number], "playerId" | "teamId" | "nickname" | "colors">[]; readonly result: LabFrame["result"] };

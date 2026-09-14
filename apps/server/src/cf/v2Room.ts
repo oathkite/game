@@ -61,7 +61,7 @@ export class RoomObject extends DurableObject<RoomEnv> {
         const stored = await hashRoomPassword(options.password);
         this.ctx.storage.sql.exec("INSERT OR REPLACE INTO room_password VALUES (1, ?, ?)", stored.salt, stored.hash);
       }
-      await runtime.update(state => ({ state: { ...state, name: options.name, passwordProtected: Boolean(options.password), initialMapId: options.mapId }, reason: "configured" }));
+      await runtime.update(state => ({ state: { ...state, name: options.name, passwordProtected: Boolean(options.password), initialMapId: options.mapId, turnLimit: options.turnLimit }, reason: "configured" }));
     }
     await this.ctx.storage.sync();
   }

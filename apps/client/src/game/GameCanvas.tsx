@@ -56,7 +56,7 @@ export const GameCanvas = ({ store, view, layout, swipe }: Props) => {
     if (!ready || !host || !v.mask || !v.players) return;
     let cancelled = false;
     let created: Renderer | null = null;
-    void createRenderer({ host, layout: layoutRef.current, mask: v.mask, players: v.players }).then((r) => {
+    void createRenderer({ mapId: v.mapId, host, layout: layoutRef.current, mask: v.mask, players: v.players }).then((r) => {
       if (cancelled) {
         r.destroy();
         return;

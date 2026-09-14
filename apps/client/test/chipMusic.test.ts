@@ -1,41 +1,31 @@
-import { describe, expect, it } from "vitest";
-import { renderChipTrack, type MusicName } from "../src/app/chipMusic";
-describe("chip music", () => {
-  it.each<MusicName>(["title", "lobby", "battle", "result"])("renders a bounded, non-silent loop with silent joins: %s", name => {
-    const samples = renderChipTrack(name, 8000);
-    let peak = 0, energy = 0;
-    for (const value of samples) { expect(Number.isFinite(value)).toBe(true); peak = Math.max(peak, Math.abs(value)); energy += value * value; }
-    expect(peak).toBeGreaterThan(.03); expect(peak).toBeLessThan(.3);
-    expect(energy / samples.length).toBeGreaterThan(.0001);
-    expect(samples[0]).toBe(0); expect(samples[samples.length - 1]).toBe(0);
-  });
-  it("uses a different score for each scene", () => {
-    const tracks = ["title", "lobby", "battle", "result"].map(name => renderChipTrack(name as MusicName, 8000));
-    for (let i = 1; i < tracks.length; i++) expect(tracks[i]).not.toEqual(tracks[i - 1]);
-  });
-});
-
-it("keeps the current loop playing and stops the previous source on scene changes", async () => {
-  const { createChipMusic } = await import("../src/app/chipMusic");
-  const { vi } = await import("vitest");
-  const sources: Array<{ loop: boolean; start: ReturnType<typeof vi.fn>; stop: ReturnType<typeof vi.fn>; connect: ReturnType<typeof vi.fn> }> = [];
+import { afterEach, expect, it, vi } from 'vitest';
+import { createChipMusic } from '../src/app/chipMusic';
+import { stageMusic } from '../src/app/musicTracks';
+afterEach(() => vi.unstubAllGlobals());
+const setup = () => {
+  const sources: any[] = [];
   const parameter = () => ({ value: 1, setValueAtTime: vi.fn(), linearRampToValueAtTime: vi.fn(), cancelScheduledValues: vi.fn() });
-  const ctx = {
-    sampleRate: 8000, currentTime: 2,
-    createBuffer: () => ({ copyToChannel: vi.fn() }),
-    createGain: () => ({ gain: parameter(), connect: vi.fn(), disconnect: vi.fn() }),
-    createBufferSource: () => {
-      const source = { loop: false, start: vi.fn(), stop: vi.fn(), connect: vi.fn().mockImplementation(node => node), disconnect: vi.fn() };
-      sources.push(source); return source;
-    },
-  };
-  const music = createChipMusic(ctx as unknown as AudioContext, {} as AudioNode);
-  music.setMusic("battle"); music.setMusic("battle");
-  expect(sources).toHaveLength(1); expect(sources[0]!.loop).toBe(true);
-  expect(sources[0]!.start).toHaveBeenCalledTimes(1);
-  music.setMusic("result");
-  expect(sources[0]!.stop).toHaveBeenCalledWith(2.09);
-  expect(sources[1]!.loop).toBe(true);
-  music.setMusic(null);
-  expect(sources[1]!.stop).toHaveBeenCalledWith(2.09);
+  const ctx = { currentTime: 2, decodeAudioData: vi.fn(async () => ({})), createGain: () => ({ gain: parameter(), connect: vi.fn(), disconnect: vi.fn() }),
+    createBufferSource: () => { const source = { loop: false, start: vi.fn(), stop: vi.fn(), connect: vi.fn(node => node), disconnect: vi.fn() }; sources.push(source); return source; } };
+  vi.stubGlobal('fetch', vi.fn(async () => ({ ok: true, arrayBuffer: async () => new ArrayBuffer(0) })));
+  return { sources, music: createChipMusic(ctx as unknown as AudioContext, {} as AudioNode) };
+};
+it('preserves the current loop and crossfades scene changes', async () => {
+  const { sources, music } = setup();
+  await music.setMusic('ridgeline'); await music.setMusic('ridgeline');
+  expect(sources).toHaveLength(1); expect(sources[0].loop).toBe(true);
+  await music.setMusic('result');
+  expect(sources[0].stop).toHaveBeenCalledWith(2.46);
+  await music.setMusic(null); expect(sources[1].stop).toHaveBeenCalledWith(2.46);
+});
+it('does not start a stale download after a newer scene starts', async () => {
+  const { sources, music } = setup();
+  let resolve!: (value: Response) => void;
+  vi.mocked(fetch).mockImplementationOnce(() => new Promise(r => { resolve = r; }) as Promise<Response>);
+  const old = music.setMusic('lobby'); await music.setMusic('room');
+  resolve({ ok: true, arrayBuffer: async () => new ArrayBuffer(0) } as Response); await old;
+  expect(sources).toHaveLength(1);
+});
+it('maps every current stage and personal result to its own track', () => {
+  expect(['moss-valley','rock-arch','reed-hills','sky-islands'].map(stageMusic)).toEqual(['ridgeline','stone-bridge','terraces','sky-islands']);
 });

@@ -6,7 +6,7 @@ import { createLobby, joinLobby, leaveLobby, setLobbyConnection, editLobby, star
 import { roomInputSchema, type RoomMode, type RoomRegion } from "@game/protocol/v2-rooms";
 
 export type RoomSession = { readonly build: ClientBuild; readonly role: "player" | "spectator"; readonly token: string; readonly playerId: string; readonly connectionId: string | null; readonly disconnectedAt: number; readonly generation: number };
-export type RoomState = { readonly name?: string; readonly passwordProtected?: boolean; readonly initialMapId?: string; readonly returnReadyIds?: readonly string[]; readonly reports: readonly PlayerReport[]; readonly mode: RoomMode; readonly region: RoomRegion; readonly roomId: string; readonly lobby: LobbyState | null; readonly battle: BattleSession | null; readonly sessions: readonly RoomSession[] };
+export type RoomState = { readonly name?: string; readonly passwordProtected?: boolean; readonly initialMapId?: string; readonly turnLimit?: number; readonly returnReadyIds?: readonly string[]; readonly reports: readonly PlayerReport[]; readonly mode: RoomMode; readonly region: RoomRegion; readonly roomId: string; readonly lobby: LobbyState | null; readonly battle: BattleSession | null; readonly sessions: readonly RoomSession[] };
 export type Identity = { readonly playerId: string; readonly token: string; readonly matchId: string; readonly seed: number };
 type Input = ReturnType<typeof roomInputSchema.parse>;
 export type RoomReply = { readonly state: RoomState; readonly reason: string; readonly welcome?: RoomSession; readonly ack?: boolean; readonly pong?: number; readonly reported?: "saved" | "duplicate"; readonly close?: boolean };
@@ -70,9 +70,10 @@ const join = (state: RoomState, connectionId: string, message: Extract<Input, { 
   if (state.battle) return reply(state, "locked");
   if (state.sessions.filter(s => s.role === "player").length >= (state.mode === "1v1" ? 2 : state.mode === "2v2" ? 4 : 8)) return reply(state, "full");
   let lobby = state.lobby ? joinLobby(state.lobby, id.playerId, message.profile) : createLobby(state.roomId, id.playerId, message.profile, MULTIPLAYER_MAPS.find(map => map.id === state.initialMapId) ?? MULTIPLAYER_MAPS[0]!);
+  if (!state.lobby) lobby = { ...lobby, turnLimit: state.turnLimit ?? 12 };
   if (!state.lobby && state.initialMapId === "random") lobby = { ...lobby, randomMap: true };
   if (state.mode !== "custom") {
-    const count = (team: string) => lobby.members.filter(p => p.teamId === team).length;
+    const count = (team: string) => lobby.members.filter(p => p.playerId !== id.playerId && p.teamId === team).length;
     lobby = editLobby(lobby, id.playerId, { version: 2, type: "room.assignTeam", roomId: state.roomId, revision: lobby.revision,
       playerId: id.playerId, teamId: count("t0") <= count("t1") ? "t0" : "t1" }).room;
   }

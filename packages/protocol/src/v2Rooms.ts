@@ -7,7 +7,8 @@ export const roomRegionSchema = z.enum(["asia", "europe", "americas"]);
 export type RoomMode = z.infer<typeof roomModeSchema>;
 export type RoomRegion = z.infer<typeof roomRegionSchema>;
 export const quickRequestSchema = z.object({ mode: z.enum(["1v1", "2v2"]), region: roomRegionSchema }).strict();
-export const createRoomOptionsSchema = z.object({ name: z.string().trim().max(32).default(""), password: z.string().max(64).default(""), mapId: z.string().min(1).max(64).default("moss-valley"), region: roomRegionSchema.default("asia") }).strict();
+export const roomTurnLimitSchema = z.number().int().min(0).max(50);
+export const createRoomOptionsSchema = z.object({ turnLimit: roomTurnLimitSchema.default(12), name: z.string().trim().max(32).default(""), password: z.string().max(64).default(""), mapId: z.string().min(1).max(64).default("moss-valley"), region: roomRegionSchema.default("asia") }).strict();
 export type CreateRoomOptions = z.infer<typeof createRoomOptionsSchema>;
 export const reportReasonSchema = z.enum(["name", "abuse", "cheating"]);
 export const reportResultSchema = z.object({ type: z.literal("room.reported"), status: z.enum(["saved", "duplicate"]) }).strict();
@@ -30,7 +31,7 @@ export const roomSnapshotSchema = z.object({ type: z.literal("room.snapshot"), r
   mode: roomModeSchema.default("custom"), region: roomRegionSchema.default("asia"),
   name: z.string().optional(), passwordProtected: z.boolean().optional(), roomId, ownerId: z.string().nullable(), revision: z.number().int(), phase: z.enum(["waiting", "started"]),
   members: z.array(lobbyProfileSchema.extend({ playerId: z.string(), teamId: z.string().nullable(), connected: z.boolean(), ready: z.boolean() })).max(8),
-  randomMap: z.boolean().optional(),
+  randomMap: z.boolean().optional(), turnLimit: roomTurnLimitSchema.optional(),
   map: z.object({ id: z.string(), version: z.number(), width: z.number(), height: z.number() }),
 }) });
 export const roomOutputSchema = z.union([

@@ -9,24 +9,24 @@ export type LobbyMember = LobbyProfile & {
   readonly playerId: string; readonly teamId: string | null; readonly connected: boolean; readonly ready: boolean;
 };
 export type LobbyState = {
-  readonly roomId: string; readonly ownerId: string | null; readonly revision: number;
+  readonly turnLimit?: number; readonly roomId: string; readonly ownerId: string | null; readonly revision: number;
   readonly randomMap?: boolean; readonly phase: "waiting" | "started"; readonly members: readonly LobbyMember[]; readonly map: MapSpec;
 };
 export type PreparedMatch = {
-  readonly roomId: string; readonly revision: number; readonly ruleSetVersion: typeof RULE_SET_VERSION;
+  readonly turnLimit?: number; readonly roomId: string; readonly revision: number; readonly ruleSetVersion: typeof RULE_SET_VERSION;
   readonly members: readonly (LobbyProfile & { readonly playerId: string; readonly teamId: string })[];
   readonly map: MapSpec;
 };
 const copyMap = (map: MapSpec): MapSpec => ({ ...map, ...(map.solidColumns ? { solidColumns: map.solidColumns.map(runs => runs.map(([start, end]) => [start, end] as [number, number])) } : {}), ...(map.voids ? { voids: map.voids.map(op => ({ ...op })) } : {}), surface: [...map.surface],
   spawns: Object.fromEntries(Object.entries(map.spawns).map(([count, xs]) => [count, [...xs!]])) });
-const memberOf = (playerId: string, raw: LobbyProfile): LobbyMember => {
+const memberOf = (playerId: string, raw: LobbyProfile, teamId: string): LobbyMember => {
   if (!playerId.trim()) throw new Error("invalid player");
   const profile = lobbyProfileSchema.parse(raw);
-  return { ...profile, playerId, teamId: null, ready: false, connected: true };
+  return { ...profile, playerId, teamId, ready: false, connected: true };
 };
 export const createLobby = (roomId: string, ownerId: string, profile: LobbyProfile, map: MapSpec): LobbyState => {
   if (!roomId.trim()) throw new Error("invalid room");
-  return { roomId, ownerId, revision: 1, phase: "waiting", members: [memberOf(ownerId, profile)], map: copyMap(map) };
+  return { roomId, ownerId, revision: 1, phase: "waiting", members: [memberOf(ownerId, profile, "t0")], map: copyMap(map) };
 };
 const changed = (room: LobbyState, members: readonly LobbyMember[]): LobbyState => ({ ...room,
   revision: room.revision + 1, members: members.map(p => ({ ...p, ready: false })),
@@ -35,7 +35,8 @@ export const joinLobby = (room: LobbyState, playerId: string, profile: LobbyProf
   if (room.phase !== "waiting") throw new Error("locked");
   if (room.members.some(p => p.playerId === playerId)) throw new Error("already joined");
   if (room.members.length >= 8) throw new Error("full");
-  return changed(room, [...room.members, memberOf(playerId, profile)]);
+  const teamId = Array.from({ length: 8 }, (_, i) => `t${i}`).find(team => !room.members.some(p => p.teamId === team))!;
+  return changed(room, [...room.members, memberOf(playerId, profile, teamId)]);
 };
 /** Match departures are handled by battle surrender, never by editing a frozen roster. */
 export const leaveLobby = (room: LobbyState, playerId: string): LobbyState => {
@@ -92,6 +93,6 @@ export const startLobby = (room: LobbyState, authenticatedId: string, revision: 
   const map = room.randomMap ? MULTIPLAYER_MAPS[Math.floor(Math.random() * MULTIPLAYER_MAPS.length)]! : room.map;
   try { buildMapSpec(map, room.members.length); } catch { return reject("unsupported-map"); }
   return { room: { ...room, map: copyMap(map), phase: "started" }, reason: "started", setup: {
-    roomId: room.roomId, revision, ruleSetVersion: RULE_SET_VERSION, map: copyMap(map),
+    turnLimit: room.turnLimit ?? 12, roomId: room.roomId, revision, ruleSetVersion: RULE_SET_VERSION, map: copyMap(map),
     members: room.members.map(p => ({ playerId: p.playerId, teamId: p.teamId!, nickname: p.nickname, ...(p.colors ? { colors: { ...p.colors } } : {}), loadout: [...p.loadout] })) } };
 };

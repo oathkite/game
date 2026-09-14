@@ -8,7 +8,7 @@ const ready = (room: ReturnType<typeof two>) => room.members.reduce((r, p) => ed
 
 it("requires two assigned teams and every member ready at the current revision", () => {
   let room = two();
-  expect(startLobby(room, "p1", room.revision).reason).toBe("unassigned");
+  expect(startLobby({ ...room, members: room.members.map(p => ({ ...p, teamId: null })) }, "p1", room.revision).reason).toBe("unassigned");
   room = editLobby(room, "p1", command(room, "room.assignTeam", { playerId: "p1", teamId: "t0" })).room;
   room = editLobby(room, "p2", command(room, "room.assignTeam", { playerId: "p2", teamId: "t1" })).room;
   expect(startLobby(room, "p1", room.revision).reason).toBe("not-ready");
@@ -164,4 +164,24 @@ it("resolves random maps once at start and preserves the random setting", () => 
   } finally { random.mockRestore(); }
   const fixed = editLobby(room,"p1",command(room,"room.map",{mapId:MULTIPLAYER_MAPS[0]!.id}));
   expect(fixed.room.randomMap).toBe(false);
+});
+
+it("assigns an unused team on creation and joining without changing existing teams", () => {
+  let room = createLobby("auto", "p0", profile, TEST_ARENA);
+  expect(room.members[0]!.teamId).toBe("t0");
+  for (let i = 1; i < 8; i++) room = joinLobby(room, `p${i}`, profile);
+  expect(room.members.map(p => p.teamId)).toEqual(Array.from({ length: 8 }, (_, i) => `t${i}`));
+  room = leaveLobby(room, "p3");
+  const before = room.members;
+  room = joinLobby(room, "new", profile);
+  expect(room.members.at(-1)!.teamId).toBe("t3");
+  expect(room.members.slice(0, -1).map(p => p.teamId)).toEqual(before.map(p => p.teamId));
+});
+
+it("freezes the room turn limit into the prepared session", async () => {
+  const { createPreparedSession } = await import("../src/multiplayer/preparedSession");
+  const room = ready({ ...two(), turnLimit: 7 });
+  const started = startLobby(room, "p1", room.revision);
+  expect(started.setup?.turnLimit).toBe(7);
+  expect(createPreparedSession(started.setup!, "match", 42, 1000).turnLimit).toBe(7);
 });

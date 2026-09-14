@@ -1,3 +1,4 @@
+import { stageMusic } from "@/app/musicTracks";
 import { resultTitle } from "@/worldUi/resultTitle";
 import { YourTurn } from "@/worldUi/YourTurn";
 import { TurnOrderList } from "@/worldUi/TurnOrderList";
@@ -44,9 +45,10 @@ export const NetworkLab = ({ worldArt = false, onExit, connection }: { readonly 
   const [elevation, setElevation] = useState(45), [power, setPower] = useState(50);
   const [frame, setFrame] = useState<LabFrame | null>(null), [positions, setPositions] = useState<Position[]>([]);
   useEffect(() => {
-    setMusic(frame?.phase === "finished" ? "result" : "battle");
+    if (!frame) return;
+    setMusic(frame.phase === "finished" ? "result" : stageMusic(frame.map.id));
     if (frame?.phase === "finished") playSound("matchFinish");
-  }, [frame?.phase === "finished"]);
+  }, [frame?.phase === "finished", frame?.map.id, playerId, spectator]);
   const [serverNow, setServerNow] = useState(0);
   const clock = useRef({ time: 0, received: 0 });
   const socket = useRef<WebSocket | null>(null), latest = useRef<LabFrame | null>(null);
@@ -160,7 +162,7 @@ export const NetworkLab = ({ worldArt = false, onExit, connection }: { readonly 
       if (socket.current?.readyState !== WebSocket.OPEN) { setReportStatus("通報を送信できませんでした。"); return; }
       setReportStatus("送信中…"); socket.current.send(JSON.stringify({ type: "room.report", matchId: frame.matchId, targetId, reason }));
     } } } : {})} {...(frame ? { diagnostics: matchDiagnostics(frame) } : {})} spectator={observing} close={() => setMenu(false)} surrender={() => { action("lab.surrender"); setMenu(false); }} exit={onExit} finished={!frame || frame.phase === "finished"} />}
-    {frame?.phase === "finished" && <section className="network-finished"><header className="result-header"><h2>{t(resultTitle(frame.result, spectator ? undefined : frame.players.find(p => p.playerId === playerId)?.teamId))}</h2>{frame.returnStatus && <p className="result-return-timer" role="timer">{t("部屋へ戻るまで {seconds}秒", { seconds: Math.max(0, Math.ceil((frame.returnStatus.deadlineAt - serverNow) / 1000)) })}</p>}</header><ResultPlayers players={frame.players} result={frame.result} {...(frame.stats ? { stats: frame.stats } : {})} /><div className="result-actions"><button onClick={onExit}>{t("退出する")}</button>{!spectator && connection && <button className="result-primary" disabled={Boolean(connection && frame.returnStatus?.readyIds.includes(playerId))} onClick={() => action("lab.rematch")}>{frame.returnStatus?.readyIds.includes(playerId) ? t("帰還待ち") : t("部屋に戻る")}</button>}</div></section>}
+    {frame?.phase === "finished" && <section className="network-finished terminal-screen result-terminal"><header className="result-header"><h2>{t(resultTitle(frame.result, spectator ? undefined : frame.players.find(p => p.playerId === playerId)?.teamId))}</h2>{frame.returnStatus && <p className="result-return-timer" role="timer">{t("部屋へ戻るまで {seconds}秒", { seconds: Math.max(0, Math.ceil((frame.returnStatus.deadlineAt - serverNow) / 1000)) })}</p>}</header><ResultPlayers players={frame.players} result={frame.result} {...(frame.stats ? { stats: frame.stats } : {})} /><div className="result-actions"><button onClick={onExit}>{t("退出する")}</button>{!spectator && connection && <button className="result-primary" disabled={Boolean(connection && frame.returnStatus?.readyIds.includes(playerId))} onClick={() => action("lab.rematch")}>{frame.returnStatus?.readyIds.includes(playerId) ? t("帰還待ち") : t("部屋に戻る")}</button>}</div></section>}
     {status === "invalid-session" && <div className="network-finished"><p>{t("接続の有効期限が切れました。")}</p><button onClick={() => { sessionStorage.removeItem("keropod.network-lab-token"); location.reload(); }}>{t("新しい接続で参加")}</button></div>}
     <div className="network-portrait"><h2>{t("横向きでプレイしよう")}</h2><p>{t("端末を回転するとフィールドと操作が見やすくなります。")}</p><button onClick={onExit}>{t("ロビーに戻る")}</button></div>
     {!connection && status.startsWith("切断") && <p className="network-connection" role="status">{t("切断されました。再読み込みで復帰できます。")}</p>}

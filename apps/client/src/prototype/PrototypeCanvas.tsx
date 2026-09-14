@@ -54,7 +54,7 @@ export const PrototypeCanvas = ({ store, rig, layout, handlers, blocked, followS
       const view = store.getView();
       if (!view.mask || !view.players) return;
       let tankIndex = 0;
-      renderer = await createRenderer({ wind: () => store.getView().wind.value, tankFactory: (colors, name) => createTankView(colors, name, teamColor(tankIndex++)), host, layout: latest.current.layout, mask: view.mask, players: view.players, background: 0x000000, backgroundAlpha:0, terrainTint: 0xffffff });
+      renderer = await createRenderer({ mapId: view.mapId, wind: () => store.getView().wind.value, tankFactory: (colors, name) => createTankView(colors, name, teamColor(tankIndex++)), host, layout: latest.current.layout, mask: view.mask, players: view.players, background: 0x000000, backgroundAlpha:0, terrainTint: 0xffffff });
       if (disposed) { renderer.destroy(); return; }
       const r = renderer;
       rig.resize(viewportOf(latest.current.layout), { left: 0, top: -100, right: view.mask.width, bottom: view.mask.height });

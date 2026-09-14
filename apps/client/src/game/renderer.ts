@@ -34,6 +34,7 @@ export type Renderer = {
 };
 
 export type RendererInit = {
+  readonly mapId?: string | undefined;
   readonly wind?: () => number;
   readonly host: HTMLElement;
   readonly layout: Layout;
@@ -75,7 +76,7 @@ export const createRenderer = async (init: RendererInit): Promise<Renderer> => {
   const world = new Container();
   const labels = new Container();
   world.scale.set(cell);
-  const backdrop = createPixelBackdrop(init.mask.cells.reduce((sum, cell) => sum + cell, 0) % 997);
+  const backdrop = createPixelBackdrop(init.mapId ?? "ridgeline");
   const wind = createPixelWind();
   app.stage.addChild(backdrop.container, wind.container, world, labels);
   const reduced = matchMedia("(prefers-reduced-motion: reduce)");
@@ -127,6 +128,7 @@ export const createRenderer = async (init: RendererInit): Promise<Renderer> => {
     },
     setCameraOffset: (x, y) => {
       world.position.set(x, y);
+      wind.setCameraOffset(x, y);
       backdrop.update(x, y, cell, app.screen.width, app.screen.height);
       labels.position.set(x, y);
       tanks.forEach((_, index) => placeLabel(index));

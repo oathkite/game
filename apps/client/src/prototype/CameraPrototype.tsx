@@ -1,3 +1,4 @@
+import { stageMusic } from "@/app/musicTracks";
 import { YourTurn } from "@/worldUi/YourTurn";
 import { useDelayReveal } from "@/worldUi/useDelayReveal";
 import { closeOnBackdrop } from "@/worldUi/dialogBackdrop";
@@ -17,7 +18,7 @@ import { loadCameraScale } from "@/worldUi/displayScale";
 import { useEffect, useMemo, useRef, useState, useSyncExternalStore } from "react";
 import { WEAPON_LABELS, WEAPON_SLOTS } from "@game/protocol";
 import { loadProfile } from "@/app/profile";
-import { setAudioSettings, unlockAudio } from "@/app/audio";
+import { setAudioSettings, setMusic, unlockAudio } from "@/app/audio";
 import { createLocalConnection, defaultOpponentColors, defaultOpponentLoadout } from "@/net/localConnection";
 import { createMatchStore, type MatchStore } from "@/match/matchStore";
 import { Timer } from "@/ui/Timer";
@@ -36,7 +37,9 @@ export const CameraPrototype = (props: ThemeProps) => {
   useEffect(() => {
     const p = loadProfile();
     setAudioSettings(p.volume, p.muted, p.bgmVolume ?? p.volume);
-    const connection = createLocalConnection({ deferReady: props.worldArt ?? false, mapName: (props.mapName === "random" ? (["ridgeline", "stone-bridge", "terraces", "sky-islands"] as const)[Math.floor(Math.random() * 4)]! : props.mapName) ?? (props.worldArt ? "rock-arch" : "valley"), nickname: p.nickname || "プレイヤー", colors: p.colors, loadout: p.loadout,
+    const selectedMap = (props.mapName === "random" ? (["ridgeline", "stone-bridge", "terraces", "sky-islands"] as const)[Math.floor(Math.random() * 4)]! : props.mapName) ?? (props.worldArt ? "rock-arch" : "valley");
+    setMusic(stageMusic(selectedMap));
+    const connection = createLocalConnection({ deferReady: props.worldArt ?? false, mapName: selectedMap, nickname: p.nickname || "プレイヤー", colors: p.colors, loadout: p.loadout,
       opponentColors: defaultOpponentColors(p.colors), opponentLoadout: defaultOpponentLoadout(p.loadout) });
     const created = createMatchStore(connection, { followCurrentSeat: true, mySeat: 0, spectator: false });
     begin.current = connection.releaseReady;
@@ -118,9 +121,9 @@ const Battle = ({ store, begin, worldArt, onExit, onResult }: { readonly store: 
       {import.meta.env.DEV && new URLSearchParams(location.search).get("debug") === "1" && <CameraSettingsPanel rig={rig} />}
       <p className="kp-shortcuts">{t("A / D・← / →：移動")}<br />{t("W / S・↑ / ↓：角度　Space：発射")}<br />{t("Q / E：武器　Tab：機体を順に見る")}<br />{t("Shift + 矢印：見回す　C：手番へ")}</p>
       {onResult && <button onClick={() => store.surrender()}>{t("降参して対戦を終える")}</button>}
-      <button onClick={() => setMenu(false)}>{t("対戦に戻る")}</button>{onExit ? <button onClick={onExit}>{t("ロビーに戻る")}</button> : <a href="/">{t("ガレージへ戻る")}</a>}
+      <button onClick={() => setMenu(false)}>{t("対戦に戻る")}</button>{onExit ? <button onClick={onExit}>{t("出撃準備に戻る")}</button> : <a href="/">{t("ガレージへ戻る")}</a>}
     </dialog>
-    {portrait && <div className="kp-portrait"><strong>{t("横向きでプレイしよう")}</strong><p>{t("機体と照準を見やすくするため、端末を回転してください。")}</p>{onExit ? <button onClick={onExit}>{t("ロビーに戻る")}</button> : <a href="/">{t("ガレージへ戻る")}</a>}</div>}
-    {view.phase === "finished" && !onResult && <div className="kp-result"><h2>{view.result?.winner === null ? t("引き分け") : t("{player}の勝利", { player: t(teamColorName(view.result?.winner ?? 0)) })}</h2><button onClick={() => store.closeResult()}>{t("もう一度")}</button>{onExit ? <button onClick={onExit}>{t("ロビーに戻る")}</button> : <a href="/">{t("ガレージへ戻る")}</a>}</div>}
+    {portrait && <div className="kp-portrait"><strong>{t("横向きでプレイしよう")}</strong><p>{t("機体と照準を見やすくするため、端末を回転してください。")}</p>{onExit ? <button onClick={onExit}>{t("出撃準備に戻る")}</button> : <a href="/">{t("ガレージへ戻る")}</a>}</div>}
+    {view.phase === "finished" && !onResult && <div className="kp-result"><h2>{view.result?.winner === null ? t("引き分け") : t("{player}の勝利", { player: t(teamColorName(view.result?.winner ?? 0)) })}</h2><button onClick={() => store.closeResult()}>{t("もう一度")}</button>{onExit ? <button onClick={onExit}>{t("出撃準備に戻る")}</button> : <a href="/">{t("ガレージへ戻る")}</a>}</div>}
   </main>;
 };

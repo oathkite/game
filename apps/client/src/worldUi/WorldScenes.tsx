@@ -44,7 +44,7 @@ export const WorldScenes = () => {
     void unlockAudio();
     if (matchMedia("(prefers-reduced-motion: reduce)").matches) { setScene(next); return; }
     setClosing(true);
-    timer.current = setTimeout(() => { setScene(next); setClosing(false); timer.current = null; }, 240);
+    timer.current = setTimeout(() => { setScene(next); setClosing(false); timer.current = null; }, 400);
   }, []);
   useWorldBrowserBack(scene !== "start", () => go(scene === "lobby" ? "start" : "lobby"));
   useEffect(() => { const profile = loadProfile(); setAudioSettings(profile.volume, profile.muted, profile.bgmVolume ?? profile.volume); }, []);
@@ -65,10 +65,10 @@ export const WorldScenes = () => {
   }, []);
   useEffect(() => {
     // Online scenes own their music because their internal phase changes independently.
-    if (scene === "rooms" || scene === "network") return;
-    setMusic(scene === "start" ? "title" : scene === "battle" ? "battle" : scene === "result" ? "result" : "lobby");
+    if (scene === "rooms" || scene === "network" || scene === "battle") return;
+    setMusic(scene === "result" && result ? "result" : "hangar");
     if (scene === "result") playSound("matchFinish");
-  }, [scene]);
+  }, [scene, result]);
   const exit = useCallback(() => go("lobby"), [go]);
   const finish = useCallback((value: ResultPresentation) => { setResult(value); go("result"); }, [go]);
   return <div className={`world-ui world-scene-${scene} ${closing ? "world-closing" : ""}`}>
@@ -78,7 +78,7 @@ export const WorldScenes = () => {
       <div key={scene} ref={heading} tabIndex={-1} className="world-content">
         {scene === "start" && <StartScreen onBegin={() => go("lobby")} />}
         {scene === "lobby" && <Lobby go={go} practiceMap={practiceMap} setPracticeMap={setPracticeMap} />}
-        {scene === "result" && result && <section className="world-result-screen"><h1>{t(resultTitle(result.result, result.players.find(p => p.playerId === result.ownId)?.teamId))}</h1><ResultPlayers {...result} /><div className="result-actions"><PixelButton onClick={exit}>{t("出撃準備")}</PixelButton><PixelButton className="result-primary" onClick={() => go("battle")}>{t("もう一度プレイ")}</PixelButton></div></section>}
+        {scene === "result" && result && <section className="world-result-screen terminal-screen result-terminal"><header className="result-header"><h1>{t(resultTitle(result.result, result.players.find(p => p.playerId === result.ownId)?.teamId))}</h1></header><ResultPlayers {...result} /><div className="result-actions"><PixelButton onClick={exit}>{t("出撃準備")}</PixelButton><PixelButton className="result-primary" onClick={() => go("battle")}>{t("もう一度プレイ")}</PixelButton></div></section>}
       </div>
     </>}
     </Suspense>

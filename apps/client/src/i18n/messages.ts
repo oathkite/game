@@ -24,6 +24,8 @@ export const english: Readonly<Record<string, string>> = {
   "溜めて、離す": "Hold, then release",
   "発射ボタンを長押し。狙ったパワーで離す。": "Hold Fire, then release at your chosen power.",
   "Spaceを長押し。狙ったパワーで離す。": "Hold Space, then release at your chosen power.",
+  "出撃準備に戻る": "Back to preparation",
+  "出撃準備へ戻りますか？": "Return to preparation?",
   "ロビーへ戻りますか？": "Return to the lobby?",
   "対戦を離れると降参扱いになります。確認中も対戦は進行します。": "Leaving counts as surrender. The battle continues while you decide.",
   "この部屋から退出します。": "You will leave this room.",

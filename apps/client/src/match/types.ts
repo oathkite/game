@@ -56,6 +56,7 @@ export type ReplayJob = {
 };
 
 export type MatchView = {
+  readonly mapId?: string;
   readonly delay?: DelayState | undefined;
   readonly phase: ClientPhase;
   readonly mask: TerrainMask | null;

@@ -105,3 +105,19 @@
 .room-weapon-slot { flex:1; min-width:0; }
 .room-weapon-slot h3 { margin:0 0 8px; font-size:14px; font-weight:normal; }
 .room-weapon-slots .room-weapon-slot button { width:100%; }
+
+.room-team-current { display:flex; align-items:center; gap:12px; white-space:nowrap; }
+.room-team-color { display:block; width:20px; height:20px; flex-shrink:0; }
+.room-team-dialog .room-team-swatches { grid-template-columns:repeat(4,44px); gap:12px; }
+.world-ui.world-ui .room-team-dialog .room-team-swatches button { width:44px; height:44px; padding:4px; }
+.room-team-dialog .room-team-swatches button span { width:32px; height:32px; }
+.world-ui.world-ui .room-team-dialog .room-team-swatches button[aria-pressed=true] { border-color:#33ff66; }
+
+.world-ui .room-turn-limit { border:0; padding:0; margin:0; min-width:0; }
+.world-ui .room-turn-limit legend { padding:0; margin-bottom:8px; }
+.world-ui .room-turn-limit > div { display:grid; grid-template-columns:repeat(4,minmax(0,1fr)); gap:0; }
+.world-ui.world-ui .room-turn-limit label { position:relative; display:flex; flex-direction:row; align-items:center; justify-content:center; min-height:44px; margin:0; padding:8px 4px; border:2px solid #33ff66; background:#000; color:#33ff66; cursor:pointer; }
+.world-ui.world-ui .room-turn-limit label + label { border-left:0; }
+.world-ui.world-ui .room-turn-limit label:has(input:checked) { background:#33ff66; color:#000; }
+.world-ui.world-ui .room-turn-limit label:has(input:focus-visible) { outline:2px solid #33ff66; outline-offset:4px; z-index:1; }
+.world-ui.world-ui .room-turn-limit input[type=radio] { position:absolute; width:1px; height:1px; min-height:0; padding:0; margin:0; border:0; overflow:hidden; clip-path:inset(50%); }

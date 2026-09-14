@@ -15,6 +15,7 @@ import { createBattleWind, advanceBattleWind, type BattleWind } from "./battleWi
 
 type ResolvedShot = ReturnType<typeof resolveBattleShot>;
 export type BattleSession = {
+  readonly turnLimit?: number;
   readonly finishedAt?: number;
   readonly stats?: BattleStats;
   readonly build: MatchBuild;
@@ -53,7 +54,7 @@ const advance = (state: BattleSession, now: number): BattleSession => {
   const result = outcome(charged), advanced = nextTurn(charged);
   const transition = advanced.delay?.round !== state.roster.delay?.round && advanced.delay;
   const roster = transition ? { ...advanced, delay: { ...transition, revealUntil: now + ROUND_REVEAL_MS } } : advanced;
-  if (result.type !== "ongoing" || roster.round > 12 || now - state.startedAt >= 1200000) {
+  if (result.type !== "ongoing" || (state.turnLimit !== 0 && roster.round > (state.turnLimit ?? 12)) || now - state.startedAt >= 1200000) {
     return { ...state, finishedAt: now, phase: "finished", result: result.type === "ongoing" ? { type: "draw" } : result,
       movement: { ...state.movement, locked: true, eventSeq: state.movement.eventSeq + 1 } };
   }

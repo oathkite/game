@@ -10,7 +10,7 @@
 .world-ui.world-ui button[aria-pressed=true] { border-color:#fff; }
 .world-ui.world-ui .world-start h1 { width:auto; aspect-ratio:auto; overflow:visible; }
 .world-title-text { font-size:clamp(32px,7vw,80px); letter-spacing:.08em; }
-.world-ui.world-ui .world-shutter { background:#000; }
+.world-ui.world-ui .world-shutter { background:repeating-linear-gradient(to bottom,#164b28 0 2px,#031008 2px 6px,#000 6px 30px,#33ff66 30px 32px,#000 32px 40px); image-rendering:pixelated; }
 .world-ui.world-ui :is(.battle-roster,.battle-console,.battle-seat,.battle-self,.battle-countdown,.battle-wind,.network-world,.battle-menu,.network-overview,.kp-minimap) { color:#33ff66; background:#000; border-color:#0f4d24; border-radius:0; box-shadow:none; }
 .world-ui.world-ui :is(.battle-console,.battle-roster) { border-block:2px solid #0f4d24; }
 .world-ui.world-ui :is(.battle-countdown,.battle-power)::before,.world-ui.world-ui :is(.battle-countdown,.battle-power)::after { display:none; }

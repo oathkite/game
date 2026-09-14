@@ -33,7 +33,7 @@
 .world-result-screen p { color:#24344a; background:#fff0dccc; padding:4px 18px; }
 .world-result-screen .tank-portrait { width:min(300px,40vh); }
 .world-result-screen > div:last-child { display:flex; flex-wrap:wrap; gap:16px; justify-content:center; }
-.world-shutter { position:absolute; inset:0; pointer-events:none; z-index:20; background:repeating-linear-gradient(0deg,#24344a 0 20px,#34485d 20px 24px); clip-path:inset(0 0 100%); transition:clip-path 240ms cubic-bezier(.65,0,.35,1); }
+.world-shutter { position:absolute; inset:0; pointer-events:none; z-index:20; background:repeating-linear-gradient(0deg,#24344a 0 20px,#34485d 20px 24px); clip-path:inset(0 0 100%); transition:clip-path 400ms cubic-bezier(.65,0,.35,1); }
 .world-closing .world-shutter { clip-path:inset(0); pointer-events:auto; }
 .world-ui .kp-canvas { position:relative; }
 .world-ui .kp-world-help { padding:4px 8px; background:#24344ac9; opacity:1; }
