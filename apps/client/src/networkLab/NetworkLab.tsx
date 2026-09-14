@@ -168,7 +168,7 @@ export const NetworkLab = ({ worldArt = false, onExit, connection }: { readonly 
     {!connection && status.startsWith("切断") && <p className="network-connection" role="status">{t("切断されました。再読み込みで復帰できます。")}</p>}
   </main>;
   return <main className="network-lab">
-    <h1>ARTILLERY 対戦同期テスト</h1>
+    <h1>TANK SHOOT 対戦同期テスト</h1>
     <p>あなた：<strong data-testid="identity">{playerId || "未割当"}</strong>　手番：<strong>{frame?.actorId ?? "—"}</strong>　{t(status)}</p>
     <p>固定8席の開発用画面です。別タブを開くと別の席で参加します。射撃終了または20秒の期限で手番が交代します。</p>
     <svg viewBox={`0 0 ${frame?.map.width ?? 500} ${frame?.map.height ?? 225}`} aria-label="移動同期フィールド">

@@ -97,7 +97,7 @@ const Battle = ({ store, begin, worldArt, onExit, onResult }: { readonly store: 
   return <main className="kp-root" onContextMenu={(e) => e.preventDefault()} onPointerDown={() => unlockAudio()}>
     <YourTurn turnKey={String(view.turnNumber)} active={enabled} />
     {worldArt ? <BattleOverlay clock={<Timer dial deadlineAt={revealing ? null : view.deadlineAt} clockOffset={0} myTurn={enabled} />} onMenu={() => { input.cancel(); setMenu(true); }} /> : <header className="kp-topbar">
-      <div className="kp-brand">ARTILLERY <span>{t("プラクティス")}</span></div>
+      <div className="kp-brand">TANK SHOOT <span>{t("プラクティス")}</span></div>
       <div className="kp-turn"><i>{t(teamColorName(view.currentSeat))}</i><strong>{view.phase === "replaying" ? t("弾を見届けよう") : view.phase === "finished" ? t("対戦終了") : t("あなたの番")}</strong><span>{t("次は")} {t(teamColorName(view.currentSeat === 0 ? 1 : 0))}</span></div>
       <div className="kp-wind" aria-label={t("風向き")}><span>{t("風")}</span><div className="kp-wind-window"><b style={{ transform: `translateX(${view.wind.value * 1.5}px) rotate(${view.wind.value * 4}deg)` }}>〰</b></div></div>
       <div className="kp-clock"><Timer deadlineAt={revealing ? null : view.deadlineAt} clockOffset={0} myTurn={enabled} /></div>
