@@ -21,6 +21,7 @@ import { CameraSettingsPanel } from "@/prototype/CameraSettingsPanel";
 import { createCameraRig } from "@/prototype/cameraRig";
 import { PixelButton, PixelPanel } from "./PixelUi";
 import { TankPortrait } from "./TankPortrait";
+import { SceneLoading } from "./SceneLoading";
 import "./worldUi.css";
 import "./simpleTheme.css";
 import "./pageLayout.css";
@@ -79,7 +80,7 @@ export const WorldScenes = () => {
   const finish = useCallback((value: ResultPresentation) => { setResult(value); go("result"); }, [go]);
   return <div className={`world-ui world-scene-${scene} ${closing ? "world-closing" : ""}`}>
     <SceneBoundary message={t("画面を読み込めませんでした。通信を確認して再読み込みしてください。")} retryLabel={t("再読み込み")}>
-    <Suspense fallback={<p role="status">{t("フィールドを準備しています…")}</p>}>
+    <Suspense fallback={<SceneLoading className="scene-loading-page" steps={[{ label: t("画面を読み込み中"), state: "active" }]} />}>
     {scene === "battle" ? <CameraPrototype cpuLevel={cpuLevel} cpu={practiceCpu} worldArt mapName={practiceMap} onExit={exitPractice} onResult={finish} /> : scene === "rooms" ? <RoomScreen onExit={exit} {...(import.meta.env.DEV ? { onLab: () => go("network") } : {})} /> : scene === "network" ? <NetworkLab worldArt onExit={exit} /> : <>
       <div key={scene} ref={heading} tabIndex={-1} className="world-content">
         {scene === "start" && <StartScreen onBegin={() => go("lobby")} />}

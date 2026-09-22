@@ -18,6 +18,8 @@ import { BattleMenu } from "@/worldUi/BattleMenu";
 import { applyOps, buildInitialTerrain, tiltOf } from "@game/sim";
 import { BattleConsole, BattleOverlay } from "@/worldUi/BattleHud";
 import { useTouchControls } from "@/worldUi/useTouchControls";
+import { SceneLoading } from "@/worldUi/SceneLoading";
+import { LAB_CONNECTED_STATUS, LAB_CONNECTING_STATUS, labLoadingSteps } from "@/worldUi/connectionSteps";
 import { useBattleInput } from "@/worldUi/useBattleInput";
 import { DEFAULT_LOADOUT, WEAPON_LABELS } from "@game/protocol";
 import { useEffect, useMemo, useRef, useState } from "react";
@@ -37,7 +39,7 @@ export const NetworkLab = ({ worldArt = false, onExit, connection }: { readonly 
   const [keepView, setKeepView] = useState(false);
   const [confirmLeave, setConfirmLeave] = useState(false);
   const [menu, setMenu] = useState(false);
-  const [status, setStatus] = useState("接続中"), [playerId, setPlayerId] = useState("");
+  const [status, setStatus] = useState(LAB_CONNECTING_STATUS), [playerId, setPlayerId] = useState("");
   const [latency, setLatency] = useState<number | null>(null);
   useEffect(() => { if (connection) return measureLatency(connection.socket, setLatency); setLatency(null); }, [connection]);
   const [reportStatus, setReportStatus] = useState("");
@@ -59,7 +61,7 @@ export const NetworkLab = ({ worldArt = false, onExit, connection }: { readonly 
     const sounds = createBattleSounds();
     const motion = new Map<string, ReturnType<typeof createRemoteMotion>>();
     let ownId = connection?.playerId ?? "", active = true, versionMismatch = false, animation = 0;
-    if (connection) { setPlayerId(ownId); setStatus("接続済み"); }
+    if (connection) { setPlayerId(ownId); setStatus(LAB_CONNECTED_STATUS); }
     if (!connection) ws.onopen = () => {
       if (!active) return;
       const token = sessionStorage.getItem("keropod.network-lab-token");
@@ -73,7 +75,7 @@ export const NetworkLab = ({ worldArt = false, onExit, connection }: { readonly 
       const result = labOutputSchema.safeParse(raw); if (!result.success) return;
       const message = result.data;
       if (message.type === "lab.welcome") {
-        ownId = message.playerId; setPlayerId(ownId); setStatus("接続済み");
+        ownId = message.playerId; setPlayerId(ownId); setStatus(LAB_CONNECTED_STATUS);
         sessionStorage.setItem("keropod.network-lab-token", message.token);
       } else if (message.type === "lab.error") setStatus(message.reason);
       else if (message.type === "lab.ack") {
@@ -151,7 +153,7 @@ export const NetworkLab = ({ worldArt = false, onExit, connection }: { readonly 
     <YourTurn turnKey={`${frame?.matchId}/${frame?.turnId}`} active={Boolean(!observing && canControl)} />
     <BattleOverlay clock={<CountdownDial seconds={seconds} />} onMenu={() => { input.cancel(); setMenu(true); }} />
     <span className="battle-sr" data-testid="identity">{playerId}</span><span className="battle-sr" data-testid="phase">{t(phaseLabel)}</span>
-    {frame && presentation ? <NetworkField key={frame.matchId} serverNow={serverNow} charge={input.gauge.charging ? input.gauge.value / 100 : 0} onSettling={setSettling} blocked={menu || confirmLeave || input.gauge.charging || serverNow < (frame.delay?.revealUntil ?? 0)} frame={frame} players={shownPlayers} presentation={presentation} elevation={elevation} ownId={playerId} followTurns={!observing || !keepView} {...(!observing ? { selectedWeapon: loadout[slot] } : {})} /> : <p role="status">{t(status)}</p>}
+    {frame && presentation ? <NetworkField key={frame.matchId} serverNow={serverNow} charge={input.gauge.charging ? input.gauge.value / 100 : 0} onSettling={setSettling} blocked={menu || confirmLeave || input.gauge.charging || serverNow < (frame.delay?.revealUntil ?? 0)} frame={frame} players={shownPlayers} presentation={presentation} elevation={elevation} ownId={playerId} followTurns={!observing || !keepView} {...(!observing ? { selectedWeapon: loadout[slot] } : {})} /> : <SceneLoading steps={labLoadingSteps(status, t)} />}
     {observing && frame?.delay && <TurnOrderList info={{ onOpen: input.cancel, serverNow, state: frame.delay, playerId, acting: false, players: frame.players.map(p => ({ id: p.playerId, name: p.nickname ?? p.playerId, colors: p.colors, eliminated: p.eliminated })) }} />}
     {observing ? <footer className="battle-console"><span role="status">{t("観戦中")}</span><label><input type="checkbox" checked={keepView} onChange={e => setKeepView(e.target.checked)} />{t("手動視点を維持")}</label></footer> : <BattleConsole delay={frame?.delay ? { onOpen: input.cancel, serverNow, state: frame.delay, playerId, acting: frame.actorId === playerId && frame.phase === "acting", players: frame.players.map(p => ({ id: p.playerId, name: p.nickname ?? p.playerId, colors: p.colors, eliminated: p.eliminated })) } : undefined} player={hudPlayers.find(p => p.id === playerId)} steps={frame?.actorId === playerId ? frame.movement.stepsLeft : 0} tilt={ground} elevation={elevation} facing={ownFacing.current} power={input.gauge.value} loadout={loadout} slot={slot} disabled={!canAct || menu || confirmLeave || input.gauge.charging} selectSlot={setSlot}>
       {touch && <BattleTouchControls disabled={!canAct || confirmLeave || menu} button={input.button} steps />}
