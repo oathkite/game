@@ -1,4 +1,5 @@
 import { drawTankWreck } from "./tankWreck";
+import { createTurnCaret, placeTurnCaret } from "./turnCaret";
 import { playSound } from "@/app/audio";
 import { TANK_PIXELS, treadPixels } from "./tankPixels";
 import type { ShotFlash } from "./muzzlePose";
@@ -36,6 +37,8 @@ export type TankView = {
   /** 名前は拡大しない層に置く */
   readonly label: Container;
   readonly setPose: (pose: TankPose, cell: number) => void;
+  /** 毎フレームの時間経過。操作中のキャレットを動かす */
+  readonly tick?: (deltaMs: number, reducedMotion: boolean) => void;
   readonly destroy: () => void;
 };
 
@@ -83,7 +86,10 @@ export const createTankView = (selection: TankColors, nickname: string, team?: s
     resolution: 1,
   });
   text.anchor.set(0.5, 1);
-  label.addChild(text);
+  // 操作中の自機だけに出す。名前と同じ色で、誰の機体を動かしているかを名前に結び付ける
+  const caret = createTurnCaret(hex(team ?? colors.primary));
+  label.addChild(text, caret);
+  let caretElapsed = 0;
 
   let wasWrecked = false;
   let wasWhite = false, distance = 0, previousX: number | null = null;
@@ -95,6 +101,7 @@ export const createTankView = (selection: TankColors, nickname: string, team?: s
     text.style.fill = wrecked ? 0x929b96 : team ?? colors.primary;
     world.visible = pose.visible;
     label.visible = pose.visible;
+    caret.visible = pose.aiming && !wrecked;
     world.position.set(pose.x + 0.5, pose.y);
     rotating.rotation = -pose.tilt * DEG;
     const local = pose.facing === 1 ? pose.elevation : 180 - pose.elevation;
@@ -119,6 +126,10 @@ export const createTankView = (selection: TankColors, nickname: string, team?: s
     world,
     label,
     setPose,
+    tick: (deltaMs, reducedMotion) => {
+      caretElapsed = caret.visible ? caretElapsed + deltaMs : 0;
+      placeTurnCaret(caret, caretElapsed, reducedMotion);
+    },
     destroy: () => {
       world.destroy({ children: true });
       label.destroy({ children: true });
