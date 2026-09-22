@@ -43,7 +43,6 @@ export const App = () => {
 
   return (
     <>
-      <div className="rotate-hint">横向きにしてください</div>
       {route.kind === "setup" && (
         <SetupScreen
           profile={profile}

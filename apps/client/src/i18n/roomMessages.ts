@@ -33,7 +33,6 @@ export const roomEnglish: Readonly<Record<string, string>> = {
   "左へ1歩": "Step left", "右へ1歩": "Step right", "角度を下げる": "Lower angle", "角度を上げる": "Raise angle", "発射": "Fire",
   "{team}チームの勝利": "Team {team} wins", "引き分け": "Draw", "部屋へ戻る（オーナー）": "Return to room (owner)", "再戦する": "Rematch",
   "接続の有効期限が切れました。": "Your connection expired.", "新しい接続で参加": "Join with a new session",
-  "横向きでプレイしよう": "Rotate to landscape", "端末を回転するとフィールドと操作が見やすくなります。": "Rotate your device to see the field and controls.",
   "切断されました。再読み込みで復帰できます。": "Disconnected. Reload to reconnect.",
 
   "部屋": "Room", "対戦ルーム": "Battle rooms", "仲間と出発しよう": "Gather your crew",

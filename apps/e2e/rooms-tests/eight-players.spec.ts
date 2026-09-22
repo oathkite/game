@@ -137,7 +137,6 @@ test("eight independent players complete a 4v4 match and return together", async
     expect(returnBox.y + returnBox.height).toBeLessThanOrEqual(375);
     await owner.screenshot({ path: "test-results/eight-player-result-mobile-actions.png" });
     await owner.setViewportSize({ width: 390, height: 844 });
-    await expect(owner.locator(".network-portrait")).toBeHidden();
     await returnButton.scrollIntoViewIfNeeded();
     const portraitReturn = (await returnButton.boundingBox())!;
     expect(portraitReturn.y + portraitReturn.height).toBeLessThanOrEqual(844);

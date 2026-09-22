@@ -13,7 +13,7 @@ export const playEnglish: Readonly<Record<string, string>> = {
   "弾の追従": "Follow shot", "左へ移動": "Move left", "右へ移動": "Move right", "移動": "Move", "角度": "Angle", "武器": "Weapons",
   "長押しして、離す": "Hold, then release", "離して発射": "Release to fire", "ひと息つこう": "Take a breather",
   "プラクティスは進行中です。": "Practice continues while this menu is open.", "サウンド": "Sound", "降参して対戦を終える": "Surrender and finish",
-  "ガレージへ戻る": "Back to garage", "機体と照準を見やすくするため、端末を回転してください。": "Rotate your device for a clearer view of the tank and aiming controls.",
+  "ガレージへ戻る": "Back to garage",
   "もう一度": "Play again", "{player}の勝利": "{player} wins", "次は": "Next",
   "A / D・← / →：移動": "A / D or ← / →: move", "W / S・↑ / ↓：角度　Space：発射": "W / S or ↑ / ↓: aim. Space: fire",
   "Q / E：武器　Tab：機体を順に見る": "Q / E: weapon. Tab: cycle tanks", "Shift + 矢印：見回す　C：手番へ": "Shift + arrows: pan. C: active tank",
