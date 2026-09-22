@@ -4,6 +4,7 @@ import { createTankView } from "@/game/tankView";
 import { openingPose, revealRowsAt } from "@/worldUi/openingTour";
 import { guideDots } from "@/game/trail";
 import { StartSignal } from "@/worldUi/StartSignal";
+import { SceneLoading } from "@/worldUi/SceneLoading";
 import { createFallMotion } from "@/worldUi/fallMotion";
 import { useLanguage } from "@/i18n/locale";
 import { teamColor } from "@/worldUi/teamColors";
@@ -138,7 +139,7 @@ export const PrototypeCanvas = ({ store, rig, layout, handlers, blocked, followS
   return <div className="kp-world" style={{ height: layout.mapHeight }}>
     <StartSignal visible={signal} />
     <div ref={hostRef} className="kp-canvas" tabIndex={0} aria-label={t("対戦フィールド")} data-testid="camera-world" data-scale={layout.cell} data-loaded={loaded} {...handlers} />
-    {!loaded && <div className="kp-loading" role="status">{error ? t("素材を読み込めませんでした。ページを再読み込みしてください。") : t("マシンを準備しています…")}</div>}
+    {!loaded && (error ? <div className="kp-loading" role="status">{t("素材を読み込めませんでした。ページを再読み込みしてください。")}</div> : <SceneLoading className="kp-loading" steps={[{ label: t("フィールドを準備中"), state: "active" }]} />)}
     <span className="kp-world-help">{t("ドラッグ・ホイールで見回す / Cで手番へ")}</span>
     <button className="kp-minimap" aria-label={t("全体図からカメラを移動")} disabled={blocked} onPointerDown={(e) => {
       if (!e.isPrimary || e.button !== 0) return;

@@ -22,6 +22,7 @@ import { createLabCrumbles, drawLabImpacts, labEdgePoints, labShake, labTankHit 
 import { edgeBlinkOn } from "@/game/edgeMarker";
 import { guideDots } from "@/game/trail";
 import { revealRowsAt } from "./openingTour";
+import { SceneLoading } from "./SceneLoading";
 
 type Props = { readonly serverNow: number; readonly onSettling?: (settling: boolean) => void; readonly followTurns?: boolean; readonly blocked?: boolean; readonly frame: LabFrame; readonly players: LabFrame["players"]; readonly presentation: ReturnType<typeof presentLabReplay>; readonly elevation: number; readonly ownId: string; readonly selectedWeapon?: WeaponId; readonly charge?: number };
 const baseTerrain = (frame: LabFrame) => buildInitialTerrain(frame.map);
@@ -179,7 +180,7 @@ export const NetworkField = (props: Props) => {
       onPointerMove={e => { if (openingActive() || !e.isPrimary) return; const p = point(e), now = performance.now(); if (drag.current) { rig.pan({ x: p.x - drag.current.x, y: p.y - drag.current.y }, now - drag.current.at, now); drag.current = { ...p, at: now }; } else if (e.pointerType === "mouse") rig.edge(p, now); }}
       onPointerUp={e => { if (!drag.current) return; drag.current = null; rig.releasePan(performance.now()); if (e.currentTarget.hasPointerCapture(e.pointerId)) e.currentTarget.releasePointerCapture(e.pointerId); }}
       onPointerCancel={() => { drag.current = null; rig.stop(); }} onPointerLeave={() => { if (!drag.current) rig.stop(); }} onBlur={() => rig.stop()} />
-    {!loaded && <p className="network-loading" role="status">{error ? t("素材を読み込めませんでした。再読み込みしてください。") : t("フィールドを準備しています…")}</p>}
+    {!loaded && (error ? <p className="network-loading" role="status">{t("素材を読み込めませんでした。再読み込みしてください。")}</p> : <SceneLoading className="network-loading" steps={[{ label: t("フィールドを準備中"), state: "active" }]} />)}
     <button className="network-overview" disabled={openingActive()} aria-label={t("全体図からカメラを移動")} onClick={e => { const box = e.currentTarget.getBoundingClientRect(); rig.focus(e.detail === 0 ? { x: props.frame.map.width / 2, y: props.frame.map.height / 2 } : { x: (e.clientX - box.left) / box.width * props.frame.map.width, y: (e.clientY - box.top) / box.height * props.frame.map.height }, "manual", true); }}><canvas ref={mini} width="200" height="90" /></button>
   </div>;
 };
