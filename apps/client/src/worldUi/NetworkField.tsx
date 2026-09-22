@@ -18,6 +18,10 @@ import { createCameraRig } from "@/prototype/cameraRig";
 import { loadCameraSettings } from "@/prototype/cameraSettings";
 import { worldToScreen } from "@/prototype/camera";
 import type { presentLabReplay } from "@/networkLab/labReplay";
+import { createLabCrumbles, drawLabImpacts, labEdgePoints, labShake, labTankHit } from "./labImpactView";
+import { edgeBlinkOn } from "@/game/edgeMarker";
+import { guideDots } from "@/game/trail";
+import { revealRowsAt } from "./openingTour";
 
 type Props = { readonly serverNow: number; readonly onSettling?: (settling: boolean) => void; readonly followTurns?: boolean; readonly blocked?: boolean; readonly frame: LabFrame; readonly players: LabFrame["players"]; readonly presentation: ReturnType<typeof presentLabReplay>; readonly elevation: number; readonly ownId: string; readonly selectedWeapon?: WeaponId; readonly charge?: number };
 const baseTerrain = (frame: LabFrame) => buildInitialTerrain(frame.map);
@@ -36,7 +40,10 @@ export const NetworkField = (props: Props) => {
     const layout = (): Layout => ({ cell, mapWidth: element.clientWidth, mapHeight: element.clientHeight, panelWidth: 0, panelCell: 1 });
     const start = async () => {
       rig.configure(loadCameraSettings());
-      let mask = baseTerrain(latest.current.frame), previousSize = "", terrainKey = "", turnKey = "", replayKey = -1;
+      let mask = baseTerrain(latest.current.frame), previousSize = "", terrainKey = "", turnKey = "", replayKey = -1, opsCount = 0;
+      const crumbles = createLabCrumbles();
+      let guide: readonly { readonly x: number; readonly y: number }[] | null = null, guideShown = false;
+      const colorOf = (playerId: string) => Number.parseInt(teamColor(Number((latest.current.frame.players.find(p => p.playerId === playerId)?.teamId ?? "t0").slice(1))).slice(1), 16);
       const falls = createFallMotion(); let settling = false, wasOpening = false, signalVisible = false, fallMatch = "";
       const facing = new Map<string, -1 | 1>();
       let tankIndex = 0;
@@ -50,8 +57,14 @@ export const NetworkField = (props: Props) => {
         const { frame, players, presentation, elevation, ownId } = latest.current;
         const size = layout(), key = `${size.mapWidth}/${size.mapHeight}/${frame.map.width}/${frame.map.height}`;
         if (key !== previousSize) { previousSize = key; r.setLayout(size); rig.resize({ width: size.mapWidth, height: size.mapHeight, scale: size.cell }, { left: 0, top: -100, right: frame.map.width, bottom: frame.map.height }); }
+        const reducedNow = matchMedia("(prefers-reduced-motion: reduce)").matches;
         const nextTerrain = `${frame.matchId}/${presentation.terrainOps.length}`;
-        if (nextTerrain !== terrainKey) { terrainKey = nextTerrain; mask = applyOps(baseTerrain(frame), presentation.terrainOps); r.setTerrain(mask, undefined, presentation.terrainOps); }
+        if (nextTerrain !== terrainKey) {
+          const before = mask, grew = terrainKey.startsWith(`${frame.matchId}/`) && presentation.terrainOps.length > opsCount;
+          if (grew && frame.phase === "replaying" && !reducedNow) crumbles.note(before, presentation.terrainOps.slice(opsCount), latest.current.serverNow);
+          terrainKey = nextTerrain; opsCount = presentation.terrainOps.length;
+          mask = applyOps(baseTerrain(frame), presentation.terrainOps); r.setTerrain(mask, undefined, presentation.terrainOps);
+        }
         const nextTurn = `${frame.matchId}/${frame.turnId}`;
         if (nextTurn !== turnKey && latest.current.serverNow >= (frame.delay?.revealUntil ?? 0) - 600) { if (latest.current.followTurns !== false) focus(turnKey === ""); turnKey = nextTurn; }
         const own = players.find(p => p.playerId === ownId);
@@ -69,10 +82,17 @@ export const NetworkField = (props: Props) => {
           return { ...p, ...motion };
         });
         if (settling !== ownFalling) { settling = ownFalling; latest.current.onSettling?.(settling); }
-        shown.forEach((p, i) => r.setTank(i, { x: p.x, y: p.y, tilt: tiltOf(mask, { x: Math.round(p.x), y: Math.round(p.y) }), facing: facing.get(p.playerId) ?? 1,
-          elevation: p.playerId === shot?.playerId ? shot.elevation : p.playerId === ownId ? elevation : 45, hp: p.eliminated ? 0 : p.hp, visible: p.y < frame.map.height, falling: p.falling || presentation.fallingIds.includes(p.playerId), shotFlashes: p.playerId === shot?.playerId ? presentation.shotFlashes : [], recoil: p.playerId === shot?.playerId ? presentation.recoil : 0, aiming: frame.phase === "acting" && p.playerId === ownId && p.playerId === frame.actorId, charge: frame.phase === "acting" && p.playerId === ownId && p.playerId === frame.actorId ? latest.current.charge ?? 0 : 0, acting: frame.phase === "acting" && p.playerId === frame.actorId, flash: presentation.effects.some(effect => effect.hitIds.includes(p.playerId)) }));
+        shown.forEach((p, i) => { const hit = labTankHit(presentation, p.playerId); r.setTank(i, { x: p.x, y: p.y, tilt: tiltOf(mask, { x: Math.round(p.x), y: Math.round(p.y) }), facing: facing.get(p.playerId) ?? 1,
+          elevation: p.playerId === shot?.playerId ? shot.elevation : p.playerId === ownId ? elevation : 45, hp: hit.bar ? hit.bar.hp : p.eliminated ? 0 : p.hp, ...(hit.bar ? { hpGhost: hit.bar.hpGhost, ghostOn: hit.bar.ghostOn } : {}), visible: p.y < frame.map.height, falling: p.falling || presentation.fallingIds.includes(p.playerId), shotFlashes: p.playerId === shot?.playerId ? presentation.shotFlashes : [], recoil: p.playerId === shot?.playerId ? presentation.recoil : 0, aiming: frame.phase === "acting" && p.playerId === ownId && p.playerId === frame.actorId, charge: frame.phase === "acting" && p.playerId === ownId && p.playerId === frame.actorId ? latest.current.charge ?? 0 : 0, acting: frame.phase === "acting" && p.playerId === frame.actorId, flash: hit.flash }); });
         const actor = shown.find(p => p.playerId === frame.actorId); if (actor && frame.phase === "acting") rig.actor({ x: actor.x, y: actor.y - 6 });
-        if (frame.replay && replayKey !== frame.replay.startsAt) { replayKey = frame.replay.startsAt; bullet = r.projectile("yellow", frame.replay.shooter.weapon);  const p = presentation.bullets[0]; if (p) rig.focus(p, "shot"); }
+        if (frame.replay && replayKey !== frame.replay.startsAt) {
+          replayKey = frame.replay.startsAt; bullet = r.projectile("yellow", frame.replay.shooter.weapon); crumbles.reset();
+          // 自分の射撃の軌跡を次の自分の手番まで残す（設計書 38 の E7）。相手には見せない
+          if (frame.replay.shooter.playerId === ownId) guide = guideDots(frame.replay.paths.map(path => path.points));
+          const p = presentation.bullets[0]; if (p) rig.focus(p, "shot");
+        }
+        const showGuide = Boolean(guide) && frame.phase === "acting" && frame.actorId === ownId && !openingActive();
+        if (showGuide !== guideShown) { guideShown = showGuide; r.setGuide(showGuide ? guide : null); }
         const replay = frame.phase === "replaying" ? frame.replay : null;
         if (replay) {
           const hit = replay.impacts.some(i => i.damage.some(d => d.amount > 0));
@@ -98,7 +118,10 @@ export const NetworkField = (props: Props) => {
         } else damageEvents.clear();
         bullet.clear();
         for (let i = 0; i < 9; i++) { const p = presentation.bullets[i]; bullet.setBullet(i, p?.x ?? null, p?.y ?? 0, p?.angle ?? 0); }
-        presentation.effects.forEach((effect, index) => bullet.setBlast(String(index), effect.cx, effect.cy, effect.radius, true, false, matchMedia("(prefers-reduced-motion: reduce)").matches ? 1 : effect.frame));
+        drawLabImpacts(bullet, presentation, mask, reducedNow);
+        crumbles.draw(bullet, latest.current.serverNow);
+        r.setShake(labShake(presentation, reducedNow));
+        r.setEdgeMarkers(labEdgePoints(presentation, shown, colorOf), edgeBlinkOn(latest.current.serverNow, reducedNow));
         const first = presentation.bullets[0]; if (first) rig.shot(first);
         const opening = frame.opening && latest.current.serverNow < frame.opening.endsAt;
         if (opening) {
@@ -108,8 +131,10 @@ export const NetworkField = (props: Props) => {
           r.setLayout({ ...size, cell: tour.scale });
           rig.resize({ width: size.mapWidth, height: size.mapHeight, scale: tour.scale }, rig.get().bounds);
           rig.focus(tour.center, "actor", true);
+          r.setReveal(revealRowsAt(latest.current.serverNow - frame.opening!.startsAt, frame.map.height, reduced));
           if (signalVisible !== tour.start) { signalVisible = tour.start; setSignal(tour.start); }
         } else if (wasOpening) {
+          r.setReveal(null);
           r.setLayout(size); rig.resize({ width: size.mapWidth, height: size.mapHeight, scale: cell }, rig.get().bounds);
           signalVisible = false; setSignal(false); focus();
         }

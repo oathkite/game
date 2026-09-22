@@ -1,7 +1,8 @@
 import { weaponPixels, WEAPON_PIXEL_WIDTH, weaponPixelHeight } from "./weaponPixels";
 import type { CellPoint, WeaponId } from "@game/protocol";
 import { Container, Graphics, Sprite, type Texture } from "pixi.js";
-import { blastCells, bulletSize, type BulletSize, projectileArtScale } from "./weaponArt";
+import { blastShapeCells, bulletSize, type BulletSize, projectileArtScale } from "./weaponArt";
+import type { TrailDot } from "./trail";
 
 // 弾、爆風、破片、外れの印。設計書 08 の 8.6、10 の 10.5。単位はセル。
 // 1 発の射撃に弾は複数（扇）、爆風も複数（弾道 × 段）ありうるので、弾は添字で、爆風と破片と印は鍵で持つ。
@@ -17,6 +18,12 @@ export type ProjectileView = {
   readonly setDebris: (key: string, cells: readonly CellPoint[]) => void;
   /** 外れの印。中心のセルと上下左右の 4 セルを塗る十字。cx が null か on が偽なら消す */
   readonly setMissMark: (key: string, cx: number | null, cy: number, on: boolean) => void;
+  /** 弾道 index の軌跡。設計書 38 の E3。空なら消す */
+  readonly setTrail: (index: number, dots: readonly TrailDot[]) => void;
+  /** 削れた縁のかけら。設計書 38 の E2。地形と同じ白で描く */
+  readonly setCrumble: (key: string, cells: readonly CellPoint[]) => void;
+  /** 直撃の白黒反転。設計書 38 の E5。null なら消す */
+  readonly setInvert: (key: string, cells: { readonly white: readonly CellPoint[]; readonly black: readonly CellPoint[] } | null) => void;
   readonly destroy: () => void;
 };
 
@@ -38,10 +45,22 @@ const keyedLayer = (parent: Container) => {
   };
 };
 
-const drawBlast = (g: Graphics, color: number, cx: number, cy: number, r: number, ring: boolean): void => {
-  for (const c of blastCells(cx, cy, r, ring)) g.rect(c.x, c.y, 1, 1);
+const drawBlast = (g: Graphics, weapon: WeaponId, color: number, cx: number, cy: number, r: number, ring: boolean): void => {
+  for (const c of blastShapeCells(weapon, cx, cy, r, ring)) g.rect(c.x, c.y, 1, 1);
   g.fill(color);
 };
+
+const fillCells = (g: Graphics, cells: readonly CellPoint[], color: number, size = 1): void => {
+  if (cells.length === 0) return;
+  const inset = (1 - size) / 2;
+  for (const c of cells) g.rect(c.x + inset, c.y + inset, size, size);
+  g.fill(color);
+};
+
+/** 軌跡の色。新しい点は明るい緑、古い点は暗い緑 */
+const TRAIL_RECENT_COLOR = 0x1f8a42;
+const TRAIL_OLD_COLOR = 0x0f4d24;
+const TERRAIN_COLOR = 0xffffff;
 
 /** 弾の列。弾道の数だけ矩形を持ち、足りなければ作る */
 const bulletPool = (parent: Container, size: BulletSize, weapon: WeaponId, texture?: Texture, scale = 1 / 12) => {
@@ -73,7 +92,11 @@ export const createProjectileView = (color: number, weapon: WeaponId, texture?: 
   const debris = new Container();
   const misses = new Container();
   const bullets = new Container();
-  container.addChild(blasts, debris, misses, bullets);
+  const trails = new Container();
+  const inverts = new Container();
+  container.addChild(trails, blasts, inverts, debris, misses, bullets);
+  const trailLayer = keyedLayer(trails);
+  const invertLayer = keyedLayer(inverts);
   const blastLayer = keyedLayer(blasts);
   const impactSprites = new Map<string, Sprite>();
   const debrisLayer = keyedLayer(debris);
@@ -91,6 +114,8 @@ export const createProjectileView = (color: number, weapon: WeaponId, texture?: 
     },
     clear: () => {
       blastLayer.clear();
+      trailLayer.clear();
+      invertLayer.clear();
       for (const sprite of impactSprites.values()) sprite.visible = false;
       debrisLayer.clear();
       missLayer.clear();
@@ -114,7 +139,7 @@ export const createProjectileView = (color: number, weapon: WeaponId, texture?: 
       const g = blastLayer.get(key);
       g.clear();
       if (cx === null || !on || r <= 0) return;
-      drawBlast(g, color, cx, cy, r, ring);
+      drawBlast(g, weapon, color, cx, cy, r, ring);
     },
     setDebris: (key, cells) => {
       const g = debrisLayer.get(key);
@@ -127,6 +152,25 @@ export const createProjectileView = (color: number, weapon: WeaponId, texture?: 
       const g = missLayer.get(key);
       g.clear();
       if (cx !== null && on) drawMissMark(g, color, cx, cy);
+    },
+    setTrail: (index, dots) => {
+      const g = trailLayer.get(String(index));
+      g.clear();
+      const at = (d: TrailDot): CellPoint => ({ x: d.x - 0.5, y: d.y - 0.5 });
+      fillCells(g, dots.filter(d => !d.recent).map(at), TRAIL_OLD_COLOR, 0.5);
+      fillCells(g, dots.filter(d => d.recent).map(at), TRAIL_RECENT_COLOR, 0.5);
+    },
+    setCrumble: (key, cells) => {
+      const g = debrisLayer.get(`crumble/${key}`);
+      g.clear();
+      fillCells(g, cells, TERRAIN_COLOR);
+    },
+    setInvert: (key, cells) => {
+      const g = invertLayer.get(key);
+      g.clear();
+      if (!cells) return;
+      fillCells(g, cells.white, 0xffffff);
+      fillCells(g, cells.black, 0x000000);
     },
     destroy: () => container.destroy({ children: true }),
   };

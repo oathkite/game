@@ -14,7 +14,7 @@ it.each([0, 1] as const)("starts seat %i replay at the confirmed crater position
   const after = players.map((p, i) => ({ ...p, x: simulated.result.xAfter[i]!, y: simulated.result.yAfter[i]!, hp: simulated.result.hpAfter[i]! })) as unknown as readonly [PlayerView, PlayerView];
   const job: ReplayJob = { id: 1, shot: simulated.result, paths: simulated.paths, maskBefore: mask, maskAfter: simulated.mask, playersBefore: players, playersAfter: after };
   const setTank = vi.fn();
-  const renderer = { setTank, projectile: () => ({ clear: vi.fn() }), onFrame: () => vi.fn(), setShake: vi.fn() } as unknown as Renderer;
+  const renderer = { setTank, projectile: () => ({ clear: vi.fn() }), onFrame: () => vi.fn(), setShake: vi.fn(), setEdgeMarkers: vi.fn() } as unknown as Renderer;
   const stop = playReplay(renderer, job, [45, 45], seat, { sound: vi.fn(), done: vi.fn(), reduceMotion: true });
   const poses = setTank.mock.calls.filter(([index]) => index === seat).map(([, pose]) => pose);
   expect(poses.length).toBeGreaterThan(0);

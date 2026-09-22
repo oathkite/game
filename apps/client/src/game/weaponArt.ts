@@ -48,3 +48,43 @@ export const blastCells = (cx: number, cy: number, r: number, ring: boolean): re
   }
   return cells;
 };
+
+/** 楕円の中（ring なら縁の 1 セル）。上端 top、下端 bottom、半幅 rx */
+const ellipseCells = (cx: number, cy: number, rx: number, top: number, bottom: number, ring: boolean): readonly CellPoint[] => {
+  const cells: CellPoint[] = [];
+  const ry = (bottom - top) / 2, my = (bottom + top) / 2;
+  const inside = (dx: number, dy: number, sx: number, sy: number): boolean => sx > 0 && sy > 0 && (dx * dx) / (sx * sx) + (dy * dy) / (sy * sy) <= 1;
+  for (let dy = top; dy <= bottom; dy++) {
+    for (let dx = -rx; dx <= rx; dx++) {
+      if (!inside(dx, dy - my, rx + 0.5, ry + 0.5)) continue;
+      if (!ring || !inside(dx, dy - my, rx - 0.5, ry - 0.5)) cells.push({ x: cx + dx, y: cy + dy });
+    }
+  }
+  return cells;
+};
+
+/** 横に細長い十字。ring なら両端だけを残す */
+const crossCells = (cx: number, cy: number, r: number, ring: boolean): readonly CellPoint[] => {
+  const arm = Math.max(1, Math.ceil(r / 2));
+  if (ring) return [-1, 0, 1].flatMap(dy => [{ x: cx - r, y: cy + dy }, { x: cx + r, y: cy + dy }]);
+  const horizontal = Array.from({ length: r * 2 + 1 }, (_, i) => ({ x: cx - r + i, y: cy }));
+  const vertical = Array.from({ length: arm * 2 + 1 }, (_, i) => ({ x: cx, y: cy - arm + i })).filter(c => c.y !== cy);
+  return [...horizontal, ...vertical];
+};
+
+/**
+ * 武器ごとの爆風の形。設計書 38 の E4。削る範囲は sim の円のままで、見た目だけを変える。
+ * レーザーは横に細い十字、掘削弾は下へ長い楕円、浮遊砲は内側にもう 1 つの輪を重ねる。ほかは円
+ */
+export const blastShapeCells = (weapon: WeaponId, cx: number, cy: number, r: number, ring: boolean): readonly CellPoint[] => {
+  switch (weapon) {
+    case "laser":
+      return crossCells(cx, cy, r, ring);
+    case "drill":
+      return ellipseCells(cx, cy, Math.max(1, Math.ceil(r * 0.6)), -Math.ceil(r * 0.6), r, ring);
+    case "floater":
+      return ring || r < 4 ? blastCells(cx, cy, r, true) : [...blastCells(cx, cy, r, true), ...blastCells(cx, cy, Math.ceil(r / 2), true)];
+    default:
+      return blastCells(cx, cy, r, ring);
+  }
+};

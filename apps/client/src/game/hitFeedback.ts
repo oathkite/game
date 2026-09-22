@@ -1,5 +1,5 @@
 import type { CellPoint, Seat } from "@game/protocol";
-import { BLAST_RADIUS, MAP_HEIGHT, MAP_WIDTH } from "@game/sim";
+import { BLAST_RADIUS, MAP_HEIGHT, MAP_WIDTH, type TerrainMask } from "@game/sim";
 import type { SoundName } from "@/app/audio";
 
 // 着弾の手応え。設計書 03 の 3.8 と 3.9、08 の 8.2 と 8.6。
@@ -223,10 +223,35 @@ export const MISS_BLINK_MS = 50;
 
 export type MissMark = { readonly x: number; readonly y: number; readonly on: boolean };
 
-/** 弾が消えた位置をマップの端に寄せ、t ミリ秒後の印。過ぎたら null */
-export const missMarkAt = (t: number, last: CellPoint): MissMark | null => {
+/** 弾が消えた位置をマップの端に寄せ、t ミリ秒後の印。過ぎたら null。マップの大きさは省けば標準 */
+export const missMarkAt = (t: number, last: CellPoint, bounds: { readonly width: number; readonly height: number } = { width: MAP_WIDTH, height: MAP_HEIGHT }): MissMark | null => {
   if (t < 0 || t >= MISS_MS) return null;
-  const x = Math.min(MAP_WIDTH - 2, Math.max(1, last.x));
-  const y = Math.min(MAP_HEIGHT - 2, Math.max(1, last.y));
+  const x = Math.min(bounds.width - 2, Math.max(1, last.x));
+  const y = Math.min(bounds.height - 2, Math.max(1, last.y));
   return { x, y, on: Math.floor(t / MISS_BLINK_MS) % 2 === 0 };
+};
+
+/**
+ * オンライン対戦の着弾の時刻の換算。設計書 38 の E1。
+ * 着弾から再生の終わりまで span ミリ秒しか無いとき（外れのターンは 300 ms）、着弾の演出の全体を span に縮める。足りていればそのまま
+ */
+export const impactClock = (age: number, span: number): number => (span >= IMPACT_TOTAL_MS ? age : (age * IMPACT_TOTAL_MS) / Math.max(1, span));
+
+/** 直撃の白黒反転を出す長さ。1 フレーム強。設計書 38 の E5 */
+export const INVERT_MS = 34;
+
+/** 着弾から t ミリ秒後に反転を出すか。大ダメージ（段階 3）の着弾で、爆風が最大になった瞬間だけ。動きを減らす設定では出さない */
+export const invertOn = (t: number, damage: number, reduced: boolean): boolean =>
+  !reduced && damageTier(damage) === 3 && t >= CARVE_AT_MS && t < CARVE_AT_MS + INVERT_MS;
+
+/** 爆風の円の中を白黒反転したセル。地形のあるセルは黒、空のセルは白 */
+export const invertCells = (mask: TerrainMask, cx: number, cy: number, r: number): { readonly white: readonly CellPoint[]; readonly black: readonly CellPoint[] } => {
+  const white: CellPoint[] = [], black: CellPoint[] = [];
+  for (let y = cy - r; y <= cy + r; y++) {
+    for (let x = cx - r; x <= cx + r; x++) {
+      if ((x - cx) ** 2 + (y - cy) ** 2 > r * r || x < 0 || y < 0 || x >= mask.width || y >= mask.height) continue;
+      (mask.cells[y * mask.width + x] === 1 ? black : white).push({ x, y });
+    }
+  }
+  return { white, black };
 };
