@@ -1,3 +1,4 @@
+import { PracticeFlow } from "@/practice/PracticeFlow";
 import { resultTitle } from "./resultTitle";
 import { DotIcon } from "./DotIcon";
 import { closeOnBackdrop } from "@/worldUi/dialogBackdrop";
@@ -12,7 +13,7 @@ import { StartScreen } from "./StartScreen";
 import { inviteRoom } from "./roomInvite";
 import { loadDisplayScale, saveDisplayScale } from "./displayScale";
 import { lazy, Suspense, useCallback, useEffect, useRef, useState } from "react";
-import { WEAPON_DELAY, MAP_LABELS, type MapName, WEAPON_IDS, WEAPON_LABELS, PLAYER_COLORS, COLOR_HEX, type WeaponId } from "@game/protocol";
+import { type MapName, PLAYER_COLORS, COLOR_HEX } from "@game/protocol";
 import { loadProfile, saveProfile } from "@/app/profile";
 import { setAudioActive, setAudioSettings, setMusic, playSound, unlockAudio } from "@/app/audio";
 import { CameraSettingsPanel } from "@/prototype/CameraSettingsPanel";
@@ -30,12 +31,13 @@ const CameraPrototype = lazy(() => loadScene("src/prototype/CameraPrototype.tsx"
 
 const ResultPlayers = lazy(() => loadScene("src/worldUi/ResultPlayers.tsx", () => import("./ResultPlayers")).then(module => ({ default: module.ResultPlayers })));
 
-type Scene = "start" | "lobby" | "battle" | "result" | "network" | "rooms";
+type Scene = "start" | "lobby" | "battle" | "result" | "network" | "rooms" | "practice";
 export const WorldScenes = () => {
   const { t, language } = useLanguage();
   useEffect(() => { document.documentElement.lang = language; }, [language]);
   const [scene, setScene] = useState<Scene>(() => inviteRoom(location.href) || new URL(location.href).searchParams.has("room") ? "rooms" : "start"), [closing, setClosing] = useState(false);
   const [practiceMap, setPracticeMap] = useState<MapName | "random">("ridgeline");
+  const [practiceProfile, setPracticeProfile] = useState(loadProfile);
   const [result, setResult] = useState<ResultPresentation | null>(null);
   const timer = useRef<ReturnType<typeof setTimeout> | null>(null);
   const heading = useRef<HTMLDivElement>(null);
@@ -46,7 +48,7 @@ export const WorldScenes = () => {
     setClosing(true);
     timer.current = setTimeout(() => { setScene(next); setClosing(false); timer.current = null; }, 400);
   }, []);
-  useWorldBrowserBack(scene !== "start", () => go(scene === "lobby" ? "start" : "lobby"));
+  useWorldBrowserBack(scene !== "start", () => go(scene === "lobby" ? "start" : scene === "battle" || scene === "result" ? "practice" : "lobby"));
   useEffect(() => { const profile = loadProfile(); setAudioSettings(profile.volume, profile.muted, profile.bgmVolume ?? profile.volume); }, []);
   useEffect(() => () => { if (timer.current) clearTimeout(timer.current); }, []);
   useEffect(() => { heading.current?.focus({ preventScroll: true }); }, [scene]);
@@ -69,16 +71,18 @@ export const WorldScenes = () => {
     setMusic(scene === "result" && result ? "result" : "hangar");
     if (scene === "result") playSound("matchFinish");
   }, [scene, result]);
+  const exitPractice = useCallback(() => { setPracticeProfile(loadProfile()); go("practice"); }, [go]);
   const exit = useCallback(() => go("lobby"), [go]);
   const finish = useCallback((value: ResultPresentation) => { setResult(value); go("result"); }, [go]);
   return <div className={`world-ui world-scene-${scene} ${closing ? "world-closing" : ""}`}>
     <SceneBoundary message={t("画面を読み込めませんでした。通信を確認して再読み込みしてください。")} retryLabel={t("再読み込み")}>
     <Suspense fallback={<p role="status">{t("フィールドを準備しています…")}</p>}>
-    {scene === "battle" ? <CameraPrototype worldArt mapName={practiceMap} onExit={exit} onResult={finish} /> : scene === "rooms" ? <RoomScreen onExit={exit} {...(import.meta.env.DEV ? { onLab: () => go("network") } : {})} /> : scene === "network" ? <NetworkLab worldArt onExit={exit} /> : <>
+    {scene === "battle" ? <CameraPrototype worldArt mapName={practiceMap} onExit={exitPractice} onResult={finish} /> : scene === "rooms" ? <RoomScreen onExit={exit} {...(import.meta.env.DEV ? { onLab: () => go("network") } : {})} /> : scene === "network" ? <NetworkLab worldArt onExit={exit} /> : <>
       <div key={scene} ref={heading} tabIndex={-1} className="world-content">
         {scene === "start" && <StartScreen onBegin={() => go("lobby")} />}
-        {scene === "lobby" && <Lobby go={go} practiceMap={practiceMap} setPracticeMap={setPracticeMap} />}
-        {scene === "result" && result && <section className="world-result-screen terminal-screen result-terminal"><header className="result-header"><h1>{t(resultTitle(result.result, result.players.find(p => p.playerId === result.ownId)?.teamId))}</h1></header><ResultPlayers {...result} /><div className="result-actions"><PixelButton onClick={exit}>{t("出撃準備")}</PixelButton><PixelButton className="result-primary" onClick={() => go("battle")}>{t("もう一度プレイ")}</PixelButton></div></section>}
+        {scene === "practice" && <PracticeFlow profile={practiceProfile} onProfileChange={p => { setPracticeProfile(p); saveProfile(p); setAudioSettings(p.volume, p.muted, p.bgmVolume ?? p.volume); }} onExit={exit} onFreeStart={map => { setPracticeMap(map); go("battle"); }} />}
+        {scene === "lobby" && <Lobby go={go} onPractice={() => { setPracticeProfile(loadProfile()); go("practice"); }} />}
+        {scene === "result" && result && <section className="world-result-screen terminal-screen result-terminal"><header className="result-header"><h1>{t(resultTitle(result.result, result.players.find(p => p.playerId === result.ownId)?.teamId))}</h1></header><ResultPlayers {...result} /><div className="result-actions"><PixelButton onClick={exitPractice}>{t("プラクティス")}</PixelButton><PixelButton className="result-primary" onClick={() => go("battle")}>{t("もう一度プレイ")}</PixelButton></div></section>}
       </div>
     </>}
     </Suspense>
@@ -86,13 +90,11 @@ export const WorldScenes = () => {
     <div className="world-shutter" aria-hidden="true" />
   </div>;
 };
-const Lobby = ({ go, practiceMap, setPracticeMap }: { readonly go: (scene: Scene) => void; readonly practiceMap: MapName | "random"; readonly setPracticeMap: (map: MapName | "random") => void }) => {
+const Lobby = ({ go, onPractice }: { readonly go: (scene: Scene) => void; readonly onPractice: () => void }) => {
   const { t } = useLanguage();
   const [profile, setProfile] = useState(loadProfile);
   const update = (patch: Partial<typeof profile>) => { const next = { ...loadProfile(), ...patch }; setProfile(next); saveProfile(next); };
-  const practiceDialog = useRef<HTMLDialogElement>(null);
   const settingsDialog = useRef<HTMLDialogElement>(null);
-  const weapon = (slot: 0 | 1, value: WeaponId) => update({ loadout: slot === 0 ? [value, profile.loadout[1]] : [profile.loadout[0], value] });
   return <section className="world-lobby">
     <header><PixelButton onClick={() => settingsDialog.current?.showModal()}>{t("設定")}</PixelButton></header>
     <div className="world-machine"><TankPortrait colors={profile.colors} /></div>
@@ -103,19 +105,14 @@ const Lobby = ({ go, practiceMap, setPracticeMap }: { readonly go: (scene: Scene
         {PLAYER_COLORS.map(color => <button type="button" role="radio" aria-label={color} aria-checked={profile.colors[part] === color} key={color} onClick={() => update({ colors: { ...profile.colors, [part]: color } })}><i style={{ background: COLOR_HEX[color] }} /></button>)}
       </div></fieldset>)}</div>
       <PixelButton className="lobby-deploy" onClick={() => go("rooms")}>{t("出撃")}</PixelButton>
-      <PixelButton className="lobby-practice" onClick={() => practiceDialog.current?.showModal()}>{t("プラクティス")}</PixelButton>
+      <PixelButton className="lobby-practice" onClick={onPractice}>{t("プラクティス")}</PixelButton>
     </div>
     <dialog ref={settingsDialog} className="lobby-settings" aria-labelledby="lobby-settings-title" onClick={event => closeOnBackdrop(event, () => settingsDialog.current?.close())}>
       <h2 id="lobby-settings-title">{t("整備と設定")}</h2>
       <PixelButton className="modal-close" aria-label={t("閉じる")} onClick={() => settingsDialog.current?.close()}><DotIcon name="close" /></PixelButton>
       <Settings />
     </dialog>
-    <dialog onClick={event => closeOnBackdrop(event, () => practiceDialog.current?.close())} ref={practiceDialog} className="practice-settings" aria-labelledby="practice-settings-title">
-      <h2 id="practice-settings-title">{t("プラクティス設定")}</h2>
-      <label>{t("ステージ")}<select aria-label={t("ステージ")} value={practiceMap} onChange={e => setPracticeMap(e.target.value as MapName | "random")}><option value="random">{t("ランダム")}</option>{(["ridgeline", "stone-bridge", "terraces", "sky-islands"] as const).map(map => <option key={map} value={map}>{t(MAP_LABELS[map])}</option>)}</select></label>
-      {([0, 1] as const).map(slot => <label key={slot}>{t("装備")} {slot + 1}<select aria-label={`${t("装備")} ${slot + 1}`} value={profile.loadout[slot]} onChange={e => weapon(slot, e.target.value as WeaponId)}>{WEAPON_IDS.map(id => <option key={id} value={id} disabled={id === profile.loadout[slot === 0 ? 1 : 0]}>{t(WEAPON_LABELS[id])} · {t("コスト")} {WEAPON_DELAY[id]}</option>)}</select></label>)}
-      <div className="practice-settings-actions"><PixelButton className="modal-close" aria-label={t("閉じる")} onClick={() => practiceDialog.current?.close()}><DotIcon name="close" /></PixelButton><PixelButton className="practice-start" onClick={() => { practiceDialog.current?.close(); go("battle"); }}>{t("プラクティス開始")}</PixelButton></div>
-    </dialog>
+
   </section>;
 };
 const Settings = () => {

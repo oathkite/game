@@ -9,7 +9,8 @@ test("portrait practice keeps every control 44px and inside the screen", async (
   await page.goto("/?prototype=world");
   await page.getByRole("button", { name: "はじめる", exact: true }).click();
   await page.getByRole("button", { name: "プラクティス", exact: true }).click();
-  await page.getByRole("button", { name: "プラクティス開始", exact: true }).click();
+  await page.getByRole("button", { name: "自由練習をはじめる", exact: true }).click();
+  await page.getByRole("button", { name: "自由練習をはじめる", exact: true }).click();
   const field = page.getByTestId("camera-world");
   await expect(field).toHaveAttribute("data-loaded", "true");
   const fieldBox = (await field.boundingBox())!;

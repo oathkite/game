@@ -8,7 +8,7 @@ import { actorPoint } from "./PrototypeCanvas";
 
 type Action = "left" | "right" | "up" | "down" | "fire";
 type Owner = { readonly id: number | string; readonly action: Action | "pan" };
-export const usePrototypeInput = (store: MatchStore, rig: CameraRig, enabled: boolean, blocked: boolean, toggleMenu: () => void, paused = false) => {
+export const usePrototypeInput = (store: Pick<MatchStore, "getView" | "fire" | "changeElevation" | "moveStep" | "selectSlot">, rig: CameraRig, enabled: boolean, blocked: boolean, toggleMenu: () => void, paused = false) => {
   const aimOwner = useRef<{ id: string | number; action: "up" | "down" } | null>(null);
   const pause = useRef(paused); pause.current = paused;
   const gauge = usePowerGauge(enabled && !blocked && !paused, store.fire);
