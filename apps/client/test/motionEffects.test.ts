@@ -72,7 +72,7 @@ describe("blastShapeCells", () => {
   it("標準砲は今と同じ円", () => {
     expect(blastShapeCells("cannon", 10, 10, 5, false)).toEqual(blastCells(10, 10, 5, false));
   });
-  it("レーザーは横に長く、縦は半分の長さの十字", () => {
+  it("レーザー弾は横に長く、縦は半分の長さの十字", () => {
     const cells = blastShapeCells("laser", 10, 10, 6, false);
     const xs = cells.map(c => c.x), ys = cells.map(c => c.y);
     expect(Math.max(...xs) - Math.min(...xs)).toBe(12);
@@ -80,16 +80,16 @@ describe("blastShapeCells", () => {
     expect(new Set(cells.map(c => `${c.x}/${c.y}`)).size).toBe(cells.length);
   });
   it("掘削弾は下へ長い楕円で、上には短い", () => {
-    const cells = blastShapeCells("drill", 10, 10, 6, false);
+    const cells = blastShapeCells("digger", 10, 10, 6, false);
     const ys = cells.map(c => c.y);
     expect(Math.max(...ys) - 10).toBeGreaterThan(10 - Math.min(...ys));
   });
-  it("浮遊砲は輪を 2 つ重ね、消える前は外の輪だけ", () => {
+  it("浮遊弾は輪を 2 つ重ね、消える前は外の輪だけ", () => {
     expect(blastShapeCells("floater", 10, 10, 8, false).length).toBeGreaterThan(blastCells(10, 10, 8, true).length);
     expect(blastShapeCells("floater", 10, 10, 8, true)).toEqual(blastCells(10, 10, 8, true));
   });
   it("縁だけの姿は塗った姿より少ない", () => {
-    for (const w of ["laser", "drill", "cannon"] as const) expect(blastShapeCells(w, 10, 10, 6, true).length).toBeLessThan(blastShapeCells(w, 10, 10, 6, false).length);
+    for (const w of ["laser", "digger", "cannon"] as const) expect(blastShapeCells(w, 10, 10, 6, true).length).toBeLessThan(blastShapeCells(w, 10, 10, 6, false).length);
   });
 });
 

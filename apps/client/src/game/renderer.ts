@@ -45,8 +45,8 @@ export type Renderer = {
 
 export type EdgePoint = { readonly x: number; readonly y: number; readonly color: number };
 
-/** 前の射撃の軌跡の色 */
-const GUIDE_COLOR = 0x1f8a42;
+/** 前の射撃の軌跡の色。飛翔中の軌跡の古い点と同じくすんだ緑 */
+const GUIDE_COLOR = 0x79cc96;
 /** 画面の外の印のドット（px） */
 const EDGE_DOT = 2;
 

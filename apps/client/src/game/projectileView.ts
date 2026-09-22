@@ -57,9 +57,9 @@ const fillCells = (g: Graphics, cells: readonly CellPoint[], color: number, size
   g.fill(color);
 };
 
-/** 軌跡の色。新しい点は明るい緑、古い点は暗い緑 */
-const TRAIL_RECENT_COLOR = 0x1f8a42;
-const TRAIL_OLD_COLOR = 0x0f4d24;
+/** 軌跡の色。新しい点は淡い緑、古い点はくすんだ緑。黒い空と緑の地形のどちらの上でも読める明るさにする */
+const TRAIL_RECENT_COLOR = 0xd9f5e1;
+const TRAIL_OLD_COLOR = 0x79cc96;
 const TERRAIN_COLOR = 0xffffff;
 
 /** 弾の列。弾道の数だけ矩形を持ち、足りなければ作る */

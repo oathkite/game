@@ -74,13 +74,13 @@ const crossCells = (cx: number, cy: number, r: number, ring: boolean): readonly 
 
 /**
  * 武器ごとの爆風の形。設計書 38 の E4。削る範囲は sim の円のままで、見た目だけを変える。
- * レーザーは横に細い十字、掘削弾は下へ長い楕円、浮遊砲は内側にもう 1 つの輪を重ねる。ほかは円
+ * レーザー弾は横に細い十字、掘削弾（digger）は下へ長い楕円、浮遊弾は内側にもう 1 つの輪を重ねる。ほかは円
  */
 export const blastShapeCells = (weapon: WeaponId, cx: number, cy: number, r: number, ring: boolean): readonly CellPoint[] => {
   switch (weapon) {
     case "laser":
       return crossCells(cx, cy, r, ring);
-    case "drill":
+    case "digger":
       return ellipseCells(cx, cy, Math.max(1, Math.ceil(r * 0.6)), -Math.ceil(r * 0.6), r, ring);
     case "floater":
       return ring || r < 4 ? blastCells(cx, cy, r, true) : [...blastCells(cx, cy, r, true), ...blastCells(cx, cy, Math.ceil(r / 2), true)];
