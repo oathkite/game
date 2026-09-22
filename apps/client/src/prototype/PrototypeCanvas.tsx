@@ -33,11 +33,11 @@ const posesOf = (v: MatchView, elevations: readonly number[]): readonly TankPose
   });
 };
 
-type Props = { readonly onOpeningComplete: () => void; readonly worldArt?: boolean; readonly store: Pick<MatchStore, "getView" | "completeReplay">; readonly practice?: Pick<ChallengeStore, "getTargets" | "showImpact">; readonly rig: CameraRig; readonly layout: Layout; readonly handlers: HTMLAttributes<HTMLDivElement>; readonly blocked: boolean; readonly followShot: boolean; readonly onReady: (ready: boolean) => void };
-export const PrototypeCanvas = ({ store, rig, layout, handlers, blocked, followShot, onReady, onOpeningComplete, worldArt, practice }: Props) => {
+type Props = { readonly onOpeningComplete: () => void; readonly worldArt?: boolean; readonly store: Pick<MatchStore, "getView" | "completeReplay">; readonly practice?: Pick<ChallengeStore, "getTargets" | "showImpact">; readonly rig: CameraRig; readonly layout: Layout; readonly handlers: HTMLAttributes<HTMLDivElement>; readonly blocked: boolean; readonly followShot: boolean; readonly onReady: (ready: boolean) => void; readonly charge?: number };
+export const PrototypeCanvas = ({ store, rig, layout, handlers, blocked, followShot, onReady, onOpeningComplete, worldArt, practice, charge = 0 }: Props) => {
   const hostRef = useRef<HTMLDivElement>(null), miniRef = useRef<HTMLCanvasElement>(null);
-  const latest = useRef({ layout, blocked, followShot });
-  latest.current = { layout, blocked, followShot };
+  const latest = useRef({ layout, blocked, followShot, charge });
+  latest.current = { layout, blocked, followShot, charge };
   const { t } = useLanguage();
   const [signal, setSignal] = useState(false);
   const [error, setError] = useState(false), [loaded, setLoaded] = useState(false);
@@ -100,7 +100,7 @@ export const PrototypeCanvas = ({ store, rig, layout, handlers, blocked, followS
           const poses = posesOf(v, elevations).map((pose, seat) => {
             const motion = falls.sample(String(seat), pose.y, performance.now(), reduced.matches);
             falling ||= motion.falling;
-            r.setTank(seat, { ...pose, ...motion, visible: motion.falling || pose.visible });
+            r.setTank(seat, { ...pose, ...motion, visible: motion.falling || pose.visible, charge: pose.aiming ? current.charge : 0 });
             return { ...pose, ...motion };
           });
           host.dataset.falling = String(falling);
