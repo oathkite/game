@@ -34,7 +34,7 @@ const posesOf = (view: MatchView, elevations: readonly [number, number]): readon
     const elevation = mine && view.control ? view.control.elevation : elevations[seat];
     // 発射角の線は自分が狙いを付けている間だけ出す。相手の仰角は見せない（設計書 04 の 4.2）
     const aiming = Boolean(mine) && view.phase === "acting";
-    return { x, y, tilt: tiltOf(mask, { x, y }), facing, elevation, hp: p.hp, visible: !isRingOut(mask, { x, y }), flash: false, aiming };
+    return { x, y, tilt: tiltOf(mask, { x, y }), facing, elevation, hp: p.hp, visible: !isRingOut(mask, { x, y }), flash: false, aiming, acting: view.phase === "acting" && view.currentSeat === seat };
   };
   return [pose(0), pose(1)];
 };

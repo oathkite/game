@@ -30,6 +30,8 @@ export type TankPose = {
   readonly flash: boolean;
   /** 発射角の線を出す。自分が狙いを付けている間だけ true */
   readonly aiming: boolean;
+  /** この機体の手番。名前の上にキャレットを出し、誰の番かを全員に見せる */
+  readonly acting?: boolean;
 };
 
 export type TankView = {
@@ -86,7 +88,7 @@ export const createTankView = (selection: TankColors, nickname: string, team?: s
     resolution: 1,
   });
   text.anchor.set(0.5, 1);
-  // 操作中の自機だけに出す。名前と同じ色で、誰の機体を動かしているかを名前に結び付ける
+  // 手番の機体に出す。名前と同じ色で、誰の番かを名前に結び付ける
   const caret = createTurnCaret(hex(team ?? colors.primary));
   label.addChild(text, caret);
   let caretElapsed = 0;
@@ -101,7 +103,7 @@ export const createTankView = (selection: TankColors, nickname: string, team?: s
     text.style.fill = wrecked ? 0x929b96 : team ?? colors.primary;
     world.visible = pose.visible;
     label.visible = pose.visible;
-    caret.visible = pose.aiming && !wrecked;
+    caret.visible = pose.acting === true && !wrecked;
     world.position.set(pose.x + 0.5, pose.y);
     rotating.rotation = -pose.tilt * DEG;
     const local = pose.facing === 1 ? pose.elevation : 180 - pose.elevation;
