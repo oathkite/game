@@ -10,6 +10,8 @@ import {
   maskFromHeights,
   MAP_WIDTH,
   settle,
+  SLOPE_RISE_MAX,
+  SLOPE_RUN,
   spawnPos,
   STEPS_PER_TURN,
   stepOutcome,
@@ -130,6 +132,40 @@ describe("移動", () => {
     const back = walk(two, down, -1, STEPS_PER_TURN);
     expect(back.stepsUsed).toBeLessThanOrEqual(1);
     expect(back.x).toBeGreaterThanOrEqual(down.x - 1);
+  });
+
+  it("14 列で 13 セルまでの上り坂は登れて、それより急な坂は途中で壁になる", () => {
+    expect([SLOPE_RUN, SLOPE_RISE_MAX]).toEqual([14, 13]);
+    // x が 6 進むごとに 5 セル上がる坂（約 40 度）。14 列で 11 か 12 セル
+    const gentle = heights((x) => (x < 100 ? 150 : 150 - Math.floor(((x - 100) * 5) / 6)));
+    expect(walk(gentle, at(gentle, 95), 1, STEPS_PER_TURN)).toMatchObject({ x: 125, stepsUsed: STEPS_PER_TURN, fell: false });
+    // 1 列に 1 セル上がる坂（45 度）。14 列目で背後との差が 13 セルを超える
+    const steep = heights((x) => (x < 100 ? 150 : 150 - (x - 100)));
+    const stopped = walk(steep, at(steep, 95), 1, STEPS_PER_TURN);
+    expect(stopped).toMatchObject({ x: 113, y: 137, fell: false });
+    expect(stepOutcome(steep, stopped, 1)).toEqual({ kind: "blocked", y: 137 });
+  });
+
+  it("1 歩で登れる段差でも、積み重なって急な崖になれば登れない", () => {
+    // 2 列ごとに 3 セルの段。1 歩の段差は CLIMB_MAX 以内だが、14 列で 21 セル上がる
+    const stairs = heights((x) => (x < 100 ? 150 : 150 - 3 * (Math.floor((x - 100) / 2) + 1)));
+    const r = walk(stairs, at(stairs, 95), 1, STEPS_PER_TURN);
+    expect(r.fell).toBe(false);
+    expect(150 - r.y).toBeLessThanOrEqual(SLOPE_RISE_MAX);
+  });
+
+  it("登れない急な坂も下りは進める", () => {
+    const steep = heights((x) => (x < 100 ? 150 : 150 - (x - 100)));
+    expect(walk(steep, at(steep, 130), -1, STEPS_PER_TURN)).toMatchObject({ x: 100, y: 150, stepsUsed: STEPS_PER_TURN, fell: false });
+  });
+
+  it("背後が奈落や落下する段差なら、その先の高さは坂に数えない", () => {
+    // 左に地面のない浮島の縁から、14 列で 9 セル上がる坂を登る
+    const edge = heights((x) => (x < 100 ? MAP_HEIGHT : 150 - Math.floor(((x - 100) * 2) / 3)));
+    expect(walk(edge, at(edge, 100), 1, 20)).toMatchObject({ x: 120, stepsUsed: 20, fell: false });
+    // 足元の 20 セル下に低い地面がある崖の上でも同じ
+    const ledge = heights((x) => (x < 100 ? 170 : 150 - Math.floor(((x - 100) * 2) / 3)));
+    expect(walk(ledge, at(ledge, 100), 1, 20)).toMatchObject({ x: 120, stepsUsed: 20, fell: false });
   });
 
   it("踏み外した先は真下の次の地面で、なければ奈落", () => {

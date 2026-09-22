@@ -33,6 +33,13 @@ export const MAX_STEPS = 4000;
 export const STEPS_PER_TURN = 30;
 /** 1歩で乗り越えられる段差は4セルまで。それを超える上りは壁、下りは落下。 */
 export const CLIMB_MAX = 4;
+/**
+ * 上り坂の急さを測る幅（列）と、その幅で登れる高さの上限（セル）。
+ * 14 列で 13 セルより高く上る上り（おおむね 43 度より急）は、1 歩の段差が CLIMB_MAX 以内でも壁になる。
+ * 主砲のクレーター（半径 10）は深さ 10 セルなので、緩い坂の途中にできても 3 セルの余裕で縁を登って出られる。
+ */
+export const SLOPE_RUN = 14;
+export const SLOPE_RISE_MAX = 13;
 /** 傾きを測る幅。中心から左右にこのセル数 */
 export const TILT_HALF_WIDTH = 3;
 export const TILT_DIFF_MAX = 6;
