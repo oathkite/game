@@ -78,6 +78,8 @@ type Run = {
   readonly falls: readonly Fall[];
   /** 弾道ごとの発射の遅れ */
   readonly launchAt: readonly number[];
+  /** 弾道ごとの位置列をセルに直したもの。軌跡に使う */
+  readonly trails: readonly (readonly { readonly x: number; readonly y: number }[])[];
   readonly impacts: readonly ImpactRun[];
   summaryAt: number | null;
   phase: Phase;
@@ -209,7 +211,7 @@ const updateBullet = (run: Run, p: number): void => {
   if (!a || !b) return;
   const f = frame.index - i;
   run.view.setBullet(p, (a.x + (b.x - a.x) * f) / ONE, (a.y + (b.y - a.y) * f) / ONE, angleAt(points, frame.holding ? i : frame.index));
-  run.view.setTrail(p, trailDots(points.map(q => ({ x: q.x / ONE, y: q.y / ONE })), frame.index));
+  run.view.setTrail(p, trailDots(run.trails[p] ?? [], frame.index));
 
 };
 
@@ -338,6 +340,7 @@ export const playReplay = (
     cb,
     falls: computeFalls(job),
     launchAt,
+    trails: job.paths.map(path => path.points.map(q => ({ x: q.x / ONE, y: q.y / ONE }))),
     impacts,
     summaryAt: null,
     phase: "shot",

@@ -93,125 +93,131 @@ const noteMoments = (m: Moments, pose: TankPose, clock: number): void => {
   m.falling = pose.falling === true;
 };
 
-export const createTankView = (selection: TankColors, nickname: string, team?: string, showHealth = true): TankView => {
-  const colors = { primary: COLOR_HEX[selection.primary], secondary: COLOR_HEX[selection.secondary] };
-  const world = new Container();
-  const hull = new Container();
-  const body = new Graphics();
-  const tread = new Graphics();
+type Parts = {
+  readonly world: Container; readonly rotating: Container; readonly hull: Container; readonly body: Graphics; readonly tread: Graphics;
+  readonly arm: Container; readonly chargeDots: Graphics; readonly deadBarrel: Graphics; readonly fx: Graphics; readonly hpBar: Graphics;
+  readonly label: Container; readonly text: Text; readonly caret: Graphics;
+};
+
+/** 表示物を組み立てる。座標はセルで、名前とキャレットだけは拡大しない層に置く */
+const buildParts = (colors: Colors, nickname: string, nameColor: string): Parts => {
+  const world = new Container(), hull = new Container(), body = new Graphics(), tread = new Graphics();
   drawHull(body, colors, false);
   drawTread(tread, 0);
   // 主砲。1 セル幅で長さは物理の主砲（4 セル）に揃える。溜めの点は砲身と一緒に回す
   const arm = new Container();
   arm.position.set(0, -BARREL_BASE_UP);
-  const barrel = new Graphics().rect(0, -0.5, BARREL_LENGTH, 1).fill(hex(colors.secondary));
   const chargeDots = new Graphics();
-  arm.addChild(barrel, chargeDots);
+  arm.addChild(new Graphics().rect(0, -0.5, BARREL_LENGTH, 1).fill(hex(colors.secondary)), chargeDots);
   hull.addChild(body, arm);
   const deadBarrel = new Graphics().rect(0, -0.5, BARREL_LENGTH - 1, 1).fill(WRECK_GREY);
   deadBarrel.position.set(0, -BARREL_BASE_UP + 2);
   const rotating = new Container();
   rotating.addChild(hull, tread, deadBarrel);
   // 地形や車体の傾きに合わせない粒と HP バー
-  const fx = new Graphics();
-  const hpBar = new Graphics();
+  const fx = new Graphics(), hpBar = new Graphics();
   world.addChild(rotating, fx, hpBar);
-
   const label = new Container();
-  const text = new Text({
-    text: nickname,
-    style: { fontFamily: "DotGothic16, monospace", fontSize: 16, fill: team ?? colors.primary },
-    resolution: 1,
-  });
+  const text = new Text({ text: nickname, style: { fontFamily: "DotGothic16, monospace", fontSize: 16, fill: nameColor }, resolution: 1 });
   text.anchor.set(0.5, 1);
   // 手番の機体に出す。名前と同じ色で、誰の番かを名前に結び付ける
-  const caret = createTurnCaret(hex(team ?? colors.primary));
+  const caret = createTurnCaret(hex(nameColor));
   label.addChild(text, caret);
-  let caretElapsed = 0, clock = 0, reduced = false;
+  return { world, rotating, hull, body, tread, arm, chargeDots, deadBarrel, fx, hpBar, label, text, caret };
+};
+
+/** 描画に使う時刻と設定。clock は tick で進める自前の時計 */
+type Frame = { readonly pose: TankPose; readonly clock: number; readonly reduced: boolean; readonly moments: Moments };
+
+/** 撃破の途中なら壊れる前の姿で描く。撃破の瞬間を見ていない（再接続など）ならすぐ残骸 */
+const wreckState = ({ pose, clock, reduced, moments }: Frame) => {
+  const frame = moments.deathAt === null ? null : wreckFrameAt(clock - moments.deathAt, reduced);
+  return { frame, wrecked: pose.hp <= 0 && (frame === null || !frame.intact) };
+};
+
+/** 接地点の周りの粒。着地の沈み込みの量を返す */
+const drawFx = (fx: Graphics, f: Frame, wreck: ReturnType<typeof wreckState>): number => {
+  const { pose, clock, reduced, moments } = f;
+  fx.clear();
+  const landing = moments.landAt === null ? null : landingAt(clock - moments.landAt, reduced);
+  if (landing) drawDust(fx, landing.dust);
+  if (!wreck.wrecked && pose.hp > 0 && pose.hp <= LOW_HP) drawLowHpSmoke(fx, clock, reduced);
+  if (wreck.frame) drawBursts(fx, wreck.frame.bursts);
+  if (wreck.frame?.smoke && moments.deathAt !== null) drawWreckSmoke(fx, clock - moments.deathAt - WRECK_SMOKE_FROM_MS);
+  return landing?.squash ?? 0;
+};
+
+/** 砲口に集まる溜めの点。砲身の震え（度）を返す */
+const drawCharge = (g: Graphics, f: Frame, wrecked: boolean): number => {
+  g.clear();
+  const charge = f.pose.aiming && !wrecked ? chargeAt(f.pose.charge ?? 0, f.clock, f.reduced) : null;
+  if (!charge) return 0;
+  for (const d of charge.dots) g.rect(BARREL_LENGTH + d.x, d.y - 0.25, 0.5, 0.5);
+  g.fill(charge.hot ? CHARGE_HOT_COLOR : CHARGE_COLOR);
+  return charge.shake;
+};
+
+/** 1 フレームぶんを描く。車体の絵は姿が変わったときだけ描き直し、描いた姿の鍵を返す */
+const renderTank = (parts: Parts, f: Frame, colors: Colors, nameColor: string, showHealth: boolean, hullKey: string): string => {
+  const { pose } = f;
+  const wreck = wreckState(f);
+  const key = `${wreck.wrecked}/${pose.flash || wreck.frame?.white === true}`;
+  if (key !== hullKey) {
+    if (wreck.wrecked) drawTankWreck(parts.body);
+    else drawHull(parts.body, colors, pose.flash || wreck.frame?.white === true);
+  }
+  parts.arm.visible = !wreck.wrecked;
+  parts.tread.visible = !wreck.wrecked;
+  parts.deadBarrel.visible = wreck.wrecked;
+  parts.deadBarrel.rotation = -(pose.facing === 1 ? -WRECK_DROOP : 180 + WRECK_DROOP) * DEG;
+  parts.text.style.fill = wreck.wrecked ? 0x929b96 : nameColor;
+  parts.hpBar.visible = showHealth && !wreck.wrecked;
+  parts.caret.visible = pose.acting === true && !wreck.wrecked;
+  const squash = drawFx(parts.fx, f, wreck);
+  const rumble = pose.acting === true && !wreck.wrecked && !pose.falling ? idleRumble(f.clock, f.reduced) : 0;
+  parts.hull.y = (rumble + squash) * ART;
+  const local = pose.facing === 1 ? pose.elevation : 180 - pose.elevation;
+  parts.arm.rotation = -(local + drawCharge(parts.chargeDots, f, wreck.wrecked)) * DEG;
+  return key;
+};
+
+export const createTankView = (selection: TankColors, nickname: string, team?: string, showHealth = true): TankView => {
+  const colors = { primary: COLOR_HEX[selection.primary], secondary: COLOR_HEX[selection.secondary] };
+  const nameColor = team ?? colors.primary;
+  const parts = buildParts(colors, nickname, nameColor);
   const moments: Moments = { first: true, hp: 0, deathAt: null, falling: false, landAt: null };
-  let hullKey = "", distance = 0, previousX: number | null = null, lastPose: TankPose | null = null;
-
-  /** 撃破の途中なら壊れる前の姿で描く。撃破の瞬間を見ていない（再接続など）ならすぐ残骸 */
-  const wreckState = (pose: TankPose) => {
-    const frame = moments.deathAt === null ? null : wreckFrameAt(clock - moments.deathAt, reduced);
-    return { frame, wrecked: pose.hp <= 0 && (frame === null || !frame.intact) };
-  };
-
-  const drawFx = (pose: TankPose, frame: ReturnType<typeof wreckFrameAt> | null, wrecked: boolean): number => {
-    fx.clear();
-    const landing = moments.landAt === null ? null : landingAt(clock - moments.landAt, reduced);
-    if (landing) drawDust(fx, landing.dust);
-    if (!wrecked && pose.hp > 0 && pose.hp <= LOW_HP) drawLowHpSmoke(fx, clock, reduced);
-    if (frame) drawBursts(fx, frame.bursts);
-    if (frame?.smoke && moments.deathAt !== null) drawWreckSmoke(fx, clock - moments.deathAt - WRECK_SMOKE_FROM_MS);
-    return landing?.squash ?? 0;
-  };
-
-  const drawCharge = (pose: TankPose, wrecked: boolean): number => {
-    chargeDots.clear();
-    const charge = pose.aiming && !wrecked ? chargeAt(pose.charge ?? 0, clock, reduced) : null;
-    if (!charge) return 0;
-    for (const d of charge.dots) chargeDots.rect(BARREL_LENGTH + d.x, d.y - 0.25, 0.5, 0.5);
-    chargeDots.fill(charge.hot ? CHARGE_HOT_COLOR : CHARGE_COLOR);
-    return charge.shake;
-  };
-
+  let caretElapsed = 0, clock = 0, reduced = false, hullKey = "", distance = 0, previousX: number | null = null;
+  let lastPose: TankPose | null = null, rendered = false;
   const render = (): void => {
-    const pose = lastPose;
-    if (!pose) return;
-    const { frame, wrecked } = wreckState(pose);
-    const white = pose.flash || frame?.white === true;
-    const key = `${wrecked}/${white}`;
-    if (key !== hullKey) {
-      hullKey = key;
-      if (wrecked) drawTankWreck(body);
-      else drawHull(body, colors, white);
-    }
-    arm.visible = !wrecked;
-    tread.visible = !wrecked;
-    deadBarrel.visible = wrecked;
-    deadBarrel.rotation = -(pose.facing === 1 ? -WRECK_DROOP : 180 + WRECK_DROOP) * DEG;
-    text.style.fill = wrecked ? 0x929b96 : team ?? colors.primary;
-    hpBar.visible = showHealth && !wrecked;
-    caret.visible = pose.acting === true && !wrecked;
-    const squash = drawFx(pose, frame, wrecked);
-    const rumble = pose.acting === true && !wrecked && !pose.falling ? idleRumble(clock, reduced) : 0;
-    hull.y = (rumble + squash) * ART;
-    const local = pose.facing === 1 ? pose.elevation : 180 - pose.elevation;
-    arm.rotation = -(local + drawCharge(pose, wrecked)) * DEG;
+    if (lastPose) hullKey = renderTank(parts, { pose: lastPose, clock, reduced, moments }, colors, nameColor, showHealth, hullKey);
   };
-
   const setPose = (pose: TankPose, cell: number): void => {
     noteMoments(moments, pose, clock);
-    world.visible = pose.visible;
-    label.visible = pose.visible;
-    world.position.set(pose.x + 0.5, pose.y);
-    rotating.rotation = -pose.tilt * DEG;
+    parts.world.visible = pose.visible;
+    parts.label.visible = pose.visible;
+    parts.world.position.set(pose.x + 0.5, pose.y);
+    parts.rotating.rotation = -pose.tilt * DEG;
     const signedDelta = previousX === null ? 0 : pose.x - previousX;
-    const delta = Math.abs(signedDelta);
     previousX = pose.x;
-    const moving = pose.hp > 0 && pose.visible && !pose.falling && delta > .001 && delta <= 2.5;
-    if (moving) { distance += signedDelta; drawTread(tread, distance); playSound("move"); }
-    drawHpBar(hpBar, { ...colors, primary: team ?? colors.primary }, pose);
+    if (pose.hp > 0 && pose.visible && !pose.falling && Math.abs(signedDelta) > .001 && Math.abs(signedDelta) <= 2.5) { distance += signedDelta; drawTread(parts.tread, distance); playSound("move"); }
+    drawHpBar(parts.hpBar, { ...colors, primary: nameColor }, pose);
     lastPose = pose;
     render();
-    label.position.set((pose.x + 0.5) * cell, (pose.y - 12) * cell);
+    rendered = true;
+    parts.label.position.set((pose.x + 0.5) * cell, (pose.y - 12) * cell);
   };
-
-  return {
-    world,
-    label,
-    setPose,
-    tick: (deltaMs, reducedMotion) => {
-      clock += deltaMs;
-      reduced = reducedMotion;
-      caretElapsed = caret.visible ? caretElapsed + deltaMs : 0;
-      placeTurnCaret(caret, caretElapsed, reducedMotion);
-      render();
-    },
-    destroy: () => {
-      world.destroy({ children: true });
-      label.destroy({ children: true });
-    },
+  // 姿勢が毎フレーム届くあいだは setPose が描き、届かないフレームだけ tick が描く
+  const tick = (deltaMs: number, reducedMotion: boolean): void => {
+    clock += deltaMs;
+    reduced = reducedMotion;
+    caretElapsed = parts.caret.visible ? caretElapsed + deltaMs : 0;
+    placeTurnCaret(parts.caret, caretElapsed, reducedMotion);
+    if (!rendered) render();
+    rendered = false;
   };
+  const destroy = (): void => {
+    parts.world.destroy({ children: true });
+    parts.label.destroy({ children: true });
+  };
+  return { world: parts.world, label: parts.label, setPose, tick, destroy };
 };
