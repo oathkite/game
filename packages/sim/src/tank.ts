@@ -1,4 +1,4 @@
-import { CLIMB_MAX, STEPS_PER_TURN, TANK_RADIUS, TILT_DIFF_MAX, TILT_HALF_WIDTH } from "./constants.js";
+import { CLIMB_MAX, SLOPE_RISE_MAX, SLOPE_RUN, STEPS_PER_TURN, TANK_RADIUS, TILT_DIFF_MAX, TILT_HALF_WIDTH } from "./constants.js";
 import { clamp } from "./fixed.js";
 import { TILT_TABLE } from "./tables.js";
 import { groundBelow, isSolid, type TerrainMask } from "./terrain.js";
@@ -55,6 +55,23 @@ export const tiltOf = (mask: TerrainMask, pos: TankPos): number => {
   return TILT_TABLE[diff + TILT_DIFF_MAX] ?? 0;
 };
 
+/**
+ * 移動先 nx の地表 there から SLOPE_RUN 列うしろまでに上った高さ。
+ * 今の位置から逆向きに地表をたどり、落下になる段差、奈落、マップ端でたどるのをやめる。
+ * そこから先の低い地面は、歩いて来られない場所なので坂に数えない（浮島の縁、崖の上）。
+ */
+const riseBehind = (mask: TerrainMask, pos: TankPos, dir: -1 | 1, there: number): number => {
+  let y = pos.y;
+  for (let k = 2; k <= SLOPE_RUN; k++) {
+    const x = pos.x + dir - dir * k;
+    if (x < 0 || x >= mask.width) break;
+    const ground = groundBelow(mask, x, y - CLIMB_MAX);
+    if (ground - y > CLIMB_MAX) break;
+    y = ground;
+  }
+  return y - there;
+};
+
 export type StepKind = "moved" | "blocked" | "fell";
 
 export type StepOutcome = {
@@ -68,6 +85,8 @@ export type StepOutcome = {
  * 機体の高さぶんの空きがない（反り立つ壁や低い天井）ときは進めない。CLIMB_MAX 以下の下りは進める。
  * それを超える下りは落下扱いで、その歩で移動は終わる。落下先は真下の次の地面（なければ奈落）。
  * 上りと下りで同じ閾値を使うのは、降りた先から同じ道を登って戻れるようにするためである。
+ * ただし上りは坂の急さも見て、SLOPE_RUN 列で SLOPE_RISE_MAX より高く上る歩は壁にする（riseBehind）。
+ * 急な坂は下りられても登り返せない。崖を「回り込む場所」にするためである。
  */
 export const stepOutcome = (mask: TerrainMask, pos: TankPos, dir: -1 | 1): StepOutcome => {
   const nx = pos.x + dir;
@@ -75,6 +94,7 @@ export const stepOutcome = (mask: TerrainMask, pos: TankPos, dir: -1 | 1): StepO
   const there = neighborGround(mask, nx, pos.y, CLIMB_MAX);
   if (!hasClearance(mask, nx, there)) return { kind: "blocked", y: pos.y };
   const drop = there - pos.y;
+  if (drop < 0 && riseBehind(mask, pos, dir, there) > SLOPE_RISE_MAX) return { kind: "blocked", y: pos.y };
   return { kind: drop > CLIMB_MAX ? "fell" : "moved", y: there };
 };
 

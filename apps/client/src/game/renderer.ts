@@ -101,6 +101,9 @@ export const createRenderer = async (init: RendererInit): Promise<Renderer> => {
     world.addChild(t.world);
     labels.addChild(t.label);
   }
+  app.ticker.add(() => {
+    for (const t of tanks) t.tick?.(app.ticker.deltaMS, reduced.matches);
+  });
   const poses: (TankPose | null)[] = tanks.map(() => null);
   const labelStops = new Set<() => void>();
   const labelOrigins = tanks.map(() => ({ x: 0, y: 0 }));
