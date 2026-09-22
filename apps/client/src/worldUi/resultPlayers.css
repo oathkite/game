@@ -36,3 +36,11 @@
 @keyframes result-row-in { from { opacity:0; } to { opacity:1; } }
 @keyframes result-crown-blink { 0% { visibility:visible; } 50% { visibility:hidden; } 100% { visibility:visible; } }
 @media(prefers-reduced-motion:reduce) { .battle-result-players tbody tr,.battle-result-players .result-outcome-label .dot-icon { animation:none!important; } }
+
+/* 勝者と敗者（C6）。勝者の機体は行が出た後で 2 art px 跳ねるのを 2 回（600 ms）。
+   64px 幅に 80 art px を描くので 2 art px は 1.6px、輪郭がぼけないよう 2px に丸める。
+   敗者は灰色にする。静的なので動きを減らす設定でも当てる。引き分けはそのまま。 */
+.result-table [data-reaction=lose] .tank-portrait { filter:grayscale(1); }
+.battle-result-players[data-motion=play] [data-reaction=win] .tank-portrait { animation:result-winner-hop 600ms steps(1,end) both; animation-delay:calc(var(--motion-delay, 0ms) + var(--row) * var(--row-step, 90ms) + 90ms); }
+@keyframes result-winner-hop { 0% { transform:none; } 25% { transform:translateY(-2px); } 50% { transform:none; } 75% { transform:translateY(-2px); } 100% { transform:none; } }
+@media(prefers-reduced-motion:reduce) { .battle-result-players [data-reaction=win] .tank-portrait { animation:none!important; } }
