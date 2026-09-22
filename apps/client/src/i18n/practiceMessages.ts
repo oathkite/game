@@ -1,4 +1,8 @@
 export const practiceEnglish: Readonly<Record<string, string>> = {
+  "CPU戦": "CPU Battle", "CPUの番": "CPU’s turn",
+  "CPU戦をはじめる": "Start CPU battle",
+  "好きなステージと装備で、CPUと対戦しよう。": "Choose a stage and weapons, then battle the CPU.",
+  "CPUを相手に、対戦の流れを練習しよう。": "Learn the flow of battle against the CPU.",
   "練習モードを選んでください。": "Choose a practice mode.",
   "ステージを選んでください。": "Choose a stage.",
   "ステージ選択": "Stage select", "ステージ選択へ戻る": "Back to stage select",

@@ -1,3 +1,4 @@
+import { chooseCpuShot } from "@/practice/cpu";
 import { createEngine, createMatchHost, DEFAULT_ENGINE_TIMING, realClock, setupMessage, type MatchHost } from "@game/engine";
 import { resolveMapChoice } from "@game/maps";
 import type { ClientMessage, Loadout, MapChoice, ServerMessage, TankColors, WeaponId } from "@game/protocol";
@@ -8,6 +9,7 @@ import { createListeners, type Connection, type ConnectionStatus } from "./conne
 
 export type LocalMatchOptions = {
   readonly deferReady?: boolean;
+  readonly cpu?: boolean;
   /** ランダムなら対戦を作るたび（再戦を含む）に抽選する */
   readonly mapName: MapChoice;
   readonly nickname: string;
@@ -32,6 +34,8 @@ export const createLocalConnection = (options: LocalMatchOptions): Connection & 
   const messages = createListeners<ServerMessage>();
   const statuses = createListeners<ConnectionStatus>();
   let status: ConnectionStatus = "open";
+  let cpuTimer: ReturnType<typeof setTimeout> | null = null;
+  const cancelCpu = () => { if (cpuTimer !== null) clearTimeout(cpuTimer); cpuTimer = null; };
   let host: MatchHost | null = null;
   let released = !options.deferReady, requested = false;
   const releaseReady = (): void => {
@@ -43,10 +47,21 @@ export const createLocalConnection = (options: LocalMatchOptions): Connection & 
 
   const deliver = (message: ServerMessage): void => {
     // 呼び出し元の処理と分けるため、次のマイクロタスクで配る
-    queueMicrotask(() => messages.emit(message));
+    queueMicrotask(() => { if (status === "open") messages.emit(message); });
+    if (message.type === "match.finished") cancelCpu();
+    if (options.cpu && message.type === "turn.start") {
+      cancelCpu();
+      if (message.seat !== 1) return;
+      cpuTimer = setTimeout(() => {
+        cpuTimer = null;
+        if (!host || host.state().match.phase !== "acting" || host.state().match.currentSeat !== 1) return;
+        host.dispatch({ type: "fire", seat: 1, fire: chooseCpuShot(host.state()) });
+      }, Math.max(0, (message.delay?.revealUntil ?? Date.now()) - Date.now()) + 900);
+    }
   };
 
   const startMatch = (): void => {
+    cancelCpu();
     if (host) host.stop();
     const state = createEngine(
       { ...DEFAULT_ENGINE_TIMING, delayEnabled: true, rng: Math.random },
@@ -55,7 +70,7 @@ export const createLocalConnection = (options: LocalMatchOptions): Connection & 
         mapName: resolveMapChoice(options.mapName, Math.random),
         players: [
           { nickname: options.nickname || "P1", colors: options.colors, loadout: options.loadout },
-          { nickname: "P2", colors: options.opponentColors, loadout: options.opponentLoadout },
+          { nickname: options.cpu ? "CPU" : "P2", colors: options.opponentColors, loadout: options.opponentLoadout },
         ],
       },
     );
@@ -65,7 +80,7 @@ export const createLocalConnection = (options: LocalMatchOptions): Connection & 
 
   const send = (message: ClientMessage): void => {
     if (!host) return;
-    const seat = host.state().match.currentSeat;
+    const seat = options.cpu ? 0 : host.state().match.currentSeat;
     switch (message.type) {
       case "match.ready":
         requested = true;
@@ -81,7 +96,7 @@ export const createLocalConnection = (options: LocalMatchOptions): Connection & 
       case "match.surrender":
         // 開幕演出は操作を待たせるが、練習の終了は妨げない。
         if (!released) releaseReady();
-        host.dispatch({ type: "surrender", seat: host.state().match.currentSeat });
+        host.dispatch({ type: "surrender", seat: options.cpu ? 0 : host.state().match.currentSeat });
         return;
       case "result.close":
         startMatch();
@@ -106,6 +121,7 @@ export const createLocalConnection = (options: LocalMatchOptions): Connection & 
     status: () => status,
     close: () => {
       status = "closed";
+      cancelCpu();
       if (host) host.stop();
       host = null;
       statuses.emit(status);

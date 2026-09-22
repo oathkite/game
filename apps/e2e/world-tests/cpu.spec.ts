@@ -1,0 +1,37 @@
+import { expect, test } from "@playwright/test";
+
+test("CPU戦の設定・自動射撃・降参・再戦・退出", async ({ page }) => {
+  test.setTimeout(90000);
+  await page.setViewportSize({ width: 390, height: 844 });
+  await page.addInitScript(() => { Math.random = () => 0.5; });
+  await page.goto("/");
+  await page.getByRole("button", { name: "はじめる", exact: true }).click();
+  await page.getByRole("button", { name: "プラクティス", exact: true }).click();
+  await page.getByRole("button", { name: "CPU戦", exact: true }).click();
+  await expect(page.getByRole("heading", { name: "CPU戦", exact: true })).toBeVisible();
+  await page.goBack();
+  await page.getByRole("button", { name: "CPU戦", exact: true }).click();
+  await expect(page.getByRole("button", { name: "CPU戦をはじめる" })).toBeInViewport();
+  await page.getByRole("button", { name: "CPU戦をはじめる" }).click();
+  const fire = page.getByRole("button", { name: "標準砲", exact: true });
+  await expect(fire).toBeEnabled({ timeout: 25000 });
+  await page.keyboard.down("Space");
+  await page.waitForTimeout(100);
+  await page.keyboard.up("Space");
+  await expect.poll(() => page.evaluate(() => window.__fortress?.getView().phase === "replaying" ? window.__fortress.getView().currentSeat : null), { timeout: 25000, intervals: [50] }).toBe(1);
+  await expect(fire).toBeDisabled();
+  await expect.poll(() => page.evaluate(() => window.__fortress?.getView().mismatches)).toBe(0);
+  await page.screenshot({ path: "/tmp/practice-cpu-portrait.png" });
+  await page.getByRole("button", { name: "設定を開く", exact: true }).click();
+  await page.getByRole("button", { name: "降参して対戦を終える" }).click();
+  await expect(page.locator(".world-result-screen")).toBeVisible({ timeout: 25000 });
+  await expect(page.locator(".world-result-screen")).toContainText("CPU");
+  await page.getByRole("button", { name: "もう一度プレイ" }).click();
+  await expect(page.locator(".practice-battle-status")).toContainText("CPU");
+  await page.getByRole("button", { name: "設定を開く", exact: true }).click();
+  await page.getByRole("button", { name: "プラクティスへ戻る", exact: true }).click();
+  await expect(page.getByRole("heading", { name: "プラクティス", exact: true })).toBeVisible();
+  await page.getByRole("button", { name: "自由練習", exact: true }).click();
+  await page.getByRole("button", { name: "自由練習をはじめる" }).click();
+  await expect(page.locator(".practice-battle-status")).toHaveText("自由練習");
+});

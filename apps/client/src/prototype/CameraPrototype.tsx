@@ -29,7 +29,7 @@ import { PrototypeCanvas } from "./PrototypeCanvas";
 import { usePrototypeInput } from "./usePrototypeInput";
 import "./prototype.css";
 
-type ThemeProps = { readonly mapName?: MapName | "random"; readonly worldArt?: boolean; readonly onExit?: () => void; readonly onResult?: (result: ResultPresentation) => void };
+type ThemeProps = { readonly cpu?: boolean; readonly mapName?: MapName | "random"; readonly worldArt?: boolean; readonly onExit?: () => void; readonly onResult?: (result: ResultPresentation) => void };
 export const CameraPrototype = (props: ThemeProps) => {
   const { t } = useLanguage();
   const begin = useRef<() => void>(() => {});
@@ -39,9 +39,9 @@ export const CameraPrototype = (props: ThemeProps) => {
     setAudioSettings(p.volume, p.muted, p.bgmVolume ?? p.volume);
     const selectedMap = (props.mapName === "random" ? (["ridgeline", "stone-bridge", "terraces", "sky-islands"] as const)[Math.floor(Math.random() * 4)]! : props.mapName) ?? (props.worldArt ? "rock-arch" : "valley");
     setMusic(stageMusic(selectedMap));
-    const connection = createLocalConnection({ deferReady: props.worldArt ?? false, mapName: selectedMap, nickname: p.nickname || "プレイヤー", colors: p.colors, loadout: p.loadout,
-      opponentColors: defaultOpponentColors(p.colors), opponentLoadout: defaultOpponentLoadout(p.loadout) });
-    const created = createMatchStore(connection, { followCurrentSeat: true, mySeat: 0, spectator: false });
+    const connection = createLocalConnection({ cpu: props.cpu ?? false, deferReady: props.worldArt ?? false, mapName: selectedMap, nickname: p.nickname || "プレイヤー", colors: p.colors, loadout: p.loadout,
+      opponentColors: defaultOpponentColors(p.colors), opponentLoadout: props.cpu ? ["cannon", "triple"] : defaultOpponentLoadout(p.loadout) });
+    const created = createMatchStore(connection, { followCurrentSeat: !props.cpu, mySeat: 0, spectator: false });
     begin.current = connection.releaseReady;
     setStore(created);
     return () => { created.dispose(); connection.close(); };
@@ -49,7 +49,7 @@ export const CameraPrototype = (props: ThemeProps) => {
   return store ? <Battle store={store} begin={begin.current} {...props} /> : <div>{t("準備しています…")}</div>;
 };
 
-const Battle = ({ store, begin, worldArt, onExit, onResult }: { readonly store: MatchStore; readonly begin: () => void } & ThemeProps) => {
+const Battle = ({ store, begin, worldArt, cpu, onExit, onResult }: { readonly store: MatchStore; readonly begin: () => void } & ThemeProps) => {
   const { t } = useLanguage();
   const touch = useTouchControls();
   const view = useSyncExternalStore(store.subscribe, store.getView, store.getView);
@@ -80,6 +80,7 @@ const Battle = ({ store, begin, worldArt, onExit, onResult }: { readonly store: 
     wasMenuOpen.current = menu;
   }, [menu, worldArt]);
   useEffect(() => {
+    if (!import.meta.env.DEV) return;
     window.__fortress = { store, getView: store.getView, aim: () => null };
     return () => { delete window.__fortress; };
   }, [store]);
@@ -94,6 +95,7 @@ const Battle = ({ store, begin, worldArt, onExit, onResult }: { readonly store: 
   const pose = view.control ?? actor;
   const ground = view.mask && pose ? tiltOf(view.mask, pose) : 0;
   return <main className="kp-root" onContextMenu={(e) => e.preventDefault()} onPointerDown={() => unlockAudio()}>
+    {worldArt && <div className="practice-battle-status" role="status">{cpu ? t(view.phase === "waiting" ? "CPUの番" : "CPU戦") : t("自由練習")}</div>}
     <YourTurn turnKey={String(view.turnNumber)} active={enabled} />
     {worldArt ? <BattleOverlay clock={<Timer dial deadlineAt={revealing ? null : view.deadlineAt} clockOffset={0} myTurn={enabled} />} onMenu={() => { input.cancel(); setMenu(true); }} /> : <header className="kp-topbar">
       <div className="kp-brand">TANK SHOOT <span>{t("プラクティス")}</span></div>
@@ -120,8 +122,8 @@ const Battle = ({ store, begin, worldArt, onExit, onResult }: { readonly store: 
       {import.meta.env.DEV && new URLSearchParams(location.search).get("debug") === "1" && <CameraSettingsPanel rig={rig} />}
       <p className="kp-shortcuts">{t("A / D・← / →：移動")}<br />{t("W / S・↑ / ↓：角度　Space：発射")}<br />{t("Q / E：武器　Tab：機体を順に見る")}<br />{t("Shift + 矢印：見回す　C：手番へ")}</p>
       {onResult && <button onClick={() => store.surrender()}>{t("降参して対戦を終える")}</button>}
-      <button onClick={() => setMenu(false)}>{t("対戦に戻る")}</button>{onExit ? <button onClick={onExit}>{t("出撃準備に戻る")}</button> : <a href="/">{t("ガレージへ戻る")}</a>}
+      <button onClick={() => setMenu(false)}>{t("対戦に戻る")}</button>{onExit ? <button onClick={onExit}>{t("プラクティスへ戻る")}</button> : <a href="/">{t("ガレージへ戻る")}</a>}
     </dialog>
-    {view.phase === "finished" && !onResult && <div className="kp-result"><h2>{view.result?.winner === null ? t("引き分け") : t("{player}の勝利", { player: t(teamColorName(view.result?.winner ?? 0)) })}</h2><button onClick={() => store.closeResult()}>{t("もう一度")}</button>{onExit ? <button onClick={onExit}>{t("出撃準備に戻る")}</button> : <a href="/">{t("ガレージへ戻る")}</a>}</div>}
+    {view.phase === "finished" && !onResult && <div className="kp-result"><h2>{view.result?.winner === null ? t("引き分け") : t("{player}の勝利", { player: t(teamColorName(view.result?.winner ?? 0)) })}</h2><button onClick={() => store.closeResult()}>{t("もう一度")}</button>{onExit ? <button onClick={onExit}>{t("プラクティスへ戻る")}</button> : <a href="/">{t("ガレージへ戻る")}</a>}</div>}
   </main>;
 };

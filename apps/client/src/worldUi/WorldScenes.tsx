@@ -36,6 +36,7 @@ export const WorldScenes = () => {
   const { t, language } = useLanguage();
   useEffect(() => { document.documentElement.lang = language; }, [language]);
   const [scene, setScene] = useState<Scene>(() => inviteRoom(location.href) || new URL(location.href).searchParams.has("room") ? "rooms" : "start"), [closing, setClosing] = useState(false);
+  const [practiceCpu, setPracticeCpu] = useState(false);
   const [practiceMap, setPracticeMap] = useState<MapName | "random">("ridgeline");
   const [practiceProfile, setPracticeProfile] = useState(loadProfile);
   const [result, setResult] = useState<ResultPresentation | null>(null);
@@ -77,10 +78,10 @@ export const WorldScenes = () => {
   return <div className={`world-ui world-scene-${scene} ${closing ? "world-closing" : ""}`}>
     <SceneBoundary message={t("画面を読み込めませんでした。通信を確認して再読み込みしてください。")} retryLabel={t("再読み込み")}>
     <Suspense fallback={<p role="status">{t("フィールドを準備しています…")}</p>}>
-    {scene === "battle" ? <CameraPrototype worldArt mapName={practiceMap} onExit={exitPractice} onResult={finish} /> : scene === "rooms" ? <RoomScreen onExit={exit} {...(import.meta.env.DEV ? { onLab: () => go("network") } : {})} /> : scene === "network" ? <NetworkLab worldArt onExit={exit} /> : <>
+    {scene === "battle" ? <CameraPrototype cpu={practiceCpu} worldArt mapName={practiceMap} onExit={exitPractice} onResult={finish} /> : scene === "rooms" ? <RoomScreen onExit={exit} {...(import.meta.env.DEV ? { onLab: () => go("network") } : {})} /> : scene === "network" ? <NetworkLab worldArt onExit={exit} /> : <>
       <div key={scene} ref={heading} tabIndex={-1} className="world-content">
         {scene === "start" && <StartScreen onBegin={() => go("lobby")} />}
-        {scene === "practice" && <PracticeFlow profile={practiceProfile} onProfileChange={p => { setPracticeProfile(p); saveProfile(p); setAudioSettings(p.volume, p.muted, p.bgmVolume ?? p.volume); }} onExit={exit} onFreeStart={map => { setPracticeMap(map); go("battle"); }} />}
+        {scene === "practice" && <PracticeFlow profile={practiceProfile} onProfileChange={p => { setPracticeProfile(p); saveProfile(p); setAudioSettings(p.volume, p.muted, p.bgmVolume ?? p.volume); }} onExit={exit} onCpuStart={map => { setPracticeCpu(true); setPracticeMap(map); go("battle"); }} onFreeStart={map => { setPracticeCpu(false); setPracticeMap(map); go("battle"); }} />}
         {scene === "lobby" && <Lobby go={go} onPractice={() => { setPracticeProfile(loadProfile()); go("practice"); }} />}
         {scene === "result" && result && <section className="world-result-screen terminal-screen result-terminal"><header className="result-header"><h1>{t(resultTitle(result.result, result.players.find(p => p.playerId === result.ownId)?.teamId))}</h1></header><ResultPlayers {...result} /><div className="result-actions"><PixelButton onClick={exitPractice}>{t("プラクティス")}</PixelButton><PixelButton className="result-primary" onClick={() => go("battle")}>{t("もう一度プレイ")}</PixelButton></div></section>}
       </div>
