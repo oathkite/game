@@ -1,3 +1,4 @@
+import type { ChallengeStore } from "@/practice/store";
 import { useWindowEdgePan } from "./useWindowEdgePan";
 import { createTankView } from "@/game/tankView";
 import { openingPose } from "@/worldUi/openingTour";
@@ -31,8 +32,8 @@ const posesOf = (v: MatchView, elevations: readonly number[]): readonly TankPose
   });
 };
 
-type Props = { readonly onOpeningComplete: () => void; readonly worldArt?: boolean; readonly store: MatchStore; readonly rig: CameraRig; readonly layout: Layout; readonly handlers: HTMLAttributes<HTMLDivElement>; readonly blocked: boolean; readonly followShot: boolean; readonly onReady: (ready: boolean) => void };
-export const PrototypeCanvas = ({ store, rig, layout, handlers, blocked, followShot, onReady, onOpeningComplete, worldArt }: Props) => {
+type Props = { readonly onOpeningComplete: () => void; readonly worldArt?: boolean; readonly store: Pick<MatchStore, "getView" | "completeReplay">; readonly practice?: Pick<ChallengeStore, "getTargets" | "showImpact">; readonly rig: CameraRig; readonly layout: Layout; readonly handlers: HTMLAttributes<HTMLDivElement>; readonly blocked: boolean; readonly followShot: boolean; readonly onReady: (ready: boolean) => void };
+export const PrototypeCanvas = ({ store, rig, layout, handlers, blocked, followShot, onReady, onOpeningComplete, worldArt, practice }: Props) => {
   const hostRef = useRef<HTMLDivElement>(null), miniRef = useRef<HTMLCanvasElement>(null);
   const latest = useRef({ layout, blocked, followShot });
   latest.current = { layout, blocked, followShot };
@@ -54,7 +55,7 @@ export const PrototypeCanvas = ({ store, rig, layout, handlers, blocked, followS
       const view = store.getView();
       if (!view.mask || !view.players) return;
       let tankIndex = 0;
-      renderer = await createRenderer({ mapId: view.mapId, wind: () => store.getView().wind.value, tankFactory: (colors, name) => createTankView(colors, name, teamColor(tankIndex++)), host, layout: latest.current.layout, mask: view.mask, players: view.players, background: 0x000000, backgroundAlpha:0, terrainTint: 0xffffff });
+      renderer = await createRenderer({ mapId: view.mapId, wind: () => store.getView().wind.value, tankFactory: (colors, name) => createTankView(colors, name, practice ? undefined : teamColor(tankIndex++), !practice), host, layout: latest.current.layout, mask: view.mask, players: view.players, background: 0x000000, backgroundAlpha:0, terrainTint: 0xffffff });
       if (disposed) { renderer.destroy(); return; }
       const r = renderer;
       rig.resize(viewportOf(latest.current.layout), { left: 0, top: -100, right: view.mask.width, bottom: view.mask.height });
@@ -67,6 +68,7 @@ export const PrototypeCanvas = ({ store, rig, layout, handlers, blocked, followS
       stopFrames = r.onFrame((dt) => {
         const v = store.getView();
         const current = latest.current;
+        if (practice) r.setTargets(practice.getTargets());
         const moveX = v.control?.x;
         if (!opening && Date.now() >= (v.delay?.revealUntil ?? 0) && v.phase === "acting" && moveX !== undefined && previousMoveX !== undefined && moveX !== previousMoveX) rig.moveActor(actorPoint(v), reduced.matches);
         previousMoveX = moveX;
@@ -82,7 +84,12 @@ export const PrototypeCanvas = ({ store, rig, layout, handlers, blocked, followS
             const projectile = r.projectile(color, weapon);
             return { ...projectile, setBullet: (index, x, y, angle) => { projectile.setBullet(index, x, y, angle); if (index === 0 && x !== null) rig.shot({ x, y }); } };
           } };
-          stopReplay = playReplay(replayRenderer, job, elevations, v.mySeat, { sound: playSound, reduceMotion: reduced.matches, roundEnd: Boolean(v.delay), done: () => { activeReplay = false; store.completeReplay(job.id); } });
+          stopReplay = playReplay(replayRenderer, job, elevations, v.mySeat, { sound: playSound, reduceMotion: reduced.matches, roundEnd: Boolean(v.delay), onImpact: (mask, impact) => practice?.showImpact(mask, impact), done: () => {
+            activeReplay = false;
+            store.completeReplay(job.id);
+            const next = store.getView();
+            if (practice && next.phase === "acting") rig.focus(actorPoint(next), "actor", reduced.matches);
+          } });
         }
         if (!v.replay && activeReplay) { stopReplay(); activeReplay = false; }
         if (!activeReplay) {
@@ -112,12 +119,12 @@ export const PrototypeCanvas = ({ store, rig, layout, handlers, blocked, followS
         const offset = worldToScreen({ x: 0, y: 0 }, center, vp), dpr = window.devicePixelRatio || 1;
         r.setCameraOffset(Math.round(offset.x * dpr) / dpr, Math.round(offset.y * dpr) / dpr);
         host.dataset.cameraX = center.x.toFixed(3); host.dataset.cameraY = center.y.toFixed(3); host.dataset.mode = rig.get().mode;
-        drawMinimap(miniRef.current, v, rig);
+        drawMinimap(miniRef.current, v, rig, practice);
       });
     };
     void start().catch((e: unknown) => { console.error(e); if (!disposed) setError(true); });
     return () => { disposed = true; onReady(false); stopFrames(); stopReplay(); renderer?.destroy(); };
-  }, [store, rig, onReady, onOpeningComplete, worldArt]);
+  }, [store, rig, onReady, onOpeningComplete, worldArt, practice]);
   useWindowEdgePan(hostRef, rig, blocked || !loaded);
   return <div className="kp-world" style={{ height: layout.mapHeight }}>
     <StartSignal visible={signal} />
@@ -135,7 +142,7 @@ export const PrototypeCanvas = ({ store, rig, layout, handlers, blocked, followS
   </div>;
 };
 
-const drawMinimap = (canvas: HTMLCanvasElement | null, v: MatchView, rig: CameraRig): void => {
+const drawMinimap = (canvas: HTMLCanvasElement | null, v: MatchView, rig: CameraRig, practice?: Pick<ChallengeStore, "getTargets">): void => {
   const ctx = canvas?.getContext("2d");
   if (!canvas || !ctx || !v.mask) return;
   const sx = canvas.width / v.mask.width, sy = canvas.height / v.mask.height;
@@ -149,6 +156,8 @@ const drawMinimap = (canvas: HTMLCanvasElement | null, v: MatchView, rig: Camera
     ctx.fillStyle = teamColor(seat);
     ctx.fillRect(point.x * sx - 2, point.y * sy - 3, 4, 4);
   });
+  ctx.fillStyle = "#ffcc66";
+  practice?.getTargets().filter(t => !t.destroyed).forEach(t => ctx.fillRect(t.x * sx - 2, (t.y - 8) * sy - 2, 4, 4));
   const { center, viewport } = rig.get(), w = viewport.width / viewport.scale, h = viewport.height / viewport.scale;
   ctx.strokeStyle = "#33ff66"; ctx.lineWidth = 2 * canvas.width / (canvas.clientWidth || canvas.width);
   ctx.strokeRect((center.x - w / 2) * sx, (center.y - h / 2) * sy, w * sx, h * sy);

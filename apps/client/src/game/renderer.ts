@@ -1,3 +1,5 @@
+import { createTargetView } from "./targetView";
+import type { Target } from "@/practice/rules";
 import { createPixelWind } from "./pixelWind";
 import { createPixelBackdrop } from "./pixelBackdrop";
 import type { TerrainOp } from "@game/protocol";
@@ -18,6 +20,7 @@ import { createTerrainLayer, type TerrainLayer } from "./terrainLayer";
 
 export type Renderer = {
   readonly app: Application;
+  readonly setTargets: (targets: readonly Target[]) => void;
   readonly setLayout: (layout: Layout) => void;
   /** 表示だけを移動する。物理座標と倍率は変えない */
   readonly setCameraOffset: (x: number, y: number) => void;
@@ -86,6 +89,8 @@ export const createRenderer = async (init: RendererInit): Promise<Renderer> => {
   world.addChild(terrain.sprite);
   terrain.sprite.tint = init.terrainTint ?? 0xffffff;
 
+  const targets = createTargetView();
+  world.addChild(targets.graphics);
   const projectileLayer = new Container();
   world.addChild(projectileLayer);
   let projectile: ProjectileView | null = null;
@@ -120,6 +125,7 @@ export const createRenderer = async (init: RendererInit): Promise<Renderer> => {
 
   return {
     app,
+    setTargets: targets.update,
     setLayout: (layout) => {
       cell = layout.cell;
       world.scale.set(cell);

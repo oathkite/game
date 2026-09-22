@@ -34,6 +34,7 @@ import type { TankPose } from "./tankView";
 export type ReplayCallbacks = {
   readonly sound: (name: SoundName) => void;
   readonly done: () => void;
+  readonly onImpact?: (mask: TerrainMask, impact: Impact) => void;
   readonly roundEnd?: boolean;
   /** 利用者が動きを減らす設定にしている。画面揺れを出さない */
   readonly reduceMotion: boolean;
@@ -206,6 +207,7 @@ const carveImpact = (run: Run, ir: ImpactRun): void => {
   ir.carved = true;
   const { impact } = ir;
   run.mask = carve(run.mask, impact.terrainOp);
+  run.cb.onImpact?.(run.mask, impact);
   run.renderer.setTerrain(run.mask, impact.terrainOp);
   const shooter = run.job.shot.input.seat;
   const shooterColor = run.job.playersBefore[shooter].colors.primary;

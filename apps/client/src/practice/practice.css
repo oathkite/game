@@ -1,0 +1,38 @@
+.practice-menu { max-width: 1100px; width: 100%; }
+.practice-content { display: flex; flex-direction: column; gap: 24px; padding: 24px; }
+.practice-content h1, .practice-content h2, .practice-content p { margin: 0; }
+.practice-content h1 { font-size: 28px; margin: 8px 0; }
+.practice-content h2 { font-size: 20px; }
+.practice-content section { display: flex; flex-direction: column; gap: 14px; }
+.practice-heading { display: flex; justify-content: space-between; align-items: center; gap: 12px; flex-wrap: wrap; }
+.practice-heading > span { font-size: 13px; }
+.practice-continue { text-align: left; padding: 18px; }
+.practice-grid { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 12px; }
+.practice-card { text-align: left; display: flex; flex-direction: column; gap: 10px; padding: 16px; min-height: 150px; }
+.practice-number { font-size: 26px; }
+.practice-card .dim, .practice-weapons { font-size: 12px; }
+.practice-card.cleared { border-color: var(--ui); }
+.practice-mode-menu { max-width: 720px; }
+.practice-modes { display: flex; flex-direction: column; gap: 20px; }
+.practice-mode { display: flex; flex-direction: column; gap: 12px; padding: 24px; text-align: left; }
+.practice-mode strong { font-size: 20px; }
+.practice-mode span { font-size: 14px; line-height: 1.6; }
+.challenge-hint { color: var(--ui-dim); font-size: 12px; text-align: center; margin: 6px 8px; }
+@media (max-width: 700px) { .practice-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); } .practice-content { padding: 16px; gap: 20px; } }
+@media (max-height: 450px) { .challenge-hint { font-size: 10px; margin: 2px; } }
+.challenge-modal { color: var(--ui); background: #080c08; border: 1px solid var(--ui); padding: 0; width: min(420px, calc(100vw - 24px)); max-height: calc(100dvh - 24px); }
+.challenge-modal::backdrop { background: #000a; }
+.challenge-modal .box { border: 0; display: flex; flex-direction: column; gap: 14px; width: 100%; }
+.challenge-modal h2, .challenge-modal p { margin: 0; }
+
+.practice-menu { margin: 0 auto; }
+.challenge-hint { color: #74a681; line-height: 1.4; flex: none; }
+.challenge-modal button { min-height: 44px; }
+.challenge-modal button:focus-visible { outline: 2px solid white; outline-offset: 2px; }
+.challenge-modal .primary-action { background: var(--ui); color: var(--bg); }
+
+.challenge-modal input { flex: none; width: 24px; height: 24px; }
+.challenge-game .battle-floating-timer { width: auto; max-width: calc(100% - 90px); left: 16px; transform: none; }
+.challenge-status { display: flex; flex-direction: column; gap: 6px; padding: 10px; background: #000d; font-size: 14px; line-height: 1.4; }
+.challenge-game > .challenge-hint { height: 36px; margin: 6px 12px; text-align: left; color: #a4c9ac; }
+.challenge-game .battle-console { flex: none; }

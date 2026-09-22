@@ -1,7 +1,8 @@
+import { practiceEnglish } from "./practiceMessages";
 import { playEnglish } from "./playMessages";
 import { roomEnglish } from "./roomMessages";
 export const english: Readonly<Record<string, string>> = {
-  ...roomEnglish, ...playEnglish,
+  ...roomEnglish, ...playEnglish, ...practiceEnglish,
   "あなた": "You",
   "ランダム": "Random",
   "対戦結果": "Match result",

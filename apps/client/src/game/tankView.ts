@@ -59,7 +59,7 @@ const drawHpBar = (g: Graphics, colors: { readonly primary: string; readonly sec
   if (pose.ghostOn && ghost > cells) g.rect(-5 + cells, 2, ghost - cells, 1).fill(hex(colors.primary));
 };
 
-export const createTankView = (selection: TankColors, nickname: string, team?: string): TankView => {
+export const createTankView = (selection: TankColors, nickname: string, team?: string, showHealth = true): TankView => {
   const colors = { primary: COLOR_HEX[selection.primary], secondary: COLOR_HEX[selection.secondary] };
   const world = new Container();
   const body = new Graphics();
@@ -91,7 +91,7 @@ export const createTankView = (selection: TankColors, nickname: string, team?: s
   const setPose = (pose: TankPose, cell: number): void => {
     const wrecked = pose.hp <= 0;
     barrel.visible = !wrecked;
-    hpBar.visible = !wrecked;
+    hpBar.visible = showHealth && !wrecked;
     text.style.fill = wrecked ? 0x929b96 : team ?? colors.primary;
     world.visible = pose.visible;
     label.visible = pose.visible;
