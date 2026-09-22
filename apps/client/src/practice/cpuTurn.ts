@@ -1,3 +1,4 @@
+import type { CpuDecision } from "@game/protocol/cpu";
 import type { Clock, EngineState } from "@game/engine";
 import { stepOutcome } from "@game/sim";
 import type { Facing, WeaponSlot } from "@game/protocol";
@@ -9,12 +10,13 @@ type Frame = { readonly at: number; readonly pose: CpuPose };
 export type CpuTurnPlan = { readonly frames: readonly Frame[]; readonly duration: number; readonly fire: ReturnType<typeof chooseCpuShot> };
 const range = (rng: () => number, low: number, high: number) => low + Math.floor(rng() * (high - low + 1));
 
-const movement = (state: EngineState, rng: () => number) => {
+const movement = (state: EngineState, rng: () => number, decision?: CpuDecision) => {
   const [target, actor] = state.match.players;
-  if (rng() < 0.25) return [];
+  if (decision ? decision.movement === "hold" : rng() < 0.25) return [];
   const toward: Facing = target.x < actor.x ? -1 : 1;
   const distance = Math.abs(target.x - actor.x);
-  const direction: Facing = distance > 150 ? toward : distance < 85 ? (toward === 1 ? -1 : 1) : rng() < 0.5 ? toward : toward === 1 ? -1 : 1;
+  const away: Facing = toward === 1 ? -1 : 1;
+  const direction: Facing = decision ? (decision.movement === "approach" ? toward : away) : distance > 150 ? toward : distance < 85 ? (toward === 1 ? -1 : 1) : rng() < 0.5 ? toward : toward === 1 ? -1 : 1;
   const limit = range(rng, 6, 18);
   const path: { x: number; y: number; facing: Facing }[] = [];
   let position = actor;
@@ -28,12 +30,12 @@ const movement = (state: EngineState, rng: () => number) => {
   return path;
 };
 
-export const planCpuTurn = (state: EngineState, level: CpuLevel, elevation: number, rng: () => number): CpuTurnPlan => {
+export const planCpuTurn = (state: EngineState, level: CpuLevel, elevation: number, rng: () => number, decision?: CpuDecision): CpuTurnPlan => {
   const actor = state.match.players[1];
-  const path = movement(state, rng);
+  const path = movement(state, rng, decision);
   const destination = path.at(-1) ?? actor;
   const moved = { ...state, match: { ...state.match, players: [state.match.players[0], { ...actor, ...destination }] as const } };
-  const fire = chooseCpuShot(moved, level, rng);
+  const fire = chooseCpuShot(moved, level, rng, decision);
   let at = range(rng, 700, 1800);
   let pose: CpuPose = { x: actor.x, y: actor.y, facing: actor.facing, elevation, slot: fire.slot, power: 0 };
   const frames: Frame[] = [{ at, pose }];
@@ -59,7 +61,8 @@ export const planCpuTurn = (state: EngineState, level: CpuLevel, elevation: numb
   }
   at += range(rng, 150, 450);
   frames.push({ at, pose: { ...pose, facing: fire.facing, power: fire.power } });
-  return { frames, duration: at + 100, fire };
+  const pace = decision?.pace === "quick" ? 0.85 : decision?.pace === "careful" ? 1.1 : 1;
+  return { frames: frames.map(frame => ({ ...frame, at: Math.round(frame.at * pace) })), duration: Math.round((at + 100) * pace), fire };
 };
 
 export const playCpuTurn = (plan: CpuTurnPlan, clock: Clock, show: (pose: CpuPose) => void, fire: () => void): (() => void) => {

@@ -39,3 +39,14 @@ it("崖へ向かう移動は落ちる前に止める", () => {
   expect(plan.fire.x).toBeGreaterThanOrEqual(295);
   expect(plan.frames.every(frame => frame.pose.y < state.mask.height)).toBe(true);
 });
+
+it("Jevが選んだ位置取り・武器・弾道・ペースを実際の計画へ反映する", () => {
+  const state = initial();
+  const decision = { movement: "hold", weapon: "cannon", trajectory: "lob", pace: "careful" } as const;
+  const plan = planCpuTurn(state, "hard", 45, () => 0.5, decision);
+  expect(plan.fire.x).toBe(300);
+  expect(plan.fire.slot).toBe(0);
+  expect(plan.fire.elevation).toBeGreaterThanOrEqual(50);
+  const quick = planCpuTurn(state, "hard", 45, () => 0.5, { ...decision, pace: "quick" });
+  expect(plan.duration).toBeGreaterThan(quick.duration);
+});

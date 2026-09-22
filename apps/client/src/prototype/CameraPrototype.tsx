@@ -1,3 +1,4 @@
+import { requestCpuDecision } from "@/practice/jevCpu";
 import { canPrepare } from "@/match/control";
 import { CPU_LEVEL_LABELS, type CpuLevel } from "@/practice/cpuLevel";
 import { stageMusic } from "@/app/musicTracks";
@@ -41,7 +42,7 @@ export const CameraPrototype = (props: ThemeProps) => {
     setAudioSettings(p.volume, p.muted, p.bgmVolume ?? p.volume);
     const selectedMap = (props.mapName === "random" ? (["ridgeline", "stone-bridge", "terraces", "sky-islands"] as const)[Math.floor(Math.random() * 4)]! : props.mapName) ?? (props.worldArt ? "rock-arch" : "valley");
     setMusic(stageMusic(selectedMap));
-    const connection = createLocalConnection({ cpuLevel: props.cpuLevel ?? "normal", cpu: props.cpu ?? false, deferReady: props.worldArt ?? false, mapName: selectedMap, nickname: p.nickname || "プレイヤー", colors: p.colors, loadout: p.loadout,
+    const connection = createLocalConnection({ decideCpu: (state, level, signal) => requestCpuDecision(state, level, signal, import.meta.env.VITE_CPU_SERVER_URL ?? ""), cpuLevel: props.cpuLevel ?? "normal", cpu: props.cpu ?? false, deferReady: props.worldArt ?? false, mapName: selectedMap, nickname: p.nickname || "プレイヤー", colors: p.colors, loadout: p.loadout,
       opponentColors: defaultOpponentColors(p.colors), opponentLoadout: props.cpu ? ["cannon", "triple"] : defaultOpponentLoadout(p.loadout) });
     const created = createMatchStore(connection, { preparation: props.cpu ?? false, followCurrentSeat: !props.cpu, mySeat: 0, spectator: false });
     begin.current = connection.releaseReady;

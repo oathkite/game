@@ -1,16 +1,19 @@
+import type { CpuDecision } from "@game/protocol/cpu";
 import type { CpuLevel } from "./cpuLevel";
 import type { EngineState } from "@game/engine";
 import type { ClientMessageOf } from "@game/protocol";
 import { simulateShot } from "@game/sim";
 
 /** 粗い角度・パワーの候補を比較する。物理や盤面を書き換えずに射撃を選ぶ。 */
-export const chooseCpuShot = (state: EngineState, level: CpuLevel = "hard", rng: () => number = () => 0.5): ClientMessageOf<"turn.fire"> => {
+export const chooseCpuShot = (state: EngineState, level: CpuLevel = "hard", rng: () => number = () => 0.5, decision?: CpuDecision): ClientMessageOf<"turn.fire"> => {
   const [target, actor] = state.match.players;
   const facing = target.x < actor.x ? -1 : 1;
   let best: ClientMessageOf<"turn.fire"> = { type: "turn.fire", x: actor.x, facing, slot: 0, elevation: 45, power: 60 };
   let bestScore = -Infinity;
   for (const slot of [0, 1] as const) {
+    if (decision && actor.loadout[slot] !== decision.weapon) continue;
     for (let elevation = 10; elevation <= 80; elevation += 10) {
+      if (decision && (decision.trajectory === "direct" ? elevation > 40 : elevation < 50)) continue;
       for (let power = 20; power <= 100; power += 10) {
         const fire = { ...best, slot, elevation, power };
         const { result } = simulateShot(state.mask, state.match.players, {

@@ -3,10 +3,10 @@ import { createLocalConnection } from "../src/net/localConnection";
 import { createMatchStore } from "../src/match/matchStore";
 
 afterEach(() => { vi.useRealTimers(); vi.restoreAllMocks(); });
-const setup = () => {
+const setup = (decideCpu?: Parameters<typeof createLocalConnection>[0]["decideCpu"]) => {
   vi.useFakeTimers();
   vi.spyOn(Math, "random").mockReturnValue(0.25);
-  const connection = createLocalConnection({ cpu: true, mapName: "ridgeline", nickname: "Player", colors: { primary: "red", secondary: "yellow" }, loadout: ["cannon", "triple"], opponentColors: { primary: "cyan", secondary: "blue" }, opponentLoadout: ["cannon", "triple"] });
+  const connection = createLocalConnection({ ...(decideCpu ? { decideCpu } : {}), cpu: true, mapName: "ridgeline", nickname: "Player", colors: { primary: "red", secondary: "yellow" }, loadout: ["cannon", "triple"], opponentColors: { primary: "cyan", secondary: "blue" }, opponentLoadout: ["cannon", "triple"] });
   const store = createMatchStore(connection, { followCurrentSeat: false, mySeat: 0, spectator: false });
   return { connection, store };
 };
@@ -103,4 +103,24 @@ it("CPUが操作している途中に退出すると、以後の操作と射撃�
   expect(listener).not.toHaveBeenCalled();
   expect(store.getView()).toBe(before);
   off(); store.dispose();
+});
+
+
+it("Jev待機中の退出はリクエストを中断し、遅い応答でも射撃しない", async () => {
+  let signal: AbortSignal | undefined;
+  let resolve!: (value: null) => void;
+  const decide = vi.fn((_state, _level, nextSignal: AbortSignal) => {
+    signal = nextSignal;
+    return new Promise<null>(done => { resolve = done; });
+  });
+  const { connection, store } = setup(decide);
+  await vi.advanceTimersByTimeAsync(2000);
+  expect(decide).toHaveBeenCalledTimes(1);
+  connection.close();
+  expect(signal?.aborted).toBe(true);
+  const before = store.getView();
+  resolve(null);
+  await vi.advanceTimersByTimeAsync(20000);
+  expect(store.getView()).toBe(before);
+  store.dispose();
 });
