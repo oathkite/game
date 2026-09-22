@@ -1,7 +1,8 @@
 .practice-menu { max-width: 1100px; width: 100%; }
 .practice-content { display: flex; flex-direction: column; gap: 24px; padding: 24px; }
 .practice-content h1, .practice-content h2, .practice-content p { margin: 0; }
-.practice-content h1 { font-size: 28px; margin: 8px 0; }
+.practice-header { display: flex; flex-direction: column; gap: 12px; }
+.practice-header h1 { font-size: 28px; line-height: 1.3; }
 .practice-content h2 { font-size: 20px; }
 .practice-content section { display: flex; flex-direction: column; gap: 14px; }
 .practice-heading { display: flex; justify-content: space-between; align-items: center; gap: 12px; flex-wrap: wrap; }
@@ -36,3 +37,7 @@
 .challenge-status { display: flex; flex-direction: column; gap: 6px; padding: 10px; background: #000d; font-size: 14px; line-height: 1.4; }
 .challenge-game > .challenge-hint { height: 36px; margin: 6px 12px; text-align: left; color: #a4c9ac; }
 .challenge-game .battle-console { flex: none; }
+
+.practice-battle-status { position: absolute; top: 18px; left: 68px; max-width: calc(50% - 96px); z-index: 2; padding: 4px; background: #000d; color: var(--ui); font-size: 12px; line-height: 1.4; pointer-events: none; }
+
+.cpu-level-label { display: block; font-size: 10px; }

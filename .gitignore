@@ -8,3 +8,9 @@ playwright-report/
 
 .keropod/
 .wrangler/
+
+.dev.vars*
+!.dev.vars.example
+.env.local
+.env.*.local
+!.env.local.example

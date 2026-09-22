@@ -1,0 +1,16 @@
+{
+  "$schema": "node_modules/wrangler/config-schema.json",
+  "name": "fortress-cpu",
+  "main": "src/cf/cpu.ts",
+  "compatibility_date": "2026-09-10",
+  "vars": {
+    "ALLOWED_ORIGINS": "https://fortress-9hj.pages.dev",
+    "JEV_MODEL": "jev-latest",
+    "JEV_ENABLED": "true"
+  },
+  "ratelimits": [
+    { "name": "CPU_LIMITER", "namespace_id": "2026092201", "simple": { "limit": 12, "period": 60 } },
+    { "name": "CPU_TOTAL_LIMITER", "namespace_id": "2026092202", "simple": { "limit": 120, "period": 60 } }
+  ],
+  "observability": { "enabled": true, "traces": { "enabled": true } }
+}

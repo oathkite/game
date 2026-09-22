@@ -1,3 +1,6 @@
+import { requestCpuDecision } from "@/practice/jevCpu";
+import { canPrepare } from "@/match/control";
+import { CPU_LEVEL_LABELS, type CpuLevel } from "@/practice/cpuLevel";
 import { stageMusic } from "@/app/musicTracks";
 import { YourTurn } from "@/worldUi/YourTurn";
 import { useDelayReveal } from "@/worldUi/useDelayReveal";
@@ -29,7 +32,7 @@ import { PrototypeCanvas } from "./PrototypeCanvas";
 import { usePrototypeInput } from "./usePrototypeInput";
 import "./prototype.css";
 
-type ThemeProps = { readonly mapName?: MapName | "random"; readonly worldArt?: boolean; readonly onExit?: () => void; readonly onResult?: (result: ResultPresentation) => void };
+type ThemeProps = { readonly cpuLevel?: CpuLevel; readonly cpu?: boolean; readonly mapName?: MapName | "random"; readonly worldArt?: boolean; readonly onExit?: () => void; readonly onResult?: (result: ResultPresentation) => void };
 export const CameraPrototype = (props: ThemeProps) => {
   const { t } = useLanguage();
   const begin = useRef<() => void>(() => {});
@@ -39,9 +42,9 @@ export const CameraPrototype = (props: ThemeProps) => {
     setAudioSettings(p.volume, p.muted, p.bgmVolume ?? p.volume);
     const selectedMap = (props.mapName === "random" ? (["ridgeline", "stone-bridge", "terraces", "sky-islands"] as const)[Math.floor(Math.random() * 4)]! : props.mapName) ?? (props.worldArt ? "rock-arch" : "valley");
     setMusic(stageMusic(selectedMap));
-    const connection = createLocalConnection({ deferReady: props.worldArt ?? false, mapName: selectedMap, nickname: p.nickname || "プレイヤー", colors: p.colors, loadout: p.loadout,
-      opponentColors: defaultOpponentColors(p.colors), opponentLoadout: defaultOpponentLoadout(p.loadout) });
-    const created = createMatchStore(connection, { followCurrentSeat: true, mySeat: 0, spectator: false });
+    const connection = createLocalConnection({ decideCpu: (state, level, signal) => requestCpuDecision(state, level, signal, import.meta.env.VITE_CPU_SERVER_URL ?? ""), cpuLevel: props.cpuLevel ?? "normal", cpu: props.cpu ?? false, deferReady: props.worldArt ?? false, mapName: selectedMap, nickname: p.nickname || "プレイヤー", colors: p.colors, loadout: p.loadout,
+      opponentColors: defaultOpponentColors(p.colors), opponentLoadout: props.cpu ? ["cannon", "triple"] : defaultOpponentLoadout(p.loadout) });
+    const created = createMatchStore(connection, { preparation: props.cpu ?? false, followCurrentSeat: !props.cpu, mySeat: 0, spectator: false });
     begin.current = connection.releaseReady;
     setStore(created);
     return () => { created.dispose(); connection.close(); };
@@ -49,7 +52,7 @@ export const CameraPrototype = (props: ThemeProps) => {
   return store ? <Battle store={store} begin={begin.current} {...props} /> : <div>{t("準備しています…")}</div>;
 };
 
-const Battle = ({ store, begin, worldArt, onExit, onResult }: { readonly store: MatchStore; readonly begin: () => void } & ThemeProps) => {
+const Battle = ({ store, begin, worldArt, cpu, cpuLevel, onExit, onResult }: { readonly store: MatchStore; readonly begin: () => void } & ThemeProps) => {
   const { t } = useLanguage();
   const touch = useTouchControls();
   const view = useSyncExternalStore(store.subscribe, store.getView, store.getView);
@@ -66,10 +69,12 @@ const Battle = ({ store, begin, worldArt, onExit, onResult }: { readonly store: 
   const layout = useMemo(() => { const base = cameraLayout(size.width, size.height, worldArt ? loadCameraScale() : 9); return worldArt ? { ...base, mapHeight: Math.max(1, size.height - hudTop - hudBottom) } : base; }, [size, worldArt, hudTop, hudBottom]);
   const revealing = useDelayReveal(view.delay?.revealUntil);
   const enabled = !revealing && sceneReady && view.phase === "acting" && view.control !== null;
-  const input = usePrototypeInput(store, rig, enabled, menu || confirmLeave || revealing, () => { if (confirmLeave) setConfirmLeave(false); else setMenu((open) => !open); }, !sceneReady);
+  const preparing = Boolean(cpu && sceneReady && !revealing && canPrepare(view));
+  const input = usePrototypeInput(store, rig, enabled, menu || confirmLeave || revealing, () => { if (confirmLeave) setConfirmLeave(false); else setMenu((open) => !open); }, !sceneReady, preparing);
   useBrowserBackAction(Boolean(worldArt && onExit), () => { input.cancel(); setMenu(false); setConfirmLeave(true); });
   const ready = view.mask !== null && view.players !== null;
-  const actor = view.players?.[view.currentSeat], slot = view.control?.slot ?? view.lastSlot;
+  const hudSeat = cpu ? 0 : view.currentSeat;
+  const actor = view.players?.[hudSeat], slot = view.control?.slot ?? view.lastSlot;
   useEffect(() => {
     const resize = (): void => setSize({ width: innerWidth, height: innerHeight });
     window.addEventListener("resize", resize); return () => window.removeEventListener("resize", resize);
@@ -80,6 +85,7 @@ const Battle = ({ store, begin, worldArt, onExit, onResult }: { readonly store: 
     wasMenuOpen.current = menu;
   }, [menu, worldArt]);
   useEffect(() => {
+    if (!import.meta.env.DEV) return;
     window.__fortress = { store, getView: store.getView, aim: () => null };
     return () => { delete window.__fortress; };
   }, [store]);
@@ -94,6 +100,7 @@ const Battle = ({ store, begin, worldArt, onExit, onResult }: { readonly store: 
   const pose = view.control ?? actor;
   const ground = view.mask && pose ? tiltOf(view.mask, pose) : 0;
   return <main className="kp-root" onContextMenu={(e) => e.preventDefault()} onPointerDown={() => unlockAudio()}>
+    {worldArt && <div className="practice-battle-status" role="status">{cpu ? t(view.phase === "waiting" ? "CPUの番" : "CPU戦") : t("自由練習")}{cpu && <span className="cpu-level-label">{t(CPU_LEVEL_LABELS[cpuLevel ?? "normal"])}</span>}</div>}
     <YourTurn turnKey={String(view.turnNumber)} active={enabled} />
     {worldArt ? <BattleOverlay clock={<Timer dial deadlineAt={revealing ? null : view.deadlineAt} clockOffset={0} myTurn={enabled} />} onMenu={() => { input.cancel(); setMenu(true); }} /> : <header className="kp-topbar">
       <div className="kp-brand">TANK SHOOT <span>{t("プラクティス")}</span></div>
@@ -103,8 +110,8 @@ const Battle = ({ store, begin, worldArt, onExit, onResult }: { readonly store: 
       <button ref={menuButton} aria-label={t("設定を開く")} onClick={() => { input.cancel(); setMenu(true); }}>{t("設定")}</button>
     </header>}
     {ready ? <PrototypeCanvas onOpeningComplete={begin} worldArt={worldArt ?? false} store={store} rig={rig} layout={layout} handlers={input.world} blocked={menu || confirmLeave || input.gauge.charging} followShot={true} onReady={setSceneReady} /> : <div style={{ height: layout.mapHeight }}>{t("フィールドを準備しています…")}</div>}
-    {worldArt ? <BattleConsole delay={view.delay ? { onOpen: input.cancel, state: view.delay, playerId: String(view.currentSeat), acting: view.phase === "acting", players: (view.players ?? []).map(p => ({ id: String(p.seat), name: p.nickname, colors: p.colors })) } : undefined} player={hudPlayers[view.currentSeat]} steps={view.control?.stepsLeft ?? 0} tilt={ground} elevation={view.control?.elevation ?? view.lastElevation} facing={pose?.facing ?? 1} power={input.gauge.value} loadout={actor?.loadout} slot={slot} disabled={!enabled || confirmLeave || menu || input.gauge.charging} selectSlot={store.selectSlot}>
-      {touch && <BattleTouchControls disabled={!enabled || confirmLeave || menu} button={input.button} />}
+    {worldArt ? <BattleConsole delay={view.delay ? { onOpen: input.cancel, state: view.delay, playerId: String(hudSeat), acting: view.phase === "acting", players: (view.players ?? []).map(p => ({ id: String(p.seat), name: p.nickname, colors: p.colors })) } : undefined} player={hudPlayers[hudSeat]} steps={view.control?.stepsLeft ?? 0} tilt={ground} elevation={view.control?.elevation ?? view.lastElevation} facing={pose?.facing ?? 1} power={input.gauge.value} loadout={actor?.loadout} slot={slot} disabled={(!enabled && !preparing) || confirmLeave || menu || input.gauge.charging} selectSlot={store.selectSlot}>
+      {touch && <BattleTouchControls aimDisabled={(!enabled && !preparing) || confirmLeave || menu} disabled={!enabled || confirmLeave || menu} button={input.button} />}
     </BattleConsole> : <footer className="kp-controls">
       <div className="kp-control-group"><span>{t("移動")} <small>{view.control?.stepsLeft ?? 0}</small></span><div><button aria-label={t("左へ移動")} disabled={!enabled || confirmLeave || menu} {...input.button("left")}>←</button><button aria-label={t("右へ移動")} disabled={!enabled || confirmLeave || menu} {...input.button("right")}>→</button></div></div>
       <div className="kp-control-group"><span>{t("角度")} <strong data-testid="camera-angle">{view.control?.elevation ?? view.lastElevation}°</strong></span><div><button aria-label={t("角度を下げる")} disabled={!enabled || confirmLeave || menu} {...input.button("down")}>−</button><button aria-label={t("角度を上げる")} disabled={!enabled || confirmLeave || menu} {...input.button("up")}>＋</button></div></div>
@@ -120,8 +127,8 @@ const Battle = ({ store, begin, worldArt, onExit, onResult }: { readonly store: 
       {import.meta.env.DEV && new URLSearchParams(location.search).get("debug") === "1" && <CameraSettingsPanel rig={rig} />}
       <p className="kp-shortcuts">{t("A / D・← / →：移動")}<br />{t("W / S・↑ / ↓：角度　Space：発射")}<br />{t("Q / E：武器　Tab：機体を順に見る")}<br />{t("Shift + 矢印：見回す　C：手番へ")}</p>
       {onResult && <button onClick={() => store.surrender()}>{t("降参して対戦を終える")}</button>}
-      <button onClick={() => setMenu(false)}>{t("対戦に戻る")}</button>{onExit ? <button onClick={onExit}>{t("出撃準備に戻る")}</button> : <a href="/">{t("ガレージへ戻る")}</a>}
+      <button onClick={() => setMenu(false)}>{t("対戦に戻る")}</button>{onExit ? <button onClick={onExit}>{t("プラクティスへ戻る")}</button> : <a href="/">{t("ガレージへ戻る")}</a>}
     </dialog>
-    {view.phase === "finished" && !onResult && <div className="kp-result"><h2>{view.result?.winner === null ? t("引き分け") : t("{player}の勝利", { player: t(teamColorName(view.result?.winner ?? 0)) })}</h2><button onClick={() => store.closeResult()}>{t("もう一度")}</button>{onExit ? <button onClick={onExit}>{t("出撃準備に戻る")}</button> : <a href="/">{t("ガレージへ戻る")}</a>}</div>}
+    {view.phase === "finished" && !onResult && <div className="kp-result"><h2>{view.result?.winner === null ? t("引き分け") : t("{player}の勝利", { player: t(teamColorName(view.result?.winner ?? 0)) })}</h2><button onClick={() => store.closeResult()}>{t("もう一度")}</button>{onExit ? <button onClick={onExit}>{t("プラクティスへ戻る")}</button> : <a href="/">{t("ガレージへ戻る")}</a>}</div>}
   </main>;
 };

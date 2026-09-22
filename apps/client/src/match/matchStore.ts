@@ -39,6 +39,8 @@ export const createMatchStore = (connection: Connection, initialOptions: ReduceO
     listeners.emit();
   };
 
+  const unsubscribeCpu = connection.subscribeCpuPose?.(cpuPose => set({ ...view, cpuPose }));
+
   const unsubscribe = connection.subscribe((message) => {
     const r = reduce(view, message, options, ++replaySeq);
     set(r.view);
@@ -60,12 +62,12 @@ export const createMatchStore = (connection: Connection, initialOptions: ReduceO
   };
 
   const changeElevation = (delta: number): void => {
-    const next = applyElevation(view, delta);
+    const next = applyElevation(view, delta, options.preparation);
     if (next !== view) set(next);
   };
 
   const selectSlot = (slot: WeaponSlot): void => {
-    const next = applySlot(view, slot);
+    const next = applySlot(view, slot, options.preparation);
     if (next !== view) set(next);
   };
 
@@ -115,6 +117,6 @@ export const createMatchStore = (connection: Connection, initialOptions: ReduceO
     surrender: () => connection.send({ type: "match.surrender" }),
     closeResult: () => connection.send({ type: "result.close" }),
     onMismatch: mismatches.add,
-    dispose: unsubscribe,
+    dispose: () => { unsubscribe(); unsubscribeCpu?.(); },
   };
 };

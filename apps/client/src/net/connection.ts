@@ -1,3 +1,4 @@
+import type { CpuPose } from "@/practice/cpuTurn";
 import type { ClientMessage, ServerMessage } from "@game/protocol";
 
 // サーバーとの接続の抽象。WebSocket と、ブラウザ内でエンジンを動かす solo モードが同じ形を持つ。
@@ -5,6 +6,7 @@ import type { ClientMessage, ServerMessage } from "@game/protocol";
 export type ConnectionStatus = "connecting" | "open" | "closed";
 
 export type Connection = {
+  readonly subscribeCpuPose?: (listener: (pose: CpuPose | null) => void) => () => void;
   readonly reportMoveCost?: (steps: number) => void;
   /** Local practice reports a walking ring-out without firing a shot. */
   readonly reportMoveRingOut?: (x: number) => void;

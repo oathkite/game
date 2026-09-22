@@ -25,9 +25,9 @@ export const actorPoint = (view: MatchView) => {
 const posesOf = (v: MatchView, elevations: readonly number[]): readonly TankPose[] => {
   if (!v.mask || !v.players) return [];
   return v.players.map((p, seat) => {
-    const control = seat === v.mySeat ? v.control : null;
+    const control = seat === v.mySeat ? v.control : seat === 1 ? v.cpuPose ?? null : null;
     const position = control ?? p;
-    return { x: position.x, y: position.y, tilt: tiltOf(v.mask!, position), facing: position.facing, elevation: control?.elevation ?? elevations[seat] ?? 45,
+    return { x: position.x, y: position.y, tilt: tiltOf(v.mask!, position), facing: position.facing, elevation: control?.elevation ?? (seat === v.mySeat ? v.lastElevation : elevations[seat]) ?? 45,
       hp: p.hp, visible: !isRingOut(v.mask!, position), flash: false, aiming: control !== null && v.phase === "acting" };
   });
 };
@@ -68,6 +68,7 @@ export const PrototypeCanvas = ({ store, rig, layout, handlers, blocked, followS
       stopFrames = r.onFrame((dt) => {
         const v = store.getView();
         const current = latest.current;
+        if (v.mySeat !== null && v.mySeat !== v.currentSeat) elevations[v.mySeat] = v.lastElevation;
         if (practice) r.setTargets(practice.getTargets());
         const moveX = v.control?.x;
         if (!opening && Date.now() >= (v.delay?.revealUntil ?? 0) && v.phase === "acting" && moveX !== undefined && previousMoveX !== undefined && moveX !== previousMoveX) rig.moveActor(actorPoint(v), reduced.matches);
@@ -152,7 +153,7 @@ const drawMinimap = (canvas: HTMLCanvasElement | null, v: MatchView, rig: Camera
     if (v.mask.cells[y * v.mask.width + x]) ctx.fillRect(x * sx, y * sy, 4 * sx, 4 * sy);
   }
   v.players?.forEach((p, seat) => {
-    const point = seat === v.mySeat && v.control ? v.control : p;
+    const point = seat === v.mySeat && v.control ? v.control : seat === 1 && v.cpuPose ? v.cpuPose : p;
     ctx.fillStyle = teamColor(seat);
     ctx.fillRect(point.x * sx - 2, point.y * sy - 3, 4, 4);
   });

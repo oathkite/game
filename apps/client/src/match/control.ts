@@ -22,9 +22,14 @@ export const canStep = (view: MatchView, dir: Facing): boolean => {
   return stepOutcome(view.mask, { x: c.x, y: c.y }, dir).kind !== "blocked";
 };
 
+export const canPrepare = (view: MatchView): boolean =>
+  !view.spectator && view.mySeat !== null && view.mySeat !== view.currentSeat && view.result === null &&
+  (view.phase === "waiting" || view.phase === "replaying") && (view.players?.[view.mySeat]?.hp ?? 0) > 0;
+
 /** 仰角の変更。10 から 90 に収める。最後の値はターンをまたいで引き継ぐ */
-export const applyElevation = (view: MatchView, delta: number): MatchView => {
+export const applyElevation = (view: MatchView, delta: number, preparation = false): MatchView => {
   const c = view.control;
+  if (preparation && canPrepare(view)) return { ...view, lastElevation: Math.min(ELEVATION_MAX, Math.max(ELEVATION_MIN, view.lastElevation + delta)) };
   if (view.phase !== "acting" || !c) return view;
   const elevation = Math.min(ELEVATION_MAX, Math.max(ELEVATION_MIN, c.elevation + delta));
   if (elevation === c.elevation) return view;
@@ -32,8 +37,9 @@ export const applyElevation = (view: MatchView, delta: number): MatchView => {
 };
 
 /** 武器のスロットの選択。最後の値はターンをまたいで引き継ぐ（設計書 10 の 10.3） */
-export const applySlot = (view: MatchView, slot: WeaponSlot): MatchView => {
+export const applySlot = (view: MatchView, slot: WeaponSlot, preparation = false): MatchView => {
   const c = view.control;
+  if (preparation && canPrepare(view)) return slot === view.lastSlot ? view : { ...view, lastSlot: slot };
   if (view.phase !== "acting" || !c || c.slot === slot) return view;
   return { ...view, lastSlot: slot, control: { ...c, slot } };
 };

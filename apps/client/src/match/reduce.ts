@@ -6,6 +6,7 @@ import { EMPTY_VIEW, type LocalControl, type MatchView, type PlayerView, type Re
 // サーバーのメッセージを表示状態に畳み込む純関数。
 
 export type ReduceOptions = {
+  readonly preparation?: boolean;
   /** solo モードでは手番側を常に自分として扱う */
   readonly followCurrentSeat: boolean;
   readonly mySeat: Seat | null;

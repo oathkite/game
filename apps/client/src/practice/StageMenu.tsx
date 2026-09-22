@@ -18,7 +18,7 @@ export const StageMenu = ({ progress, saved, onStage, onBack }: Props) => {
   return (
     <main className="menu-shell practice-menu">
       <div className="menu-content practice-content">
-        <header><div className="label">PRACTICE</div><h1>{t("ターゲットチャレンジ")}</h1><p className="dim">{t("ステージを選んでください。")}</p></header>
+        <header className="practice-header"><h1>{t("ターゲットチャレンジ")}</h1><p className="dim">{t("ステージを選んでください。")}</p></header>
         <section aria-labelledby="challenge-title">
           <div className="practice-heading"><h2 id="challenge-title">{t("ステージ選択")}</h2><span>{cleared} / {STAGES.length} CLEAR</span></div>
           <p>{t("限られた弾数で、すべてのターゲットを壊そう。")}</p>

@@ -1,0 +1,2 @@
+# Copy to .dev.vars and set this value locally. Never commit .dev.vars.
+TYPESAFE_API_KEY=

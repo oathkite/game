@@ -1,3 +1,7 @@
+import type { CpuDecision } from "@game/protocol/cpu";
+import type { EngineState } from "@game/engine";
+import type { CpuLevel } from "@/practice/cpuLevel";
+import { planCpuTurn, playCpuTurn, type CpuPose } from "@/practice/cpuTurn";
 import { createEngine, createMatchHost, DEFAULT_ENGINE_TIMING, realClock, setupMessage, type MatchHost } from "@game/engine";
 import { resolveMapChoice } from "@game/maps";
 import type { ClientMessage, Loadout, MapChoice, ServerMessage, TankColors, WeaponId } from "@game/protocol";
@@ -8,6 +12,9 @@ import { createListeners, type Connection, type ConnectionStatus } from "./conne
 
 export type LocalMatchOptions = {
   readonly deferReady?: boolean;
+  readonly cpu?: boolean;
+  readonly cpuLevel?: CpuLevel;
+  readonly decideCpu?: (state: EngineState, level: CpuLevel, signal: AbortSignal) => Promise<CpuDecision | null>;
   /** ランダムなら対戦を作るたび（再戦を含む）に抽選する */
   readonly mapName: MapChoice;
   readonly nickname: string;
@@ -32,6 +39,12 @@ export const createLocalConnection = (options: LocalMatchOptions): Connection & 
   const messages = createListeners<ServerMessage>();
   const statuses = createListeners<ConnectionStatus>();
   let status: ConnectionStatus = "open";
+  const cpuPoses = createListeners<CpuPose | null>();
+  let cpuElevation = 45;
+  let pendingCpu: AbortController | null = null;
+  let stopCpu = () => {};
+  let cpuTimer: ReturnType<typeof setTimeout> | null = null;
+  const cancelCpu = () => { pendingCpu?.abort(); pendingCpu = null; if (cpuTimer !== null) clearTimeout(cpuTimer); cpuTimer = null; stopCpu(); cpuPoses.emit(null); };
   let host: MatchHost | null = null;
   let released = !options.deferReady, requested = false;
   const releaseReady = (): void => {
@@ -43,10 +56,33 @@ export const createLocalConnection = (options: LocalMatchOptions): Connection & 
 
   const deliver = (message: ServerMessage): void => {
     // 呼び出し元の処理と分けるため、次のマイクロタスクで配る
-    queueMicrotask(() => messages.emit(message));
+    queueMicrotask(() => { if (status === "open") messages.emit(message); });
+    if (message.type === "match.finished") cancelCpu();
+    if (options.cpu && message.type === "turn.start") {
+      cancelCpu();
+      if (message.seat !== 1) return;
+      cpuTimer = setTimeout(async () => {
+        cpuTimer = null;
+        if (!host || host.state().match.phase !== "acting" || host.state().match.currentSeat !== 1) return;
+        const activeHost = host;
+        const controller = new AbortController();
+        pendingCpu = controller;
+        let decision: CpuDecision | null = null;
+        try { decision = await options.decideCpu?.(activeHost.state(), options.cpuLevel ?? "normal", controller.signal) ?? null; } catch { /* 通信障害時はローカルCPUで続行する。 */ }
+        if (controller.signal.aborted || activeHost !== host || activeHost.state().match.currentSeat !== 1 || activeHost.state().match.phase !== "acting") return;
+        const plan = planCpuTurn(activeHost.state(), options.cpuLevel ?? "normal", cpuElevation, Math.random, decision ?? undefined);
+        stopCpu = playCpuTurn(plan, realClock, pose => { cpuElevation = pose.elevation; cpuPoses.emit(pose); }, () => {
+          activeHost.dispatch({ type: "practiceMoveCost", steps: Math.abs(plan.fire.x - activeHost.state().match.players[1].x) });
+          activeHost.dispatch({ type: "fire", seat: 1, fire: plan.fire });
+          cpuPoses.emit(null);
+        });
+      }, Math.max(0, (message.delay?.revealUntil ?? Date.now()) - Date.now()));
+    }
   };
 
   const startMatch = (): void => {
+    cancelCpu();
+    cpuElevation = 45;
     if (host) host.stop();
     const state = createEngine(
       { ...DEFAULT_ENGINE_TIMING, delayEnabled: true, rng: Math.random },
@@ -55,7 +91,7 @@ export const createLocalConnection = (options: LocalMatchOptions): Connection & 
         mapName: resolveMapChoice(options.mapName, Math.random),
         players: [
           { nickname: options.nickname || "P1", colors: options.colors, loadout: options.loadout },
-          { nickname: "P2", colors: options.opponentColors, loadout: options.opponentLoadout },
+          { nickname: options.cpu ? "CPU" : "P2", colors: options.opponentColors, loadout: options.opponentLoadout },
         ],
       },
     );
@@ -65,7 +101,7 @@ export const createLocalConnection = (options: LocalMatchOptions): Connection & 
 
   const send = (message: ClientMessage): void => {
     if (!host) return;
-    const seat = host.state().match.currentSeat;
+    const seat = options.cpu ? 0 : host.state().match.currentSeat;
     switch (message.type) {
       case "match.ready":
         requested = true;
@@ -81,7 +117,7 @@ export const createLocalConnection = (options: LocalMatchOptions): Connection & 
       case "match.surrender":
         // 開幕演出は操作を待たせるが、練習の終了は妨げない。
         if (!released) releaseReady();
-        host.dispatch({ type: "surrender", seat: host.state().match.currentSeat });
+        host.dispatch({ type: "surrender", seat: options.cpu ? 0 : host.state().match.currentSeat });
         return;
       case "result.close":
         startMatch();
@@ -98,6 +134,7 @@ export const createLocalConnection = (options: LocalMatchOptions): Connection & 
 
   return {
     releaseReady,
+    subscribeCpuPose: cpuPoses.add,
     reportMoveCost: steps => { host?.dispatch({ type: "practiceMoveCost", steps }); },
     reportMoveRingOut: x => { if (host) host.dispatch({ type:"moveRingOut", seat:host.state().match.currentSeat, x }); },
     send,
@@ -106,6 +143,7 @@ export const createLocalConnection = (options: LocalMatchOptions): Connection & 
     status: () => status,
     close: () => {
       status = "closed";
+      cancelCpu();
       if (host) host.stop();
       host = null;
       statuses.emit(status);
