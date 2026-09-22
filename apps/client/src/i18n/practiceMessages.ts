@@ -1,4 +1,7 @@
 export const practiceEnglish: Readonly<Record<string, string>> = {
+  "練習モードを選んでください。": "Choose a practice mode.",
+  "ステージを選んでください。": "Choose a stage.",
+  "ステージ選択": "Stage select", "ステージ選択へ戻る": "Back to stage select",
   "消音": "Mute",
   "ターゲットチャレンジ": "Target Challenge", "自由練習": "Free Practice",
   "狙って、崩して、自分のペースで。": "Aim, reshape the terrain, and learn at your own pace.",

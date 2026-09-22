@@ -84,7 +84,12 @@ export const PrototypeCanvas = ({ store, rig, layout, handlers, blocked, followS
             const projectile = r.projectile(color, weapon);
             return { ...projectile, setBullet: (index, x, y, angle) => { projectile.setBullet(index, x, y, angle); if (index === 0 && x !== null) rig.shot({ x, y }); } };
           } };
-          stopReplay = playReplay(replayRenderer, job, elevations, v.mySeat, { sound: playSound, reduceMotion: reduced.matches, roundEnd: Boolean(v.delay), onImpact: (mask, impact) => practice?.showImpact(mask, impact), done: () => { activeReplay = false; store.completeReplay(job.id); } });
+          stopReplay = playReplay(replayRenderer, job, elevations, v.mySeat, { sound: playSound, reduceMotion: reduced.matches, roundEnd: Boolean(v.delay), onImpact: (mask, impact) => practice?.showImpact(mask, impact), done: () => {
+            activeReplay = false;
+            store.completeReplay(job.id);
+            const next = store.getView();
+            if (practice && next.phase === "acting") rig.focus(actorPoint(next), "actor", reduced.matches);
+          } });
         }
         if (!v.replay && activeReplay) { stopReplay(); activeReplay = false; }
         if (!activeReplay) {

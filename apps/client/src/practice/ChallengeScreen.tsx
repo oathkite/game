@@ -42,7 +42,7 @@ const ChallengeDialog = ({ state, menu, close, ...props }: Props & { readonly st
       {menu && <label className="row"><input type="checkbox" checked={props.profile.muted} onChange={(e) => props.onProfileChange({ ...props.profile, muted: e.target.checked })} />{t("消音")}</label>}
       {menu && <button className="primary-action" onClick={close}>{t("練習に戻る")}</button>}
       <button onClick={props.onRetry}>{t("もう一度")}</button>
-      <button onClick={props.onBack}>{t("プラクティスへ戻る")}</button>
+      <button onClick={props.onBack}>{t("ステージ選択へ戻る")}</button>
     </div>
   </dialog>;
 };

@@ -4,15 +4,18 @@ test("プラクティス入口、未解放ステージ、自由練習、横画�
   await page.goto("/");
   await page.getByRole("button", { name: "はじめる", exact: true }).click();
   await page.getByRole("button", { name: "プラクティス", exact: true }).click();
-  await expect(page.getByRole("heading", { name: "プラクティス", exact: true })).toBeVisible();
+  await page.getByRole("button", { name: "ターゲットチャレンジ", exact: true }).click();
+  await expect(page.getByRole("heading", { name: "ターゲットチャレンジ", exact: true })).toBeVisible();
   await expect(page.getByRole("button", { name: "02 丘の向こう 未解放" })).toBeDisabled();
   await page.screenshot({ path: "test-results/practice-desktop.png" });
-  await page.getByRole("button", { name: "自由練習をはじめる" }).click();
+  await page.getByRole("button", { name: "プラクティスへ戻る" }).click();
+  await page.getByRole("button", { name: "自由練習", exact: true }).click();
   await page.getByRole("button", { name: "自由練習をはじめる" }).click();
   await expect(page.locator(".kp-canvas canvas")).toBeVisible();
   await page.goto("/");
   await page.getByRole("button", { name: "はじめる", exact: true }).click();
   await page.getByRole("button", { name: "プラクティス", exact: true }).click();
+  await page.getByRole("button", { name: "ターゲットチャレンジ", exact: true }).click();
   await page.getByRole("button", { name: "ステージ1をはじめる" }).click();
   await expect(page.locator(".kp-canvas canvas")).toBeVisible();
   await page.screenshot({ path: "test-results/challenge-desktop.png" });
@@ -23,38 +26,31 @@ test("プラクティス入口、未解放ステージ、自由練習、横画�
   await page.setViewportSize({ width: 844, height: 390 });
   await page.screenshot({ path: "test-results/challenge-mobile.png" });
   await page.getByRole("button", { name: "設定を開く", exact: true }).click();
-  await page.getByRole("button", { name: "プラクティスへ戻る" }).click();
+  await page.getByRole("button", { name: "ステージ選択へ戻る" }).click();
   await page.setViewportSize({ width: 390, height: 844 });
   await expect(page.getByRole("button", { name: "ステージ1をはじめる" })).toBeInViewport();
   await page.screenshot({ path: "test-results/practice-mobile.png" });
 });
 
 
-// 通信遅延でパワーがずれないよう、既存battleテスト同様にページ内の時計で離す。
+// 実入力の長押し時間を偽の時計で固定し、マシン負荷によるパワーのずれを避ける。
 const fireAtPower = async (page: Page, power: number) => {
-  await page.evaluate(() => {
-    window.addEventListener("keydown", (e) => { if (e.code === "Space") (window as Window & { __e2eSpaceDownAt?: number }).__e2eSpaceDownAt = performance.now(); }, { once: true, capture: true });
-  });
+  await page.clock.pauseAt(new Date(await page.evaluate(() => Date.now() + 1000)));
   await page.keyboard.down("Space");
-  await page.evaluate((power) => new Promise<void>((resolve) => {
-    const start = (window as Window & { __e2eSpaceDownAt?: number }).__e2eSpaceDownAt!;
-    const duration = power * 15 + 3;
-    setTimeout(() => {
-      while (performance.now() - start < duration) { /* exact release */ }
-      window.dispatchEvent(new KeyboardEvent("keyup", { code: "Space", key: " " }));
-      resolve();
-    }, Math.max(0, duration - (performance.now() - start) - 20));
-  }), power);
+  await page.clock.runFor(power * 15 + 3);
   await page.keyboard.up("Space");
+  await page.clock.resume();
 };
 
 import { SOLUTIONS } from "../../client/test/fixtures/challenge-solutions";
 
 test("実操作で全8面をクリアし、解放・BESTを再読み込み後も保持する", async ({ page }) => {
   test.setTimeout(180_000);
+  await page.clock.install();
   await page.goto("/");
   await page.getByRole("button", { name: "はじめる", exact: true }).click();
   await page.getByRole("button", { name: "プラクティス", exact: true }).click();
+  await page.getByRole("button", { name: "ターゲットチャレンジ", exact: true }).click();
   await page.getByRole("button", { name: "ステージ1をはじめる" }).click();
   for (const [index, actions] of SOLUTIONS.entries()) {
     await expect(page.locator(".kp-canvas canvas")).toBeVisible();
@@ -77,6 +73,7 @@ test("実操作で全8面をクリアし、解放・BESTを再読み込み後も
   await page.reload();
   await page.getByRole("button", { name: "はじめる", exact: true }).click();
   await page.getByRole("button", { name: "プラクティス", exact: true }).click();
+  await page.getByRole("button", { name: "ターゲットチャレンジ", exact: true }).click();
   await expect(page.getByText("8 / 8 CLEAR", { exact: true })).toBeVisible();
   await expect(page.locator(".practice-card.cleared")).toHaveCount(8);
 });
@@ -85,6 +82,7 @@ test("弾切れ後に再挑戦でき、メニューを開くと長押し射撃�
   await page.goto("/");
   await page.getByRole("button", { name: "はじめる", exact: true }).click();
   await page.getByRole("button", { name: "プラクティス", exact: true }).click();
+  await page.getByRole("button", { name: "ターゲットチャレンジ", exact: true }).click();
   await page.getByRole("button", { name: "ステージ1をはじめる" }).click();
   await expect(page.locator(".kp-canvas canvas")).toBeVisible();
   await page.keyboard.down("Space");
@@ -102,7 +100,7 @@ test("弾切れ後に再挑戦でき、メニューを開くと長押し射撃�
   await expect(page.locator(".challenge-status")).toContainText("的 1 · 残り 5発");
   await expect(page.getByRole("button", { name: "発射", exact: true })).toBeEnabled();
   await page.getByRole("button", { name: "設定を開く", exact: true }).click();
-  await page.getByRole("button", { name: "プラクティスへ戻る" }).click();
+  await page.getByRole("button", { name: "ステージ選択へ戻る" }).click();
   await expect(page.getByRole("button", { name: "02 丘の向こう 未解放" })).toBeDisabled();
 });
 
@@ -112,8 +110,11 @@ test("縦画面で操作でき、ブラウザの戻るは練習メニューを�
   await page.goto("/");
   await page.getByRole("button", { name: "はじめる", exact: true }).click();
   await page.getByRole("button", { name: "プラクティス", exact: true }).click();
-  await page.getByRole("button", { name: "自由練習をはじめる" }).click();
+  await page.getByRole("button", { name: "ターゲットチャレンジ", exact: true }).click();
+  await page.getByRole("button", { name: "プラクティスへ戻る" }).click();
+  await page.getByRole("button", { name: "自由練習", exact: true }).click();
   await page.goBack();
+  await page.getByRole("button", { name: "ターゲットチャレンジ", exact: true }).click();
   await expect(page.getByRole("heading", { name: "ターゲットチャレンジ" })).toBeVisible();
   await page.getByRole("button", { name: "ステージ1をはじめる" }).click();
   await expect(page.getByRole("button", { name: "発射", exact: true })).toBeEnabled();
@@ -138,6 +139,7 @@ test("英語設定を練習の一覧・説明・操作にも引き継ぐ", async
   await page.goto("/");
   await page.getByRole("button", { name: "Play", exact: true }).click();
   await page.getByRole("button", { name: "Practice", exact: true }).click();
+  await page.getByRole("button", { name: "Target Challenge", exact: true }).click();
   await expect(page.getByRole("heading", { name: "Target Challenge" })).toBeVisible();
   await expect(page.getByRole("button", { name: "02 Over the hill Locked" })).toBeDisabled();
   await page.getByRole("button", { name: "Start stage 1" }).click();

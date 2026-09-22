@@ -7,9 +7,11 @@ test("練習から出撃準備に戻り、部屋作成・退出ができる", as
     await owner.goto(`${baseURL}/`);
     await owner.getByRole("button", { name: "はじめる", exact: true }).click();
     await owner.getByRole("button", { name: "プラクティス", exact: true }).click();
+    await owner.getByRole("button", { name: "ターゲットチャレンジ", exact: true }).click();
     await owner.getByRole("button", { name: "ステージ1をはじめる" }).click();
     await expect(owner.getByRole("button", { name: "発射", exact: true })).toBeEnabled();
     await owner.getByRole("button", { name: "設定を開く", exact: true }).click();
+    await owner.getByRole("button", { name: "ステージ選択へ戻る" }).click();
     await owner.getByRole("button", { name: "プラクティスへ戻る" }).click();
     await owner.getByRole("button", { name: "出撃準備へ戻る" }).click();
     await owner.getByRole("button", { name: "出撃", exact: true }).click();

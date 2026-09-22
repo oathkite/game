@@ -12,7 +12,11 @@
 .practice-number { font-size: 26px; }
 .practice-card .dim, .practice-weapons { font-size: 12px; }
 .practice-card.cleared { border-color: var(--ui); }
-.practice-free { border-top: 1px solid var(--ui-dim); padding-top: 20px; }
+.practice-mode-menu { max-width: 720px; }
+.practice-modes { display: flex; flex-direction: column; gap: 20px; }
+.practice-mode { display: flex; flex-direction: column; gap: 12px; padding: 24px; text-align: left; }
+.practice-mode strong { font-size: 20px; }
+.practice-mode span { font-size: 14px; line-height: 1.6; }
 .challenge-hint { color: var(--ui-dim); font-size: 12px; text-align: center; margin: 6px 8px; }
 @media (max-width: 700px) { .practice-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); } .practice-content { padding: 16px; gap: 20px; } }
 @media (max-height: 450px) { .challenge-hint { font-size: 10px; margin: 2px; } }
