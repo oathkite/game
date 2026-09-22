@@ -1,5 +1,5 @@
 import type { CpuLevel } from "@/practice/cpuLevel";
-import { chooseCpuShot } from "@/practice/cpu";
+import { planCpuTurn, playCpuTurn, type CpuPose } from "@/practice/cpuTurn";
 import { createEngine, createMatchHost, DEFAULT_ENGINE_TIMING, realClock, setupMessage, type MatchHost } from "@game/engine";
 import { resolveMapChoice } from "@game/maps";
 import type { ClientMessage, Loadout, MapChoice, ServerMessage, TankColors, WeaponId } from "@game/protocol";
@@ -36,8 +36,11 @@ export const createLocalConnection = (options: LocalMatchOptions): Connection & 
   const messages = createListeners<ServerMessage>();
   const statuses = createListeners<ConnectionStatus>();
   let status: ConnectionStatus = "open";
+  const cpuPoses = createListeners<CpuPose | null>();
+  let cpuElevation = 45;
+  let stopCpu = () => {};
   let cpuTimer: ReturnType<typeof setTimeout> | null = null;
-  const cancelCpu = () => { if (cpuTimer !== null) clearTimeout(cpuTimer); cpuTimer = null; };
+  const cancelCpu = () => { if (cpuTimer !== null) clearTimeout(cpuTimer); cpuTimer = null; stopCpu(); cpuPoses.emit(null); };
   let host: MatchHost | null = null;
   let released = !options.deferReady, requested = false;
   const releaseReady = (): void => {
@@ -57,13 +60,20 @@ export const createLocalConnection = (options: LocalMatchOptions): Connection & 
       cpuTimer = setTimeout(() => {
         cpuTimer = null;
         if (!host || host.state().match.phase !== "acting" || host.state().match.currentSeat !== 1) return;
-        host.dispatch({ type: "fire", seat: 1, fire: chooseCpuShot(host.state(), options.cpuLevel ?? "normal", Math.random) });
-      }, Math.max(0, (message.delay?.revealUntil ?? Date.now()) - Date.now()) + 900);
+        const activeHost = host;
+        const plan = planCpuTurn(activeHost.state(), options.cpuLevel ?? "normal", cpuElevation, Math.random);
+        stopCpu = playCpuTurn(plan, realClock, pose => { cpuElevation = pose.elevation; cpuPoses.emit(pose); }, () => {
+          activeHost.dispatch({ type: "practiceMoveCost", steps: Math.abs(plan.fire.x - activeHost.state().match.players[1].x) });
+          activeHost.dispatch({ type: "fire", seat: 1, fire: plan.fire });
+          cpuPoses.emit(null);
+        });
+      }, Math.max(0, (message.delay?.revealUntil ?? Date.now()) - Date.now()));
     }
   };
 
   const startMatch = (): void => {
     cancelCpu();
+    cpuElevation = 45;
     if (host) host.stop();
     const state = createEngine(
       { ...DEFAULT_ENGINE_TIMING, delayEnabled: true, rng: Math.random },
@@ -115,6 +125,7 @@ export const createLocalConnection = (options: LocalMatchOptions): Connection & 
 
   return {
     releaseReady,
+    subscribeCpuPose: cpuPoses.add,
     reportMoveCost: steps => { host?.dispatch({ type: "practiceMoveCost", steps }); },
     reportMoveRingOut: x => { if (host) host.dispatch({ type:"moveRingOut", seat:host.state().match.currentSeat, x }); },
     send,

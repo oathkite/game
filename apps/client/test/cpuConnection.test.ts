@@ -10,6 +10,9 @@ const setup = () => {
   const store = createMatchStore(connection, { followCurrentSeat: false, mySeat: 0, spectator: false });
   return { connection, store };
 };
+const waitForReplay = async (store: ReturnType<typeof createMatchStore>) => {
+  for (let i = 0; i < 300 && !store.getView().replay; i++) await vi.advanceTimersByTimeAsync(50);
+};
 it("CPUが自動射撃し、同じ射撃を再現でき、人間はCPUを操作できない", async () => {
   const { connection, store } = setup();
   await vi.advanceTimersByTimeAsync(0);
@@ -17,7 +20,9 @@ it("CPUが自動射撃し、同じ射撃を再現でき、人間はCPUを操作�
   expect(store.getView().control).toBeNull();
   store.fire(100);
   expect(store.getView().replay).toBeNull();
-  await vi.advanceTimersByTimeAsync(5000);
+  await vi.advanceTimersByTimeAsync(1000);
+  expect(store.getView().replay).toBeNull();
+  await waitForReplay(store);
   expect(store.getView().replay?.shot.input.seat).toBe(1);
   expect(store.getView().mismatches).toBe(0);
   store.dispose(); connection.close();
@@ -44,7 +49,7 @@ it("退出でCPUの予約を解除する", async () => {
 
 it("CPUの再生が終わると人間に操作が戻る", async () => {
   const { connection, store } = setup();
-  await vi.advanceTimersByTimeAsync(1000);
+  await waitForReplay(store);
   const replay = store.getView().replay;
   expect(replay).not.toBeNull();
   store.completeReplay(replay!.id);
@@ -66,4 +71,36 @@ it("射撃と手番を繰り返して通常の決着まで進められる", asyn
   expect(store.getView().phase).toBe("finished");
   expect(store.getView().mismatches).toBe(0);
   store.dispose(); connection.close();
+});
+
+
+it("CPUの移動と照準を表示し、確定盤面や自分の照準は書き換えない", async () => {
+  const { connection, store } = setup();
+  await vi.advanceTimersByTimeAsync(0);
+  const before = store.getView();
+  const poses: NonNullable<ReturnType<typeof store.getView>["cpuPose"]>[] = [];
+  const off = store.subscribe(() => { const pose = store.getView().cpuPose; if (pose) poses.push(pose); });
+  await waitForReplay(store);
+  expect(poses.length).toBeGreaterThan(5);
+  expect(new Set(poses.map(p => p.elevation)).size).toBeGreaterThan(1);
+  expect(store.getView().players).toEqual(before.players);
+  expect(store.getView().lastElevation).toBe(before.lastElevation);
+  expect(store.getView().lastSlot).toBe(before.lastSlot);
+  expect(store.getView().cpuPose).toBeNull();
+  expect(store.getView().mismatches).toBe(0);
+  off(); store.dispose(); connection.close();
+});
+
+it("CPUが操作している途中に退出すると、以後の操作と射撃を止める", async () => {
+  const { connection, store } = setup();
+  await vi.advanceTimersByTimeAsync(2200);
+  const listener = vi.fn();
+  const off = connection.subscribeCpuPose!(listener);
+  connection.close();
+  listener.mockClear();
+  const before = store.getView();
+  await vi.advanceTimersByTimeAsync(20000);
+  expect(listener).not.toHaveBeenCalled();
+  expect(store.getView()).toBe(before);
+  off(); store.dispose();
 });

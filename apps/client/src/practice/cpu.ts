@@ -22,8 +22,7 @@ export const chooseCpuShot = (state: EngineState, level: CpuLevel = "hard", rng:
       }
     }
   }
-  if (level === "hard") return best;
-  const spread = level === "easy" ? { angle: 12, power: 20 } : { angle: 5, power: 8 };
+  const spread = level === "easy" ? { angle: 14, power: 24 } : level === "normal" ? { angle: 7, power: 12 } : { angle: 2, power: 4 };
   const offset = (range: number) => Math.floor(rng() * (range * 2 + 1)) - range;
   return { ...best, elevation: Math.max(10, Math.min(90, best.elevation + offset(spread.angle))),
     power: Math.max(1, Math.min(100, best.power + offset(spread.power))) };

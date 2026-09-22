@@ -27,16 +27,16 @@ it("初期マップでは相手にダメージを与える射撃を選ぶ", () =
   expect(result.hpAfter[0]).toBeLessThan(state.match.players[0].hp);
 });
 
-it("難易度ごとに照準誤差を変え、むずかしいは従来の精度を維持する", () => {
+it("難易度ごとに照準誤差を変え、むずかしいにも小さな誤差を入れる", () => {
   const state = initial();
   const hard = chooseCpuShot(state);
-  expect(chooseCpuShot(state, "hard", () => 0)).toEqual(hard);
+  expect(chooseCpuShot(state, "hard", () => 0)).not.toEqual(hard);
   const easy = chooseCpuShot(state, "easy", () => 0);
   const normal = chooseCpuShot(state, "normal", () => 0);
-  expect(easy.power).toBe(Math.max(1, hard.power - 20));
-  expect(normal.power).toBe(Math.max(1, hard.power - 8));
-  expect(easy.elevation).toBe(Math.max(10, hard.elevation - 12));
-  expect(normal.elevation).toBe(Math.max(10, hard.elevation - 5));
+  expect(easy.power).toBe(Math.max(1, hard.power - 24));
+  expect(normal.power).toBe(Math.max(1, hard.power - 12));
+  expect(easy.elevation).toBe(Math.max(10, hard.elevation - 14));
+  expect(normal.elevation).toBe(Math.max(10, hard.elevation - 7));
   expect(easy).not.toEqual(hard);
 });
 

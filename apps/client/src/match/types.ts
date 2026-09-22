@@ -1,3 +1,4 @@
+import type { CpuPose } from "@/practice/cpuTurn";
 import type { DelayState } from "@game/protocol";
 import { type Facing, type Loadout, type MatchResult, type Seat, type ShotResult, type TankColors, TURN_LIMIT, type WeaponSlot, type Wind } from "@game/protocol";
 import type { ProjectilePath, TerrainMask } from "@game/sim";
@@ -56,6 +57,7 @@ export type ReplayJob = {
 };
 
 export type MatchView = {
+  readonly cpuPose?: CpuPose | null;
   readonly mapId?: string;
   readonly delay?: DelayState | undefined;
   readonly phase: ClientPhase;

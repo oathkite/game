@@ -22,6 +22,11 @@ test("CPU戦の設定・自動射撃・降参・再戦・退出", async ({ page 
   await page.keyboard.down("Space");
   await page.waitForTimeout(100);
   await page.keyboard.up("Space");
+  await expect.poll(() => page.evaluate(() => {
+    const view = window.__fortress?.getView() as { cpuPose?: { elevation: number } | null } | undefined;
+    return view?.cpuPose?.elevation;
+  }), { timeout: 25000, intervals: [50] }).toEqual(expect.any(Number));
+  await page.screenshot({ path: "/tmp/practice-cpu-aim.png" });
   await expect.poll(() => page.evaluate(() => window.__fortress?.getView().phase === "replaying" ? window.__fortress.getView().currentSeat : null), { timeout: 25000, intervals: [50] }).toBe(1);
   await expect(fire).toBeDisabled();
   expect(await page.locator(".battle-weapons button").evaluateAll(buttons => buttons.map(button => button.getAttribute("aria-label")))).toEqual(["標準砲", "掘削弾"]);

@@ -2,7 +2,7 @@ export const practiceEnglish: Readonly<Record<string, string>> = {
   "CPUレベル": "CPU level", "やさしい": "Easy", "ふつう": "Normal", "むずかしい": "Hard",
   "照準が大きくぶれます。操作に慣れたいときに。": "Large aiming errors. A good place to learn the controls.",
   "照準が少しぶれます。対戦の練習に。": "Small aiming errors. Practice your battle skills.",
-  "照準のぶれがなく、正確に狙います。": "Precise aiming with no added errors.",
+  "狙いは正確ですが、少し照準がぶれます。": "Accurate aiming with a little variation.",
   "CPU戦": "CPU Battle", "CPUの番": "CPU’s turn",
   "CPU戦をはじめる": "Start CPU battle",
   "好きなステージと装備で、CPUと対戦しよう。": "Choose a stage and weapons, then battle the CPU.",
