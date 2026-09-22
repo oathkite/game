@@ -13,6 +13,7 @@ import { playReplay } from "@/game/replay";
 import type { TankPose } from "@/game/tankView";
 import type { Layout } from "@/game/scale";
 import type { MatchStore } from "@/match/matchStore";
+import { turnSeatOf } from "@/match/turnSeat";
 import type { MatchView } from "@/match/types";
 import { playSound } from "@/app/audio";
 import { viewportOf, worldToScreen } from "./camera";
@@ -28,7 +29,7 @@ const posesOf = (v: MatchView, elevations: readonly number[]): readonly TankPose
     const control = seat === v.mySeat ? v.control : seat === 1 ? v.cpuPose ?? null : null;
     const position = control ?? p;
     return { x: position.x, y: position.y, tilt: tiltOf(v.mask!, position), facing: position.facing, elevation: control?.elevation ?? (seat === v.mySeat ? v.lastElevation : elevations[seat]) ?? 45,
-      hp: p.hp, visible: !isRingOut(v.mask!, position), flash: false, aiming: control !== null && v.phase === "acting", acting: v.phase === "acting" && v.currentSeat === seat };
+      hp: p.hp, visible: !isRingOut(v.mask!, position), flash: false, aiming: control !== null && v.phase === "acting", acting: turnSeatOf(v) === seat };
   });
 };
 
