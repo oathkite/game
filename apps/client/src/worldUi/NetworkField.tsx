@@ -22,6 +22,7 @@ import { createLabCrumbles, drawLabImpacts, labEdgePoints, labShake, labTankHit 
 import { edgeBlinkOn } from "@/game/edgeMarker";
 import { guideDots } from "@/game/trail";
 import { revealRowsAt } from "./openingTour";
+import { CARVE_AT_MS, IMPACT_TOTAL_MS } from "@/game/hitFeedback";
 import { SceneLoading } from "./SceneLoading";
 
 type Props = { readonly serverNow: number; readonly onSettling?: (settling: boolean) => void; readonly followTurns?: boolean; readonly blocked?: boolean; readonly frame: LabFrame; readonly players: LabFrame["players"]; readonly presentation: ReturnType<typeof presentLabReplay>; readonly elevation: number; readonly ownId: string; readonly selectedWeapon?: WeaponId; readonly charge?: number };
@@ -101,7 +102,10 @@ export const NetworkField = (props: Props) => {
           const elapsed = latest.current.serverNow - replay.startsAt;
           replay.impacts.forEach((impact, index) => {
             const event = `${replay.startsAt}/${index}`;
-            if (elapsed < impact.tick / Math.max(1, replay.ticks) * flightMs || damageEvents.has(event)) return;
+            // 練習と同じく、爆風が最大になって機体が白くなる瞬間に数字を出す（設計書 38 の E1）
+            const effect = presentation.effects.find(e => e.key === String(index));
+            const due = effect ? effect.clock >= CARVE_AT_MS : elapsed >= impact.tick / Math.max(1, replay.ticks) * flightMs + IMPACT_TOTAL_MS;
+            if (!due || damageEvents.has(event)) return;
             damageEvents.add(event);
             impact.damage.forEach(d => {
               const seat = players.findIndex(p => p.playerId === d.playerId);
