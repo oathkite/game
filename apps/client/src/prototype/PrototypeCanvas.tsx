@@ -27,7 +27,7 @@ const posesOf = (v: MatchView, elevations: readonly number[]): readonly TankPose
   return v.players.map((p, seat) => {
     const control = seat === v.mySeat ? v.control : seat === 1 ? v.cpuPose ?? null : null;
     const position = control ?? p;
-    return { x: position.x, y: position.y, tilt: tiltOf(v.mask!, position), facing: position.facing, elevation: control?.elevation ?? elevations[seat] ?? 45,
+    return { x: position.x, y: position.y, tilt: tiltOf(v.mask!, position), facing: position.facing, elevation: control?.elevation ?? (seat === v.mySeat ? v.lastElevation : elevations[seat]) ?? 45,
       hp: p.hp, visible: !isRingOut(v.mask!, position), flash: false, aiming: control !== null && v.phase === "acting" };
   });
 };
@@ -68,6 +68,7 @@ export const PrototypeCanvas = ({ store, rig, layout, handlers, blocked, followS
       stopFrames = r.onFrame((dt) => {
         const v = store.getView();
         const current = latest.current;
+        if (v.mySeat !== null && v.mySeat !== v.currentSeat) elevations[v.mySeat] = v.lastElevation;
         if (practice) r.setTargets(practice.getTargets());
         const moveX = v.control?.x;
         if (!opening && Date.now() >= (v.delay?.revealUntil ?? 0) && v.phase === "acting" && moveX !== undefined && previousMoveX !== undefined && moveX !== previousMoveX) rig.moveActor(actorPoint(v), reduced.matches);

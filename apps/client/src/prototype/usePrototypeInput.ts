@@ -8,26 +8,28 @@ import { actorPoint } from "./PrototypeCanvas";
 
 type Action = "left" | "right" | "up" | "down" | "fire";
 type Owner = { readonly id: number | string; readonly action: Action | "pan" };
-export const usePrototypeInput = (store: Pick<MatchStore, "getView" | "fire" | "changeElevation" | "moveStep" | "selectSlot">, rig: CameraRig, enabled: boolean, blocked: boolean, toggleMenu: () => void, paused = false) => {
+export const usePrototypeInput = (store: Pick<MatchStore, "getView" | "fire" | "changeElevation" | "moveStep" | "selectSlot">, rig: CameraRig, enabled: boolean, blocked: boolean, toggleMenu: () => void, paused = false, preparation = false) => {
   const aimOwner = useRef<{ id: string | number; action: "up" | "down" } | null>(null);
   const pause = useRef(paused); pause.current = paused;
   const gauge = usePowerGauge(enabled && !blocked && !paused, store.fire);
   const holds = {
     left: useHold(() => { if (!pause.current) store.moveStep(-1); }, 80, enabled && !blocked && !gauge.charging),
     right: useHold(() => { if (!pause.current) store.moveStep(1); }, 80, enabled && !blocked && !gauge.charging),
-    up: useHold(() => { if (!pause.current) store.changeElevation(1); }, 50, enabled && !blocked),
-    down: useHold(() => { if (!pause.current) store.changeElevation(-1); }, 50, enabled && !blocked),
+    up: useHold(() => { if (!pause.current) store.changeElevation(1); }, 50, (enabled || preparation) && !blocked),
+    down: useHold(() => { if (!pause.current) store.changeElevation(-1); }, 50, (enabled || preparation) && !blocked),
   };
   const owner = useRef<Owner | null>(null);
   const drag = useRef<{ x: number; y: number; active: boolean; at: number } | null>(null);
-  const latest = useRef({ gauge, holds, enabled, blocked, toggleMenu });
-  latest.current = { gauge, holds, enabled, blocked, toggleMenu };
+  const latest = useRef({ gauge, holds, enabled, preparation, blocked, toggleMenu });
+  latest.current = { gauge, holds, enabled, preparation, blocked, toggleMenu };
   const cancel = (): void => {
     Object.values(latest.current.holds).forEach((h) => h.stop());
     latest.current.gauge.cancel(); owner.current = null; aimOwner.current = null; drag.current = null; rig.stop();
   };
   const begin = (id: number | string, action: Action): boolean => {
-    if (pause.current || !latest.current.enabled || latest.current.blocked) return false;
+    if (pause.current || latest.current.blocked) return false;
+    const aiming = action === "up" || action === "down";
+    if (!(latest.current.enabled || (aiming && latest.current.preparation))) return false;
     if (action === "up" || action === "down") {
       if (aimOwner.current || (owner.current && owner.current.action !== "fire")) return false;
       aimOwner.current = { id, action }; rig.stop(); latest.current.holds[action].start();
@@ -72,7 +74,7 @@ export const usePrototypeInput = (store: Pick<MatchStore, "getView" | "fire" | "
         rig.focus({ x: position.x, y: position.y - 6 }, "manual", matchMedia("(prefers-reduced-motion: reduce)").matches);
         return;
       }
-      if ((e.code === "KeyQ" || e.code === "KeyE") && !owner.current && !aimOwner.current && latest.current.enabled) { store.selectSlot(e.code === "KeyQ" ? 0 : 1); e.preventDefault(); return; }
+      if ((e.code === "KeyQ" || e.code === "KeyE") && !owner.current && !aimOwner.current && (latest.current.enabled || latest.current.preparation)) { store.selectSlot(e.code === "KeyQ" ? 0 : 1); e.preventDefault(); return; }
       if (e.code === "KeyC" && !owner.current && !aimOwner.current) { rig.focus(actorPoint(store.getView()), "actor", matchMedia("(prefers-reduced-motion: reduce)").matches); e.preventDefault(); return; }
       if (e.shiftKey && e.code.startsWith("Arrow") && !owner.current && !aimOwner.current) { panKey = e.code; e.preventDefault(); return; }
       if (panKey) return;

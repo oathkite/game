@@ -1,3 +1,4 @@
+import { canPrepare } from "@/match/control";
 import { CPU_LEVEL_LABELS, type CpuLevel } from "@/practice/cpuLevel";
 import { stageMusic } from "@/app/musicTracks";
 import { YourTurn } from "@/worldUi/YourTurn";
@@ -42,7 +43,7 @@ export const CameraPrototype = (props: ThemeProps) => {
     setMusic(stageMusic(selectedMap));
     const connection = createLocalConnection({ cpuLevel: props.cpuLevel ?? "normal", cpu: props.cpu ?? false, deferReady: props.worldArt ?? false, mapName: selectedMap, nickname: p.nickname || "プレイヤー", colors: p.colors, loadout: p.loadout,
       opponentColors: defaultOpponentColors(p.colors), opponentLoadout: props.cpu ? ["cannon", "triple"] : defaultOpponentLoadout(p.loadout) });
-    const created = createMatchStore(connection, { followCurrentSeat: !props.cpu, mySeat: 0, spectator: false });
+    const created = createMatchStore(connection, { preparation: props.cpu ?? false, followCurrentSeat: !props.cpu, mySeat: 0, spectator: false });
     begin.current = connection.releaseReady;
     setStore(created);
     return () => { created.dispose(); connection.close(); };
@@ -67,7 +68,8 @@ const Battle = ({ store, begin, worldArt, cpu, cpuLevel, onExit, onResult }: { r
   const layout = useMemo(() => { const base = cameraLayout(size.width, size.height, worldArt ? loadCameraScale() : 9); return worldArt ? { ...base, mapHeight: Math.max(1, size.height - hudTop - hudBottom) } : base; }, [size, worldArt, hudTop, hudBottom]);
   const revealing = useDelayReveal(view.delay?.revealUntil);
   const enabled = !revealing && sceneReady && view.phase === "acting" && view.control !== null;
-  const input = usePrototypeInput(store, rig, enabled, menu || confirmLeave || revealing, () => { if (confirmLeave) setConfirmLeave(false); else setMenu((open) => !open); }, !sceneReady);
+  const preparing = Boolean(cpu && sceneReady && !revealing && canPrepare(view));
+  const input = usePrototypeInput(store, rig, enabled, menu || confirmLeave || revealing, () => { if (confirmLeave) setConfirmLeave(false); else setMenu((open) => !open); }, !sceneReady, preparing);
   useBrowserBackAction(Boolean(worldArt && onExit), () => { input.cancel(); setMenu(false); setConfirmLeave(true); });
   const ready = view.mask !== null && view.players !== null;
   const hudSeat = cpu ? 0 : view.currentSeat;
@@ -107,8 +109,8 @@ const Battle = ({ store, begin, worldArt, cpu, cpuLevel, onExit, onResult }: { r
       <button ref={menuButton} aria-label={t("設定を開く")} onClick={() => { input.cancel(); setMenu(true); }}>{t("設定")}</button>
     </header>}
     {ready ? <PrototypeCanvas onOpeningComplete={begin} worldArt={worldArt ?? false} store={store} rig={rig} layout={layout} handlers={input.world} blocked={menu || confirmLeave || input.gauge.charging} followShot={true} onReady={setSceneReady} /> : <div style={{ height: layout.mapHeight }}>{t("フィールドを準備しています…")}</div>}
-    {worldArt ? <BattleConsole delay={view.delay ? { onOpen: input.cancel, state: view.delay, playerId: String(hudSeat), acting: view.phase === "acting", players: (view.players ?? []).map(p => ({ id: String(p.seat), name: p.nickname, colors: p.colors })) } : undefined} player={hudPlayers[hudSeat]} steps={view.control?.stepsLeft ?? 0} tilt={ground} elevation={view.control?.elevation ?? view.lastElevation} facing={pose?.facing ?? 1} power={input.gauge.value} loadout={actor?.loadout} slot={slot} disabled={!enabled || confirmLeave || menu || input.gauge.charging} selectSlot={store.selectSlot}>
-      {touch && <BattleTouchControls disabled={!enabled || confirmLeave || menu} button={input.button} />}
+    {worldArt ? <BattleConsole delay={view.delay ? { onOpen: input.cancel, state: view.delay, playerId: String(hudSeat), acting: view.phase === "acting", players: (view.players ?? []).map(p => ({ id: String(p.seat), name: p.nickname, colors: p.colors })) } : undefined} player={hudPlayers[hudSeat]} steps={view.control?.stepsLeft ?? 0} tilt={ground} elevation={view.control?.elevation ?? view.lastElevation} facing={pose?.facing ?? 1} power={input.gauge.value} loadout={actor?.loadout} slot={slot} disabled={(!enabled && !preparing) || confirmLeave || menu || input.gauge.charging} selectSlot={store.selectSlot}>
+      {touch && <BattleTouchControls aimDisabled={(!enabled && !preparing) || confirmLeave || menu} disabled={!enabled || confirmLeave || menu} button={input.button} />}
     </BattleConsole> : <footer className="kp-controls">
       <div className="kp-control-group"><span>{t("移動")} <small>{view.control?.stepsLeft ?? 0}</small></span><div><button aria-label={t("左へ移動")} disabled={!enabled || confirmLeave || menu} {...input.button("left")}>←</button><button aria-label={t("右へ移動")} disabled={!enabled || confirmLeave || menu} {...input.button("right")}>→</button></div></div>
       <div className="kp-control-group"><span>{t("角度")} <strong data-testid="camera-angle">{view.control?.elevation ?? view.lastElevation}°</strong></span><div><button aria-label={t("角度を下げる")} disabled={!enabled || confirmLeave || menu} {...input.button("down")}>−</button><button aria-label={t("角度を上げる")} disabled={!enabled || confirmLeave || menu} {...input.button("up")}>＋</button></div></div>

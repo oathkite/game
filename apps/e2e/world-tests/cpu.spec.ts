@@ -26,9 +26,14 @@ test("CPU戦の設定・自動射撃・降参・再戦・退出", async ({ page 
     const view = window.__fortress?.getView() as { cpuPose?: { elevation: number } | null } | undefined;
     return view?.cpuPose?.elevation;
   }), { timeout: 25000, intervals: [50] }).toEqual(expect.any(Number));
+  await page.keyboard.press("KeyE");
+  await page.keyboard.down("ArrowUp");
+  await page.waitForTimeout(150);
+  await page.keyboard.up("ArrowUp");
+  await expect(page.getByRole("button", { name: "掘削弾", exact: true })).toHaveAttribute("aria-pressed", "true");
   await page.screenshot({ path: "/tmp/practice-cpu-aim.png" });
   await expect.poll(() => page.evaluate(() => window.__fortress?.getView().phase === "replaying" ? window.__fortress.getView().currentSeat : null), { timeout: 25000, intervals: [50] }).toBe(1);
-  await expect(fire).toBeDisabled();
+  await expect(fire).toBeEnabled();
   expect(await page.locator(".battle-weapons button").evaluateAll(buttons => buttons.map(button => button.getAttribute("aria-label")))).toEqual(["標準砲", "掘削弾"]);
   await expect.poll(() => page.evaluate(() => window.__fortress?.getView().mismatches)).toBe(0);
   await page.screenshot({ path: "/tmp/practice-cpu-portrait.png" });
@@ -45,4 +50,23 @@ test("CPU戦の設定・自動射撃・降参・再戦・退出", async ({ page 
   await page.getByRole("button", { name: "自由練習", exact: true }).click();
   await page.getByRole("button", { name: "自由練習をはじめる" }).click();
   await expect(page.locator(".practice-battle-status")).toHaveText("自由練習");
+});
+
+test("タッチでも敵の手番は準備だけを操作できる", async ({ browser }) => {
+  const context = await browser.newContext({ hasTouch: true, viewport: { width: 390, height: 844 }, locale: "ja-JP" });
+  const page = await context.newPage();
+  await page.addInitScript(() => { Math.random = () => 0.25; });
+  await page.goto("/");
+  await page.getByRole("button", { name: "はじめる", exact: true }).tap();
+  await page.getByRole("button", { name: "プラクティス", exact: true }).tap();
+  await page.getByRole("button", { name: "CPU戦", exact: true }).tap();
+  await page.getByRole("button", { name: "CPU戦をはじめる" }).tap();
+  const aim = page.getByRole("button", { name: "角度を上げる", exact: true });
+  await expect(aim).toBeEnabled({ timeout: 15000 });
+  await expect(page.getByRole("button", { name: "発射", exact: true })).toBeDisabled();
+  await expect(page.getByRole("button", { name: "左へ移動", exact: true })).toBeDisabled();
+  await aim.tap();
+  await page.getByRole("button", { name: "掘削弾", exact: true }).tap();
+  await expect(page.getByRole("button", { name: "掘削弾", exact: true })).toHaveAttribute("aria-pressed", "true");
+  await context.close();
 });

@@ -62,12 +62,12 @@ export const createMatchStore = (connection: Connection, initialOptions: ReduceO
   };
 
   const changeElevation = (delta: number): void => {
-    const next = applyElevation(view, delta);
+    const next = applyElevation(view, delta, options.preparation);
     if (next !== view) set(next);
   };
 
   const selectSlot = (slot: WeaponSlot): void => {
-    const next = applySlot(view, slot);
+    const next = applySlot(view, slot, options.preparation);
     if (next !== view) set(next);
   };
 
