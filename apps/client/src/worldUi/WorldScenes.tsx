@@ -22,7 +22,7 @@ import { createCameraRig } from "@/prototype/cameraRig";
 import { PixelButton, PixelPanel } from "./PixelUi";
 import { TankPortrait } from "./TankPortrait";
 import { SceneLoading } from "./SceneLoading";
-import { shutterDirection, type ShutterDirection } from "./sceneShutter";
+import { SHUTTER_OPEN_MS, shutterDirection, type ShutterDirection } from "./sceneShutter";
 import "./worldUi.css";
 import "./simpleTheme.css";
 import "./pageLayout.css";
@@ -89,7 +89,7 @@ export const WorldScenes = () => {
         {scene === "start" && <StartScreen onBegin={() => go("lobby")} />}
         {scene === "practice" && <PracticeFlow profile={practiceProfile} onProfileChange={p => { setPracticeProfile(p); saveProfile(p); setAudioSettings(p.volume, p.muted, p.bgmVolume ?? p.volume); }} onExit={exit} onCpuStart={(map, level) => { setCpuLevel(level); setPracticeCpu(true); setPracticeMap(map); go("battle"); }} onFreeStart={map => { setPracticeCpu(false); setPracticeMap(map); go("battle"); }} />}
         {scene === "lobby" && <Lobby go={go} onPractice={() => { setPracticeProfile(loadProfile()); go("practice"); }} />}
-        {scene === "result" && result && <section className="world-result-screen terminal-screen result-terminal"><header className="result-header"><h1>{t(resultTitle(result.result, result.players.find(p => p.playerId === result.ownId)?.teamId))}</h1></header><ResultPlayers {...result} /><div className="result-actions"><PixelButton onClick={exitPractice}>{t("プラクティス")}</PixelButton><PixelButton className="result-primary" onClick={() => go("battle")}>{t("もう一度プレイ")}</PixelButton></div></section>}
+        {scene === "result" && result && <section className="world-result-screen terminal-screen result-terminal"><header className="result-header"><h1>{t(resultTitle(result.result, result.players.find(p => p.playerId === result.ownId)?.teamId))}</h1></header><ResultPlayers {...result} motionDelayMs={SHUTTER_OPEN_MS} /><div className="result-actions"><PixelButton onClick={exitPractice}>{t("プラクティス")}</PixelButton><PixelButton className="result-primary" onClick={() => go("battle")}>{t("もう一度プレイ")}</PixelButton></div></section>}
       </div>
     </>}
     </Suspense>
