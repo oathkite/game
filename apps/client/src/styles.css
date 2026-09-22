@@ -146,7 +146,7 @@ a {
   gap: 16px;
 }
 
-/* 横向きのスマートフォン（幅 640 px 超）では 2 ペインを保つ。縦向きは幅 900 px まで回転の案内で覆われるので、この分岐に届くのは幅 640 px 以下の横向きの小さな端末だけ */
+/* 幅 640 px 超では 2 ペインを保つ。640 px 以下（縦向きのスマートフォンと小さな横向きの端末）は 1 列にする */
 @media (max-width: 640px) {
   /* 1 列に戻し、画面いっぱいのこの要素の中でスクロールする。#root が overflow: hidden なので、height: auto にすると溢れた分に届かなくなる */
   .screen-split,
@@ -511,24 +511,6 @@ a {
 .steps {
   display: flex;
   gap: 1px;
-}
-
-.rotate-hint {
-  position: fixed;
-  inset: 0;
-  display: none;
-  align-items: center;
-  justify-content: center;
-  background: var(--bg);
-  color: var(--ui);
-  font-size: 32px;
-  z-index: 10;
-}
-
-@media (orientation: portrait) and (max-width: 900px) {
-  .rotate-hint {
-    display: flex;
-  }
 }
 
 /* マップ選択（設計書 09 の 9.4）。サムネイルは 80 × 45 の絵を最近傍で 2 倍に拡大する。

@@ -64,10 +64,9 @@ const Battle = ({ store, begin, worldArt, onExit, onResult }: { readonly store: 
   const hudTop = 0;
   const hudBottom = touch ? 112 : largeHud ? 160 : size.height < 500 || size.width < 1000 ? 96 : 120;
   const layout = useMemo(() => { const base = cameraLayout(size.width, size.height, worldArt ? loadCameraScale() : 9); return worldArt ? { ...base, mapHeight: Math.max(1, size.height - hudTop - hudBottom) } : base; }, [size, worldArt, hudTop, hudBottom]);
-  const portrait = size.height > size.width;
   const revealing = useDelayReveal(view.delay?.revealUntil);
-  const enabled = !revealing && sceneReady && view.phase === "acting" && view.control !== null && !portrait;
-  const input = usePrototypeInput(store, rig, enabled, menu || confirmLeave || portrait || revealing, () => { if (confirmLeave) setConfirmLeave(false); else setMenu((open) => !open); }, !sceneReady);
+  const enabled = !revealing && sceneReady && view.phase === "acting" && view.control !== null;
+  const input = usePrototypeInput(store, rig, enabled, menu || confirmLeave || revealing, () => { if (confirmLeave) setConfirmLeave(false); else setMenu((open) => !open); }, !sceneReady);
   useBrowserBackAction(Boolean(worldArt && onExit), () => { input.cancel(); setMenu(false); setConfirmLeave(true); });
   const ready = view.mask !== null && view.players !== null;
   const actor = view.players?.[view.currentSeat], slot = view.control?.slot ?? view.lastSlot;
@@ -103,7 +102,7 @@ const Battle = ({ store, begin, worldArt, onExit, onResult }: { readonly store: 
       <div className="kp-clock"><Timer deadlineAt={revealing ? null : view.deadlineAt} clockOffset={0} myTurn={enabled} /></div>
       <button ref={menuButton} aria-label={t("設定を開く")} onClick={() => { input.cancel(); setMenu(true); }}>{t("設定")}</button>
     </header>}
-    {ready ? <PrototypeCanvas onOpeningComplete={begin} worldArt={worldArt ?? false} store={store} rig={rig} layout={layout} handlers={input.world} blocked={menu || confirmLeave || portrait || input.gauge.charging} followShot={true} onReady={setSceneReady} /> : <div style={{ height: layout.mapHeight }}>{t("フィールドを準備しています…")}</div>}
+    {ready ? <PrototypeCanvas onOpeningComplete={begin} worldArt={worldArt ?? false} store={store} rig={rig} layout={layout} handlers={input.world} blocked={menu || confirmLeave || input.gauge.charging} followShot={true} onReady={setSceneReady} /> : <div style={{ height: layout.mapHeight }}>{t("フィールドを準備しています…")}</div>}
     {worldArt ? <BattleConsole delay={view.delay ? { onOpen: input.cancel, state: view.delay, playerId: String(view.currentSeat), acting: view.phase === "acting", players: (view.players ?? []).map(p => ({ id: String(p.seat), name: p.nickname, colors: p.colors })) } : undefined} player={hudPlayers[view.currentSeat]} steps={view.control?.stepsLeft ?? 0} tilt={ground} elevation={view.control?.elevation ?? view.lastElevation} facing={pose?.facing ?? 1} power={input.gauge.value} loadout={actor?.loadout} slot={slot} disabled={!enabled || confirmLeave || menu || input.gauge.charging} selectSlot={store.selectSlot}>
       {touch && <BattleTouchControls disabled={!enabled || confirmLeave || menu} button={input.button} />}
     </BattleConsole> : <footer className="kp-controls">
@@ -123,7 +122,6 @@ const Battle = ({ store, begin, worldArt, onExit, onResult }: { readonly store: 
       {onResult && <button onClick={() => store.surrender()}>{t("降参して対戦を終える")}</button>}
       <button onClick={() => setMenu(false)}>{t("対戦に戻る")}</button>{onExit ? <button onClick={onExit}>{t("出撃準備に戻る")}</button> : <a href="/">{t("ガレージへ戻る")}</a>}
     </dialog>
-    {portrait && <div className="kp-portrait"><strong>{t("横向きでプレイしよう")}</strong><p>{t("機体と照準を見やすくするため、端末を回転してください。")}</p>{onExit ? <button onClick={onExit}>{t("出撃準備に戻る")}</button> : <a href="/">{t("ガレージへ戻る")}</a>}</div>}
     {view.phase === "finished" && !onResult && <div className="kp-result"><h2>{view.result?.winner === null ? t("引き分け") : t("{player}の勝利", { player: t(teamColorName(view.result?.winner ?? 0)) })}</h2><button onClick={() => store.closeResult()}>{t("もう一度")}</button>{onExit ? <button onClick={onExit}>{t("出撃準備に戻る")}</button> : <a href="/">{t("ガレージへ戻る")}</a>}</div>}
   </main>;
 };

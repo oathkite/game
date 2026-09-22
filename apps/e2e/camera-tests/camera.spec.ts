@@ -98,7 +98,7 @@ test('touch swipe only pans; pointer cancellation and rotation never fire', asyn
   await client.send('Input.dispatchTouchEvent', { type: 'touchStart', touchPoints: [point] });
   await page.setViewportSize({ width: 390, height: 844 });
   await client.send('Input.dispatchTouchEvent', { type: 'touchEnd', touchPoints: [] });
-  await expect(page.getByText('横向きでプレイしよう')).toBeVisible();
+  await expect(page.getByRole('button', { name: '発射', exact: true })).toBeEnabled();
   expect((await state(page)).turn).toBe(before.turn);
   expect((await state(page)).phase).toBe('acting');
   await context.close();

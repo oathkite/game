@@ -1,7 +1,7 @@
 import { expect, test } from "@playwright/test";
 import type { LabFrame } from "@game/protocol/v2-lab";
 
-test("resizing cancels held fire and rotation restores fresh touch input", async ({ browser }) => {
+test("resizing cancels held fire and portrait keeps the console usable", async ({ browser }) => {
   const contexts = await Promise.all([0, 1].map(() => browser.newContext({ locale: "ja-JP", viewport: { width: 844, height: 390 }, hasTouch: true })));
   const pages = await Promise.all(contexts.map(context => context.newPage()));
   const frames: (LabFrame | undefined)[] = [], shots: number[] = [0, 0];
@@ -49,8 +49,8 @@ test("resizing cancels held fire and rotation restores fresh touch input", async
     await fire.hover();
     await page.mouse.down();
     await page.setViewportSize({ width: 390, height: 844 });
-    await expect(page.getByRole("heading", { name: "横向きでプレイしよう", exact: true })).toBeVisible();
-    await expect(fire).toBeDisabled();
+    await expect(power).toHaveAttribute("aria-valuenow", "0");
+    await expect(fire).toBeEnabled();
     await page.mouse.up();
     expect(shots[index]).toBe(0);
     await page.setViewportSize({ width: 844, height: 390 });

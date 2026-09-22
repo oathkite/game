@@ -57,7 +57,7 @@ UI共通素材を9sliceで使い、角の変形と押しにくい小さなボタ
 
 - 2ブラウザで相手の移動、射撃再生、着弾後の地形、次の手番を確認。
 - 1440×900と844×390で実タンクを描き、見回し、慣性、手番へ戻る、全体図を接続。
-- 縦向きでは横向き案内を表示し操作を止める。主要操作は44px以上。
+- 主要操作は44px以上。縦向きの横向き案内は2026-09-22に外し、縦向きでも同じHUDで操作できる（3.1）。
 - world E2E 5件、world-network E2E 1件、camera E2E 11件、workspace typecheck、production build成功。
 - localhostのlab serverは8794。許可Originはlocalhost/127.0.0.1の5185・5186のみ。
 - server起動はこのUI worktreeで `pnpm --filter @game/server exec tsx src/lab/main.ts`。

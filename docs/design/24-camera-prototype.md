@@ -24,7 +24,7 @@ pnpm --filter @game/client dev --port 5184 --host 127.0.0.1
 - baseline-v2の本体・履帯・搭乗者・8武器の実PNGをアンカーに合わせて表示。
 - 上下HUD、移動と角度の専用ボタン、武器変更、横powerゲージ、発射、音設定。
 - 一つのpointerが操作を所有し、取消・focus喪失・回転・設定表示ではpowerを破棄。
-- 最小横画面の44px操作、縦持ちの回転案内、reduced motion。
+- 最小横画面の44px操作、reduced motion。縦持ちの回転案内は2026-09-22に外し、縦持ちでも操作できる（3.1）。
 
 ## 今回の倍率比較
 

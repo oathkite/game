@@ -212,11 +212,6 @@
 
 }
 
-/* メニューは縦持ちでも使える。対戦画面の回転案内は維持する。 */
-#root:has(.menu-shell) > .rotate-hint {
-  display: none;
-}
-
 .menu-shell .map-pick {
   flex-direction: row;
   justify-content: center;
