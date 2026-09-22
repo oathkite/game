@@ -24,6 +24,7 @@ test("CPU戦の設定・自動射撃・降参・再戦・退出", async ({ page 
   await page.keyboard.up("Space");
   await expect.poll(() => page.evaluate(() => window.__fortress?.getView().phase === "replaying" ? window.__fortress.getView().currentSeat : null), { timeout: 25000, intervals: [50] }).toBe(1);
   await expect(fire).toBeDisabled();
+  expect(await page.locator(".battle-weapons button").evaluateAll(buttons => buttons.map(button => button.getAttribute("aria-label")))).toEqual(["標準砲", "掘削弾"]);
   await expect.poll(() => page.evaluate(() => window.__fortress?.getView().mismatches)).toBe(0);
   await page.screenshot({ path: "/tmp/practice-cpu-portrait.png" });
   await page.getByRole("button", { name: "設定を開く", exact: true }).click();
