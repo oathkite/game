@@ -12,7 +12,11 @@ test("CPU戦の設定・自動射撃・降参・再戦・退出", async ({ page 
   await page.goBack();
   await page.getByRole("button", { name: "CPU戦", exact: true }).click();
   await expect(page.getByRole("button", { name: "CPU戦をはじめる" })).toBeInViewport();
+  await expect(page.getByRole("combobox", { name: "CPUレベル" })).toHaveValue("normal");
+  await page.getByRole("combobox", { name: "CPUレベル" }).selectOption("easy");
+  await expect(page.locator("#cpu-level-hint")).toContainText("大きく");
   await page.getByRole("button", { name: "CPU戦をはじめる" }).click();
+  await expect(page.locator(".cpu-level-label")).toHaveText("やさしい");
   const fire = page.getByRole("button", { name: "標準砲", exact: true });
   await expect(fire).toBeEnabled({ timeout: 25000 });
   await page.keyboard.down("Space");
@@ -28,6 +32,7 @@ test("CPU戦の設定・自動射撃・降参・再戦・退出", async ({ page 
   await expect(page.locator(".world-result-screen")).toContainText("CPU");
   await page.getByRole("button", { name: "もう一度プレイ" }).click();
   await expect(page.locator(".practice-battle-status")).toContainText("CPU");
+  await expect(page.locator(".cpu-level-label")).toHaveText("やさしい");
   await page.getByRole("button", { name: "設定を開く", exact: true }).click();
   await page.getByRole("button", { name: "プラクティスへ戻る", exact: true }).click();
   await expect(page.getByRole("heading", { name: "プラクティス", exact: true })).toBeVisible();

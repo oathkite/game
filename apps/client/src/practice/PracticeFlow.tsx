@@ -1,3 +1,4 @@
+import type { CpuLevel } from "./cpuLevel";
 import { useBrowserBackAction } from "@/worldUi/browserBack";
 import { useState } from "react";
 import type { Profile } from "@/app/profile";
@@ -10,7 +11,7 @@ import { loadProgress, recordClear, saveProgress } from "./progress";
 import { STAGES } from "./stages";
 import "./practice.css";
 
-type Props = { readonly onCpuStart: (map: MapName | "random") => void; readonly profile: Profile; readonly onProfileChange: (profile: Profile) => void; readonly onExit: () => void; readonly onFreeStart: (map: MapName | "random") => void };
+type Props = { readonly onCpuStart: (map: MapName | "random", level: CpuLevel) => void; readonly profile: Profile; readonly onProfileChange: (profile: Profile) => void; readonly onExit: () => void; readonly onFreeStart: (map: MapName | "random") => void };
 type Page = { readonly kind: "menu" } | { readonly kind: "stages" } | { readonly kind: "free" | "cpu" } | { readonly kind: "challenge"; readonly index: number; readonly attempt: number };
 
 export const PracticeFlow = ({ onCpuStart, profile, onProfileChange, onExit, onFreeStart }: Props) => {

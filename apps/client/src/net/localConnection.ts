@@ -1,3 +1,4 @@
+import type { CpuLevel } from "@/practice/cpuLevel";
 import { chooseCpuShot } from "@/practice/cpu";
 import { createEngine, createMatchHost, DEFAULT_ENGINE_TIMING, realClock, setupMessage, type MatchHost } from "@game/engine";
 import { resolveMapChoice } from "@game/maps";
@@ -10,6 +11,7 @@ import { createListeners, type Connection, type ConnectionStatus } from "./conne
 export type LocalMatchOptions = {
   readonly deferReady?: boolean;
   readonly cpu?: boolean;
+  readonly cpuLevel?: CpuLevel;
   /** ランダムなら対戦を作るたび（再戦を含む）に抽選する */
   readonly mapName: MapChoice;
   readonly nickname: string;
@@ -55,7 +57,7 @@ export const createLocalConnection = (options: LocalMatchOptions): Connection & 
       cpuTimer = setTimeout(() => {
         cpuTimer = null;
         if (!host || host.state().match.phase !== "acting" || host.state().match.currentSeat !== 1) return;
-        host.dispatch({ type: "fire", seat: 1, fire: chooseCpuShot(host.state()) });
+        host.dispatch({ type: "fire", seat: 1, fire: chooseCpuShot(host.state(), options.cpuLevel ?? "normal", Math.random) });
       }, Math.max(0, (message.delay?.revealUntil ?? Date.now()) - Date.now()) + 900);
     }
   };

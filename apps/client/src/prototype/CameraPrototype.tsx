@@ -1,3 +1,4 @@
+import { CPU_LEVEL_LABELS, type CpuLevel } from "@/practice/cpuLevel";
 import { stageMusic } from "@/app/musicTracks";
 import { YourTurn } from "@/worldUi/YourTurn";
 import { useDelayReveal } from "@/worldUi/useDelayReveal";
@@ -29,7 +30,7 @@ import { PrototypeCanvas } from "./PrototypeCanvas";
 import { usePrototypeInput } from "./usePrototypeInput";
 import "./prototype.css";
 
-type ThemeProps = { readonly cpu?: boolean; readonly mapName?: MapName | "random"; readonly worldArt?: boolean; readonly onExit?: () => void; readonly onResult?: (result: ResultPresentation) => void };
+type ThemeProps = { readonly cpuLevel?: CpuLevel; readonly cpu?: boolean; readonly mapName?: MapName | "random"; readonly worldArt?: boolean; readonly onExit?: () => void; readonly onResult?: (result: ResultPresentation) => void };
 export const CameraPrototype = (props: ThemeProps) => {
   const { t } = useLanguage();
   const begin = useRef<() => void>(() => {});
@@ -39,7 +40,7 @@ export const CameraPrototype = (props: ThemeProps) => {
     setAudioSettings(p.volume, p.muted, p.bgmVolume ?? p.volume);
     const selectedMap = (props.mapName === "random" ? (["ridgeline", "stone-bridge", "terraces", "sky-islands"] as const)[Math.floor(Math.random() * 4)]! : props.mapName) ?? (props.worldArt ? "rock-arch" : "valley");
     setMusic(stageMusic(selectedMap));
-    const connection = createLocalConnection({ cpu: props.cpu ?? false, deferReady: props.worldArt ?? false, mapName: selectedMap, nickname: p.nickname || "プレイヤー", colors: p.colors, loadout: p.loadout,
+    const connection = createLocalConnection({ cpuLevel: props.cpuLevel ?? "normal", cpu: props.cpu ?? false, deferReady: props.worldArt ?? false, mapName: selectedMap, nickname: p.nickname || "プレイヤー", colors: p.colors, loadout: p.loadout,
       opponentColors: defaultOpponentColors(p.colors), opponentLoadout: props.cpu ? ["cannon", "triple"] : defaultOpponentLoadout(p.loadout) });
     const created = createMatchStore(connection, { followCurrentSeat: !props.cpu, mySeat: 0, spectator: false });
     begin.current = connection.releaseReady;
@@ -49,7 +50,7 @@ export const CameraPrototype = (props: ThemeProps) => {
   return store ? <Battle store={store} begin={begin.current} {...props} /> : <div>{t("準備しています…")}</div>;
 };
 
-const Battle = ({ store, begin, worldArt, cpu, onExit, onResult }: { readonly store: MatchStore; readonly begin: () => void } & ThemeProps) => {
+const Battle = ({ store, begin, worldArt, cpu, cpuLevel, onExit, onResult }: { readonly store: MatchStore; readonly begin: () => void } & ThemeProps) => {
   const { t } = useLanguage();
   const touch = useTouchControls();
   const view = useSyncExternalStore(store.subscribe, store.getView, store.getView);
@@ -95,7 +96,7 @@ const Battle = ({ store, begin, worldArt, cpu, onExit, onResult }: { readonly st
   const pose = view.control ?? actor;
   const ground = view.mask && pose ? tiltOf(view.mask, pose) : 0;
   return <main className="kp-root" onContextMenu={(e) => e.preventDefault()} onPointerDown={() => unlockAudio()}>
-    {worldArt && <div className="practice-battle-status" role="status">{cpu ? t(view.phase === "waiting" ? "CPUの番" : "CPU戦") : t("自由練習")}</div>}
+    {worldArt && <div className="practice-battle-status" role="status">{cpu ? t(view.phase === "waiting" ? "CPUの番" : "CPU戦") : t("自由練習")}{cpu && <span className="cpu-level-label">{t(CPU_LEVEL_LABELS[cpuLevel ?? "normal"])}</span>}</div>}
     <YourTurn turnKey={String(view.turnNumber)} active={enabled} />
     {worldArt ? <BattleOverlay clock={<Timer dial deadlineAt={revealing ? null : view.deadlineAt} clockOffset={0} myTurn={enabled} />} onMenu={() => { input.cancel(); setMenu(true); }} /> : <header className="kp-topbar">
       <div className="kp-brand">TANK SHOOT <span>{t("プラクティス")}</span></div>

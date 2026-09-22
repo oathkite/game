@@ -39,3 +39,5 @@
 .challenge-game .battle-console { flex: none; }
 
 .practice-battle-status { position: absolute; top: 18px; left: 68px; max-width: calc(50% - 96px); z-index: 2; padding: 4px; background: #000d; color: var(--ui); font-size: 12px; line-height: 1.4; pointer-events: none; }
+
+.cpu-level-label { display: block; font-size: 10px; }

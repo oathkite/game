@@ -1,9 +1,10 @@
+import type { CpuLevel } from "./cpuLevel";
 import type { EngineState } from "@game/engine";
 import type { ClientMessageOf } from "@game/protocol";
 import { simulateShot } from "@game/sim";
 
 /** 粗い角度・パワーの候補を比較する。物理や盤面を書き換えずに射撃を選ぶ。 */
-export const chooseCpuShot = (state: EngineState): ClientMessageOf<"turn.fire"> => {
+export const chooseCpuShot = (state: EngineState, level: CpuLevel = "hard", rng: () => number = () => 0.5): ClientMessageOf<"turn.fire"> => {
   const [target, actor] = state.match.players;
   const facing = target.x < actor.x ? -1 : 1;
   let best: ClientMessageOf<"turn.fire"> = { type: "turn.fire", x: actor.x, facing, slot: 0, elevation: 45, power: 60 };
@@ -21,5 +22,9 @@ export const chooseCpuShot = (state: EngineState): ClientMessageOf<"turn.fire"> 
       }
     }
   }
-  return best;
+  if (level === "hard") return best;
+  const spread = level === "easy" ? { angle: 12, power: 20 } : { angle: 5, power: 8 };
+  const offset = (range: number) => Math.floor(rng() * (range * 2 + 1)) - range;
+  return { ...best, elevation: Math.max(10, Math.min(90, best.elevation + offset(spread.angle))),
+    power: Math.max(1, Math.min(100, best.power + offset(spread.power))) };
 };
