@@ -10,7 +10,7 @@ KEROPODの入口を`/`へ統合。`?prototype=world`も同じ画面になる。
 - `VITE_ROOM_SERVER_URL`指定時はそのHTTP originの`/v2/rooms`、`/v2/quick`、部屋別WebSocketを使う。
 - 配信用buildで未指定の場合は同一originの`/v2/*`へ接続。公開時にはWorkerへのroutingが必要。
 - 標準の`pnpm dev`はVite5173とローカルWrangler8796を同時起動し、`VITE_ROOM_SERVER_URL=http://127.0.0.1:8796`を指定する。
-- clientだけを起動して開発時に接続先を未指定にした場合は、従来のNode8795へ直接接続する。
+- clientだけを起動して開発時に接続先を未指定にした場合は、従来のNode8795へ直接接続する。ただし部屋一覧とコード入力は接続先を指定したときだけ描画されるので、2人目が参加できない（TBD-32）。部屋のE2E（`rooms.config.ts`）はローカルのWranglerでv2 Room APIを起動して検証する。
 - 本番の許可Origin、domain、Worker routing、配備順序は公開gate。今回の変更はデプロイを行わない。
 
 保存済み音量・ミュートは画面起動時に適用する。音声の再生開始はユーザー操作時。

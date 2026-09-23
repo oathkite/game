@@ -41,12 +41,16 @@ protocol ← sim ← maps ← engine ← server
 
 ```sh
 pnpm -r typecheck
-pnpm test                          # 単体テスト
-pnpm --filter @game/e2e test:e2e   # server か client の振る舞いを変えたとき
+pnpm test                                                              # 単体テスト
+pnpm --filter @game/e2e exec playwright test --config rooms.config.ts  # オンライン対戦。server か client の振る舞いを変えたとき
+pnpm --filter @game/e2e exec playwright test --config world.config.ts  # タイトル、ロビー、プラクティス。client を変えたとき
 ```
 
-- e2e は `battle.spec.ts` だけで 7 分かかる。日常は `match.spec.ts` と `reconnect.spec.ts` を回し、決着まわりを触ったときだけ全件を回す。
-- Workers 版のサーバーを変えたら、`wrangler dev --port 8788 --local` を起こし、`VITE_DEV_SERVER_TARGET=ws://localhost:8788` で e2e を回す。
+- `rooms.config.ts` はローカルの wrangler（v2 Room API、8797）と、`VITE_ROOM_SERVER_URL` を指定した Vite（5186）を起動する。部屋一覧とコード参加はこの指定があるときだけ描画されるので、Node の 8795 では 2 人目が入れない（TBD-32）。v2 Room API（`apps/server/src/cf/v2*.ts`）を変えたときもこの config で確かめる。
+- rooms の全件は多人数の spec を含めて約 9 分かかる。日常は `rooms.spec.ts` と `battle-controls.spec.ts`（作成、参加、準備、射撃、再接続、降参、部屋へ戻る）を回し、多人数や決着まわりを触ったときだけ全件を回す。world の全件は約 5 分。
+- 2 つの config はどちらも 5186 を使い、`reuseExistingServer: false` なので、同時に回せない。ほかの worktree が 5186 を使っているときは終わるのを待つ。
+- `fixme` と `test.fail` の spec は、設計書との食い違い（`99-open-questions.md` の TBD-29、TBD-30）と既知の不具合を表す。直したら外す。
+- `pnpm --filter @game/e2e test:e2e`（`playwright.config.ts`）は旧 UI（`?prototype=legacy`）と旧 Node サーバー（8787）の回帰テストで、今の画面は検査しない。旧実装を触ったときだけ回す。5173 と 8787 に動いているプロセスを再利用するので、ほかの worktree の Vite が 5173 にいると、そのブランチのコードを検査してしまう。旧 Workers 版（`wrangler.jsonc`）を変えたら、`wrangler dev --port 8788 --local` を起こし、`VITE_DEV_SERVER_TARGET=ws://localhost:8788` でこの回帰テストを回す。
 - コミット前に `/code-review` を実行する。指摘は全件判断し、直さないものは理由を PR に書く。
 
 ## サーバーを変えるときの注意

@@ -35,4 +35,4 @@ Directoryの一覧更新失敗が既存の招待・再接続を妨げない。
 
 - Room reducer: 4人未満の開始拒否、2:2自動配置、定員、mode/region混在拒否。
 - edge-quick.test.ts: 同時4予約の同室割当、5人目/別mode/別regionの分離、全ready自動開始。
-- quick.spec.ts: 1v1と2v2のブラウザー対戦開始、30秒後の案内とキャンセル。
+- quick.spec.ts: 1v1と2v2のブラウザー対戦開始、30秒後の案内とキャンセル。2026-09-23時点では入口が画面に無いため fixme（TBD-29）。
