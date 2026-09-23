@@ -1,8 +1,12 @@
-# Adopted BGM
+# Archived BGM (2026-09-14 to 2026-09-23)
+
+Replaced on 2026-09-23 by the synthesized soundtrack in `docs/design/39-soundtrack-and-sfx.md`.
+The files below were moved here unchanged from `apps/client/src/assets/music` as a production record.
+
 
 The eight OGG files provided by the user in `Chiptune_BGM_8tracks` on
 2026-09-14 replace the generated soundtrack. Audio bytes are copied unchanged;
-`apps/client/src/assets/music/provenance.json` records filenames and SHA-256 hashes.
+`provenance.json` in this folder records filenames and SHA-256 hashes.
 
 | Source | Usage |
 | --- | --- |
@@ -21,5 +25,5 @@ There is no padding offset, normalization, waveform taper or additional composit
 Scene transitions crossfade over 450 ms. Same-track calls do not restart playback.
 Only requested files download; two decoded tracks are cached.
 
-The earlier composition scripts in `tools/music` are rejected studies, not the
-source of the adopted soundtrack. Do not export those studies over these assets.
+The composition scripts that lived in `tools/music` before 2026-09-14 were rejected studies.
+The current `tools/music` is the 2026-09-23 renderer and is unrelated to them.

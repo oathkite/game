@@ -1,7 +1,7 @@
 import { expect, test } from "@playwright/test";
 import { startFreePractice } from "./practiceFlow";
 
-test("chip loops follow scenes and live output settings", async ({ page }) => {
+test("scene music follows the garage, the stage and the result with live output settings", async ({ page }) => {
   await page.addInitScript(() => {
     const probe = { gains: [] as GainNode[], sources: [] as AudioBufferSourceNode[], ended: new Set<AudioBufferSourceNode>() };
     Object.assign(window, { audioProbe: probe });
@@ -15,12 +15,14 @@ test("chip loops follow scenes and live output settings", async ({ page }) => {
       node.addEventListener("ended", () => probe.ended.add(node)); return node;
     };
   });
+  type Probe = { gains: GainNode[]; sources: AudioBufferSourceNode[]; ended: Set<AudioBufferSourceNode> };
+  // 効果音のノイズも loop で鳴らすので、BGM は 5 秒を超える音源だけを数える
   const activeMusic = () => page.evaluate(() => {
-    const probe = (window as unknown as { audioProbe: { sources: AudioBufferSourceNode[]; ended: Set<AudioBufferSourceNode> } }).audioProbe;
-    return probe.sources.filter(source => source.loop && !probe.ended.has(source)).map(source => source.buffer!.duration);
+    const probe = (window as unknown as { audioProbe: Probe }).audioProbe;
+    return probe.sources.filter(source => source.loop && (source.buffer?.duration ?? 0) > 5 && !probe.ended.has(source)).map(source => source.buffer!.duration);
   });
   // gains[0] は効果音、gains[1] は BGM の出力（app/audio.ts の作成順）。
-  const outputVolumes = () => page.evaluate(() => (window as unknown as { audioProbe: { gains: GainNode[] } }).audioProbe.gains.slice(0, 2).map(node => node.gain.value));
+  const outputVolumes = () => page.evaluate(() => (window as unknown as { audioProbe: Probe }).audioProbe.gains.slice(0, 2).map(node => node.gain.value));
   const errors: string[] = [];
   page.on("pageerror", error => errors.push(error.message));
   await page.goto("/");
@@ -44,26 +46,28 @@ test("chip loops follow scenes and live output settings", async ({ page }) => {
   await page.getByRole("dialog", { name: "整備と設定" }).getByRole("button", { name: "閉じる", exact: true }).click();
   await startFreePractice(page);
   await expect.poll(async () => { const playing = await activeMusic(); return playing.length === 1 && playing[0] !== hangar; }).toBe(true);
+  const stage = (await activeMusic())[0];
   await page.getByRole("button", { name: "設定を開く", exact: true }).click();
   await page.getByRole("button", { name: "降参して対戦を終える", exact: true }).click();
   await expect(page.getByRole("heading", { name: /^(勝利|敗北)$/ })).toBeVisible();
-  await expect.poll(() => page.evaluate(() => {
-    const probe = (window as unknown as { audioProbe: { sources: AudioBufferSourceNode[] } }).audioProbe;
-    return probe.sources.filter(source => source.loop).length;
-  })).toBe(3); // 格納庫、対戦、リザルト
-  const loopEdges = await page.evaluate(() => {
-    const probe = (window as unknown as { audioProbe: { sources: AudioBufferSourceNode[] } }).audioProbe;
-    return probe.sources.filter(source => source.loop).flatMap(source => {
+  await expect.poll(async () => { const playing = await activeMusic(); return playing.length === 1 && playing[0] !== stage; }).toBe(true);
+  const seams = await page.evaluate(() => {
+    const probe = (window as unknown as { audioProbe: Probe }).audioProbe;
+    return probe.sources.filter(source => source.loop && (source.buffer?.duration ?? 0) > 5).flatMap(source => {
       const buffer = source.buffer!;
       return Array.from({ length: buffer.numberOfChannels }, (_, channel) => {
         const data = buffer.getChannelData(channel);
-        return { first: Math.abs(data[0]!), last: Math.abs(data[data.length - 1]!),
-          hasSignal: data.subarray(1000, 10000).some(sample => Math.abs(sample) > 0.001) };
+        const steps = new Float32Array(data.length - 1);
+        for (let i = 1; i < data.length; i++) steps[i - 1] = Math.abs(data[i]! - data[i - 1]!);
+        steps.sort();
+        // ループの継ぎ目の段差が、曲の中で普通に起きる段差の範囲に収まっていればクリックにならない（39.4）
+        const seam = Math.abs(data[0]! - data[data.length - 1]!);
+        return { smooth: seam <= steps[Math.floor(steps.length * 0.999)]!, hasSignal: data.subarray(1000, 10000).some(sample => Math.abs(sample) > 0.001) };
       });
     });
   });
-  expect(loopEdges.length).toBeGreaterThanOrEqual(3);
-  // 合成したループ（51027e4）は両端を 0 にしていたが、c9edd8f で OGG の曲に替えたので端の値は検査しない。継ぎ目は聴いて確かめる。
-  for (const edge of loopEdges) expect(edge.hasSignal).toBe(true);
+  // 格納庫、対戦、リザルトの 3 曲を左右それぞれ
+  expect(seams).toHaveLength(6);
+  for (const seam of seams) expect(seam).toEqual({ smooth: true, hasSignal: true });
   expect(errors).toEqual([]);
 });

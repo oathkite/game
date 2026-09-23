@@ -1,22 +1,26 @@
-import type { WeaponSound } from "./weaponSounds";
 import { createChipMusic, type MusicName } from "./chipMusic";
+import { createImpulse, createNoiseBuffer, playRecipe, type SfxGraph } from "./sfx";
+import { SOUNDS, type SoundName } from "./soundRecipes";
 
-// ドットテーマ向けの合成音とシーン別チップチューン。外部音源の取得は不要。
+// シーン別の BGM と、レイヤー合成の効果音。効果音は外部音源を取得せずにその場で作る。
 
-export type SoundName = WeaponSound | "move" | "tick" | "fire" | "explosion" | "hit" | "hitConfirm" | "finish" | "matchFinish";
+export type { SoundName } from "./soundRecipes";
 
 type AudioState = {
   ctx: AudioContext | null;
-  /** 全部の音をまとめて通す圧縮器。着弾で 3 つまで重なる音が割れないようにする */
+  /** 全部の効果音をまとめて通す圧縮器。着弾で重なる音が割れないようにする */
   master: DynamicsCompressorNode | null;
   output: GainNode | null;
   musicOutput: GainNode | null;
+  /** 大きい着弾の瞬間だけ BGM を下げる段。音量設定とは別に持つ */
+  musicDuck: GainNode | null;
+  sfx: SfxGraph | null;
   bgmVolume: number;
   volume: number;
   muted: boolean;
 };
 
-const state: AudioState = { ctx: null, master: null, output: null, musicOutput: null, bgmVolume: 0.5, volume: 0.5, muted: false };
+const state: AudioState = { ctx: null, master: null, output: null, musicOutput: null, musicDuck: null, sfx: null, bgmVolume: 0.5, volume: 0.5, muted: false };
 
 let music: ReturnType<typeof createChipMusic> | null = null;
 let desiredMusic: MusicName | null = null;
@@ -31,6 +35,43 @@ export const setAudioActive = (active: boolean): void => {
   void (active ? state.ctx.resume() : state.ctx.suspend()).catch(() => {});
 };
 
+const createEffectsChain = (ctx: AudioContext): void => {
+  const master = ctx.createDynamicsCompressor();
+  master.threshold.value = -14;
+  master.knee.value = 8;
+  master.ratio.value = 4;
+  master.attack.value = 0.003;
+  master.release.value = 0.25;
+  const output = ctx.createGain();
+  output.gain.value = state.muted ? 0 : state.volume;
+  master.connect(output);
+  output.connect(ctx.destination);
+  state.master = master;
+  state.output = output;
+};
+
+const createMusicChain = (ctx: AudioContext): GainNode => {
+  const musicOutput = ctx.createGain();
+  musicOutput.gain.value = state.muted ? 0 : state.bgmVolume;
+  const musicDuck = ctx.createGain();
+  musicOutput.connect(musicDuck);
+  musicDuck.connect(ctx.destination);
+  state.musicOutput = musicOutput;
+  state.musicDuck = musicDuck;
+  return musicOutput;
+};
+
+/** 爆発の尾を置く短い残響。効果音の圧縮器の手前へ戻す */
+const createSfxGraph = (ctx: AudioContext, master: AudioNode): SfxGraph => {
+  const space = ctx.createConvolver();
+  space.buffer = createImpulse(ctx);
+  const wet = ctx.createGain();
+  wet.gain.value = 0.5;
+  space.connect(wet);
+  wet.connect(master);
+  return { ctx, output: master, space, noise: createNoiseBuffer(ctx) };
+};
+
 /** 最初のユーザー操作で呼び、自動再生制限を解除する */
 export const unlockAudio = (): void => {
   if (state.ctx) {
@@ -41,23 +82,10 @@ export const unlockAudio = (): void => {
   if (typeof AudioContext === "undefined") return;
   let ctx: AudioContext;
   try { ctx = new AudioContext(); } catch { return; }
-  const master = ctx.createDynamicsCompressor();
-  master.threshold.value = -12;
-  master.ratio.value = 8;
-  master.attack.value = 0.002;
-  master.release.value = 0.1;
-  const output = ctx.createGain();
-  output.gain.value = state.muted ? 0 : state.volume;
-  master.connect(output);
-  output.connect(ctx.destination);
   state.ctx = ctx;
-  state.master = master;
-  state.output = output;
-  const musicOutput = ctx.createGain();
-  musicOutput.gain.value = state.muted ? 0 : state.bgmVolume;
-  musicOutput.connect(ctx.destination);
-  state.musicOutput = musicOutput;
-  music = createChipMusic(ctx, musicOutput);
+  createEffectsChain(ctx);
+  music = createChipMusic(ctx, createMusicChain(ctx));
+  if (state.master) state.sfx = createSfxGraph(ctx, state.master);
   void music.setMusic(desiredMusic);
 };
 
@@ -69,57 +97,37 @@ export const setAudioSettings = (volume: number, muted: boolean, bgmVolume = vol
   if (state.ctx && state.output) state.output.gain.setValueAtTime(muted ? 0 : volume, state.ctx.currentTime);
 };
 
-type Tone = {
-  readonly type: OscillatorType;
-  readonly from: number;
-  readonly to: number;
-  readonly duration: number;
-  readonly gain: number;
+const DUCK_HOLD = 0.12;
+let activeDuck = { amount: 0, at: -Infinity };
+
+/**
+ * 着弾の瞬間に BGM を下げ、0.1 秒ほど置いてから戻す。音量は変えずに効果音を前へ出す。
+ * 同じ瞬間に爆発と被弾が続くと後の浅い値で上書きされるので、下げている間は深いほうを保つ
+ */
+const duckMusic = (ctx: AudioContext, amount: number): void => {
+  const duck = state.musicDuck;
+  if (!duck || amount <= 0) return;
+  const t = ctx.currentTime;
+  if (t < activeDuck.at + DUCK_HOLD && amount <= activeDuck.amount) return;
+  activeDuck = { amount, at: t };
+  duck.gain.cancelScheduledValues(t);
+  duck.gain.setTargetAtTime(1 - amount, t, 0.01);
+  duck.gain.setTargetAtTime(1, t + DUCK_HOLD, 0.35);
 };
 
-let lastMoveAt = -Infinity;
-const TONES: Readonly<Record<SoundName, Tone>> = {
-  move: { type: "triangle", from: 95, to: 55, duration: .055, gain: .12 },
-  "laser-fire": { type: "sawtooth", from: 2200, to: 180, duration: 0.24, gain: 0.18 },
-  "laser-impact": { type: "triangle", from: 1200, to: 90, duration: 0.18, gain: 0.3 },
-  "floater-fire": { type: "sine", from: 180, to: 780, duration: 0.5, gain: 0.4 },
-  "floater-impact": { type: "sine", from: 650, to: 45, duration: 0.7, gain: 0.5 },
-  "triple-fire": { type: "square", from: 550, to: 100, duration: 0.1, gain: 0.3 },
-  "triple-impact": { type: "triangle", from: 200, to: 38, duration: 0.4, gain: 0.5 },
-  "multiple-fire": { type: "square", from: 730, to: 130, duration: 0.08, gain: 0.25 },
-  "multiple-impact": { type: "triangle", from: 264, to: 50, duration: 0.3, gain: 0.4 },
-  "drill-fire": { type: "sawtooth", from: 300, to: 56, duration: 0.2, gain: 0.3 },
-  "drill-impact": { type: "sawtooth", from: 112, to: 21, duration: 0.7, gain: 0.4 },
-  "digger-fire": { type: "square", from: 374, to: 68, duration: 0.16, gain: 0.3 },
-  "digger-impact": { type: "triangle", from: 136, to: 26, duration: 0.6, gain: 0.5 },
-  "stinger-fire": { type: "sawtooth", from: 640, to: 116, duration: 0.14, gain: 0.25 },
-  "stinger-impact": { type: "triangle", from: 232, to: 44, duration: 0.35, gain: 0.4 },
-  matchFinish: { type: "triangle", from: 440, to: 880, duration: 0.5, gain: 0.3 },
-  tick: { type: "square", from: 1760, to: 1760, duration: 0.06, gain: 0.25 },
-  fire: { type: "square", from: 440, to: 80, duration: 0.12, gain: 0.35 },
-  explosion: { type: "triangle", from: 160, to: 30, duration: 0.5, gain: 0.6 },
-  hit: { type: "square", from: 220, to: 110, duration: 0.3, gain: 0.4 },
-  // 自分の弾が相手に入った手応え。上昇する短い音で、被弾の下降音と向きで区別する
-  hitConfirm: { type: "square", from: 330, to: 660, duration: 0.09, gain: 0.35 },
-  // この一撃で HP が尽きた。長く沈む音
-  finish: { type: "triangle", from: 440, to: 55, duration: 0.9, gain: 0.5 },
-};
+const MOVE_INTERVAL = 0.075;
+/** 同じ音がこの間隔より詰めて届いたら重ねない。同じ瞬間の多段着弾で音量が跳ねるのを防ぐ */
+const RETRIGGER_INTERVAL = 0.03;
+const lastPlayed = new Map<SoundName, number>();
 
 export const playSound = (name: SoundName): void => {
-  const ctx = state.ctx;
-  const master = state.master;
-  if (!ctx || !master || state.muted || state.volume <= 0) return;
-  if (name === "move") { if (ctx.currentTime - lastMoveAt < .075) return; lastMoveAt = ctx.currentTime; }
-  const tone = TONES[name];
-  const t0 = ctx.currentTime;
-  const osc = ctx.createOscillator();
-  const gain = ctx.createGain();
-  osc.type = tone.type;
-  osc.frequency.setValueAtTime(tone.from, t0);
-  osc.frequency.exponentialRampToValueAtTime(Math.max(1, tone.to), t0 + tone.duration);
-  gain.gain.setValueAtTime(tone.gain, t0);
-  gain.gain.exponentialRampToValueAtTime(0.001, t0 + tone.duration);
-  osc.connect(gain).connect(master);
-  osc.start(t0);
-  osc.stop(t0 + tone.duration + 0.02);
+  const { ctx, sfx } = state;
+  if (!ctx || !sfx || state.muted || state.volume <= 0) return;
+  const now = ctx.currentTime;
+  const interval = name === "move" ? MOVE_INTERVAL : RETRIGGER_INTERVAL;
+  if (now - (lastPlayed.get(name) ?? -Infinity) < interval) return;
+  lastPlayed.set(name, now);
+  const recipe = SOUNDS[name];
+  playRecipe(sfx, recipe, now);
+  duckMusic(ctx, recipe.duck ?? 0);
 };
