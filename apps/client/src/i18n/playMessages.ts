@@ -8,6 +8,7 @@ export const playEnglish: Readonly<Record<string, string>> = {
   "パワー": "Power", "地面 {tilt}度、射角 {elevation}度、水平から {world}度": "Ground {tilt} degrees, elevation {elevation} degrees, world angle {world} degrees",
   "対戦フィールド。ドラッグ・ホイールで見回す、Cで手番へ": "Battlefield. Drag or scroll to look around. C returns to the active tank.",
   "素材を読み込めませんでした。再読み込みしてください。": "Unable to load artwork. Please reload.", "フィールドを準備しています…": "Preparing the battlefield…",
+  "画面を読み込み中": "Loading screen", "フィールドを準備中": "Preparing battlefield",
   "手番へ戻る": "Focus active tank", "全体図からカメラを移動": "Pan using the overview", "準備しています…": "Preparing…",
   "プラクティス": "Practice", "弾を見届けよう": "Watch your shot", "あなたの番": "Your turn", "風向き": "Wind direction",
   "弾の追従": "Follow shot", "左へ移動": "Move left", "右へ移動": "Move right", "移動": "Move", "角度": "Angle", "武器": "Weapons",

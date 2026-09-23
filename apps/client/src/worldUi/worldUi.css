@@ -33,8 +33,22 @@
 .world-result-screen p { color:#24344a; background:#fff0dccc; padding:4px 18px; }
 .world-result-screen .tank-portrait { width:min(300px,40vh); }
 .world-result-screen > div:last-child { display:flex; flex-wrap:wrap; gap:16px; justify-content:center; }
-.world-shutter { position:absolute; inset:0; pointer-events:none; z-index:20; background:repeating-linear-gradient(0deg,#24344a 0 20px,#34485d 20px 24px); clip-path:inset(0 0 100%); transition:clip-path 400ms cubic-bezier(.65,0,.35,1); }
+.world-shutter { position:absolute; inset:0; pointer-events:none; z-index:20; background:repeating-linear-gradient(0deg,#24344a 0 20px,#34485d 20px 24px); clip-path:inset(0 0 100%); }
 .world-closing .world-shutter { clip-path:inset(0); pointer-events:auto; }
+/* 行き先で変わるシャッター。閉じる 400 ms と開く 400 ms を 8 段で刻む。入力を止める時間は WorldScenes の timer が決める。 */
+.world-shutter[data-direction] { animation:400ms steps(8,end) both; }
+.world-shutter[data-direction=forward] { animation-name:world-shutter-forward-open; }
+.world-closing .world-shutter[data-direction=forward] { animation-name:world-shutter-forward-close; }
+.world-shutter[data-direction=battle] { animation-name:world-shutter-battle-open; }
+.world-closing .world-shutter[data-direction=battle] { animation-name:world-shutter-battle-close; }
+@keyframes world-shutter-forward-close { from { clip-path:inset(0 0 100% 0); } to { clip-path:inset(0); } }
+@keyframes world-shutter-forward-open { from { clip-path:inset(0); } to { clip-path:inset(0 0 100% 0); } }
+/* ブラウン管が点くように、中央の横線から縦に開く。開く側は中央の横線から穴を広げて次の画面を見せる。 */
+@keyframes world-shutter-battle-close { from { clip-path:inset(calc(50% - 2px) 0); } to { clip-path:inset(0); } }
+@keyframes world-shutter-battle-open {
+  from { clip-path:polygon(evenodd, 0 0, 100% 0, 100% 100%, 0 100%, 0 0, 0 50%, 100% 50%, 100% 50%, 0 50%, 0 50%); }
+  to { clip-path:polygon(evenodd, 0 0, 100% 0, 100% 100%, 0 100%, 0 0, 0 0, 100% 0, 100% 100%, 0 100%, 0 0); }
+}
 .world-ui .kp-canvas { position:relative; }
 .world-ui .kp-world-help { padding:4px 8px; background:#24344ac9; opacity:1; }
 .world-ui .kp-topbar,.world-ui .kp-controls { background:#24344a; border-bottom:3px solid #b96f3a; }
@@ -72,7 +86,7 @@
   .world-lobby footer .pixel-button { min-width:0!important; }
   .world-settings { padding:24px 16px; }
 }
-@media (prefers-reduced-motion:reduce) { .world-shutter { transition:none; } }
+@media (prefers-reduced-motion:reduce) { .world-shutter[data-direction],.world-closing .world-shutter[data-direction] { animation:none; } }
 .world-ui .kp-power-track { height:24px; padding:7px 14%; border:0; box-shadow:none; background:#000; overflow:hidden; }
 .world-ui .network-world { display:grid; grid-template-rows:56px minmax(0,1fr) 98px; max-width:none; padding:0; margin:0; overflow:hidden; color:#fff1d5; background:#24344a; }
 .network-world header { display:flex; align-items:center; gap:20px; padding:0 16px; border-bottom:3px solid #c68a4c; }

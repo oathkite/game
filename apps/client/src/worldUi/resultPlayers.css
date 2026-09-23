@@ -28,3 +28,19 @@
 
 .result-outcome-label { display:inline-flex; align-items:center; gap:8px; }
 .result-outcome-label .dot-icon { width:16px; height:16px; flex-shrink:0; color:#33ff66; }
+
+/* 段階表示（P2）。--motion-delay の後、行は --row-step おきに上から出し、勝者の冠は行が出たところから 2 回だけ明滅させる。
+   数え上げは ResultPlayers が 40 ms ごとに描き直す。data-motion=done（飛ばした、動きを減らす設定）では止める。 */
+.battle-result-players[data-motion=play] tbody tr { animation:result-row-in 90ms steps(3,jump-none) both; animation-delay:calc(var(--motion-delay, 0ms) + var(--row) * var(--row-step, 90ms)); }
+.battle-result-players[data-motion=play] [data-reaction=win] .result-outcome-label .dot-icon { animation:result-crown-blink 160ms steps(1,end) 2; animation-delay:calc(var(--motion-delay, 0ms) + var(--row) * var(--row-step, 90ms)); }
+@keyframes result-row-in { from { opacity:0; } to { opacity:1; } }
+@keyframes result-crown-blink { 0% { visibility:visible; } 50% { visibility:hidden; } 100% { visibility:visible; } }
+@media(prefers-reduced-motion:reduce) { .battle-result-players tbody tr,.battle-result-players .result-outcome-label .dot-icon { animation:none!important; } }
+
+/* 勝者と敗者（C6）。勝者の機体は行が出た後で 2 art px 跳ねるのを 2 回（600 ms）。
+   64px 幅に 80 art px を描くので 2 art px は 1.6px、輪郭がぼけないよう 2px に丸める。
+   敗者は灰色にする。静的なので動きを減らす設定でも当てる。引き分けはそのまま。 */
+.result-table [data-reaction=lose] .tank-portrait { filter:grayscale(1); }
+.battle-result-players[data-motion=play] [data-reaction=win] .tank-portrait { animation:result-winner-hop 600ms steps(1,end) both; animation-delay:calc(var(--motion-delay, 0ms) + var(--row) * var(--row-step, 90ms) + 90ms); }
+@keyframes result-winner-hop { 0% { transform:none; } 25% { transform:translateY(-2px); } 50% { transform:none; } 75% { transform:translateY(-2px); } 100% { transform:none; } }
+@media(prefers-reduced-motion:reduce) { .battle-result-players [data-reaction=win] .tank-portrait { animation:none!important; } }

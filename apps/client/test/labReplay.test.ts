@@ -1,6 +1,7 @@
 import { expect, it } from "vitest";
 import { labFrameSchema } from "@game/protocol/v2-lab";
 import { presentLabReplay } from "../src/networkLab/labReplay";
+import { CARVE_AT_MS, HP_DRAIN_MS, IMPACT_TOTAL_MS, MISS_MS } from "../src/game/hitFeedback";
 const player = { playerId: "p1", x: 20, y: 150, hp: 100, teamId: "t0", eliminated: false };
 const frame = labFrameSchema.parse({ type: "lab.frame", build: { protocol: 2, sim: "keropod-sim-v2.1", assets: "keropod-world-v1", rules: "keropod-v2.1", map: { id: "test", version: 1 } }, wind: 0, map: { id: "test", version: 1, width: 500, height: 225, surface: Array(500).fill(150) }, serverTime: 1000, eventSeq: 2, matchId: "m", turnId: 1, actorId: "p1", deadlineAt: 20000,
   players: Array.from({ length: 8 }, (_, i) => ({ ...player, playerId: `p${i + 1}`, y: 170, hp: 65 })),
@@ -42,12 +43,39 @@ it("staggered launches and impacts follow authoritative ticks, preserving earlie
   expect(settled.terrainOps).toHaveLength(2);
 });
 
-it("shows impact frames and damage flashes only on the authoritative impact timeline", () => {
+it("plays the practice impact timeline from the authoritative impact time", () => {
   expect(presentLabReplay(frame, 1699).effects).toEqual([]);
-  expect(presentLabReplay(frame, 1700).effects[0]).toMatchObject({ cx: 20, cy: 150, frame: 0, hitIds: ["p1"] });
-  expect(presentLabReplay(frame, 1850).effects[0]).toMatchObject({ frame: 2, hitIds: [] });
-  expect(presentLabReplay(frame, 1999).effects[0]!.frame).toBe(3);
-  expect(presentLabReplay(frame, 2000).effects).toEqual([]);
+  expect(presentLabReplay(frame, 1700).effects[0]).toMatchObject({ cx: 20, cy: 150, radius: 10, clock: 0, damage: 35, damages: [{ playerId: "p1", amount: 35 }] });
+  expect(presentLabReplay(frame, 2289).effects[0]!.clock).toBe(589);
+  expect(presentLabReplay(frame, 1700 + IMPACT_TOTAL_MS).effects).toEqual([]);
+});
+it("compresses the impact timeline into the 300ms left on a turn without damage", () => {
+  const miss = { ...frame, replay: { ...frame.replay!, impacts: [{ tick: 42, damage: [] }] } };
+  expect(presentLabReplay(miss, 3000).effects[0]).toMatchObject({ clock: 0, damage: 0, damages: [] });
+  expect(presentLabReplay(miss, 3150).effects[0]!.clock).toBeCloseTo(IMPACT_TOTAL_MS / 2);
+  expect(presentLabReplay(miss, 3299).effects).toHaveLength(1);
+  expect(presentLabReplay(miss, 3300).effects).toEqual([]);
+});
+it("drains the hit tank's HP bar from the value before the hit", () => {
+  expect(presentLabReplay(frame, 1699).hpBars).toEqual({});
+  expect(presentLabReplay(frame, 1700).hpBars.p1).toMatchObject({ hp: 100, hpGhost: 100 });
+  expect(presentLabReplay(frame, 1700 + CARVE_AT_MS + HP_DRAIN_MS).hpBars.p1!.hp).toBe(65);
+  expect(presentLabReplay(frame, 1700).hpBars.p2).toBeUndefined();
+});
+it("draws a trail behind a flying projectile and clears it at impact", () => {
+  const long = { ...frame, replay: { ...frame.replay!, paths: [{ launchTick: 0, endTick: 42, points: Array.from({ length: 11 }, (_, i) => ({ x: 20 + i * 6, y: 140, tick: i * 4 })) }] } };
+  const early = presentLabReplay(long, 1100).trails[0]!, later = presentLabReplay(long, 1600).trails[0]!;
+  expect(later.length).toBeGreaterThan(early.length);
+  expect(later[0]).toMatchObject({ x: 20, y: 140, recent: false });
+  expect(later[later.length - 1]!.recent).toBe(true);
+  expect(presentLabReplay(long, 1700).trails).toEqual([]);
+});
+it("marks a projectile that leaves the map at the edge of the actual map size", () => {
+  const out = { ...frame, replay: { ...frame.replay!, impacts: [], paths: [{ launchTick: 0, endTick: 20, points: [{ x: 400, y: 100, tick: 0 }, { x: 560, y: 90, tick: 20 }] }] } };
+  const at = 1000 + (20 / 42) * (3000 - 1000);
+  expect(presentLabReplay(out, at).misses).toEqual([{ key: "miss/0", x: 498, y: 90, on: true }]);
+  expect(presentLabReplay(out, at + MISS_MS).misses).toEqual([]);
+  expect(presentLabReplay(frame, 1700).misses).toEqual([]);
 });
 it("marks only descending tanks during settlement and clears falling at its deadline", () => {
   const mixed = { ...frame, players: frame.players.map((p, i) => ({ ...p, y: i === 0 ? 170 : 150 })) };

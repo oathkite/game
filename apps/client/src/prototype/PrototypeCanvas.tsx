@@ -1,13 +1,15 @@
 import type { ChallengeStore } from "@/practice/store";
 import { useWindowEdgePan } from "./useWindowEdgePan";
 import { createTankView } from "@/game/tankView";
-import { openingPose } from "@/worldUi/openingTour";
+import { openingPose, revealRowsAt } from "@/worldUi/openingTour";
+import { guideDots } from "@/game/trail";
 import { StartSignal } from "@/worldUi/StartSignal";
+import { SceneLoading } from "@/worldUi/SceneLoading";
 import { createFallMotion } from "@/worldUi/fallMotion";
 import { useLanguage } from "@/i18n/locale";
 import { teamColor } from "@/worldUi/teamColors";
 import { useEffect, useRef, useState, type HTMLAttributes } from "react";
-import { isRingOut, tiltOf } from "@game/sim";
+import { isRingOut, ONE, tiltOf } from "@game/sim";
 import { createRenderer, type Renderer } from "@/game/renderer";
 import { playReplay } from "@/game/replay";
 import type { TankPose } from "@/game/tankView";
@@ -33,11 +35,11 @@ const posesOf = (v: MatchView, elevations: readonly number[]): readonly TankPose
   });
 };
 
-type Props = { readonly onOpeningComplete: () => void; readonly worldArt?: boolean; readonly store: Pick<MatchStore, "getView" | "completeReplay">; readonly practice?: Pick<ChallengeStore, "getTargets" | "showImpact">; readonly rig: CameraRig; readonly layout: Layout; readonly handlers: HTMLAttributes<HTMLDivElement>; readonly blocked: boolean; readonly followShot: boolean; readonly onReady: (ready: boolean) => void };
-export const PrototypeCanvas = ({ store, rig, layout, handlers, blocked, followShot, onReady, onOpeningComplete, worldArt, practice }: Props) => {
+type Props = { readonly onOpeningComplete: () => void; readonly worldArt?: boolean; readonly store: Pick<MatchStore, "getView" | "completeReplay">; readonly practice?: Pick<ChallengeStore, "getTargets" | "showImpact">; readonly rig: CameraRig; readonly layout: Layout; readonly handlers: HTMLAttributes<HTMLDivElement>; readonly blocked: boolean; readonly followShot: boolean; readonly onReady: (ready: boolean) => void; readonly charge?: number };
+export const PrototypeCanvas = ({ store, rig, layout, handlers, blocked, followShot, onReady, onOpeningComplete, worldArt, practice, charge = 0 }: Props) => {
   const hostRef = useRef<HTMLDivElement>(null), miniRef = useRef<HTMLCanvasElement>(null);
-  const latest = useRef({ layout, blocked, followShot });
-  latest.current = { layout, blocked, followShot };
+  const latest = useRef({ layout, blocked, followShot, charge });
+  latest.current = { layout, blocked, followShot, charge };
   const { t } = useLanguage();
   const [signal, setSignal] = useState(false);
   const [error, setError] = useState(false), [loaded, setLoaded] = useState(false);
@@ -51,6 +53,7 @@ export const PrototypeCanvas = ({ store, rig, layout, handlers, blocked, followS
     const falls = createFallMotion();
     let available = true;
     const elevations: [number, number] = [45, 45];
+    let guide: readonly { readonly x: number; readonly y: number }[] | null = null, guideShown = false;
     const reduced = matchMedia("(prefers-reduced-motion: reduce)");
     const start = async (): Promise<void> => {
       const view = store.getView();
@@ -81,6 +84,8 @@ export const PrototypeCanvas = ({ store, rig, layout, handlers, blocked, followS
           stopReplay(); replayId = v.replay.id; activeReplay = true; falls.reset();
           const job = v.replay;
           elevations[job.shot.input.seat] = job.shot.input.elevation;
+          // 自分の射撃の軌跡を次の自分の手番まで残す（設計書 38 の E7）
+          if (job.shot.input.seat === v.mySeat) guide = guideDots(job.paths.map(path => path.points.map(q => ({ x: q.x / ONE, y: q.y / ONE }))));
           if (current.followShot) rig.focus(job.shot.input, "shot", reduced.matches);
           const replayRenderer: Renderer = { ...r, projectile: (color, weapon) => {
             const projectile = r.projectile(color, weapon);
@@ -94,13 +99,15 @@ export const PrototypeCanvas = ({ store, rig, layout, handlers, blocked, followS
           } });
         }
         if (!v.replay && activeReplay) { stopReplay(); activeReplay = false; }
+        const showGuide = Boolean(guide) && !activeReplay && !opening && v.phase === "acting" && v.control !== null;
+        if (showGuide !== guideShown) { guideShown = showGuide; r.setGuide(showGuide ? guide : null); }
         if (!activeReplay) {
           if (v.mask && lastMask !== v.mask) { r.setTerrain(v.mask); lastMask = v.mask; }
           let falling = false;
           const poses = posesOf(v, elevations).map((pose, seat) => {
             const motion = falls.sample(String(seat), pose.y, performance.now(), reduced.matches);
             falling ||= motion.falling;
-            r.setTank(seat, { ...pose, ...motion, visible: motion.falling || pose.visible });
+            r.setTank(seat, { ...pose, ...motion, visible: motion.falling || pose.visible, charge: pose.aiming ? current.charge : 0 });
             return { ...pose, ...motion };
           });
           host.dataset.falling = String(falling);
@@ -110,11 +117,12 @@ export const PrototypeCanvas = ({ store, rig, layout, handlers, blocked, followS
         }
         if (opening) {
           const tour = openingPose(performance.now() - openingAt, order, view.mask!, viewportOf(current.layout), reduced.matches);
+          r.setReveal(revealRowsAt(performance.now() - openingAt, view.mask!.height, reduced.matches));
           r.setLayout({ ...current.layout, cell: tour.scale });
           rig.resize({ ...viewportOf(current.layout), scale: tour.scale }, rig.get().bounds);
           rig.focus(tour.center, "actor", true);
           if (signalVisible !== tour.start) { signalVisible = tour.start; setSignal(tour.start); }
-          if (tour.done) { opening = false; available = true; onOpeningComplete(); onReady(true); }
+          if (tour.done) { opening = false; available = true; r.setReveal(null); onOpeningComplete(); onReady(true); }
         }
         host.dataset.opening = String(opening);
         const center = rig.tick(dt, performance.now(), reduced.matches), vp = rig.get().viewport;
@@ -131,7 +139,7 @@ export const PrototypeCanvas = ({ store, rig, layout, handlers, blocked, followS
   return <div className="kp-world" style={{ height: layout.mapHeight }}>
     <StartSignal visible={signal} />
     <div ref={hostRef} className="kp-canvas" tabIndex={0} aria-label={t("対戦フィールド")} data-testid="camera-world" data-scale={layout.cell} data-loaded={loaded} {...handlers} />
-    {!loaded && <div className="kp-loading" role="status">{error ? t("素材を読み込めませんでした。ページを再読み込みしてください。") : t("マシンを準備しています…")}</div>}
+    {!loaded && (error ? <div className="kp-loading" role="status">{t("素材を読み込めませんでした。ページを再読み込みしてください。")}</div> : <SceneLoading className="kp-loading" steps={[{ label: t("フィールドを準備中"), state: "active" }]} />)}
     <span className="kp-world-help">{t("ドラッグ・ホイールで見回す / Cで手番へ")}</span>
     <button className="kp-minimap" aria-label={t("全体図からカメラを移動")} disabled={blocked} onPointerDown={(e) => {
       if (!e.isPrimary || e.button !== 0) return;

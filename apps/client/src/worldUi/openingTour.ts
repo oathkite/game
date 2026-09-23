@@ -20,3 +20,14 @@ export const openingPose = (elapsed: number, players: readonly Point[], map: { w
   return { center: { x: from.x + (to.x - from.x) * t, y: from.y + (to.y - from.y) * t },
     scale: step === 0 ? fit + (viewport.scale - fit) * t : viewport.scale, start, done };
 };
+
+/** 地形を上から描き出す長さ。開幕の俯瞰（900 ms）の中に収める。設計書 38 の L3 */
+export const REVEAL_MS = 600;
+/** 描き出しの段数。ドットの手触りを保つため連続にしない */
+export const REVEAL_STEPS = 12;
+/** 開幕から elapsed ミリ秒後に見せる地形の行数。描き終えたら null（全体）。動きを減らす設定では描き出さない */
+export const revealRowsAt = (elapsed: number, height: number, reduced = false): number | null => {
+  if (reduced || elapsed >= REVEAL_MS) return null;
+  const step = Math.floor((Math.max(0, elapsed) / REVEAL_MS) * REVEAL_STEPS) + 1;
+  return Math.floor((height * step) / REVEAL_STEPS);
+};

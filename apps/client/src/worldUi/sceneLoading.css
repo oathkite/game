@@ -1,0 +1,14 @@
+/* 端末ログ風の待ち表示（L1）と工程数のドットバー（L2）。 */
+.scene-loading { display:grid; gap:8px; justify-items:start; padding:12px 16px; color:#33ff66; background:#000; font-family:var(--font-jp); font-size:14px; line-height:1.5; text-align:left; white-space:pre-wrap; }
+.scene-loading-page { margin:24px; }
+.scene-loading-inline { padding:8px 0; }
+.scene-loading ol { margin:0; padding:0; list-style:none; }
+.scene-loading li[data-state=error] b { color:#000; background:#33ff66; font-weight:normal; padding:0 4px; }
+.scene-loading li b { font-weight:normal; }
+.scene-loading-cursor { display:inline-block; width:.6em; height:1em; margin-left:2px; vertical-align:-.12em; background:#33ff66; animation:scene-loading-blink 1s steps(2,jump-none) infinite; }
+@keyframes scene-loading-blink { from { opacity:1; } to { opacity:0; } }
+.scene-loading-dots { display:flex; gap:4px; }
+.scene-loading-dots i { display:block; width:8px; height:8px; background:#0f4d24; }
+.scene-loading-dots i[data-filled=true] { background:#33ff66; }
+.scene-loading-sr { position:absolute; width:1px; height:1px; overflow:hidden; clip-path:inset(50%); white-space:nowrap; }
+@media(prefers-reduced-motion:reduce) { .scene-loading-cursor { animation:none; } }

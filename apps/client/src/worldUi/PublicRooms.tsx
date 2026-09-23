@@ -5,6 +5,7 @@ import { MULTIPLAYER_MAPS, MULTIPLAYER_MAP_LABELS } from "@game/maps";
 import { roomPageSchema, type RoomPage } from "@game/protocol/v2-rooms";
 import { useLanguage } from "@/i18n/locale";
 import { PixelButton } from "./PixelUi";
+import { SceneLoading } from "./SceneLoading";
 
 export const PublicRooms = ({ initialCode = "", base, busy, filtersOpen, closeFilters, join }: {
   readonly initialCode?: string; readonly base: string; readonly busy: boolean; readonly filtersOpen: boolean; readonly closeFilters: () => void;
@@ -89,7 +90,7 @@ export const PublicRooms = ({ initialCode = "", base, busy, filtersOpen, closeFi
       <div className="room-card-actions">{room.phase === "waiting" && <PixelButton disabled={busy || room.members >= 8} onClick={() => join(room.roomId, "room.join", Boolean(room.passwordProtected))}>{t("部屋に参加")}</PixelButton>}
         <PixelButton disabled={busy || room.spectators >= 8} onClick={() => join(room.roomId, "room.spectate", Boolean(room.passwordProtected))}>{t("観戦する")}</PixelButton></div>
     </li>)}</ul>
-    {loading && <p role="status">{t("部屋一覧を読み込み中…")}</p>}
+    {loading && <SceneLoading className="scene-loading-inline" steps={[{ label: t("部屋一覧を読み込み中"), state: "active" }]} />}
     {page.nextCursor && <PixelButton disabled={loading || busy} onClick={() => { void load(page.nextCursor!); }}>{t("もっと見る")}</PixelButton>}
   </section>;
 };

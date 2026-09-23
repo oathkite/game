@@ -7,7 +7,8 @@ import { createImageTerrainLayer } from "./imageTerrainLayer";
 import { fitTankLabel } from "./tankLabelLayout";
 import { COLOR_HEX, type TankColors, type WeaponId } from "@game/protocol";
 import type { TerrainMask } from "@game/sim";
-import { Application, Container, type Texture } from "pixi.js";
+import { Application, Container, Graphics, type Texture } from "pixi.js";
+import { type EdgeSide, edgeMarker } from "./edgeMarker";
 import { spawnDamageLabel } from "./damageLabel";
 import { DAMAGE_LABEL_GAP_PX, type Offset } from "./hitFeedback";
 import { createProjectileView, type ProjectileView } from "./projectileView";
@@ -33,7 +34,32 @@ export type Renderer = {
   readonly setShake: (offset: Offset) => void;
   /** 機体の上にダメージ数字を出す。数字は自分で浮いて消える */
   readonly showDamage: (seat: number, text: string, color: TankColors["primary"], big: boolean, summary?: boolean) => void;
+  /** 前の射撃の軌跡（セル）。設計書 38 の E7。null なら消す */
+  readonly setGuide: (dots: readonly { readonly x: number; readonly y: number }[] | null) => void;
+  /** 画面の外で被弾した機体の印。位置はセル。設計書 38 の E6。on が偽なら消す */
+  readonly setEdgeMarkers: (points: readonly EdgePoint[], on: boolean) => void;
+  /** 地形を上から rows 行だけ見せる。null なら全体。設計書 38 の L3 */
+  readonly setReveal: (rows: number | null) => void;
   readonly destroy: () => void;
+};
+
+export type EdgePoint = { readonly x: number; readonly y: number; readonly color: number };
+
+/** 前の射撃の軌跡の色。飛翔中の軌跡の古い点と同じくすんだ緑 */
+const GUIDE_COLOR = 0x79cc96;
+/** 画面の外の印のドット（px） */
+const EDGE_DOT = 2;
+
+/** 外へ向く三角。幅 5、3、1 ドット。先端が side の向き */
+const drawEdgeArrow = (g: Graphics, x: number, y: number, side: EdgeSide, color: number): void => {
+  [5, 3, 1].forEach((w, i) => {
+    const across = (-w * EDGE_DOT) / 2, along = (i - 1) * EDGE_DOT;
+    if (side === "left") g.rect(x - along, y + across, EDGE_DOT, w * EDGE_DOT);
+    else if (side === "right") g.rect(x + along, y + across, EDGE_DOT, w * EDGE_DOT);
+    else if (side === "up") g.rect(x + across, y - along, w * EDGE_DOT, EDGE_DOT);
+    else g.rect(x + across, y + along, w * EDGE_DOT, EDGE_DOT);
+  });
+  g.fill(color);
 };
 
 export type RendererInit = {
@@ -91,6 +117,11 @@ export const createRenderer = async (init: RendererInit): Promise<Renderer> => {
 
   const targets = createTargetView();
   world.addChild(targets.graphics);
+  const guide = new Graphics();
+  world.addChild(guide);
+  const reveal = new Graphics();
+  world.addChild(reveal);
+  const edges = new Graphics();
   const projectileLayer = new Container();
   world.addChild(projectileLayer);
   let projectile: ProjectileView | null = null;
@@ -101,6 +132,7 @@ export const createRenderer = async (init: RendererInit): Promise<Renderer> => {
     world.addChild(t.world);
     labels.addChild(t.label);
   }
+  app.stage.addChild(edges);
   app.ticker.add(() => {
     for (const t of tanks) t.tick?.(app.ticker.deltaMS, reduced.matches);
   });
@@ -170,6 +202,28 @@ export const createRenderer = async (init: RendererInit): Promise<Renderer> => {
       const y = tanks[seat]!.label.getBounds().minY - labels.getGlobalPosition().y - DAMAGE_LABEL_GAP_PX;
       const stop = spawnDamageLabel({ parent: labels, ticker: app.ticker, text, color, big, summary, x: (pose.x + 0.5) * cell, y, onEnd: () => labelStops.delete(stop) });
       labelStops.add(stop);
+    },
+    setGuide: (dots) => {
+      guide.clear();
+      if (!dots || dots.length === 0) return;
+      for (const d of dots) guide.rect(d.x - 0.25, d.y - 0.25, 0.5, 0.5);
+      guide.fill(GUIDE_COLOR);
+    },
+    setEdgeMarkers: (points, on) => {
+      edges.clear();
+      edges.position.set(-app.stage.x, -app.stage.y);
+      if (!on) return;
+      for (const p of points) {
+        const marker = edgeMarker({ x: (p.x + 0.5) * cell + world.x, y: p.y * cell + world.y }, app.screen);
+        if (marker) drawEdgeArrow(edges, marker.x, marker.y, marker.side, p.color);
+      }
+    },
+    setReveal: (rows) => {
+      reveal.clear();
+      if (rows === null) { terrain.sprite.mask = null; reveal.visible = false; return; }
+      reveal.rect(0, 0, terrain.sprite.width || 10000, Math.max(0, rows)).fill(0xffffff);
+      reveal.visible = true;
+      terrain.sprite.mask = reveal;
     },
     destroy: () => {
       for (const stop of labelStops) safely(stop);

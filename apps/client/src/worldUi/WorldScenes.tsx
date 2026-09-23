@@ -21,6 +21,8 @@ import { CameraSettingsPanel } from "@/prototype/CameraSettingsPanel";
 import { createCameraRig } from "@/prototype/cameraRig";
 import { PixelButton, PixelPanel } from "./PixelUi";
 import { TankPortrait } from "./TankPortrait";
+import { SceneLoading } from "./SceneLoading";
+import { SHUTTER_OPEN_MS, shutterDirection, type ShutterDirection } from "./sceneShutter";
 import "./worldUi.css";
 import "./simpleTheme.css";
 import "./pageLayout.css";
@@ -42,12 +44,14 @@ export const WorldScenes = () => {
   const [practiceMap, setPracticeMap] = useState<MapName | "random">("ridgeline");
   const [practiceProfile, setPracticeProfile] = useState(loadProfile);
   const [result, setResult] = useState<ResultPresentation | null>(null);
+  const [direction, setDirection] = useState<ShutterDirection | null>(null);
   const timer = useRef<ReturnType<typeof setTimeout> | null>(null);
   const heading = useRef<HTMLDivElement>(null);
   const go = useCallback((next: Scene) => {
     if (timer.current) return;
     void unlockAudio();
     if (matchMedia("(prefers-reduced-motion: reduce)").matches) { setScene(next); return; }
+    setDirection(shutterDirection(next));
     setClosing(true);
     timer.current = setTimeout(() => { setScene(next); setClosing(false); timer.current = null; }, 400);
   }, []);
@@ -79,18 +83,18 @@ export const WorldScenes = () => {
   const finish = useCallback((value: ResultPresentation) => { setResult(value); go("result"); }, [go]);
   return <div className={`world-ui world-scene-${scene} ${closing ? "world-closing" : ""}`}>
     <SceneBoundary message={t("画面を読み込めませんでした。通信を確認して再読み込みしてください。")} retryLabel={t("再読み込み")}>
-    <Suspense fallback={<p role="status">{t("フィールドを準備しています…")}</p>}>
+    <Suspense fallback={<SceneLoading className="scene-loading-page" steps={[{ label: t("画面を読み込み中"), state: "active" }]} />}>
     {scene === "battle" ? <CameraPrototype cpuLevel={cpuLevel} cpu={practiceCpu} worldArt mapName={practiceMap} onExit={exitPractice} onResult={finish} /> : scene === "rooms" ? <RoomScreen onExit={exit} {...(import.meta.env.DEV ? { onLab: () => go("network") } : {})} /> : scene === "network" ? <NetworkLab worldArt onExit={exit} /> : <>
       <div key={scene} ref={heading} tabIndex={-1} className="world-content">
         {scene === "start" && <StartScreen onBegin={() => go("lobby")} />}
         {scene === "practice" && <PracticeFlow profile={practiceProfile} onProfileChange={p => { setPracticeProfile(p); saveProfile(p); setAudioSettings(p.volume, p.muted, p.bgmVolume ?? p.volume); }} onExit={exit} onCpuStart={(map, level) => { setCpuLevel(level); setPracticeCpu(true); setPracticeMap(map); go("battle"); }} onFreeStart={map => { setPracticeCpu(false); setPracticeMap(map); go("battle"); }} />}
         {scene === "lobby" && <Lobby go={go} onPractice={() => { setPracticeProfile(loadProfile()); go("practice"); }} />}
-        {scene === "result" && result && <section className="world-result-screen terminal-screen result-terminal"><header className="result-header"><h1>{t(resultTitle(result.result, result.players.find(p => p.playerId === result.ownId)?.teamId))}</h1></header><ResultPlayers {...result} /><div className="result-actions"><PixelButton onClick={exitPractice}>{t("プラクティス")}</PixelButton><PixelButton className="result-primary" onClick={() => go("battle")}>{t("もう一度プレイ")}</PixelButton></div></section>}
+        {scene === "result" && result && <section className="world-result-screen terminal-screen result-terminal"><header className="result-header"><h1>{t(resultTitle(result.result, result.players.find(p => p.playerId === result.ownId)?.teamId))}</h1></header><ResultPlayers {...result} motionDelayMs={SHUTTER_OPEN_MS} /><div className="result-actions"><PixelButton onClick={exitPractice}>{t("プラクティス")}</PixelButton><PixelButton className="result-primary" onClick={() => go("battle")}>{t("もう一度プレイ")}</PixelButton></div></section>}
       </div>
     </>}
     </Suspense>
     </SceneBoundary>
-    <div className="world-shutter" aria-hidden="true" />
+    <div className="world-shutter" data-direction={direction ?? undefined} aria-hidden="true" />
   </div>;
 };
 const Lobby = ({ go, onPractice }: { readonly go: (scene: Scene) => void; readonly onPractice: () => void }) => {

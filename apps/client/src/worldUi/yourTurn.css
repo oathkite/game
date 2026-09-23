@@ -13,11 +13,16 @@
   font-size:clamp(24px,5vw,44px);
   line-height:1.4;
   white-space:nowrap;
-  animation:your-turn-appear 1800ms linear both;
+  animation:your-turn-scan 120ms steps(3,jump-start) both,your-turn-appear 1800ms linear both;
+}
+/* 入りの 120 ms だけ、中央の走査線が横に伸びてから縦に開く（P4）。steps はキーフレームの区間ごとに効くので、横 3 段、縦 3 段。jump-start で最初の段から線を見せる。入りは走査線が受け持つので、不透明度は最初から 1。 */
+@keyframes your-turn-scan {
+  0% { clip-path:inset(calc(50% - 1px) 50%); }
+  50% { clip-path:inset(calc(50% - 1px) 0); }
+  100% { clip-path:inset(0); }
 }
 @keyframes your-turn-appear {
-  0% { opacity:0; }
-  8%,80% { opacity:1; }
+  0%,80% { opacity:1; }
   100% { opacity:0; }
 }
 @media(prefers-reduced-motion:reduce) { .your-turn { animation:none; } }

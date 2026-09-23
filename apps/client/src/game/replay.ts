@@ -2,7 +2,7 @@ import { damageSummary } from "./damageSummary";
 import { weaponSound } from "@/app/weaponSounds";
 import { shotFlashes } from "./muzzlePose";
 import { shotRecoil } from "./shotRecoil";
-import type { CellPoint, Impact, Seat } from "@game/protocol";
+import { COLOR_HEX, type CellPoint, type Impact, type Seat } from "@game/protocol";
 import { carve, isRingOut, MAP_HEIGHT, ONE, tiltOf, weaponSpec, type ProjectilePath, type TerrainMask } from "@game/sim";
 import type { SoundName } from "@/app/audio";
 import type { PlayerView, ReplayJob } from "@/match/types";
@@ -16,6 +16,8 @@ import {
   hpBarAt,
   IMPACT_TOTAL_MS,
   impactTimeMs,
+  invertCells,
+  invertOn,
   launchDelayMs,
   MISS_MS,
   missMarkAt,
@@ -24,7 +26,10 @@ import {
   STEP_MS,
 } from "./hitFeedback";
 import type { ProjectileView } from "./projectileView";
-import type { Renderer } from "./renderer";
+import { crumbleAt, rimCells } from "./crumble";
+import { trailDots } from "./trail";
+import type { EdgePoint, Renderer } from "./renderer";
+import { edgeBlinkOn } from "./edgeMarker";
 import type { TankPose } from "./tankView";
 
 // 射撃結果の再生。設計書 03 の 3.9。弾道は 1 ステップ 1/60 秒で進め、着弾で弾を一瞬止め、爆風の膨張、地形の削り、落下を順に描く。
@@ -58,6 +63,8 @@ type ImpactRun = {
   readonly at: number;
   exploded: boolean;
   carved: boolean;
+  /** 削れた縁のセル。かけらにして落とす */
+  rim: readonly CellPoint[];
 };
 
 /** 再生 1 回分の可変状態 */
@@ -71,6 +78,8 @@ type Run = {
   readonly falls: readonly Fall[];
   /** 弾道ごとの発射の遅れ */
   readonly launchAt: readonly number[];
+  /** 弾道ごとの位置列をセルに直したもの。軌跡に使う */
+  readonly trails: readonly (readonly { readonly x: number; readonly y: number }[])[];
   readonly impacts: readonly ImpactRun[];
   summaryAt: number | null;
   phase: Phase;
@@ -124,7 +133,7 @@ const timeline = (job: ReplayJob): { launchAt: number[]; impacts: ImpactRun[] } 
   const impacts = job.shot.impacts.map((impact) => {
     const path = job.paths[impact.projectile];
     const at = (launchAt[impact.projectile] ?? 0) + impactTimeMs(impact.stage, path?.impactAt ?? []);
-    return { impact, key: `${impact.projectile}/${impact.stage}`, at, exploded: false, carved: false };
+    return { impact, key: `${impact.projectile}/${impact.stage}`, at, exploded: false, carved: false, rim: [] };
   });
   return { launchAt, impacts };
 };
@@ -151,6 +160,7 @@ const finish = (run: Run): void => {
   run.view.clear();
   for (const seat of [0, 1] as const) run.renderer.setTank(seat, poseOf(run.job.playersAfter[seat], run.job.maskAfter, elevationOf(run, seat)));
   run.renderer.setShake({ dx: 0, dy: 0 });
+  run.renderer.setEdgeMarkers([], false);
   run.stopFrames();
   run.cb.done();
 };
@@ -159,6 +169,7 @@ const enterFall = (run: Run): void => {
   run.phase = "fall";
   run.phaseStart = run.elapsed;
   run.view.clear();
+  run.renderer.setEdgeMarkers([], false);
   run.renderer.setTerrain(run.job.maskAfter);
   for (const seat of [0, 1] as const) {
     run.renderer.setTank(seat, poseOf(run.job.playersAfter[seat], run.job.maskBefore, elevationOf(run, seat), { visible: true }));
@@ -189,6 +200,7 @@ const updateBullet = (run: Run, p: number): void => {
   const last = points[points.length - 1];
   if (frame.ended && last) {
     run.view.setBullet(p, null, 0, 0);
+    run.view.setTrail(p, []);
     const mark = path.impactAt.length === 0 ? missMarkAt(t - (points.length - 1) * STEP_MS, cellOfPoint(last)) : null;
     run.view.setMissMark(`miss/${p}`, mark ? mark.x : null, mark?.y ?? 0, mark?.on ?? false);
     return;
@@ -199,6 +211,7 @@ const updateBullet = (run: Run, p: number): void => {
   if (!a || !b) return;
   const f = frame.index - i;
   run.view.setBullet(p, (a.x + (b.x - a.x) * f) / ONE, (a.y + (b.y - a.y) * f) / ONE, angleAt(points, frame.holding ? i : frame.index));
+  run.view.setTrail(p, trailDots(run.trails[p] ?? [], frame.index));
 
 };
 
@@ -206,7 +219,9 @@ const updateBullet = (run: Run, p: number): void => {
 const carveImpact = (run: Run, ir: ImpactRun): void => {
   ir.carved = true;
   const { impact } = ir;
+  const before = run.mask;
   run.mask = carve(run.mask, impact.terrainOp);
+  if (!run.cb.reduceMotion) ir.rim = rimCells(before, run.mask, impact.terrainOp);
   run.cb.onImpact?.(run.mask, impact);
   run.renderer.setTerrain(run.mask, impact.terrainOp);
   const shooter = run.job.shot.input.seat;
@@ -240,13 +255,26 @@ const updateImpact = (run: Run, ir: ImpactRun): void => {
   run.view.setBlast(ir.key, frame ? cell.x : null, cell.y, frame?.radius ?? 0, frame?.on ?? false, frame?.ring ?? false, run.cb.reduceMotion ? 1 : Math.min(3, Math.floor(t / IMPACT_TOTAL_MS * 4)));
   if (frame?.carved && !ir.carved) carveImpact(run, ir);
   if (ir.carved) run.view.setDebris(ir.key, debrisAt(t - CARVE_AT_MS, cell, terrainOp.radius));
+  if (ir.carved) run.view.setCrumble(ir.key, crumbleAt(t - CARVE_AT_MS, ir.rim, cell));
+  const damage = Math.max(ir.impact.damage[0], ir.impact.damage[1]);
+  run.view.setInvert(ir.key, invertOn(t, damage, run.cb.reduceMotion) ? invertCells(run.mask, cell.x, cell.y, terrainOp.radius) : null);
 };
+
+/** 被弾してから EDGE_HOLD_MS の間、画面の外にいる機体の向きを端に出す */
+const EDGE_HOLD_MS = 1000;
+const hitMarkers = (run: Run): readonly EdgePoint[] => ([0, 1] as const).flatMap(seat => {
+  const drain = run.drains[seat];
+  if (!drain || run.elapsed - drain.at >= EDGE_HOLD_MS) return [];
+  const after = run.job.playersAfter[seat];
+  return [{ x: after.x, y: groundBeforeFall(run.job, seat) - 4, color: Number.parseInt(COLOR_HEX[run.job.playersBefore[seat].colors.primary].slice(1), 16) }];
+});
 
 /** 被弾の見せ方。白はダメージが大きいほど長く続き、HP バーは減っていき、画面が揺れる */
 const updateHits = (run: Run): void => {
   for (const seat of [0, 1] as const) {
     if (run.drains[seat] || seat === run.job.shot.input.seat) run.renderer.setTank(seat, poseAfterHit(run, seat, run.elapsed < run.flashUntil[seat]));
   }
+  run.renderer.setEdgeMarkers(hitMarkers(run), edgeBlinkOn(run.elapsed, run.cb.reduceMotion));
   if (run.cb.reduceMotion) return;
   run.renderer.setShake(run.shake ? shakeOffsetAt(run.elapsed - run.shake.at, run.shake.damage) : { dx: 0, dy: 0 });
 };
@@ -312,6 +340,7 @@ export const playReplay = (
     cb,
     falls: computeFalls(job),
     launchAt,
+    trails: job.paths.map(path => path.points.map(q => ({ x: q.x / ONE, y: q.y / ONE }))),
     impacts,
     summaryAt: null,
     phase: "shot",
@@ -339,6 +368,7 @@ export const playReplay = (
     run.phase = "done";
     run.view.clear();
     run.renderer.setShake({ dx: 0, dy: 0 });
+    run.renderer.setEdgeMarkers([], false);
     run.stopFrames();
   };
 };
