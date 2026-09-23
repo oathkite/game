@@ -1,4 +1,5 @@
 import { expect, test } from "@playwright/test";
+import { lobby, startFreePractice } from "./practiceFlow";
 for (const size of [{ width: 1440, height: 900 }, { width: 844, height: 390 }, { width: 667, height: 375 }, { width: 390, height: 844 }]) {
   test.describe(`input ${size.width}`, () => {
   test.use({ hasTouch: size.width < 1000 });
@@ -6,45 +7,40 @@ for (const size of [{ width: 1440, height: 900 }, { width: 844, height: 390 }, {
     await page.setViewportSize(size);
     const errors: string[] = [];
     page.on("pageerror", e => errors.push(e.message));
-    await page.goto("/?prototype=world");
-    const logo = page.getByRole("img", { name: "KEROPOD（ケロポッド）", exact: true });
-    await expect(logo).toBeVisible();
-    await expect.poll(() => logo.evaluate(image => (image as HTMLImageElement).naturalWidth)).toBe(1536);
-    const title = (await page.getByRole("heading", { name: "KEROPOD（ケロポッド）", exact: true }).boundingBox())!;
+    await page.goto("/");
+    // 画像ロゴは36章で取り下げ、題名は文字で表す。
+    const title = (await page.getByRole("heading", { name: "TANK SHOOT", exact: true }).boundingBox())!;
     const begin = (await page.getByRole("button", { name: "はじめる", exact: true }).boundingBox())!;
     expect(title.x).toBeGreaterThanOrEqual(0); expect(title.x + title.width).toBeLessThanOrEqual(size.width);
     expect(title.y + title.height).toBeLessThanOrEqual(begin.y);
     expect(begin.y + begin.height).toBeLessThanOrEqual(size.height - 32);
     await page.screenshot({ path: `test-results/world-start-${size.width}.png` });
     await page.getByRole("button", { name: "はじめる", exact: true }).click();
-    await expect(page.getByRole("heading", { name: "出発の準備" })).toBeVisible();
+    await expect(lobby(page)).toBeVisible();
     await page.getByRole("textbox", { name: "名前" }).fill("ケロテスト");
-    await expect(page.getByRole("combobox", { name: "装備 2" }).locator('option[value="cannon"]')).toHaveJSProperty("disabled", true);
     await page.getByRole("button", { name: "設定", exact: true }).click();
-    await expect(page.getByRole("heading", { name: "整備と設定" })).toBeVisible();
+    const settings = page.getByRole("dialog", { name: "整備と設定" });
+    await expect(settings).toBeVisible();
     await page.locator(".world-shutter").evaluate(e => Promise.all(e.getAnimations().map(a => a.finished)));
     await page.screenshot({ path: `test-results/world-settings-${size.width}.png` });
-    await page.getByRole("combobox", { name: "機体の表示サイズ" }).selectOption("9");
-    await page.getByRole("combobox", { name: "機体の表示サイズ" }).selectOption("12");
-    await page.getByRole("button", { name: "音を消す" }).click();
-    await expect(page.getByRole("button", { name: "音を出す" })).toBeVisible();
-    await page.getByRole("button", { name: "ロビーに戻る" }).click();
+    await settings.getByRole("button", { name: "音を消す" }).click();
+    await expect(settings.getByRole("button", { name: "音を出す" })).toBeVisible();
+    await settings.getByRole("button", { name: "閉じる", exact: true }).click();
     await expect(page.getByRole("textbox", { name: "名前" })).toHaveValue("ケロテスト");
-    const start = page.getByRole("button", { name: "プラクティスへ" });
+    const start = page.getByRole("button", { name: "プラクティス", exact: true });
     const box = await start.boundingBox();
     expect(box!.y + box!.height).toBeLessThanOrEqual(size.height);
     await expect(page.locator(".tank-portrait")).toHaveAttribute("data-loaded", "true");
     await page.locator(".world-shutter").evaluate(e => Promise.all(e.getAnimations().map(a => a.finished)));
     await page.screenshot({ path: `test-results/world-lobby-${size.width}.png` });
     if (size.width > size.height) {
-      await start.click();
-      await expect(page.getByTestId("camera-world")).toHaveAttribute("data-loaded", "true");
-      await expect(page.getByTestId("world-wind")).toBeVisible();
-      await expect(page.getByTestId("camera-world")).toHaveAttribute("data-scale", "12");
+      await startFreePractice(page);
       if (size.width === 1440) { await expect(page.getByRole("button", { name: "発射", exact: true })).toHaveCount(0); await expect(page.locator("[data-power-tick]")).toHaveCount(101); }
       for (const label of (size.width === 1440 ? [] : ["左へ移動", "右へ移動", "角度を下げる", "角度を上げる", "発射"])) {
         const control = (await page.getByRole("button", { name: label, exact: true }).boundingBox())!;
-        expect(control.width).toBeGreaterThanOrEqual(44); expect(control.height).toBeGreaterThanOrEqual(44);
+        // 十字キーは36章のコンパクトな寸法（32px）。発射は44px以上。
+        const minimum = label === "発射" ? 44 : 32;
+        expect(control.width).toBeGreaterThanOrEqual(minimum); expect(control.height).toBeGreaterThanOrEqual(minimum);
         expect(control.x).toBeGreaterThanOrEqual(0); expect(control.x + control.width).toBeLessThanOrEqual(size.width);
         expect(control.y + control.height).toBeLessThanOrEqual(size.height);
       }
@@ -58,44 +54,47 @@ for (const size of [{ width: 1440, height: 900 }, { width: 844, height: 390 }, {
         await expect.poll(async () => Number(await field.getAttribute("data-camera-y"))).toBeLessThan(beforeY - 1);
         await page.getByRole("button", { name: "設定を開く" }).click();
         await page.getByRole("button", { name: "降参して対戦を終える" }).click();
-        await expect(page.getByRole("heading", { name: /の勝利/ })).toBeVisible();
-        await expect(page.locator('.battle-result-player[data-reaction="win"]')).toHaveCount(1);
-        await expect(page.locator('.battle-result-player[data-reaction="lose"]')).toHaveCount(1);
+        await expect(page.getByRole("heading", { name: /^(勝利|敗北)$/ })).toBeVisible();
+        const results = page.getByRole("table", { name: "試合成績" });
+        await expect(results.locator('tbody tr[data-reaction="win"]')).toHaveCount(1);
+        await expect(results.locator('tbody tr[data-reaction="lose"]')).toHaveCount(1);
         await page.screenshot({ path: "test-results/world-result-1440.png" });
         await page.getByRole("button", { name: "もう一度プレイ" }).click();
         await expect(page.getByTestId("camera-world")).toHaveAttribute("data-loaded", "true");
       }
       await page.getByRole("button", { name: "設定を開く" }).click();
-      await page.getByRole("button", { name: "ロビーに戻る" }).click();
-      await expect(page.getByRole("heading", { name: "出発の準備" })).toBeVisible();
+      await page.getByRole("button", { name: "プラクティスへ戻る" }).click();
+      await expect(page.getByRole("button", { name: "自由練習", exact: true })).toBeVisible();
     }
     expect(errors).toEqual([]);
   });
   });
 }
 
-test("weapon icon layout keeps inner projectile viewports at their own size", async ({ page }) => {
-  await page.goto("/?prototype=world");
+// 武器アイコンはドットの rect だけで描く（36章）。入れ子の弾の svg は無くなったので、アイコンの寸法だけを見る。
+test("weapon icon keeps its size in the battle HUD", async ({ page }) => {
+  await page.goto("/");
   await page.getByRole("button", { name: "はじめる", exact: true }).click();
+  await page.getByRole("button", { name: "プラクティス", exact: true }).click();
+  await page.getByRole("button", { name: "自由練習", exact: true }).click();
   await page.getByRole("combobox", { name: "装備 1" }).selectOption("triple");
-  await page.getByRole("button", { name: "プラクティスへ", exact: true }).click();
-  await expect(page.getByTestId("camera-world")).toHaveAttribute("data-loaded", "true");
+  await expect(page.getByRole("combobox", { name: "装備 2" }).locator('option[value="triple"]')).toHaveJSProperty("disabled", true);
+  await page.getByRole("button", { name: "自由練習をはじめる", exact: true }).click();
+  await expect(page.getByTestId("camera-world")).toHaveAttribute("data-opening", "false", { timeout: 15000 });
+  // 自由練習は両方の戦車を交互に操作し、相手側は別の装備になる。自分の手番でなければ1発撃って手番を進める。
   const weapon = page.locator(".battle-weapons").getByRole("button", { name: "トリプル弾", exact: true });
-  await expect(weapon).toBeVisible({ timeout: 25000 });
+  if (!(await weapon.isVisible())) {
+    const seat = await page.evaluate(() => window.__fortress!.getView().currentSeat);
+    await page.keyboard.down("Space"); await page.waitForTimeout(200); await page.keyboard.up("Space");
+    await expect.poll(() => page.evaluate(() => { const v = window.__fortress!.getView(); return v.phase === "acting" ? v.currentSeat : null; }), { timeout: 25000 }).toBe(seat === 0 ? 1 : 0);
+  }
+  await expect(weapon).toBeVisible({ timeout: 10000 });
   const icon = weapon.locator(":scope > svg");
   await expect(icon).toHaveCSS("width", "52px");
-  const projectiles = icon.locator(":scope > svg");
-  await expect(projectiles).toHaveCount(3);
-  for (const projectile of await projectiles.all()) {
-    await expect(projectile).toHaveAttribute("width", "17");
-    await expect(projectile).toHaveCSS("width", "auto");
-    await expect(projectile).toHaveAttribute("height", "17");
-    await expect(projectile).toHaveCSS("height", "auto");
-  }
 });
 
 for (const ratio of [1, 3]) test(`terrain art preserves collision alpha and ${ratio}:1 tile proportions`, async ({ page }) => {
-  await page.goto("/?prototype=world");
+  await page.goto("/");
   const result = await page.evaluate(async (ratio) => {
     const modulePath = "/src/game/terrainLayer.ts";
     const { createTerrainLayer } = await import(modulePath);
@@ -131,7 +130,8 @@ for (const ratio of [1, 3]) test(`terrain art preserves collision alpha and ${ra
   }, ratio);
   expect(result.matches).toBe(true);
   expect(result.continuous).toBe(true);
-  expect(result.white).toEqual([255, 255, 255, 255]);
+  // 画像なしの地形は上面を明るい緑で塗る（pixel-map-refresh.md）。
+  expect(result.white).toEqual([0x33, 0xff, 0x66, 255]);
   expect(result.chunks).toHaveLength(6);
   for (const chunk of result.chunks) {
     expect(chunk.scale).toBe(12);
@@ -141,7 +141,7 @@ for (const ratio of [1, 3]) test(`terrain art preserves collision alpha and ${ra
 });
 
 test("terrain only uploads changed chunks and refreshes the moss across a chunk boundary", async ({ page }) => {
-  await page.goto("/?prototype=world");
+  await page.goto("/");
   const result = await page.evaluate(async () => {
     const modulePath = "/src/game/terrainLayer.ts";
     const { createTerrainLayer } = await import(modulePath);

@@ -1,17 +1,15 @@
 import { expect, test } from "@playwright/test";
+import { startFreePractice } from "./practiceFlow";
 
-test("practice countdown ring follows the remaining seconds", async ({ page }) => {
+// 残り時間は数字だけで示す（63dc954 で輪を外した）。
+test("practice countdown follows the remaining seconds", async ({ page }) => {
   await page.goto("/?prototype=world");
   await page.getByRole("button", { name: "はじめる", exact: true }).click();
-  await page.getByRole("button", { name: "プラクティスへ", exact: true }).click();
-  await expect(page.getByTestId("camera-world")).toHaveAttribute("data-loaded", "true");
+  await startFreePractice(page);
   const dial = page.locator(".countdown-dial");
   const remaining = dial.locator("span");
-  const arc = dial.locator("circle").nth(1);
   const seconds = Number(await remaining.innerText());
   await expect.poll(async () => Number(await remaining.innerText())).toBeLessThan(seconds);
-  const next = Number(await remaining.innerText());
-  await expect(arc).toHaveAttribute("stroke-dasharray", `${next * 5} 100`);
   const bounds = await dial.boundingBox();
   expect(bounds!.width).toBeGreaterThanOrEqual(40);
   expect(bounds!.height).toBeGreaterThanOrEqual(40);

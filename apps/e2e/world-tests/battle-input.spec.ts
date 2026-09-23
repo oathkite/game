@@ -1,11 +1,11 @@
 import { expect, test } from "@playwright/test";
+import { startFreePractice } from "./practiceFlow";
 
 test("desktop keyboard drives movement, aim and power; menus cancel charging", async ({ page }) => {
   await page.setViewportSize({ width: 1440, height: 900 });
   await page.goto("/?prototype=world");
   await page.getByRole("button", { name: "はじめる", exact: true }).click();
-  await page.getByRole("button", { name: "プラクティスへ" }).click();
-  await expect(page.getByTestId("camera-world")).toHaveAttribute("data-loaded", "true");
+  await startFreePractice(page);
   await expect(page.getByRole("button", { name: "発射", exact: true })).toHaveCount(0);
   const state = () => page.evaluate(() => { const v = window.__fortress!.getView(); return { x: v.control?.x, angle: v.control?.elevation, phase: v.phase }; });
   const before = await state();
@@ -54,16 +54,17 @@ test("touch controls remain usable and a physical gameplay key switches to keybo
   try {
     await page.goto("/?prototype=world");
     await page.getByRole("button", { name: "はじめる", exact: true }).click();
-    await page.getByRole("button", { name: "プラクティスへ" }).click();
-    await expect(page.getByTestId("camera-world")).toHaveAttribute("data-loaded", "true");
+    await startFreePractice(page);
     const fire = page.getByRole("button", { name: "発射", exact: true });
     await expect(fire).toBeVisible();
-    await expect(page.locator(".battle-weapons button span")).toHaveText(["1", "2"]);
+    // タッチ操作のときは武器ボタンにキーの表示を出さない。
+    await expect(page.locator(".battle-weapons button span")).toHaveCount(0);
+    const angle = Number((await page.getByTestId("camera-angle").textContent())!.replace("°", ""));
     await page.getByRole("button", { name: "角度を上げる" }).tap();
-    await expect(page.getByTestId("camera-angle")).toHaveText("46°");
+    await expect(page.getByTestId("camera-angle")).toHaveText(`${angle + 1}°`);
     await page.keyboard.press("ArrowDown");
     await expect(fire).toHaveCount(0);
     await expect(page.locator(".battle-weapons button span")).toHaveText(["Q", "E"]);
-    await expect(page.getByTestId("camera-angle")).toHaveText("45°");
+    await expect(page.getByTestId("camera-angle")).toHaveText(`${angle}°`);
   } finally { await context.close(); }
 });
