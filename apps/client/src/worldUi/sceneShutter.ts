@@ -1,4 +1,4 @@
-/** シャッターの向き。奥へ進む forward は左から右、戻る back は右から左、対戦へ入る battle はブラウン管が点くように中央から開く。 */
+/** シャッターの向き。奥へ進む forward は上から下りて上へ開き、戻る back は下から上がって下へ開く。対戦へ入る battle はブラウン管が点くように中央から開く。 */
 export type ShutterDirection = "forward" | "back" | "battle";
 
 /** シャッターが開ききるまでの時間。閉じる側は WorldScenes の timer が同じ長さで入力を止める。 */
