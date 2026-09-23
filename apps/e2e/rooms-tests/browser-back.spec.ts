@@ -1,24 +1,18 @@
 import { test, expect } from "@playwright/test";
+import { createRoom, enterRooms, joinListed, members, readyUp, waitForBattle } from "./roomFlow";
 
 test("back from an invited battle preserves the session until confirmed, then surrenders", async ({ browser, baseURL }) => {
   const contexts = await Promise.all([browser.newContext({ locale: "ja-JP" }), browser.newContext({ locale: "ja-JP" })]);
   const [owner, guest] = await Promise.all(contexts.map(context => context.newPage()));
   try {
-    await owner!.goto(`${baseURL}/?prototype=world`);
-    await owner!.getByRole("button", { name: "はじめる", exact: true }).click();
-    await owner!.getByRole("button", { name: "出撃", exact: true }).click();
-    await owner!.getByRole("button", { name: "部屋を作る", exact: true }).click();
-    await expect(owner!.getByTestId("room-code")).toHaveText(/^[A-F0-9]{6}$/);
-    const code = await owner!.getByTestId("room-code").textContent();
-    await guest!.goto(`${baseURL}/?prototype=world&room=${code}`);
-    await guest!.getByRole("button", { name: "部屋に参加", exact: true }).click();
-    await expect(owner!.getByLabel("参加者2のチーム")).toBeVisible();
-    await owner!.getByLabel("参加者1のチーム").selectOption("t0");
-    await guest!.getByLabel("参加者2のチーム").selectOption("t1");
-    await owner!.getByRole("button", { name: "準備完了", exact: true }).click();
-    await guest!.getByRole("button", { name: "準備完了", exact: true }).click();
+    await enterRooms(owner!);
+    const code = await createRoom(owner!);
+    await guest!.goto(`${baseURL}/?room=${code}`);
+    await joinListed(guest!, code);
+    await expect(members(owner!)).toHaveCount(2);
+    await readyUp(guest!);
     await owner!.getByRole("button", { name: "対戦開始", exact: true }).click();
-    for (const page of [owner!, guest!]) await expect(page.getByTestId("network-world")).toHaveAttribute("data-loaded", "true");
+    for (const page of [owner!, guest!]) await waitForBattle(page);
     const shooter = await owner!.locator(".battle-weapons button").first().isEnabled() ? owner! : guest!;
     const observer = shooter === owner ? guest! : owner!;
     await observer.getByRole("button", { name: "設定を開く", exact: true }).click();
@@ -40,12 +34,12 @@ test("back from an invited battle preserves the session until confirmed, then su
     await guest!.keyboard.press("Escape");
     await expect(dialog).toHaveCount(0);
     expect(await guest!.evaluate(() => sessionStorage.getItem("keropod.room-token"))).toBe(token);
-    await expect(owner!.getByRole("heading", { name: /チームの勝利/ })).toHaveCount(0);
+    await expect(owner!.getByRole("heading", { name: "勝利", exact: true })).toHaveCount(0);
     await guest!.evaluate(() => history.back());
     await dialog.getByRole("button", { name: "ロビーに戻る", exact: true }).click();
-    await expect(guest!.getByRole("heading", { name: "出撃準備" })).toBeVisible();
+    await expect(guest!.getByRole("button", { name: "出撃", exact: true })).toBeVisible();
     expect(await guest!.evaluate(() => sessionStorage.getItem("keropod.room-token"))).toBeNull();
-    await expect(owner!.getByRole("heading", { name: "青チームの勝利", exact: true })).toBeVisible();
+    await expect(owner!.getByRole("heading", { name: "勝利", exact: true })).toBeVisible();
   } finally { await Promise.all(contexts.map(context => context.close())); }
 });
 
@@ -53,18 +47,15 @@ test("back from a waiting room releases the seat and clears the resume token", a
   const contexts = await Promise.all([browser.newContext({ locale: "ja-JP" }), browser.newContext({ locale: "ja-JP" })]);
   const [owner, guest] = await Promise.all(contexts.map(context => context.newPage()));
   try {
-    await owner!.goto(`${baseURL}/?prototype=world`);
-    await owner!.getByRole("button", { name: "はじめる", exact: true }).click();
-    await owner!.getByRole("button", { name: "出撃", exact: true }).click();
-    await owner!.getByRole("button", { name: "部屋を作る", exact: true }).click();
-    await expect(owner!.getByTestId("room-code")).toHaveText(/^[A-F0-9]{6}$/);
-    const code = await owner!.getByTestId("room-code").textContent();
-    await guest!.goto(`${baseURL}/?prototype=world&room=${code}`);
-    await guest!.getByRole("button", { name: "部屋に参加", exact: true }).click();
-    await expect(owner!.locator(".room-members li")).toHaveCount(2);
+    await enterRooms(owner!);
+    const code = await createRoom(owner!);
+    await guest!.goto(`${baseURL}/?room=${code}`);
+    await joinListed(guest!, code);
+    await expect(members(owner!)).toHaveCount(2);
     await guest!.evaluate(() => history.back());
-    await expect(guest!.getByRole("heading", { name: "出撃準備" })).toBeVisible();
-    await expect(owner!.locator(".room-members li")).toHaveCount(1);
+    await expect(guest!.getByTestId("room-code")).toHaveCount(0);
+    await expect(guest!.getByRole("button", { name: "部屋を作る", exact: true })).toBeEnabled();
+    await expect(members(owner!)).toHaveCount(1);
     expect(await guest!.evaluate(() => sessionStorage.getItem("keropod.room-token"))).toBeNull();
   } finally { await Promise.all(contexts.map(context => context.close())); }
 });

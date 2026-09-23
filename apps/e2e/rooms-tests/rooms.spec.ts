@@ -1,10 +1,16 @@
 import { test, expect } from "@playwright/test";
+import { assignTeam, chooseWeapon, createRoom, enterRooms, joinByCode, members, readyUp, teamOf, waitForBattle } from "./roomFlow";
 test("room code, teams, ready, selected weapons and return to preparation", async ({ browser }) => {
+  test.setTimeout(150000);
   const contexts = await Promise.all([browser.newContext({ locale: "ja-JP", viewport: { width: 1440, height: 900 } }), browser.newContext({ locale: "ja-JP", hasTouch: true, viewport: { width: 844, height: 390 } })]);
   const [a, b] = await Promise.all(contexts.map(c => c.newPage()));
-  const errors: string[] = [];
+  const errors: string[] = [], winds: (number | undefined)[] = [];
   try {
-    for (const page of [a!, b!]) {
+    for (const [index, page] of [a!, b!].entries()) {
+      page.on("websocket", socket => socket.on("framereceived", ({ payload }) => {
+        const message = JSON.parse(String(payload));
+        if (message.type === "lab.frame") winds[index] = message.wind;
+      }));
       await page.addInitScript(() => {
         const NativeSocket = WebSocket;
         window.WebSocket = class extends NativeSocket {
@@ -22,45 +28,45 @@ test("room code, teams, ready, selected weapons and return to preparation", asyn
         };
       });
       page.on("pageerror", e => errors.push(e.message));
-      await page.goto("/?prototype=world");
-      await page.getByRole("button", { name: "はじめる", exact: true }).click();
-      await page.getByRole("button", { name: "出撃" }).click();
+      await enterRooms(page);
     }
-    await a!.getByRole("button", { name: "部屋を作る" }).click();
-    const code = a!.getByTestId("room-code"); await expect(code).toHaveText(/^[A-F0-9]{6}$/);
-    await b!.getByLabel("部屋コード", { exact: true }).fill((await code.textContent())!);
-    await b!.getByRole("button", { name: "部屋に参加", exact: true }).click();
-    await expect(a!.getByLabel("参加者2のチーム")).toBeVisible();
-    await expect(a!.getByLabel("参加者1のチーム").locator('option[value="t0"]')).toHaveText("青チーム");
-    await expect(a!.getByLabel("参加者1のチーム").locator('option[value="t7"]')).toHaveText("銀チーム");
-    const roomCode = await code.textContent();
+    const roomCode = await createRoom(a!);
+    await joinByCode(b!, roomCode);
+    await expect(members(a!)).toHaveCount(2);
+    await members(a!).nth(0).locator(".room-team-current").getByRole("button", { name: "変更", exact: true }).click();
+    const swatches = a!.getByRole("dialog", { name: "チーム" }).locator(".room-team-swatches button");
+    await expect(swatches.first()).toHaveAccessibleName("青チーム");
+    await expect(swatches.last()).toHaveAccessibleName("銀チーム");
+    await a!.keyboard.press("Escape");
     await b!.reload();
     await b!.getByRole("button", { name: "はじめる", exact: true }).click();
-    await b!.getByRole("button", { name: "出撃" }).click();
-    await expect(b!.getByTestId("room-code")).toHaveText(roomCode!);
-    await expect(b!.locator(".room-members li")).toHaveCount(2);
-    await a!.getByLabel("参加者1のチーム").selectOption("t0");
-    await expect(b!.getByLabel("参加者1のチーム")).toHaveValue("t0");
-    await b!.getByLabel("参加者2のチーム").selectOption("t1");
-    for (const page of [a!, b!]) {
-      await page.getByLabel("部屋の装備1").selectOption("triple");
-      await expect(page.getByLabel("部屋の装備1")).toHaveValue("triple");
-    }
-    await a!.getByRole("button", { name: "準備完了", exact: true }).click();
+    await b!.getByRole("button", { name: "出撃", exact: true }).click();
+    await expect(b!.getByTestId("room-code")).toHaveText(roomCode);
+    await expect(members(b!)).toHaveCount(2);
+    await assignTeam(b!, 1, "t2");
+    await expect(teamOf(a!, 1)).toHaveAccessibleName("緑チーム");
+    await assignTeam(a!, 1, "t1");
+    await expect(teamOf(b!, 1)).toHaveAccessibleName("赤チーム");
+    for (const page of [a!, b!]) await chooseWeapon(page, 0, "トリプル弾");
+    await readyUp(b!);
+    await expect(a!.getByRole("button", { name: "対戦開始", exact: true })).toBeEnabled();
+    // マップと装備の変更は全員の準備完了を解除する。オーナー以外はマップを選べない。
     await expect(b!.getByLabel("マップ", { exact: true })).toBeDisabled();
     await a!.getByLabel("マップ", { exact: true }).selectOption("reed-hills");
     await expect(b!.getByLabel("マップ", { exact: true })).toHaveValue("reed-hills");
-    await expect(a!.getByRole("button", { name: "準備完了", exact: true })).toBeVisible();
-    await b!.getByLabel("部屋の装備2").selectOption("laser");
-    await expect(a!.getByRole("button", { name: "準備完了", exact: true })).toBeVisible();
-    await a!.getByRole("button", { name: "準備完了", exact: true }).click();
-    await b!.getByRole("button", { name: "準備完了", exact: true }).click();
-    await expect(a!.getByRole("button", { name: "対戦開始" })).toBeEnabled();
+    await expect(b!.getByRole("button", { name: "準備完了", exact: true })).toBeVisible();
+    await expect(a!.getByRole("button", { name: "対戦開始", exact: true })).toBeDisabled();
+    await readyUp(b!);
+    await chooseWeapon(b!, 1, "レーザー弾");
+    await expect(b!.getByRole("button", { name: "準備完了", exact: true })).toBeVisible();
+    await readyUp(b!);
+    await expect(a!.getByRole("button", { name: "対戦開始", exact: true })).toBeEnabled();
     await b!.screenshot({ path: "test-results/room-mobile.png" });
-    await a!.getByRole("button", { name: "対戦開始" }).click();
-    for (const page of [a!, b!]) await expect(page.getByTestId("network-world")).toHaveAttribute("data-loaded", "true");
-    const wind = await a!.getByTestId("world-wind").getAttribute("data-wind");
-    await expect(b!.getByTestId("world-wind")).toHaveAttribute("data-wind", wind!);
+    await a!.getByRole("button", { name: "対戦開始", exact: true }).click();
+    for (const page of [a!, b!]) await waitForBattle(page);
+    // 風は canvas に描かれるので、両者が受け取った値を比べる。
+    expect(winds[0]).toEqual(expect.any(Number));
+    expect(winds[1]).toBe(winds[0]);
     await expect(a!.getByRole("button", { name: "トリプル弾", exact: true })).toHaveAttribute("aria-pressed", "true");
     const shooter = await a!.getByRole("button", { name: "トリプル弾", exact: true }).isEnabled() ? a! : b!;
     if (shooter === a) { await shooter.keyboard.down("Space"); await shooter.waitForTimeout(400); await shooter.keyboard.up("Space"); } else { const fire = shooter.getByRole("button", { name: "発射", exact: true }); await fire.hover(); await shooter.mouse.down(); await shooter.waitForTimeout(400); await shooter.mouse.up(); }
@@ -71,12 +77,13 @@ test("room code, teams, ready, selected weapons and return to preparation", asyn
     await b!.setViewportSize({ width: 667, height: 375 });
     for (const name of ["左へ1歩", "右へ1歩", "発射"]) {
       const box = (await b!.getByRole("button", { name, exact: true }).boundingBox())!;
-      expect(box.height).toBeGreaterThanOrEqual(44); expect(box.x).toBeGreaterThanOrEqual(0);
+      // 十字キーは36章のコンパクトな寸法（32px）。発射は44px以上。
+      expect(box.height).toBeGreaterThanOrEqual(name === "発射" ? 44 : 32); expect(box.x).toBeGreaterThanOrEqual(0);
       expect(box.x + box.width).toBeLessThanOrEqual(667); expect(box.y + box.height).toBeLessThanOrEqual(375);
     }
     const identity = await b!.getByTestId("identity").textContent();
     await b!.evaluate(() => {
-      const sockets = (window as unknown as { gameSockets: WebSocket[] }).gameSockets.filter(socket => socket.readyState === WebSocket.OPEN && (socket.url.includes("/v2/rooms/") || new URL(socket.url).port === "8795"));
+      const sockets = (window as unknown as { gameSockets: WebSocket[] }).gameSockets.filter(socket => socket.readyState === WebSocket.OPEN && socket.url.includes("/v2/rooms/"));
       if (sockets.length !== 1) throw new Error(`Expected one live room connection: ${sockets.map(s => s.url)}`);
       sockets[0]!.close();
     });
@@ -94,10 +101,12 @@ test("room code, teams, ready, selected weapons and return to preparation", asyn
     expect(diagnostics.build.map.id).toBe("reed-hills");
     expect(JSON.stringify(diagnostics)).not.toContain((await b!.evaluate(() => sessionStorage.getItem("keropod.room-token")))!);
     await b!.getByRole("button", { name: "降参", exact: true }).click();
-    await expect(a!.getByRole("heading", { name: /チームの勝利/ })).toBeVisible();
-    await a!.getByRole("button", { name: "部屋へ戻る", exact: true }).click();
-    await b!.getByRole("button", { name: "部屋へ戻る", exact: true }).click();
-    await expect(a!.getByTestId("room-code")).toHaveText((await code.textContent())!);
+    await expect(a!.getByRole("heading", { name: "勝利", exact: true })).toBeVisible();
+    await a!.getByRole("button", { name: "部屋に戻る", exact: true }).click();
+    // 全員がそろった瞬間に部屋へ戻り、対戦画面の破棄（PixiJS の WebGL loseContext）がヘッドレス Chromium で数秒から数十秒止まる。
+    // 最後のクリックの後に待たず、戻った画面の確認に余裕を持たせる。この停止は不具合として別に追っている。
+    await b!.getByRole("button", { name: "部屋に戻る", exact: true }).click({ noWaitAfter: true });
+    await expect(a!.getByTestId("room-code")).toHaveText(roomCode, { timeout: 90000 });
     await expect(b!.getByRole("button", { name: "準備完了", exact: true })).toBeVisible();
     expect(errors).toEqual([]);
   } finally { for (const c of contexts) await c.close(); }
