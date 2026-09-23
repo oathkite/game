@@ -1,4 +1,5 @@
 import { expect, test } from "@playwright/test";
+import { startFreePractice } from "./practiceFlow";
 
 test("chip loops follow scenes and live output settings", async ({ page }) => {
   await page.addInitScript(() => {
@@ -18,37 +19,38 @@ test("chip loops follow scenes and live output settings", async ({ page }) => {
     const probe = (window as unknown as { audioProbe: { sources: AudioBufferSourceNode[]; ended: Set<AudioBufferSourceNode> } }).audioProbe;
     return probe.sources.filter(source => source.loop && !probe.ended.has(source)).map(source => source.buffer!.duration);
   });
-  const outputVolume = () => page.evaluate(() => (window as unknown as { audioProbe: { gains: GainNode[] } }).audioProbe.gains[0]?.gain.value);
+  // gains[0] は効果音、gains[1] は BGM の出力（app/audio.ts の作成順）。
+  const outputVolumes = () => page.evaluate(() => (window as unknown as { audioProbe: { gains: GainNode[] } }).audioProbe.gains.slice(0, 2).map(node => node.gain.value));
   const errors: string[] = [];
   page.on("pageerror", error => errors.push(error.message));
-  await page.goto("/?prototype=world");
+  await page.goto("/");
   await expect(page.getByRole("button", { name: "はじめる", exact: true })).toBeVisible();
   expect(await activeMusic()).toEqual([]);
-  await page.getByRole("heading", { name: "ARTILLERY", exact: true }).click();
+  await page.getByRole("heading", { name: "TANK SHOOT", exact: true }).click();
   await expect.poll(async () => (await activeMusic()).length).toBe(1);
-  const title = (await activeMusic())[0];
+  // タイトルからプラクティスのメニューまでは同じ格納庫の曲を流し続ける。
+  const hangar = (await activeMusic())[0];
   await page.getByRole("button", { name: "はじめる", exact: true }).click();
-  await expect.poll(async () => { const playing = await activeMusic(); return playing.length === 1 && playing[0] !== title; }).toBe(true);
-  const lobby = (await activeMusic())[0];
   await page.getByRole("button", { name: "設定", exact: true }).click();
   await expect(page.getByRole("heading", { name: "整備と設定" })).toBeVisible();
-  expect(await activeMusic()).toEqual([lobby]);
-  await page.getByRole("slider", { name: "音量", exact: true }).fill("20");
-  await expect.poll(outputVolume).toBeCloseTo(0.2);
+  expect(await activeMusic()).toEqual([hangar]);
+  await page.getByRole("slider", { name: "効果音量", exact: true }).fill("20");
+  await page.getByRole("slider", { name: "BGM音量", exact: true }).fill("30");
+  await expect.poll(async () => (await outputVolumes()).map(value => Math.round(value * 100))).toEqual([20, 30]);
   await page.getByRole("button", { name: "音を消す", exact: true }).click();
-  await expect.poll(outputVolume).toBe(0);
+  await expect.poll(outputVolumes).toEqual([0, 0]);
   await page.getByRole("button", { name: "音を出す", exact: true }).click();
-  await expect.poll(outputVolume).toBeCloseTo(0.2);
-  await page.getByRole("button", { name: "ロビーに戻る", exact: true }).click();
-  await page.getByRole("button", { name: "プラクティスへ", exact: true }).click();
-  await expect.poll(async () => { const playing = await activeMusic(); return playing.length === 1 && playing[0] !== lobby; }).toBe(true);
+  await expect.poll(async () => (await outputVolumes()).map(value => Math.round(value * 100))).toEqual([20, 30]);
+  await page.getByRole("dialog", { name: "整備と設定" }).getByRole("button", { name: "閉じる", exact: true }).click();
+  await startFreePractice(page);
+  await expect.poll(async () => { const playing = await activeMusic(); return playing.length === 1 && playing[0] !== hangar; }).toBe(true);
   await page.getByRole("button", { name: "設定を開く", exact: true }).click();
   await page.getByRole("button", { name: "降参して対戦を終える", exact: true }).click();
-  await expect(page.getByRole("heading", { name: /の勝利/ })).toBeVisible();
+  await expect(page.getByRole("heading", { name: /^(勝利|敗北)$/ })).toBeVisible();
   await expect.poll(() => page.evaluate(() => {
     const probe = (window as unknown as { audioProbe: { sources: AudioBufferSourceNode[] } }).audioProbe;
     return probe.sources.filter(source => source.loop).length;
-  })).toBe(4);
+  })).toBe(3); // 格納庫、対戦、リザルト
   const loopEdges = await page.evaluate(() => {
     const probe = (window as unknown as { audioProbe: { sources: AudioBufferSourceNode[] } }).audioProbe;
     return probe.sources.filter(source => source.loop).flatMap(source => {
@@ -60,7 +62,8 @@ test("chip loops follow scenes and live output settings", async ({ page }) => {
       });
     });
   });
-  expect(loopEdges).toHaveLength(4);
-  for (const edge of loopEdges) expect(edge).toEqual({ first: 0, last: 0, hasSignal: true });
+  expect(loopEdges.length).toBeGreaterThanOrEqual(3);
+  // 合成したループ（51027e4）は両端を 0 にしていたが、c9edd8f で OGG の曲に替えたので端の値は検査しない。継ぎ目は聴いて確かめる。
+  for (const edge of loopEdges) expect(edge.hasSignal).toBe(true);
   expect(errors).toEqual([]);
 });

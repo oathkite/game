@@ -1,4 +1,5 @@
 import { expect, test, type Browser, type Page } from "@playwright/test";
+import { assignTeam, createRoom, enterRooms, joinByCode, readyUp, teamLabel, teamOf, waitForBattle } from "./roomFlow";
 import type { LabFrame } from "@game/protocol/v2-lab";
 
 const formations = [[1, 7], [1, 1, 1, 1, 1, 1, 1, 1], [2, 2, 2], [1, 1, 1, 2]];
@@ -12,30 +13,23 @@ async function participants(browser: Browser, count: number, frames: (LabFrame |
       const message = JSON.parse(String(payload));
       if (message.type === "lab.frame") frames[index] = message;
     }));
-    await page.goto("/");
-    await page.getByRole("button", { name: "はじめる", exact: true }).click();
-    await page.getByRole("button", { name: "出撃", exact: true }).click();
-    await page.getByLabel("対戦で使う名前").fill(`Formation${index + 1}`);
+    await enterRooms(page, `Formation${index + 1}`);
   }));
   return { contexts, pages };
 }
 
 async function startRoom(pages: Page[], teams: string[]): Promise<string> {
   const owner = pages[0]!;
-  await owner.getByRole("button", { name: "部屋を作る", exact: true }).click();
-  const code = (await owner.getByTestId("room-code").textContent())!;
-  for (const page of pages.slice(1)) {
-    await page.getByLabel("部屋コード", { exact: true }).fill(code);
-    await page.getByRole("button", { name: "部屋に参加", exact: true }).click();
-    await expect(page.getByTestId("room-code")).toHaveText(code);
-  }
+  const code = await createRoom(owner);
+  for (const page of pages.slice(1)) await joinByCode(page, code);
   for (const [index, team] of teams.entries()) {
-    await owner.getByLabel(`参加者${index + 1}のチーム`).selectOption(team);
-    await expect(pages.at(-1)!.getByLabel(`参加者${index + 1}のチーム`)).toHaveValue(team);
+    if (index > 0) await assignTeam(owner, index, team);
+    await expect(teamOf(pages.at(-1)!, index)).toHaveAccessibleName(teamLabel(team));
   }
-  for (const page of pages) await page.getByRole("button", { name: "準備完了", exact: true }).click();
+  for (const page of pages.slice(1)) await readyUp(page);
   await owner.getByRole("button", { name: "対戦開始", exact: true }).click();
-  await Promise.all(pages.map(page => expect(page.getByTestId("network-world")).toHaveAttribute("data-loaded", "true")));
+  await Promise.all(pages.map(page => expect(page.getByTestId("network-world")).toHaveAttribute("data-loaded", "true", { timeout: 20000 })));
+  await Promise.all(pages.map(waitForBattle));
   return code;
 }
 
@@ -52,8 +46,10 @@ for (const formation of formations) test(`formation ${formation.join(":")} share
     }
     const owner = pages[0]!;
     await expect.poll(async () => Number(await owner.locator(".countdown-dial > span").innerText()), { timeout: 25000 }).toBeGreaterThanOrEqual(18);
-    const active = await Promise.all(pages.map(page => page.locator(".battle-weapons button").first().isEnabled()));
-    expect(active.filter(Boolean)).toHaveLength(1);
+    // 手番の操作はカメラの移動と並行して少し遅れて始まる（turn-delay.md）。
+    const enabled = () => Promise.all(pages.map(page => page.locator(".battle-weapons button").first().isEnabled()));
+    await expect.poll(async () => (await enabled()).filter(Boolean).length, { timeout: 15000 }).toBe(1);
+    const active = await enabled();
     const shooter = pages[active.indexOf(true)]!;
     await shooter.keyboard.down("Space"); await shooter.waitForTimeout(300); await shooter.keyboard.up("Space");
     await Promise.all(pages.map(page => expect(page.getByTestId("phase")).toHaveText("射撃を再生中")));
@@ -65,12 +61,17 @@ for (const formation of formations) test(`formation ${formation.join(":")} share
     }
     await Promise.all(pages.map(page => expect(page.getByRole("table", { name: "試合成績" })).toBeVisible()));
     for (const frame of frames) expect(frame!.result).toEqual({ type: "win", teamId: winningTeam });
+    // 成績の数字はカウントアップするので、段階表示が終わってから読む。
+    await Promise.all(pages.map(page => expect(page.locator(".result-table-scroll")).toHaveAttribute("data-motion", "done", { timeout: 15000 })));
     const results = await Promise.all(pages.map(page => page.getByRole("table", { name: "試合成績" }).innerText()));
     expect(new Set(results).size).toBe(1);
-    await expect(owner.locator('.battle-result-player[data-reaction="win"]')).toHaveCount(formation.at(-1)!);
-    await expect(owner.locator('.battle-result-player[data-reaction="lose"]')).toHaveCount(teams.length - formation.at(-1)!);
-    for (const page of pages) await page.getByRole("button", { name: "部屋へ戻る", exact: true }).click();
-    await Promise.all(pages.map(page => expect(page.getByTestId("room-code")).toHaveText(code)));
+    const table = owner.getByRole("table", { name: "試合成績" });
+    await expect(table.locator('tbody tr[data-reaction="win"]')).toHaveCount(formation.at(-1)!);
+    await expect(table.locator('tbody tr[data-reaction="lose"]')).toHaveCount(teams.length - formation.at(-1)!);
+    // 全員がそろった瞬間に部屋へ戻り、対戦画面の破棄（PixiJS の WebGL loseContext）がヘッドレス Chromium で数秒から数十秒止まる。
+    // 最後のクリックの後に待たず、戻った画面の確認に余裕を持たせる。この停止は不具合として別に追っている。
+    for (const page of pages) await page.getByRole("button", { name: "部屋に戻る", exact: true }).click({ noWaitAfter: true });
+    await Promise.all(pages.map(page => expect(page.getByTestId("room-code")).toHaveText(code, { timeout: 90000 })));
     expect(errors).toEqual([]);
   } finally { await Promise.all(contexts.map(context => context.close())); }
 });

@@ -1,4 +1,5 @@
 import { expect, test } from "@playwright/test";
+import { createRoom, joinByCode, members, readyUp, teamOf } from "./roomFlow";
 import type { LabFrame } from "@game/protocol/v2-lab";
 
 test("resizing cancels held fire and portrait keeps the console usable", async ({ browser }) => {
@@ -18,20 +19,14 @@ test("resizing cancels held fire and portrait keeps the console usable", async (
       });
       await page.goto("/");
       await page.getByRole("button", { name: "はじめる", exact: true }).click();
+      await page.getByLabel("名前", { exact: true }).fill(`Rotate${i}`);
       await page.getByRole("button", { name: "出撃", exact: true }).click();
-      await page.getByLabel("対戦で使う名前").fill(`Rotate${i}`);
     }
     const [owner, guest] = pages;
-    await owner!.getByRole("button", { name: "部屋を作る", exact: true }).click();
-    await expect(owner!.getByTestId("room-code")).toHaveText(/^[A-F0-9]{6}$/);
-    await guest!.getByLabel("部屋コード", { exact: true }).fill((await owner!.getByTestId("room-code").textContent())!);
-    await guest!.getByRole("button", { name: "部屋に参加", exact: true }).click();
-    await expect(owner!.locator(".room-members li")).toHaveCount(2);
-    await owner!.getByLabel("参加者1のチーム").selectOption("t0");
-    await expect(guest!.getByLabel("参加者1のチーム")).toHaveValue("t0");
-    await guest!.getByLabel("参加者2のチーム").selectOption("t1");
-    await expect(owner!.getByLabel("参加者2のチーム")).toHaveValue("t1");
-    for (const page of pages) await page.getByRole("button", { name: "準備完了", exact: true }).click();
+    await joinByCode(guest!, await createRoom(owner!));
+    await expect(members(owner!)).toHaveCount(2);
+    await expect(teamOf(guest!, 1)).toHaveAccessibleName("赤チーム");
+    await readyUp(guest!);
     await owner!.getByRole("button", { name: "対戦開始", exact: true }).click();
     await expect.poll(() => frames[0]?.opening ? Date.now() >= frames[0]!.opening!.endsAt : false, { timeout: 15000 }).toBe(true);
     const actor = frames[0]!.players.find(player => player.playerId === frames[0]!.actorId)!;
