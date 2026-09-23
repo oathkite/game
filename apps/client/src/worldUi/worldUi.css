@@ -39,14 +39,10 @@
 .world-shutter[data-direction] { animation:400ms steps(8,end) both; }
 .world-shutter[data-direction=forward] { animation-name:world-shutter-forward-open; }
 .world-closing .world-shutter[data-direction=forward] { animation-name:world-shutter-forward-close; }
-.world-shutter[data-direction=back] { animation-name:world-shutter-back-open; }
-.world-closing .world-shutter[data-direction=back] { animation-name:world-shutter-back-close; }
 .world-shutter[data-direction=battle] { animation-name:world-shutter-battle-open; }
 .world-closing .world-shutter[data-direction=battle] { animation-name:world-shutter-battle-close; }
 @keyframes world-shutter-forward-close { from { clip-path:inset(0 0 100% 0); } to { clip-path:inset(0); } }
 @keyframes world-shutter-forward-open { from { clip-path:inset(0); } to { clip-path:inset(0 0 100% 0); } }
-@keyframes world-shutter-back-close { from { clip-path:inset(100% 0 0 0); } to { clip-path:inset(0); } }
-@keyframes world-shutter-back-open { from { clip-path:inset(0); } to { clip-path:inset(100% 0 0 0); } }
 /* ブラウン管が点くように、中央の横線から縦に開く。開く側は中央の横線から穴を広げて次の画面を見せる。 */
 @keyframes world-shutter-battle-close { from { clip-path:inset(calc(50% - 2px) 0); } to { clip-path:inset(0); } }
 @keyframes world-shutter-battle-open {

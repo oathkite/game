@@ -47,15 +47,15 @@ export const WorldScenes = () => {
   const [direction, setDirection] = useState<ShutterDirection | null>(null);
   const timer = useRef<ReturnType<typeof setTimeout> | null>(null);
   const heading = useRef<HTMLDivElement>(null);
-  const go = useCallback((next: Scene, requested?: Exclude<ShutterDirection, "battle">) => {
+  const go = useCallback((next: Scene) => {
     if (timer.current) return;
     void unlockAudio();
     if (matchMedia("(prefers-reduced-motion: reduce)").matches) { setScene(next); return; }
-    setDirection(shutterDirection(next, requested));
+    setDirection(shutterDirection(next));
     setClosing(true);
     timer.current = setTimeout(() => { setScene(next); setClosing(false); timer.current = null; }, 400);
   }, []);
-  useWorldBrowserBack(scene !== "start", () => go(scene === "lobby" ? "start" : scene === "battle" || scene === "result" ? "practice" : "lobby", "back"));
+  useWorldBrowserBack(scene !== "start", () => go(scene === "lobby" ? "start" : scene === "battle" || scene === "result" ? "practice" : "lobby"));
   useEffect(() => { const profile = loadProfile(); setAudioSettings(profile.volume, profile.muted, profile.bgmVolume ?? profile.volume); }, []);
   useEffect(() => () => { if (timer.current) clearTimeout(timer.current); }, []);
   useEffect(() => { heading.current?.focus({ preventScroll: true }); }, [scene]);
@@ -78,8 +78,8 @@ export const WorldScenes = () => {
     setMusic(scene === "result" && result ? "result" : "hangar");
     if (scene === "result") playSound("matchFinish");
   }, [scene, result]);
-  const exitPractice = useCallback(() => { setPracticeProfile(loadProfile()); go("practice", "back"); }, [go]);
-  const exit = useCallback(() => go("lobby", "back"), [go]);
+  const exitPractice = useCallback(() => { setPracticeProfile(loadProfile()); go("practice"); }, [go]);
+  const exit = useCallback(() => go("lobby"), [go]);
   const finish = useCallback((value: ResultPresentation) => { setResult(value); go("result"); }, [go]);
   return <div className={`world-ui world-scene-${scene} ${closing ? "world-closing" : ""}`}>
     <SceneBoundary message={t("画面を読み込めませんでした。通信を確認して再読み込みしてください。")} retryLabel={t("再読み込み")}>
