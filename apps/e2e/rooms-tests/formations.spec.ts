@@ -46,8 +46,10 @@ for (const formation of formations) test(`formation ${formation.join(":")} share
     }
     const owner = pages[0]!;
     await expect.poll(async () => Number(await owner.locator(".countdown-dial > span").innerText()), { timeout: 25000 }).toBeGreaterThanOrEqual(18);
-    const active = await Promise.all(pages.map(page => page.locator(".battle-weapons button").first().isEnabled()));
-    expect(active.filter(Boolean)).toHaveLength(1);
+    // 手番の操作はカメラの移動と並行して少し遅れて始まる（turn-delay.md）。
+    const enabled = () => Promise.all(pages.map(page => page.locator(".battle-weapons button").first().isEnabled()));
+    await expect.poll(async () => (await enabled()).filter(Boolean).length, { timeout: 15000 }).toBe(1);
+    const active = await enabled();
     const shooter = pages[active.indexOf(true)]!;
     await shooter.keyboard.down("Space"); await shooter.waitForTimeout(300); await shooter.keyboard.up("Space");
     await Promise.all(pages.map(page => expect(page.getByTestId("phase")).toHaveText("射撃を再生中")));
@@ -59,6 +61,8 @@ for (const formation of formations) test(`formation ${formation.join(":")} share
     }
     await Promise.all(pages.map(page => expect(page.getByRole("table", { name: "試合成績" })).toBeVisible()));
     for (const frame of frames) expect(frame!.result).toEqual({ type: "win", teamId: winningTeam });
+    // 成績の数字はカウントアップするので、段階表示が終わってから読む。
+    await Promise.all(pages.map(page => expect(page.locator(".result-table-scroll")).toHaveAttribute("data-motion", "done", { timeout: 15000 })));
     const results = await Promise.all(pages.map(page => page.getByRole("table", { name: "試合成績" }).innerText()));
     expect(new Set(results).size).toBe(1);
     const table = owner.getByRole("table", { name: "試合成績" });

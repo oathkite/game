@@ -87,6 +87,8 @@ test("eight independent players complete a 4v4 match and return together", async
     for (const [index, page] of pages.entries()) await expect(page.getByRole("heading", { name: index < 4 ? "敗北" : "勝利", exact: true })).toBeVisible();
     const resultTables = await Promise.all(pages.map(async page => {
       const table = page.getByRole("table", { name: "試合成績" });
+      // 成績の数字はカウントアップするので、段階表示が終わってから読む。
+      await expect(page.locator(".result-table-scroll")).toHaveAttribute("data-motion", "done", { timeout: 15000 });
       await expect(table.locator('tbody tr[data-reaction="win"]')).toHaveCount(4);
       await expect(table.locator('tbody tr[data-reaction="lose"]')).toHaveCount(4);
       await expect(table.locator("tbody tr")).toHaveCount(8);
