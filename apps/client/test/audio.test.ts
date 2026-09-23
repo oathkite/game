@@ -100,6 +100,20 @@ it("dips the music under a heavy impact and lets it recover, but not for a timer
   expect(gains[MUSIC]!.gain.value).toBe(0.5);
 });
 
+it("keeps the deeper dip when a lighter sound follows in the same instant", async () => {
+  const { audio, gains, ctx } = await setup();
+  audio.unlockAudio();
+  audio.playSound("explosion");
+  audio.playSound("hit");
+  const dips = () => gains[DUCK]!.gain.setTargetAtTime.mock.calls.filter(([value]) => value < 1).map(([value]) => value);
+  expect(dips()).toEqual([1 - SOUNDS.explosion.duck!]);
+  audio.playSound("finish");
+  expect(dips().at(-1)).toBeCloseTo(1 - SOUNDS.finish.duck!);
+  ctx.currentTime += 1;
+  audio.playSound("hit");
+  expect(dips().at(-1)).toBeCloseTo(1 - SOUNDS.hit.duck!);
+});
+
 it("keeps music and effects volumes independent across mute", async () => {
   const { audio, gains } = await setup();
   audio.setAudioSettings(.7, false, .2);

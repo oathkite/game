@@ -97,14 +97,22 @@ export const setAudioSettings = (volume: number, muted: boolean, bgmVolume = vol
   if (state.ctx && state.output) state.output.gain.setValueAtTime(muted ? 0 : volume, state.ctx.currentTime);
 };
 
-/** 着弾の瞬間に BGM を下げ、0.1 秒ほど置いてから戻す。音量は変えずに効果音を前へ出す */
+const DUCK_HOLD = 0.12;
+let activeDuck = { amount: 0, at: -Infinity };
+
+/**
+ * 着弾の瞬間に BGM を下げ、0.1 秒ほど置いてから戻す。音量は変えずに効果音を前へ出す。
+ * 同じ瞬間に爆発と被弾が続くと後の浅い値で上書きされるので、下げている間は深いほうを保つ
+ */
 const duckMusic = (ctx: AudioContext, amount: number): void => {
   const duck = state.musicDuck;
   if (!duck || amount <= 0) return;
   const t = ctx.currentTime;
+  if (t < activeDuck.at + DUCK_HOLD && amount <= activeDuck.amount) return;
+  activeDuck = { amount, at: t };
   duck.gain.cancelScheduledValues(t);
   duck.gain.setTargetAtTime(1 - amount, t, 0.01);
-  duck.gain.setTargetAtTime(1, t + 0.12, 0.35);
+  duck.gain.setTargetAtTime(1, t + DUCK_HOLD, 0.35);
 };
 
 const MOVE_INTERVAL = 0.075;
