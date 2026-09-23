@@ -1,45 +1,70 @@
 {
-  "source": "User supplied Chiptune_BGM_8tracks, 2026-09-14",
+  "source": "Synthesized by tools/music/render.mjs from the scores in tools/music/tracks",
+  "encoder": "ffmpeg libvorbis -q:a 5",
   "files": [
     {
       "track": "hangar",
-      "source": "01_departure.ogg",
-      "sha256": "34ff1259c1db933e1de43e34aa4e38c3570ffb65fc7834df0f631d3fc4e46c2a"
+      "bpm": 90,
+      "bars": 16,
+      "frames": 1881600,
+      "seed": 90,
+      "sha256": "7c47110a1614097099d480cacad128d3e0ee698569f5f4dd35e86f2ff781da70"
     },
     {
       "track": "lobby",
-      "source": "02_lobby.ogg",
-      "sha256": "6927553f31416a49fa6903d9c5f1c379fc60af4f7fea02db75de4eea557d826e"
+      "bpm": 100,
+      "bars": 16,
+      "frames": 1693440,
+      "seed": 100,
+      "sha256": "3f2f998bbb077bd0c318403b34c0a0a7aa8068e9f78efc9cfd3252f002767cd9"
     },
     {
       "track": "room",
-      "source": "03_room.ogg",
-      "sha256": "2bc46c5639073ff90f942a374c47472e47b6be9b56d3ea6f09ec586db52d77fa"
-    },
-    {
-      "track": "stone-bridge",
-      "source": "04_stone_bridge.ogg",
-      "sha256": "d2efb54ffae692a8b44785cf5f3ea1585f4972bbc76f47e5c66ae8123e0a6fd0"
+      "bpm": 112,
+      "bars": 16,
+      "frames": 1512000,
+      "seed": 112,
+      "sha256": "896c72d4b37458f07eac07a4e87e5139f79b8b69cfc92819a65124c4c5f6fbfe"
     },
     {
       "track": "ridgeline",
-      "source": "05_ridgeline.ogg",
-      "sha256": "3e4d2d56a9b1d556eb0241000f811ec111cd2d7e67c3b54a26db7554302e4b9c"
+      "bpm": 126,
+      "bars": 24,
+      "frames": 2016000,
+      "seed": 126,
+      "sha256": "c5e6ccc66b9948dc0c67ed17b5e8e36ed58ec8a0f2db931357d2ecbe37bd2f84"
+    },
+    {
+      "track": "stone-bridge",
+      "bpm": 105,
+      "bars": 20,
+      "frames": 2016000,
+      "seed": 105,
+      "sha256": "559edc9a165ed059423a7d069c7de4ecf016c19431bc0c749de55f0312a4fe92"
     },
     {
       "track": "terraces",
-      "source": "06_hills.ogg",
-      "sha256": "247c6d40888c69fab61eaf8029c16524f270a87e8cf993bbd1ef2f190bd8bc57"
+      "bpm": 120,
+      "bars": 24,
+      "frames": 2116800,
+      "seed": 120,
+      "sha256": "3d1ed287f609afbf6463080850c3a156ca7d4dee0a656593343ad5f03a8160b5"
     },
     {
       "track": "sky-islands",
-      "source": "07_floating_islands.ogg",
-      "sha256": "8c6cf81a040b4221379b279a5b20ee7b6630eb1dbebb37245c02bbe0ea968858"
+      "bpm": 98,
+      "bars": 20,
+      "frames": 2160000,
+      "seed": 98,
+      "sha256": "cf07c47d6a8ce43c55166ed566bea6ad022b48458ef0560f68962c61611f3607"
     },
     {
       "track": "result",
-      "source": "08_results.ogg",
-      "sha256": "6c9ba8f0c4ed5e923aa2176168a641d08af8e7a4b7cd9be5e221e198b8ce9e17"
+      "bpm": 84,
+      "bars": 12,
+      "frames": 1512000,
+      "seed": 84,
+      "sha256": "4754d2edbed638b785f3f45ea84fa3110380e5b0a75515a68b538b215c8de755"
     }
   ]
 }
