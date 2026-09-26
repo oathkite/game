@@ -327,9 +327,7 @@ type SeatStats = {
 ## 6.9 外見データの拡張境界
 
 以下は将来の設計方針であり、現在の型へ追加済みのフィールドではない。
-既存の colors と loadout を維持し、足回りと pilotAppearance を独立させる。
-pilotAppearanceはspeciesId、その種族に属するskin、ペイント、任意のface/neck装備を参照する。本人専用の利用権限は17章に従いサーバー側で確認する。
-外見の制作カタログと保存データ案は[17章](17-avatar-customization.md)に定義する。現行の通信型への追加は未実装であり、購入情報の型は販売方式の決定後に設計する。
-本体は全組み合わせで共通とし、canopyId や turretShellId の選択フィールドを作らない。
-姿勢、顔、接続点、palette、clip はクライアントの素材定義であり、sim の計算入力にしない。
-素材の manifest は 14 章で定義し、対戦プロトコルの型とは別の version を持つ。
+既存の colors と loadout を維持し、足回りを独立させる。
+本体は全組み合わせで共通とし、turretShellId の選択フィールドを作らない。
+接続点、palette、clip はクライアントの素材定義であり、sim の計算入力にしない。
+素材の manifest は対戦プロトコルの型とは別の version を持つ。

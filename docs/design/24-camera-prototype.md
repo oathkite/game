@@ -60,7 +60,7 @@ Tabはフォーカス移動。ボタンにフォーカスした場合、Space/En
 - production出力に試作module・CSS・pilot PNGが含まれないことを確認。
 
 Chromiumでのブラウザ検証とモバイル・touch emulationであり、iOS/Android実機の確認ではない。
-FPS、発熱、顔の判読に関するユーザー評価、Safari/Firefoxの実動作は未検証。
+FPS、発熱に関するユーザー評価、Safari/Firefoxの実動作は未検証。
 
 ## 比較画像
 
@@ -77,8 +77,8 @@ FPS、発熱、顔の判読に関するユーザー評価、Safari/Firefoxの実
 - 多人数モデル、チーム手番、相手のリアルタイム移動、protocol v2は工程B/C。
 - 可変MapSpecと新しい500cellマップは未導入。現時点のworld boundsは既存maskから設定。
 - 弾追従はindex 0の代表弾を使用。残弾への引継ぎ、画面外マーカー、主要着弾のholdは続くcamera完成工程で追加。
-- 弾・爆発・地形の絵は現行rendererの表示を使用。一般アバター、原寸の顔・paint・全モーションの本体統合は別検証。
-- 名前とA1/B1で識別し、機体paintは元PNGの色を使用。本人用の最終一体portraitを搭乗素材として再加工していない。
+- 弾・爆発・地形の絵は現行rendererの表示を使用。paint・全モーションの本体統合は別検証。
+- 名前とA1/B1で識別し、機体paintは元PNGの色を使用。
 - 開始ページとscene演出、world server、実機の最終調整は工程D以降。
 - 試作確認後に通常の対戦画面へ統合する。現時点で本番機能が更新されたとは扱わない。
 
