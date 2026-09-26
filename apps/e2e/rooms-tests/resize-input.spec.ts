@@ -43,6 +43,8 @@ test("resizing cancels held fire and portrait keeps the console usable", async (
     expect(shots[index]).toBe(0);
     await fire.hover();
     await page.mouse.down();
+    // 溜め始めてから回す。待たないと WebKit は resize を pointerdown より先に処理することがあり、取り消しが空振りして離した瞬間に撃つ。
+    await expect.poll(async () => Number(await power.getAttribute("aria-valuenow"))).toBeGreaterThan(0);
     await page.setViewportSize({ width: 390, height: 844 });
     await expect(power).toHaveAttribute("aria-valuenow", "0");
     await expect(fire).toBeEnabled();
