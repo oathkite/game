@@ -26,7 +26,7 @@ PC・横向き・縦向きの各シーン、文字の背景、44px操作、地�
 ## 第一案の実装
 
 GPT Image 2.5 (`gpt-image-2.5-sunburst`) でロゴの微修正、コックピット枠、細密地形を作成。
-`assets/workbench/ui-polish-v1/generation.json` にモデルと生成条件を記録した。
+`assets/workbench/ui-polish-v1/generation.json` にモデルと生成条件を記録した（2026-09-26 に削除。git の履歴に残る）。
 従来の採用ロゴ原本は保持し、新案をプレビューへ適用。
 
 等倍を初期値とし、ロビーの「設定 → 機体の表示サイズ」で0.75倍へ戻して比較できる。

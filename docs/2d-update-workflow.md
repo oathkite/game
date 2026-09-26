@@ -22,8 +22,6 @@
 ## 検証
 
 - アセット形式とUnit tests：`pnpm assets:test`、`pnpm assets:check`
-- 確認ツール：`pnpm assets:test:browser`
 - プロジェクト全体：`pnpm test`、`pnpm -r typecheck`
-- 見た目の変更：`pnpm assets:capture`の結果を目視し、制作ルールと回帰検査を更新
 
 APIキーは `.env.imagegen.local` に置き、Git管理対象にしない。

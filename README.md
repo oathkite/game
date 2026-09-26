@@ -7,13 +7,11 @@
 
 [世界観](./docs/design/00-world-and-experience.md)と[UI の方向性](./docs/design/08-visual-direction.md)を基準にする。
 機体は真横で本体形状を固定し、足回りと武器を独立させる。
-生成プレビューは完成 atlas と区別する。
+本番で使う画像は `assets/runtime/tanks-v1` の着弾効果3枚と砲弾8枚で、元素材は `assets/workbench/baseline-v2` にある。
 
 ```sh
-pnpm assets:test
-pnpm assets:check
-pnpm assets:lab          # http://127.0.0.1:4178 で動作試験台を開く
-pnpm assets:test:browser # 試験台の操作と描画を検証
+pnpm assets:test   # 楽曲ツールの単体テスト
+pnpm assets:check  # 配信用画像と元素材の一致を検証
 ```
 
 ## プロモーション動画
@@ -71,8 +69,6 @@ pnpm typecheck
 `main` へのpushは本番デプロイを起動するため、公開は明示的なリリース指示後に行う。
 新サーバーの設定は `apps/server/wrangler.v2.jsonc`。旧 `deploy:cf` と区別する。
 [最終監査](docs/progress/final-audit-2026-09-10.md)と[判断が必要な項目](docs/progress/owner-decisions-2026-09-12.md)で残る検証・公開条件を確認する。
-
-ローカルの [動作試験台](./tools/asset-lab/README.md) では機体素材を検証できる。ゲーム本体にも2Dスプライトを統合済み。
 
 ## 2Dアップデートの開発
 

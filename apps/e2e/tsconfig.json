@@ -13,8 +13,6 @@
     "tests",
     "scripts",
     "playwright.config.ts",
-    "asset-lab",
-    "asset-lab.config.ts",
     "camera-tests",
     "camera.config.ts",
     "world-tests",
