@@ -1,12 +1,12 @@
 # TANK SHOOT
 
-自分のキャラクターが共通キャノピーのマシンに乗り、風と地形を読んで一発を競う、2D ドット絵の砲撃対戦ゲームを目指す。
+自分のマシンで風と地形を読み、一発を競う、2D ドット絵の砲撃対戦ゲームを目指す。
 2Dアップデートの作業ブランチでは最大8人・任意のチーム分割、リアルタイム移動、画像地形の破壊、再接続、練習、BGM・効果音を実装済み。最終的な見た目と実機・公開環境の検証は継続中。設計は [docs/design](./docs/design/README.md) に、開発の進め方は [CLAUDE.md](./CLAUDE.md) にある。
 
 ## アートと UI の制作
 
-[世界観](./docs/design/00-world-and-experience.md)、[UI の方向性](./docs/design/08-visual-direction.md)、[素材一覧](./docs/design/13-asset-preview.md)、[制作規約と検証](./docs/design/14-asset-pipeline.md) を基準にする。
-機体は真横で本体形状を固定し、搭乗者、足回り、武器を独立させる。
+[世界観](./docs/design/00-world-and-experience.md)と[UI の方向性](./docs/design/08-visual-direction.md)を基準にする。
+機体は真横で本体形状を固定し、足回りと武器を独立させる。
 生成プレビューは完成 atlas と区別する。
 
 ```sh
