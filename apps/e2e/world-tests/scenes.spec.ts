@@ -125,13 +125,15 @@ for (const ratio of [1, 3]) test(`terrain art preserves collision alpha and ${ra
     const plain = createTerrainLayer(carved);
     const plainCanvas = plain.sprite.children[0].texture.source.resource as HTMLCanvasElement;
     const white = Array.from(plainCanvas.getContext("2d")!.getImageData(0, 0, 1, 1).data);
+    const plainScale = plainCanvas.width / plain.sprite.children[0].width;
     plain.destroy();
-    return { matches, continuous, white, chunks };
+    return { matches, continuous, white, plainScale, chunks };
   }, ratio);
   expect(result.matches).toBe(true);
   expect(result.continuous).toBe(true);
-  // 画像なしの地形は上面を明るい緑で塗る（pixel-map-refresh.md）。
+  // 画像なしの地形は 1 セルを 4 texel で塗り、上面の草の先端を明るい緑にする（40.6）。
   expect(result.white).toEqual([0x33, 0xff, 0x66, 255]);
+  expect(result.plainScale).toBe(4);
   expect(result.chunks).toHaveLength(6);
   for (const chunk of result.chunks) {
     expect(chunk.scale).toBe(12);

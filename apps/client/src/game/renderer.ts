@@ -1,7 +1,7 @@
 import { createTargetView } from "./targetView";
 import type { Target } from "@/practice/rules";
 import { createPixelWind } from "./pixelWind";
-import { createPixelBackdrop } from "./pixelBackdrop";
+import { backdropTheme, createPixelBackdrop } from "./pixelBackdrop";
 import type { TerrainOp } from "@game/protocol";
 import { createImageTerrainLayer } from "./imageTerrainLayer";
 import { fitTankLabel } from "./tankLabelLayout";
@@ -111,7 +111,7 @@ export const createRenderer = async (init: RendererInit): Promise<Renderer> => {
   const reduced = matchMedia("(prefers-reduced-motion: reduce)");
   app.ticker.add(() => wind.update(app.ticker.deltaMS, init.wind?.() ?? 0, app.screen.width, app.screen.height, reduced.matches || !init.wind));
 
-  const terrain: TerrainLayer = init.imageTerrain ? createImageTerrainLayer(init.mask, init.imageTerrain) : createTerrainLayer(init.mask, init.terrainArt);
+  const terrain: TerrainLayer = init.imageTerrain ? createImageTerrainLayer(init.mask, init.imageTerrain) : createTerrainLayer(init.mask, init.terrainArt, backdropTheme(init.mapId ?? "ridgeline"));
   world.addChild(terrain.sprite);
   terrain.sprite.tint = init.terrainTint ?? 0xffffff;
 
