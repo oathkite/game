@@ -1,6 +1,6 @@
 # 33. 通常起動と配信用クライアント
 
-KEROPODの入口を`/`へ統合。`?prototype=world`も同じ画面になる。
+TANK SHOOTの入口を`/`へ統合。`?prototype=world`も同じ画面になる。
 招待URLの`?room=ABCDEF`はタイトルを省略して部屋画面へ進む。
 旧1対1UIは開発時のみ`?prototype=legacy`から確認できる。
 `?prototype=camera`と`?prototype=network`も開発専用。

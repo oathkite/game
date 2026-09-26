@@ -5,7 +5,7 @@
 
 ## Cloudflare
 
-`wrangler.v2.jsonc` はKEROPOD用の別構成。既存本番の`wrangler.jsonc`とHubは変更しない。
+`wrangler.v2.jsonc` は新しいRoom API用の別構成。既存本番の`wrangler.jsonc`とHubは変更しない。
 各RoomObjectはSQLiteにsnapshotと次alarmを同一transactionで保存する。
 RoomDirectoryは公開summaryのみを保持し、token/入力/地形計算を持たない。コードの再利用による過去のRoomObjectへの誤接続を防ぐため割当済みコードを保持する。
 
