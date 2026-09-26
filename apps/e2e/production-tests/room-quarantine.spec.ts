@@ -13,6 +13,7 @@ test("an unrecoverable room clears resume credentials and provides a lobby exit"
   await expect(page.getByRole("status").filter({ hasText: "部屋のデータを復元できませんでした。" })).toBeVisible();
   await expect(page.getByRole("button", { name: "再接続", exact: true })).toHaveCount(0);
   expect(await page.evaluate(() => [sessionStorage.getItem("keropod.room-token"), sessionStorage.getItem("keropod.room-id")])).toEqual([null, null]);
-  await page.getByRole("button", { name: "ロビーに戻る", exact: true }).click();
+  // 部屋一覧の「出撃準備」でロビーへ戻る。
+  await page.getByRole("button", { name: "出撃準備", exact: true }).click();
   await expect(page.getByRole("button", { name: "出撃", exact: true })).toBeVisible();
 });

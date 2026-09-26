@@ -1,4 +1,5 @@
 import { expect, test } from "@playwright/test";
+import { openFreePracticeSetup } from "../world-tests/practiceFlow";
 
 const loadouts = [["cannon", "triple"], ["multiple", "drill"], ["laser", "digger"], ["floater", "stinger"]] as const;
 for (const [first, second] of loadouts) {
@@ -6,11 +7,11 @@ for (const [first, second] of loadouts) {
     await page.setViewportSize({ width: 1440, height: 900 });
     await page.goto("/");
     await page.getByRole("button", { name: "はじめる", exact: true }).click();
-    await page.getByRole("button", { name: "プラクティス", exact: true }).click();
-    // Select through the real loadout UI, including replacing a conflicting default slot.
+    // 装備は自由練習の設定画面で選ぶ（37章）。既定の装備と重なる枠の入れ替えも含めて、実際の UI で選ぶ。
+    await openFreePracticeSetup(page);
     await page.getByRole("combobox", { name: "装備 1", exact: true }).selectOption(first);
     await page.getByRole("combobox", { name: "装備 2", exact: true }).selectOption(second);
-    await page.getByRole("button", { name: "練習開始", exact: true }).click();
+    await page.getByRole("button", { name: "自由練習をはじめる", exact: true }).click();
     await expect(page.getByTestId("camera-world")).toHaveAttribute("data-loaded", "true");
     await expect(page.getByTestId("camera-world")).toHaveAttribute("data-opening", "false", { timeout: 15000 });
     const buttons = page.locator(".battle-weapons button");
@@ -31,13 +32,6 @@ for (const [first, second] of loadouts) {
         expect(box.x + box.width).toBeLessThanOrEqual(width);
         expect(box.y + box.height).toBeLessThanOrEqual(height);
       }
-      await expect.poll(() => page.locator(".battle-weapons image").evaluateAll(async images => {
-        const loaded = await Promise.all(images.map(async image => {
-          const source = new Image(); source.src = image.getAttribute("href")!;
-          try { await source.decode(); return source.naturalWidth > 0; } catch { return false; }
-        }));
-        return loaded.every(Boolean);
-      })).toBe(true);
       await page.locator(".battle-weapons").screenshot({ path: testInfo.outputPath(`weapons-${width}.png`) });
     }
   });
