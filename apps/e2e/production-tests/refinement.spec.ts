@@ -11,8 +11,8 @@ test("opening holds input until START and leaves a full turn", async ({ page }) 
   const field = page.getByTestId("camera-world");
   await expect(page.locator(".battle-weapons button").first()).toBeDisabled();
   await expect(field).toHaveAttribute("data-loaded", "true", { timeout: 15000 });
-  // 通常のカメラは表示倍率 9 を 7/9 に引いた 7 CSS px/cell（loadCameraScale）。
-  await expect(field).toHaveAttribute("data-scale", "7");
+  // 通常のカメラは 8 CSS px/cell（loadCameraScale、設計書 40.3）。
+  await expect(field).toHaveAttribute("data-scale", "8");
   await expect(field).toHaveAttribute("data-opening", "true");
   await expect(page.locator(".battle-weapons button").first()).toBeDisabled();
   await page.screenshot({ path: "test-results/refinement-overview.png" });

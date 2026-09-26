@@ -126,8 +126,9 @@ export const PrototypeCanvas = ({ store, rig, layout, handlers, blocked, followS
         }
         host.dataset.opening = String(opening);
         const center = rig.tick(dt, performance.now(), reduced.matches), vp = rig.get().viewport;
-        const offset = worldToScreen({ x: 0, y: 0 }, center, vp), dpr = window.devicePixelRatio || 1;
-        r.setCameraOffset(Math.round(offset.x * dpr) / dpr, Math.round(offset.y * dpr) / dpr);
+        // canvas は解像度 1 で描くので、整数の CSS px に丸めて texel の境目に画素の中心を乗せない（設計書 40.3）
+        const offset = worldToScreen({ x: 0, y: 0 }, center, vp);
+        r.setCameraOffset(Math.round(offset.x), Math.round(offset.y));
         host.dataset.cameraX = center.x.toFixed(3); host.dataset.cameraY = center.y.toFixed(3); host.dataset.mode = rig.get().mode;
         drawMinimap(miniRef.current, v, rig, practice);
       });

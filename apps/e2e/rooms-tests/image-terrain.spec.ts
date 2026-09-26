@@ -63,8 +63,8 @@ test("authored terrain is shared after firing and reconnecting", async ({ browse
     await expect(field).toHaveAttribute("data-initial-camera-x", /[\d.]+/);
     const box = (await field.boundingBox())!;
     const currentActor = frames[1]!.players.find(p => p.playerId === frames[1]!.actorId)!;
-    // 通常のカメラ倍率は displayScale.ts の loadCameraScale（9 * 7 / 9）。
-    const halfWidth = box.width / 7 / 2, halfHeight = box.height / 7 / 2;
+    // 通常のカメラ倍率は displayScale.ts の loadCameraScale（8 px/セル、設計書 40.3）。
+    const halfWidth = box.width / 8 / 2, halfHeight = box.height / 8 / 2;
     expect(Number(await field.getAttribute("data-initial-camera-x"))).toBeCloseTo(Math.max(halfWidth, Math.min(map.width - halfWidth, currentActor.x)), 2);
     expect(Number(await field.getAttribute("data-initial-camera-y"))).toBeCloseTo(Math.max(-100 + halfHeight, Math.min(map.height - halfHeight, currentActor.y - 6)), 2);
     await guest.screenshot({ path: `test-results/online-${mapId}-${test.info().project.name}.png` });
