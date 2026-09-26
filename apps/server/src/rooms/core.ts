@@ -2,12 +2,13 @@ import { reportPlayer, REPORT_RETENTION_MS, type PlayerReport } from "./reports.
 import { CLIENT_BUILD, compatibleBuild, type ClientBuild } from "@game/protocol/build";
 import { MULTIPLAYER_MAPS } from "@game/maps";
 import { createLobby, joinLobby, leaveLobby, setLobbyConnection, editLobby, startLobby, createPreparedSession,
-  fireInSession, moveInSession, surrenderInSession, forfeitInSession, tickSession, type LobbyState, type BattleSession } from "@game/engine/multiplayer";
+  fireInSession, moveInSession, surrenderInSession, forfeitInSession, tickSession, seededRandom, type LobbyState, type BattleSession } from "@game/engine/multiplayer";
 import { roomInputSchema, type RoomMode, type RoomRegion } from "@game/protocol/v2-rooms";
 
 export type RoomSession = { readonly build: ClientBuild; readonly role: "player" | "spectator"; readonly token: string; readonly playerId: string; readonly connectionId: string | null; readonly disconnectedAt: number; readonly generation: number };
 export type RoomState = { readonly name?: string; readonly passwordProtected?: boolean; readonly initialMapId?: string; readonly turnLimit?: number; readonly returnReadyIds?: readonly string[]; readonly reports: readonly PlayerReport[]; readonly mode: RoomMode; readonly region: RoomRegion; readonly roomId: string; readonly lobby: LobbyState | null; readonly battle: BattleSession | null; readonly sessions: readonly RoomSession[] };
-export type Identity = { readonly playerId: string; readonly token: string; readonly matchId: string; readonly seed: number };
+/** 命令ごとにアダプタが作る。seed は手番順などの対戦の乱数、mapSeed はランダムの部屋のマップを引く乱数。同じ乱数列を共有しないよう分ける */
+export type Identity = { readonly playerId: string; readonly token: string; readonly matchId: string; readonly seed: number; readonly mapSeed: number };
 type Input = ReturnType<typeof roomInputSchema.parse>;
 export type RoomReply = { readonly state: RoomState; readonly reason: string; readonly welcome?: RoomSession; readonly ack?: boolean; readonly pong?: number; readonly reported?: "saved" | "duplicate"; readonly close?: boolean };
 export const createRoomState = (roomId: string, mode: RoomMode = "custom", region: RoomRegion = "asia"): RoomState => ({ roomId, mode, region, reports: [], lobby: null, battle: null, sessions: [] });
@@ -111,13 +112,13 @@ export const reduceRoom = (state: RoomState, connectionId: string, raw: unknown,
   if (state.mode !== "custom" && (message.type === "room.assignTeam" || message.type === "room.map")) return reply(state, "fixed-mode");
   if (message.type === "room.start") {
     if (state.mode !== "custom" && state.lobby!.members.length !== (state.mode === "1v1" ? 2 : 4)) return reply(state, "waiting-for-players");
-    const result = startLobby(state.lobby!, session.playerId, message.revision, state.mode !== "custom");
+    const result = startLobby(state.lobby!, session.playerId, message.revision, seededRandom(id.mapSeed), state.mode !== "custom");
     return result.setup ? reply({ ...state, lobby: result.room, battle: createPreparedSession(result.setup, id.matchId, id.seed, now) }) : reply(state, result.reason);
   }
   if (message.type.startsWith("room.")) {
     const result = editLobby(state.lobby!, session.playerId, message);
     if (message.type === "room.ready" && state.mode !== "custom" && result.room.members.length === (state.mode === "1v1" ? 2 : 4)) {
-      const started = startLobby(result.room, result.room.ownerId!, result.room.revision);
+      const started = startLobby(result.room, result.room.ownerId!, result.room.revision, seededRandom(id.mapSeed));
       if (started.setup) return reply({ ...state, lobby: started.room, battle: createPreparedSession(started.setup, id.matchId, id.seed, now) });
     }
     return reply(result.room === state.lobby ? state : { ...state, lobby: result.room }, result.reason);

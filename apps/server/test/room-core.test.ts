@@ -1,9 +1,9 @@
 import { CLIENT_BUILD } from "@game/protocol/build";
-import { expect, it } from "vitest";
+import { expect, it, vi } from "vitest";
 import { createRoomState, reduceRoom, disconnectRoom, tickRoom } from "../src/rooms/core";
 const profile = { nickname: "Kero", loadout: ["cannon", "digger"] };
 let serial = 0;
-const identity = () => { const n = ++serial; return { playerId: `p${n}`, token: `00000000-0000-4000-8000-${String(n).padStart(12, "0")}`, matchId: `m${n}`, seed: n }; };
+const identity = () => { const n = ++serial; return { playerId: `p${n}`, token: `00000000-0000-4000-8000-${String(n).padStart(12, "0")}`, matchId: `m${n}`, seed: n, mapSeed: n }; };
 const create = () => reduceRoom(createRoomState("ABCDEF"), "socket-a", { type: "room.create", build: CLIENT_BUILD, profile }, 1000, identity()).state;
 it("increments session generation after disconnect and rejects the old connection", () => {
   const state = create(), token = state.sessions[0]!.token;
@@ -62,4 +62,24 @@ it("rejects an old build before assigning a seat or resuming a session", () => {
   expect(reduceRoom(initial, "old", { type: "room.create", profile }, 1000, identity()).reason).toBe("version-mismatch");
   const state = disconnectRoom(create(), "socket-a", 1100);
   expect(reduceRoom(state, "new", { type: "room.resume", token: state.sessions[0]!.token, build: { ...CLIENT_BUILD, assets: "old" } }, 1200, identity()).reason).toBe("version-mismatch");
+});
+it("draws a random room's map only from the injected map seed", () => {
+  const startRandom = (mapSeed: number): string => {
+    let state = reduceRoom(create(), "socket-b", { type: "room.join", build: CLIENT_BUILD, roomId: "ABCDEF", profile }, 1100, identity()).state;
+    const edit = (connectionId: string, type: string, extra: object = {}) => {
+      state = reduceRoom(state, connectionId, { type, version: 2, roomId: "ABCDEF", revision: state.lobby!.revision, ...extra }, 1200, identity()).state;
+    };
+    edit("socket-a", "room.map", { mapId: "random" });
+    edit("socket-b", "room.ready", { ready: true });
+    const started = reduceRoom(state, "socket-a", { type: "room.start", version: 2, roomId: "ABCDEF", revision: state.lobby!.revision }, 1300, { ...identity(), mapSeed });
+    expect(started.state.battle).not.toBeNull();
+    return started.state.lobby!.map.id;
+  };
+  // 同じ値なら同じマップを引き、値を変えれば別のマップも引く。サーバーの中で Math.random を呼ばない（設計書 02 の 2.9）。
+  const random = vi.spyOn(Math, "random");
+  try {
+    expect(startRandom(7)).toBe(startRandom(7));
+    expect(new Set(Array.from({ length: 32 }, (_, i) => startRandom(i))).size).toBeGreaterThan(1);
+    expect(random).not.toHaveBeenCalled();
+  } finally { random.mockRestore(); }
 });
