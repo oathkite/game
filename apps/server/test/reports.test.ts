@@ -5,7 +5,7 @@ import { MULTIPLAYER_MAPS } from "@game/maps";
 import { createRoomState, reduceRoom, tickRoom, nextRoomDeadline } from "../src/rooms/core";
 import { REPORT_RETENTION_MS } from "../src/rooms/reports";
 import { restoreRoom, serializeRoom, RoomRuntime } from "../src/rooms/runtime";
-const identity = { playerId: "unused", token: "unused", matchId: "unused", seed: 1 };
+const identity = { playerId: "unused", token: "unused", matchId: "unused", seed: 1, mapSeed: 1 };
 const initial = () => ({ ...createRoomState("ABCDEF"),
   lobby: joinLobby(createLobby("ABCDEF", "p1", { nickname: "ReportedName", loadout: ["cannon", "digger"] }, MULTIPLAYER_MAPS[0]!), "p2", { nickname: "PlayerTwo", loadout: ["cannon", "digger"] }),
   sessions: [{ build: CLIENT_BUILD, role: "spectator" as const, playerId: "viewer", token: "private", connectionId: "socket", disconnectedAt: 0, generation: 1 }],

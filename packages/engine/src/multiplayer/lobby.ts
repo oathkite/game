@@ -80,7 +80,8 @@ export const editLobby = (room: LobbyState, authenticatedId: string, raw: unknow
   if (target.teamId === command.teamId) return reject("unchanged");
   return { room: changed(room, room.members.map(p => p === target ? { ...p, teamId: command.teamId } : p)), reason: "accepted" };
 };
-export const startLobby = (room: LobbyState, authenticatedId: string, revision: number, requireOwnerReady = true): { room: LobbyState; reason: string; setup?: PreparedMatch } => {
+/** ランダムの部屋は、ここで注入された rng から等確率に 1 枚を引く（設計書 02 の 2.9）。固定マップの部屋は rng を呼ばない */
+export const startLobby = (room: LobbyState, authenticatedId: string, revision: number, rng: () => number, requireOwnerReady = true): { room: LobbyState; reason: string; setup?: PreparedMatch } => {
   const reject = (reason: string) => ({ room, reason });
   if (room.ownerId !== authenticatedId) return reject("not-owner");
   if (room.phase !== "waiting") return reject("locked");
@@ -90,7 +91,7 @@ export const startLobby = (room: LobbyState, authenticatedId: string, revision: 
   if (room.members.some(p => p.teamId === null)) return reject("unassigned");
   if (new Set(room.members.map(p => p.teamId)).size < 2) return reject("not-enough-teams");
   if (room.members.some(p => !p.ready && (requireOwnerReady || p.playerId !== room.ownerId))) return reject("not-ready");
-  const map = room.randomMap ? MULTIPLAYER_MAPS[Math.floor(Math.random() * MULTIPLAYER_MAPS.length)]! : room.map;
+  const map = room.randomMap ? MULTIPLAYER_MAPS[Math.min(MULTIPLAYER_MAPS.length - 1, Math.floor(rng() * MULTIPLAYER_MAPS.length))]! : room.map;
   try { buildMapSpec(map, room.members.length); } catch { return reject("unsupported-map"); }
   return { room: { ...room, map: copyMap(map), phase: "started" }, reason: "started", setup: {
     turnLimit: room.turnLimit ?? 12, roomId: room.roomId, revision, ruleSetVersion: RULE_SET_VERSION, map: copyMap(map),

@@ -5,24 +5,26 @@ const profile = { nickname: "Kero", loadout: ["cannon", "digger"] as const };
 const two = () => joinLobby(createLobby("room-a", "p1", profile, TEST_ARENA), "p2", profile);
 const command = (room: ReturnType<typeof two>, type: string, extra = {}) => ({ version: 2, roomId: room.roomId, revision: room.revision, type, ...extra });
 const ready = (room: ReturnType<typeof two>) => room.members.reduce((r, p) => editLobby(r, p.playerId, command(r, "room.ready", { ready: true })).room, room);
+/** 固定マップの部屋は乱数を引かない。引いたら失敗させる */
+const noRandom = (): number => { throw new Error("固定マップの部屋で乱数を引いた"); };
 
 it("requires two assigned teams and every member ready at the current revision", () => {
   let room = two();
-  expect(startLobby({ ...room, members: room.members.map(p => ({ ...p, teamId: null })) }, "p1", room.revision).reason).toBe("unassigned");
+  expect(startLobby({ ...room, members: room.members.map(p => ({ ...p, teamId: null })) }, "p1", room.revision, noRandom).reason).toBe("unassigned");
   room = editLobby(room, "p1", command(room, "room.assignTeam", { playerId: "p1", teamId: "t0" })).room;
   room = editLobby(room, "p2", command(room, "room.assignTeam", { playerId: "p2", teamId: "t1" })).room;
-  expect(startLobby(room, "p1", room.revision).reason).toBe("not-ready");
+  expect(startLobby(room, "p1", room.revision, noRandom).reason).toBe("not-ready");
   const revision = room.revision; room = ready(room);
   expect(room.revision).toBe(revision); // readiness does not invalidate the other person's acknowledgement
-  expect(startLobby(room, "p2", room.revision).reason).toBe("not-owner");
-  const started = startLobby(room, "p1", room.revision);
+  expect(startLobby(room, "p2", room.revision, noRandom).reason).toBe("not-owner");
+  const started = startLobby(room, "p1", room.revision, noRandom);
   expect(started.reason).toBe("started");
   expect(started.setup?.members).toHaveLength(2);
   expect(started.setup?.ruleSetVersion).toBe("keropod-v2.4-delay");
   expect(started.setup?.map).toEqual(TEST_ARENA);
   expect(started.setup?.map).not.toBe(TEST_ARENA);
   expect(editLobby(started.room, "p1", command(started.room, "room.assignTeam", { playerId: "p2", teamId: "t0" })).reason).toBe("locked");
-  expect(startLobby(started.room, "p1", started.room.revision).reason).toBe("locked");
+  expect(startLobby(started.room, "p1", started.room.revision, noRandom).reason).toBe("locked");
 });
 it("invalidates all readiness on loadout or membership change but not nickname edits", () => {
   let room = ready(two()); const old = room;
@@ -32,7 +34,7 @@ it("invalidates all readiness on loadout or membership change but not nickname e
   expect(room.members.every(p => !p.ready)).toBe(true);
   expect(room.revision).toBe(old.revision + 1);
   expect(old.members[0]!.loadout).toEqual(profile.loadout);
-  expect(startLobby(room, "p1", old.revision).reason).toBe("stale-revision");
+  expect(startLobby(room, "p1", old.revision, noRandom).reason).toBe("stale-revision");
   expect(joinLobby(ready(room), "p3", profile).members.every(p => !p.ready)).toBe(true);
 });
 it("rejects cross-room, stale and impersonated changes and duplicate weapons", () => {
@@ -64,7 +66,7 @@ it("caps at eight, preserves isolated room states and validates map capacity", (
   restricted = joinLobby(restricted, "p2", profile);
   for (const [i, p] of restricted.members.entries()) restricted = editLobby(restricted, p.playerId, command(restricted, "room.assignTeam", { playerId: p.playerId, teamId: `t${i}` })).room;
   restricted = ready(restricted);
-  expect(startLobby(restricted, "p1", restricted.revision).reason).toBe("unsupported-map");
+  expect(startLobby(restricted, "p1", restricted.revision, noRandom).reason).toBe("unsupported-map");
 });
 
 it("starts every 2..8 player team partition without balancing asymmetric teams", () => {
@@ -77,17 +79,17 @@ it("starts every 2..8 player team partition without balancing asymmetric teams",
     for (let i = 1; i < teams.length; i++) room = joinLobby(room, `p${i}`, profile);
     for (const [i, teamId] of teams.entries()) room = editLobby(room, "p0", command(room, "room.assignTeam", { playerId: `p${i}`, teamId })).room;
     room = ready(room);
-    const started = startLobby(room, "p0", room.revision);
+    const started = startLobby(room, "p0", room.revision, noRandom);
     expect(started.setup?.members.map(p => p.teamId)).toEqual(teams);
   }
 });
 it("does not start alone, disconnected, or with only one team", () => {
   const alone = createLobby("r", "p1", profile, TEST_ARENA);
-  expect(startLobby(alone, "p1", 1).reason).toBe("not-enough-players");
+  expect(startLobby(alone, "p1", 1, noRandom).reason).toBe("not-enough-players");
   let room = two();
   for (const p of room.members) room = editLobby(room, "p1", command(room, "room.assignTeam", { playerId: p.playerId, teamId: "t0" })).room;
-  room = ready(room); expect(startLobby(room, "p1", room.revision).reason).toBe("not-enough-teams");
-  room = setLobbyConnection(room, "p2", false); expect(startLobby(room, "p1", room.revision).reason).toBe("disconnected");
+  room = ready(room); expect(startLobby(room, "p1", room.revision, noRandom).reason).toBe("not-enough-teams");
+  room = setLobbyConnection(room, "p2", false); expect(startLobby(room, "p1", room.revision, noRandom).reason).toBe("disconnected");
 });
 it("uses the frozen loadout for the match instead of the lab's fixed cannon", async () => {
   const { createPreparedSession } = await import("../src/multiplayer/preparedSession");
@@ -98,7 +100,7 @@ it("uses the frozen loadout for the match instead of the lab's fixed cannon", as
     room = editLobby(room, p.playerId, command(room, "room.loadout", { loadout: ["triple", "laser"] })).room;
   }
   room = ready(room);
-  const setup = startLobby(room, "p1", room.revision).setup!;
+  const setup = startLobby(room, "p1", room.revision, noRandom).setup!;
   const session = createPreparedSession(setup, "match1", 42, 1000);
   expect(session.ruleSetVersion).toBe(setup.ruleSetVersion);
   expect(session.movement.startsAt).toBeGreaterThan(session.startedAt);
@@ -131,7 +133,7 @@ it("keeps validated custom colors through match preparation and accepts legacy p
   let room = joinLobby(createLobby("color-room", "p1", { ...profile, colors }, TEST_ARENA), "p2", profile);
   room = editLobby(room, "p1", command(room, "room.assignTeam", { playerId:"p1", teamId:"t0" })).room;
   room = editLobby(room, "p2", command(room, "room.assignTeam", { playerId:"p2", teamId:"t1" })).room;
-  const prepared = startLobby(ready(room), "p1", room.revision);
+  const prepared = startLobby(ready(room), "p1", room.revision, noRandom);
   expect(prepared.setup?.members[0]?.colors).toEqual(colors);
   expect(prepared.setup?.members[1]?.colors).toBeUndefined();
   expect(() => createLobby("bad", "p1", { ...profile, colors: { primary:"invalid", secondary:"red" } as never }, TEST_ARENA)).toThrow();
@@ -140,10 +142,10 @@ it("lets a custom-room owner start once guests are ready", () => {
   let room = two();
   room = editLobby(room, "p1", command(room, "room.assignTeam", { playerId: "p1", teamId: "t0" })).room;
   room = editLobby(room, "p2", command(room, "room.assignTeam", { playerId: "p2", teamId: "t1" })).room;
-  expect(startLobby(room, "p1", room.revision, false).reason).toBe("not-ready");
+  expect(startLobby(room, "p1", room.revision, noRandom, false).reason).toBe("not-ready");
   room = editLobby(room, "p2", command(room, "room.ready", { ready: true })).room;
-  expect(startLobby(room, "p1", room.revision, false).reason).toBe("started");
-  expect(startLobby(room, "p1", room.revision).reason).toBe("not-ready");
+  expect(startLobby(room, "p1", room.revision, noRandom, false).reason).toBe("started");
+  expect(startLobby(room, "p1", room.revision, noRandom).reason).toBe("not-ready");
 });
 
 it("resolves random maps once at start and preserves the random setting", () => {
@@ -152,15 +154,18 @@ it("resolves random maps once at start and preserves the random setting", () => 
   room = editLobby(room,"p2",command(room,"room.assignTeam",{playerId:"p2",teamId:"t1"})).room;
   expect(editLobby(room,"p2",command(room,"room.map",{mapId:"random"})).reason).toBe("not-owner");
   room = ready(editLobby(room,"p1",command(room,"room.map",{mapId:"random"})).room);
+  // 注入した乱数だけでマップを引く（設計書 02 の 2.9、CLAUDE.md の rng 注入）。Math.random は呼ばない。
   const random = vi.spyOn(Math,"random");
   try {
     MULTIPLAYER_MAPS.forEach((map,index) => {
-      random.mockReturnValue((index+.5)/MULTIPLAYER_MAPS.length);
-      const started = startLobby(room,"p1",room.revision);
+      const started = startLobby(room,"p1",room.revision,() => (index+.5)/MULTIPLAYER_MAPS.length);
       expect(started.setup?.map.id).toBe(map.id);
       expect(started.room.map).toEqual(started.setup?.map);
       expect(started.room.randomMap).toBe(true);
     });
+    expect(startLobby(room,"p1",room.revision,() => 0).setup?.map.id).toBe(MULTIPLAYER_MAPS[0]!.id);
+    expect(startLobby(room,"p1",room.revision,() => 1 - Number.EPSILON).setup?.map.id).toBe(MULTIPLAYER_MAPS.at(-1)!.id);
+    expect(random).not.toHaveBeenCalled();
   } finally { random.mockRestore(); }
   const fixed = editLobby(room,"p1",command(room,"room.map",{mapId:MULTIPLAYER_MAPS[0]!.id}));
   expect(fixed.room.randomMap).toBe(false);
@@ -181,7 +186,7 @@ it("assigns an unused team on creation and joining without changing existing tea
 it("freezes the room turn limit into the prepared session", async () => {
   const { createPreparedSession } = await import("../src/multiplayer/preparedSession");
   const room = ready({ ...two(), turnLimit: 7 });
-  const started = startLobby(room, "p1", room.revision);
+  const started = startLobby(room, "p1", room.revision, noRandom);
   expect(started.setup?.turnLimit).toBe(7);
   expect(createPreparedSession(started.setup!, "match", 42, 1000).turnLimit).toBe(7);
 });

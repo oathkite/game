@@ -168,10 +168,10 @@ export class RoomObject extends DurableObject<RoomEnv> {
         }
       }
     }
-    const seed = crypto.getRandomValues(new Uint32Array(1))[0]!;
+    const randoms = crypto.getRandomValues(new Uint32Array(2)), seed = randoms[0]!, mapSeed = randoms[1]!;
     const runtime = await this.recover();
     if (!runtime) return;
-    const result = await runtime.update(state => reduceRoom(this.reconcile(state), a.connectionId, raw, now, { playerId: `p${crypto.randomUUID()}`, token: crypto.randomUUID(), matchId: crypto.randomUUID(), seed }));
+    const result = await runtime.update(state => reduceRoom(this.reconcile(state), a.connectionId, raw, now, { playerId: `p${crypto.randomUUID()}`, token: crypto.randomUUID(), matchId: crypto.randomUUID(), seed, mapSeed }));
     if (result.welcome) {
       ws.serializeAttachment({ ...ws.deserializeAttachment(), joined: true });
       this.send(ws, { type: "room.welcome", playerId: result.welcome.playerId, token: result.welcome.token, role: result.welcome.role, generation: result.welcome.generation });

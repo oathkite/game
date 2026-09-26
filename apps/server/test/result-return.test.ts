@@ -4,7 +4,7 @@ import { createBattle, createBattleSession } from "@game/engine/multiplayer";
 import { TEST_ARENA } from "@game/maps";
 import { createRoomState, reduceRoom, tickRoom, nextRoomDeadline, disconnectRoom } from "../src/rooms/core";
 import { serializeRoom, restoreRoom } from "../src/rooms/runtime";
-const id = (playerId: string) => ({ playerId, token: `00000000-0000-4000-8000-${playerId === "a" ? "000000000001" : "000000000002"}`, matchId: "match", seed: 42 });
+const id = (playerId: string) => ({ playerId, token: `00000000-0000-4000-8000-${playerId === "a" ? "000000000001" : "000000000002"}`, matchId: "match", seed: 42, mapSeed: 42 });
 const finished = () => {
   const profile = { nickname: "Kero", loadout: ["cannon", "digger"] };
   let room = reduceRoom(createRoomState("ABCDEF"), "a", { type: "room.create", build: CLIENT_BUILD, profile }, 1000, id("a")).state;

@@ -81,7 +81,7 @@ export const attachRooms = (wss: WebSocketServer, options: Options = {}) => {
       const room = roomId ? rooms.get(roomId) : undefined;
       if (!room) { error(input.type === "room.resume" ? "invalid-session" : "not-found"); return; }
       const result = await room.update(state => reduceRoom(state, connectionId, input, Date.now(), {
-        playerId: `p${randomUUID()}`, token: randomUUID(), matchId: randomUUID(), seed: randomInt(0x100000000),
+        playerId: `p${randomUUID()}`, token: randomUUID(), matchId: randomUUID(), seed: randomInt(0x100000000), mapSeed: randomInt(0x100000000),
       })).finally(() => { if (reserved) { const remaining = (reservations.get(reserved) ?? 1) - 1; if (remaining) reservations.set(reserved, remaining); else reservations.delete(reserved); } });
       if (result.welcome) { joinedRoom = result.state.roomId; clearTimeout(handshake); }
       effects(socket, result);

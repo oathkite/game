@@ -2,7 +2,7 @@ import { CLIENT_BUILD } from "@game/protocol/build";
 import { expect, it } from "vitest";
 import { createRoomState, reduceRoom } from "../src/rooms/core";
 const profile = { nickname: "Quick", loadout: ["cannon", "laser"] };
-const id = (n: number) => ({ playerId: `p${n}`, token: `00000000-0000-4000-8000-${String(n).padStart(12, "0")}`, matchId: "quick-match", seed: n });
+const id = (n: number) => ({ playerId: `p${n}`, token: `00000000-0000-4000-8000-${String(n).padStart(12, "0")}`, matchId: "quick-match", seed: n, mapSeed: n });
 const join = (n: number, mode = "2v2") => ({ type: "room.quick", build: CLIENT_BUILD, roomId: "ABCDEF", mode, region: "asia", profile });
 it("starts 2v2 only with four ready players and fixes the symmetric teams", () => {
   let state = createRoomState("ABCDEF", "2v2", "asia");
