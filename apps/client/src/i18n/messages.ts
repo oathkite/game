@@ -32,7 +32,7 @@ export const english: Readonly<Record<string, string>> = {
   "この部屋から退出します。": "You will leave this room.",
   "現在のプラクティスを終了します。": "Your current practice will end.",
   "はじめる": "Play", "スキップ": "Skip", "出撃準備": "Ready to deploy", "設定": "Settings",
-  "湿地の観測所": "Wetland observatory", "名前": "Name", "装備": "Weapon", "ケロポッド": "KEROPOD",
+  "湿地の観測所": "Wetland observatory", "名前": "Name", "装備": "Weapon",
   "タイトルへ": "Title", "オンライン対戦": "Online battle", "プラクティス": "Practice",
   "整備と設定": "Settings", "音量": "Volume", "音を出す": "Unmute", "音を消す": "Mute",
   "機体の表示サイズ": "Tank scale", "等倍": "Native size", "0.75倍（標準）": "75% size",
@@ -44,5 +44,5 @@ export const english: Readonly<Record<string, string>> = {
   "カメラを初期値に戻す": "Reset camera", "変更は即時反映され、このブラウザに保存されます。": "Changes apply immediately and are saved in this browser.",
   "標準砲": "Cannon", "トリプル弾": "Triple", "マルチ弾": "Multiple", "貫通弾": "Drill",
   "レーザー弾": "Laser", "掘削弾": "Digger", "浮遊弾": "Floater", "針弾": "Stinger",
-  "車体色": "Body color", "砲塔色": "Turret color", "プレイヤー": "Player", "機体": "Tank", "KEROPOD（ケロポッド）": "KEROPOD", "カエルのパイロットと黄色いケロポッド": "Frog pilot and yellow KEROPOD",
+  "車体色": "Body color", "砲塔色": "Turret color", "プレイヤー": "Player", "機体": "Tank",
 };

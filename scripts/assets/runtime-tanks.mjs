@@ -2,13 +2,13 @@ import { createHash } from 'node:crypto';
 import { mkdirSync, readFileSync, writeFileSync } from 'node:fs';
 import { resolve } from 'node:path';
 import { pathToFileURL } from 'node:url';
-const files = ['cabin-standard', 'tracks-standard', 'pilot-frog', 'effect-spark', 'effect-smoke', 'effect-dust', 'effect-muzzle', 'effect-explosion', 'effect-energy', 'effect-drill', 'effect-dig', ...['cannon', 'triple', 'multiple', 'drill', 'laser', 'digger', 'floater', 'stinger'].flatMap(id => [`weapon-${id}`, `projectile-${id}`])];
+const files = ['effect-explosion', 'effect-energy', 'effect-drill', ...['cannon', 'triple', 'multiple', 'drill', 'laser', 'digger', 'floater', 'stinger'].map(id => `projectile-${id}`)];
 const digest = bytes => createHash('sha256').update(bytes).digest('hex');
 export function runtimeTanks(check = true) {
   const root = resolve('assets/runtime/tanks-v1');
   const entries = files.map(id => {
-    const file = `${id}.${id === 'pilot-frog' ? 'svg' : 'png'}`;
-    const source = `assets/workbench/${id === 'pilot-frog' ? 'pilot-generic-v2' : 'baseline-v2'}/${file}`;
+    const file = `${id}.png`;
+    const source = `assets/workbench/baseline-v2/${file}`;
     const bytes = readFileSync(source);
     if (check) {
       if (!bytes.equals(readFileSync(resolve(root, file)))) throw new Error(`runtime tank differs: ${id}`);

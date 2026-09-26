@@ -30,7 +30,7 @@ UI文字・ゲージ値・操作はDOMで描く。生成画像は背景やフレ
 
 ## 生成レビュー
 
-GPT Image 2.5 `gpt-image-2.5-sunburst` を使用。元画像とpromptはassets/workbench/world-ui-v1。
+GPT Image 2.5 `gpt-image-2.5-sunburst` を使用。元画像とpromptはassets/workbench/world-ui-v1に置いたが、2026-09-26 に削除した（git の履歴に残る）。
 背景・ロビー・設定・結果は色と材料の一貫性を確認。button-v1の外側glowを減らしたv2を採用候補とした。
 ボタン・メーター・葉にはまだ柔らかい陰影がある。完全な整数pixel-grid素材とは呼ばず、画面サイズでのレビュー後に採否を判断する。
 UI共通素材を9sliceで使い、角の変形と押しにくい小さなボタンを避ける。候補素材でありユーザーの最終承認前。
