@@ -4,7 +4,6 @@ import { CRUMBLE_LIMIT, CRUMBLE_MS, crumbleAt, rimCells } from "@/game/crumble";
 import { EDGE_MARGIN, edgeBlinkOn, edgeMarker } from "@/game/edgeMarker";
 import { CARVE_AT_MS, IMPACT_TOTAL_MS, impactClock, INVERT_MS, invertCells, invertOn, missMarkAt } from "@/game/hitFeedback";
 import { guideDots, TRAIL_EVERY, trailDots } from "@/game/trail";
-import { blastCells, blastShapeCells } from "@/game/weaponArt";
 import { REVEAL_MS, revealRowsAt } from "@/worldUi/openingTour";
 
 // 着弾まわりの演出の見え方を数値で固定する。設計書 38 の E1〜E7 と L3
@@ -68,30 +67,6 @@ describe("trailDots と guideDots", () => {
   });
 });
 
-describe("blastShapeCells", () => {
-  it("標準砲は今と同じ円", () => {
-    expect(blastShapeCells("cannon", 10, 10, 5, false)).toEqual(blastCells(10, 10, 5, false));
-  });
-  it("レーザー弾は横に長く、縦は半分の長さの十字", () => {
-    const cells = blastShapeCells("laser", 10, 10, 6, false);
-    const xs = cells.map(c => c.x), ys = cells.map(c => c.y);
-    expect(Math.max(...xs) - Math.min(...xs)).toBe(12);
-    expect(Math.max(...ys) - Math.min(...ys)).toBe(6);
-    expect(new Set(cells.map(c => `${c.x}/${c.y}`)).size).toBe(cells.length);
-  });
-  it("掘削弾は下へ長い楕円で、上には短い", () => {
-    const cells = blastShapeCells("digger", 10, 10, 6, false);
-    const ys = cells.map(c => c.y);
-    expect(Math.max(...ys) - 10).toBeGreaterThan(10 - Math.min(...ys));
-  });
-  it("浮遊弾は輪を 2 つ重ね、消える前は外の輪だけ", () => {
-    expect(blastShapeCells("floater", 10, 10, 8, false).length).toBeGreaterThan(blastCells(10, 10, 8, true).length);
-    expect(blastShapeCells("floater", 10, 10, 8, true)).toEqual(blastCells(10, 10, 8, true));
-  });
-  it("縁だけの姿は塗った姿より少ない", () => {
-    for (const w of ["laser", "digger", "cannon"] as const) expect(blastShapeCells(w, 10, 10, 6, true).length).toBeLessThan(blastShapeCells(w, 10, 10, 6, false).length);
-  });
-});
 
 describe("impactClock", () => {
   it("時間が足りていればそのまま、足りなければ演出の全体を縮める", () => {

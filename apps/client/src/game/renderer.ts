@@ -5,13 +5,16 @@ import { backdropTheme, createPixelBackdrop } from "./pixelBackdrop";
 import type { TerrainOp } from "@game/protocol";
 import { createImageTerrainLayer } from "./imageTerrainLayer";
 import { fitTankLabel } from "./tankLabelLayout";
-import { COLOR_HEX, type TankColors, type WeaponId } from "@game/protocol";
+import type { TankColors, WeaponId } from "@game/protocol";
 import type { TerrainMask } from "@game/sim";
 import { Application, Container, Graphics, type Texture } from "pixi.js";
 import { type EdgeSide, edgeMarker } from "./edgeMarker";
 import { spawnDamageLabel } from "./damageLabel";
 import { DAMAGE_LABEL_GAP_PX, type Offset } from "./hitFeedback";
 import { createProjectileView, type ProjectileView } from "./projectileView";
+import { createExplosionTextures } from "./explosionTextures";
+import { PALETTE, TEAM_RAMPS } from "./palette";
+import { TERRAIN_THEMES } from "./terrainPaint";
 import type { Layout } from "./scale";
 import { createTankView, type TankPose, type TankView } from "./tankView";
 import { createTerrainLayer, type TerrainLayer } from "./terrainLayer";
@@ -45,8 +48,8 @@ export type Renderer = {
 
 export type EdgePoint = { readonly x: number; readonly y: number; readonly color: number };
 
-/** 前の射撃の軌跡の色。飛翔中の軌跡の古い点と同じくすんだ緑 */
-const GUIDE_COLOR = 0x79cc96;
+/** 前の射撃の軌跡の色。飛翔中の軌跡の古い点と同じ緑（設計書 40.8） */
+const GUIDE_COLOR = PALETTE.greenMid;
 /** 画面の外の印のドット（px） */
 const EDGE_DOT = 2;
 
@@ -112,7 +115,10 @@ export const createRenderer = async (init: RendererInit): Promise<Renderer> => {
   app.ticker.add(() => wind.update(app.ticker.deltaMS, init.wind?.() ?? 0, app.screen.width, app.screen.height, reduced.matches || !init.wind));
   app.ticker.add(() => backdrop.tick(app.ticker.deltaMS, reduced.matches));
 
-  const terrain: TerrainLayer = init.imageTerrain ? createImageTerrainLayer(init.mask, init.imageTerrain) : createTerrainLayer(init.mask, init.terrainArt, backdropTheme(init.mapId ?? "ridgeline"));
+  const theme = backdropTheme(init.mapId ?? "ridgeline");
+  const terrain: TerrainLayer = init.imageTerrain ? createImageTerrainLayer(init.mask, init.imageTerrain) : createTerrainLayer(init.mask, init.terrainArt, theme);
+  // 爆発の絵は描画を閉じるまで使い回す（設計書 40.11）
+  const explosions = createExplosionTextures();
   world.addChild(terrain.sprite);
   terrain.sprite.tint = init.terrainTint ?? 0xffffff;
 
@@ -182,7 +188,7 @@ export const createRenderer = async (init: RendererInit): Promise<Renderer> => {
     },
     projectile: (color, weapon) => {
       if (projectile) projectile.destroy();
-      projectile = createProjectileView(Number.parseInt(COLOR_HEX[color].slice(1), 16), weapon, init.projectileTextures?.[weapon], init.impactTextures?.[weapon]);
+      projectile = createProjectileView({ ramp: TEAM_RAMPS[color], soil: TERRAIN_THEMES[theme].soil, explosions }, weapon, init.projectileTextures?.[weapon], init.impactTextures?.[weapon]);
       projectileLayer.addChild(projectile.container);
       return projectile;
     },
@@ -207,7 +213,8 @@ export const createRenderer = async (init: RendererInit): Promise<Renderer> => {
     setGuide: (dots) => {
       guide.clear();
       if (!dots || dots.length === 0) return;
-      for (const d of dots) guide.rect(d.x - 0.25, d.y - 0.25, 0.5, 0.5);
+      // 2 × 2 art px の点を art px の格子に揃える
+      for (const d of dots) guide.rect(Math.round((d.x - 0.25) * 4) / 4, Math.round((d.y - 0.25) * 4) / 4, 0.5, 0.5);
       guide.fill(GUIDE_COLOR);
     },
     setEdgeMarkers: (points, on) => {
@@ -236,6 +243,7 @@ export const createRenderer = async (init: RendererInit): Promise<Renderer> => {
       if (p) safely(() => p.destroy());
       safely(() => app.destroy(true, { children: true }));
       safely(() => backdrop.destroy());
+      safely(() => explosions.destroy());
     },
   };
 };
