@@ -2,6 +2,9 @@
 // 絵を回すときは Container を回さず、ここで画素ごとに描き直して格子に揃える。
 // 格子は組み立てる関数の中でだけ書き換え、返した後は読むだけにする。
 
+/** 1 セルの art px。対戦の既定倍率 8 px/セルで 1 art px = 2 CSS px（設計書 40.3） */
+export const ART_PER_CELL = 4;
+
 /** 透明の画素 */
 export const TRANSPARENT = -1;
 
@@ -125,6 +128,24 @@ export const opaqueBounds = (grid: PixelGrid): Rect | null => {
     minX = Math.min(minX, col); maxX = Math.max(maxX, col); minY = Math.min(minY, row); maxY = Math.max(maxY, row);
   }
   return minX === Infinity ? null : { left: grid.left + minX, top: grid.top + minY, width: maxX - minX + 1, height: maxY - minY + 1 };
+};
+
+export type ColorRun = { readonly x: number; readonly y: number; readonly w: number; readonly color: number };
+
+/** 行ごとに、同じ色の横の連なりをまとめる。SVG の rect を減らすのに使う */
+export const colorRuns = (grid: PixelGrid): readonly ColorRun[] => {
+  const runs: ColorRun[] = [];
+  for (let row = 0; row < grid.height; row++) {
+    let col = 0;
+    while (col < grid.width) {
+      const color = grid.pixels[row * grid.width + col]!;
+      let end = col + 1;
+      while (end < grid.width && grid.pixels[row * grid.width + end] === color) end++;
+      if (color !== TRANSPARENT) runs.push({ x: grid.left + col, y: grid.top + row, w: end - col, color });
+      col = end;
+    }
+  }
+  return runs;
 };
 
 /** canvas の ImageData に渡す RGBA。透明は alpha 0 */

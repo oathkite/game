@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { composeLayers, createGrid, fillRect, getPixel, mirrorGrid, opaqueBounds, rotateGrid, setPixel, toRgba, TRANSPARENT } from "@/game/pixelGrid";
+import { colorRuns, composeLayers, createGrid, fillRect, getPixel, mirrorGrid, opaqueBounds, rotateGrid, setPixel, toRgba, TRANSPARENT } from "@/game/pixelGrid";
 
 // 画素の格子の純関数。設計書 40.3 の「回転は描き直して格子に揃える」の土台
 
@@ -122,5 +122,19 @@ describe("opaqueBounds と toRgba", () => {
     const grid = createGrid(0, 0, 2, 1);
     setPixel(grid, 1, 0, 0x33ff66);
     expect(Array.from(toRgba(grid))).toEqual([0, 0, 0, 0, 0x33, 0xff, 0x66, 255]);
+  });
+});
+
+describe("colorRuns", () => {
+  it("行ごとに同じ色の連なりをまとめ、透明は飛ばす", () => {
+    const grid = createGrid(-1, 2, 5, 2);
+    fillRect(grid, -1, 2, 3, 1, 7);
+    setPixel(grid, 3, 2, 8);
+    fillRect(grid, 0, 3, 2, 1, 7);
+    expect(colorRuns(grid)).toEqual([
+      { x: -1, y: 2, w: 3, color: 7 },
+      { x: 3, y: 2, w: 1, color: 8 },
+      { x: 0, y: 3, w: 2, color: 7 },
+    ]);
   });
 });
