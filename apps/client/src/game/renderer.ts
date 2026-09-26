@@ -110,6 +110,7 @@ export const createRenderer = async (init: RendererInit): Promise<Renderer> => {
   app.stage.addChild(backdrop.container, wind.container, world, labels);
   const reduced = matchMedia("(prefers-reduced-motion: reduce)");
   app.ticker.add(() => wind.update(app.ticker.deltaMS, init.wind?.() ?? 0, app.screen.width, app.screen.height, reduced.matches || !init.wind));
+  app.ticker.add(() => backdrop.tick(app.ticker.deltaMS, reduced.matches));
 
   const terrain: TerrainLayer = init.imageTerrain ? createImageTerrainLayer(init.mask, init.imageTerrain) : createTerrainLayer(init.mask, init.terrainArt, backdropTheme(init.mapId ?? "ridgeline"));
   world.addChild(terrain.sprite);
@@ -234,6 +235,7 @@ export const createRenderer = async (init: RendererInit): Promise<Renderer> => {
       const p = projectile;
       if (p) safely(() => p.destroy());
       safely(() => app.destroy(true, { children: true }));
+      safely(() => backdrop.destroy());
     },
   };
 };
