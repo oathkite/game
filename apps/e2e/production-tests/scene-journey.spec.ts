@@ -37,7 +37,7 @@ for (const viewport of [{ width: 1440, height: 900 }, { width: 667, height: 375 
       await capture(page, "battle");
       await page.getByRole("button", { name: "設定を開く", exact: true }).click();
       await page.getByRole("button", { name: "降参して対戦を終える", exact: true }).click();
-      // 自由練習の見出しの勝敗は、終了時に手番だった側の視点になる。どちらの視点にするかは未決なので、見出しの文言は見ない。
+      // 自由練習の見出しは、終了時に手番だった側の勝敗（37.4）。先攻で「勝利」にも「敗北」にもなるので、文言は見ない。
       await expect(page.getByRole("heading", { level: 1 })).toBeVisible();
       const results = page.getByRole("table", { name: "試合成績" });
       await expect(results.getByRole("cell", { name: "勝利", exact: true })).toHaveCount(1);
