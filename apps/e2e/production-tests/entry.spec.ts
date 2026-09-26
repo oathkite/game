@@ -1,4 +1,5 @@
 import { expect, test } from "@playwright/test";
+import { beginFreePractice, enterFreePractice } from "../world-tests/practiceFlow";
 test("production root opens the dot theme and practice", async ({ page }) => {
   const errors: string[] = [];
   page.on("pageerror", error => errors.push(error.message));
@@ -11,8 +12,8 @@ test("production root opens the dot theme and practice", async ({ page }) => {
     } as typeof original;
   });
   await page.goto("/");
-  await expect(page).toHaveTitle("ARTILLERY");
-  const logo = page.getByRole("heading", { name: "ARTILLERY", exact: true });
+  await expect(page).toHaveTitle("TANK SHOOT");
+  const logo = page.getByRole("heading", { name: "TANK SHOOT", exact: true });
   await expect(logo).toBeVisible();
   await expect(page.getByText("2Dプレビュー", { exact: true })).toHaveCount(0);
   expect(await page.evaluate(() => (window as Window & { webglRequests?: number }).webglRequests)).toBe(0);
@@ -25,8 +26,7 @@ test("production root opens the dot theme and practice", async ({ page }) => {
   await page.getByRole("button", { name: "はじめる", exact: true }).click();
   await expect(page.getByRole("button", { name: "出撃", exact: true })).toBeVisible();
   await expect(page.locator(".world-machine svg").first()).toBeVisible();
-  await page.getByRole("button", { name: "プラクティス", exact: true }).click(); await page.getByRole("button", { name: "練習開始", exact: true }).click();
-  await expect(page.getByTestId("camera-world")).toHaveAttribute("data-loaded", "true");
+  await enterFreePractice(page);
   await page.waitForLoadState("networkidle");
   const battleBytes = await page.evaluate(() => [...performance.getEntriesByType("navigation"), ...performance.getEntriesByType("resource")].reduce((total, entry) => total + (entry as PerformanceResourceTiming).encodedBodySize, 0));
   console.info(`Cold practice cumulative encoded transfer: ${battleBytes} bytes`);
@@ -36,6 +36,8 @@ test("production root opens the dot theme and practice", async ({ page }) => {
 });
 test("production invitation reaches the room screen without development controls", async ({ page }) => {
   await page.goto("/?room=ABCDEF");
+  // 招待の部屋コードは「部屋を探す」の絞り込みに入る（33章）。
+  await page.getByRole("button", { name: "部屋を探す", exact: true }).click();
   await expect(page.getByRole("textbox", { name: "部屋コード" })).toHaveValue("ABCDEF");
   await expect(page.getByRole("button", { name: "固定8席試験" })).toHaveCount(0);
 });
@@ -43,8 +45,9 @@ test("production invitation reaches the room screen without development controls
 test("production allocation uses the same origin when no separate server is configured", async ({ page }) => {
   await page.route("**/v2/rooms", route => route.fulfill({ status: 503, body: "unavailable" }));
   await page.goto("/?room=ABCDEF");
-  const request = page.waitForRequest(request => new URL(request.url()).pathname === "/v2/rooms");
   await page.getByRole("button", { name: "部屋を作る", exact: true }).click();
+  const request = page.waitForRequest(request => new URL(request.url()).pathname === "/v2/rooms");
+  await page.getByRole("dialog", { name: "部屋を作る" }).getByRole("button", { name: "部屋を作る", exact: true }).click();
   expect(new URL((await request).url()).origin).toBe("http://127.0.0.1:5188");
   await expect(page.getByText("対戦サーバーに接続できません。", { exact: true })).toBeVisible();
 });
@@ -53,16 +56,16 @@ test("a failed battle chunk offers a reload instead of a blank screen", async ({
   await page.route("**/assets/CameraPrototype-*.js*", route => route.abort());
   await page.goto("/");
   await page.getByRole("button", { name: "はじめる", exact: true }).click();
-  await page.getByRole("button", { name: "プラクティス", exact: true }).click(); await page.getByRole("button", { name: "練習開始", exact: true }).click();
+  await beginFreePractice(page);
   await expect(page.getByRole("alert")).toContainText("画面を読み込めませんでした");
   await page.getByRole("button", { name: "再読み込み", exact: true }).click();
   await page.getByRole("button", { name: "はじめる", exact: true }).click();
-  await page.getByRole("button", { name: "プラクティス", exact: true }).click(); await page.getByRole("button", { name: "練習開始", exact: true }).click();
+  await beginFreePractice(page);
   await expect(page.getByRole("alert")).toContainText("画面を読み込めませんでした");
   await page.unroute("**/assets/CameraPrototype-*.js*");
   await page.getByRole("button", { name: "再読み込み", exact: true }).click();
   await page.getByRole("button", { name: "はじめる", exact: true }).click();
-  await page.getByRole("button", { name: "プラクティス", exact: true }).click(); await page.getByRole("button", { name: "練習開始", exact: true }).click();
+  await beginFreePractice(page);
   await expect(page.getByTestId("camera-world")).toHaveAttribute("data-loaded", "true");
   expect((await page.getByTestId("camera-world").boundingBox())!.height).toBeGreaterThan(300);
 });

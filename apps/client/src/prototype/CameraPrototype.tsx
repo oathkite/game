@@ -69,9 +69,12 @@ const Battle = ({ store, begin, worldArt, cpu, cpuLevel, onExit, onResult }: { r
   const hudBottom = touch ? 112 : largeHud ? 160 : size.height < 500 || size.width < 1000 ? 96 : 120;
   const layout = useMemo(() => { const base = cameraLayout(size.width, size.height, worldArt ? loadCameraScale() : 9); return worldArt ? { ...base, mapHeight: Math.max(1, size.height - hudTop - hudBottom) } : base; }, [size, worldArt, hudTop, hudBottom]);
   const revealing = useDelayReveal(view.delay?.revealUntil);
-  const enabled = !revealing && sceneReady && view.phase === "acting" && view.control !== null;
+  // 落下中は sceneReady が false になる。入力には sceneReady を含めずに渡し、paused で一時停止させる。
+  // enabled を渡すと押し続けの反復が止まり、着地しても移動が再開しない。
+  const controllable = !revealing && view.phase === "acting" && view.control !== null;
+  const enabled = controllable && sceneReady;
   const preparing = Boolean(cpu && sceneReady && !revealing && canPrepare(view));
-  const input = usePrototypeInput(store, rig, enabled, menu || confirmLeave || revealing, () => { if (confirmLeave) setConfirmLeave(false); else setMenu((open) => !open); }, !sceneReady, preparing);
+  const input = usePrototypeInput(store, rig, controllable, menu || confirmLeave || revealing, () => { if (confirmLeave) setConfirmLeave(false); else setMenu((open) => !open); }, !sceneReady, preparing);
   useBrowserBackAction(Boolean(worldArt && onExit), () => { input.cancel(); setMenu(false); setConfirmLeave(true); });
   const ready = view.mask !== null && view.players !== null;
   const hudSeat = cpu ? 0 : view.currentSeat;

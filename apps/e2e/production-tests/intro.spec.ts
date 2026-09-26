@@ -1,4 +1,5 @@
 import { expect, test } from "@playwright/test";
+import { lobby } from "../world-tests/practiceFlow";
 test("title starts immediately without intro or replay controls", async ({ page }) => {
   await page.goto("/");
   await expect(page.getByRole("button", { name: "はじめる", exact: true })).toBeVisible();
@@ -13,5 +14,5 @@ test("audio initialization refusal does not block starting the game", async ({ p
   });
   await page.goto("/");
   await page.getByRole("button", { name: "はじめる", exact: true }).click();
-  await expect(page.getByRole("heading", { name: "出撃準備" })).toBeVisible();
+  await expect(lobby(page)).toBeVisible();
 });
