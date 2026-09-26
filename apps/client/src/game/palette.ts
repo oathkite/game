@@ -54,5 +54,8 @@ const ALLOWED: ReadonlySet<number> = new Set([
   ...Object.values(TEAM_RAMPS).flatMap(r => [r.light, r.base, r.shadow, r.deep]),
 ]);
 
+/** CSS と canvas 2D に渡す色の文字列（#rrggbb） */
+export const cssHex = (color: number): string => `#${color.toString(16).padStart(6, "0")}`;
+
 /** 固定パレットの色か。テストで、描いた画素がすべてパレットの色であることを確かめる */
 export const isPaletteColor = (color: number): boolean => ALLOWED.has(color);

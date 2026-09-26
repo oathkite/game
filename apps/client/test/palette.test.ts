@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { COLOR_HEX, PLAYER_COLORS } from "@game/protocol";
-import { FIRE_RAMP, isPaletteColor, PALETTE, rampOf, SMOKE_RAMP, TEAM_RAMPS } from "@/game/palette";
+import { cssHex, FIRE_RAMP, isPaletteColor, PALETTE, rampOf, SMOKE_RAMP, TEAM_RAMPS } from "@/game/palette";
 
 // 設計書 40.4 の固定パレット。描く画素はすべてこの表の色にする
 
@@ -49,5 +49,13 @@ describe("isPaletteColor", () => {
     expect(isPaletteColor(PALETTE.outline)).toBe(true);
     expect(isPaletteColor(TEAM_RAMPS.pink.deep)).toBe(true);
     expect(isPaletteColor(0x123456)).toBe(false);
+  });
+});
+
+describe("cssHex", () => {
+  it("6 桁の #rrggbb にする", () => {
+    expect(cssHex(PALETTE.green)).toBe("#33ff66");
+    expect(cssHex(PALETTE.black)).toBe("#000000");
+    expect(cssHex(PALETTE.sky1)).toBe("#0b1122");
   });
 });

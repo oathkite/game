@@ -13,6 +13,9 @@ import type { WeaponId } from "@game/protocol";
 import type { LabFrame } from "@game/protocol/v2-lab";
 import { applyOps, buildInitialTerrain, tiltOf } from "@game/sim";
 import { createRenderer, type Renderer } from "@/game/renderer";
+import { cssHex, PALETTE } from "@/game/palette";
+import { backdropTheme } from "@/game/pixelBackdrop";
+import { TERRAIN_THEMES } from "@/game/terrainPaint";
 import type { Layout } from "@/game/scale";
 import { createCameraRig } from "@/prototype/cameraRig";
 import { loadCameraSettings } from "@/prototype/cameraSettings";
@@ -146,7 +149,7 @@ export const NetworkField = (props: Props) => {
         wasOpening = Boolean(opening); element.dataset.opening = String(Boolean(opening));
         const center = rig.tick(dt, performance.now(), matchMedia("(prefers-reduced-motion: reduce)").matches);
         const offset = worldToScreen({ x: 0, y: 0 }, center, rig.get().viewport); r.setCameraOffset(Math.round(offset.x), Math.round(offset.y));
-        drawOverview(mini.current, mask, players, rig.get());
+        drawOverview(mini.current, mask, players, rig.get(), frame.map.id);
         element.dataset.cameraX = center.x.toFixed(3); element.dataset.cameraY = center.y.toFixed(3); element.dataset.mode = rig.get().mode;
       });
       setLoaded(true);
@@ -188,9 +191,10 @@ export const NetworkField = (props: Props) => {
     <button className="network-overview" disabled={openingActive()} aria-label={t("全体図からカメラを移動")} onClick={e => { const box = e.currentTarget.getBoundingClientRect(); rig.focus(e.detail === 0 ? { x: props.frame.map.width / 2, y: props.frame.map.height / 2 } : { x: (e.clientX - box.left) / box.width * props.frame.map.width, y: (e.clientY - box.top) / box.height * props.frame.map.height }, "manual", true); }}><canvas ref={mini} width="200" height="90" /></button>
   </div>;
 };
-const drawOverview = (canvas: HTMLCanvasElement | null, mask: ReturnType<typeof baseTerrain>, players: LabFrame["players"], camera: ReturnType<ReturnType<typeof createCameraRig>["get"]>) => {
+const drawOverview = (canvas: HTMLCanvasElement | null, mask: ReturnType<typeof baseTerrain>, players: LabFrame["players"], camera: ReturnType<ReturnType<typeof createCameraRig>["get"]>, mapId: string) => {
   const ctx = canvas?.getContext("2d"); if (!canvas || !ctx) return;
-  ctx.fillStyle = "#24344a"; ctx.fillRect(0, 0, 200, 90); ctx.fillStyle = "#8c995f";
+  // 全体図も夜空とステージの土の色で描く（設計書 40.4）
+  ctx.fillStyle = cssHex(PALETTE.sky1); ctx.fillRect(0, 0, 200, 90); ctx.fillStyle = cssHex(TERRAIN_THEMES[backdropTheme(mapId)].soil[0]);
   const sx = 200 / mask.width, sy = 90 / mask.height;
   for (let y = 0; y < mask.height; y += 5) for (let x = 0; x < mask.width; x += 5) if (mask.cells[y * mask.width + x]) ctx.fillRect(x * sx, y * sy, 5 * sx, 5 * sy);
   for (const p of players) if (!p.eliminated) { ctx.fillStyle = teamColor(Number(p.teamId.slice(1))); ctx.fillRect(p.x * sx - 1, p.y * sy - 3, 3, 3); }

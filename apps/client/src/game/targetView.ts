@@ -1,9 +1,15 @@
 import { Graphics } from "pixi.js";
 import type { Target } from "@/practice/rules";
 import { TARGET_HEIGHT } from "@/practice/rules";
+import { ART_PER_CELL, colorRuns } from "./pixelGrid";
+import { targetPixels } from "./targetSprite";
+
+// 練習の的。絵は targetSprite.ts（設計書 40.8）。的が変わったときだけ描き直す。
+const ART = 1 / ART_PER_CELL;
 
 export const createTargetView = () => {
   const graphics = new Graphics();
+  const runs = colorRuns(targetPixels());
   let previous: readonly Target[] | null = null;
   return { graphics, update: (targets: readonly Target[]) => {
     if (previous === targets) return;
@@ -12,10 +18,7 @@ export const createTargetView = () => {
     for (const t of targets) {
       if (t.destroyed) continue;
       const y = t.y - TARGET_HEIGHT;
-      graphics.rect(t.x - 0.5, y + 3, 1, 5).fill(0xb78d42);
-      graphics.circle(t.x, y, 3).fill(0xffcc66);
-      graphics.circle(t.x, y, 1.8).fill(0x241907);
-      graphics.circle(t.x, y, 0.7).fill(0xffeeaa);
+      for (const r of runs) graphics.rect(t.x + r.x * ART, y + r.y * ART, r.w * ART, ART).fill(r.color);
     }
   } };
 };
