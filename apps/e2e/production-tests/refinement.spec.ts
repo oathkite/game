@@ -1,8 +1,9 @@
 import { expect, test } from "@playwright/test";
+import { beginFreePractice } from "../world-tests/practiceFlow";
 const enter = async (page: import("@playwright/test").Page) => {
   await page.goto("/");
   await page.getByRole("button", { name: "はじめる", exact: true }).click();
-  await page.getByRole("button", { name: "プラクティス", exact: true }).click(); await page.getByRole("button", { name: "練習開始", exact: true }).click();
+  await beginFreePractice(page);
 };
 test("opening holds input until START and leaves a full turn", async ({ page }) => {
   await page.setViewportSize({ width: 1440, height: 900 });
@@ -10,7 +11,8 @@ test("opening holds input until START and leaves a full turn", async ({ page }) 
   const field = page.getByTestId("camera-world");
   await expect(page.locator(".battle-weapons button").first()).toBeDisabled();
   await expect(field).toHaveAttribute("data-loaded", "true", { timeout: 15000 });
-  await expect(field).toHaveAttribute("data-scale", "9");
+  // 通常のカメラは表示倍率 9 を 7/9 に引いた 7 CSS px/cell（loadCameraScale）。
+  await expect(field).toHaveAttribute("data-scale", "7");
   await expect(field).toHaveAttribute("data-opening", "true");
   await expect(page.locator(".battle-weapons button").first()).toBeDisabled();
   await page.screenshot({ path: "test-results/refinement-overview.png" });

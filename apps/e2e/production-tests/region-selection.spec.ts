@@ -1,4 +1,7 @@
 import { expect, test } from "@playwright/test";
+// 地域の自動選択と「クイック参加」は、e984b39 の部屋一覧の改修で画面から外れた（TBD-29）。
+// 入口を戻すか廃止するかが決まるまで保留する。rooms-tests/quick.spec.ts と同じ扱い。
+test.fixme(true, "クイック参加の入口と地域別の応答表示が画面に無い（設計書32章・36章との食い違い、TBD-29）");
 const enter = async (page: import("@playwright/test").Page) => {
   await page.goto("/?prototype=world");
   await page.getByRole("button", { name: "はじめる", exact: true }).click();

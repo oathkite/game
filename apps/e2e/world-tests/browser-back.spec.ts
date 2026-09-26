@@ -30,10 +30,11 @@ test("browser back cancels a charged shot and requires confirmation before leavi
   const dialog = page.getByRole("dialog", { name: "出撃準備へ戻りますか？" });
   await expect(dialog).toBeVisible();
   await page.keyboard.up("Space");
-  expect(await page.evaluate(() => window.__fortress!.getView().phase)).toBe("acting");
   await page.keyboard.press("Escape");
   await expect(dialog).toHaveCount(0);
   await expect(page.getByRole("dialog")).toHaveCount(0);
+  // 溜めは取り消され、弾は出ていない。撃つと手番が終わり、武器ボタンが押せなくなる。
+  await expect(page.locator(".battle-weapons button").first()).toBeEnabled();
   await expect(page.getByTestId("camera-world")).toHaveAttribute("data-loaded", "true");
   await back(page);
   await dialog.getByRole("button", { name: "出撃準備に戻る", exact: true }).click();

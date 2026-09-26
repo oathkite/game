@@ -1,11 +1,11 @@
 import { expect, test } from "@playwright/test";
+import { enterFreePractice, startFreePractice } from "../world-tests/practiceFlow";
 
 test("clicking a weapon preserves Space firing and keyboard aim", async ({ page }) => {
   await page.setViewportSize({ width: 1440, height: 900 });
   await page.goto("/");
   await page.getByRole("button", { name: "はじめる", exact: true }).click();
-  await page.getByRole("button", { name: "プラクティス", exact: true }).click(); await page.getByRole("button", { name: "練習開始", exact: true }).click();
-  await expect(page.getByTestId("camera-world")).toHaveAttribute("data-loaded", "true");
+  await enterFreePractice(page);
   const weapon = page.locator(".battle-weapons button").nth(1);
   await weapon.click();
   // WebKit does not focus buttons on mouse click; exercise the focused state too.
@@ -24,9 +24,7 @@ test("clicking a weapon preserves Space firing and keyboard aim", async ({ page 
 test("aim and Space charge overlap without dropping either input", async ({ page }) => {
   await page.goto("/");
   await page.getByRole("button", { name: "はじめる", exact: true }).click();
-  await page.getByRole("button", { name: "プラクティス", exact: true }).click();
-  await page.getByRole("button", { name: "練習開始", exact: true }).click();
-  await expect(page.getByTestId("camera-world")).toHaveAttribute("data-opening", "false", { timeout: 15000 });
+  await startFreePractice(page);
   const angle = page.getByTestId("camera-angle");
   const power = page.getByTestId("prototype-power");
   await page.keyboard.down("w");

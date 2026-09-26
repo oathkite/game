@@ -1,4 +1,6 @@
 import { expect, test } from "@playwright/test";
+import { enterFreePractice } from "./practiceFlow";
+// 地形のマスクは画面から読めないので、開発用のフック（window.__fortress）がある dev サーバーで確かめる。
 test("authored terrain survives loading and loses collision cells after a real shot", async ({ page }) => {
   const errors: string[] = []; page.on("pageerror", e => errors.push(e.message));
   await page.setViewportSize({ width: 1440, height: 900 });
@@ -8,7 +10,7 @@ test("authored terrain survives loading and loses collision cells after a real s
   });
   await page.goto("/");
   await page.getByRole("button", { name: "はじめる", exact: true }).click();
-  await page.getByRole("button", { name: "プラクティス", exact: true }).click(); await page.getByRole("button", { name: "練習開始", exact: true }).click();
+  await enterFreePractice(page);
   const field = page.getByTestId("camera-world");
   await expect(field).toHaveAttribute("data-opening", "true");
   await page.screenshot({ path: `test-results/image-terrain-overview-${test.info().project.name}.png` });
