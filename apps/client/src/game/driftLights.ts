@@ -16,12 +16,12 @@ const COLORS: Readonly<Record<SkyTheme, readonly (readonly [number, number])[]>>
   islands: [[PALETTE.energy0, PALETTE.energy2], [PALETTE.energy1, PALETTE.sky4]],
 };
 
-/** 光 i の t ms の位置（画面の割合）と点いているか。周期 1200〜2400 ms で明滅し、sin の軌道で漂う */
+/** 光 i の t ms の位置（画面の割合）と点いているか。遠景の木の帯と地平の近く（画面の高さの 0.44〜0.68）を漂い、周期 500〜1100 ms で明滅する（評価の 3 回目） */
 export const driftLightAt = (i: number, t: number, reduced: boolean): { readonly x: number; readonly y: number; readonly on: boolean } => {
-  const h = hash32(41, i), period = 1200 + 1200 * unit(hash32(h, 1)), phase = unit(hash32(h, 2));
+  const h = hash32(41, i), period = 500 + 600 * unit(hash32(h, 1)), phase = unit(hash32(h, 2));
   const time = reduced ? 0 : t;
-  const x = unit(hash32(h, 3)) + 0.03 * Math.sin((time / (period * 3)) * Math.PI * 2 + phase * 6);
-  const y = 0.45 + 0.4 * unit(hash32(h, 4)) + 0.02 * Math.sin((time / (period * 2)) * Math.PI * 2 + phase * 4);
+  const x = unit(hash32(h, 3)) + 0.03 * Math.sin((time / (period * 6)) * Math.PI * 2 + phase * 6);
+  const y = 0.46 + 0.2 * unit(hash32(h, 4)) + 0.02 * Math.sin((time / (period * 4)) * Math.PI * 2 + phase * 4);
   return { x, y, on: reduced || ((time / period + phase) % 1) < 0.6 };
 };
 

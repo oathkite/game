@@ -9,7 +9,7 @@ import { allocBatch, type ParticleBatch } from "./particles";
 // 余韻と地形への光。設計書 41 の評価と改善（1 回目）。
 // クレーターの底の小さな炎と昇る火の粉、撃破した機体の黒煙の柱、爆発が地形の表面を照らす光。どれも閉じた式の粒。
 
-const FLAME = 12, EMBER = 13, COLUMN = 14;
+const FLAME = 12, EMBER = 13, COLUMN = 14, GLOW = 15;
 
 /** クレーターの底の炎が燃える長さ（ms） */
 export const FLAME_MS = 2500;
@@ -37,41 +37,54 @@ export const craterFloor = (after: TerrainMask, op: TerrainOp, seed: number): { 
   return picked;
 };
 
-/** 小さな炎と昇る火の粉。炎は 28 粒/秒を 2.5 秒、火の粉は 6 粒をゆっくり昇らせる */
+/** 炎の舌。粒を 1 art px ずつ上へ重ね、上の粒ほど寿命を短くして、舌の先から冷まして消す。
+ * 舌は幅 1〜2 art px、高さはその 2〜3 倍になる（評価の 3 回目で、炎の床が塊に見えた） */
+const TONGUE: readonly number[] = [1, 0.8, 0.6];
+
+/** 小さな炎と昇る火の粉。炎は 48 本/秒の舌を 2.5 秒、火の粉は 6 粒をゆっくり昇らせる */
 export const craterFlames = (after: TerrainMask, op: TerrainOp, seed: number): ParticleBatch => {
   const floor = craterFloor(after, op, seed);
-  const flamePer = Math.round((FLAME_RATE * FLAME_MS) / 1000), per = flamePer + EMBERS_PER_FLAME;
-  // 炎の粒は根元で太く（3 art px）、昇って冷めるほど細くなる。大きさの表はまとまりで共有するので、火の粉も生まれた直後だけ太い
-  const b = allocBatch(floor.length * per, { ramps: [[PALETTE.fire1, PALETTE.fire2, PALETTE.fire3, PALETTE.fire5], [PALETTE.fire1, PALETTE.fire3, PALETTE.fire5, PALETTE.fire5]], gravity: -30, drag: 0, sizes: [3, 2, 2, 1] });
+  const flamePer = Math.round((FLAME_RATE * FLAME_MS) / 1000), per = flamePer * TONGUE.length + EMBERS_PER_FLAME;
+  // 炎の舌は細く（2 art px の芯から 1 art px へ）、淡い黄は芯の最初の段だけ。大きさの表はまとまりで共有するので、火の粉も生まれた直後だけ太い
+  const b = allocBatch(floor.length * per, { ramps: [[PALETTE.fire1, PALETTE.fire2, PALETTE.fire3, PALETTE.fire5], [PALETTE.fire2, PALETTE.fire3, PALETTE.fire5, PALETTE.fire5]], gravity: -30, drag: 0, sizes: [2, 1, 1, 1] });
   floor.forEach((f, k) => {
     const x = (f.x + 0.5) * ART_PER_CELL, y = f.y * ART_PER_CELL - 1;
-    for (let j = 0; j < per; j++) {
-      const i = k * per + j, ember = j >= flamePer, h = hash32(seed, ember ? EMBER : FLAME, k, j);
+    for (let j = 0; j < flamePer; j++) {
+      const h = hash32(seed, FLAME, k, j);
       // 炎は根元の幅いっぱいから中央へ寄りながら昇る
-      const spread = (unit(hash32(h, 1)) * 2 - 1) * (ember ? 1 : FLAME_HALF_WIDTH);
-      b.x0[i] = x + spread;
-      b.y0[i] = y;
-      b.vx[i] = ember ? (unit(hash32(h, 2)) * 2 - 1) * 12 : -spread * 1.2 + (unit(hash32(h, 2)) * 2 - 1) * 4;
-      b.vy[i] = -(ember ? 15 + 15 * unit(hash32(h, 3)) : 40 + 30 * unit(hash32(h, 3)));
+      const spread = (unit(hash32(h, 1)) * 2 - 1) * FLAME_HALF_WIDTH;
+      const vx = -spread * 1.2 + (unit(hash32(h, 2)) * 2 - 1) * 4, vy = -(40 + 30 * unit(hash32(h, 3)));
+      const at = j * (FLAME_MS / flamePer) + 20 * unit(hash32(h, 4));
       // 炎の最後の 1/3 は勢いを落とすため、生まれる間隔を広げずに寿命を縮める
-      const at = ember ? (j - flamePer + 0.5) * (FLAME_MS / EMBERS_PER_FLAME) : j * (FLAME_MS / flamePer) + 20 * unit(hash32(h, 4));
-      b.t0[i] = at;
-      b.life[i] = ember ? 1300 + 400 * unit(hash32(h, 5)) : (250 + 200 * unit(hash32(h, 5))) * (at > FLAME_MS * 0.66 ? 0.6 : 1);
-      b.ramp[i] = ember ? 1 : 0;
-      b.size[i] = 1;
-      b.fade[i] = unit(hash32(h, 7));
+      const life = (250 + 200 * unit(hash32(h, 5))) * (at > FLAME_MS * 0.66 ? 0.6 : 1);
+      TONGUE.forEach((share, m) => {
+        const i = k * per + j * TONGUE.length + m;
+        b.x0[i] = x + spread; b.y0[i] = y - m;
+        b.vx[i] = vx; b.vy[i] = vy;
+        b.t0[i] = at; b.life[i] = life * share;
+        b.ramp[i] = 0; b.size[i] = 1; b.fade[i] = unit(hash32(h, 7));
+      });
+    }
+    for (let e = 0; e < EMBERS_PER_FLAME; e++) {
+      const i = k * per + flamePer * TONGUE.length + e, h = hash32(seed, EMBER, k, e);
+      b.x0[i] = x + (unit(hash32(h, 1)) * 2 - 1); b.y0[i] = y;
+      b.vx[i] = (unit(hash32(h, 2)) * 2 - 1) * 12; b.vy[i] = -(15 + 15 * unit(hash32(h, 3)));
+      b.t0[i] = (e + 0.5) * (FLAME_MS / EMBERS_PER_FLAME);
+      b.life[i] = 1300 + 400 * unit(hash32(h, 5));
+      b.ramp[i] = 1; b.size[i] = 1; b.fade[i] = unit(hash32(h, 7));
     }
   });
   return b;
 };
 
-/** 撃破した機体の黒煙の柱。3.5 秒かけて 40 粒を昇らせ、根元の暗い灰から上ほど明るく、4 → 6 → 8 art px と膨らませる。位置はセルで接地点 */
+/** 撃破した機体の煙の柱。3.5 秒かけて 40 粒を昇らせ、根元の中くらいの灰から上ほど明るく、4 → 6 → 8 art px と膨らませる。位置はセルで接地点 */
 export const wreckSmokeColumn = (x: number, y: number, seed: number): ParticleBatch => {
-  const count = 40, b = allocBatch(count, { ramps: [[PALETTE.smoke3, PALETTE.smoke2, PALETTE.smoke1]], gravity: -6, drag: 0.4, sizes: [4, 6, 8] });
+  // 根元を中くらいの灰にして、暗い木の帯に溶けずに残骸から切れ目なく出して見せる（評価の 3 回目）
+  const count = 40, b = allocBatch(count, { ramps: [[PALETTE.smoke2, PALETTE.smoke1, PALETTE.smoke1]], gravity: -6, drag: 0.4, sizes: [4, 6, 8] });
   for (let i = 0; i < count; i++) {
     const h = hash32(seed, COLUMN, i);
     b.x0[i] = (x + 0.5) * ART_PER_CELL + (unit(hash32(h, 1)) * 2 - 1) * 3;
-    b.y0[i] = (y - 4) * ART_PER_CELL;
+    b.y0[i] = (y - 2.5) * ART_PER_CELL;
     b.vx[i] = (unit(hash32(h, 2)) * 2 - 1) * 5;
     b.vy[i] = -(26 + 12 * unit(hash32(h, 3)));
     b.t0[i] = (i / count) * 3500;
@@ -84,12 +97,19 @@ export const wreckSmokeColumn = (x: number, y: number, seed: number): ParticleBa
 
 const bayer = (x: number, y: number): number => (BAYER4[((y & 3) << 2) | (x & 3)]! + 0.5) / 16;
 
-/** 地形の照り返しの濃さの段。爆風半径の 0.6、1.2、1.8 倍までを 100、50、25% のドットで照らす（設計書 41.13 の評価の 2 回目） */
-const SURFACE_LEVELS: readonly (readonly [number, number])[] = [[0.6, 1], [1.2, 0.5], [1.8, 0.25]];
+/** 地形の照り返しの濃さの段。爆風の縁から外へ、半径の 1/4、1/2、3/4 まで（3、6、9 セルを超えない）を 100、50、25% のドットで照らす。
+ * 爆心からの距離の倍率で測ると、大きな爆風（掘削弾）では濃い段がクレーターの中に収まり、残る地表を照らさなかった（評価の 3 回目） */
+const SURFACE_LEVELS: readonly { readonly share: number; readonly maxCells: number; readonly level: number }[] = [
+  { share: 0.25, maxCells: 3, level: 1 },
+  { share: 0.5, maxCells: 6, level: 0.5 },
+  { share: 0.75, maxCells: 9, level: 0.25 },
+];
 /** 照り返しを 3 段で弱める 1 段の長さ（ms）。3 段で 450 ms */
 export const SURFACE_STEP_MS = 150;
 
-const levelAt = (d: number, radius: number): number => SURFACE_LEVELS.find(([scale]) => d < radius * scale)?.[1] ?? 0;
+/** 爆風の縁から d − radius（art px）の外にある面の濃さ */
+const levelAt = (d: number, radius: number): number =>
+  SURFACE_LEVELS.find(s => d - radius < Math.min(radius * s.share, s.maxCells * ART_PER_CELL))?.level ?? 0;
 
 /** 空気に面した面のうち、上面と、爆心を向いた横と下の面の縁の 2 texel（art px）と、その面の向き */
 const litFaces = (mask: TerrainMask, x: number, y: number): readonly { readonly tx: number; readonly ty: number; readonly nx: number; readonly ny: number }[] => {
@@ -108,28 +128,70 @@ const litFaces = (mask: TerrainMask, x: number, y: number): readonly { readonly 
   return faces;
 };
 
-/** 爆発が地形を照らす光。上面と爆心を向いた面の縁に、中心ほど濃い 3 段の Bayer のドットで光の色を置き、450 ms で 3 段に弱める。
+type LitFace = { readonly tx: number; readonly ty: number; readonly d: number };
+
+/** 光源 c（art px）から range（art px）までにある、上面と光源を向いた横と下の面の縁の texel。skip のセルは除く */
+const facesToward = (mask: TerrainMask, c: { readonly x: number; readonly y: number }, range: number, skip: (x: number, y: number) => boolean): LitFace[] => {
+  const cells = Math.ceil(range / ART_PER_CELL) + 1, cx = Math.floor(c.x / ART_PER_CELL), cy = Math.floor(c.y / ART_PER_CELL);
+  const out: LitFace[] = [];
+  for (let y = cy - cells; y <= cy + cells; y++) for (let x = cx - cells; x <= cx + cells; x++) {
+    if (!solid(mask, x, y) || skip(x, y)) continue;
+    for (const f of litFaces(mask, x, y)) {
+      const dx = c.x - (f.tx + 0.5), dy = c.y - (f.ty + 0.5), d = Math.hypot(dx, dy);
+      // 上面はいつも、横と下の面は光源を向いているときだけ照らす
+      if (d >= range || (f.ny !== -1 && (f.nx * dx + f.ny * dy) / Math.max(1, d) < 0.2)) continue;
+      out.push({ tx: f.tx, ty: f.ty, d });
+    }
+  }
+  return out;
+};
+
+/** 爆発が地形を照らす光。上面と爆心を向いた面の縁に、爆風の縁に近いほど濃い 3 段の Bayer のドットで光の色を置き、450 ms で 3 段に弱める。
+ * 爆風の内側のセルは削れるので照らさない（削れた後に宙に光が残らないようにする）。
  * 位置はセル、radius は爆風半径（art px）。濃さ 50% 以上の段は内側の色 */
 export const surfaceLight = (mask: TerrainMask, cx: number, cy: number, radius: number, inner: number, outer: number): ParticleBatch => {
   const c = { x: (cx + 0.5) * ART_PER_CELL, y: (cy + 0.5) * ART_PER_CELL }, R = Math.max(1, radius);
-  const cells = Math.ceil((R * 1.8) / ART_PER_CELL) + 1;
+  const outermost = SURFACE_LEVELS[SURFACE_LEVELS.length - 1]!, carved = (R / ART_PER_CELL) ** 2;
+  // 削る範囲は sim の carve と同じく、セルの中心の距離が半径以下
+  const faces = facesToward(mask, c, R + Math.min(R * outermost.share, outermost.maxCells * ART_PER_CELL), (x, y) => (x - cx) ** 2 + (y - cy) ** 2 <= carved);
   const dots: { x: number; y: number; life: number; inner: boolean }[] = [];
-  for (let y = cy - cells; y <= cy + cells; y++) for (let x = cx - cells; x <= cx + cells; x++) {
-    if (!solid(mask, x, y)) continue;
-    for (const f of litFaces(mask, x, y)) {
-      const dx = c.x - (f.tx + 0.5), dy = c.y - (f.ty + 0.5), d = Math.hypot(dx, dy);
-      // 上面はいつも、横と下の面は爆心を向いているときだけ照らす
-      if (f.ny !== -1 && (f.nx * dx + f.ny * dy) / Math.max(1, d) < 0.2) continue;
-      const level = levelAt(d, R), threshold = bayer(f.tx, f.ty);
-      // 強さ 1、2/3、1/3 の 3 段のうち、level × 強さが閾値を超える段の数だけ光る
-      const steps = [1, 2 / 3, 1 / 3].filter(s => level * s > threshold).length;
-      if (steps > 0) dots.push({ x: f.tx, y: f.ty, life: steps * SURFACE_STEP_MS, inner: level >= 0.5 });
-    }
+  for (const f of faces) {
+    const level = levelAt(f.d, R), threshold = bayer(f.tx, f.ty);
+    // 強さ 1、2/3、1/3 の 3 段のうち、level × 強さが閾値を超える段の数だけ光る
+    const steps = [1, 2 / 3, 1 / 3].filter(s => level * s > threshold).length;
+    if (steps > 0) dots.push({ x: f.tx, y: f.ty, life: steps * SURFACE_STEP_MS, inner: level >= 0.5 });
   }
   const b = allocBatch(dots.length, { ramps: [[outer], [inner]], gravity: 0, drag: 0 });
   dots.forEach((d, i) => {
     b.x0[i] = d.x; b.y0[i] = d.y; b.life[i] = d.life; b.size[i] = 1; b.fade[i] = 0;
     b.ramp[i] = d.inner ? 1 : 0;
+  });
+  return b;
+};
+
+/** 炎が照らす範囲の半径（セル）と、炎の根元での強さ。評価の 3 回目の「照り返しの仕組みを 25〜50% の強さで」に合わせる */
+const FLAME_LIGHT_CELLS = 6;
+const FLAME_LIGHT_STRENGTH = 0.5;
+/** 炎の光の揺らぎの 1 コマ（ms）。コマごとに強さを 60〜100% で変える */
+export const FLAME_FLICKER_MS = 120;
+
+/** 炎がクレーターの床と壁を照らす光。炎を向いた面の縁に、炎に近いほど濃い Bayer のドットを暗い橙で置く。
+ * 120 ms のコマごとに強さを揺らし、炎が燃える 2.5 秒で弱める。土の中には光を置かない（評価の 3 回目） */
+export const flameGlow = (after: TerrainMask, op: TerrainOp, seed: number): ParticleBatch => {
+  const R = FLAME_LIGHT_CELLS * ART_PER_CELL, frames = Math.ceil(FLAME_MS / FLAME_FLICKER_MS);
+  const dots: { x: number; y: number; t0: number }[] = [];
+  craterFloor(after, op, seed).forEach((f, k) => {
+    const faces = facesToward(after, { x: (f.x + 0.5) * ART_PER_CELL, y: f.y * ART_PER_CELL - 2 }, R, () => false);
+    for (let n = 0; n < frames; n++) {
+      const t0 = n * FLAME_FLICKER_MS, strength = FLAME_LIGHT_STRENGTH * (1 - t0 / FLAME_MS) * (0.6 + 0.4 * unit(hash32(seed, GLOW, k, n)));
+      for (const face of faces) if (strength * (1 - face.d / R) > bayer(face.tx, face.ty)) dots.push({ x: face.tx, y: face.ty, t0 });
+    }
+  });
+  const b = allocBatch(dots.length, { ramps: [[PALETTE.fire4]], gravity: 0, drag: 0 });
+  dots.forEach((d, i) => {
+    b.x0[i] = d.x; b.y0[i] = d.y; b.t0[i] = d.t0; b.life[i] = FLAME_FLICKER_MS; b.size[i] = 1;
+    // 光は間引かずにコマの終わりで消える
+    b.fade[i] = 0;
   });
   return b;
 };

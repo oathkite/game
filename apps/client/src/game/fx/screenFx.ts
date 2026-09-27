@@ -1,14 +1,16 @@
 import { Graphics, type Container } from "pixi.js";
 import { PALETTE } from "../palette";
 import { createGradeFilter } from "./gradeFilter";
-import { composeTables, DIM_TABLE, type GradeTable } from "./gradeTables";
+import { brighterHalf, composeTables, DIM_TABLE, type GradeTable } from "./gradeTables";
 
 // 画面全体にかかる演出。設計書 41.6 の I5 と、41.13 の評価と改善。
 // 暗転は、爆心の周りを残すスポットライトにし、外の地形と背景の色を 1 段暗いパレットの色へ置き換える。
 // 空の色は、武器と大ダメージで置き換え表を当てる。どちらも置き換え表のフィルター（gradeFilter.ts）で、描く画素はパレットの色のまま。
-// 強さを Bayer の市松で段に分けて戻すと空が網のように見えたので、長さの間は表をそのまま当て、終わったら外す。
+// 強さを Bayer の市松で段に分けて戻すと空が網のように見えたので、入りと戻りの 70 ms だけ明るい半分の色を置き換える表を挟む。
 // 戦車、火球、粒、数字には当てない（暗転の手前に見える）。全画面の光は 1 コマの白。
 
+/** 色の寄せの入りと戻りの段の長さ（ms） */
+const TINT_EDGE_MS = 70;
 /** スポットライトの縁の市松の幅（セル） */
 const DIM_EDGE_CELLS = 3;
 /** 背景の 1 art px の画面の px（pixelBackdrop の PX と同じ） */
@@ -65,8 +67,10 @@ export const createScreenFx = (view: View): ScreenFx => {
       const tinting = tint !== null && now >= tint.from && now < tint.from + tint.ms ? tint : null;
       terrainKey = place(view.terrain, terrainGrade, dimming ? "dim" : "", dimming ? DIM_TABLE : null, 1, view.cell() / 4, true);
       // 空は、暗転と色の寄せが重なったら続けて当てる。スポットライトは地形だけにする（空に残すと、寄せた空に元の色の円が浮いた）
-      const skyTable = dimming && tinting ? composeTables(DIM_TABLE, tinting.table) : dimming ? DIM_TABLE : tinting?.table ?? null;
-      const key = `${dimming}/${tinting ? tinting.from : ""}`;
+      const edge = tinting !== null && (now - tinting.from < TINT_EDGE_MS || tinting.from + tinting.ms - now <= TINT_EDGE_MS);
+      const tintTable = tinting ? (edge ? brighterHalf(tinting.table) : tinting.table) : null;
+      const skyTable = dimming && tintTable ? composeTables(DIM_TABLE, tintTable) : dimming ? DIM_TABLE : tintTable;
+      const key = `${dimming}/${tinting ? tinting.from : ""}/${edge}`;
       skyKey = place(view.sky, skyGrade, key, skyTable, 1, BACKDROP_PX, false);
       const flashing = now >= flashFrom && now < flashUntil;
       if (flashing && !flash.visible) flash.clear().rect(0, 0, screen.width, screen.height).fill(PALETTE.white);

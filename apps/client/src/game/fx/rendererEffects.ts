@@ -2,11 +2,11 @@ import type { TerrainOp, WeaponId } from "@game/protocol";
 import type { TerrainMask } from "@game/sim";
 import { PALETTE, type Ramp } from "../palette";
 import { ART_PER_CELL, type PixelGrid, type Rect } from "../pixelGrid";
-import { craterFlames, surfaceLight, wreckSmokeColumn } from "./aftermathFx";
+import { craterFlames, flameGlow, surfaceLight, wreckSmokeColumn } from "./aftermathFx";
 import type { FxLayer } from "./fxLayer";
 import { partitionBatch } from "./particles";
 import { craterGlow, impactSmoke, impactSparks, lightBurst, muzzleSmoke, trackDust, wreckDebris } from "./impactFx";
-import { COOL_TABLE, HIT_TABLE, KILL_TABLE, WARM_TABLE, type GradeTable } from "./gradeTables";
+import { FLOATER_TABLE, KILL_TABLE, LASER_TABLE, WARM_TABLE, type GradeTable } from "./gradeTables";
 import type { ScreenFx } from "./screenFx";
 import { terrainDebris } from "./terrainDebris";
 import { crossFlash, debrisHeatOf, debrisPowerOf, impactPaletteOf, weaponTrail, type TrailPoint } from "./weaponFx";
@@ -58,20 +58,19 @@ export const FLASH_GAP_MS = 1000;
 const LIGHT_SCALE = 1.3;
 const LIGHT_MAX_CELLS = 14;
 const LIGHT_MS = 300;
-/** 地形の照り返しの基準にする爆風半径の上限（セル）。照らすのはその 1.8 倍まで */
-const SURFACE_MAX_CELLS = 11;
 const MUZZLE_LIGHT_CELLS = 6;
 const MUZZLE_LIGHT_MS = 140;
 /** クレーターの底に炎を置く爆風半径の下限（セル）。マルチ弾の 9 発では炎を出さない */
 const FLAME_MIN_RADIUS = 6;
-/** 空の色を寄せる長さと、武器と大ダメージの色（設計書 41.13） */
-const TINT_MS = 450;
+/** 空の色を寄せる長さ（設計書 41.13）。レーザー弾は短く、浮遊弾は長く */
+const TINT_MS: Readonly<Record<"digger" | "laser" | "floater", number>> = { digger: 450, laser: 200, floater: 500 };
 const KILL_TINT_MS = 500;
-/** 武器の色を先に、無ければダメージ段階 3 の赤。浮遊弾の直撃も青に寄せる（評価の 3 回目） */
-const tintOf = (weapon: WeaponId, tier: number): GradeTable | null => {
-  if (weapon === "digger") return WARM_TABLE;
-  if (weapon === "floater" || weapon === "laser") return COOL_TABLE;
-  return tier >= 3 ? HIT_TABLE : null;
+/** 武器ごとの空の色。ダメージ段階 3 は暗転だけで空を寄せない（赤は撃破だけに使う。評価の 3 回目） */
+const tintOf = (weapon: WeaponId): { readonly table: GradeTable; readonly ms: number } | null => {
+  if (weapon === "digger") return { table: WARM_TABLE, ms: TINT_MS.digger };
+  if (weapon === "laser") return { table: LASER_TABLE, ms: TINT_MS.laser };
+  if (weapon === "floater") return { table: FLOATER_TABLE, ms: TINT_MS.floater };
+  return null;
 };
 
 type Deps = {
@@ -89,11 +88,11 @@ const emitImpact = (d: Deps, s: ImpactSpec): void => {
   d.fx.emit("front", impactSparks(s.cx, s.cy, s.radius, s.seed, colors.sparks), age);
   d.fx.emit("back", impactSmoke(s.cx, s.cy, s.radius, s.seed), age);
   d.fx.emit("back", lightBurst({ cx: s.cx, cy: s.cy, radius: Math.min(s.radius * LIGHT_SCALE, LIGHT_MAX_CELLS) * ART_PER_CELL, duration: LIGHT_MS, strength: 1, inner: colors.lightInner, outer: colors.lightOuter }), age);
-  if (s.mask) d.fx.emit("back", surfaceLight(s.mask, s.cx, s.cy, Math.min(s.radius, SURFACE_MAX_CELLS) * ART_PER_CELL, colors.lightInner, colors.lightOuter), age);
+  if (s.mask) d.fx.emit("back", surfaceLight(s.mask, s.cx, s.cy, s.radius * ART_PER_CELL, colors.lightInner, colors.lightOuter), age);
   if (weapon === "laser") d.fx.emit("front", crossFlash(s.cx, s.cy, s.seed), age);
   if (d.reduced()) return;
-  const tint = tintOf(weapon, s.tier);
-  if (tint !== null) d.screenFx.tintAt(tint, from, TINT_MS);
+  const tint = tintOf(weapon);
+  if (tint !== null) d.screenFx.tintAt(tint.table, from, tint.ms);
   if (s.tier >= 3) d.screenFx.dimAt(s.cx, s.cy, Math.min(s.radius * LIGHT_SCALE, LIGHT_MAX_CELLS), from, DIM_MS);
 };
 
@@ -110,7 +109,10 @@ export const createRendererEffects = (d: Deps): RendererEffects & { readonly tic
         d.fx.emit("under", falling, age);
       }
       d.fx.emit("back", craterGlow(before, after, op, seed), age);
-      if (op.radius >= FLAME_MIN_RADIUS) d.fx.emit("back", craterFlames(after, op, seed), age);
+      if (op.radius >= FLAME_MIN_RADIUS) {
+        d.fx.emit("back", craterFlames(after, op, seed), age);
+        d.fx.emit("back", flameGlow(after, op, seed), age);
+      }
     },
     impact: (spec) => emitImpact(d, spec),
     killFlash: (delay = 0) => {

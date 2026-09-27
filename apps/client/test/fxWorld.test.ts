@@ -43,6 +43,16 @@ describe("driftLightAt", () => {
     expect(states).toContain(true);
     expect(states).toContain(false);
   });
+  it("遠景の木の帯と地平の近くに集まり、どの光も 1.1 秒の間に 1 回は点いて消える", () => {
+    for (let i = 0; i < DRIFT_COUNT; i++) {
+      const y = driftLightAt(i, 7000, false).y;
+      expect(y).toBeGreaterThan(0.44);
+      expect(y).toBeLessThan(0.68);
+      const states = Array.from({ length: 23 }, (_, k) => driftLightAt(i, 3000 + k * 50, false).on);
+      expect(states).toContain(true);
+      expect(states).toContain(false);
+    }
+  });
 });
 
 describe("shootingStarAt", () => {

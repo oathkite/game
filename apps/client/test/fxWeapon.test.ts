@@ -1,6 +1,6 @@
 import { WEAPON_IDS } from "@game/protocol";
 import { describe, expect, it } from "vitest";
-import { debrisPowerOf, impactPaletteOf, TRAIL_STYLES, weaponTrail } from "@/game/fx/weaponFx";
+import { crossFlash, debrisPowerOf, impactPaletteOf, TRAIL_STYLES, weaponTrail } from "@/game/fx/weaponFx";
 import { PALETTE } from "@/game/palette";
 
 // 武器ごとの軌跡と着弾の色（設計書 41 の段階 5）を数値で固定する
@@ -21,6 +21,11 @@ describe("weaponTrail", () => {
     expect(weaponTrail("digger", line, 1)).toBeNull();
     expect(weaponTrail("cannon", [line[0]!], 1)).toBeNull();
   });
+  it("レーザー弾の軌跡は道のり 1 art px ごとに置き、速い弾でも点線にしない", () => {
+    const b = weaponTrail("laser", line, 1)!, length = 2 * Math.hypot(50, 20) * 4;
+    expect(Math.abs(b.count - Math.floor(length))).toBeLessThanOrEqual(1);
+    for (let i = 1; i < b.count; i++) expect(Math.hypot(b.x0[i]! - b.x0[i - 1]!, b.y0[i]! - b.y0[i - 1]!)).toBeLessThan(1.5);
+  });
   it("軌跡の色は武器ごとに違う", () => {
     const firsts = new Set(WEAPON_IDS.flatMap((w) => (TRAIL_STYLES[w] ? [`${TRAIL_STYLES[w]!.ramp[0]}/${TRAIL_STYLES[w]!.size}/${TRAIL_STYLES[w]!.every}`] : [])));
     expect(firsts.size).toBe(WEAPON_IDS.filter((w) => TRAIL_STYLES[w]).length);
@@ -34,5 +39,14 @@ describe("着弾の色と破片の勢い", () => {
     expect(impactPaletteOf("cannon").lightInner).toBe(PALETTE.fire1);
     expect(debrisPowerOf("digger")).toBeGreaterThan(1);
     expect(debrisPowerOf("cannon")).toBe(1);
+  });
+});
+
+describe("crossFlash", () => {
+  it("5 × 5 art px の水色の十字の外側に、重ならない暗い縁を付ける", () => {
+    const b = crossFlash(10, 10, 1), colors = Array.from({ length: b.count }, (_, i) => b.ramps[b.ramp[i]!]![0]);
+    expect(colors.filter((c) => c === PALETTE.energy0)).toHaveLength(9);
+    expect(colors.filter((c) => c === PALETTE.outline).length).toBeGreaterThan(9);
+    expect(new Set(Array.from({ length: b.count }, (_, i) => `${b.x0[i]},${b.y0[i]}`)).size).toBe(b.count);
   });
 });

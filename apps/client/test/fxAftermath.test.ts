@@ -1,6 +1,6 @@
 import type { TerrainMask } from "@game/sim";
 import { describe, expect, it } from "vitest";
-import { craterFlames, craterFloor, FLAME_MS, surfaceLight, wreckSmokeColumn } from "@/game/fx/aftermathFx";
+import { craterFlames, craterFloor, FLAME_FLICKER_MS, FLAME_MS, flameGlow, surfaceLight, wreckSmokeColumn } from "@/game/fx/aftermathFx";
 import { createFrame, sampleBatch, spanOf, type ArtBounds } from "@/game/fx/particles";
 import { damagePixels, DIGITS } from "@/game/damageFont";
 import { PALETTE } from "@/game/palette";
@@ -44,18 +44,52 @@ describe("craterFloor と craterFlames", () => {
     expect(mid.n).toBeGreaterThan(0);
     expect(b.ramps[0]![0]).toBe(PALETTE.fire1);
   });
+  it("炎は 1 art px ずつ上へ 3 粒重ねた舌で、上の粒ほど早く冷めて消える", () => {
+    const b = craterFlames(after, op, 1);
+    expect(b.x0[1]).toBe(b.x0[0]);
+    expect(b.x0[2]).toBe(b.x0[0]);
+    expect([b.y0[0]! - b.y0[1]!, b.y0[1]! - b.y0[2]!]).toEqual([1, 1]);
+    expect(b.life[1]).toBeLessThan(b.life[0]!);
+    expect(b.life[2]).toBeLessThan(b.life[1]!);
+    expect(b.sizes).toEqual([2, 1, 1, 1]);
+  });
   it("削れていなければ（床が爆風の外なら）炎を出さない", () => {
     const air = { width: 20, height: 20, cells: new Uint8Array(400) } as TerrainMask;
     expect(craterFlames(air, { cx: 10, cy: 10, radius: 4 }, 1).count).toBe(0);
   });
 });
 
+describe("flameGlow", () => {
+  const before = ground(80, 60, 30), op = { cx: 40, cy: 30, radius: 8 }, after = carveOut(before, 40, 30, 8);
+  const solidAt = (tx: number, ty: number): boolean => after.cells[Math.floor(ty / 4) * after.width + Math.floor(tx / 4)] === 1;
+  const airAt = (tx: number, ty: number): boolean => { const x = Math.floor(tx / 4), y = Math.floor(ty / 4); return y < 0 || after.cells[y * after.width + x] !== 1; };
+  it("炎を向いた面の縁だけを暗い橙で照らし、土の中や宙には置かない", () => {
+    const b = flameGlow(after, op, 1);
+    expect(b.count).toBeGreaterThan(0);
+    expect(new Set(Array.from({ length: b.count }, (_, i) => b.ramps[b.ramp[i]!]![0]))).toEqual(new Set([PALETTE.fire4]));
+    for (let i = 0; i < b.count; i++) {
+      const x = b.x0[i]!, y = b.y0[i]!;
+      expect(solidAt(x, y)).toBe(true);
+      // 縁の 2 texel の内に、空気に面したセルがある
+      expect([[0, -2], [0, 2], [-2, 0], [2, 0]].some(([dx, dy]) => airAt(x + dx!, y + dy!))).toBe(true);
+    }
+  });
+  it("120 ms のコマごとに強さが揺らぎ、炎が燃える 2.5 秒の間に弱まって消える", () => {
+    const b = flameGlow(after, op, 1);
+    const at = (t: number) => { const f = createFrame(b.count); sampleBatch(b, t, WIDE, f); return f.n; };
+    const early = Array.from({ length: 6 }, (_, k) => at(10 + k * FLAME_FLICKER_MS));
+    expect(new Set(early).size).toBeGreaterThan(1);
+    expect(at(FLAME_MS * 0.9)).toBeLessThan(Math.max(...early));
+    expect(at(FLAME_MS + FLAME_FLICKER_MS)).toBe(0);
+  });
+});
+
 describe("wreckSmokeColumn", () => {
-  it("3.5 秒かけて 40 粒の黒煙を昇らせ、根元の暗い灰から明るく、4 → 6 → 8 art px と膨らませる", () => {
+  it("3.5 秒かけて 40 粒の煙を昇らせ、根元の中くらいの灰から明るく、4 → 6 → 8 art px と膨らませる", () => {
     const b = wreckSmokeColumn(10, 20, 1);
     expect(b.count).toBe(40);
     expect(spanOf(b)).toBeGreaterThan(3500);
-    expect(b.ramps[0]![0]).toBe(PALETTE.smoke3);
+    expect(b.ramps[0]![0]).toBe(PALETTE.smoke2);
     expect(b.sizes).toEqual([4, 6, 8]);
     const f = createFrame(b.count);
     sampleBatch(b, b.t0[0]! + b.life[0]! * 0.9, WIDE, f);
@@ -65,13 +99,25 @@ describe("wreckSmokeColumn", () => {
 
 describe("surfaceLight", () => {
   const mask = ground(60, 40, 20);
-  it("上面の縁の 2 texel を、中心ほど濃い 3 段で照らす", () => {
+  it("上面の縁の 2 texel を、爆風の縁のすぐ外ほど濃い 3 段で照らし、削れる内側は照らさない", () => {
+    // 爆心 (30, 19)、半径 6 セル。y = 20 の地表では x = 25〜35 のセル（texel 100〜143）が削れる
     const b = surfaceLight(mask, 30, 19, 24, PALETTE.fire2, PALETTE.fire3);
     expect(b.count).toBeGreaterThan(0);
     for (let i = 0; i < b.count; i++) expect([80, 81]).toContain(b.y0[i]);
-    const cx = 122, near = Array.from(b.x0).filter((x) => Math.abs(x - cx) < 12).length, far = Array.from(b.x0).filter((x) => Math.abs(x - cx) > 30).length;
-    expect(near / (2 * 12 * 2)).toBeGreaterThan(far / (2 * (43 - 30) * 2));
+    const xs = Array.from(b.x0);
+    expect(xs.filter((x) => x >= 100 && x <= 143)).toEqual([]);
+    const near = xs.filter((x) => x >= 144 && x <= 151).length, far = xs.filter((x) => x >= 158 && x <= 163).length;
+    expect(near).toBe(2 * 8);
+    expect(near / (2 * 8)).toBeGreaterThan(far / (2 * 6));
     expect(Array.from({ length: b.count }, (_, i) => b.ramps[b.ramp[i]!]![0])).toContain(PALETTE.fire2);
+  });
+  it("掘削弾ほどの大きな爆風でも、残る地表の縁のすぐ外を最も濃く照らし、縁から 9 セルより外は照らさない", () => {
+    // 爆心 (60, 29)、半径 20 セル。y = 30 の地表で最初に残るセルは x = 80（texel 320〜）
+    const wide = ground(120, 60, 30), b = surfaceLight(wide, 60, 29, 80, PALETTE.fire2, PALETTE.fire3);
+    const rim = Array.from({ length: b.count }, (_, i) => i).filter((i) => b.x0[i]! >= 320 && b.x0[i]! <= 333);
+    expect(rim).toHaveLength(2 * 14);
+    for (const i of rim) expect(b.ramps[b.ramp[i]!]![0]).toBe(PALETTE.fire2);
+    expect(Array.from(b.x0).filter((x) => x >= 358)).toEqual([]);
   });
   it("爆心を向いた横の面も照らし、背を向けた面は照らさない", () => {
     // 爆心の右に立つ壁。左の面が爆心を向く
