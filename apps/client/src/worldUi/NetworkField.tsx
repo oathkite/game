@@ -131,7 +131,7 @@ export const NetworkField = (props: Props) => {
         drawLabImpacts(bullet, presentation, mask, reducedNow);
         if (frame.phase === "replaying" && frame.replay) impactFx.update(r.effects, presentation, frame.replay, frame.matchId, reducedNow, (id) => {
           const p = shown.find(t => t.playerId === id), colors = frame.players.find(t => t.playerId === id)?.colors;
-          return p && colors ? { x: p.x, y: p.y, ramp: TEAM_RAMPS[colors.primary] } : undefined;
+          return p && colors ? { x: p.x, y: p.y, ramp: TEAM_RAMPS[colors.primary], seat: shown.indexOf(p) } : undefined;
         }, mask);
         r.setShake(labShake(presentation, reducedNow));
         r.setEdgeMarkers(labEdgePoints(presentation, shown, colorOf), edgeBlinkOn(latest.current.serverNow, reducedNow));

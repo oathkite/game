@@ -71,7 +71,9 @@ const LATE_KILL_MS = 100;
 /** オンラインの着弾の層（設計書 41.6）。着弾ごとに 1 回だけ出す。途中から見たときは、着弾からの時刻だけ前に生まれたものとして出す。
  * 最後の着弾では削る瞬間に粒の時計も止め、labReplay.ts のヒットストップに合わせる */
 /** 撃破された機体の位置と主色。撃破の破片に使う */
-export type LabTank = { readonly x: number; readonly y: number; readonly ramp: Ramp };
+export type LabTank = { readonly x: number; readonly y: number; readonly ramp: Ramp;
+  /** renderer の機体の番号。あれば煙の柱が残骸を追う */
+  readonly seat?: number };
 
 export const createLabImpactFx = () => {
   let replayKey = "";
@@ -97,7 +99,7 @@ export const createLabImpactFx = () => {
             effects.killFlash(killIn);
             for (const id of e.kills) {
               const tank = tankOf(id);
-              if (tank) effects.wreck(tank.x, tank.y, tank.ramp, hash32(match, hashText(id), 11), killIn + WRECK_BLINK_MS);
+              if (tank) effects.wreck(tank.x, tank.y, tank.ramp, hash32(match, hashText(id), 11), killIn + WRECK_BLINK_MS, tank.seat);
             }
           }
         }

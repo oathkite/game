@@ -1,9 +1,12 @@
 import type { TerrainMask } from "@game/sim";
 import { describe, expect, it } from "vitest";
 import { craterFlames, craterFloor, FLAME_FLICKER_MS, FLAME_MS, flameGlow, surfaceLight, wreckSmokeColumn } from "@/game/fx/aftermathFx";
-import { createFrame, sampleBatch, spanOf, type ArtBounds } from "@/game/fx/particles";
+import { createFrame, sampleBatch, spanOf, type ArtBounds, type ParticleBatch } from "@/game/fx/particles";
+import type { FxDepth, FxLayer } from "@/game/fx/fxLayer";
+import { createRendererEffects } from "@/game/fx/rendererEffects";
+import type { ScreenFx } from "@/game/fx/screenFx";
 import { damagePixels, DIGITS } from "@/game/damageFont";
-import { PALETTE } from "@/game/palette";
+import { PALETTE, TEAM_RAMPS } from "@/game/palette";
 import { getPixel, TRANSPARENT } from "@/game/pixelGrid";
 
 // 評価と改善の 1 回目で足した余韻、地形への光、ダメージ数字のドット文字（設計書 41.13）
@@ -63,15 +66,17 @@ describe("flameGlow", () => {
   const before = ground(80, 60, 30), op = { cx: 40, cy: 30, radius: 8 }, after = carveOut(before, 40, 30, 8);
   const solidAt = (tx: number, ty: number): boolean => after.cells[Math.floor(ty / 4) * after.width + Math.floor(tx / 4)] === 1;
   const airAt = (tx: number, ty: number): boolean => { const x = Math.floor(tx / 4), y = Math.floor(ty / 4); return y < 0 || after.cells[y * after.width + x] !== 1; };
-  it("炎を向いた面の縁だけを暗い橙で照らし、土の中や宙には置かない", () => {
+  it("炎を向いた面から 1〜3 texel 内側の土を、橙と暗い橙で照らし、縁の texel と宙には置かない", () => {
     const b = flameGlow(after, op, 1);
     expect(b.count).toBeGreaterThan(0);
-    expect(new Set(Array.from({ length: b.count }, (_, i) => b.ramps[b.ramp[i]!]![0]))).toEqual(new Set([PALETTE.fire4]));
+    const colors = new Set(Array.from({ length: b.count }, (_, i) => b.ramps[b.ramp[i]!]![0]));
+    for (const c of colors) expect([PALETTE.fire3, PALETTE.fire4]).toContain(c);
     for (let i = 0; i < b.count; i++) {
       const x = b.x0[i]!, y = b.y0[i]!;
       expect(solidAt(x, y)).toBe(true);
-      // 縁の 2 texel の内に、空気に面したセルがある
-      expect([[0, -2], [0, 2], [-2, 0], [2, 0]].some(([dx, dy]) => airAt(x + dx!, y + dy!))).toBe(true);
+      // 空気に接する texel ではなく、面の向きに 2〜4 texel 先に空気がある
+      expect([[0, -1], [0, 1], [-1, 0], [1, 0]].every(([dx, dy]) => !airAt(x + dx!, y + dy!))).toBe(true);
+      expect([[0, -1], [0, 1], [-1, 0], [1, 0]].some(([dx, dy]) => [2, 3, 4].some((k) => airAt(x + dx! * k, y + dy! * k)))).toBe(true);
     }
   });
   it("120 ms のコマごとに強さが揺らぎ、炎が燃える 2.5 秒の間に弱まって消える", () => {
@@ -85,6 +90,16 @@ describe("flameGlow", () => {
 });
 
 describe("wreckSmokeColumn", () => {
+  it("粒の範囲を指定すると、柱全体の同じ粒を同じ生まれる時刻で作る（残骸を追って少しずつ出すため）", () => {
+    const whole = wreckSmokeColumn(10, 20, 1), part = wreckSmokeColumn(10, 30, 1, 4, 8);
+    expect(part.count).toBe(4);
+    for (let i = 0; i < 4; i++) {
+      expect(part.t0[i]).toBe(whole.t0[4 + i]);
+      expect(part.vy[i]).toBe(whole.vy[4 + i]);
+      expect(part.y0[i]).toBe((30 - 2.5) * 4);
+    }
+    expect(wreckSmokeColumn(10, 20, 1, 38, 42).count).toBe(2);
+  });
   it("3.5 秒かけて 40 粒の煙を昇らせ、根元の中くらいの灰から明るく、4 → 6 → 8 art px と膨らませる", () => {
     const b = wreckSmokeColumn(10, 20, 1);
     expect(b.count).toBe(40);
@@ -148,5 +163,41 @@ describe("damagePixels", () => {
   });
   it("0〜9 と「-」をすべて持つ", () => {
     for (const ch of "0123456789-") expect(DIGITS[ch]).toHaveLength(7);
+  });
+});
+
+describe("煙の柱が残骸を追う", () => {
+  const setup = () => {
+    let now = 0, at: { x: number; y: number } | null = { x: 10, y: 20 };
+    const emitted: { depth: FxDepth; batch: ParticleBatch; age: number }[] = [];
+    const fx = { now: () => now, emit: (depth: FxDepth, batch: ParticleBatch, age = 0) => { emitted.push({ depth, batch, age }); }, clear: () => {}, count: () => 0, freeze: () => {} } as unknown as FxLayer;
+    const screenFx = { tick: () => {}, clear: () => {}, tintAt: () => {}, dimAt: () => {}, flashAt: () => {} } as unknown as ScreenFx;
+    const effects = createRendererEffects({ fx, screenFx, texels: undefined, screen: () => ({ width: 100, height: 100 }), reduced: () => false, soil: [PALETTE.loam1], tankAt: () => at });
+    const smokes = () => emitted.filter((e) => e.depth === "back" && e.batch.sizes?.[0] === 4);
+    return { effects, smokes, advance: (ms: number) => { now += ms; effects.tick(); }, move: (next: { x: number; y: number } | null) => { at = next; } };
+  };
+  it("4 粒ずつ、その時の残骸の接地点から出す。落ちた後の粒は落ちた先から昇る", () => {
+    const t = setup();
+    t.effects.wreck(10, 20, TEAM_RAMPS.red, 1, 0, 0);
+    t.advance(0);
+    expect(t.smokes()).toHaveLength(1);
+    expect(t.smokes()[0]!.batch.count).toBe(4);
+    expect(t.smokes()[0]!.batch.y0[0]).toBe((20 - 2.5) * 4);
+    t.move({ x: 10, y: 30 });
+    t.advance(400);
+    expect(t.smokes()).toHaveLength(2);
+    expect(t.smokes()[1]!.batch.y0[0]).toBe((30 - 2.5) * 4);
+    // 柱の始まりからの時刻で出すので、粒の生まれる時刻は柱全体で出したときと変わらない
+    expect(t.smokes()[1]!.age).toBe(400);
+    t.advance(4000);
+    expect(t.smokes().reduce((sum, e) => sum + e.batch.count, 0)).toBe(40);
+  });
+  it("残骸が見えなくなったら（場外）、その後の粒を出さない", () => {
+    const t = setup();
+    t.effects.wreck(10, 20, TEAM_RAMPS.red, 1, 0, 0);
+    t.advance(0);
+    t.move(null);
+    t.advance(4000);
+    expect(t.smokes()).toHaveLength(1);
   });
 });

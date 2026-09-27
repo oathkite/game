@@ -290,7 +290,7 @@ const carveImpact = (run: Run, ir: ImpactRun): void => {
       run.renderer.effects.killFlash(HP_DRAIN_MS);
       // 撃破の最初の爆発（38.3 の C5、明滅が始まってから 260 ms）で機体の色の破片を散らす
       const after = run.job.playersAfter[seat];
-      run.renderer.effects.wreck(after.x, groundBeforeFall(run.job, seat), TEAM_RAMPS[after.colors.primary], hash32(0, run.job.id, seat, 11), HP_DRAIN_MS + WRECK_BLINK_MS);
+      run.renderer.effects.wreck(after.x, groundBeforeFall(run.job, seat), TEAM_RAMPS[after.colors.primary], hash32(0, run.job.id, seat, 11), HP_DRAIN_MS + WRECK_BLINK_MS, seat);
       run.pendingSounds.push({ at: run.elapsed + HP_DRAIN_MS + WRECK_BLINK_MS, name: "destroy" });
     }
   }

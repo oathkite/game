@@ -1,5 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { brighterHalf, composeTables, DIM_TABLE, FLOATER_TABLE, KILL_TABLE, LASER_TABLE, WARM_TABLE } from "@/game/fx/gradeTables";
+import { nextTint, TINT_EDGE_MS, tintPhaseAt } from "@/game/fx/screenFx";
 import { isPaletteColor, PALETTE } from "@/game/palette";
 
 // 暗転と空の色の寄せの置き換え表（設計書 41.13 の評価と改善の 2 回目）。置き換えても描く画素はパレットの色のまま
@@ -43,5 +44,31 @@ describe("置き換え表", () => {
     // sky4 は暗転で sky3、撃破の表で sky3 は fire5
     expect(both.get(PALETTE.sky4)).toBe(KILL_TABLE.get(PALETTE.sky3));
     expect(both.get(PALETTE.loam0)).toBe(DIM_TABLE.get(PALETTE.loam0));
+  });
+});
+
+describe("空の色の寄せの段", () => {
+  const warm = { table: WARM_TABLE, from: 1000, ms: 450, entry: true };
+  it("入りと戻りの 70 ms は明るい半分の段、その間はすべて、外は寄せない", () => {
+    expect(tintPhaseAt(warm, 999)).toBeNull();
+    expect(tintPhaseAt(warm, 1000)).toBe("edge");
+    expect(tintPhaseAt(warm, 1000 + TINT_EDGE_MS)).toBe("full");
+    expect(tintPhaseAt(warm, 1450 - TINT_EDGE_MS)).toBe("edge");
+    expect(tintPhaseAt(warm, 1450)).toBeNull();
+  });
+  it("全画面の白から入る寄せ（撃破）は、入りの段を挟まずにすべてを置き換える", () => {
+    expect(tintPhaseAt({ table: KILL_TABLE, from: 1000, ms: 500, entry: false }, 1000)).toBe("full");
+  });
+  it("同じ表が効いている間に続けて当たると、始まりを保って終わりだけ延ばす（レーザー弾の 7 段）", () => {
+    const laser = { table: LASER_TABLE, from: 1000, ms: 200, entry: true };
+    expect(nextTint(laser, { ...laser, from: 1150 })).toEqual({ ...laser, ms: 350 });
+    expect(tintPhaseAt(nextTint(laser, { ...laser, from: 1150 }), 1100)).toBe("full");
+  });
+  it("別の表や、効き終わった後の同じ表は、新しい寄せとしてやり直す", () => {
+    const laser = { table: LASER_TABLE, from: 1000, ms: 200, entry: true };
+    const kill = { table: KILL_TABLE, from: 1100, ms: 500, entry: false };
+    expect(nextTint(laser, kill)).toBe(kill);
+    expect(nextTint(laser, { ...laser, from: 1300 })).toEqual({ ...laser, from: 1300 });
+    expect(nextTint(null, laser)).toBe(laser);
   });
 });

@@ -77,17 +77,26 @@ export const craterFlames = (after: TerrainMask, op: TerrainOp, seed: number): P
   return b;
 };
 
-/** 撃破した機体の煙の柱。3.5 秒かけて 40 粒を昇らせ、根元の中くらいの灰から上ほど明るく、4 → 6 → 8 art px と膨らませる。位置はセルで接地点 */
-export const wreckSmokeColumn = (x: number, y: number, seed: number): ParticleBatch => {
+/** 煙の柱の粒の数と、出し終えるまでの長さ（ms） */
+export const WRECK_SMOKE_COUNT = 40;
+const WRECK_SMOKE_MS = 3500;
+
+/** 煙の柱の粒 i が、柱の始まりから生まれるまでの ms */
+export const wreckSmokeBirth = (i: number): number => (i / WRECK_SMOKE_COUNT) * WRECK_SMOKE_MS;
+
+/** 撃破した機体の煙の柱。3.5 秒かけて 40 粒を昇らせ、根元の中くらいの灰から上ほど明るく、4 → 6 → 8 art px と膨らませる。位置はセルで接地点。
+ * from〜to の粒だけを作れる。残骸が落ちても根元が離れないよう、少しずつその時の残骸の位置から出すのに使う（評価の 4 回目） */
+export const wreckSmokeColumn = (x: number, y: number, seed: number, from = 0, to = WRECK_SMOKE_COUNT): ParticleBatch => {
   // 根元を中くらいの灰にして、暗い木の帯に溶けずに残骸から切れ目なく出して見せる（評価の 3 回目）
-  const count = 40, b = allocBatch(count, { ramps: [[PALETTE.smoke2, PALETTE.smoke1, PALETTE.smoke1]], gravity: -6, drag: 0.4, sizes: [4, 6, 8] });
-  for (let i = 0; i < count; i++) {
-    const h = hash32(seed, COLUMN, i);
+  const first = Math.max(0, from), last = Math.min(WRECK_SMOKE_COUNT, to);
+  const b = allocBatch(Math.max(0, last - first), { ramps: [[PALETTE.smoke2, PALETTE.smoke1, PALETTE.smoke1]], gravity: -6, drag: 0.4, sizes: [4, 6, 8] });
+  for (let n = first; n < last; n++) {
+    const i = n - first, h = hash32(seed, COLUMN, n);
     b.x0[i] = (x + 0.5) * ART_PER_CELL + (unit(hash32(h, 1)) * 2 - 1) * 3;
     b.y0[i] = (y - 2.5) * ART_PER_CELL;
     b.vx[i] = (unit(hash32(h, 2)) * 2 - 1) * 5;
     b.vy[i] = -(26 + 12 * unit(hash32(h, 3)));
-    b.t0[i] = (i / count) * 3500;
+    b.t0[i] = wreckSmokeBirth(n);
     b.life[i] = 1400 + 400 * unit(hash32(h, 4));
     b.size[i] = 4;
     b.fade[i] = unit(hash32(h, 6));
@@ -111,11 +120,15 @@ export const SURFACE_STEP_MS = 150;
 const levelAt = (d: number, radius: number): number =>
   SURFACE_LEVELS.find(s => d - radius < Math.min(radius * s.share, s.maxCells * ART_PER_CELL))?.level ?? 0;
 
-/** 空気に面した面のうち、上面と、爆心を向いた横と下の面の縁の 2 texel（art px）と、その面の向き */
-const litFaces = (mask: TerrainMask, x: number, y: number): readonly { readonly tx: number; readonly ty: number; readonly nx: number; readonly ny: number }[] => {
+/** 面の縁から数えた texel の深さ。0 が空気に接する texel */
+type Depths = { readonly from: number; readonly to: number };
+const RIM: Depths = { from: 0, to: 2 };
+
+/** 空気に面した面のうち、上面と、爆心を向いた横と下の面の、depths の深さの texel（art px）と、その面の向き */
+const litFaces = (mask: TerrainMask, x: number, y: number, depths: Depths): readonly { readonly tx: number; readonly ty: number; readonly nx: number; readonly ny: number }[] => {
   const faces: { tx: number; ty: number; nx: number; ny: number }[] = [];
   const add = (nx: number, ny: number): void => {
-    for (let depth = 0; depth < 2; depth++) for (let k = 0; k < ART_PER_CELL; k++) {
+    for (let depth = depths.from; depth < depths.to; depth++) for (let k = 0; k < ART_PER_CELL; k++) {
       const tx = nx === 0 ? x * ART_PER_CELL + k : x * ART_PER_CELL + (nx > 0 ? ART_PER_CELL - 1 - depth : depth);
       const ty = ny === 0 ? y * ART_PER_CELL + k : y * ART_PER_CELL + (ny > 0 ? ART_PER_CELL - 1 - depth : depth);
       faces.push({ tx, ty, nx, ny });
@@ -130,13 +143,13 @@ const litFaces = (mask: TerrainMask, x: number, y: number): readonly { readonly 
 
 type LitFace = { readonly tx: number; readonly ty: number; readonly d: number };
 
-/** 光源 c（art px）から range（art px）までにある、上面と光源を向いた横と下の面の縁の texel。skip のセルは除く */
-const facesToward = (mask: TerrainMask, c: { readonly x: number; readonly y: number }, range: number, skip: (x: number, y: number) => boolean): LitFace[] => {
+/** 光源 c（art px）から range（art px）までにある、上面と光源を向いた横と下の面の depths の深さの texel。skip のセルは除く */
+const facesToward = (mask: TerrainMask, c: { readonly x: number; readonly y: number }, range: number, skip: (x: number, y: number) => boolean, depths: Depths = RIM): LitFace[] => {
   const cells = Math.ceil(range / ART_PER_CELL) + 1, cx = Math.floor(c.x / ART_PER_CELL), cy = Math.floor(c.y / ART_PER_CELL);
   const out: LitFace[] = [];
   for (let y = cy - cells; y <= cy + cells; y++) for (let x = cx - cells; x <= cx + cells; x++) {
     if (!solid(mask, x, y) || skip(x, y)) continue;
-    for (const f of litFaces(mask, x, y)) {
+    for (const f of litFaces(mask, x, y, depths)) {
       const dx = c.x - (f.tx + 0.5), dy = c.y - (f.ty + 0.5), d = Math.hypot(dx, dy);
       // 上面はいつも、横と下の面は光源を向いているときだけ照らす
       if (d >= range || (f.ny !== -1 && (f.nx * dx + f.ny * dy) / Math.max(1, d) < 0.2)) continue;
@@ -175,21 +188,31 @@ const FLAME_LIGHT_STRENGTH = 0.5;
 /** 炎の光の揺らぎの 1 コマ（ms）。コマごとに強さを 60〜100% で変える */
 export const FLAME_FLICKER_MS = 120;
 
-/** 炎がクレーターの床と壁を照らす光。炎を向いた面の縁に、炎に近いほど濃い Bayer のドットを暗い橙で置く。
- * 120 ms のコマごとに強さを揺らし、炎が燃える 2.5 秒で弱める。土の中には光を置かない（評価の 3 回目） */
+/** 炎が照らす土の深さ。縁の 1 texel は赤熱する縁（I3）と焦げた縁の色で塗られていて光が見えないので、その内側の 1〜3 texel を照らす（評価の 4 回目） */
+const FLAME_LIT: Depths = { from: 1, to: 4 };
+
+/** texel の上下左右のどれかが空気のセルにある（縁の texel）。段になった壁の角では、上面から 1 texel 内側でも横の面の縁になる */
+const touchesAir = (mask: TerrainMask, tx: number, ty: number): boolean =>
+  [[0, -1], [0, 1], [-1, 0], [1, 0]].some(([dx, dy]) => !solid(mask, Math.floor((tx + dx!) / ART_PER_CELL), Math.floor((ty + dy!) / ART_PER_CELL)));
+
+/** 炎がクレーターの床と壁を照らす光。炎を向いた面の内側の土に、炎に近いほど濃い Bayer のドットを置く。強い所は橙、弱い所は暗い橙。
+ * 120 ms のコマごとに強さを揺らし、炎が燃える 2.5 秒で弱める。宙には光を置かない（評価の 3 回目） */
 export const flameGlow = (after: TerrainMask, op: TerrainOp, seed: number): ParticleBatch => {
   const R = FLAME_LIGHT_CELLS * ART_PER_CELL, frames = Math.ceil(FLAME_MS / FLAME_FLICKER_MS);
-  const dots: { x: number; y: number; t0: number }[] = [];
+  const dots: { x: number; y: number; t0: number; bright: boolean }[] = [];
   craterFloor(after, op, seed).forEach((f, k) => {
-    const faces = facesToward(after, { x: (f.x + 0.5) * ART_PER_CELL, y: f.y * ART_PER_CELL - 2 }, R, () => false);
+    const faces = facesToward(after, { x: (f.x + 0.5) * ART_PER_CELL, y: f.y * ART_PER_CELL - 2 }, R, () => false, FLAME_LIT).filter(face => !touchesAir(after, face.tx, face.ty));
     for (let n = 0; n < frames; n++) {
       const t0 = n * FLAME_FLICKER_MS, strength = FLAME_LIGHT_STRENGTH * (1 - t0 / FLAME_MS) * (0.6 + 0.4 * unit(hash32(seed, GLOW, k, n)));
-      for (const face of faces) if (strength * (1 - face.d / R) > bayer(face.tx, face.ty)) dots.push({ x: face.tx, y: face.ty, t0 });
+      for (const face of faces) {
+        const level = strength * (1 - face.d / R);
+        if (level > bayer(face.tx, face.ty)) dots.push({ x: face.tx, y: face.ty, t0, bright: level > 0.25 });
+      }
     }
   });
-  const b = allocBatch(dots.length, { ramps: [[PALETTE.fire4]], gravity: 0, drag: 0 });
+  const b = allocBatch(dots.length, { ramps: [[PALETTE.fire4], [PALETTE.fire3]], gravity: 0, drag: 0 });
   dots.forEach((d, i) => {
-    b.x0[i] = d.x; b.y0[i] = d.y; b.t0[i] = d.t0; b.life[i] = FLAME_FLICKER_MS; b.size[i] = 1;
+    b.x0[i] = d.x; b.y0[i] = d.y; b.t0[i] = d.t0; b.life[i] = FLAME_FLICKER_MS; b.size[i] = 1; b.ramp[i] = d.bright ? 1 : 0;
     // 光は間引かずにコマの終わりで消える
     b.fade[i] = 0;
   });

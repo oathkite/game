@@ -2,7 +2,7 @@ import type { TerrainOp, WeaponId } from "@game/protocol";
 import type { TerrainMask } from "@game/sim";
 import { PALETTE, type Ramp } from "../palette";
 import { ART_PER_CELL, type PixelGrid, type Rect } from "../pixelGrid";
-import { craterFlames, flameGlow, surfaceLight, wreckSmokeColumn } from "./aftermathFx";
+import { craterFlames, flameGlow, surfaceLight, WRECK_SMOKE_COUNT, wreckSmokeBirth, wreckSmokeColumn } from "./aftermathFx";
 import type { FxLayer } from "./fxLayer";
 import { partitionBatch } from "./particles";
 import { craterGlow, impactSmoke, impactSparks, lightBurst, muzzleSmoke, trackDust, wreckDebris } from "./impactFx";
@@ -40,8 +40,8 @@ export type RendererEffects = {
   readonly launch: (weapon: WeaponId, points: readonly TrailPoint[], seed: number, age?: number) => void;
   /** 走行の土煙。位置はセルで接地点 */
   readonly dust: (x: number, y: number, facing: 1 | -1, seed: number) => void;
-  /** 撃破の破片と黒煙の柱。delay ms 後に機体の色で散らす */
-  readonly wreck: (x: number, y: number, ramp: Ramp, seed: number, delay?: number) => void;
+  /** 撃破の破片と煙の柱。delay ms 後に機体の色で散らす。seat があれば、煙の柱をその機体の今の位置から出し続ける */
+  readonly wreck: (x: number, y: number, ramp: Ramp, seed: number, delay?: number, seat?: number) => void;
   /** 粒の時計を止める（ヒットストップ） */
   readonly freeze: (ms: number) => void;
   /** 今描いている粒の数。FX ラボと測定に使う */
@@ -81,7 +81,15 @@ type Deps = {
   readonly reduced: () => boolean;
   /** 走行の土煙の色。ステージの土の色（明るい順） */
   readonly soil: readonly number[];
+  /** 機体 seat の今の接地点（セル）。見えていなければ null */
+  readonly tankAt?: (seat: number) => { readonly x: number; readonly y: number } | null;
 };
+
+/** 煙の柱を出し直す粒の数。4 粒（350 ms）ごとに、その時の残骸の位置から出す（評価の 4 回目で、落ちた残骸から根元が離れた） */
+const SMOKE_CHUNK = 4;
+
+/** 出し終えていない煙の柱。start は柱の始まりの時刻（FX の時計）、next は次に出す粒 */
+type SmokeSource = { readonly x: number; readonly y: number; readonly seed: number; readonly start: number; readonly seat: number | undefined; readonly next: number };
 
 const emitImpact = (d: Deps, s: ImpactSpec): void => {
   const age = s.age ?? 0, weapon = s.weapon ?? "cannon", colors = impactPaletteOf(weapon), from = d.fx.now() - age;
@@ -96,8 +104,20 @@ const emitImpact = (d: Deps, s: ImpactSpec): void => {
   if (s.tier >= 3) d.screenFx.dimAt(s.cx, s.cy, Math.min(s.radius * LIGHT_SCALE, LIGHT_MAX_CELLS), from, DIM_MS);
 };
 
+/** 時刻 now までに生まれる煙の柱の粒を出し、出し終えていない柱を返す。残骸が見えなくなったら（場外）柱を終える */
+const emitSmoke = (d: Deps, sources: readonly SmokeSource[], now: number): readonly SmokeSource[] => sources.flatMap((s) => {
+  let next = s.next;
+  while (next < WRECK_SMOKE_COUNT && s.start + wreckSmokeBirth(next) <= now) {
+    const at = s.seat !== undefined && d.tankAt ? d.tankAt(s.seat) : { x: s.x, y: s.y };
+    if (at === null) return [];
+    d.fx.emit("back", wreckSmokeColumn(at.x, at.y, s.seed, next, next + SMOKE_CHUNK), now - s.start);
+    next += SMOKE_CHUNK;
+  }
+  return next < WRECK_SMOKE_COUNT ? [{ ...s, next }] : [];
+});
+
 export const createRendererEffects = (d: Deps): RendererEffects & { readonly tick: () => void } => {
-  let lastFlash = -Infinity;
+  let lastFlash = -Infinity, smokes: readonly SmokeSource[] = [];
   return {
     crater: (before, after, op, seed, age = 0, weapon = "cannon") => {
       const texels = d.texels;
@@ -120,7 +140,7 @@ export const createRendererEffects = (d: Deps): RendererEffects & { readonly tic
       if (d.reduced() || at - lastFlash < FLASH_GAP_MS) return;
       lastFlash = at;
       d.screenFx.flashAt(at, FLASH_MS);
-      d.screenFx.tintAt(KILL_TABLE, at, KILL_TINT_MS);
+      d.screenFx.tintAt(KILL_TABLE, at, KILL_TINT_MS, false);
     },
     launch: (weapon, points, seed, age = 0) => {
       const a = points[0], b = points[1];
@@ -132,14 +152,17 @@ export const createRendererEffects = (d: Deps): RendererEffects & { readonly tic
       if (trail) d.fx.emit("back", trail, age);
     },
     dust: (x, y, facing, seed) => { if (!d.reduced()) d.fx.emit("back", trackDust(x, y, facing, d.soil.slice(0, 2), seed)); },
-    wreck: (x, y, ramp, seed, delay = 0) => {
+    wreck: (x, y, ramp, seed, delay = 0, seat) => {
       if (d.reduced()) return;
       d.fx.emit("front", wreckDebris(x, y, [ramp.light, ramp.base, ramp.shadow, PALETTE.metal1, PALETTE.metal2], seed), -delay);
-      d.fx.emit("back", wreckSmokeColumn(x, y, seed), -delay);
+      smokes = [...smokes, { x, y, seed, start: d.fx.now() + delay, seat, next: 0 }];
     },
     freeze: (ms) => { if (!d.reduced()) d.fx.freeze(ms); },
     particleCount: d.fx.count,
-    clear: () => { d.fx.clear(); d.screenFx.clear(); lastFlash = -Infinity; },
-    tick: () => d.screenFx.tick(d.fx.now(), d.screen()),
+    clear: () => { d.fx.clear(); d.screenFx.clear(); lastFlash = -Infinity; smokes = []; },
+    tick: () => {
+      smokes = emitSmoke(d, smokes, d.fx.now());
+      d.screenFx.tick(d.fx.now(), d.screen());
+    },
   };
 };
