@@ -15,5 +15,8 @@
     "@game/maps": "workspace:*",
     "@game/protocol": "workspace:*",
     "@game/sim": "workspace:*"
+  },
+  "devDependencies": {
+    "@game/testing": "workspace:*"
   }
 }

@@ -39,6 +39,9 @@ importers:
         specifier: ^19.2.0
         version: 19.2.8(react@19.2.8)
     devDependencies:
+      '@game/testing':
+        specifier: workspace:*
+        version: link:../../packages/testing
       '@types/node':
         specifier: ^26.4.1
         version: 26.4.1
@@ -100,6 +103,9 @@ importers:
       '@cloudflare/workers-types':
         specifier: ^5.20260903.1
         version: 5.20260903.1
+      '@game/testing':
+        specifier: workspace:*
+        version: link:../../packages/testing
       '@types/node':
         specifier: ^26.4.1
         version: 26.4.1
@@ -124,6 +130,10 @@ importers:
       '@game/sim':
         specifier: workspace:*
         version: link:../sim
+    devDependencies:
+      '@game/testing':
+        specifier: workspace:*
+        version: link:../testing
 
   packages/maps:
     dependencies:
@@ -137,6 +147,9 @@ importers:
         specifier: ^4.5.4
         version: 4.5.4
     devDependencies:
+      '@game/testing':
+        specifier: workspace:*
+        version: link:../testing
       tsx:
         specifier: 4.23.13
         version: 4.23.13
@@ -146,12 +159,22 @@ importers:
       zod:
         specifier: ^4.5.4
         version: 4.5.4
+    devDependencies:
+      '@game/testing':
+        specifier: workspace:*
+        version: link:../testing
 
   packages/sim:
     dependencies:
       '@game/protocol':
         specifier: workspace:*
         version: link:../protocol
+    devDependencies:
+      '@game/testing':
+        specifier: workspace:*
+        version: link:../testing
+
+  packages/testing: {}
 
 packages:
 
