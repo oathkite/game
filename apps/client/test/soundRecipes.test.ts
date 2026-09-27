@@ -9,6 +9,29 @@ const length = (recipe: Recipe) => Math.max(...recipe.layers.map((layer) => (lay
 const lowest = (recipe: Recipe) => Math.min(...recipe.layers.filter((layer): layer is Extract<Layer, { kind: "tone" }> => layer.kind === "tone").map((layer) => layer.to));
 const pitchDirection = (recipe: Recipe) => recipe.layers.filter((layer) => layer.kind === "tone").map((layer) => Math.sign(layer.to - layer.from));
 
+describe("演出に合わせた音（設計書 41.14）", () => {
+  it("土の雨は破片が落ちる 0.15〜1.1 秒に粒を散らし、後ろほど小さい", () => {
+    const grains = SOUNDS.debris.layers;
+    expect(Math.min(...grains.map((l) => l.delay ?? 0))).toBeGreaterThanOrEqual(0.15);
+    expect(length(SOUNDS.debris)).toBeLessThanOrEqual(1.2);
+    expect(grains[grains.length - 1]!.gain).toBeLessThan(grains[0]!.gain);
+    expect(SOUNDS.debris.duck ?? 0).toBe(0);
+  });
+  it("焼ける音は赤熱が冷める長さで小さく鳴る", () => {
+    expect(length(SOUNDS.sizzle)).toBeCloseTo(1.6, 1);
+    expect(Math.max(...SOUNDS.sizzle.layers.map((l) => l.gain))).toBeLessThanOrEqual(0.15);
+  });
+  it("止めの一撃は短く低く、BGM を深く下げる", () => {
+    expect(lowest(SOUNDS.impactStop)).toBeLessThanOrEqual(30);
+    expect(SOUNDS.impactStop.duck).toBeGreaterThanOrEqual(0.8);
+    expect(length(SOUNDS.impactStop)).toBeLessThanOrEqual(0.6);
+  });
+  it("撃破の音は 3 連の爆発（C5）に合わせて 140 ms おきに破裂を置く", () => {
+    const starts = [...new Set(SOUNDS.destroy.layers.filter((l) => l.kind === "noise" && l.filter === "highpass").map((l) => l.delay ?? 0))];
+    expect(starts).toEqual([0, 0.14, 0.28]);
+  });
+});
+
 describe("sound design", () => {
   it("has a layered sound for every weapon's shot and impact", () => {
     for (const weapon of WEAPON_IDS) {

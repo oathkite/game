@@ -103,6 +103,10 @@ type Run = {
   freezeLeft: number;
   /** 発射の煙の輪を出した弾道 */
   readonly launched: boolean[];
+  /** 地形が削れて、土の雨と焼ける音を鳴らしたか。1 回の射撃で 1 回だけ（設計書 41.14） */
+  crumbled: boolean;
+  /** 時刻が来たら鳴らす音。撃破の爆発に合わせる */
+  readonly pendingSounds: { readonly at: number; readonly name: SoundName }[];
   readonly flashUntil: [number, number];
   readonly drains: [Drain | null, Drain | null];
   shake: { readonly at: number; readonly damage: readonly [number, number] } | null;
@@ -255,6 +259,9 @@ const carveImpact = (run: Run, ir: ImpactRun): void => {
   // 削れた地形のドットを散らして落とす（設計書 41.5 の D1）。練習は対戦の識別子を 0 とする（41.3）
   if (!run.cb.reduceMotion) run.renderer.effects.crater(before, run.mask, impact.terrainOp, hash32(0, run.job.id, impact.projectile, impact.stage), 0, run.job.shot.input.weapon);
   if (ir.final && !run.cb.reduceMotion) { run.freezeLeft = HITSTOP_MS; run.renderer.effects.freeze(HITSTOP_MS); }
+  // 演出に合わせた音（設計書 41.14）。動きを減らす設定でも、何が起きたかを伝えるので鳴らす
+  if (ir.final) run.cb.sound("impactStop");
+  if (!run.crumbled) { run.crumbled = true; run.cb.sound("debris"); run.cb.sound("sizzle"); }
   run.cb.onImpact?.(run.mask, impact);
   run.renderer.setTerrain(run.mask, impact.terrainOp);
   const shooter = run.job.shot.input.seat;
@@ -276,6 +283,7 @@ const carveImpact = (run: Run, ir: ImpactRun): void => {
       // 撃破の最初の爆発（38.3 の C5、明滅が始まってから 260 ms）で機体の色の破片を散らす
       const after = run.job.playersAfter[seat];
       run.renderer.effects.wreck(after.x, groundBeforeFall(run.job, seat), TEAM_RAMPS[after.colors.primary], hash32(0, run.job.id, seat, 11), HP_DRAIN_MS + WRECK_BLINK_MS);
+      run.pendingSounds.push({ at: run.elapsed + HP_DRAIN_MS + WRECK_BLINK_MS, name: "destroy" });
     }
   }
   if (impact.damage[0] > 0 || impact.damage[1] > 0) run.shake = { at: run.elapsed, damage: impact.damage };
@@ -367,6 +375,10 @@ const stepFrame = (run: Run, deltaMs: number): void => {
   const frozen = Math.min(run.freezeLeft, deltaMs);
   run.freezeLeft -= frozen;
   run.elapsed += deltaMs - frozen;
+  for (let i = run.pendingSounds.length - 1; i >= 0; i--) {
+    const pending = run.pendingSounds[i]!;
+    if (run.elapsed >= pending.at) { run.cb.sound(pending.name); run.pendingSounds.splice(i, 1); }
+  }
   if (run.phase === "shot") stepShot(run);
   else if (run.phase === "fall") stepFall(run);
   else if (run.phase === "hold") stepHold(run);
@@ -403,6 +415,8 @@ export const playReplay = (
     hp: [job.playersBefore[0].hp, job.playersBefore[1].hp],
     freezeLeft: 0,
     launched: job.paths.map(() => false),
+    crumbled: false,
+    pendingSounds: [],
     flashUntil: [0, 0],
     drains: [null, null],
     shake: null,

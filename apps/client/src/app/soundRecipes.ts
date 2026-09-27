@@ -4,7 +4,7 @@ import type { Layer, NoiseLayer, Recipe, ToneLayer } from "./sfx";
 // 効果音の設計。発射は「破裂の立ち上がり + 胴の低音 + 爆風のノイズ」、着弾は「サブの低音 + 破裂 + 低域へ沈む余韻」を基本形にする。
 // 多段の武器（レーザー 7 段、マルチ 9 発）は 1 回を短く軽くし、連続しても濁らないようにする。
 
-export type SoundName = WeaponSound | "move" | "tick" | "fire" | "explosion" | "hit" | "hitConfirm" | "finish" | "matchFinish";
+export type SoundName = WeaponSound | "move" | "tick" | "fire" | "explosion" | "hit" | "hitConfirm" | "finish" | "matchFinish" | "debris" | "sizzle" | "impactStop" | "destroy";
 
 type Extra<T> = Partial<Omit<T, "kind" | "wave" | "filter" | "from" | "to" | "duration" | "gain">>;
 const tone = (wave: OscillatorType, from: number, to: number, duration: number, gain: number, extra: Extra<ToneLayer> = {}): ToneLayer =>
@@ -97,8 +97,37 @@ const WEAPONS: Readonly<Record<WeaponSound, Recipe>> = {
   ], drive: 1.8, space: 0.15, duck: 0.15, vary: 0.05 },
 };
 
+/** 土の雨。帯域通過のノイズの短い粒を 0.15〜1.1 秒に散らし、後ろほど小さく低くする。削れた地形の破片が落ちていく長さに合わせる（設計書 41.14） */
+const DEBRIS_GRAINS: readonly Layer[] = Array.from({ length: 12 }, (_, i) => {
+  const f = i / 11;
+  return noise("bandpass", 2600 - 1500 * f, 2000 - 1200 * f, 0.05, 1 - 0.65 * f, { q: 1.2, delay: 0.15 + 0.95 * f + (i % 3) * 0.013 });
+});
+
+/** 演出に合わせて足した音（設計書 41.14）。どれも 39 章の出力経路（圧縮器、BGM を下げる仕組み）を通る */
+const SCENE: Readonly<Record<"debris" | "sizzle" | "impactStop" | "destroy", Recipe>> = {
+  debris: { layers: DEBRIS_GRAINS, space: 0.2, vary: 0.08 },
+  // 焼ける音。赤熱が冷める長さ（約 1.6 秒）で小さく消える
+  sizzle: { layers: [
+    noise("highpass", 5200, 3600, 1.6, 0.11, { attack: 0.06 }),
+    noise("bandpass", 7200, 5200, 1.2, 0.05, { q: 4, delay: 0.1, attack: 0.05 }),
+  ], space: 0.1, vary: 0.05 },
+  // ヒットストップの 60 ms に置く止めの一撃。破裂の頭とサブの低音で、BGM を深く下げる
+  impactStop: { layers: [
+    crack(0.03, 0.9),
+    thump(90, 28, 0.5, 1),
+    noise("lowpass", 900, 120, 0.3, 0.5, { q: 0.8 }),
+  ], drive: 2.4, space: 0.3, duck: 0.8, vary: 0.02 },
+  // 撃破の明滅の後の 3 連の爆発（38.3 の C5、260、400、540 ms）に合わせた破裂と、金属の鳴り
+  destroy: { layers: [
+    ...[0, 0.14, 0.28].flatMap((delay) => [crack(0.05, 0.3, delay), thump(120, 36, 0.32, 0.55, delay)]),
+    tone("triangle", 920, 640, 0.6, 0.12, { delay: 0.02 }),
+    rumble(2200, 90, 0.9, 0.45, 0.05),
+  ], drive: 1.4, space: 0.35, duck: 0.45, vary: 0.03 },
+};
+
 export const SOUNDS: Readonly<Record<SoundName, Recipe>> = {
   ...WEAPONS,
+  ...SCENE,
   // 履帯の短い噛み合い。75 ms ごとに繰り返すので控えめにする
   move: { layers: [noise("bandpass", 420, 300, 0.04, 0.13, { q: 3 }), tone("triangle", 95, 55, 0.05, 0.09)], vary: 0.12 },
   // 秒読み。繰り返すので鋭さだけ残して小さく
