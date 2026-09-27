@@ -203,3 +203,19 @@ export const paintTrees = (theme: SkyTheme, height: number = TREE_HEIGHT): Pixel
   }
   return grid;
 };
+
+/** 流れ星（設計書 41.13 の評価の 3 回目）。6 秒の窓ごとに 1 つ、窓の中のハッシュで決めた時刻に 450 ms で流れる */
+export const SHOOTING_WINDOW_MS = 6000;
+export const SHOOTING_MS = 450;
+/** 流れる長さ（背景の art px）と、尾の長さ */
+const SHOOTING_TRAVEL = 120;
+export const SHOOTING_TAIL = 6;
+
+/** clock ms の時点で流れている星。頭の位置（画面の幅と高さに対する割合と、背景の art px の移動量）。流れていなければ null */
+export const shootingStarAt = (clock: number, reduced: boolean): { readonly x: number; readonly y: number; readonly travel: number } | null => {
+  if (reduced || clock < 0) return null;
+  const window = Math.floor(clock / SHOOTING_WINDOW_MS), start = window * SHOOTING_WINDOW_MS + (hash(window, 61) % (SHOOTING_WINDOW_MS - SHOOTING_MS));
+  const t = clock - start;
+  if (t < 0 || t >= SHOOTING_MS) return null;
+  return { x: 0.1 + (hash(window, 67) % 600) / 1000, y: 0.04 + (hash(window, 71) % 220) / 1000, travel: Math.floor((t / SHOOTING_MS) * SHOOTING_TRAVEL) };
+};

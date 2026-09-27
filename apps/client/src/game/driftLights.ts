@@ -6,13 +6,14 @@ import type { SkyTheme } from "./skyPaint";
 // 漂う光。設計書 41 の段階 6。稜線と段丘は緑の蛍、石橋は塵、浮島は発光色のかけら。
 // 風の計器は風の粒だけにするので（8.5）、風では動かさず、自分の周期でゆっくり漂って明滅する。動きを減らす設定では止める。
 
-export const DRIFT_COUNT = 20;
+export const DRIFT_COUNT = 24;
 
-const COLORS: Readonly<Record<SkyTheme, readonly number[]>> = {
-  ridge: [PALETTE.greenLight, PALETTE.greenPale],
-  canyon: [PALETTE.smoke0, PALETTE.smoke1],
-  basin: [PALETTE.greenLight, PALETTE.fire1],
-  islands: [PALETTE.energy0, PALETTE.energy1],
+/** 芯の色と、上下左右 1 art px の暈（かさ）の色。暈があると 1 art px の点でも光って見える（設計書 41.13 の評価の 3 回目） */
+const COLORS: Readonly<Record<SkyTheme, readonly (readonly [number, number])[]>> = {
+  ridge: [[PALETTE.greenLight, PALETTE.greenDark], [PALETTE.greenPale, PALETTE.greenMid]],
+  canyon: [[PALETTE.smoke0, PALETTE.smoke2], [PALETTE.smoke1, PALETTE.smoke3]],
+  basin: [[PALETTE.greenLight, PALETTE.greenDark], [PALETTE.fire1, PALETTE.fire4]],
+  islands: [[PALETTE.energy0, PALETTE.energy2], [PALETTE.energy1, PALETTE.sky4]],
 };
 
 /** 光 i の t ms の位置（画面の割合）と点いているか。周期 1200〜2400 ms で明滅し、sin の軌道で漂う */
@@ -34,7 +35,9 @@ export const createDriftLights = (theme: SkyTheme, px: number) => {
       if (!p.on) continue;
       // カメラの 60% で横に流し、画面の幅で折り返す
       const x = ((((p.x * width + camera * 0.6) % width) + width) % width);
-      graphics.rect(Math.floor(x / px) * px, Math.floor((p.y * height) / px) * px, px, px).fill(colors[i % colors.length]!);
+      const gx = Math.floor(x / px) * px, gy = Math.floor((p.y * height) / px) * px, [core, halo] = colors[i % colors.length]!;
+      graphics.rect(gx - px, gy, px, px).rect(gx + px, gy, px, px).rect(gx, gy - px, px, px).rect(gx, gy + px, px, px).fill(halo);
+      graphics.rect(gx, gy, px, px).fill(core);
     }
   };
   return {

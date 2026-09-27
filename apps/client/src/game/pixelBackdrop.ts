@@ -1,7 +1,7 @@
 import { Container, Graphics, Sprite, Texture, TilingSprite } from "pixi.js";
 import { PALETTE } from "./palette";
 import { toRgba, type PixelGrid } from "./pixelGrid";
-import { paintMountains, paintSky, paintTrees, SKY_THEMES, skyStars, TREE_HEIGHT, twinkleOn, type SkyTheme, type Star } from "./skyPaint";
+import { paintMountains, paintSky, paintTrees, shootingStarAt, SHOOTING_TAIL, SKY_THEMES, skyStars, TREE_HEIGHT, twinkleOn, type SkyTheme, type Star } from "./skyPaint";
 import { createDriftLights } from "./driftLights";
 
 // 背景の夜空、月、星、山並み。設計書 40.7。地形と風の粒の後ろに置き、当たり判定には含めない。
@@ -57,13 +57,24 @@ export const createPixelBackdrop = (mapId: string) => {
   const container = new Container();
   const sky = new Sprite(Texture.EMPTY);
   sky.scale.set(PX);
-  const stars = new Graphics();
-  container.addChild(sky, stars);
+  const stars = new Graphics(), meteor = new Graphics();
+  container.addChild(sky, stars, meteor);
   const mountains = createMountains(theme, container);
   // 漂う光（設計書 41 の段階 6）。遠景の前、地形の後ろ。風では動かさない
   const lights = createDriftLights(theme, PX);
   container.addChild(lights.graphics);
-  let size = "", skyTexture: Texture | null = null, starList: readonly Star[] = [], clock = 0, reduced = false, twinkleKey = "";
+  let size = "", skyTexture: Texture | null = null, starList: readonly Star[] = [], clock = 0, reduced = false, twinkleKey = "", screen = { width: 0, height: 0 };
+  /** 流れ星。頭は白、尾は淡い星の色からかすかな星の色へ。右下へ 2 : 1 で流れる */
+  const drawMeteor = (): void => {
+    meteor.clear();
+    const star = shootingStarAt(clock, reduced);
+    if (!star) return;
+    const hx = Math.floor((star.x * screen.width) / PX) + star.travel, hy = Math.floor((star.y * screen.height) / PX) + Math.floor(star.travel / 2);
+    for (let k = SHOOTING_TAIL; k >= 0; k--) {
+      const color = k === 0 ? PALETTE.white : k < 3 ? PALETTE.starDim : PALETTE.starFaint;
+      meteor.rect((hx - k) * PX, (hy - Math.floor(k / 2)) * PX, PX, PX).fill(color);
+    }
+  };
   const drawStars = (): void => {
     const key = starList.map(s => (!s.twinkle || twinkleOn(s.index, clock, reduced) ? "1" : "0")).join("");
     if (key === twinkleKey) return;
@@ -72,6 +83,7 @@ export const createPixelBackdrop = (mapId: string) => {
     starList.forEach((s, i) => stars.rect(s.x * PX, s.y * PX, PX, PX).fill(key[i] === "1" ? s.color : PALETTE.starFaint));
   };
   const resize = (width: number, height: number): void => {
+    screen = { width, height };
     const w = Math.ceil(width / PX), h = Math.ceil(height / PX), key = `${w}x${h}`;
     if (key === size) return;
     size = key;
@@ -103,6 +115,7 @@ export const createPixelBackdrop = (mapId: string) => {
       clock += deltaMs;
       reduced = reducedMotion;
       drawStars();
+      drawMeteor();
       lights.tick(deltaMs, reducedMotion);
     },
     destroy: (): void => {

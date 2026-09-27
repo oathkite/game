@@ -2,7 +2,8 @@ import { describe, expect, it } from "vitest";
 import { DRIFT_COUNT, driftLightAt } from "@/game/driftLights";
 import { PALETTE } from "@/game/palette";
 import { getPixel, TRANSPARENT } from "@/game/pixelGrid";
-import { MOUNTAIN_PERIOD, paintTrees, TREE_HEIGHT } from "@/game/skyPaint";
+import { MOUNTAIN_PERIOD, paintTrees, shootingStarAt, SHOOTING_MS, SHOOTING_WINDOW_MS, TREE_HEIGHT } from "@/game/skyPaint";
+import { EXHAUST_PERIOD_MS, EXHAUST_VISIBLE_MS, exhaustAt } from "@/game/tankMotion";
 
 // 世界の動き（設計書 41 の段階 6）。3 層目の遠景と漂う光
 
@@ -41,5 +42,26 @@ describe("driftLightAt", () => {
     const states = Array.from({ length: 40 }, (_, k) => driftLightAt(3, k * 100, false).on);
     expect(states).toContain(true);
     expect(states).toContain(false);
+  });
+});
+
+describe("shootingStarAt", () => {
+  it("6 秒の窓ごとに 1 回だけ、450 ms で右下へ流れる。動きを減らす設定では流れない", () => {
+    const seen: number[] = [];
+    for (let t = 0; t < SHOOTING_WINDOW_MS * 3; t += 10) if (shootingStarAt(t, false)) seen.push(Math.floor(t / SHOOTING_WINDOW_MS));
+    expect([...new Set(seen)]).toEqual([0, 1, 2]);
+    const first = Array.from({ length: SHOOTING_WINDOW_MS / 10 }, (_, k) => k * 10).find((t) => shootingStarAt(t, false))!;
+    expect(shootingStarAt(first + SHOOTING_MS / 2, false)!.travel).toBeGreaterThan(shootingStarAt(first, false)!.travel);
+    expect(shootingStarAt(first, true)).toBeNull();
+  });
+});
+
+describe("exhaustAt", () => {
+  it("1.4 秒ごとに排気口から小さな煙が昇り、0.9 秒で消える", () => {
+    expect(exhaustAt(0, false)).toMatchObject({ x: -15, y: -7, size: 1 });
+    expect(exhaustAt(EXHAUST_VISIBLE_MS - 10, false)!.y).toBeLessThan(-7);
+    expect(exhaustAt(EXHAUST_VISIBLE_MS + 10, false)).toBeNull();
+    expect(exhaustAt(EXHAUST_PERIOD_MS, false)).toMatchObject({ x: -15, y: -7 });
+    expect(exhaustAt(0, true)).toBeNull();
   });
 });

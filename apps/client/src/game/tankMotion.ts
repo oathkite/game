@@ -167,3 +167,16 @@ export const antennaSwayAt = (t: number, amplitude: number, reduced: boolean): n
   const value = amplitude * 0.5 ** (t / ANTENNA_PERIOD_MS) * Math.cos((2 * Math.PI * t) / ANTENNA_PERIOD_MS);
   return Math.abs(value) < 0.5 ? 0 : Math.round(value);
 };
+
+/** 排気の周期（ms）と、1 回の煙が見えている長さ（設計書 41.13 の評価の 3 回目。何もしていない間も機体が生きて見えるように） */
+export const EXHAUST_PERIOD_MS = 1400;
+export const EXHAUST_VISIBLE_MS = 900;
+
+/** 排気口からの煙の粒。接地点からの位置（art px、機体の前が正）、大きさ、濃さ。見えていなければ null。動きを減らす設定では出さない */
+export const exhaustAt = (clock: number, reduced: boolean): { readonly x: number; readonly y: number; readonly size: 1 | 2; readonly tone: 0 | 1 } | null => {
+  if (reduced) return null;
+  const t = Math.max(0, clock) % EXHAUST_PERIOD_MS;
+  if (t >= EXHAUST_VISIBLE_MS) return null;
+  const f = t / EXHAUST_VISIBLE_MS;
+  return { x: -15 - Math.floor(f * 3), y: -7 - Math.floor(f * 6), size: f < 0.4 ? 1 : 2, tone: f < 0.5 ? 0 : 1 };
+};

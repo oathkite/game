@@ -4,7 +4,7 @@ import type { ShotFlash } from "./muzzlePose";
 import { COLOR_HEX, type Facing, type TankColors } from "@game/protocol";
 import { Container, Graphics, Text } from "pixi.js";
 import { antennaSwayAt, chargeAt, idleRumble, landingAt, LOW_HP, wreckFrameAt, WRECK_SMOKE_FROM_MS } from "./tankMotion";
-import { drawBursts, drawDust, drawLowHpSmoke, drawWreckSmoke } from "./tankFx";
+import { drawBursts, drawDust, drawExhaust, drawLowHpSmoke, drawWreckSmoke } from "./tankFx";
 import { TEAM_RAMPS, type Ramp } from "./palette";
 import { ART_PER_CELL } from "./pixelGrid";
 import { createPixelSprite, type PixelSprite } from "./pixelTexture";
@@ -115,6 +115,8 @@ const drawFx = (fx: Graphics, f: Frame, wreck: ReturnType<typeof wreckState>): n
   const landing = moments.landAt === null ? null : landingAt(clock - moments.landAt, reduced);
   if (landing) drawDust(fx, landing.dust);
   if (!wreck.wrecked && pose.hp > 0 && pose.hp <= LOW_HP) drawLowHpSmoke(fx, clock, reduced);
+  // 何もしていない間も機体が生きて見えるよう、排気口から小さな煙（HP が少ない機体は煙を出しているので出さない）
+  else if (!wreck.wrecked && pose.hp > 0 && pose.visible && !pose.falling) drawExhaust(fx, clock, pose.facing, reduced);
   if (wreck.frame) drawBursts(fx, wreck.frame.bursts);
   if (wreck.frame?.smoke && moments.deathAt !== null) drawWreckSmoke(fx, clock - moments.deathAt - WRECK_SMOKE_FROM_MS);
   return landing?.squash ?? 0;
