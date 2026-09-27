@@ -162,3 +162,60 @@ export const paintMountains = (theme: SkyTheme, layer: 0 | 1, height: number): P
   }
   return grid;
 };
+
+/** 3 層目の遠景の木々と柱（設計書 41 の段階 6）。地平に近い、いちばん手前の遠景で、最も暗い夜空の色で塗る。浮島は宙なので描かない */
+export const TREE_HEIGHT = 36;
+
+type Silhouette = (dx: number, y: number, size: number, height: number) => boolean;
+
+/** 針葉樹。上ほど細い三角を 3 段重ねる */
+const pine: Silhouette = (dx, y, size, height) => {
+  const top = height - size, rise = y - top;
+  if (rise < 0) return false;
+  const tier = rise % Math.max(3, Math.floor(size / 3));
+  return Math.abs(dx) <= Math.min(Math.floor(size / 5) + 1, Math.floor((rise / size) * (size / 3)) + Math.floor(tier / 2)) || (Math.abs(dx) === 0 && y >= height - 3);
+};
+/** 崩れた柱。幅 4 の矩形の上端を欠く */
+const pillar: Silhouette = (dx, y, size, height) => Math.abs(dx) <= 2 && y >= height - size + (dx === 2 ? 2 : 0);
+/** ポプラ。細長い楕円 */
+const poplar: Silhouette = (dx, y, size, height) => {
+  const cy = height - size / 2 - 2, ry = size / 2, rx = Math.max(1.5, size / 7);
+  return (dx / rx) ** 2 + ((y - cy) / ry) ** 2 <= 1 || (dx === 0 && y >= height - 3);
+};
+
+const SILHOUETTES: Readonly<Record<SkyTheme, Silhouette | null>> = { ridge: pine, canyon: pillar, basin: poplar, islands: null };
+
+/** 1 周期の中の木の位置と大きさ。ハッシュで 7〜17 art px おきに置く */
+const treesOf = (theme: SkyTheme): readonly { readonly x: number; readonly size: number }[] => {
+  const list: { x: number; size: number }[] = [];
+  for (let x = 4; x < MOUNTAIN_PERIOD - 4; x += 7 + (hash(x, 91) % 11)) list.push({ x, size: 12 + (hash(x, 97) % (TREE_HEIGHT - 14)) });
+  return theme === "islands" ? [] : list;
+};
+
+export const paintTrees = (theme: SkyTheme, height: number = TREE_HEIGHT): PixelGrid => {
+  const grid = createGrid(0, 0, MOUNTAIN_PERIOD, height), shape = SILHOUETTES[theme];
+  if (!shape) return grid;
+  const trees = treesOf(theme);
+  for (let y = 0; y < height; y++) for (let x = 0; x < MOUNTAIN_PERIOD; x++) {
+    // 周期の端の木は反対側にもかかるので、左右 1 周期ずらして調べる
+    const hit = trees.some(t => [0, -MOUNTAIN_PERIOD, MOUNTAIN_PERIOD].some(shift => Math.abs(x - t.x - shift) <= t.size && shape(x - t.x - shift, y, t.size, height)));
+    if (hit || y >= height - 2) setPixel(grid, x, y, PALETTE.sky0);
+  }
+  return grid;
+};
+
+/** 流れ星（設計書 41.13 の評価の 3 回目）。6 秒の窓ごとに 1 つ、窓の中のハッシュで決めた時刻に 450 ms で流れる */
+export const SHOOTING_WINDOW_MS = 6000;
+export const SHOOTING_MS = 450;
+/** 流れる長さ（背景の art px）と、尾の長さ */
+const SHOOTING_TRAVEL = 120;
+export const SHOOTING_TAIL = 6;
+
+/** clock ms の時点で流れている星。頭の位置（画面の幅と高さに対する割合と、背景の art px の移動量）。流れていなければ null */
+export const shootingStarAt = (clock: number, reduced: boolean): { readonly x: number; readonly y: number; readonly travel: number } | null => {
+  if (reduced || clock < 0) return null;
+  const window = Math.floor(clock / SHOOTING_WINDOW_MS), start = window * SHOOTING_WINDOW_MS + (hash(window, 61) % (SHOOTING_WINDOW_MS - SHOOTING_MS));
+  const t = clock - start;
+  if (t < 0 || t >= SHOOTING_MS) return null;
+  return { x: 0.1 + (hash(window, 67) % 600) / 1000, y: 0.04 + (hash(window, 71) % 220) / 1000, travel: Math.floor((t / SHOOTING_MS) * SHOOTING_TRAVEL) };
+};

@@ -57,6 +57,11 @@ export const createPixelTerrainLayer = (original: TerrainMask, theme: TerrainThe
       current = next;
       if (rect) for (const chunk of chunks) chunk.paint(context(next), rect);
     },
+    texels: (mask, rect) => {
+      const grid = createGrid(rect.left * TEXELS, rect.top * TEXELS, rect.width * TEXELS, rect.height * TEXELS);
+      paintTerrain(context(mask), grid);
+      return grid;
+    },
     destroy: () => { for (const chunk of chunks) chunk.destroy(); sprite.destroy(); },
   };
 };

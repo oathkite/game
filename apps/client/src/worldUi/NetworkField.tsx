@@ -13,7 +13,7 @@ import type { WeaponId } from "@game/protocol";
 import type { LabFrame } from "@game/protocol/v2-lab";
 import { applyOps, buildInitialTerrain, tiltOf } from "@game/sim";
 import { createRenderer, type Renderer } from "@/game/renderer";
-import { cssHex, PALETTE } from "@/game/palette";
+import { cssHex, PALETTE, TEAM_RAMPS } from "@/game/palette";
 import { backdropTheme } from "@/game/pixelBackdrop";
 import { TERRAIN_THEMES } from "@/game/terrainPaint";
 import type { Layout } from "@/game/scale";
@@ -21,12 +21,14 @@ import { createCameraRig } from "@/prototype/cameraRig";
 import { loadCameraSettings } from "@/prototype/cameraSettings";
 import { worldToScreen } from "@/prototype/camera";
 import type { presentLabReplay } from "@/networkLab/labReplay";
-import { createLabCrumbles, drawLabImpacts, labEdgePoints, labShake, labTankHit } from "./labImpactView";
+import { createLabImpactFx, drawLabImpacts, emitLabDebris, labEdgePoints, labShake, labTankHit } from "./labImpactView";
 import { edgeBlinkOn } from "@/game/edgeMarker";
 import { guideDots } from "@/game/trail";
 import { revealRowsAt } from "./openingTour";
 import { CARVE_AT_MS, IMPACT_TOTAL_MS } from "@/game/hitFeedback";
 import { SceneLoading } from "./SceneLoading";
+import { replayTailMs } from "@game/engine/replay-timing";
+import { TOTAL_AFTER_CARVE_MS } from "@/game/replay";
 
 type Props = { readonly serverNow: number; readonly onSettling?: (settling: boolean) => void; readonly followTurns?: boolean; readonly blocked?: boolean; readonly frame: LabFrame; readonly players: LabFrame["players"]; readonly presentation: ReturnType<typeof presentLabReplay>; readonly elevation: number; readonly ownId: string; readonly selectedWeapon?: WeaponId; readonly charge?: number };
 const baseTerrain = (frame: LabFrame) => buildInitialTerrain(frame.map);
@@ -46,7 +48,6 @@ export const NetworkField = (props: Props) => {
     const start = async () => {
       rig.configure(loadCameraSettings());
       let mask = baseTerrain(latest.current.frame), previousSize = "", terrainKey = "", turnKey = "", replayKey = -1, opsCount = 0;
-      const crumbles = createLabCrumbles();
       let guide: readonly { readonly x: number; readonly y: number }[] | null = null, guideShown = false;
       const colorOf = (playerId: string) => Number.parseInt(teamColor(Number((latest.current.frame.players.find(p => p.playerId === playerId)?.teamId ?? "t0").slice(1))).slice(1), 16);
       const falls = createFallMotion(); let settling = false, wasOpening = false, signalVisible = false, fallMatch = "";
@@ -57,7 +58,7 @@ export const NetworkField = (props: Props) => {
       if (disposed) { renderer.destroy(); return; }
       const r = renderer; let bullet = r.projectile("yellow", "cannon");
       let previousMoveX: number | undefined;
-      const damageEvents = new Set<string>();
+      const damageEvents = new Set<string>(), impactFx = createLabImpactFx();
       stop = r.onFrame(dt => {
         const { frame, players, presentation, elevation, ownId } = latest.current;
         const size = layout(), key = `${size.mapWidth}/${size.mapHeight}/${frame.map.width}/${frame.map.height}`;
@@ -66,7 +67,7 @@ export const NetworkField = (props: Props) => {
         const nextTerrain = `${frame.matchId}/${presentation.terrainOps.length}`;
         if (nextTerrain !== terrainKey) {
           const before = mask, grew = terrainKey.startsWith(`${frame.matchId}/`) && presentation.terrainOps.length > opsCount;
-          if (grew && frame.phase === "replaying" && !reducedNow) crumbles.note(before, presentation.terrainOps.slice(opsCount), latest.current.serverNow);
+          if (grew && frame.phase === "replaying" && !reducedNow) emitLabDebris(r.effects, before, presentation.terrainOps.slice(opsCount), opsCount, frame.matchId, frame.replay?.shooter.weapon);
           terrainKey = nextTerrain; opsCount = presentation.terrainOps.length;
           mask = applyOps(baseTerrain(frame), presentation.terrainOps); r.setTerrain(mask, undefined, presentation.terrainOps);
         }
@@ -87,11 +88,11 @@ export const NetworkField = (props: Props) => {
           return { ...p, ...motion };
         });
         if (settling !== ownFalling) { settling = ownFalling; latest.current.onSettling?.(settling); }
-        shown.forEach((p, i) => { const hit = labTankHit(presentation, p.playerId); r.setTank(i, { x: p.x, y: p.y, tilt: tiltOf(mask, { x: Math.round(p.x), y: Math.round(p.y) }), facing: facing.get(p.playerId) ?? 1,
-          elevation: p.playerId === shot?.playerId ? shot.elevation : p.playerId === ownId ? elevation : 45, hp: hit.bar ? hit.bar.hp : p.eliminated ? 0 : p.hp, ...(hit.bar ? { hpGhost: hit.bar.hpGhost, ghostOn: hit.bar.ghostOn } : {}), visible: p.y < frame.map.height, falling: p.falling || presentation.fallingIds.includes(p.playerId), shotFlashes: p.playerId === shot?.playerId ? presentation.shotFlashes : [], recoil: p.playerId === shot?.playerId ? presentation.recoil : 0, aiming: frame.phase === "acting" && p.playerId === ownId && p.playerId === frame.actorId, charge: frame.phase === "acting" && p.playerId === ownId && p.playerId === frame.actorId ? latest.current.charge ?? 0 : 0, acting: frame.phase === "acting" && p.playerId === frame.actorId, flash: hit.flash }); });
+        shown.forEach((p, i) => { const hit = labTankHit(presentation, p.playerId, p.x); r.setTank(i, { x: p.x, y: p.y, tilt: tiltOf(mask, { x: Math.round(p.x), y: Math.round(p.y) }), facing: facing.get(p.playerId) ?? 1,
+          elevation: p.playerId === shot?.playerId ? shot.elevation : p.playerId === ownId ? elevation : 45, hp: hit.bar ? hit.bar.hp : p.eliminated ? 0 : p.hp, ...(hit.bar ? { hpGhost: hit.bar.hpGhost, ghostOn: hit.bar.ghostOn } : {}), visible: p.y < frame.map.height, falling: p.falling || presentation.fallingIds.includes(p.playerId), shotFlashes: p.playerId === shot?.playerId ? presentation.shotFlashes : [], recoil: p.playerId === shot?.playerId ? presentation.recoil : 0, aiming: frame.phase === "acting" && p.playerId === ownId && p.playerId === frame.actorId, charge: frame.phase === "acting" && p.playerId === ownId && p.playerId === frame.actorId ? latest.current.charge ?? 0 : 0, acting: frame.phase === "acting" && p.playerId === frame.actorId, flash: hit.flash, nudge: reducedNow ? 0 : hit.nudge }); });
         const actor = shown.find(p => p.playerId === frame.actorId); if (actor && frame.phase === "acting") rig.actor({ x: actor.x, y: actor.y - 6 });
         if (frame.replay && replayKey !== frame.replay.startsAt) {
-          replayKey = frame.replay.startsAt; bullet = r.projectile("yellow", frame.replay.shooter.weapon); crumbles.reset();
+          replayKey = frame.replay.startsAt; bullet = r.projectile("yellow", frame.replay.shooter.weapon);
           // 自分の射撃の軌跡を次の自分の手番まで残す（設計書 38 の E7）。相手には見せない
           if (frame.replay.shooter.playerId === ownId) guide = guideDots(frame.replay.paths.map(path => path.points));
           const p = presentation.bullets[0]; if (p) rig.focus(p, "shot");
@@ -100,8 +101,7 @@ export const NetworkField = (props: Props) => {
         if (showGuide !== guideShown) { guideShown = showGuide; r.setGuide(showGuide ? guide : null); }
         const replay = frame.phase === "replaying" ? frame.replay : null;
         if (replay) {
-          const hit = replay.impacts.some(i => i.damage.some(d => d.amount > 0));
-          const flightMs = Math.max(1, replay.endsAt - replay.startsAt - 300 - (hit ? 1300 : 0));
+          const flightMs = Math.max(1, replay.endsAt - replay.startsAt - replayTailMs(replay.impacts));
           const elapsed = latest.current.serverNow - replay.startsAt;
           replay.impacts.forEach((impact, index) => {
             const event = `${replay.startsAt}/${index}`;
@@ -116,7 +116,9 @@ export const NetworkField = (props: Props) => {
             });
           });
           const event = `${replay.startsAt}/total`;
-          if (elapsed >= flightMs + 300 && !damageEvents.has(event)) {
+          // 多段の合計は、最後の着弾が削れてから 150 ms で出す（設計書 41.13。練習の TOTAL_AFTER_CARVE_MS と同じ）
+          const lastImpactAt = Math.max(0, ...replay.impacts.map(i => i.tick / Math.max(1, replay.ticks) * flightMs));
+          if (elapsed >= lastImpactAt + CARVE_AT_MS + TOTAL_AFTER_CARVE_MS && !damageEvents.has(event)) {
             damageEvents.add(event);
             players.forEach((p, seat) => {
               const summary = damageSummary(replay.impacts.map(i => i.damage.find(d => d.playerId === p.playerId)?.amount ?? 0));
@@ -127,7 +129,10 @@ export const NetworkField = (props: Props) => {
         bullet.clear();
         for (let i = 0; i < 9; i++) { const p = presentation.bullets[i]; bullet.setBullet(i, p?.x ?? null, p?.y ?? 0, p?.angle ?? 0); }
         drawLabImpacts(bullet, presentation, mask, reducedNow);
-        crumbles.draw(bullet, latest.current.serverNow);
+        if (frame.phase === "replaying" && frame.replay) impactFx.update(r.effects, presentation, frame.replay, frame.matchId, reducedNow, (id) => {
+          const p = shown.find(t => t.playerId === id), colors = frame.players.find(t => t.playerId === id)?.colors;
+          return p && colors ? { x: p.x, y: p.y, ramp: TEAM_RAMPS[colors.primary], seat: shown.indexOf(p) } : undefined;
+        }, mask);
         r.setShake(labShake(presentation, reducedNow));
         r.setEdgeMarkers(labEdgePoints(presentation, shown, colorOf), edgeBlinkOn(latest.current.serverNow, reducedNow));
         const first = presentation.bullets[0]; if (first) rig.shot(first);

@@ -9,6 +9,7 @@ import { resolveBattleShot, type BattlePlayer } from "./combat.js";
 import type { createBattle } from "./create.js";
 import { createMovement, type MovementState } from "./movement.js";
 import { moveBattle } from "./moveBattle.js";
+import { REPLAY_SETTLE_MS, replayHoldMs } from "./replayTiming.js";
 import { eliminatePlayers, nextTurn, outcome, type RosterState, type TeamOutcome } from "./rules.js";
 
 import { createBattleWind, advanceBattleWind, type BattleWind } from "./battleWind.js";
@@ -89,12 +90,13 @@ export const fireInSession = (state: BattleSession, playerId: string, raw: unkno
   const weapon = state.loadouts[playerId]![command.slot];
   const shot = resolveBattleShot(state.roster, state.mask, state.players, { playerId, weapon, wind: state.windState.value,
     facing: command.facing, elevation: command.elevation, power: command.power });
-  const duration = Math.min(8000, Math.max(500, shot.ticks * COMBAT_TICK_MS + 300));
-  const damageReadMs = shot.impacts.some(i => i.damage.some(d => d.amount > 0)) ? 1300 : 0;
+  const duration = Math.min(8000, Math.max(500, shot.ticks * COMBAT_TICK_MS + REPLAY_SETTLE_MS));
+  // 着弾の後に留める長さ（設計書 41.8）。クライアントも同じ関数で飛翔の終わりを逆算する
+  const holdMs = replayHoldMs(shot.impacts);
   const next: BattleSession = { ...state, ...(state.stats ? { stats: recordShotStats(state.stats, state.roster.members, playerId, state.players, shot.impacts) } : {}), roster: { ...shot.roster, ...(state.roster.delay ? { delay: finishDelay(state.roster.delay, playerId, actionCost(30 - state.movement.stepsLeft, weapon)) } : {}) }, players: shot.players, mask: shot.mask, phase: "replaying",
     movement: { ...state.movement, locked: true, eventSeq: state.movement.eventSeq + 1 },
     terrainOps: [...state.terrainOps, ...shot.impacts.map(i => i.terrainOp)],
-    replay: { startsAt: now, endsAt: now + duration + damageReadMs, shot, playersBefore: state.players, eliminatedBefore: state.roster.eliminated, origin: { x: state.movement.x, y: state.movement.y } },
+    replay: { startsAt: now, endsAt: now + duration + holdMs, shot, playersBefore: state.players, eliminatedBefore: state.roster.eliminated, origin: { x: state.movement.x, y: state.movement.y } },
     lastFire: { playerId, command } };
   return { state: next, reason: "accepted" };
 };

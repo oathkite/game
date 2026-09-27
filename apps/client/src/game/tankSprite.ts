@@ -30,6 +30,8 @@ export type TankSpriteInput = {
   /** 発射光のコマ。null なら出さない */
   readonly flash: number | null;
   readonly sparks: readonly Spark[];
+  /** アンテナの先端の横のずれ（art px）。省略は 0 */
+  readonly antenna?: number;
 };
 
 /** スプライトを描く枠。砲身と発射光と火花が全仰角、全傾きで収まる大きさ */
@@ -101,10 +103,10 @@ const bodyMasks = (input: TankSpriteInput): readonly PixelGrid[] => {
   const phase = input.facing * input.treadPhase;
   // 転輪は 3 px ごとにコマを替え、履帯の輪（3 px）と端（2 px）と合わせて 6 px で一巡する
   const wheel = Math.floor(phase / 3);
-  const key = `${input.facing}|${input.tilt}|${input.sink}|${((phase % 6) + 6) % 6}|${((wheel % 2) + 2) % 2}|${input.wrecked}`;
+  const key = `${input.facing}|${input.tilt}|${input.sink}|${((phase % 6) + 6) % 6}|${((wheel % 2) + 2) % 2}|${input.wrecked}|${input.antenna ?? 0}`;
   const cached = bodyCache.get(key);
   if (cached) return cached;
-  const local = [treadMask(phase, wheel, input.wrecked), hullMask(input.sink, input.wrecked), turretMask(input.sink, input.wrecked), ...(input.wrecked ? [] : [antennaMask(input.sink)])];
+  const local = [treadMask(phase, wheel, input.wrecked), hullMask(input.sink, input.wrecked), turretMask(input.sink, input.wrecked), ...(input.wrecked ? [] : [antennaMask(input.sink, input.antenna ?? 0)])];
   const masks = local.map(mask => rotateGrid(input.facing === 1 ? mask : mirrorGrid(mask), input.tilt));
   if (bodyCache.size >= MAX_CACHE) bodyCache.clear();
   bodyCache.set(key, masks);

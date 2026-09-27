@@ -105,10 +105,11 @@ export const turretMask = (sink: number, wrecked: boolean): PixelGrid => {
   return grid;
 };
 
-/** 砲塔の後ろに立つアンテナ。残骸には無い */
-export const antennaMask = (sink: number): PixelGrid => {
-  const grid = createGrid(-6, -25 + sink, 1, 6);
-  fillRect(grid, -6, -24 + sink, 1, 5, MATERIAL.antenna);
-  setPixel(grid, -6, -25 + sink, MATERIAL.antennaTip);
+/** 砲塔の後ろに立つアンテナ。残骸には無い。sway は先端の横のずれ（art px）で、付け根から先へ 2 乗で曲げる（設計書 41 の段階 4） */
+export const antennaMask = (sink: number, sway = 0): PixelGrid => {
+  const reach = Math.abs(sway);
+  const grid = createGrid(-6 - reach, -25 + sink, 1 + 2 * reach, 6);
+  // 付け根（下）から先端（上）へ 6 行
+  for (let k = 0; k < 6; k++) setPixel(grid, -6 + Math.round(sway * (k / 5) ** 2), -20 + sink - k, k === 5 ? MATERIAL.antennaTip : MATERIAL.antenna);
   return grid;
 };

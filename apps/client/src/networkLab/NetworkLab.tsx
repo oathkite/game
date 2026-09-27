@@ -133,7 +133,7 @@ export const NetworkLab = ({ worldArt = false, onExit, connection }: { readonly 
   const action = (type: "lab.rematch" | "lab.surrender"): void => {
     if (frame && socket.current?.readyState === WebSocket.OPEN) socket.current.send(JSON.stringify({ type, matchId: frame.matchId }));
   };
-  const presentation = frame ? presentLabReplay(frame, serverNow) : null;
+  const presentation = frame ? presentLabReplay(frame, serverNow, typeof matchMedia === "function" && matchMedia("(prefers-reduced-motion: reduce)").matches) : null;
   const shownPlayers = frame?.phase === "replaying" ? presentation!.players : positions.map(p => ({ ...frame!.players.find(player => player.playerId === p.playerId)!, ...p }));
   const loadout = frame?.players.find(p => p.playerId === playerId)?.loadout ?? DEFAULT_LOADOUT;
   const seconds = frame?.phase === "acting" ? Math.max(0, Math.min(20, Math.ceil((frame.deadlineAt - serverNow) / 1000))) : null;

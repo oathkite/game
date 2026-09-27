@@ -3,7 +3,7 @@ import { BARREL_BASE_UP } from "@game/sim";
 import { explosionPixels, type BlastStage } from "./explosionSprite";
 import { PALETTE, type Ramp } from "./palette";
 import { ART_PER_CELL, colorRuns, type ColorRun } from "./pixelGrid";
-import { type Burst, type Dot, type Puff, smokeAt, smokeSparkOn } from "./tankMotion";
+import { type Burst, type Dot, exhaustAt, type Puff, smokeAt, smokeSparkOn } from "./tankMotion";
 
 // 機体の周りに出す粒（土煙、煙、撃破の爆発）の描画。時間の流れは tankMotion.ts が決める（設計書 38）。
 // 絵は設計書 40.5 と 40.9。座標は接地点を原点とするセルで、粒は art px（1/4 セル）の格子に揃える。機体の傾きには合わせない。
@@ -62,4 +62,12 @@ export const drawBursts = (g: Graphics, bursts: readonly Burst[]): void => {
     const stage: BlastStage = b.ring ? "ring" : b.tone === 2 ? "cool" : "hot";
     for (const r of runsOf(b.radius, stage)) g.rect(b.x + 0.5 + r.x * ART, b.y + 0.5 + r.y * ART, r.w * ART, ART).fill(r.color);
   }
+};
+
+/** 排気口の煙。機体の後ろから小さく昇る。facing で左右を反転する */
+export const drawExhaust = (g: Graphics, clock: number, facing: 1 | -1, reduced: boolean): void => {
+  const puff = exhaustAt(clock, reduced);
+  if (!puff) return;
+  const x = 0.5 + (facing * puff.x - (facing < 0 ? puff.size : 0)) * ART, y = puff.y * ART;
+  g.rect(Math.round(x * ART_PER_CELL) * ART, y, puff.size * ART, puff.size * ART).fill(puff.tone === 0 ? PALETTE.smoke1 : PALETTE.smoke2);
 };

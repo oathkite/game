@@ -14,10 +14,16 @@ import { DAMAGE_LABEL_GAP_PX, type Offset } from "./hitFeedback";
 import { createProjectileView, type ProjectileView } from "./projectileView";
 import { createExplosionTextures } from "./explosionTextures";
 import { PALETTE, TEAM_RAMPS } from "./palette";
-import { TERRAIN_THEMES } from "./terrainPaint";
 import type { Layout } from "./scale";
 import { createTankView, type TankPose, type TankView } from "./tankView";
+import { TERRAIN_THEMES } from "./terrainPaint";
 import { createTerrainLayer, type TerrainLayer } from "./terrainLayer";
+import { createFxLayer } from "./fx/fxLayer";
+import type { ArtBounds } from "./fx/particles";
+import { createRendererEffects, type RendererEffects } from "./fx/rendererEffects";
+import { createScreenFx } from "./fx/screenFx";
+import { ART_PER_CELL } from "./pixelGrid";
+import { hash32 } from "./fx/hash";
 
 // PixiJS の Application を 1 つ持ち、地形、戦車、弾の層をまとめる。
 // world はセル単位で描き、cell 倍に拡大する。名前の文字だけは拡大しない層に置く。
@@ -43,8 +49,20 @@ export type Renderer = {
   readonly setEdgeMarkers: (points: readonly EdgePoint[], on: boolean) => void;
   /** 地形を上から rows 行だけ見せる。null なら全体。設計書 38 の L3 */
   readonly setReveal: (rows: number | null) => void;
+  /** 再生の外で寿命が尽きるまで描く演出。設計書 41 */
+  readonly effects: RendererEffects;
   readonly destroy: () => void;
 };
+
+export type { RendererEffects };
+
+/** 同じ機体の数字を積むときの 1 行の高さ（px）。ドット文字の高さ（7 × 2 と 7 × 3 に輪郭 2）に 2 px の隙間。積むのは 4 つまで */
+const DAMAGE_STACK_PX = 18;
+const DAMAGE_STACK_BIG_PX = 25;
+const DAMAGE_STACK_LIMIT = 4;
+
+/** 粒を描く範囲の余白（art px）。画面揺れでずれた分も描く */
+const FX_MARGIN = 8;
 
 export type EdgePoint = { readonly x: number; readonly y: number; readonly color: number };
 
@@ -80,6 +98,8 @@ export type RendererInit = {
   readonly imageTerrain?: CanvasImageSource;
   readonly terrainArt?: CanvasImageSource;
   readonly players: readonly { colors: TankColors; nickname: string }[];
+  /** 偽なら描画の時計を自分では進めない。FX ラボの決めた時刻の絵に使う（設計書 41.11） */
+  readonly autoStart?: boolean;
 };
 
 const safely = (fn: () => void): void => {
@@ -101,6 +121,7 @@ export const createRenderer = async (init: RendererInit): Promise<Renderer> => {
     resolution: 1,
     autoDensity: false,
     preference: "webgl",
+    autoStart: init.autoStart ?? true,
   });
   init.host.appendChild(app.canvas);
 
@@ -129,6 +150,14 @@ export const createRenderer = async (init: RendererInit): Promise<Renderer> => {
   const reveal = new Graphics();
   world.addChild(reveal);
   const edges = new Graphics();
+  // 大きな着弾の暗転（設計書 41.6 の I5）。地形と背景の上、光と火球と機体の下
+  // 暗転と空の色の寄せは、地形と背景に置き換え表のフィルターを当てる（設計書 41.13）
+  const screenFx = createScreenFx({ terrain: terrain.sprite, sky: backdrop.container, toScreen: (cx, cy) => ({ x: world.x + cx * cell + app.stage.x, y: world.y + cy * cell + app.stage.y }), cell: () => cell });
+  // 手番をまたいで残る粒。地形より手前で、爆風と機体より奥（設計書 41.9）。火球の中の破片は火球に隠れ、外へ出たものが見える
+  const fx = createFxLayer();
+  // 削れた地形の破片は地形の奥に描き、地面の向こうへ落ちて見えなくなるようにする（設計書 41.13）
+  world.addChildAt(fx.under, 0);
+  world.addChild(fx.back);
   const projectileLayer = new Container();
   world.addChild(projectileLayer);
   let projectile: ProjectileView | null = null;
@@ -139,12 +168,31 @@ export const createRenderer = async (init: RendererInit): Promise<Renderer> => {
     world.addChild(t.world);
     labels.addChild(t.label);
   }
+  world.addChild(fx.front);
   app.stage.addChild(edges);
+  const flash = screenFx.flash;
+  app.stage.addChild(flash);
+  /** 見えている範囲（art px） */
+  const viewArt = (): ArtBounds => {
+    const left = -world.x / cell, top = -world.y / cell;
+    return {
+      left: Math.floor(left * ART_PER_CELL) - FX_MARGIN,
+      top: Math.floor(top * ART_PER_CELL) - FX_MARGIN,
+      right: Math.ceil((left + app.screen.width / cell) * ART_PER_CELL) + FX_MARGIN,
+      bottom: Math.ceil((top + app.screen.height / cell) * ART_PER_CELL) + FX_MARGIN,
+    };
+  };
+  const effects = createRendererEffects({ fx, screenFx, texels: terrain.texels, screen: () => app.screen, reduced: () => reduced.matches, soil: TERRAIN_THEMES[theme].soil,
+    tankAt: (seat) => { const pose = poses[seat]; return pose && pose.visible ? { x: pose.x, y: pose.y } : null; } });
+  app.ticker.add(() => { fx.tick(app.ticker.deltaMS, viewArt()); effects.tick(); });
   app.ticker.add(() => {
     for (const t of tanks) t.tick?.(app.ticker.deltaMS, reduced.matches);
   });
   const poses: (TankPose | null)[] = tanks.map(() => null);
+  const travel: number[] = tanks.map(() => 0);
   const labelStops = new Set<() => void>();
+  // 機体ごとの出ている数字。新しい数字が出たら古い数字を 1 行上へ押し上げ、縦に積む（設計書 41 の段階 4）
+  const stacks = tanks.map(() => new Set<{ readonly push: (px: number) => void; readonly stop: () => void }>());
   const labelOrigins = tanks.map(() => ({ x: 0, y: 0 }));
   const placeLabel = (seat: number): void => {
     const pose = poses[seat];
@@ -183,12 +231,20 @@ export const createRenderer = async (init: RendererInit): Promise<Renderer> => {
     },
     setTerrain: (mask, cut, history) => terrain.update(mask, cut, history),
     setTank: (seat, pose) => {
+      const before = poses[seat];
       poses[seat] = pose;
       applyPose(seat);
+      // 走行の土煙。1 セル進むごとに後ろの履帯の下から出す（設計書 41 の段階 4）
+      const moved = before ? Math.abs(pose.x - before.x) : 0;
+      if (before && moved > 0 && moved <= 2.5 && pose.hp > 0 && pose.visible && !pose.falling) {
+        const travelled = (travel[seat] ?? 0) + moved;
+        travel[seat] = travelled % 1;
+        if (travelled >= 1) effects.dust(pose.x, pose.y, pose.facing, hash32(seat, Math.round(pose.x * ART_PER_CELL)));
+      }
     },
     projectile: (color, weapon) => {
       if (projectile) projectile.destroy();
-      projectile = createProjectileView({ ramp: TEAM_RAMPS[color], soil: TERRAIN_THEMES[theme].soil, explosions }, weapon, init.projectileTextures?.[weapon], init.impactTextures?.[weapon]);
+      projectile = createProjectileView({ ramp: TEAM_RAMPS[color], explosions }, weapon, init.projectileTextures?.[weapon], init.impactTextures?.[weapon]);
       projectileLayer.addChild(projectile.container);
       return projectile;
     },
@@ -201,14 +257,24 @@ export const createRenderer = async (init: RendererInit): Promise<Renderer> => {
     },
     setShake: (offset) => {
       app.stage.position.set(offset.dx * cell, offset.dy * cell);
+      // 背景と風の粒と全画面の光は揺らさない。揺らすと画面の端に canvas の外の黒い帯が出る（設計書 41.13）
+      for (const still of [backdrop.container, wind.container, flash]) still.position.set(-offset.dx * cell, -offset.dy * cell);
     },
     showDamage: (seat, text, color, big, summary = false) => {
       const pose = poses[seat];
       if (!pose) return;
       // 名前の文字の上端から隙間を空けて出す。名前は px で描かれるので px で積む
       const y = tanks[seat]!.label.getBounds().minY - labels.getGlobalPosition().y - DAMAGE_LABEL_GAP_PX;
-      const stop = spawnDamageLabel({ parent: labels, ticker: app.ticker, text, color, big, summary, x: (pose.x + 0.5) * cell, y, onEnd: () => labelStops.delete(stop) });
-      labelStops.add(stop);
+      const stack = stacks[seat]!;
+      // 積むのは新しい 4 つまで。古い数字から消す（設計書 41.13）
+      while (stack.size >= DAMAGE_STACK_LIMIT) {
+        const oldest = stack.values().next().value!;
+        oldest.stop(); stack.delete(oldest); labelStops.delete(oldest.stop);
+      }
+      for (const shown of stack) shown.push(big || summary ? DAMAGE_STACK_BIG_PX : DAMAGE_STACK_PX);
+      const label = spawnDamageLabel({ parent: labels, ticker: app.ticker, text, color, big, summary, x: (pose.x + 0.5) * cell, y, onEnd: () => { labelStops.delete(label.stop); stack.delete(label); } });
+      labelStops.add(label.stop);
+      stack.add(label);
     },
     setGuide: (dots) => {
       guide.clear();
@@ -233,6 +299,8 @@ export const createRenderer = async (init: RendererInit): Promise<Renderer> => {
       reveal.visible = true;
       terrain.sprite.mask = reveal;
     },
+    // 撃ち直すときは、出ている数字も消す（FX ラボ）
+    effects: { ...effects, clear: () => { effects.clear(); for (const stop of labelStops) safely(stop); labelStops.clear(); for (const stack of stacks) stack.clear(); } },
     destroy: () => {
       for (const stop of labelStops) safely(stop);
       labelStops.clear();
@@ -244,6 +312,7 @@ export const createRenderer = async (init: RendererInit): Promise<Renderer> => {
       safely(() => app.destroy(true, { children: true }));
       safely(() => backdrop.destroy());
       safely(() => explosions.destroy());
+      safely(() => screenFx.destroy());
     },
   };
 };

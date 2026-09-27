@@ -21,6 +21,11 @@ export const BLAST_MIN_RADIUS = 2;
 export const CARVE_AT_MS = HOLD_MS + EXPAND_MS;
 /** 着弾の演出の合計 */
 export const IMPACT_TOTAL_MS = HOLD_MS + EXPAND_MS + FLICKER_MS + RING_MS;
+/** 最後の着弾で、その後に飛んでいる弾がないときに画面全体を止める長さ（設計書 41.6） */
+export const HITSTOP_MS = 60;
+
+/** ヒットストップを入れた時刻 now'。止め始め（freezeAt）から HITSTOP_MS の間は freezeAt に留まり、その後は HITSTOP_MS だけ遅れて進む */
+export const hitstopClock = (now: number, freezeAt: number | null): number => (freezeAt === null ? now : now - Math.min(HITSTOP_MS, Math.max(0, now - freezeAt)));
 
 export type BlastFrame = {
   /** 弾を着弾点に止めて見せる */
@@ -231,11 +236,6 @@ export const missMarkAt = (t: number, last: CellPoint, bounds: { readonly width:
   return { x, y, on: Math.floor(t / MISS_BLINK_MS) % 2 === 0 };
 };
 
-/**
- * オンライン対戦の着弾の時刻の換算。設計書 38 の E1。
- * 着弾から再生の終わりまで span ミリ秒しか無いとき（外れのターンは 300 ms）、着弾の演出の全体を span に縮める。足りていればそのまま
- */
-export const impactClock = (age: number, span: number): number => (span >= IMPACT_TOTAL_MS ? age : (age * IMPACT_TOTAL_MS) / Math.max(1, span));
 
 /** 直撃の白黒反転を出す長さ。1 フレーム強。設計書 38 の E5 */
 export const INVERT_MS = 34;
@@ -254,4 +254,16 @@ export const invertCells = (mask: TerrainMask, cx: number, cy: number, r: number
     }
   }
   return { white, black };
+};
+
+/** 被弾の押し戻しの量（art px）。ダメージ段階 1〜3 で 1、2、2。60 ms で押され、120 ms で戻る（設計書 41 の段階 4） */
+export const KNOCKBACK_PX: readonly number[] = [0, 1, 2, 2];
+export const KNOCKBACK_OUT_MS = 60;
+export const KNOCKBACK_BACK_MS = 120;
+
+/** 削れてから t ms 後の押し戻しの量（art px、整数） */
+export const knockbackAt = (t: number, damage: number): number => {
+  const amount = KNOCKBACK_PX[damageTier(damage)] ?? 0;
+  if (t < 0 || t >= KNOCKBACK_OUT_MS + KNOCKBACK_BACK_MS) return 0;
+  return t < KNOCKBACK_OUT_MS ? amount : Math.round(amount * (1 - (t - KNOCKBACK_OUT_MS) / KNOCKBACK_BACK_MS));
 };

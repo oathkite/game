@@ -3,19 +3,19 @@ import { describe, expect, it, vi } from "vitest";
 import { CARVE_AT_MS, FLASH_MS_BY_TIER, FLICKER_HALF_MS } from "@/game/hitFeedback";
 import type { ProjectileView } from "@/game/projectileView";
 import type { LabEffect, presentLabReplay } from "@/networkLab/labReplay";
-import { createLabCrumbles, drawLabImpacts, labEdgePoints, labShake, labTankHit } from "@/worldUi/labImpactView";
+import { drawLabImpacts, emitLabDebris, labEdgePoints, labShake, labTankHit } from "@/worldUi/labImpactView";
 
 // オンライン対戦の着弾の見せ方。設計書 38 の E1
 
 type Presentation = ReturnType<typeof presentLabReplay>;
-const effect = (clock: number, amount: number): LabEffect => ({ key: "0", cx: 20, cy: 15, radius: 6, clock, damage: amount, damages: amount > 0 ? [{ playerId: "p1", amount }] : [] });
-const presentation = (effects: readonly LabEffect[]): Presentation => ({ players: [], terrainOps: [], bullets: [], trails: [], effects, hpBars: {}, misses: [], fallingIds: [], recoil: 0, shotFlashes: [] }) as Presentation;
+const effect = (clock: number, amount: number): LabEffect => ({ key: "0", cx: 20, cy: 15, radius: 6, clock, damage: amount, damages: amount > 0 ? [{ playerId: "p1", amount }] : [], kills: [], final: false });
+const presentation = (effects: readonly LabEffect[]): Presentation => ({ launches: [], players: [], terrainOps: [], bullets: [], trails: [], effects, hpBars: {}, misses: [], fallingIds: [], recoil: 0, shotFlashes: [] }) as Presentation;
 const mask = (): TerrainMask => {
   const cells = new Uint8Array(40 * 30);
   for (let y = 15; y < 30; y++) for (let x = 0; x < 40; x++) cells[y * 40 + x] = 1;
   return { width: 40, height: 30, cells } as TerrainMask;
 };
-const view = () => ({ setBlast: vi.fn(), setDebris: vi.fn(), setInvert: vi.fn(), setMissMark: vi.fn(), setTrail: vi.fn(), setCrumble: vi.fn() });
+const view = () => ({ setBlast: vi.fn(), setDebris: vi.fn(), setInvert: vi.fn(), setMissMark: vi.fn(), setTrail: vi.fn() });
 
 describe("labTankHit", () => {
   it("爆風が最大になってから、ダメージの段階の長さだけ白くする", () => {
@@ -68,19 +68,30 @@ describe("drawLabImpacts の明滅", () => {
   });
 });
 
-describe("createLabCrumbles", () => {
-  it("増えた削りの縁をかけらにして落とし、時間が過ぎたら消す", () => {
-    const crumbles = createLabCrumbles(), v = view();
-    crumbles.note(mask(), [{ cx: 20, cy: 15, radius: 6 }], 1000);
-    crumbles.draw(v as unknown as ProjectileView, 1000);
-    expect(v.setCrumble.mock.calls[0]![1].length).toBeGreaterThan(0);
-    crumbles.draw(v as unknown as ProjectileView, 1500);
-    expect(v.setCrumble.mock.calls[1]![1]).toEqual([]);
+describe("emitLabDebris", () => {
+  it("増えた削りを順に当て、削りごとに削る前と後の mask で破片を出す（設計書 41.5）", () => {
+    const effects = { crater: vi.fn() };
+    const ops = [{ cx: 20, cy: 15, radius: 6 }, { cx: 24, cy: 16, radius: 4 }];
+    emitLabDebris(effects, mask(), ops, 3, "match-a");
+    expect(effects.crater).toHaveBeenCalledTimes(2);
+    const [first, second] = effects.crater.mock.calls;
+    expect(first![2]).toEqual(ops[0]);
+    // 2 つめの削りは、1 つめを当てた後の mask から削る
+    expect(second![0]).toBe(first![1]);
+    expect(first![3]).not.toBe(second![3]);
   });
-  it("まとめて届いた削り（再接続など）ではかけらを出さない", () => {
-    const crumbles = createLabCrumbles(), v = view();
-    crumbles.note(mask(), Array.from({ length: 9 }, (_, i) => ({ cx: i * 4, cy: 15, radius: 2 })), 0);
-    crumbles.draw(v as unknown as ProjectileView, 0);
-    expect(v.setCrumble).not.toHaveBeenCalled();
+  it("同じ対戦の同じ削りには同じ種を、別の対戦には別の種を渡す", () => {
+    const a = { crater: vi.fn() }, b = { crater: vi.fn() }, c = { crater: vi.fn() };
+    const op = [{ cx: 20, cy: 15, radius: 6 }];
+    emitLabDebris(a, mask(), op, 0, "match-a");
+    emitLabDebris(b, mask(), op, 0, "match-a");
+    emitLabDebris(c, mask(), op, 0, "match-b");
+    expect(a.crater.mock.calls[0]![3]).toBe(b.crater.mock.calls[0]![3]);
+    expect(a.crater.mock.calls[0]![3]).not.toBe(c.crater.mock.calls[0]![3]);
+  });
+  it("まとめて届いた削り（再接続など）では破片を出さない", () => {
+    const effects = { crater: vi.fn() };
+    emitLabDebris(effects, mask(), Array.from({ length: 9 }, (_, i) => ({ cx: i * 4, cy: 15, radius: 2 })), 0, "match-a");
+    expect(effects.crater).not.toHaveBeenCalled();
   });
 });

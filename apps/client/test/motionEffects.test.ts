@@ -1,8 +1,7 @@
 import type { TerrainMask } from "@game/sim";
 import { describe, expect, it } from "vitest";
-import { CRUMBLE_LIMIT, CRUMBLE_MS, crumbleAt, rimCells } from "@/game/crumble";
 import { EDGE_MARGIN, edgeBlinkOn, edgeMarker } from "@/game/edgeMarker";
-import { CARVE_AT_MS, IMPACT_TOTAL_MS, impactClock, INVERT_MS, invertCells, invertOn, missMarkAt } from "@/game/hitFeedback";
+import { CARVE_AT_MS, IMPACT_TOTAL_MS, INVERT_MS, invertCells, invertOn, missMarkAt } from "@/game/hitFeedback";
 import { guideDots, TRAIL_EVERY, trailDots } from "@/game/trail";
 import { REVEAL_MS, revealRowsAt } from "@/worldUi/openingTour";
 
@@ -14,41 +13,6 @@ const ground = (width: number, height: number, top: number): TerrainMask => {
   for (let y = top; y < height; y++) for (let x = 0; x < width; x++) cells[y * width + x] = 1;
   return { width, height, cells } as TerrainMask;
 };
-const carveOut = (mask: TerrainMask, cx: number, cy: number, r: number): TerrainMask => {
-  const cells = new Uint8Array(mask.cells);
-  for (let y = 0; y < mask.height; y++) for (let x = 0; x < mask.width; x++) if ((x - cx) ** 2 + (y - cy) ** 2 <= r * r) cells[y * mask.width + x] = 0;
-  return { ...mask, cells };
-};
-
-describe("rimCells と crumbleAt", () => {
-  const before = ground(40, 30, 15);
-  const after = carveOut(before, 20, 15, 6);
-  const op = { cx: 20, cy: 15, radius: 6 };
-  it("削られたセルのうち縁だけを拾い、地形の無かった所は拾わない", () => {
-    const rim = rimCells(before, after, op);
-    expect(rim.length).toBeGreaterThan(0);
-    for (const c of rim) {
-      expect(c.y).toBeGreaterThanOrEqual(15);
-      expect(Math.hypot(c.x - 20, c.y - 15)).toBeGreaterThanOrEqual(4.5);
-    }
-  });
-  it("大きな爆風では上限まで間引く", () => {
-    const big = carveOut(before, 20, 15, 14);
-    expect(rimCells(before, big, { cx: 20, cy: 15, radius: 14 }).length).toBe(CRUMBLE_LIMIT);
-  });
-  it("何も削っていなければ拾わない", () => {
-    expect(rimCells(before, before, op)).toEqual([]);
-  });
-  it("かけらは中心から外へ跳ねて落ち、長さを過ぎたら消える", () => {
-    const cells = [{ x: 14, y: 16 }, { x: 26, y: 16 }];
-    expect(crumbleAt(0, cells, { x: 20, y: 15 })).toEqual(cells);
-    const later = crumbleAt(300, cells, { x: 20, y: 15 });
-    expect(later[0]!.x).toBeLessThan(14);
-    expect(later[1]!.x).toBeGreaterThan(26);
-    expect(crumbleAt(CRUMBLE_MS, cells, { x: 20, y: 15 })).toEqual([]);
-    expect(crumbleAt(-1, cells, { x: 20, y: 15 })).toEqual([]);
-  });
-});
 
 describe("trailDots と guideDots", () => {
   const points = Array.from({ length: 50 }, (_, i) => ({ x: i, y: 10 }));
@@ -67,15 +31,6 @@ describe("trailDots と guideDots", () => {
   });
 });
 
-
-describe("impactClock", () => {
-  it("時間が足りていればそのまま、足りなければ演出の全体を縮める", () => {
-    expect(impactClock(100, 1600)).toBe(100);
-    expect(impactClock(150, 300)).toBe(IMPACT_TOTAL_MS / 2);
-    expect(impactClock(300, 300)).toBe(IMPACT_TOTAL_MS);
-    expect(impactClock(10, 0)).toBeGreaterThan(0);
-  });
-});
 
 describe("invertOn と invertCells", () => {
   it("大ダメージの着弾で爆風が最大になった瞬間だけ出す", () => {

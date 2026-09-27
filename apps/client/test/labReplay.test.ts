@@ -1,7 +1,7 @@
 import { expect, it } from "vitest";
 import { labFrameSchema } from "@game/protocol/v2-lab";
 import { presentLabReplay } from "../src/networkLab/labReplay";
-import { CARVE_AT_MS, HP_DRAIN_MS, IMPACT_TOTAL_MS, MISS_MS } from "../src/game/hitFeedback";
+import { CARVE_AT_MS, HITSTOP_MS, HP_DRAIN_MS, IMPACT_TOTAL_MS, MISS_MS } from "../src/game/hitFeedback";
 const player = { playerId: "p1", x: 20, y: 150, hp: 100, teamId: "t0", eliminated: false };
 const frame = labFrameSchema.parse({ type: "lab.frame", build: { protocol: 2, sim: "keropod-sim-v2.1", assets: "keropod-world-v1", rules: "keropod-v2.1", map: { id: "test", version: 1 } }, wind: 0, map: { id: "test", version: 1, width: 500, height: 225, surface: Array(500).fill(150) }, serverTime: 1000, eventSeq: 2, matchId: "m", turnId: 1, actorId: "p1", deadlineAt: 20000,
   players: Array.from({ length: 8 }, (_, i) => ({ ...player, playerId: `p${i + 1}`, y: 170, hp: 65 })),
@@ -46,20 +46,23 @@ it("staggered launches and impacts follow authoritative ticks, preserving earlie
 it("plays the practice impact timeline from the authoritative impact time", () => {
   expect(presentLabReplay(frame, 1699).effects).toEqual([]);
   expect(presentLabReplay(frame, 1700).effects[0]).toMatchObject({ cx: 20, cy: 150, radius: 10, clock: 0, damage: 35, damages: [{ playerId: "p1", amount: 35 }] });
-  expect(presentLabReplay(frame, 2289).effects[0]!.clock).toBe(589);
-  expect(presentLabReplay(frame, 1700 + IMPACT_TOTAL_MS).effects).toEqual([]);
+  // 最後の着弾なので、削る瞬間から HITSTOP_MS だけ時計が止まる（設計書 41.6）
+  expect(presentLabReplay(frame, 2289 + HITSTOP_MS).effects[0]!.clock).toBe(589);
+  expect(presentLabReplay(frame, 1700 + IMPACT_TOTAL_MS + HITSTOP_MS).effects).toEqual([]);
 });
-it("compresses the impact timeline into the 300ms left on a turn without damage", () => {
+it("plays the whole impact timeline on a turn without damage, which now holds 1000ms after the flight (設計書 41.8)", () => {
   const miss = { ...frame, replay: { ...frame.replay!, impacts: [{ tick: 42, damage: [] }] } };
-  expect(presentLabReplay(miss, 3000).effects[0]).toMatchObject({ clock: 0, damage: 0, damages: [] });
-  expect(presentLabReplay(miss, 3150).effects[0]!.clock).toBeCloseTo(IMPACT_TOTAL_MS / 2);
-  expect(presentLabReplay(miss, 3299).effects).toHaveLength(1);
-  expect(presentLabReplay(miss, 3300).effects).toEqual([]);
+  // 着弾ありダメージなしは飛翔の終わりから 1000 ms 留めるので、endsAt 3300 の飛翔は 2300 に終わる
+  expect(presentLabReplay(miss, 2299).effects).toEqual([]);
+  expect(presentLabReplay(miss, 2300).effects[0]).toMatchObject({ clock: 0, damage: 0, damages: [] });
+  expect(presentLabReplay(miss, 2450).effects[0]!.clock).toBe(150);
+  expect(presentLabReplay(miss, 2300 + IMPACT_TOTAL_MS + HITSTOP_MS - 1).effects).toHaveLength(1);
+  expect(presentLabReplay(miss, 2300 + IMPACT_TOTAL_MS + HITSTOP_MS).effects).toEqual([]);
 });
 it("drains the hit tank's HP bar from the value before the hit", () => {
   expect(presentLabReplay(frame, 1699).hpBars).toEqual({});
   expect(presentLabReplay(frame, 1700).hpBars.p1).toMatchObject({ hp: 100, hpGhost: 100 });
-  expect(presentLabReplay(frame, 1700 + CARVE_AT_MS + HP_DRAIN_MS).hpBars.p1!.hp).toBe(65);
+  expect(presentLabReplay(frame, 1700 + CARVE_AT_MS + HITSTOP_MS + HP_DRAIN_MS).hpBars.p1!.hp).toBe(65);
   expect(presentLabReplay(frame, 1700).hpBars.p2).toBeUndefined();
 });
 it("draws a trail behind a flying projectile and clears it at impact", () => {
@@ -100,4 +103,20 @@ it("keeps damage reading time after settlement without stretching projectile fli
   expect(presentLabReplay(frame, 2500).players).toEqual(frame.players);
   expect(presentLabReplay(frame, 2500).fallingIds).toEqual([]);
   expect(presentLabReplay(frame, 2500).bullets).toEqual([]);
+});
+it("freezes the final impact's clock for HITSTOP_MS from the carve when nothing is still flying (設計書 41.6)", () => {
+  // 着弾は 1700、削る瞬間は 1700 + CARVE_AT_MS
+  const carve = 1700 + CARVE_AT_MS;
+  expect(presentLabReplay(frame, carve).effects[0]).toMatchObject({ clock: CARVE_AT_MS, final: true, kills: [] });
+  expect(presentLabReplay(frame, carve + HITSTOP_MS / 2).effects[0]!.clock).toBe(CARVE_AT_MS);
+  expect(presentLabReplay(frame, carve + HITSTOP_MS + 100).effects[0]!.clock).toBe(CARVE_AT_MS + 100);
+});
+it("does not freeze the clock when reduced motion is on (設計書 41.6)", () => {
+  const carve = 1700 + CARVE_AT_MS;
+  expect(presentLabReplay(frame, carve + HITSTOP_MS / 2, true).effects[0]!.clock).toBe(CARVE_AT_MS + HITSTOP_MS / 2);
+  expect(presentLabReplay(frame, carve + HITSTOP_MS + 100, true).effects[0]!.clock).toBe(CARVE_AT_MS + HITSTOP_MS + 100);
+});
+it("reports the players an impact takes to zero HP", () => {
+  const lethal = { ...frame, replay: { ...frame.replay!, impacts: [{ tick: 42, damage: [{ playerId: "p1", amount: 100 }, { playerId: "p2", amount: 20 }] }] } };
+  expect(presentLabReplay(lethal, 1700).effects[0]!.kills).toEqual(["p1"]);
 });
