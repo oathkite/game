@@ -1,5 +1,10 @@
 import { expect, test, type Page } from "@playwright/test";
 import { createRoom, enterRooms, joinByCode, readyUp, waitForBattle } from "./roomFlow";
+// 風のメーター（8.5）。両者に同じサーバーの風を出す。ターンの切り替わりをまたいで読まないよう、揃うまで読み直す。
+const windLabels = (pages: readonly Page[]) => Promise.all(pages.map(page => page.locator(".battle-console > .battle-wind .battle-sr").textContent()));
+const expectSameWind = async (pages: readonly Page[]): Promise<void> => {
+  await expect.poll(async () => { const [a, b] = await windLabels(pages); return a === b && /^(左向きの風 \d+|右向きの風 \d+|無風)$/.test(a ?? ""); }).toBe(true);
+};
 // 旧 world-network-tests/online.spec.ts。ロビーから固定8席の試験場へ入る導線は外れたので（33章）、部屋の対戦で同じ操作を確かめる。
 test("room battle takes keyboard, touch and camera input from both players", async ({ browser }) => {
   const contexts = await Promise.all([browser.newContext({ locale: "ja-JP", viewport: { width: 1440, height: 900 } }), browser.newContext({ locale: "ja-JP", hasTouch: true, viewport: { width: 844, height: 390 } })]);
@@ -12,6 +17,7 @@ test("room battle takes keyboard, touch and camera input from both players", asy
     await readyUp(mobile!);
     await desktop!.getByRole("button", { name: "対戦開始", exact: true }).click();
     for (const page of pages) await waitForBattle(page);
+    await expectSameWind(pages);
     await expect(desktop!.getByRole("button", { name: "発射", exact: true })).toHaveCount(0);
     // ゲーム用のキー入力を検出するとタッチ操作は隠れるので、キーを押す前に確かめる。十字キーは36章のコンパクトな寸法（32px）。
     for (const label of ["左へ1歩", "右へ1歩", "発射"]) {
@@ -42,6 +48,7 @@ test("room battle takes keyboard, touch and camera input from both players", asy
     await actor.keyboard.down("Space"); await actor.waitForTimeout(400); await actor.keyboard.up("Space");
     await expect(observer.getByTestId("phase")).toHaveText("射撃を再生中");
     await expect(observer.getByTestId("phase")).toHaveText("操作中", { timeout: 10000 });
+    await expectSameWind(pages);
     await desktop!.screenshot({ path: "test-results/room-controls-desktop.png" });
     await mobile!.screenshot({ path: "test-results/room-controls-mobile.png" });
     const world = mobile!.getByTestId("network-world");

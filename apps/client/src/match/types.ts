@@ -69,6 +69,7 @@ export type MatchView = {
   readonly turnNumber: number;
   /** ターン数の上限。match.setup と conn.state から受け取る */
   readonly turnLimit: number;
+  /** 1 ターン目の turn.start までは初期値 0 のままで、無風を意味しない。表示には match/wind.ts の decidedWind を使う */
   readonly wind: Wind;
   /** サーバー時刻の期限 */
   readonly deadlineAt: number | null;

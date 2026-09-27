@@ -13,6 +13,7 @@ type FortressView = {
   readonly players: readonly [FortressPlayer, FortressPlayer] | null;
   readonly mask: { readonly width: number; readonly height: number; readonly cells: Uint8Array } | null;
   readonly mismatches: number;
+  readonly wind: { readonly value: number };
 };
 
 interface Window {

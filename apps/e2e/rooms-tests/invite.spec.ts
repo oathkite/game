@@ -25,6 +25,17 @@ test("invitation skips the title and an independent spectator watches without co
     await expect(viewer!.getByTestId("network-world")).toHaveAttribute("data-loaded", "true");
     await expect(viewer!.getByRole("status")).toHaveText("観戦中");
     await expect(viewer!.getByRole("button", { name: "発射", exact: true })).toHaveCount(0);
+    // 観戦中の帯の右端にも風のメーターを出し、選手と同じサーバーの風を見せる（設計書 08 の 8.5）
+    const viewerWind = viewer!.locator(".battle-console > .battle-wind");
+    await expect(viewerWind).toBeVisible();
+    await expect.poll(async () => await viewerWind.locator(".battle-sr").textContent() === await a!.locator(".battle-console > .battle-wind .battle-sr").textContent()).toBe(true);
+    const strip = (await viewer!.locator(".battle-console").boundingBox())!, meterBox = (await viewerWind.boundingBox())!;
+    expect(meterBox.x + meterBox.width).toBeLessThanOrEqual(strip.x + strip.width);
+    for (const other of [viewer!.getByRole("status").filter({ hasText: "観戦中" }), viewer!.getByText("手動視点を維持")]) {
+      const box = (await other.boundingBox())!;
+      expect(box.x + box.width <= meterBox.x || meterBox.x + meterBox.width <= box.x || box.y + box.height <= meterBox.y || meterBox.y + meterBox.height <= box.y).toBe(true);
+    }
+    await viewer!.screenshot({ path: "test-results/invite-spectator.png" });
     await viewer!.getByLabel("手動視点を維持").check();
     const actor = await a!.getByRole("button", { name: "標準砲", exact: true }).isEnabled() ? a! : b!;
     await actor.keyboard.down("Space"); await actor.waitForTimeout(350); await actor.keyboard.up("Space");

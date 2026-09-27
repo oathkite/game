@@ -11,13 +11,18 @@
   .battle-countdown::before { content:""; position:absolute; z-index:-1; inset:-10px -16px -20px; pointer-events:none; background:#000; clip-path:polygon(0 0,100% 0,91% 91%,85% 100%,15% 100%,9% 91%); }
   .battle-countdown::after { content:""; position:absolute; z-index:-1; inset:-10px -14px -18px; pointer-events:none; background:#000; clip-path:polygon(0 0,100% 0,91% 91%,85% 100%,15% 100%,9% 91%); }
   .world-ui .battle-menu { top:92px; right:20px; }
-  .battle-wind { top:92px; left:20px; }
   .world-ui .battle-console:not(.has-touch) { height:160px; grid-template-columns:280px 156px minmax(0,1fr) 164px; gap:22px; padding:8px 20px; }
   .battle-console:not(.has-touch) .battle-self { height:120px; grid-template-columns:86px minmax(0,1fr); gap:12px; padding:8px; background:#000; border-color:#47677f; box-shadow:none; }
   .battle-console:not(.has-touch) .battle-self-info { align-content:center; gap:8px; }
   .battle-console:not(.has-touch) .battle-self strong { font-size:19px; }
   .battle-console:not(.has-touch) .battle-self span { font-size:16px; }
   .battle-console:not(.has-touch) .battle-angle { width:144px; height:144px; justify-self:center; filter:drop-shadow(0 3px 3px #06152099); }
+  /* 風を出す操作盤（設計書 08 の 8.5）。下の段の分だけ角度メーターを縮める。
+     風のメーターは 1 art px = 3 CSS px で描く。観戦中の帯（has-wind を持たない）も同じ大きさにする */
+  .world-ui .battle-console.has-wind:not(.has-touch) { row-gap:8px; }
+  .battle-console.has-wind:not(.has-touch) .battle-angle { width:114px; height:114px; }
+  .battle-console:not(.has-touch) > .battle-wind { gap:6px; font-size:20px; }
+  .battle-console:not(.has-touch) > .battle-wind .battle-wind-half { width:60px; height:21px; }
   .battle-console:not(.has-touch) .battle-power { height:100px; padding:0; }
   .battle-console:not(.has-touch) .battle-power > svg { top:32px; height:42px; }
   .battle-console:not(.has-touch) .battle-power-value { font-size:24px; }
