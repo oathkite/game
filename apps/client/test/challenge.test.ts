@@ -24,10 +24,16 @@ describe("ターゲットチャレンジ", () => {
   it("8面の地形と初期状態を独立して作る", () => {
     expect(STAGES).toHaveLength(8);
     expect(new Set(STAGES.map((s) => s.id)).size).toBe(8);
+    const solidCount = (cells: Uint8Array) => cells.reduce((n, c) => n + c, 0);
     for (const stage of STAGES) {
       const a = createStageMask(stage);
       const b = createStageMask(stage);
-      expect(a.cells).not.toBe(b.cells);
+      const solid = solidCount(b.cells);
+      expect(solid).toBeGreaterThan(0);
+      // 片方を壊しても、もう片方の地形が残ることで独立を確かめる。
+      // cells の not.toBe は同じ配列かどうかしか見ないが、これなら同じ ArrayBuffer を共有する別の配列も捕まえる。
+      a.cells.fill(0);
+      expect(solidCount(b.cells)).toBe(solid);
       expect(a.width).toBe(400);
       expect(stage.shots).toBeGreaterThan(0);
     }
