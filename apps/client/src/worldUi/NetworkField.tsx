@@ -27,6 +27,7 @@ import { guideDots } from "@/game/trail";
 import { revealRowsAt } from "./openingTour";
 import { CARVE_AT_MS, IMPACT_TOTAL_MS } from "@/game/hitFeedback";
 import { SceneLoading } from "./SceneLoading";
+import { REPLAY_SETTLE_MS, replayTailMs } from "@game/engine/replay-timing";
 
 type Props = { readonly serverNow: number; readonly onSettling?: (settling: boolean) => void; readonly followTurns?: boolean; readonly blocked?: boolean; readonly frame: LabFrame; readonly players: LabFrame["players"]; readonly presentation: ReturnType<typeof presentLabReplay>; readonly elevation: number; readonly ownId: string; readonly selectedWeapon?: WeaponId; readonly charge?: number };
 const baseTerrain = (frame: LabFrame) => buildInitialTerrain(frame.map);
@@ -99,8 +100,7 @@ export const NetworkField = (props: Props) => {
         if (showGuide !== guideShown) { guideShown = showGuide; r.setGuide(showGuide ? guide : null); }
         const replay = frame.phase === "replaying" ? frame.replay : null;
         if (replay) {
-          const hit = replay.impacts.some(i => i.damage.some(d => d.amount > 0));
-          const flightMs = Math.max(1, replay.endsAt - replay.startsAt - 300 - (hit ? 1300 : 0));
+          const flightMs = Math.max(1, replay.endsAt - replay.startsAt - replayTailMs(replay.impacts));
           const elapsed = latest.current.serverNow - replay.startsAt;
           replay.impacts.forEach((impact, index) => {
             const event = `${replay.startsAt}/${index}`;
@@ -115,7 +115,7 @@ export const NetworkField = (props: Props) => {
             });
           });
           const event = `${replay.startsAt}/total`;
-          if (elapsed >= flightMs + 300 && !damageEvents.has(event)) {
+          if (elapsed >= flightMs + REPLAY_SETTLE_MS && !damageEvents.has(event)) {
             damageEvents.add(event);
             players.forEach((p, seat) => {
               const summary = damageSummary(replay.impacts.map(i => i.damage.find(d => d.playerId === p.playerId)?.amount ?? 0));

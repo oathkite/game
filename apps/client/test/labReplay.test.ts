@@ -49,12 +49,14 @@ it("plays the practice impact timeline from the authoritative impact time", () =
   expect(presentLabReplay(frame, 2289).effects[0]!.clock).toBe(589);
   expect(presentLabReplay(frame, 1700 + IMPACT_TOTAL_MS).effects).toEqual([]);
 });
-it("compresses the impact timeline into the 300ms left on a turn without damage", () => {
+it("plays the whole impact timeline on a turn without damage, which now holds 1000ms after the flight (設計書 41.8)", () => {
   const miss = { ...frame, replay: { ...frame.replay!, impacts: [{ tick: 42, damage: [] }] } };
-  expect(presentLabReplay(miss, 3000).effects[0]).toMatchObject({ clock: 0, damage: 0, damages: [] });
-  expect(presentLabReplay(miss, 3150).effects[0]!.clock).toBeCloseTo(IMPACT_TOTAL_MS / 2);
-  expect(presentLabReplay(miss, 3299).effects).toHaveLength(1);
-  expect(presentLabReplay(miss, 3300).effects).toEqual([]);
+  // 着弾ありダメージなしは飛翔の終わりから 1000 ms 留めるので、endsAt 3300 の飛翔は 2300 に終わる
+  expect(presentLabReplay(miss, 2299).effects).toEqual([]);
+  expect(presentLabReplay(miss, 2300).effects[0]).toMatchObject({ clock: 0, damage: 0, damages: [] });
+  expect(presentLabReplay(miss, 2450).effects[0]!.clock).toBe(150);
+  expect(presentLabReplay(miss, 2300 + IMPACT_TOTAL_MS - 1).effects).toHaveLength(1);
+  expect(presentLabReplay(miss, 2300 + IMPACT_TOTAL_MS).effects).toEqual([]);
 });
 it("drains the hit tank's HP bar from the value before the hit", () => {
   expect(presentLabReplay(frame, 1699).hpBars).toEqual({});

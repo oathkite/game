@@ -10,3 +10,4 @@ export * from "./preparedSession.js";
 export * from "./snapshot.js";
 
 export * from "./terrainCheckpoint.js";
+export * from "./replayTiming.js";

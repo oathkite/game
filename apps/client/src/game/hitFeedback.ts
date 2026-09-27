@@ -231,11 +231,6 @@ export const missMarkAt = (t: number, last: CellPoint, bounds: { readonly width:
   return { x, y, on: Math.floor(t / MISS_BLINK_MS) % 2 === 0 };
 };
 
-/**
- * オンライン対戦の着弾の時刻の換算。設計書 38 の E1。
- * 着弾から再生の終わりまで span ミリ秒しか無いとき（外れのターンは 300 ms）、着弾の演出の全体を span に縮める。足りていればそのまま
- */
-export const impactClock = (age: number, span: number): number => (span >= IMPACT_TOTAL_MS ? age : (age * IMPACT_TOTAL_MS) / Math.max(1, span));
 
 /** 直撃の白黒反転を出す長さ。1 フレーム強。設計書 38 の E5 */
 export const INVERT_MS = 34;

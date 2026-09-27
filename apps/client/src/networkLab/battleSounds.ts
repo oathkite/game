@@ -1,3 +1,4 @@
+import { replayTailMs } from "@game/engine/replay-timing";
 import { weaponSound } from "@/app/weaponSounds";
 import type { WeaponId } from "@game/protocol";
 import type { LabFrame } from "@game/protocol/v2-lab";
@@ -23,8 +24,7 @@ export const createBattleSounds = () => {
     const replay = frame.replay;
     if (frame.phase === "replaying" && replay) {
       const start = replay.startsAt;
-      const damageReadMs = replay.impacts.some(i => i.damage.some(d => d.amount > 0)) ? 1300 : 0;
-      const duration = Math.max(1, replay.endsAt - 300 - damageReadMs - start);
+      const duration = Math.max(1, replay.endsAt - replayTailMs(replay.impacts) - start);
       const fresh = before.frame.phase !== "replaying" || before.frame.turnId !== frame.turnId || before.frame.replay?.startsAt !== start;
       const from = fresh && now - start <= 500 ? Math.min(before.now, start - 0.001) : before.now;
       const crossed = (tick: number) => {

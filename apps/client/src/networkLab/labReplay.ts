@@ -1,6 +1,7 @@
 import { shotFlashes, type ShotFlash } from "@/game/muzzlePose";
 import { shotRecoil } from "@/game/shotRecoil";
-import { CARVE_AT_MS, hpBarAt, IMPACT_TOTAL_MS, impactClock, missMarkAt, type HpBar, type MissMark } from "@/game/hitFeedback";
+import { CARVE_AT_MS, hpBarAt, IMPACT_TOTAL_MS, missMarkAt, type HpBar, type MissMark } from "@/game/hitFeedback";
+import { replayTailMs } from "@game/engine/replay-timing";
 import { trailDots, type TrailDot } from "@/game/trail";
 import type { LabFrame } from "@game/protocol/v2-lab";
 const smooth = (t: number) => t * t * t * (t * (t * 6 - 15) + 10);
@@ -40,7 +41,8 @@ const trailAt = (path: Path, tick: number): readonly TrailDot[] => {
 
 type Timeline = { readonly replay: Replay; readonly settleAt: number; readonly now: number };
 const timeOf = (line: Timeline, tick: number): number => line.replay.startsAt + tick / Math.max(1, line.replay.ticks) * (line.settleAt - line.replay.startsAt);
-const clockOf = (line: Timeline, at: number): number => impactClock(line.now - at, line.replay.endsAt - at);
+// 着弾の後には 1000 ms 以上残るので（設計書 41.8）、着弾の演出は縮めずに再生する
+const clockOf = (line: Timeline, at: number): number => line.now - at;
 
 const effectsAt = (frame: LabFrame, line: Timeline): readonly LabEffect[] => line.replay.impacts.flatMap((impact, index) => {
   const at = timeOf(line, impact.tick), op = frame.terrainOps[line.replay.terrainOpsBefore + index];
@@ -80,8 +82,8 @@ const idle = (frame: LabFrame) => ({ players: frame.players, terrainOps: frame.t
 export const presentLabReplay = (frame: LabFrame, now: number) => {
   const replay = frame.replay;
   if (frame.phase !== "replaying" || !replay || now >= replay.endsAt) return idle(frame);
-  const damageReadMs = replay.impacts.some(i => i.damage.some(d => d.amount > 0)) ? 1300 : 0;
-  const settleAt = replay.endsAt - 300 - damageReadMs;
+  // 飛翔の終わりはサーバーと同じ関数で逆算する（設計書 41.8）
+  const settleAt = replay.endsAt - replayTailMs(replay.impacts);
   const line: Timeline = { replay, settleAt, now };
   const t = Math.max(0, Math.min(1, (now - replay.startsAt) / Math.max(1, settleAt - replay.startsAt)));
   const tick = t * replay.ticks;

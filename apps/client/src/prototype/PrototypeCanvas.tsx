@@ -82,7 +82,8 @@ export const PrototypeCanvas = ({ store, rig, layout, handlers, blocked, followS
         previousMoveX = moveX;
         if (current.blocked) rig.stop();
         if (previousLayout !== current.layout) { previousLayout = current.layout; r.setLayout(current.layout); rig.resize(viewportOf(current.layout), rig.get().bounds); }
-        if (v.turnNumber !== lastTurn && Date.now() >= (v.delay?.revealUntil ?? 0) - 600) { lastTurn = v.turnNumber; rig.focus(actorPoint(v), "actor", reduced.matches); }
+        // 再生中は、着弾の後に留める時間が終わるまで次の機体へ向けない（設計書 41.8）
+        if (v.turnNumber !== lastTurn && !activeReplay && Date.now() >= (v.delay?.revealUntil ?? 0) - 600) { lastTurn = v.turnNumber; rig.focus(actorPoint(v), "actor", reduced.matches); }
         if (v.replay && replayId !== v.replay.id) {
           stopReplay(); replayId = v.replay.id; activeReplay = true; falls.reset();
           const job = v.replay;

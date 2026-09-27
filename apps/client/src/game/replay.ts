@@ -27,6 +27,7 @@ import {
 } from "./hitFeedback";
 import type { ProjectileView } from "./projectileView";
 import { hash32 } from "./fx/hash";
+import { replayTailMs } from "@game/engine/replay-timing";
 import { trailDots } from "./trail";
 import type { EdgePoint, Renderer } from "./renderer";
 import { edgeBlinkOn } from "./edgeMarker";
@@ -50,7 +51,7 @@ const FALL_CELLS_PER_S = 90;
 
 type Fall = { readonly seat: Seat; readonly from: number; readonly to: number };
 
-type Phase = "shot" | "fall" | "done";
+type Phase = "shot" | "fall" | "hold" | "done";
 
 /** HP バーの減り。減る前の値から後の値へ、at から減らしていく */
 type Drain = { readonly before: number; readonly after: number; readonly at: number };
@@ -80,6 +81,8 @@ type Run = {
   readonly trails: readonly (readonly { readonly x: number; readonly y: number }[])[];
   readonly impacts: readonly ImpactRun[];
   summaryAt: number | null;
+  /** 次の手番へ移ってよい時刻。飛翔の終わりからオンラインと同じ長さだけ留める（設計書 41.8） */
+  readonly doneAt: number;
   phase: Phase;
   elapsed: number;
   phaseStart: number;
@@ -152,13 +155,20 @@ const poseAfterHit = (run: Run, seat: Seat, flash: boolean): TankPose => {
   });
 };
 
+/** 落下まで終えた姿にして、留める時間が過ぎるのを待つ */
 const finish = (run: Run): void => {
-  if (run.phase === "done") return;
-  run.phase = "done";
+  if (run.phase === "done" || run.phase === "hold") return;
+  run.phase = "hold";
   run.view.clear();
   for (const seat of [0, 1] as const) run.renderer.setTank(seat, poseOf(run.job.playersAfter[seat], run.job.maskAfter, elevationOf(run, seat)));
   run.renderer.setShake({ dx: 0, dy: 0 });
   run.renderer.setEdgeMarkers([], false);
+  stepHold(run);
+};
+
+const stepHold = (run: Run): void => {
+  if (run.elapsed < run.doneAt) return;
+  run.phase = "done";
   run.stopFrames();
   run.cb.done();
 };
@@ -278,13 +288,16 @@ const updateHits = (run: Run): void => {
   run.renderer.setShake(run.shake ? shakeOffsetAt(run.elapsed - run.shake.at, run.shake.damage) : { dx: 0, dy: 0 });
 };
 
+/** 弾道 p が着弾し終えるか、画面の外へ消える時刻 */
+const flightEndOf = (job: ReplayJob, launchAt: readonly number[], p: number): number => {
+  const path = job.paths[p];
+  return path ? (launchAt[p] ?? 0) + impactTimeMs(path.impactAt.length, [...path.impactAt, path.points.length - 1]) : 0;
+};
+
 /** すべての弾道が終わり、すべての着弾の演出と外れの印が消えたか */
 const shotDone = (run: Run): boolean => {
   const impactsDone = run.impacts.every((ir) => run.elapsed - ir.at >= (run.cb.roundEnd ? CARVE_AT_MS + 100 : IMPACT_TOTAL_MS));
-  const pathsDone = run.job.paths.every((path, p) => {
-    const flightMs = (run.launchAt[p] ?? 0) + impactTimeMs(path.impactAt.length, [...path.impactAt, path.points.length - 1]);
-    return run.elapsed >= flightMs + (path.impactAt.length === 0 ? MISS_MS : 0);
-  });
+  const pathsDone = run.job.paths.every((path, p) => run.elapsed >= flightEndOf(run.job, run.launchAt, p) + (path.impactAt.length === 0 ? MISS_MS : 0));
   return impactsDone && pathsDone;
 };
 
@@ -318,6 +331,7 @@ const stepFrame = (run: Run, deltaMs: number): void => {
   run.elapsed += deltaMs;
   if (run.phase === "shot") stepShot(run);
   else if (run.phase === "fall") stepFall(run);
+  else if (run.phase === "hold") stepHold(run);
 };
 
 /** 再生を始める。返り値で中断できる */
@@ -342,6 +356,8 @@ export const playReplay = (
     trails: job.paths.map(path => path.points.map(q => ({ x: q.x / ONE, y: q.y / ONE }))),
     impacts,
     summaryAt: null,
+    // 決着のターンはこれまでどおり早くリザルトへ進めるので留めない
+    doneAt: cb.roundEnd ? 0 : Math.max(0, ...job.paths.map((_, p) => flightEndOf(job, launchAt, p))) + replayTailMs(job.shot.impacts),
     phase: "shot",
     elapsed: 0,
     phaseStart: 0,

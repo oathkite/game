@@ -1,7 +1,8 @@
 import { expect, it } from "vitest";
 import { createBattleSounds, type SoundFrame } from "../src/networkLab/battleSounds";
+// 着弾ありダメージなしは飛翔の終わりから 1000 ms 留める（設計書 41.8）。endsAt 3000 の飛翔は 1000 から 2000
 const acting: SoundFrame = { matchId: "m", turnId: 1, phase: "acting", replay: null };
-const shot: SoundFrame = { ...acting, phase: "replaying", replay: { startsAt: 1000, endsAt: 2300, ticks: 60, paths: [{ launchTick: 0 }, { launchTick: 30 }], impacts: [{ tick: 60, damage: [] }] } };
+const shot: SoundFrame = { ...acting, phase: "replaying", replay: { startsAt: 1000, endsAt: 3000, ticks: 60, paths: [{ launchTick: 0 }, { launchTick: 30 }], impacts: [{ tick: 60, damage: [] }] } };
 it("plays timed launches and impacts once, then the next turn", () => {
   const sounds = createBattleSounds();
   expect(sounds(acting, 900)).toEqual([]);
@@ -9,7 +10,8 @@ it("plays timed launches and impacts once, then the next turn", () => {
   expect(sounds(shot, 1000)).toEqual([]);
   expect(sounds(shot, 1500)).toEqual(["fire"]);
   expect(sounds(shot, 2000)).toEqual(["explosion"]);
-  expect(sounds({ ...acting, turnId: 2 }, 2400)).toEqual(["tick"]);
+  expect(sounds(shot, 2700)).toEqual([]);
+  expect(sounds({ ...acting, turnId: 2 }, 3100)).toEqual(["tick"]);
 });
 it("joining or reconnecting during replay never replays past sounds", () => {
   const sounds = createBattleSounds();

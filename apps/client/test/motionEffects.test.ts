@@ -1,7 +1,7 @@
 import type { TerrainMask } from "@game/sim";
 import { describe, expect, it } from "vitest";
 import { EDGE_MARGIN, edgeBlinkOn, edgeMarker } from "@/game/edgeMarker";
-import { CARVE_AT_MS, IMPACT_TOTAL_MS, impactClock, INVERT_MS, invertCells, invertOn, missMarkAt } from "@/game/hitFeedback";
+import { CARVE_AT_MS, IMPACT_TOTAL_MS, INVERT_MS, invertCells, invertOn, missMarkAt } from "@/game/hitFeedback";
 import { guideDots, TRAIL_EVERY, trailDots } from "@/game/trail";
 import { REVEAL_MS, revealRowsAt } from "@/worldUi/openingTour";
 
@@ -31,15 +31,6 @@ describe("trailDots と guideDots", () => {
   });
 });
 
-
-describe("impactClock", () => {
-  it("時間が足りていればそのまま、足りなければ演出の全体を縮める", () => {
-    expect(impactClock(100, 1600)).toBe(100);
-    expect(impactClock(150, 300)).toBe(IMPACT_TOTAL_MS / 2);
-    expect(impactClock(300, 300)).toBe(IMPACT_TOTAL_MS);
-    expect(impactClock(10, 0)).toBeGreaterThan(0);
-  });
-});
 
 describe("invertOn と invertCells", () => {
   it("大ダメージの着弾で爆風が最大になった瞬間だけ出す", () => {
