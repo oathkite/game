@@ -36,6 +36,7 @@ packages/
   protocol/   メッセージの型と Zod スキーマ、RoomState と MatchState などのデータモデル
   maps/       マップ定義（折れ線の頂点とスポーン）と、整数演算のマスク生成コード
   engine/     対戦の状態遷移（Loading から Finished）。時刻と乱数を注入する純関数と、時計につなぐ host
+  testing/    Vitest の setup だけを置く。各パッケージが devDependency として持ち、src からは参照しない
 apps/
   client/     Vite + React + PixiJS。solo モードでは engine をブラウザ内で動かす
   server/     Node.js + ws。部屋、ロビー、再接続と、engine の橋渡し
@@ -98,6 +99,14 @@ UI 本文は読みやすい日本語 sans-serif とし、短い見出しやア�
 
 **client のテスト**は、Playwright で 2 つのブラウザを開いて 1 戦を通す e2e を 1 本持つ。
 細かい UI の単体テストは、面白さの確認が終わるまで最小にする。
+
+**地形マスクの比較**は、`packages/testing` の setup で速くする。
+Vitest の既定の deep equality は、typed array を 1 要素ずつ汎用の比較に通し、`Object.entries` で全要素の組を作って比べ直す。
+`toEqual` も、別の配列どうしの `not.toBe` もこの比較を通り、400×225 のマスク 1 枚でローカルで 100ms を超える。
+CI の runner ではその 4〜6 倍かかり、5 秒のテストの制限にかかって配置が止まったことがある（PR #44）。
+そこで、同じ型の typed array どうしを単純なループで比べる tester を `expect.addEqualityTesters` で登録し、Vitest を使う全パッケージの `setupFiles` から読む。
+既定の比較と違い、添字以外の独自プロパティは比べない。
+setup を 1 か所に置くのは、各パッケージに複製せず、`protocol` のような役割の違うパッケージにも混ぜないためである。
 
 ## 7.6 新デザインの導入順
 
