@@ -96,7 +96,7 @@ export const barrelMask = (input: TankSpriteInput): PixelGrid => {
 const MAX_CACHE = 256;
 const bodyCache = new Map<string, readonly PixelGrid[]>();
 
-/** 反転と傾きを済ませた履帯、車体、砲塔、アンテナ。色によらないので全機体で使い回す */
+/** 反転と傾きを済ませた履帯、車体、砲塔、アンテナ。色によらないので全機体で使い回す。使い回すので、返した格子は書き換えない */
 const bodyMasks = (input: TankSpriteInput): readonly PixelGrid[] => {
   const phase = input.facing * input.treadPhase;
   // 転輪は 3 px ごとにコマを替え、履帯の輪（3 px）と端（2 px）と合わせて 6 px で一巡する
