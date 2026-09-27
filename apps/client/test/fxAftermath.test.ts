@@ -174,7 +174,7 @@ describe("煙の柱が残骸を追う", () => {
     const screenFx = { tick: () => {}, clear: () => {}, tintAt: () => {}, dimAt: () => {}, flashAt: () => {} } as unknown as ScreenFx;
     const effects = createRendererEffects({ fx, screenFx, texels: undefined, screen: () => ({ width: 100, height: 100 }), reduced: () => false, soil: [PALETTE.loam1], tankAt: () => at });
     const smokes = () => emitted.filter((e) => e.depth === "back" && e.batch.sizes?.[0] === 4);
-    return { effects, smokes, advance: (ms: number) => { now += ms; effects.tick(); }, move: (next: { x: number; y: number } | null) => { at = next; } };
+    return { effects, smokes, advance: (ms: number) => { now += ms; effects.tick(ms); }, move: (next: { x: number; y: number } | null) => { at = next; } };
   };
   it("4 粒ずつ、その時の残骸の接地点から出す。落ちた後の粒は落ちた先から昇る", () => {
     const t = setup();

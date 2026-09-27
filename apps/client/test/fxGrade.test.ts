@@ -135,7 +135,7 @@ describe("空のフィルターに送る表", () => {
     // 武器の寄せの長さは、撃破の前後で効いているところを見るためのもの
     const view = { terrain: { filters: null }, sky: { filters: null as readonly { readonly tables: readonly unknown[] }[] | null }, toScreen: () => ({ x: 0, y: 0 }), cell: () => 8 };
     const screenFx = createScreenFx(view as unknown as Parameters<typeof createScreenFx>[0]);
-    const skyAt = (now: number): unknown => { screenFx.tick(now, { width: 100, height: 100 }); return view.sky.filters?.[0]?.tables.at(-1) ?? null; };
+    const skyAt = (now: number): unknown => { screenFx.tick(now, { width: 100, height: 100 }, 16); return view.sky.filters?.[0]?.tables.at(-1) ?? null; };
     screenFx.tintAt(LASER_TABLE, 1000, 1200);
     screenFx.tintAt(KILL_TABLE, 1500, 500, false, TINT_PRIORITY.kill);
     expect(skyAt(1100)).toBe(LASER_TABLE);
