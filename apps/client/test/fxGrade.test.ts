@@ -1,12 +1,20 @@
-import { describe, expect, it } from "vitest";
+import { describe, expect, it, vi } from "vitest";
 import type { FxLayer } from "@/game/fx/fxLayer";
-import { brighterHalf, composeTables, DIM_TABLE, FLOATER_TABLE, KILL_TABLE, LASER_TABLE, WARM_TABLE, type GradeTable } from "@/game/fx/gradeTables";
+import { brighterHalf, composeTables, DIM_TABLE, FLOATER_TABLE, KILL_TABLE, LASER_TABLE, TINT_PRIORITY, WARM_TABLE, type GradeTable, type TintPriority } from "@/game/fx/gradeTables";
 import { createRendererEffects } from "@/game/fx/rendererEffects";
-import { nextTint, nextTints, shownTint, TINT_EDGE_MS, TINT_PRIORITY, tintPhaseAt, type ScreenFx, type Tint, type TintPriority } from "@/game/fx/screenFx";
+import { createScreenFx, nextTint, nextTints, shownTint, TINT_EDGE_MS, tintPhaseAt, type ScreenFx, type Tint } from "@/game/fx/screenFx";
 import { HOLD_MS, HP_DRAIN_MS } from "@/game/hitFeedback";
 import { isPaletteColor, PALETTE } from "@/game/palette";
 
 // 暗転と空の色の寄せの置き換え表（設計書 41.13 の評価と改善の 2 回目）。置き換えても描く画素はパレットの色のまま
+
+// フィルターは canvas と WebGL が要るので、受け取った表を覚えるだけのものに替える
+vi.mock("@/game/fx/gradeFilter", () => ({
+  createGradeFilter: () => {
+    const filter = { tables: [] as unknown[] };
+    return { filter, setTable: (table: unknown) => { filter.tables.push(table); }, setStrength: () => {}, setSpot: () => {}, setPixel: () => {}, destroy: () => {} };
+  },
+}));
 
 const luminance = (c: number): number => 0.2126 * ((c >> 16) & 0xff) + 0.7152 * ((c >> 8) & 0xff) + 0.0722 * (c & 0xff);
 
@@ -95,12 +103,16 @@ describe("撃破と武器の空の色の寄せ", () => {
     expect(shownTint(laserKill, 1589)?.table).toBe(LASER_TABLE);
     expect(shownTint(nextTints(nextTints([], kill), laserAt(1300)), 1400)?.table).toBe(LASER_TABLE);
   });
-  it("撃破の寄せが終わった後は、武器の寄せを当てる", () => {
+  it("撃破の寄せが戻りの段に入るか終わった後は、効いている武器の寄せを当てる", () => {
     const tints = nextTints(nextTints([], kill), laserAt(2000));
-    expect(shownTint(tints, 2089)).toBe(kill);
+    expect(shownTint(tints, 2019)).toBe(kill);
+    // 戻りの段（明るい半分だけ）を挟むと、武器の寄せへ移る前に元の空の色が見える
+    expect(shownTint(tints, 2020)?.table).toBe(LASER_TABLE);
     expect(shownTint(tints, 2100)?.table).toBe(LASER_TABLE);
     expect(shownTint(nextTints(tints, laserAt(2300)), 2400)?.table).toBe(LASER_TABLE);
     expect(shownTint(tints, 2200)).toBeNull();
+    // 下に効いている寄せがなければ、戻りの段で元の空へ戻す
+    expect(shownTint([kill], 2050)).toBe(kill);
   });
   it("練習と同じ順（着弾、削る瞬間の撃破、後の段の着弾）で演出を呼んでも、白の時刻には撃破の寄せを当てる", () => {
     let now = 0, tints: readonly Tint[] = [];
@@ -115,5 +127,20 @@ describe("撃破と武器の空の色の寄せ", () => {
     [1224, 1288, 1352, 1432].forEach(hit);
     expect(shownTint(tints, 1200)?.table).toBe(LASER_TABLE);
     expect(shownTint(tints, 1590)?.table).toBe(KILL_TABLE);
+  });
+});
+
+describe("空のフィルターに送る表", () => {
+  it("武器の寄せ、白の時刻からの撃破の寄せ、撃破の後も効いている武器の寄せの順に、表を送り直す", () => {
+    // 武器の寄せの長さは、撃破の前後で効いているところを見るためのもの
+    const view = { terrain: { filters: null }, sky: { filters: null as readonly { readonly tables: readonly unknown[] }[] | null }, toScreen: () => ({ x: 0, y: 0 }), cell: () => 8 };
+    const screenFx = createScreenFx(view as unknown as Parameters<typeof createScreenFx>[0]);
+    const skyAt = (now: number): unknown => { screenFx.tick(now, { width: 100, height: 100 }); return view.sky.filters?.[0]?.tables.at(-1) ?? null; };
+    screenFx.tintAt(LASER_TABLE, 1000, 1200);
+    screenFx.tintAt(KILL_TABLE, 1500, 500, false, TINT_PRIORITY.kill);
+    expect(skyAt(1100)).toBe(LASER_TABLE);
+    expect(skyAt(1500)).toBe(KILL_TABLE);
+    expect(skyAt(2100)).toBe(LASER_TABLE);
+    expect(skyAt(2300)).toBeNull();
   });
 });

@@ -6,6 +6,10 @@ import { PALETTE } from "../palette";
 
 export type GradeTable = ReadonlyMap<number, number>;
 
+/** 寄せの優先度。効いている寄せが重なったら、高いほうを当てる（screenFx.ts） */
+export const TINT_PRIORITY = { weapon: 0, kill: 1 } as const;
+export type TintPriority = (typeof TINT_PRIORITY)[keyof typeof TINT_PRIORITY];
+
 const P = PALETTE;
 
 /** 1 段ずつ暗くする並び。各並びの最後の色は、さらに暗い色へ送る */

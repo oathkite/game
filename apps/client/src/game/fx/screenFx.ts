@@ -1,7 +1,7 @@
 import { Graphics, type Container } from "pixi.js";
 import { PALETTE } from "../palette";
 import { createGradeFilter } from "./gradeFilter";
-import { brighterHalf, composeTables, DIM_TABLE, type GradeTable } from "./gradeTables";
+import { brighterHalf, composeTables, DIM_TABLE, TINT_PRIORITY, type GradeTable, type TintPriority } from "./gradeTables";
 
 // 画面全体にかかる演出。設計書 41.6 の I5 と、41.13 の評価と改善。
 // 暗転は、爆心の周りを残すスポットライトにし、外の地形と背景の色を 1 段暗いパレットの色へ置き換える。
@@ -9,14 +9,10 @@ import { brighterHalf, composeTables, DIM_TABLE, type GradeTable } from "./grade
 // 強さを Bayer の市松で段に分けて戻すと空が網のように見えたので、入りと戻りの 70 ms だけ明るい半分の色を置き換える表を挟む。
 // 撃破は全画面の白から入るので、入りの段を挟まない（挟むと、白の直後に元の夜空が 3 コマ見えた。評価の 4 回目）。
 // 撃破の寄せは武器の寄せと別に持ち、重なったら撃破を当てる。
-// 戦車、火球、粒、数字には当てない（暗転の手前に見える）。全画面の光は 1 コマの白。
+// 戦車、火球、粒、数字には当てない（暗転の手前に見える）。全画面の光は 34 ms（60 fps で 2 コマ）の白。
 
 /** 色の寄せの入りと戻りの段の長さ（ms） */
 export const TINT_EDGE_MS = 70;
-
-/** 寄せの優先度。効いている寄せが重なったら、高いほうを当てる */
-export const TINT_PRIORITY = { weapon: 0, kill: 1 } as const;
-export type TintPriority = (typeof TINT_PRIORITY)[keyof typeof TINT_PRIORITY];
 
 /** 空の色の寄せ。entry が false なら入りの段を挟まない（全画面の白から入るとき。白が移り変わりの役を果たす） */
 export type Tint = { readonly table: GradeTable; readonly from: number; readonly ms: number; readonly entry: boolean; readonly priority: TintPriority };
@@ -42,9 +38,12 @@ export const tintPhaseAt = (tint: Tint | null, now: number): "edge" | "full" | n
   return entering || leaving ? "edge" : "full";
 };
 
-/** now に当てる寄せ。効いている寄せのうち優先度の高いもの。なければ null */
-export const shownTint = (tints: readonly Tint[], now: number): Tint | null =>
-  tints.reduce<Tint | null>((top, t) => (tintPhaseAt(t, now) !== null && (top === null || t.priority > top.priority) ? t : top), null);
+/** now に当てる寄せ。効いている寄せのうち優先度の高いもの。なければ null。
+ * 上の寄せが入りか戻りの段にあり、下の寄せも効いていれば、下の寄せを当てる。明るい半分だけの段を挟むと、下の寄せとの間に元の空の色が見える */
+export const shownTint = (tints: readonly Tint[], now: number): Tint | null => {
+  const [top, below] = tints.filter((t) => tintPhaseAt(t, now) !== null).sort((a, b) => b.priority - a.priority);
+  return top !== undefined && below !== undefined && tintPhaseAt(top, now) === "edge" ? below : top ?? null;
+};
 /** スポットライトの縁の市松の幅（セル） */
 const DIM_EDGE_CELLS = 3;
 /** 背景の 1 art px の画面の px（pixelBackdrop の PX と同じ） */
