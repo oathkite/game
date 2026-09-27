@@ -1,9 +1,9 @@
 import { blastFrameAt, CARVE_AT_MS, debrisAt, flashMsOf, invertCells, invertOn, shakeOffsetAt, type HpBar, type Offset } from "@/game/hitFeedback";
-import { crumbleAt, rimCells } from "@/game/crumble";
+import { hash32, hashText } from "@/game/fx/hash";
 import type { ProjectileView } from "@/game/projectileView";
-import type { EdgePoint } from "@/game/renderer";
+import type { EdgePoint, RendererEffects } from "@/game/renderer";
 import type { presentLabReplay } from "@/networkLab/labReplay";
-import type { CellPoint, TerrainOp } from "@game/protocol";
+import type { TerrainOp } from "@game/protocol";
 import { carve, type TerrainMask } from "@game/sim";
 
 // オンライン対戦の着弾の見せ方。設計書 38 の E1。練習（game/replay.ts）と同じ hitFeedback の時間の流れで描く。
@@ -42,29 +42,18 @@ export const labEdgePoints = (presentation: Presentation, players: readonly { re
   return players.filter(p => hit.has(p.playerId)).map(p => ({ x: p.x, y: p.y - 4, color: colorOf(p.playerId) }));
 };
 
-type Crumble = { readonly cells: readonly CellPoint[]; readonly center: CellPoint; readonly at: number };
+/** 一度に増えた削りがこれより多ければ、再接続などでまとめて届いたとみなして破片を出さない */
+const DEBRIS_BATCH_LIMIT = 8;
 
-/** 一度に増えた削りがこれより多ければ、再接続などでまとめて届いたとみなしてかけらを出さない */
-const CRUMBLE_BATCH_LIMIT = 8;
-
-/** 削れた縁のかけら（E2）。地形が増えた瞬間の mask の差から作り、時刻とともに落とす */
-export const createLabCrumbles = () => {
-  let list: readonly Crumble[] = [];
-  return {
-    note: (before: TerrainMask, ops: readonly TerrainOp[], now: number): void => {
-      if (ops.length === 0 || ops.length > CRUMBLE_BATCH_LIMIT) return;
-      let mask = before;
-      const added = ops.map(op => {
-        const after = carve(mask, op);
-        const crumble = { cells: rimCells(mask, after, op), center: { x: op.cx, y: op.cy }, at: now };
-        mask = after;
-        return crumble;
-      });
-      list = [...list.filter(c => now - c.at < 1000), ...added];
-    },
-    draw: (view: ProjectileView, now: number): void => {
-      list.forEach((c, i) => view.setCrumble(String(i), crumbleAt(now - c.at, c.cells, c.center)));
-    },
-    reset: (): void => { list = []; },
-  };
+/** 削れた地形の破片（設計書 41.5 の D1）。地形が増えた瞬間に、増えた削りを順に当てた mask の差から出す。
+ * ハッシュの入力は対戦の識別子と、対戦の中での削りの通し番号（41.3）。どの画面でも同じ散り方になる */
+export const emitLabDebris = (effects: Pick<RendererEffects, "terrainDebris">, before: TerrainMask, ops: readonly TerrainOp[], firstIndex: number, matchId: string): void => {
+  if (ops.length === 0 || ops.length > DEBRIS_BATCH_LIMIT) return;
+  const match = hashText(matchId);
+  let mask = before;
+  ops.forEach((op, i) => {
+    const after = carve(mask, op);
+    effects.terrainDebris(mask, after, op, hash32(match, firstIndex + i));
+    mask = after;
+  });
 };

@@ -26,7 +26,7 @@ import {
   STEP_MS,
 } from "./hitFeedback";
 import type { ProjectileView } from "./projectileView";
-import { crumbleAt, rimCells } from "./crumble";
+import { hash32 } from "./fx/hash";
 import { trailDots } from "./trail";
 import type { EdgePoint, Renderer } from "./renderer";
 import { edgeBlinkOn } from "./edgeMarker";
@@ -63,8 +63,6 @@ type ImpactRun = {
   readonly at: number;
   exploded: boolean;
   carved: boolean;
-  /** 削れた縁のセル。かけらにして落とす */
-  rim: readonly CellPoint[];
 };
 
 /** 再生 1 回分の可変状態 */
@@ -133,7 +131,7 @@ const timeline = (job: ReplayJob): { launchAt: number[]; impacts: ImpactRun[] } 
   const impacts = job.shot.impacts.map((impact) => {
     const path = job.paths[impact.projectile];
     const at = (launchAt[impact.projectile] ?? 0) + impactTimeMs(impact.stage, path?.impactAt ?? []);
-    return { impact, key: `${impact.projectile}/${impact.stage}`, at, exploded: false, carved: false, rim: [] };
+    return { impact, key: `${impact.projectile}/${impact.stage}`, at, exploded: false, carved: false };
   });
   return { launchAt, impacts };
 };
@@ -221,7 +219,8 @@ const carveImpact = (run: Run, ir: ImpactRun): void => {
   const { impact } = ir;
   const before = run.mask;
   run.mask = carve(run.mask, impact.terrainOp);
-  if (!run.cb.reduceMotion) ir.rim = rimCells(before, run.mask, impact.terrainOp);
+  // 削れた地形のドットを散らして落とす（設計書 41.5 の D1）。練習は対戦の識別子を 0 とする（41.3）
+  if (!run.cb.reduceMotion) run.renderer.effects.terrainDebris(before, run.mask, impact.terrainOp, hash32(0, run.job.id, impact.projectile, impact.stage));
   run.cb.onImpact?.(run.mask, impact);
   run.renderer.setTerrain(run.mask, impact.terrainOp);
   const shooter = run.job.shot.input.seat;
@@ -256,7 +255,6 @@ const updateImpact = (run: Run, ir: ImpactRun): void => {
   run.view.setBlast(ir.key, frame ? cell.x : null, cell.y, frame?.radius ?? 0, (frame?.on ?? false) || run.cb.reduceMotion, frame?.ring ?? false, run.cb.reduceMotion ? 1 : Math.min(3, Math.floor(t / IMPACT_TOTAL_MS * 4)));
   if (frame?.carved && !ir.carved) carveImpact(run, ir);
   if (ir.carved) run.view.setDebris(ir.key, debrisAt(t - CARVE_AT_MS, cell, terrainOp.radius));
-  if (ir.carved) run.view.setCrumble(ir.key, crumbleAt(t - CARVE_AT_MS, ir.rim, cell));
   const damage = Math.max(ir.impact.damage[0], ir.impact.damage[1]);
   run.view.setInvert(ir.key, invertOn(t, damage, run.cb.reduceMotion) ? invertCells(run.mask, cell.x, cell.y, terrainOp.radius) : null);
 };

@@ -14,10 +14,13 @@ import { DAMAGE_LABEL_GAP_PX, type Offset } from "./hitFeedback";
 import { createProjectileView, type ProjectileView } from "./projectileView";
 import { createExplosionTextures } from "./explosionTextures";
 import { PALETTE, TEAM_RAMPS } from "./palette";
-import { TERRAIN_THEMES } from "./terrainPaint";
 import type { Layout } from "./scale";
 import { createTankView, type TankPose, type TankView } from "./tankView";
 import { createTerrainLayer, type TerrainLayer } from "./terrainLayer";
+import { createFxLayer } from "./fx/fxLayer";
+import type { ArtBounds } from "./fx/particles";
+import { terrainDebris } from "./fx/terrainDebris";
+import { ART_PER_CELL } from "./pixelGrid";
 
 // PixiJS の Application を 1 つ持ち、地形、戦車、弾の層をまとめる。
 // world はセル単位で描き、cell 倍に拡大する。名前の文字だけは拡大しない層に置く。
@@ -43,8 +46,22 @@ export type Renderer = {
   readonly setEdgeMarkers: (points: readonly EdgePoint[], on: boolean) => void;
   /** 地形を上から rows 行だけ見せる。null なら全体。設計書 38 の L3 */
   readonly setReveal: (rows: number | null) => void;
+  /** 再生の外で寿命が尽きるまで描く演出。設計書 41 */
+  readonly effects: RendererEffects;
   readonly destroy: () => void;
 };
+
+export type RendererEffects = {
+  /** 削れた地形の破片（設計書 41.5 の D1）。seed はハッシュの入力、age は削れてからの ms */
+  readonly terrainDebris: (before: TerrainMask, after: TerrainMask, op: TerrainOp, seed: number, age?: number) => void;
+  /** 今描いている粒の数。FX ラボと測定に使う */
+  readonly particleCount: () => number;
+  /** 粒をすべて消す。FX ラボで撃ち直すときに使う */
+  readonly clear: () => void;
+};
+
+/** 粒を描く範囲の余白（art px）。画面揺れでずれた分も描く */
+const FX_MARGIN = 8;
 
 export type EdgePoint = { readonly x: number; readonly y: number; readonly color: number };
 
@@ -80,6 +97,8 @@ export type RendererInit = {
   readonly imageTerrain?: CanvasImageSource;
   readonly terrainArt?: CanvasImageSource;
   readonly players: readonly { colors: TankColors; nickname: string }[];
+  /** 偽なら描画の時計を自分では進めない。FX ラボの決めた時刻の絵に使う（設計書 41.11） */
+  readonly autoStart?: boolean;
 };
 
 const safely = (fn: () => void): void => {
@@ -101,6 +120,7 @@ export const createRenderer = async (init: RendererInit): Promise<Renderer> => {
     resolution: 1,
     autoDensity: false,
     preference: "webgl",
+    autoStart: init.autoStart ?? true,
   });
   init.host.appendChild(app.canvas);
 
@@ -129,6 +149,9 @@ export const createRenderer = async (init: RendererInit): Promise<Renderer> => {
   const reveal = new Graphics();
   world.addChild(reveal);
   const edges = new Graphics();
+  // 手番をまたいで残る粒。地形より手前で、爆風と機体より奥（設計書 41.9）。火球の中の破片は火球に隠れ、外へ出たものが見える
+  const fx = createFxLayer();
+  world.addChild(fx.back);
   const projectileLayer = new Container();
   world.addChild(projectileLayer);
   let projectile: ProjectileView | null = null;
@@ -139,7 +162,19 @@ export const createRenderer = async (init: RendererInit): Promise<Renderer> => {
     world.addChild(t.world);
     labels.addChild(t.label);
   }
+  world.addChild(fx.front);
   app.stage.addChild(edges);
+  /** 見えている範囲（art px） */
+  const viewArt = (): ArtBounds => {
+    const left = -world.x / cell, top = -world.y / cell;
+    return {
+      left: Math.floor(left * ART_PER_CELL) - FX_MARGIN,
+      top: Math.floor(top * ART_PER_CELL) - FX_MARGIN,
+      right: Math.ceil((left + app.screen.width / cell) * ART_PER_CELL) + FX_MARGIN,
+      bottom: Math.ceil((top + app.screen.height / cell) * ART_PER_CELL) + FX_MARGIN,
+    };
+  };
+  app.ticker.add(() => fx.tick(app.ticker.deltaMS, viewArt()));
   app.ticker.add(() => {
     for (const t of tanks) t.tick?.(app.ticker.deltaMS, reduced.matches);
   });
@@ -188,7 +223,7 @@ export const createRenderer = async (init: RendererInit): Promise<Renderer> => {
     },
     projectile: (color, weapon) => {
       if (projectile) projectile.destroy();
-      projectile = createProjectileView({ ramp: TEAM_RAMPS[color], soil: TERRAIN_THEMES[theme].soil, explosions }, weapon, init.projectileTextures?.[weapon], init.impactTextures?.[weapon]);
+      projectile = createProjectileView({ ramp: TEAM_RAMPS[color], explosions }, weapon, init.projectileTextures?.[weapon], init.impactTextures?.[weapon]);
       projectileLayer.addChild(projectile.container);
       return projectile;
     },
@@ -232,6 +267,15 @@ export const createRenderer = async (init: RendererInit): Promise<Renderer> => {
       reveal.rect(0, 0, terrain.sprite.width || 10000, Math.max(0, rows)).fill(0xffffff);
       reveal.visible = true;
       terrain.sprite.mask = reveal;
+    },
+    effects: {
+      terrainDebris: (before, after, op, seed, age = 0) => {
+        const texels = terrain.texels;
+        if (!texels) return;
+        fx.emit("back", terrainDebris({ before, after, op, seed, texels: (rect) => texels(before, rect) }), age);
+      },
+      particleCount: fx.count,
+      clear: fx.clear,
     },
     destroy: () => {
       for (const stop of labelStops) safely(stop);

@@ -1,12 +1,15 @@
 import type { TerrainOp } from "@game/protocol";
 import type { TerrainMask } from "@game/sim";
 import { Container, Sprite, Texture } from "pixi.js";
+import type { PixelGrid, Rect } from "./pixelGrid";
 import { createPixelTerrainLayer } from "./pixelTerrainLayer";
 import type { TerrainTheme } from "./terrainPaint";
 
 export type TerrainLayer = {
   readonly sprite: Container;
   readonly update: (mask: TerrainMask, cut?: TerrainOp, history?: readonly TerrainOp[]) => void;
+  /** mask の地形を rect（セル）の範囲だけ texel の格子に塗る。削れた地形の破片の色に使う（設計書 41.5）。ドットの地形だけが持つ */
+  readonly texels?: (mask: TerrainMask, rect: Rect) => PixelGrid;
   readonly destroy: () => void;
 };
 

@@ -20,9 +20,9 @@
 
 ## 38.2 共通の作り方
 
-- 時間は純関数にする。`経過時間 → 見え方` の関数を `game/tankMotion.ts`、`game/hitFeedback.ts`、`game/crumble.ts`、`game/trail.ts`、`game/edgeMarker.ts`、`worldUi/openingTour.ts` に置き、単体テストで数値を固定する。描画は `tankView.ts`、`projectileView.ts`、`renderer.ts` が行う。
+- 時間は純関数にする。`経過時間 → 見え方` の関数を `game/tankMotion.ts`、`game/hitFeedback.ts`、`game/trail.ts`、`game/edgeMarker.ts`、`worldUi/openingTour.ts` に置き、単体テストで数値を固定する。描画は `tankView.ts`、`projectileView.ts`、`renderer.ts` が行う。
 - 乱数を使わない。粒の散り方は固定の表で決める（`DEBRIS_VELOCITIES` と同じ方式）。
-  - 2026-09-27：40.1 で座標のハッシュを認めた。41 章の段階 1 で、ハッシュの入力に対戦、ターン、着弾、粒の番号を足す（[41.3](41-effects-overhaul.md#413-乱数と決定論)、未実装）。
+  - 2026-09-27：40.1 で座標のハッシュを認めた。41 章の段階 1 で、ハッシュの入力に対戦、ターン、着弾、粒の番号を足した（[41.3](41-effects-overhaul.md#413-乱数と決定論)、`game/fx/hash.ts`）。
 - 位置はセルか art px（1/8 セル）で動かす。CSS は `steps()` を使う。
   - 2026-09-27 改訂：art px を 1/4 セルに改めた（[40.3](40-pixel-art-refresh.md#403-ピクセルの格子)）。本章の「1 art px」は新しい art px で数える。各演出の見え方は 40 章で描き直し、時間と数は本章のまま保つ。
 
@@ -52,7 +52,7 @@
 | E6 | 画面の外で被弾した機体の印 | 画面の端から 16 px の位置に外向きの三角、120 ms で明滅 |
 | E7 | 自分の前回の軌跡 | 次の自分の手番の間だけ、3 点おきに描く |
 
-2026-09-27：E2 は、41 章の段階 1 で削れた地形の破片（D1）に置き換える（[41.5](41-effects-overhaul.md#415-削れた地形の破片)、未実装）。
+2026-09-27：E2 は、41 章の段階 1 で削れた地形の破片（D1）に置き換え、`game/crumble.ts` を外した（[41.5](41-effects-overhaul.md#415-削れた地形の破片)）。
 
 ### E1 で決めたこと
 

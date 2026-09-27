@@ -24,15 +24,13 @@ export type ProjectileView = {
   readonly setMissMark: (key: string, cx: number | null, cy: number, on: boolean) => void;
   /** 弾道 index の軌跡。設計書 38 の E3。空なら消す */
   readonly setTrail: (index: number, dots: readonly TrailDot[]) => void;
-  /** 削れた縁のかけら。設計書 38 の E2。ステージの土の色で描く */
-  readonly setCrumble: (key: string, cells: readonly CellPoint[]) => void;
   /** 直撃の白黒反転。設計書 38 の E5。null なら消す */
   readonly setInvert: (key: string, cells: { readonly white: readonly CellPoint[]; readonly black: readonly CellPoint[] } | null) => void;
   readonly destroy: () => void;
 };
 
-/** ドットの絵を描くのに要るもの。撃った側の主色の段、ステージの土の色（明るい順）、爆発の texture */
-export type PixelFx = { readonly ramp: Ramp; readonly soil: readonly number[]; readonly explosions: ExplosionTextures };
+/** ドットの絵を描くのに要るもの。撃った側の主色の段、爆発の texture */
+export type PixelFx = { readonly ramp: Ramp; readonly explosions: ExplosionTextures };
 
 const ART = 1 / ART_PER_CELL;
 const snap = (cells: number): number => Math.round(cells * ART_PER_CELL) / ART_PER_CELL;
@@ -138,15 +136,6 @@ const drawChunks = (g: Graphics, cells: readonly CellPoint[], ramp: Ramp): void 
   }
 };
 
-/** 削れた縁のかけら。セルの中心に土の色の 2 × 2 */
-const drawCrumbs = (g: Graphics, cells: readonly CellPoint[], soil: readonly number[]): void => {
-  for (const c of cells) {
-    g.rect(c.x + ART, c.y + ART, ART, ART).fill(soil[0] ?? PALETTE.loam0);
-    g.rect(c.x + 2 * ART, c.y + ART, ART, ART).rect(c.x + ART, c.y + 2 * ART, ART, ART).fill(soil[1] ?? PALETTE.loam1);
-    g.rect(c.x + 2 * ART, c.y + 2 * ART, ART, ART).fill(soil[2] ?? PALETTE.loam2);
-  }
-};
-
 /** 外れの印。セルの中心に、輪郭つきの主色の十字 */
 const drawMissMark = (g: Graphics, ramp: Ramp, cx: number, cy: number): void => {
   const x = cx + 0.5, y = cy + 0.5;
@@ -211,11 +200,6 @@ export const createProjectileView = (fx: PixelFx, weapon: WeaponId, texture?: Te
       const at = (d: TrailDot): CellPoint => ({ x: snap(d.x - 0.25) - 0.25, y: snap(d.y - 0.25) - 0.25 });
       fillCells(g, dots.filter(d => !d.recent).map(at), TRAIL_OLD_COLOR, 0.5);
       fillCells(g, dots.filter(d => d.recent).map(at), TRAIL_RECENT_COLOR, 0.5);
-    },
-    setCrumble: (key, cells) => {
-      const g = debrisLayer.get(`crumble/${key}`);
-      g.clear();
-      drawCrumbs(g, cells, fx.soil);
     },
     setInvert: (key, cells) => {
       const g = invertLayer.get(key);
