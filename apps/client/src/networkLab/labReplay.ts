@@ -115,15 +115,15 @@ const launchesAt = (line: Timeline): readonly LabLaunch[] => line.replay.paths.f
 const idle = (frame: LabFrame) => ({ launches: [] as readonly LabLaunch[], players: frame.players, terrainOps: frame.terrainOps, bullets: [], trails: [] as readonly (readonly TrailDot[])[], effects: [] as readonly LabEffect[], hpBars: {} as Readonly<Record<string, HpBar>>, misses: [] as readonly (MissMark & { readonly key: string })[], fallingIds: [] as string[], recoil: 0, shotFlashes: [] as readonly ShotFlash[] });
 
 /** Replay server ticks at a shared pace, retaining a final 300ms settling window. */
-export const presentLabReplay = (frame: LabFrame, now: number) => {
+export const presentLabReplay = (frame: LabFrame, now: number, reduced = false) => {
   const replay = frame.replay;
   if (frame.phase !== "replaying" || !replay || now >= replay.endsAt) return idle(frame);
   // 飛翔の終わりはサーバーと同じ関数で逆算する（設計書 41.8）
   const settleAt = replay.endsAt - replayTailMs(replay.impacts);
   const base = { replay, settleAt, now, freezeAt: null };
   const final = finalImpactOf(replay);
-  // 最後の着弾の削る瞬間から HITSTOP_MS だけ着弾の時計を止める（設計書 41.6）
-  const line: Timeline = { ...base, freezeAt: final === null ? null : timeOf(base, replay.impacts[final]!.tick) + CARVE_AT_MS };
+  // 最後の着弾の削る瞬間から HITSTOP_MS だけ着弾の時計を止める。動きを減らす設定では止めない（設計書 41.6）
+  const line: Timeline = { ...base, freezeAt: final === null || reduced ? null : timeOf(base, replay.impacts[final]!.tick) + CARVE_AT_MS };
   const t = Math.max(0, Math.min(1, (now - replay.startsAt) / Math.max(1, settleAt - replay.startsAt)));
   const tick = t * replay.ticks;
   const impacts = replay.impacts.filter(i => i.tick <= tick);

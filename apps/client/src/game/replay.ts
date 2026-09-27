@@ -151,6 +151,13 @@ const computeFalls = (job: ReplayJob): Fall[] => {
   return falls;
 };
 
+/** 時刻（ms）を比べるときに許す誤差 */
+const TIME_EPSILON_MS = 1e-6;
+
+/** 着弾の後に弾が飛んでいないか（飛翔の終わりが、着弾で止まる HOLD_MS の終わりより後でない）。
+ * 両辺は STEP_MS（1000/60）の和を別の順で足すので、浮動小数点の誤差を許して比べる */
+export const endsWithImpact = (flightEnd: number, impactAt: number): boolean => flightEnd - (impactAt + HOLD_MS) <= TIME_EPSILON_MS;
+
 /** 弾道ごとの発射の遅れと、着弾ごとの時刻。弾道の位置列はクライアントの再計算から得る */
 const timeline = (job: ReplayJob): { launchAt: number[]; impacts: ImpactRun[] } => {
   const fanCount = weaponSpec(job.shot.input.weapon).fan.length;
@@ -163,7 +170,7 @@ const timeline = (job: ReplayJob): { launchAt: number[]; impacts: ImpactRun[] } 
   // 最後の着弾は、その後に弾が飛んでいないときだけヒットストップの対象にする
   const last = impacts.reduce<ImpactRun | null>((a, b) => (a === null || b.at > a.at ? b : a), null);
   const flightEnd = Math.max(0, ...job.paths.map((_, p) => flightEndOf(job, launchAt, p)));
-  return { launchAt, impacts: impacts.map(ir => (ir === last && flightEnd <= ir.at + HOLD_MS ? { ...ir, final: true } : ir)) };
+  return { launchAt, impacts: impacts.map(ir => (ir === last && endsWithImpact(flightEnd, ir.at) ? { ...ir, final: true } : ir)) };
 };
 
 /** 着弾後の位置で、地形は着弾前のまま描く。落下前の姿勢。HP バーは削れてからの時間で減らしていく */

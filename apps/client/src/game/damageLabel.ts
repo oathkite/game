@@ -47,12 +47,13 @@ export const spawnDamageLabel = (init: DamageLabelInit): DamageLabel => {
   const color = init.summary ? PALETTE.fire2 : init.big ? PALETTE.white : Number.parseInt(COLOR_HEX[init.color].slice(1), 16);
   let drawnDot = 0;
   const draw = (dot: number): void => { if (dot !== drawnDot) { drawDigits(text, init.text, dot, color); drawnDot = dot; } };
-  draw(big ? BIG_DOT + 1 : DOT);
+  const reduced = typeof matchMedia !== "undefined" && matchMedia("(prefers-reduced-motion: reduce)").matches;
+  // 動きを減らす設定では、出た直後の 1 コマも弾ませない
+  draw(big ? (reduced ? BIG_DOT : BIG_DOT + 1) : DOT);
   text.position.set(Math.round(init.x), Math.round(init.y));
   init.parent.addChild(text);
   const sparks = new Graphics();
   if (init.big) init.parent.addChild(sparks);
-  const reduced = typeof matchMedia !== "undefined" && matchMedia("(prefers-reduced-motion: reduce)").matches;
   const duration = init.summary || init.big ? 1200 : 1000;
   let elapsed = 0, lifted = 0;
   const stop = (): void => {

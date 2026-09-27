@@ -30,6 +30,8 @@ export const createDriftLights = (theme: SkyTheme, px: number) => {
   let width = 0, height = 0, camera = 0, clock = 0, reduced = false;
   const draw = (): void => {
     graphics.clear();
+    // 大きさが決まる前（0 × 0）は描かない。折り返しの剰余が NaN になる
+    if (width <= 0 || height <= 0) return;
     for (let i = 0; i < DRIFT_COUNT; i++) {
       const p = driftLightAt(i, clock, reduced);
       if (!p.on) continue;
@@ -44,6 +46,6 @@ export const createDriftLights = (theme: SkyTheme, px: number) => {
     graphics,
     resize: (w: number, h: number): void => { width = w; height = h; draw(); },
     setCamera: (x: number): void => { camera = x; },
-    tick: (deltaMs: number, reducedMotion: boolean): void => { clock += deltaMs; reduced = reducedMotion; if (width > 0) draw(); },
+    tick: (deltaMs: number, reducedMotion: boolean): void => { clock += deltaMs; reduced = reducedMotion; draw(); },
   };
 };

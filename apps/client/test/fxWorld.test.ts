@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { DRIFT_COUNT, driftLightAt } from "@/game/driftLights";
+import { createDriftLights, DRIFT_COUNT, driftLightAt } from "@/game/driftLights";
 import { PALETTE } from "@/game/palette";
 import { getPixel, TRANSPARENT } from "@/game/pixelGrid";
 import { MOUNTAIN_PERIOD, paintTrees, shootingStarAt, SHOOTING_MS, SHOOTING_WINDOW_MS, TREE_HEIGHT } from "@/game/skyPaint";
@@ -52,6 +52,19 @@ describe("driftLightAt", () => {
       expect(states).toContain(true);
       expect(states).toContain(false);
     }
+  });
+});
+
+describe("createDriftLights", () => {
+  it("大きさが決まる前（0 × 0）は描かず、座標に NaN を作らない", () => {
+    const lights = createDriftLights("ridge", 2);
+    lights.resize(0, 0);
+    lights.tick(16, false);
+    expect(lights.graphics.bounds.width).toBe(0);
+    lights.resize(640, 400);
+    lights.tick(16, false);
+    expect(Number.isFinite(lights.graphics.bounds.width)).toBe(true);
+    expect(lights.graphics.bounds.width).toBeGreaterThan(0);
   });
 });
 

@@ -111,6 +111,11 @@ it("freezes the final impact's clock for HITSTOP_MS from the carve when nothing 
   expect(presentLabReplay(frame, carve + HITSTOP_MS / 2).effects[0]!.clock).toBe(CARVE_AT_MS);
   expect(presentLabReplay(frame, carve + HITSTOP_MS + 100).effects[0]!.clock).toBe(CARVE_AT_MS + 100);
 });
+it("does not freeze the clock when reduced motion is on (設計書 41.6)", () => {
+  const carve = 1700 + CARVE_AT_MS;
+  expect(presentLabReplay(frame, carve + HITSTOP_MS / 2, true).effects[0]!.clock).toBe(CARVE_AT_MS + HITSTOP_MS / 2);
+  expect(presentLabReplay(frame, carve + HITSTOP_MS + 100, true).effects[0]!.clock).toBe(CARVE_AT_MS + HITSTOP_MS + 100);
+});
 it("reports the players an impact takes to zero HP", () => {
   const lethal = { ...frame, replay: { ...frame.replay!, impacts: [{ tick: 42, damage: [{ playerId: "p1", amount: 100 }, { playerId: "p2", amount: 20 }] }] } };
   expect(presentLabReplay(lethal, 1700).effects[0]!.kills).toEqual(["p1"]);

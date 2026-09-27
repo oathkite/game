@@ -2,7 +2,8 @@ import type { TerrainMask } from "@game/sim";
 import { describe, expect, it, vi } from "vitest";
 import { craterGlow, GLOW_MS, impactSmoke, impactSparks, lightBurst, SMOKE_LIMIT, SPARK_LIMIT } from "@/game/fx/impactFx";
 import { createFrame, sampleBatch, type ArtBounds } from "@/game/fx/particles";
-import { CARVE_AT_MS, HITSTOP_MS, hitstopClock, HOLD_MS } from "@/game/hitFeedback";
+import { CARVE_AT_MS, HITSTOP_MS, hitstopClock, HOLD_MS, impactTimeMs } from "@/game/hitFeedback";
+import { endsWithImpact } from "@/game/replay";
 import { PALETTE } from "@/game/palette";
 import type { LabEffect, presentLabReplay } from "@/networkLab/labReplay";
 import { createLabImpactFx } from "@/worldUi/labImpactView";
@@ -86,6 +87,18 @@ describe("lightBurst", () => {
   });
   it("閾値は art px の座標で決まるので、同じ光源からは同じ模様になる", () => {
     expect(lightBurst(spec).x0).toEqual(lightBurst(spec).x0);
+  });
+});
+
+describe("endsWithImpact", () => {
+  it("飛翔の終わりと着弾の止まりの終わりが、足す順だけ違う同じ時刻なら、最後の着弾とみなす", () => {
+    // 2 発目のマルチ弾（180 ms 遅れ）が 1 点目で着弾し、そこで弾道が終わる。浮動小数点では左辺が 5e-14 ほど大きくなる
+    const launch = 180, flightEnd = launch + impactTimeMs(1, [1, 1]), impactAt = launch + impactTimeMs(0, [1]);
+    expect(flightEnd > impactAt + HOLD_MS).toBe(true);
+    expect(endsWithImpact(flightEnd, impactAt)).toBe(true);
+  });
+  it("着弾の後も弾が飛んでいれば、最後の着弾とみなさない", () => {
+    expect(endsWithImpact(300, 196)).toBe(false);
   });
 });
 

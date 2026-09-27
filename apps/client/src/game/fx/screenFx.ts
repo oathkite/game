@@ -58,6 +58,17 @@ type View = {
   readonly cell: () => number;
 };
 
+/** 表ごとの番号。フィルターに表を送り直すかを決める鍵に入れ、同じ時刻に別の表へ替わっても送り直す */
+const tableIds = new WeakMap<GradeTable, number>();
+let nextTableId = 0;
+const tableId = (table: GradeTable): number => {
+  const found = tableIds.get(table);
+  if (found !== undefined) return found;
+  const id = nextTableId++;
+  tableIds.set(table, id);
+  return id;
+};
+
 export const createScreenFx = (view: View): ScreenFx => {
   const terrainGrade = createGradeFilter(), skyGrade = createGradeFilter();
   const flash = new Graphics();
@@ -87,7 +98,7 @@ export const createScreenFx = (view: View): ScreenFx => {
       const phase = tintPhaseAt(tint, now);
       const tintTable = tint !== null && phase !== null ? (phase === "edge" ? brighterHalf(tint.table) : tint.table) : null;
       const skyTable = dimming && tintTable ? composeTables(DIM_TABLE, tintTable) : dimming ? DIM_TABLE : tintTable;
-      const key = `${dimming}/${phase && tint ? tint.from : ""}/${phase}`;
+      const key = `${dimming}/${phase && tint ? `${tableId(tint.table)}@${tint.from}` : ""}/${phase}`;
       skyKey = place(view.sky, skyGrade, key, skyTable, 1, BACKDROP_PX, false);
       const flashing = now >= flashFrom && now < flashUntil;
       if (flashing && !flash.visible) flash.clear().rect(0, 0, screen.width, screen.height).fill(PALETTE.white);
