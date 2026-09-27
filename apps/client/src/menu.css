@@ -25,7 +25,7 @@
   flex-shrink: 0;
 }
 
-.menu-shell .dim, .menu-hint {
+.menu-shell .dim {
   color: var(--menu-muted);
 }
 
@@ -62,12 +62,6 @@
 
 .menu-shell .weapon-grid {
   grid-template-columns: repeat(2, minmax(0, 1fr));
-}
-
-.menu-hint {
-  font-size: 14px;
-  margin: 0;
-  line-height: 1.6;
 }
 
 

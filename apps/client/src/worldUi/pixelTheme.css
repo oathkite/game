@@ -29,8 +29,8 @@
    角は欠かない。フォーカスの輪郭（外側 4px）を clip-path で切らないため */
 .world-ui.world-ui .pixel-button { box-shadow:inset 2px 2px 0 var(--px-green-deep); }
 .world-ui.world-ui .pixel-button:active:not(:disabled) { transform:translateY(2px); box-shadow:inset -2px -2px 0 var(--px-green-deep); }
-.world-ui.world-ui :is(.world-lobby .lobby-deploy, button.room-create, button.practice-start, button.room-ready-button[aria-pressed=true], .result-primary) { box-shadow:inset 2px 2px 0 var(--px-green-light), inset -2px -2px 0 var(--px-green-mid); }
-.world-ui.world-ui :is(.world-lobby .lobby-deploy, button.room-create, button.practice-start, button.room-ready-button[aria-pressed=true], .result-primary):active:not(:disabled) { transform:translateY(2px); box-shadow:inset 2px 2px 0 var(--px-green-mid), inset -2px -2px 0 var(--px-green-light); }
+.world-ui.world-ui :is(.world-lobby .lobby-deploy, button.room-create, button.room-ready-button[aria-pressed=true], .result-primary) { box-shadow:inset 2px 2px 0 var(--px-green-light), inset -2px -2px 0 var(--px-green-mid); }
+.world-ui.world-ui :is(.world-lobby .lobby-deploy, button.room-create, button.room-ready-button[aria-pressed=true], .result-primary):active:not(:disabled) { transform:translateY(2px); box-shadow:inset 2px 2px 0 var(--px-green-mid), inset -2px -2px 0 var(--px-green-light); }
 @media (prefers-reduced-motion:reduce) {
-  .world-ui.world-ui :is(.pixel-button, .world-lobby .lobby-deploy, button.room-create, button.practice-start, button.room-ready-button, .result-primary):active { transform:none; }
+  .world-ui.world-ui :is(.pixel-button, .world-lobby .lobby-deploy, button.room-create, button.room-ready-button, .result-primary):active { transform:none; }
 }

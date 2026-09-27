@@ -19,9 +19,9 @@
 .world-ui.world-ui .battle-hp { background:#0f4d24; box-shadow:none; border-radius:0; }
 .world-ui.world-ui .battle-weapons button { background:#000!important; color:#33ff66!important; border-color:#0f4d24!important; border-radius:0; box-shadow:none; }
 .world-ui.world-ui .battle-weapons button[aria-pressed=true] { border-color:#33ff66!important; }
-.world-ui.world-ui :is(.battle-touch button,.battle-menu,.network-focus,.kp-camera-actions button) { color:#33ff66; background:#000; border:2px solid #33ff66; box-shadow:none; border-radius:0; }
+.world-ui.world-ui :is(.battle-touch button,.battle-menu) { color:#33ff66; background:#000; border:2px solid #33ff66; box-shadow:none; border-radius:0; }
 .world-ui.world-ui :is(.battle-power-value,.battle-power-labels,.battle-movement) { color:#33ff66; }
-.world-ui.world-ui :is(.world-loading,.network-loading,.kp-dialog,.battle-menu-panel,.battle-result-player) { color:#33ff66; background:#000; border-color:#0f4d24; box-shadow:none; }
+.world-ui.world-ui :is(.network-loading,.kp-dialog,.battle-menu-panel,.battle-result-player) { color:#33ff66; background:#000; border-color:#0f4d24; box-shadow:none; }
 .world-ui.world-ui .kp-world-help { display:none; }
 
 .world-ui.world-ui::before,.world-ui.world-ui .kp-world::before,.world-ui.world-ui .network-field::before { display:none; }
@@ -48,11 +48,6 @@
 .world-lobby .tank-colors i { width:100%; height:100%; }
 .world-ui.world-ui .world-lobby .lobby-deploy { width:100%; min-height:52px; background:#33ff66; color:#000; font-size:22px; }
 .world-ui.world-ui .world-lobby footer .pixel-button { min-width:0; }
-.practice-settings { width:min(420px,calc(100vw - 32px)); max-height:calc(100dvh - 32px); padding:24px; border:2px solid #33ff66; background:#000; color:#33ff66; font:inherit; }
-.practice-settings::backdrop { background:#000c; }
-.practice-settings h2 { font-size:22px; margin:0 0 20px; }
-.practice-settings label { display:block; margin-bottom:16px; }
-.practice-settings-actions { display:flex; justify-content:space-between; gap:12px; margin-top:24px; }
 @media (max-height:550px) and (orientation:landscape) {
   .world-lobby .tank-colors { margin:10px 0; gap:12px; }
   .world-lobby .tank-colors [role=radiogroup] { grid-template-columns:repeat(5,24px); gap:4px; }
@@ -89,7 +84,7 @@
 .world-ui.world-ui :is(h1,h2,h3,.pixel-panel,.world-build-note,.world-result-screen p,.world-result-screen .tank-portrait,.room-team-summary,.battle-self,.battle-countdown,.battle-wind,.battle-result-player,.battle-result-stats,.battle-turn-notice,.battle-menu-progress,.battle-upcoming,.network-latency,.network-finished > p) { border:0; box-shadow:none; }
 .world-ui.world-ui :is(.battle-console,.battle-roster,.kp-topbar,.kp-controls,.network-world > header,.network-world > footer) { border:0; box-shadow:none; }
 .world-ui.world-ui .battle-seat:not(.is-actor) { border-color:transparent; box-shadow:none; }
-.world-ui.world-ui :is(.room-members li,.public-rooms li,.battle-result-stats th,.battle-result-stats td) { border-bottom:0; }
+.world-ui.world-ui :is(.public-rooms li,.battle-result-stats th,.battle-result-stats td) { border-bottom:0; }
 .world-ui.world-ui :is(.kp-topbar,.kp-controls,.network-world > header,.network-world > footer)::before { border:0; }
 .world-ui.world-ui dialog::backdrop { background:#000c; }
 .world-ui.world-ui .battle-result-player { border-bottom:2px solid var(--team); }
@@ -171,12 +166,9 @@
 .lobby-settings > h2 { font-size:22px; }
 .world-ui .lobby-settings .world-settings { height:auto; padding:0; }
 
-.world-ui.world-ui button.practice-start { width:100%; background:#33ff66; color:#000; }
-.world-ui.world-ui button.practice-start:hover:not(:disabled) { background:#80ff9f; color:#000; border-color:#80ff9f; }
-
 /* Modal actions fill the content width; close icons and option grids keep their size. */
 .world-ui.world-ui dialog > button:not(.modal-close),
-.world-ui.world-ui dialog :is(.room-filters,.room-create-form,.practice-settings-actions,.audio-controls) > button:not(.modal-close) {
+.world-ui.world-ui dialog :is(.room-filters,.room-create-form,.audio-controls) > button:not(.modal-close) {
   width:100%;
   grid-column:1 / -1;
 }
