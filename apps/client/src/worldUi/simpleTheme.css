@@ -10,18 +10,16 @@
 .world-ui.world-ui button[aria-pressed=true] { border-color:#fff; }
 .world-ui.world-ui .world-start h1 { width:auto; aspect-ratio:auto; overflow:visible; }
 .world-ui.world-ui .world-shutter { background:repeating-linear-gradient(to bottom,#164b28 0 2px,#031008 2px 6px,#000 6px 30px,#33ff66 30px 32px,#000 32px 40px); image-rendering:pixelated; }
-.world-ui.world-ui :is(.battle-roster,.battle-console,.battle-seat,.battle-self,.battle-countdown,.battle-wind,.network-world,.battle-menu,.network-overview,.kp-minimap) { color:#33ff66; background:#000; border-color:#0f4d24; border-radius:0; box-shadow:none; }
-.world-ui.world-ui :is(.battle-console,.battle-roster) { border-block:2px solid #0f4d24; }
+.world-ui.world-ui :is(.battle-console,.battle-countdown,.battle-wind,.network-world,.battle-menu,.network-overview,.kp-minimap) { color:#33ff66; background:#000; border-color:#0f4d24; border-radius:0; box-shadow:none; }
+.world-ui.world-ui .battle-console { border-block:2px solid #0f4d24; }
 .world-ui.world-ui :is(.battle-countdown,.battle-power)::before,.world-ui.world-ui :is(.battle-countdown,.battle-power)::after { display:none; }
 .world-ui.world-ui .battle-angle { filter:none; }
-.world-ui.world-ui :is(.battle-seat-portrait,.battle-self-portrait) { border:0; border-radius:0; background:#000; }
-.world-ui.world-ui .battle-seat.is-actor { border-color:var(--team); }
 .world-ui.world-ui .battle-hp { background:#0f4d24; box-shadow:none; border-radius:0; }
 .world-ui.world-ui .battle-weapons button { background:#000!important; color:#33ff66!important; border-color:#0f4d24!important; border-radius:0; box-shadow:none; }
 .world-ui.world-ui .battle-weapons button[aria-pressed=true] { border-color:#33ff66!important; }
 .world-ui.world-ui :is(.battle-touch button,.battle-menu) { color:#33ff66; background:#000; border:2px solid #33ff66; box-shadow:none; border-radius:0; }
 .world-ui.world-ui :is(.battle-power-value,.battle-power-labels,.battle-movement) { color:#33ff66; }
-.world-ui.world-ui :is(.network-loading,.kp-dialog,.battle-menu-panel,.battle-result-player) { color:#33ff66; background:#000; border-color:#0f4d24; box-shadow:none; }
+.world-ui.world-ui :is(.network-loading,.kp-dialog,.battle-menu-panel) { color:#33ff66; background:#000; border-color:#0f4d24; box-shadow:none; }
 .world-ui.world-ui .kp-world-help { display:none; }
 
 .world-ui.world-ui::before,.world-ui.world-ui .kp-world::before,.world-ui.world-ui .network-field::before { display:none; }
@@ -81,13 +79,11 @@
 .world-ui.world-ui .world-lobby .lobby-deploy:hover:not(:disabled) { background:#80ff9f; color:#000; border-color:#80ff9f; }
 
 /* Shared page rule: borders identify controls or state, not content wrappers. */
-.world-ui.world-ui :is(h1,h2,h3,.pixel-panel,.world-build-note,.world-result-screen p,.world-result-screen .tank-portrait,.room-team-summary,.battle-self,.battle-countdown,.battle-wind,.battle-result-player,.battle-result-stats,.battle-turn-notice,.battle-menu-progress,.battle-upcoming,.network-latency,.network-finished > p) { border:0; box-shadow:none; }
-.world-ui.world-ui :is(.battle-console,.battle-roster,.kp-topbar,.kp-controls,.network-world > header,.network-world > footer) { border:0; box-shadow:none; }
-.world-ui.world-ui .battle-seat:not(.is-actor) { border-color:transparent; box-shadow:none; }
-.world-ui.world-ui :is(.public-rooms li,.battle-result-stats th,.battle-result-stats td) { border-bottom:0; }
+.world-ui.world-ui :is(h1,h2,h3,.pixel-panel,.world-result-screen p,.world-result-screen .tank-portrait,.room-team-summary,.battle-countdown,.battle-wind,.battle-turn-notice,.battle-menu-progress,.network-latency,.network-finished > p) { border:0; box-shadow:none; }
+.world-ui.world-ui :is(.battle-console,.kp-topbar,.kp-controls,.network-world > header,.network-world > footer) { border:0; box-shadow:none; }
+.world-ui.world-ui :is(.public-rooms li) { border-bottom:0; }
 .world-ui.world-ui :is(.kp-topbar,.kp-controls,.network-world > header,.network-world > footer)::before { border:0; }
 .world-ui.world-ui dialog::backdrop { background:#000c; }
-.world-ui.world-ui .battle-result-player { border-bottom:2px solid var(--team); }
 
 /* Native scrollbars, shared by panels, dialogs and result lists. */
 .world-ui,.world-ui * { scrollbar-width:thin; scrollbar-color:#33ff66 #000; }
@@ -106,14 +102,8 @@
 .world-ui .dot-icon { display:inline-block; width:24px; height:24px; margin:0; vertical-align:middle; image-rendering:pixelated; }
 .world-ui .battle-dpad .dot-icon { width:16px; height:16px; }
 
-.world-ui.world-ui .battle-roster { justify-content:center; }
-.world-ui.world-ui .battle-console .battle-self { grid-template-columns:minmax(0,1fr); }
-
 .world-ui .kp-canvas { position:relative; }
-.world-ui.world-ui .battle-roster,
-.world-ui.world-ui .battle-roster .battle-countdown { background:transparent; }
 
-.world-ui.world-ui .battle-roster { position:absolute; inset:0 0 auto; width:100%; z-index:2; }
 .world-ui.world-ui .network-world > .network-field { grid-row:1 / 3; grid-column:1; }
 .world-ui.world-ui .network-world > .battle-console { grid-row:3; grid-column:1; }
 

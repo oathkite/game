@@ -7,7 +7,6 @@
 .world-start { height:100%; display:flex; flex-direction:column; align-items:center; justify-content:center; padding:24px; gap:24px; text-align:center; background:linear-gradient(0deg,#20384a38,transparent 70%); }
 .world-start h1 { position:relative; flex-shrink:0; width:min(880px,100%,120vh); aspect-ratio:1536/560; overflow:hidden; }
 .world-start .pixel-button { min-width:240px; font-size:22px; }
-.world-build-note { position:absolute; bottom:20px; color:#fff4d9; font-size:12px; }
 .world-lobby { max-width:1160px; height:100%; margin:auto; padding:36px; display:grid; grid-template-columns:1fr 400px; grid-template-rows:auto minmax(0,1fr) auto; gap:24px; }
 .world-lobby header { grid-column:1/-1; display:flex; align-items:center; justify-content:space-between; }
 .world-lobby h1 { color:#fff1d5; text-shadow:2px 3px #24344a; }
@@ -126,7 +125,6 @@
 .world-ui::before { content:""; position:absolute; inset:0; pointer-events:none; background:linear-gradient(180deg,#182d4966,#24344a22 45%,#152b4566); }
 .world-ui .kp-world::before,.network-field::before { content:""; position:absolute; inset:0; pointer-events:none; background:linear-gradient(180deg,#90a7b266,#6b879566); }
 .world-lobby h1,.world-settings h1,.world-result-screen h1 { padding:8px 16px; background:#24344a; border:2px solid #718a9a; box-shadow:inset 0 0 0 2px #101e30,0 3px 0 #172638; text-shadow:none; }
-.world-build-note { padding:4px 12px; background:#24344a; border:2px solid #bf9968; }
 .world-machine .tank-portrait,.world-result-screen .tank-portrait { background:radial-gradient(ellipse at 50% 70%,#34566b 0,#112333 65%); border:3px solid #718a9a; box-shadow:inset 0 0 0 3px #17283b,0 5px 0 #17283b; }
 .world-result-screen p { background:#112333; color:#f4f0de; border:2px solid #718a9a; }
 .world-ui .kp-topbar,.world-ui .kp-controls,.network-world > header,.network-world > footer { position:relative; isolation:isolate; background:#20344b; border:0; box-shadow:inset 0 0 0 2px #101e30; }
