@@ -32,24 +32,32 @@ protocol ← sim ← maps ← engine ← server
 ## ブランチとコミット
 
 - 作業を始める前に、今のブランチと未コミットの変更を確かめる。別の作業の変更を消さない。
-- `main` には PR 経由でだけ入れる。作業は `feat/<内容>` か `fix/<内容>` で行い、PR も `main` へ向ける。draft PR を早めに開く。
-- コミットは Conventional Commits を日本語で書き、1 コミット 1 責務にする。テストと typecheck が通った状態でコミットする。
+- `main` には PR 経由でだけ入れる。作業ブランチは `git fetch origin` のあと `origin/main` から `<type>/<内容>` で切り、PR も `main` へ向ける。`<type>` はコミットの種類（`feat`、`fix`、`docs`、`chore` など）に揃える。draft PR を早めに開く。
+- コミットは Conventional Commits を日本語で書き、1 コミット 1 責務にする。
 - push は HTTPS で行う（`git push https://github.com/oathkite/game.git <branch>`）。この環境には SSH 鍵が無く、`gh` の認証を使う。
 
 ## 変更前後のゲート
 
-作業を始める前と、コミットする前に次を通す。
+コミットごとに次を通す。
 
 ```sh
 pnpm -r typecheck
-pnpm test                                                              # 単体テスト
+pnpm test          # 単体テスト
+```
+
+e2e は、PR を ready にする前に、変えたものに応じた config を通す。ready のあとにコミットを足したら、マージする HEAD で回し直す。
+CI は PR では走らない。`deploy.yml` が main への push で typecheck と単体テストを回してから配置するだけなので、ここで回す e2e が本番へ出る前の唯一の e2e になる。
+途中のコミットで回すかどうかは作業者が決める。
+
+```sh
 pnpm --filter @game/e2e exec playwright test --config rooms.config.ts  # オンライン対戦。server か client の振る舞いを変えたとき
 pnpm --filter @game/e2e exec playwright test --config world.config.ts  # タイトル、ロビー、プラクティス。client を変えたとき
 ```
 
+- ゲートが落ちたら、`origin/main` の別の worktree で同じコマンドを回し、元からの失敗かどうかを確かめる。元からの失敗は PR に書けばコミットを止めなくてよい。自分の変更で落ちたものは直してからコミットする。
 - `rooms.config.ts` はローカルの wrangler（v2 Room API、8797）と、`VITE_ROOM_SERVER_URL` を指定した Vite（5186）を起動する。部屋一覧とコード参加はこの指定があるときだけ描画されるので、Node の 8795 では 2 人目が入れない（TBD-32）。v2 Room API（`apps/server/src/cf/v2*.ts`）を変えたときもこの config で確かめる。
-- rooms の全件は多人数の spec を含めて約 9 分かかる。日常は `rooms.spec.ts` と `battle-controls.spec.ts`（作成、参加、準備、射撃、再接続、降参、部屋へ戻る）を回し、多人数や決着まわりを触ったときだけ全件を回す。world の全件は約 5 分。
-- 2 つの config はどちらも 5186 を使い、`reuseExistingServer: false` なので、同時に回せない。ほかの worktree が 5186 を使っているときは終わるのを待つ。
+- rooms の全件は多人数の spec を含めて約 9 分かかる。ふだんは `rooms.spec.ts` と `battle-controls.spec.ts`（作成、参加、準備、射撃、再接続、降参、部屋へ戻る）を回し、多人数や決着まわりを触ったときだけ全件を回す。world の全件は約 5 分。
+- 2 つの config はどちらも 5186 を使い、`reuseExistingServer: false` なので、同時に回せない。`origin/main` と比べるときも、ほかの worktree が 5186 を使っているときも、先の実行が終わってから回す。
 - `fixme` と `test.fail` の spec は、設計書との食い違い（`99-open-questions.md` の TBD-29、TBD-30）と既知の不具合を表す。直したら外す。
 - `pnpm --filter @game/e2e test:e2e`（`playwright.config.ts`）は旧 UI（`?prototype=legacy`）と旧 Node サーバー（8787）の回帰テストで、今の画面は検査しない。旧実装を触ったときだけ回す。5173 と 8787 に動いているプロセスを再利用するので、ほかの worktree の Vite が 5173 にいると、そのブランチのコードを検査してしまう。旧 Workers 版（`wrangler.jsonc`）を変えたら、`wrangler dev --port 8788 --local` を起こし、`VITE_DEV_SERVER_TARGET=ws://localhost:8788` でこの回帰テストを回す。
 - コミット前にコードレビュー（Claude Code では `/code-review`）を通す。指摘は全件判断し、直さないものは理由を PR に書く。
