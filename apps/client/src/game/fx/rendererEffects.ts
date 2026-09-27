@@ -7,7 +7,7 @@ import type { FxLayer } from "./fxLayer";
 import { partitionBatch } from "./particles";
 import { craterGlow, impactSmoke, impactSparks, lightBurst, muzzleSmoke, trackDust, wreckDebris } from "./impactFx";
 import { FLOATER_TABLE, KILL_TABLE, LASER_TABLE, WARM_TABLE, type GradeTable } from "./gradeTables";
-import type { ScreenFx } from "./screenFx";
+import { TINT_PRIORITY, type ScreenFx } from "./screenFx";
 import { terrainDebris } from "./terrainDebris";
 import { crossFlash, debrisHeatOf, debrisPowerOf, impactPaletteOf, weaponTrail, type TrailPoint } from "./weaponFx";
 
@@ -140,7 +140,7 @@ export const createRendererEffects = (d: Deps): RendererEffects & { readonly tic
       if (d.reduced() || at - lastFlash < FLASH_GAP_MS) return;
       lastFlash = at;
       d.screenFx.flashAt(at, FLASH_MS);
-      d.screenFx.tintAt(KILL_TABLE, at, KILL_TINT_MS, false);
+      d.screenFx.tintAt(KILL_TABLE, at, KILL_TINT_MS, false, TINT_PRIORITY.kill);
     },
     launch: (weapon, points, seed, age = 0) => {
       const a = points[0], b = points[1];

@@ -1,6 +1,9 @@
 import { describe, expect, it } from "vitest";
-import { brighterHalf, composeTables, DIM_TABLE, FLOATER_TABLE, KILL_TABLE, LASER_TABLE, WARM_TABLE } from "@/game/fx/gradeTables";
-import { nextTint, TINT_EDGE_MS, tintPhaseAt } from "@/game/fx/screenFx";
+import type { FxLayer } from "@/game/fx/fxLayer";
+import { brighterHalf, composeTables, DIM_TABLE, FLOATER_TABLE, KILL_TABLE, LASER_TABLE, WARM_TABLE, type GradeTable } from "@/game/fx/gradeTables";
+import { createRendererEffects } from "@/game/fx/rendererEffects";
+import { nextTint, nextTints, shownTint, TINT_EDGE_MS, TINT_PRIORITY, tintPhaseAt, type ScreenFx, type Tint, type TintPriority } from "@/game/fx/screenFx";
+import { HOLD_MS, HP_DRAIN_MS } from "@/game/hitFeedback";
 import { isPaletteColor, PALETTE } from "@/game/palette";
 
 // 暗転と空の色の寄せの置き換え表（設計書 41.13 の評価と改善の 2 回目）。置き換えても描く画素はパレットの色のまま
@@ -48,7 +51,7 @@ describe("置き換え表", () => {
 });
 
 describe("空の色の寄せの段", () => {
-  const warm = { table: WARM_TABLE, from: 1000, ms: 450, entry: true };
+  const warm = { table: WARM_TABLE, from: 1000, ms: 450, entry: true, priority: TINT_PRIORITY.weapon };
   it("入りと戻りの 70 ms は明るい半分の段、その間はすべて、外は寄せない", () => {
     expect(tintPhaseAt(warm, 999)).toBeNull();
     expect(tintPhaseAt(warm, 1000)).toBe("edge");
@@ -57,18 +60,60 @@ describe("空の色の寄せの段", () => {
     expect(tintPhaseAt(warm, 1450)).toBeNull();
   });
   it("全画面の白から入る寄せ（撃破）は、入りの段を挟まずにすべてを置き換える", () => {
-    expect(tintPhaseAt({ table: KILL_TABLE, from: 1000, ms: 500, entry: false }, 1000)).toBe("full");
+    expect(tintPhaseAt({ table: KILL_TABLE, from: 1000, ms: 500, entry: false, priority: TINT_PRIORITY.kill }, 1000)).toBe("full");
   });
   it("同じ表が効いている間に続けて当たると、始まりを保って終わりだけ延ばす（レーザー弾の 7 段）", () => {
-    const laser = { table: LASER_TABLE, from: 1000, ms: 200, entry: true };
+    const laser = { table: LASER_TABLE, from: 1000, ms: 200, entry: true, priority: TINT_PRIORITY.weapon };
     expect(nextTint(laser, { ...laser, from: 1150 })).toEqual({ ...laser, ms: 350 });
     expect(tintPhaseAt(nextTint(laser, { ...laser, from: 1150 }), 1100)).toBe("full");
   });
   it("別の表や、効き終わった後の同じ表は、新しい寄せとしてやり直す", () => {
-    const laser = { table: LASER_TABLE, from: 1000, ms: 200, entry: true };
-    const kill = { table: KILL_TABLE, from: 1100, ms: 500, entry: false };
-    expect(nextTint(laser, kill)).toBe(kill);
+    const laser = { table: LASER_TABLE, from: 1000, ms: 200, entry: true, priority: TINT_PRIORITY.weapon };
+    const floater = { table: FLOATER_TABLE, from: 1100, ms: 500, entry: true, priority: TINT_PRIORITY.weapon };
+    expect(nextTint(laser, floater)).toBe(floater);
     expect(nextTint(laser, { ...laser, from: 1300 })).toEqual({ ...laser, from: 1300 });
     expect(nextTint(null, laser)).toBe(laser);
+  });
+});
+
+describe("撃破と武器の空の色の寄せ", () => {
+  // レーザー弾の 1 段目が 1000 に当たって撃破する。寄せは 1070 から、削る瞬間（1190）に HP バーが減りきる 1590 の撃破を予約する。
+  // 後の段は 64〜80 ms おきに続く（FX ラボで測った削る時刻の間隔）
+  const laserAt = (from: number) => ({ table: LASER_TABLE, from, ms: 200, entry: true, priority: TINT_PRIORITY.weapon });
+  const kill = { table: KILL_TABLE, from: 1590, ms: 500, entry: false, priority: TINT_PRIORITY.kill };
+  const laserKill = [1150, 1214, 1294, 1358, 1422, 1502].reduce((tints, from) => nextTints(tints, laserAt(from)), nextTints(nextTints([], laserAt(1070)), kill));
+  it("撃破の寄せを予約した後に武器の寄せが続いても、撃破の間は撃破の寄せを当てる", () => {
+    // 1 つで持つと、後の段が予約中の撃破の寄せを置き換え、白の後に赤が出なかった
+    expect(shownTint(laserKill, 1590)).toBe(kill);
+    expect(tintPhaseAt(shownTint(laserKill, 1590), 1590)).toBe("full");
+    expect(shownTint(laserKill, 1650)).toBe(kill);
+  });
+  it("撃破の寄せが始まるまでは、効いている武器の寄せを当てる", () => {
+    // 1 つで持つと、撃破の予約が効いているレーザー弾の寄せを消し、後の段が当たるまで元の夜空に戻った
+    expect(shownTint(nextTints(nextTints([], laserAt(1070)), kill), 1200)?.table).toBe(LASER_TABLE);
+    expect(shownTint(laserKill, 1200)?.table).toBe(LASER_TABLE);
+    expect(shownTint(laserKill, 1589)?.table).toBe(LASER_TABLE);
+    expect(shownTint(nextTints(nextTints([], kill), laserAt(1300)), 1400)?.table).toBe(LASER_TABLE);
+  });
+  it("撃破の寄せが終わった後は、武器の寄せを当てる", () => {
+    const tints = nextTints(nextTints([], kill), laserAt(2000));
+    expect(shownTint(tints, 2089)).toBe(kill);
+    expect(shownTint(tints, 2100)?.table).toBe(LASER_TABLE);
+    expect(shownTint(nextTints(tints, laserAt(2300)), 2400)?.table).toBe(LASER_TABLE);
+    expect(shownTint(tints, 2200)).toBeNull();
+  });
+  it("練習と同じ順（着弾、削る瞬間の撃破、後の段の着弾）で演出を呼んでも、白の時刻には撃破の寄せを当てる", () => {
+    let now = 0, tints: readonly Tint[] = [];
+    const fx = { now: () => now, emit: () => {}, clear: () => {}, count: () => 0, freeze: () => {} } as unknown as FxLayer;
+    const tintAt = (table: GradeTable, from: number, ms: number, entry = true, priority: TintPriority = TINT_PRIORITY.weapon) => { tints = nextTints(tints, { table, from, ms, entry, priority }); };
+    const screenFx = { tick: () => {}, clear: () => {}, dimAt: () => {}, flashAt: () => {}, tintAt } as unknown as ScreenFx;
+    const effects = createRendererEffects({ fx, screenFx, texels: undefined, screen: () => ({ width: 100, height: 100 }), reduced: () => false, soil: [PALETTE.loam1] });
+    const hit = (at: number) => { now = at; effects.impact({ cx: 10, cy: 10, radius: 3, tier: 0, seed: 1, age: -HOLD_MS, weapon: "laser" }); };
+    [1000, 1080, 1144].forEach(hit);
+    now = 1190;
+    effects.killFlash(HP_DRAIN_MS);
+    [1224, 1288, 1352, 1432].forEach(hit);
+    expect(shownTint(tints, 1200)?.table).toBe(LASER_TABLE);
+    expect(shownTint(tints, 1590)?.table).toBe(KILL_TABLE);
   });
 });
