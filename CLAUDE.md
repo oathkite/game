@@ -1,7 +1,8 @@
 # CLAUDE.md
 
 このリポジトリでの開発の進め方を定める。
-ユーザー共通の規約（`~/.claude/CLAUDE.md`）に加えて、このプロジェクトに固有の決まりだけを書く。
+ユーザー共通の規約（`~/.claude/CLAUDE.md`）に加えて、このプロジェクトに固有の決まりを書く。
+Codex も `AGENTS.md` からこのファイルを読み、同じ規約に従う。
 
 ## 設計書が正
 
@@ -30,10 +31,10 @@ protocol ← sim ← maps ← engine ← server
 
 ## ブランチとコミット
 
-- `main` には PR 経由でだけ入れる。作業は `feat/<内容>` か `fix/<内容>` で行い、draft PR を早めに開く。
+- 作業を始める前に、今のブランチと未コミットの変更を確かめる。別の作業の変更を消さない。
+- `main` には PR 経由でだけ入れる。作業は `feat/<内容>` か `fix/<内容>` で行い、PR も `main` へ向ける。draft PR を早めに開く。
 - コミットは Conventional Commits を日本語で書き、1 コミット 1 責務にする。テストと typecheck が通った状態でコミットする。
 - push は HTTPS で行う（`git push https://github.com/oathkite/game.git <branch>`）。この環境には SSH 鍵が無く、`gh` の認証を使う。
-- Playwright の成果物（`test-results/`、`playwright-report/`）はコミットしない。
 
 ## 変更前後のゲート
 
@@ -51,7 +52,7 @@ pnpm --filter @game/e2e exec playwright test --config world.config.ts  # タイ�
 - 2 つの config はどちらも 5186 を使い、`reuseExistingServer: false` なので、同時に回せない。ほかの worktree が 5186 を使っているときは終わるのを待つ。
 - `fixme` と `test.fail` の spec は、設計書との食い違い（`99-open-questions.md` の TBD-29、TBD-30）と既知の不具合を表す。直したら外す。
 - `pnpm --filter @game/e2e test:e2e`（`playwright.config.ts`）は旧 UI（`?prototype=legacy`）と旧 Node サーバー（8787）の回帰テストで、今の画面は検査しない。旧実装を触ったときだけ回す。5173 と 8787 に動いているプロセスを再利用するので、ほかの worktree の Vite が 5173 にいると、そのブランチのコードを検査してしまう。旧 Workers 版（`wrangler.jsonc`）を変えたら、`wrangler dev --port 8788 --local` を起こし、`VITE_DEV_SERVER_TARGET=ws://localhost:8788` でこの回帰テストを回す。
-- コミット前に `/code-review` を実行する。指摘は全件判断し、直さないものは理由を PR に書く。
+- コミット前にコードレビュー（Claude Code では `/code-review`）を通す。指摘は全件判断し、直さないものは理由を PR に書く。
 
 ## サーバーを変えるときの注意
 
@@ -70,10 +71,10 @@ pnpm --filter @game/e2e exec playwright test --config world.config.ts  # タイ�
 
 ## デプロイ
 
-本番は Cloudflare にある。手順と URL は `README.md` の「デプロイ」にある。
+本番は Cloudflare にある。配置の手順と URL は `.github/workflows/deploy.yml` にあり、CPU の Worker の設定は `docs/jev-cpu-setup.md` にある。
 
-- `main` へのマージで GitHub Actions（`.github/workflows/deploy.yml`）が本番へ配置する。PR をマージすることが配置の操作なので、マージ前に e2e まで通しておく。
-- 配置の順序は server（`wrangler deploy`）、次に client（`VITE_SERVER_URL` を server の URL にしてビルドし `wrangler pages deploy`）。workflow もこの順序で行う。
+- `main` へのマージで GitHub Actions が本番へ配置する。PR をマージすることが配置の操作なので、マージはユーザーが明示的に指示したときだけ行い、その前に e2e まで通しておく。
+- 配置の順序は Workers（旧 server の `wrangler.jsonc`、v2 Room API の `wrangler.v2.jsonc`、CPU の `wrangler.cpu.jsonc`）、次に client（3 つの Worker の URL を `VITE_SERVER_URL`、`VITE_ROOM_SERVER_URL`、`VITE_CPU_SERVER_URL` に入れてビルドし、`wrangler pages deploy`）。手で配置するときも workflow と同じ順序にする。
 - 配置後は 2 つのブラウザで部屋の作成、入室、開始、射撃、ターン進行を確かめる。
 - 費用の見張り: alarm の下限（1 秒）と「部屋も接続も無ければ storage を空にする」を外さない。Durable Object の要求数と storage 書き込みが増える変更（命令ごとの保存回数、alarm の頻度）は PR に見積もりを書く。
 - 認証は `wrangler login` で行い、トークンや `.env` をコミットしない。

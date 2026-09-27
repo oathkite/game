@@ -69,7 +69,3 @@ pnpm typecheck
 `main` へのpushは本番デプロイを起動するため、公開は明示的なリリース指示後に行う。
 新サーバーの設定は `apps/server/wrangler.v2.jsonc`。旧 `deploy:cf` と区別する。
 [最終監査](docs/progress/final-audit-2026-09-10.md)と[判断が必要な項目](docs/progress/owner-decisions-2026-09-12.md)で残る検証・公開条件を確認する。
-
-## 2Dアップデートの開発
-
-総合ブランチは `codex/2d-update`。今後の2D関連の実装・アセット・仕様変更は、このブランチから作業ブランチを切って進める。[ブランチ運用](docs/2d-update-workflow.md)を参照。
