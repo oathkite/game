@@ -28,6 +28,7 @@ import { createMatchStore, type MatchStore } from "@/match/matchStore";
 import { Timer } from "@/ui/Timer";
 import { CameraSettingsPanel } from "./CameraSettingsPanel";
 import { cameraLayout } from "./camera";
+import { decidedWind } from "@/match/wind";
 import { createCameraRig } from "./cameraRig";
 import { PrototypeCanvas } from "./PrototypeCanvas";
 import { usePrototypeInput } from "./usePrototypeInput";
@@ -114,7 +115,7 @@ const Battle = ({ store, begin, worldArt, cpu, cpuLevel, onExit, onResult }: { r
       <button ref={menuButton} aria-label={t("設定を開く")} onClick={() => { input.cancel(); setMenu(true); }}>{t("設定")}</button>
     </header>}
     {ready ? <PrototypeCanvas onOpeningComplete={begin} worldArt={worldArt ?? false} store={store} rig={rig} layout={layout} handlers={input.world} blocked={menu || confirmLeave || input.gauge.charging} followShot={true} onReady={setSceneReady} charge={input.gauge.charging ? input.gauge.value / 100 : 0} /> : <div style={{ height: layout.mapHeight }}><SceneLoading steps={[{ label: t("画面を読み込み中"), state: "done" }, { label: t("フィールドを準備中"), state: "active" }]} /></div>}
-    {worldArt ? <BattleConsole delay={view.delay ? { onOpen: input.cancel, state: view.delay, playerId: String(hudSeat), acting: view.phase === "acting", players: (view.players ?? []).map(p => ({ id: String(p.seat), name: p.nickname, colors: p.colors })) } : undefined} player={hudPlayers[hudSeat]} steps={view.control?.stepsLeft ?? 0} tilt={ground} elevation={view.control?.elevation ?? view.lastElevation} facing={pose?.facing ?? 1} power={input.gauge.value} loadout={actor?.loadout} slot={slot} disabled={(!enabled && !preparing) || confirmLeave || menu || input.gauge.charging} selectSlot={store.selectSlot}>
+    {worldArt ? <BattleConsole delay={view.delay ? { onOpen: input.cancel, state: view.delay, playerId: String(hudSeat), acting: view.phase === "acting", players: (view.players ?? []).map(p => ({ id: String(p.seat), name: p.nickname, colors: p.colors })) } : undefined} player={hudPlayers[hudSeat]} steps={view.control?.stepsLeft ?? 0} tilt={ground} elevation={view.control?.elevation ?? view.lastElevation} facing={pose?.facing ?? 1} power={input.gauge.value} loadout={actor?.loadout} slot={slot} wind={decidedWind(view)} disabled={(!enabled && !preparing) || confirmLeave || menu || input.gauge.charging} selectSlot={store.selectSlot}>
       {touch && <BattleTouchControls aimDisabled={(!enabled && !preparing) || confirmLeave || menu} disabled={!enabled || confirmLeave || menu} button={input.button} />}
     </BattleConsole> : <footer className="kp-controls">
       <div className="kp-control-group"><span>{t("移動")} <small>{view.control?.stepsLeft ?? 0}</small></span><div><button aria-label={t("左へ移動")} disabled={!enabled || confirmLeave || menu} {...input.button("left")}>←</button><button aria-label={t("右へ移動")} disabled={!enabled || confirmLeave || menu} {...input.button("right")}>→</button></div></div>

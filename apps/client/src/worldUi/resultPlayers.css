@@ -1,5 +1,4 @@
 .world-ui .network-finished:has(.battle-result-players) { inset:0; }
-.network-world:has(.battle-result-players) > .battle-roster,
 .network-world:has(.battle-result-players) > .battle-console,
 .network-world:has(.battle-result-players) > .network-field { visibility:hidden; }
 .world-ui.world-ui .network-finished:has(.result-table),.world-ui.world-ui .world-result-screen { box-sizing:border-box; padding:24px; display:flex; flex-direction:column; justify-content:flex-start; align-items:center; gap:24px; overflow:auto; }
