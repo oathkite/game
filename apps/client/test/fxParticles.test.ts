@@ -1,8 +1,8 @@
 import type { TerrainMask } from "@game/sim";
 import { describe, expect, it } from "vitest";
 import { hash32, hashText, unit } from "@/game/fx/hash";
-import { allocBatch, createFrame, FADE_TAIL, sampleBatch, spanOf, visibleAt, type ArtBounds } from "@/game/fx/particles";
-import { DEBRIS_AFTER_RETURN_MS, DEBRIS_GRASS_KEEP, DEBRIS_GRAVITY, DEBRIS_HEAT_SHARE, DEBRIS_LIFE_MS, terrainDebris } from "@/game/fx/terrainDebris";
+import { allocBatch, allocBounce, createFrame, FADE_TAIL, partitionBatch, sampleBatch, spanOf, visibleAt, type ArtBounds } from "@/game/fx/particles";
+import { DEBRIS_AFTER_RETURN_MS, DEBRIS_BOUNCE_SHARE, DEBRIS_FRICTION, DEBRIS_GRASS_KEEP, DEBRIS_GRAVITY, DEBRIS_HEAT_SHARE, DEBRIS_HOP_MAX_MS, DEBRIS_LIFE_MS, terrainDebris } from "@/game/fx/terrainDebris";
 import { PALETTE } from "@/game/palette";
 import { createGrid, setPixel, type Rect } from "@/game/pixelGrid";
 
@@ -152,9 +152,34 @@ describe("terrainDebris", () => {
     expect(heated[0]![0]).toBe(PALETTE.fire1);
     expect(heated.every((r) => !r.includes(PALETTE.white))).toBe(true);
   });
-  it("生まれた高さへ戻ってから 1 秒で消え、地形の上をいつまでも落ちない", () => {
+  it("跳ねない破片は、生まれた高さへ戻ってから 1 秒で消える", () => {
     const b = debris();
-    for (let i = 0; i < b.count; i++) expect(b.life[i]).toBeCloseTo(Math.min(DEBRIS_LIFE_MS, (2000 * Math.abs(b.vy[i]!)) / DEBRIS_GRAVITY + DEBRIS_AFTER_RETURN_MS), 3);
+    for (let i = 0; i < b.count; i++) {
+      if (b.bounce!.hitAt[i]! < Infinity) continue;
+      expect(b.life[i]).toBeCloseTo(Math.min(DEBRIS_LIFE_MS, (2000 * Math.abs(b.vy[i]!)) / DEBRIS_GRAVITY + DEBRIS_AFTER_RETURN_MS), 3);
+    }
+  });
+  it("一部の破片は地面に着いたところで跳ね、落ちてきたところで消える（ユーザーの案）", () => {
+    const b = debris(), bounce = b.bounce!;
+    const hits = Array.from({ length: b.count }, (_, i) => i).filter((i) => bounce.hitAt[i]! < Infinity);
+    expect(hits.length / b.count).toBeGreaterThan(DEBRIS_BOUNCE_SHARE * 0.5);
+    expect(hits.length / b.count).toBeLessThan(DEBRIS_BOUNCE_SHARE + 0.05);
+    for (const i of hits) {
+      // 着いた位置は空気の中で、その真下の近くに地面がある。跳ねた後は上へ向かい、跳ねてから短い時間で消える
+      const cx = Math.floor(bounce.hitX[i]! / 4), cy = Math.floor(bounce.hitY[i]! / 4);
+      expect(after.cells[cy * after.width + cx] ?? 0).toBe(0);
+      expect(bounce.bvy[i]).toBeLessThan(0);
+      expect(Math.abs(bounce.bvx[i]!)).toBeCloseTo(Math.abs(b.vx[i]!) * DEBRIS_FRICTION, 3);
+      expect(b.life[i]! - bounce.hitAt[i]!).toBeLessThanOrEqual(DEBRIS_HOP_MAX_MS + 30 + 1e-3);
+    }
+  });
+  it("跳ねた破片は着いた位置から跳ね上がって動く", () => {
+    const b = debris(), bounce = b.bounce!;
+    const i = Array.from({ length: b.count }, (_, k) => k).find((k) => bounce.hitAt[k]! < Infinity && Math.abs(bounce.bvy[k]!) > 30)!;
+    const at = (t: number) => { const one = { ...b, count: b.count }; const f = createFrame(b.count); sampleBatch(one, t, WIDE, f); return f; };
+    const f = at(bounce.hitAt[i]! + 40);
+    expect(f.n).toBeGreaterThan(0);
+    expect(Math.min(...Array.from(f.y.subarray(0, f.n)))).toBeLessThan(1000);
   });
   it("上限を超えると 2 × 2 art px の塊にまとめ、それでも超えたら間引く", () => {
     const texels = removedCells(before, after) * 16;
@@ -183,5 +208,25 @@ describe("terrainDebris の熱の色", () => {
     const b = terrainDebris({ before, after: carveOut(before, op.cx, op.cy, op.radius), op, texels: paint(before), seed: 3, heat: [PALETTE.energy0, PALETTE.energy2] });
     const heated = Array.from({ length: b.count }, (_, i) => b.ramps[b.ramp[i]!]!).filter((r) => r.length > 1);
     expect(heated[0]!.slice(0, 2)).toEqual([PALETTE.energy0, PALETTE.energy2]);
+  });
+});
+
+describe("跳ね返りと分け方", () => {
+  it("地面に着いた後は、着いた位置から跳ねた後の速さで飛ぶ", () => {
+    const b = { ...allocBatch(1, { ramps: [[PALETTE.white]], gravity: 100, drag: 0 }), bounce: allocBounce(1) };
+    b.life[0] = 2000; b.size[0] = 1; b.vx[0] = 10; b.vy[0] = 0;
+    b.bounce.hitAt[0] = 500; b.bounce.hitX[0] = 50; b.bounce.hitY[0] = 60; b.bounce.bvx[0] = 20; b.bounce.bvy[0] = -40;
+    const f = createFrame(1);
+    sampleBatch(b, 1000, WIDE, f);
+    expect(f.x[0]).toBe(Math.floor(50 + 20 * 0.5));
+    expect(f.y[0]).toBe(Math.floor(60 - 40 * 0.5 + (100 * 0.25) / 2));
+  });
+  it("partitionBatch は条件で 2 つのまとまりに分け、値と跳ね返りを写す", () => {
+    const b = { ...allocBatch(3, { ramps: [[PALETTE.white]], gravity: 0, drag: 0 }), bounce: allocBounce(3) };
+    b.x0[0] = 1; b.x0[1] = 2; b.x0[2] = 3; b.bounce.hitAt[1] = 100;
+    const [yes, no] = partitionBatch(b, (i) => b.bounce.hitAt[i]! < Infinity);
+    expect(Array.from(yes.x0)).toEqual([2]);
+    expect(Array.from(no.x0)).toEqual([1, 3]);
+    expect(yes.bounce!.hitAt[0]).toBe(100);
   });
 });

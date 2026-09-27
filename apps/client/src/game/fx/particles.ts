@@ -31,7 +31,26 @@ export type ParticleBatch = {
   readonly drag: number;
   /** 色の段ごとの大きさ（art px）。あれば粒ごとの size の代わりに使う。煙が昇るにつれ膨らむ、炎が昇るにつれ細くなる、など */
   readonly sizes?: readonly number[];
+  /** 地面で 1 回跳ねる粒（削れた地形の破片の一部）。hitAt は生まれてから地面に着く ms で、跳ねない粒は Infinity。
+   * 着いた後は、着いた位置（hitX、hitY）から跳ねた後の速さ（bvx、bvy）で飛ぶ。空気の抵抗のないまとまりだけで使う */
+  readonly bounce?: Bounce;
 };
+
+export type Bounce = {
+  readonly hitAt: Float32Array;
+  readonly hitX: Float32Array;
+  readonly hitY: Float32Array;
+  readonly bvx: Float32Array;
+  readonly bvy: Float32Array;
+};
+
+export const allocBounce = (count: number): Bounce => ({
+  hitAt: new Float32Array(count).fill(Infinity),
+  hitX: new Float32Array(count),
+  hitY: new Float32Array(count),
+  bvx: new Float32Array(count),
+  bvy: new Float32Array(count),
+});
 
 export type BatchOptions = {
   readonly ramps: readonly (readonly number[])[];
@@ -103,9 +122,13 @@ export const sampleBatch = (b: ParticleBatch, t: number, bounds: ArtBounds, out:
   for (let i = 0; i < b.count && out.n < capacity; i++) {
     const tau = t - b.t0[i]!, life = b.life[i]!;
     if (!visibleAt(tau, life, b.fade[i]!)) continue;
-    const s = tau / 1000;
+    const s = tau / 1000, hit = b.bounce && tau >= b.bounce.hitAt[i]! ? b.bounce : null;
     let x: number, y: number;
-    if (k > 0) {
+    if (hit) {
+      const s2 = (tau - hit.hitAt[i]!) / 1000;
+      x = hit.hitX[i]! + hit.bvx[i]! * s2;
+      y = hit.hitY[i]! + hit.bvy[i]! * s2 + (g * s2 * s2) / 2;
+    } else if (k > 0) {
       const e = (1 - Math.exp(-k * s)) / k;
       x = b.x0[i]! + b.vx[i]! * e;
       y = b.y0[i]! + (g / k) * s + (b.vy[i]! - g / k) * e;
@@ -124,4 +147,25 @@ export const sampleBatch = (b: ParticleBatch, t: number, bounds: ArtBounds, out:
     out.n++;
   }
   return out.n - start;
+};
+
+/** まとまりを、粒ごとの条件で 2 つに分ける。跳ねる破片を地形の手前、落ちていく破片を地形の奥に描き分けるのに使う */
+export const partitionBatch = (b: ParticleBatch, pick: (i: number) => boolean): readonly [ParticleBatch, ParticleBatch] => {
+  const yes: number[] = [], no: number[] = [];
+  for (let i = 0; i < b.count; i++) (pick(i) ? yes : no).push(i);
+  const take = (indices: readonly number[]): ParticleBatch => {
+    const out = allocBatch(indices.length, { ramps: b.ramps, gravity: b.gravity, drag: b.drag, ...(b.sizes ? { sizes: b.sizes } : {}) });
+    const bounce = b.bounce ? allocBounce(indices.length) : null;
+    indices.forEach((from, to) => {
+      out.t0[to] = b.t0[from]!; out.life[to] = b.life[from]!; out.x0[to] = b.x0[from]!; out.y0[to] = b.y0[from]!;
+      out.vx[to] = b.vx[from]!; out.vy[to] = b.vy[from]!; out.ramp[to] = b.ramp[from]!; out.step[to] = b.step[from]!;
+      out.size[to] = b.size[from]!; out.fade[to] = b.fade[from]!;
+      if (bounce && b.bounce) {
+        bounce.hitAt[to] = b.bounce.hitAt[from]!; bounce.hitX[to] = b.bounce.hitX[from]!; bounce.hitY[to] = b.bounce.hitY[from]!;
+        bounce.bvx[to] = b.bounce.bvx[from]!; bounce.bvy[to] = b.bounce.bvy[from]!;
+      }
+    });
+    return bounce ? { ...out, bounce } : out;
+  };
+  return [take(yes), take(no)];
 };

@@ -4,6 +4,7 @@ import { PALETTE, type Ramp } from "../palette";
 import { ART_PER_CELL, type PixelGrid, type Rect } from "../pixelGrid";
 import { craterFlames, surfaceLight, wreckSmokeColumn } from "./aftermathFx";
 import type { FxLayer } from "./fxLayer";
+import { partitionBatch } from "./particles";
 import { craterGlow, impactSmoke, impactSparks, lightBurst, muzzleSmoke, trackDust, wreckDebris } from "./impactFx";
 import { COOL_TABLE, HIT_TABLE, KILL_TABLE, WARM_TABLE, type GradeTable } from "./gradeTables";
 import type { ScreenFx } from "./screenFx";
@@ -101,7 +102,13 @@ export const createRendererEffects = (d: Deps): RendererEffects & { readonly tic
   return {
     crater: (before, after, op, seed, age = 0, weapon = "cannon") => {
       const texels = d.texels;
-      if (texels) d.fx.emit("under", terrainDebris({ before, after, op, seed, power: debrisPowerOf(weapon), heat: debrisHeatOf(weapon), texels: (rect) => texels(before, rect) }), age);
+      if (texels) {
+        // 地面で跳ねる破片は地形の手前に、落ちていく破片は地形の奥に描く（設計書 41.5）
+        const debris = terrainDebris({ before, after, op, seed, power: debrisPowerOf(weapon), heat: debrisHeatOf(weapon), texels: (rect) => texels(before, rect) });
+        const [bouncing, falling] = partitionBatch(debris, i => (debris.bounce?.hitAt[i] ?? Infinity) < Infinity);
+        d.fx.emit("back", bouncing, age);
+        d.fx.emit("under", falling, age);
+      }
       d.fx.emit("back", craterGlow(before, after, op, seed), age);
       if (op.radius >= FLAME_MIN_RADIUS) d.fx.emit("back", craterFlames(after, op, seed), age);
     },

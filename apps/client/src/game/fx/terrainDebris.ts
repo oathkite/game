@@ -3,7 +3,7 @@ import type { TerrainMask } from "@game/sim";
 import { PALETTE } from "../palette";
 import { ART_PER_CELL, getPixel, TRANSPARENT, type PixelGrid, type Rect } from "../pixelGrid";
 import { hash32, unit } from "./hash";
-import { allocBatch, type ParticleBatch } from "./particles";
+import { allocBatch, allocBounce, type Bounce, type ParticleBatch } from "./particles";
 
 // 削れた地形の破片。設計書 41.5 の D1。
 // 削る前と後の mask で変わったセルの texel を、削る前の地形の色のまま爆心から外へ散らし、重さで画面の下へ落とす。
@@ -28,6 +28,16 @@ export const DEBRIS_HEAT_STEP_MS = 80;
 export const DEBRIS_GRASS_KEEP = 0.4;
 /** 生まれた高さまで戻ってから消えるまで（ms）。落ち切るまで描くと、地形の上がざらついて見えた */
 export const DEBRIS_AFTER_RETURN_MS = 1000;
+/** 地面で 1 回跳ねてから消える破片の割合（2026-09-27 のユーザーの案）。ほかの破片は地形の奥へ落ちていく */
+export const DEBRIS_BOUNCE_SHARE = 0.4;
+/** 跳ね返りで残る縦の速さと横の速さの割合 */
+export const DEBRIS_RESTITUTION = 0.35;
+export const DEBRIS_FRICTION = 0.5;
+/** 跳ねてから消えるまでの上限（ms）。跳ねて落ちてきたところで消す */
+export const DEBRIS_HOP_MAX_MS = 320;
+/** 地面に着く時刻を探す刻み（ms） */
+const LANDING_STEP_MS = 16;
+
 /** 1 回の着弾で出す粒の上限。超えたら 2 × 2 art px の塊にまとめ、それでも超えたら間引く（TBD-40） */
 export const DEBRIS_BUDGET = 16384;
 
@@ -109,6 +119,30 @@ const rampTable = (heat: readonly number[]) => {
   };
 };
 
+/** 削れた後の地形に、落ちてくる途中で初めて入る時刻と、その直前の位置と速さ。入らなければ null */
+const landingOf = (after: TerrainMask, x0: number, y0: number, vx: number, vy: number, life: number) => {
+  let px = x0, py = y0;
+  for (let t = LANDING_STEP_MS; t <= life; t += LANDING_STEP_MS) {
+    const s = t / 1000, x = x0 + vx * s, y = y0 + vy * s + (DEBRIS_GRAVITY * s * s) / 2;
+    if (vy + DEBRIS_GRAVITY * s > 0 && solid(after, Math.floor(x / ART_PER_CELL), Math.floor(y / ART_PER_CELL))) {
+      const before = (t - LANDING_STEP_MS) / 1000;
+      return { at: t - LANDING_STEP_MS, x: px, y: py, vy: vy + DEBRIS_GRAVITY * before };
+    }
+    px = x; py = y;
+  }
+  return null;
+};
+
+/** 地面に着く破片に跳ね返りを付ける。跳ねたら縦は 35%、横は半分の速さで跳ね、落ちてきたところで消える */
+const addBounce = (b: ParticleBatch, bounce: Bounce, i: number, after: TerrainMask): void => {
+  const landing = landingOf(after, b.x0[i]!, b.y0[i]!, b.vx[i]!, b.vy[i]!, b.life[i]!);
+  if (!landing) return;
+  const bvy = -Math.abs(landing.vy) * DEBRIS_RESTITUTION;
+  bounce.hitAt[i] = landing.at; bounce.hitX[i] = landing.x; bounce.hitY[i] = landing.y;
+  bounce.bvx[i] = b.vx[i]! * DEBRIS_FRICTION; bounce.bvy[i] = bvy;
+  b.life[i] = landing.at + Math.min((2000 * Math.abs(bvy)) / DEBRIS_GRAVITY, DEBRIS_HOP_MAX_MS) + 30;
+};
+
 /** 削れた地形の破片のまとまり。削れていなければ 0 粒 */
 export const terrainDebris = (input: DebrisInput): ParticleBatch => {
   const rect = removedRect(input.before, input.after, input.op);
@@ -119,7 +153,7 @@ export const terrainDebris = (input: DebrisInput): ParticleBatch => {
     const h = unit(hash32(input.seed, PURPOSE, u.x, u.y));
     return (keep >= 1 || h < keep) && (!GRASS.has(u.color) || unit(hash32(input.seed, PURPOSE + 100, u.x, u.y)) < DEBRIS_GRASS_KEEP);
   });
-  const b = allocBatch(units.length, { ramps: table.ramps, gravity: DEBRIS_GRAVITY, drag: 0 });
+  const b = allocBatch(units.length, { ramps: table.ramps, gravity: DEBRIS_GRAVITY, drag: 0 }), bounce = allocBounce(units.length);
   const cx = (input.op.cx + 0.5) * ART_PER_CELL, cy = (input.op.cy + 0.5) * ART_PER_CELL, r = Math.max(1, input.op.radius * ART_PER_CELL);
   units.forEach((u, i) => {
     const h = hash32(input.seed, PURPOSE, u.x, u.y);
@@ -139,6 +173,7 @@ export const terrainDebris = (input: DebrisInput): ParticleBatch => {
     b.step[i] = heated ? DEBRIS_HEAT_STEP_MS : 0;
     b.size[i] = size;
     b.fade[i] = unit(hash32(h, 4));
+    if (unit(hash32(h, 5)) < DEBRIS_BOUNCE_SHARE) addBounce(b, bounce, i, input.after);
   });
-  return b;
+  return { ...b, bounce };
 };
