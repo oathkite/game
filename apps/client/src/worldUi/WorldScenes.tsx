@@ -25,6 +25,7 @@ import { SceneLoading } from "./SceneLoading";
 import { SHUTTER_OPEN_MS, shutterDirection, type ShutterDirection } from "./sceneShutter";
 import "./worldUi.css";
 import "./simpleTheme.css";
+import "./pixelTheme.css";
 import "./pageLayout.css";
 import "./dock.css";
 

@@ -31,8 +31,8 @@ for (const viewport of [{ width: 1440, height: 900 }, { width: 667, height: 375 
       const field = page.getByTestId("camera-world");
       await expect(field).toHaveAttribute("data-loaded", "true", { timeout: 15000 });
       await expect(field).toHaveAttribute("data-opening", "false", { timeout: 15000 });
-      // 通常のカメラは表示倍率 9 を 7/9 に引いた 7 CSS px/cell（loadCameraScale）。
-      await expect(field).toHaveAttribute("data-scale", "7");
+      // 通常のカメラは 8 CSS px/cell（loadCameraScale、設計書 40.3）。
+      await expect(field).toHaveAttribute("data-scale", "8");
       await expect(page.locator("[data-power-tick]")).toHaveCount(101);
       await capture(page, "battle");
       await page.getByRole("button", { name: "設定を開く", exact: true }).click();

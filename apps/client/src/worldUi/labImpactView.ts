@@ -21,7 +21,8 @@ export const labTankHit = (presentation: Presentation, playerId: string): { read
 export const drawLabImpacts = (view: ProjectileView, presentation: Presentation, mask: TerrainMask, reduced: boolean): void => {
   for (const effect of presentation.effects) {
     const blast = blastFrameAt(effect.clock, effect.radius);
-    view.setBlast(effect.key, blast ? effect.cx : null, effect.cy, blast?.radius ?? 0, blast?.on ?? false, blast?.ring ?? false);
+    // 動きを減らす設定では明滅させず、熱い火球のまま見せる（設計書 40.9）
+    view.setBlast(effect.key, blast ? effect.cx : null, effect.cy, blast?.radius ?? 0, (blast?.on ?? false) || reduced, blast?.ring ?? false);
     view.setDebris(effect.key, debrisAt(effect.clock - CARVE_AT_MS, { x: effect.cx, y: effect.cy }, effect.radius));
     view.setInvert(effect.key, invertOn(effect.clock, effect.damage, reduced) ? invertCells(mask, effect.cx, effect.cy, effect.radius) : null);
   }

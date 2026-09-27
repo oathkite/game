@@ -18,6 +18,9 @@ import type { MatchStore } from "@/match/matchStore";
 import { turnSeatOf } from "@/match/turnSeat";
 import type { MatchView } from "@/match/types";
 import { playSound } from "@/app/audio";
+import { cssHex, PALETTE } from "@/game/palette";
+import { backdropTheme } from "@/game/pixelBackdrop";
+import { TERRAIN_THEMES } from "@/game/terrainPaint";
 import { viewportOf, worldToScreen } from "./camera";
 import type { CameraRig } from "./cameraRig";
 
@@ -126,8 +129,9 @@ export const PrototypeCanvas = ({ store, rig, layout, handlers, blocked, followS
         }
         host.dataset.opening = String(opening);
         const center = rig.tick(dt, performance.now(), reduced.matches), vp = rig.get().viewport;
-        const offset = worldToScreen({ x: 0, y: 0 }, center, vp), dpr = window.devicePixelRatio || 1;
-        r.setCameraOffset(Math.round(offset.x * dpr) / dpr, Math.round(offset.y * dpr) / dpr);
+        // canvas は解像度 1 で描くので、整数の CSS px に丸めて texel の境目に画素の中心を乗せない（設計書 40.3）
+        const offset = worldToScreen({ x: 0, y: 0 }, center, vp);
+        r.setCameraOffset(Math.round(offset.x), Math.round(offset.y));
         host.dataset.cameraX = center.x.toFixed(3); host.dataset.cameraY = center.y.toFixed(3); host.dataset.mode = rig.get().mode;
         drawMinimap(miniRef.current, v, rig, practice);
       });
@@ -156,8 +160,9 @@ const drawMinimap = (canvas: HTMLCanvasElement | null, v: MatchView, rig: Camera
   const ctx = canvas?.getContext("2d");
   if (!canvas || !ctx || !v.mask) return;
   const sx = canvas.width / v.mask.width, sy = canvas.height / v.mask.height;
-  ctx.fillStyle = "#101c2c"; ctx.fillRect(0, 0, canvas.width, canvas.height);
-  ctx.fillStyle = "#637d71";
+  // 全体図も夜空とステージの土の色で描く（設計書 40.4）
+  ctx.fillStyle = cssHex(PALETTE.sky1); ctx.fillRect(0, 0, canvas.width, canvas.height);
+  ctx.fillStyle = cssHex(TERRAIN_THEMES[backdropTheme(v.mapId ?? "ridgeline")].soil[0]);
   for (let x = 0; x < v.mask.width; x += 4) for (let y = 0; y < v.mask.height; y += 4) {
     if (v.mask.cells[y * v.mask.width + x]) ctx.fillRect(x * sx, y * sy, 4 * sx, 4 * sy);
   }
@@ -166,7 +171,7 @@ const drawMinimap = (canvas: HTMLCanvasElement | null, v: MatchView, rig: Camera
     ctx.fillStyle = teamColor(seat);
     ctx.fillRect(point.x * sx - 2, point.y * sy - 3, 4, 4);
   });
-  ctx.fillStyle = "#ffcc66";
+  ctx.fillStyle = cssHex(PALETTE.fire2);
   practice?.getTargets().filter(t => !t.destroyed).forEach(t => ctx.fillRect(t.x * sx - 2, (t.y - 8) * sy - 2, 4, 4));
   const { center, viewport } = rig.get(), w = viewport.width / viewport.scale, h = viewport.height / viewport.scale;
   ctx.strokeStyle = "#33ff66"; ctx.lineWidth = 2 * canvas.width / (canvas.clientWidth || canvas.width);

@@ -13,7 +13,7 @@
  .battle-console.has-touch .battle-power { grid-column:3; }
  .battle-console.has-touch .battle-weapons { grid-column:4; align-self:start; gap:4px; }
  .world-ui .battle-console.has-touch .battle-weapons button { width:40px; min-width:40px!important; min-height:44px; height:44px; }
- .battle-console.has-touch .battle-weapons button > svg { width:24px; height:24px; }
+ .battle-console.has-touch .battle-weapons button > svg { width:26px; height:26px; }
  .battle-console.has-touch .battle-touch { display:contents; }
  .battle-console.has-touch .battle-dpad { position:absolute; top:8px; left:8px; }
  .world-ui .battle-console.has-touch .battle-touch-fire { position:absolute; right:8px; bottom:8px; width:84px; height:44px; padding:0!important; }

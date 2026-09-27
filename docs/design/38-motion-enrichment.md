@@ -21,6 +21,7 @@
 - 時間は純関数にする。`経過時間 → 見え方` の関数を `game/tankMotion.ts`、`game/hitFeedback.ts`、`game/crumble.ts`、`game/trail.ts`、`game/edgeMarker.ts`、`worldUi/openingTour.ts` に置き、単体テストで数値を固定する。描画は `tankView.ts`、`projectileView.ts`、`renderer.ts` が行う。
 - 乱数を使わない。粒の散り方は固定の表で決める（`DEBRIS_VELOCITIES` と同じ方式）。
 - 位置はセルか art px（1/8 セル）で動かす。CSS は `steps()` を使う。
+  - 2026-09-27 改訂：art px を 1/4 セルに改めた（[40.3](40-pixel-art-refresh.md#403-ピクセルの格子)）。本章の「1 art px」は新しい art px で数える。各演出の見え方は 40 章で描き直し、時間と数は本章のまま保つ。
 
 ## 38.3 機体
 

@@ -1,6 +1,6 @@
 import type { TerrainMask } from "@game/sim";
 import { describe, expect, it, vi } from "vitest";
-import { CARVE_AT_MS, FLASH_MS_BY_TIER } from "@/game/hitFeedback";
+import { CARVE_AT_MS, FLASH_MS_BY_TIER, FLICKER_HALF_MS } from "@/game/hitFeedback";
 import type { ProjectileView } from "@/game/projectileView";
 import type { LabEffect, presentLabReplay } from "@/networkLab/labReplay";
 import { createLabCrumbles, drawLabImpacts, labEdgePoints, labShake, labTankHit } from "@/worldUi/labImpactView";
@@ -54,6 +54,17 @@ describe("drawLabImpacts", () => {
     const reduced = view();
     drawLabImpacts(reduced as unknown as ProjectileView, presentation([effect(CARVE_AT_MS, 30)]), mask(), true);
     expect(reduced.setInvert.mock.calls[0]![1]).toBeNull();
+  });
+});
+
+describe("drawLabImpacts の明滅", () => {
+  it("消灯のコマでは冷えた火球を出し、動きを減らす設定では明滅させず熱い火球のままにする（設計書 40.9）", () => {
+    const off = presentation([effect(CARVE_AT_MS + FLICKER_HALF_MS, 0)]);
+    const normal = view(), reduced = view();
+    drawLabImpacts(normal as unknown as ProjectileView, off, mask(), false);
+    drawLabImpacts(reduced as unknown as ProjectileView, off, mask(), true);
+    expect(normal.setBlast).toHaveBeenCalledWith("0", 20, 15, 6, false, false);
+    expect(reduced.setBlast).toHaveBeenCalledWith("0", 20, 15, 6, true, false);
   });
 });
 

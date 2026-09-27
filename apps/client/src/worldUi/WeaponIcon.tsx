@@ -1,15 +1,13 @@
 import type { WeaponId } from "@game/protocol";
-import { weaponPixels, WEAPON_PIXEL_COLORS } from "@/game/weaponPixels";
+import { useMemo } from "react";
+import { cssHex } from "@/game/palette";
+import { colorRuns } from "@/game/pixelGrid";
+import { ICON_VIEW, weaponIconGrid } from "./weaponIconGrid";
 
-const burstPatterns = {
-  triple: [".11111......","1222211.....",".13331......","............","...11111....","..1222211...","...13331....","............",".....11111..","....1222211.",".....13331..","............"],
-  multiple: [".1...1...1..","121.121.121.",".3...3...3..","............",".1...1...1..","121.121.121.",".3...3...3..","............",".1...1...1..","121.121.121.",".3...3...3..","............"],
-} as const;
-export const weaponIconPixels = (weapon: WeaponId) => weapon === "triple" || weapon === "multiple"
-  ? burstPatterns[weapon].flatMap((row, y) => [...row].flatMap((value, x) => value === "." ? [] : [{ x, y, color: WEAPON_PIXEL_COLORS[value as keyof typeof WEAPON_PIXEL_COLORS] }]))
-  : weapon === "digger" ? weaponPixels(weapon)
-  : weaponPixels(weapon).map(pixel => ({ ...pixel, y: pixel.y + 2 }));
-export const WeaponIcon = ({ weapon }: { readonly weapon: WeaponId }) =>
-  <svg viewBox="-1 -1 14 14" aria-hidden="true" shapeRendering="crispEdges">
-    {weaponIconPixels(weapon).map(p => <rect key={`${p.x}/${p.y}`} x={p.x} y={p.y} width="1" height="1" fill={p.color} />)}
+// 武器のアイコン。40.8 の弾の絵を SVG の rect で描く（設計書 40.10）
+export const WeaponIcon = ({ weapon }: { readonly weapon: WeaponId }) => {
+  const runs = useMemo(() => colorRuns(weaponIconGrid(weapon)), [weapon]);
+  return <svg viewBox={`${ICON_VIEW.left} ${ICON_VIEW.top} ${ICON_VIEW.width} ${ICON_VIEW.height}`} aria-hidden="true" shapeRendering="crispEdges">
+    {runs.map(r => <rect key={`${r.x}/${r.y}`} x={r.x} y={r.y} width={r.w} height={1} fill={cssHex(r.color)} />)}
   </svg>;
+};

@@ -1,11 +1,12 @@
 import { Container, Graphics } from "pixi.js";
+import { PALETTE } from "./palette";
 
-/** Wind drift plus a half-speed camera layer, composited behind solid terrain. */
+/** Wind drift plus a half-speed camera layer, composited behind solid terrain. 1 art px（2 CSS px）の粒と 2 × 1 art px の筋（設計書 40.7） */
 export const createPixelWind = () => {
   const container = new Container();
   let cameraX = 0, cameraY = 0;
   const particles = Array.from({ length: 24 }, (_, i) => {
-    const sprite = new Graphics().rect(0, 0, i % 3 === 0 ? 6 : 4, 4).fill(i % 3 === 0 ? 0x79cc96 : 0x4b9967);
+    const sprite = new Graphics().rect(0, 0, i % 3 === 0 ? 4 : 2, 2).fill(i % 3 === 0 ? PALETTE.greenPale : PALETTE.greenMid);
     container.addChild(sprite);
     return { sprite, x: (i * .618) % 1, y: (i * .381) % 1 };
   });

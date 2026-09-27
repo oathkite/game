@@ -30,7 +30,8 @@
 .battle-weapons { display:flex; gap:8px; }
 .world-ui .battle-weapons button { position:relative; width:48px; min-width:48px!important; min-height:56px; padding:2px!important; border:2px solid #526c80!important; border-image:none!important; border-radius:0; color:#33ff66!important; background:#000; }
 .world-ui .battle-weapons button[aria-pressed=true] { border-color:#f8e98d!important; outline:none!important; box-shadow:none; }
-.battle-weapons button > svg { width:36px; height:36px; display:block; margin:auto; }
+/* 武器のアイコンは 13 × 13 art px。大きさを 13 の倍数にして 1 art px を整数の px にする（設計書 40.10） */
+.battle-weapons button > svg { width:39px; height:39px; display:block; margin:auto; }
 .battle-weapons span { font-size:11px; }
 .world-ui .battle-console.has-touch { height:152px; grid-template-rows:84px 50px; grid-template-columns:100px 84px minmax(0,1fr) 104px; gap:4px 12px; }
 .battle-console.has-touch .battle-self { grid-template-columns:minmax(0,1fr); }
