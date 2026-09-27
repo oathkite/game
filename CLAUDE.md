@@ -18,7 +18,7 @@ protocol ← sim ← maps ← engine ← server
 ```
 
 - 矢印の逆方向に import しない。`sim` が `protocol` の型と定数（マップの大きさ）を使うのはよいが、`protocol` が `sim` を使ってはならない。
-- `testing` は上の矢印の外にある。Vitest の setup（typed array を速く比べる tester）だけを置き、各パッケージは devDependency として持って `vitest.config.ts` の `setupFiles` からだけ読む。`src` から import しない。Vitest を使うパッケージを足したら、同じ `setupFiles` を入れる。
+- `testing` は上の矢印の外にある。Vitest の setup（typed array を速く比べる tester）だけを置き、各パッケージは devDependency として持って `vitest.config.ts` の `setupFiles` からだけ読む。`src` から import しない。Vitest を使うパッケージを足したら、同じ `setupFiles` と、読んでいることを確かめる `test/typed-array-tester.test.ts` を入れる。
 - `sim` には DOM も Node の API も入れない。`(state, input) => result` の純関数だけを置く。
 - `engine` と `server` は時刻と乱数を外から受け取る。`Date.now()` と `Math.random()` を関数の中で呼ばない。時計は `Clock`、乱数は `rng` として注入する。
 
