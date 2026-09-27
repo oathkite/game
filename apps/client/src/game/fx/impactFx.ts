@@ -55,7 +55,8 @@ export const impactSmoke = (cx: number, cy: number, radius: number, seed: number
     b.vy[i] = -(20 + 20 * unit(hash32(h, 4)));
     b.t0[i] = 120 + 200 * unit(hash32(h, 5));
     b.life[i] = 1200 + 1200 * unit(hash32(h, 6));
-    b.size[i] = 2 + Math.floor(unit(hash32(h, 7)) * 3);
+    // 2 と 4 の 2 種類に揃える。大きさがばらばらだと格子から浮いて見えた（設計書 41.13）
+    b.size[i] = unit(hash32(h, 7)) < 0.6 ? 2 : 4;
     b.fade[i] = unit(hash32(h, 8));
   }
   return b;

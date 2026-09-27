@@ -110,7 +110,7 @@ describe("createLabImpactFx", () => {
     fx.update(effects, presentation([effect("0", 30)]), replay, "m", false);
     fx.update(effects, presentation([effect("0", 50)]), replay, "m", false);
     expect(effects.impact).toHaveBeenCalledTimes(1);
-    expect(effects.impact.mock.calls[0]![5]).toBe(30 - HOLD_MS);
+    expect(effects.impact.mock.calls[0]![0].age).toBe(30 - HOLD_MS);
   });
   it("撃破した着弾では HP バーが減りきる時刻に全画面の光を出し、途中参加で昔の撃破は光らせない", () => {
     const fx = createLabImpactFx(), effects = api();

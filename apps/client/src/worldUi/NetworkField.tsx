@@ -27,7 +27,8 @@ import { guideDots } from "@/game/trail";
 import { revealRowsAt } from "./openingTour";
 import { CARVE_AT_MS, IMPACT_TOTAL_MS } from "@/game/hitFeedback";
 import { SceneLoading } from "./SceneLoading";
-import { REPLAY_SETTLE_MS, replayTailMs } from "@game/engine/replay-timing";
+import { replayTailMs } from "@game/engine/replay-timing";
+import { TOTAL_AFTER_CARVE_MS } from "@/game/replay";
 
 type Props = { readonly serverNow: number; readonly onSettling?: (settling: boolean) => void; readonly followTurns?: boolean; readonly blocked?: boolean; readonly frame: LabFrame; readonly players: LabFrame["players"]; readonly presentation: ReturnType<typeof presentLabReplay>; readonly elevation: number; readonly ownId: string; readonly selectedWeapon?: WeaponId; readonly charge?: number };
 const baseTerrain = (frame: LabFrame) => buildInitialTerrain(frame.map);
@@ -115,7 +116,9 @@ export const NetworkField = (props: Props) => {
             });
           });
           const event = `${replay.startsAt}/total`;
-          if (elapsed >= flightMs + REPLAY_SETTLE_MS && !damageEvents.has(event)) {
+          // 多段の合計は、最後の着弾が削れてから 150 ms で出す（設計書 41.13。練習の TOTAL_AFTER_CARVE_MS と同じ）
+          const lastImpactAt = Math.max(0, ...replay.impacts.map(i => i.tick / Math.max(1, replay.ticks) * flightMs));
+          if (elapsed >= lastImpactAt + CARVE_AT_MS + TOTAL_AFTER_CARVE_MS && !damageEvents.has(event)) {
             damageEvents.add(event);
             players.forEach((p, seat) => {
               const summary = damageSummary(replay.impacts.map(i => i.damage.find(d => d.playerId === p.playerId)?.amount ?? 0));
@@ -129,7 +132,7 @@ export const NetworkField = (props: Props) => {
         if (frame.phase === "replaying" && frame.replay) impactFx.update(r.effects, presentation, frame.replay, frame.matchId, reducedNow, (id) => {
           const p = shown.find(t => t.playerId === id), colors = frame.players.find(t => t.playerId === id)?.colors;
           return p && colors ? { x: p.x, y: p.y, ramp: TEAM_RAMPS[colors.primary] } : undefined;
-        });
+        }, mask);
         r.setShake(labShake(presentation, reducedNow));
         r.setEdgeMarkers(labEdgePoints(presentation, shown, colorOf), edgeBlinkOn(latest.current.serverNow, reducedNow));
         const first = presentation.bullets[0]; if (first) rig.shot(first);

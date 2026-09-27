@@ -77,7 +77,7 @@ export const createLabImpactFx = () => {
   let replayKey = "";
   const emitted = new Set<string>(), frozen = new Set<string>(), launched = new Set<string>();
   return {
-    update: (effects: Pick<RendererEffects, "impact" | "killFlash" | "freeze" | "launch" | "wreck">, presentation: Presentation, replay: { readonly startsAt: number; readonly terrainOpsBefore: number; readonly shooter?: { readonly weapon: WeaponId } }, matchId: string, reduced: boolean, tankOf: (playerId: string) => LabTank | undefined = () => undefined): void => {
+    update: (effects: Pick<RendererEffects, "impact" | "killFlash" | "freeze" | "launch" | "wreck">, presentation: Presentation, replay: { readonly startsAt: number; readonly terrainOpsBefore: number; readonly shooter?: { readonly weapon: WeaponId } }, matchId: string, reduced: boolean, tankOf: (playerId: string) => LabTank | undefined = () => undefined, mask?: TerrainMask): void => {
       const weapon = replay.shooter?.weapon ?? "cannon";
       const key = `${matchId}/${replay.startsAt}`;
       if (key !== replayKey) { replayKey = key; emitted.clear(); frozen.clear(); launched.clear(); }
@@ -91,7 +91,7 @@ export const createLabImpactFx = () => {
       for (const e of presentation.effects) {
         if (!emitted.has(e.key) && e.clock >= 0) {
           emitted.add(e.key);
-          effects.impact(e.cx, e.cy, e.radius, damageTier(e.damage), hash32(match, replay.terrainOpsBefore + Number(e.key), 1), e.clock - HOLD_MS, weapon);
+          effects.impact({ cx: e.cx, cy: e.cy, radius: e.radius, tier: damageTier(e.damage), seed: hash32(match, replay.terrainOpsBefore + Number(e.key), 1), age: e.clock - HOLD_MS, weapon, ...(mask ? { mask } : {}) });
           const killIn = CARVE_AT_MS + HP_DRAIN_MS - e.clock;
           if (e.kills.length > 0 && killIn > -LATE_KILL_MS) {
             effects.killFlash(killIn);

@@ -2,7 +2,7 @@ import type { TerrainMask } from "@game/sim";
 import { describe, expect, it } from "vitest";
 import { hash32, hashText, unit } from "@/game/fx/hash";
 import { allocBatch, createFrame, FADE_TAIL, sampleBatch, spanOf, visibleAt, type ArtBounds } from "@/game/fx/particles";
-import { DEBRIS_GRAVITY, DEBRIS_LIFE_MS, terrainDebris } from "@/game/fx/terrainDebris";
+import { DEBRIS_AFTER_RETURN_MS, DEBRIS_GRASS_KEEP, DEBRIS_GRAVITY, DEBRIS_HEAT_SHARE, DEBRIS_LIFE_MS, terrainDebris } from "@/game/fx/terrainDebris";
 import { PALETTE } from "@/game/palette";
 import { createGrid, setPixel, type Rect } from "@/game/pixelGrid";
 
@@ -118,13 +118,17 @@ describe("terrainDebris", () => {
   const after = carveOut(before, op.cx, op.cy, op.radius);
   const debris = (budget?: number) => terrainDebris({ before, after, op, texels: paint(before), seed: 42, ...(budget === undefined ? {} : { budget }) });
 
-  it("削れたセルの texel を 1 つずつ粒にし、色は削る前の地形の色のまま", () => {
+  it("削れたセルの texel を粒にし、色は削る前の地形の色のまま。草の色は 4 割だけ残す", () => {
     const b = debris();
-    expect(b.count).toBe(removedCells(before, after) * 16);
-    const colors = new Set(Array.from({ length: b.count }, (_, i) => b.ramps[b.ramp[i]!]!.at(-1)));
-    expect([...colors].sort()).toEqual([PALETTE.green, PALETTE.loam1].sort());
+    const colorOf = (i: number) => b.ramps[b.ramp[i]!]!.at(-1);
+    const soil = Array.from({ length: b.count }, (_, i) => colorOf(i)).filter((c) => c === PALETTE.loam1).length;
+    const grass = Array.from({ length: b.count }, (_, i) => colorOf(i)).filter((c) => c === PALETTE.green).length;
+    // 塗りは各セルの最上行だけが草。土は 12/16、草は 4/16
+    expect(soil).toBe(removedCells(before, after) * 12);
+    expect(grass / (removedCells(before, after) * 4)).toBeGreaterThan(DEBRIS_GRASS_KEEP - 0.12);
+    expect(grass / (removedCells(before, after) * 4)).toBeLessThan(DEBRIS_GRASS_KEEP + 0.12);
     expect(b.gravity).toBe(DEBRIS_GRAVITY);
-    expect(Array.from(b.life).every((l) => l === DEBRIS_LIFE_MS)).toBe(true);
+    expect(Array.from(b.life).every((l) => l > 0 && l <= DEBRIS_LIFE_MS)).toBe(true);
   });
   it("同じ入力からは同じ破片ができる", () => {
     const a = debris(), b = debris();
@@ -140,21 +144,26 @@ describe("terrainDebris", () => {
     expect(outward).toBe(b.count);
     expect(Array.from(b.vy).every((v) => v < 0)).toBe(true);
   });
-  it("爆心に近い粒の一部だけが熱の色から始まる", () => {
+  it("粒のおよそ 35% が淡い黄から熱の色で冷めてから、元の色に戻る。白は使わない", () => {
     const b = debris();
     const heated = Array.from({ length: b.count }, (_, i) => b.ramps[b.ramp[i]!]!).filter((r) => r.length > 1);
-    expect(heated.length).toBeGreaterThan(0);
-    expect(heated.length).toBeLessThan(b.count / 4);
-    expect(heated[0]![0]).toBe(PALETTE.fire2);
+    expect(heated.length / b.count).toBeGreaterThan(DEBRIS_HEAT_SHARE - 0.08);
+    expect(heated.length / b.count).toBeLessThan(DEBRIS_HEAT_SHARE + 0.08);
+    expect(heated[0]![0]).toBe(PALETTE.fire1);
+    expect(heated.every((r) => !r.includes(PALETTE.white))).toBe(true);
+  });
+  it("生まれた高さへ戻ってから 1 秒で消え、地形の上をいつまでも落ちない", () => {
+    const b = debris();
+    for (let i = 0; i < b.count; i++) expect(b.life[i]).toBeCloseTo(Math.min(DEBRIS_LIFE_MS, (2000 * Math.abs(b.vy[i]!)) / DEBRIS_GRAVITY + DEBRIS_AFTER_RETURN_MS), 3);
   });
   it("上限を超えると 2 × 2 art px の塊にまとめ、それでも超えたら間引く", () => {
     const texels = removedCells(before, after) * 16;
     const grouped = debris(texels / 2);
-    expect(grouped.count).toBe(texels / 4);
+    expect(grouped.count).toBeLessThanOrEqual(texels / 4);
+    expect(grouped.count).toBeGreaterThan(texels / 8);
     expect(Array.from(grouped.size).every((s) => s === 2)).toBe(true);
     const thinned = debris(texels / 16);
-    expect(thinned.count).toBeGreaterThan(texels / 16 * 0.7);
-    expect(thinned.count).toBeLessThan(texels / 16 * 1.3);
+    expect(thinned.count).toBeLessThan(grouped.count * 0.5);
   });
   it("何も削れていなければ 0 粒", () => {
     expect(terrainDebris({ before, after: before, op, texels: paint(before), seed: 1 }).count).toBe(0);
@@ -165,5 +174,14 @@ describe("terrainDebris", () => {
     sampleBatch(b, 2000, WIDE, late);
     const mean = (f: typeof early) => Array.from(f.y.subarray(0, f.n)).reduce((s, y) => s + y, 0) / f.n;
     expect(mean(late)).toBeGreaterThan(mean(early) + 200);
+  });
+});
+
+describe("terrainDebris の熱の色", () => {
+  it("熱い粒の色の段を差し替えられる（レーザー弾と浮遊弾は発光色）", () => {
+    const before = ground(60, 40, 20), op = { cx: 30, cy: 20, radius: 6 };
+    const b = terrainDebris({ before, after: carveOut(before, op.cx, op.cy, op.radius), op, texels: paint(before), seed: 3, heat: [PALETTE.energy0, PALETTE.energy2] });
+    const heated = Array.from({ length: b.count }, (_, i) => b.ramps[b.ramp[i]!]!).filter((r) => r.length > 1);
+    expect(heated[0]!.slice(0, 2)).toEqual([PALETTE.energy0, PALETTE.energy2]);
   });
 });

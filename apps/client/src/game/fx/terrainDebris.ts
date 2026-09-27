@@ -20,14 +20,20 @@ export const DEBRIS_CORE_SPEED = 150;
 export const DEBRIS_SPREAD = 0.25;
 /** 上向きに足す速さ（art px/秒） */
 export const DEBRIS_LIFT = 100;
-/** 熱で光らせる割合。爆心から半径の半分以内のドットだけ */
-export const DEBRIS_HEAT_SHARE = 0.25;
-/** 熱の色の段を進める ms。黄、橙、赤の 3 段で約 400 ms */
-export const DEBRIS_HEAT_STEP_MS = 133;
+/** 熱で光らせる割合。爆風の内側のドットのうち、この割合を白から冷ます（設計書 41.13 の評価で 25% の半径の半分以内から改めた） */
+export const DEBRIS_HEAT_SHARE = 0.35;
+/** 熱の色の段を進める ms。淡い黄 80、黄 80、橙 160、赤 240 ms で元の色に戻る */
+export const DEBRIS_HEAT_STEP_MS = 80;
+/** 草の色の破片を残す割合。草は表層にしか無いのに、そのまま飛ばすと緑の紙吹雪に見えた */
+export const DEBRIS_GRASS_KEEP = 0.4;
+/** 生まれた高さまで戻ってから消えるまで（ms）。落ち切るまで描くと、地形の上がざらついて見えた */
+export const DEBRIS_AFTER_RETURN_MS = 1000;
 /** 1 回の着弾で出す粒の上限。超えたら 2 × 2 art px の塊にまとめ、それでも超えたら間引く（TBD-40） */
 export const DEBRIS_BUDGET = 16384;
 
-const HEAT: readonly number[] = [PALETTE.fire2, PALETTE.fire3, PALETTE.fire5];
+/** 熱い粒の色の段の既定。淡い黄から始め、白は使わない（白い粒が多いと砂嵐に見えた） */
+const HEAT: readonly number[] = [PALETTE.fire1, PALETTE.fire2, PALETTE.fire3, PALETTE.fire3, PALETTE.fire5, PALETTE.fire5, PALETTE.fire5];
+const GRASS: ReadonlySet<number> = new Set([PALETTE.greenPale, PALETTE.greenLight, PALETTE.green, PALETTE.greenMid, PALETTE.greenDark, PALETTE.greenDeep, PALETTE.greenBlack]);
 
 /** 用途の番号。ハッシュの入力を他の演出と分ける */
 const PURPOSE = 1;
@@ -42,6 +48,8 @@ export type DebrisInput = {
   readonly budget?: number;
   /** 速さと上向きの勢いの倍率。掘削弾で大きくする（設計書 41 の段階 5） */
   readonly power?: number;
+  /** 熱い粒の色の段。省けば炎の色 */
+  readonly heat?: readonly number[];
 };
 
 const solid = (mask: TerrainMask, x: number, y: number): boolean =>
@@ -87,14 +95,14 @@ const removedTexels = (before: TerrainMask, after: TerrainMask, rect: Rect): num
 };
 
 /** 色ごとの段の番号。熱い粒は熱の 3 段の後に元の色へ戻る */
-const rampTable = () => {
+const rampTable = (heat: readonly number[]) => {
   const ramps: (readonly number[])[] = [], index = new Map<string, number>();
   return {
     ramps,
     of: (color: number, heated: boolean): number => {
       const key = `${heated ? "h" : "c"}${color}`, found = index.get(key);
       if (found !== undefined) return found;
-      ramps.push(heated ? [...HEAT, color] : [color]);
+      ramps.push(heated ? [...heat, color] : [color]);
       index.set(key, ramps.length - 1);
       return ramps.length - 1;
     },
@@ -104,10 +112,13 @@ const rampTable = () => {
 /** 削れた地形の破片のまとまり。削れていなければ 0 粒 */
 export const terrainDebris = (input: DebrisInput): ParticleBatch => {
   const rect = removedRect(input.before, input.after, input.op);
-  const table = rampTable();
+  const table = rampTable(input.heat ?? HEAT);
   if (!rect) return allocBatch(0, { ramps: table.ramps, gravity: DEBRIS_GRAVITY, drag: 0 });
   const { size, keep } = densityOf(removedTexels(input.before, input.after, rect), input.budget ?? DEBRIS_BUDGET);
-  const units = collectUnits(input, rect, size).filter((u) => keep >= 1 || unit(hash32(input.seed, PURPOSE, u.x, u.y)) < keep);
+  const units = collectUnits(input, rect, size).filter((u) => {
+    const h = unit(hash32(input.seed, PURPOSE, u.x, u.y));
+    return (keep >= 1 || h < keep) && (!GRASS.has(u.color) || unit(hash32(input.seed, PURPOSE + 100, u.x, u.y)) < DEBRIS_GRASS_KEEP);
+  });
   const b = allocBatch(units.length, { ramps: table.ramps, gravity: DEBRIS_GRAVITY, drag: 0 });
   const cx = (input.op.cx + 0.5) * ART_PER_CELL, cy = (input.op.cy + 0.5) * ART_PER_CELL, r = Math.max(1, input.op.radius * ART_PER_CELL);
   units.forEach((u, i) => {
@@ -117,12 +128,13 @@ export const terrainDebris = (input: DebrisInput): ParticleBatch => {
     const angle = d > 0 ? Math.atan2(-Math.abs(dy), dx) : -unit(hash32(h, 1)) * Math.PI;
     const power = input.power ?? 1;
     const speed = power * (DEBRIS_EDGE_SPEED + DEBRIS_CORE_SPEED * Math.max(0, 1 - d / r)) * (1 + DEBRIS_SPREAD * (2 * unit(hash32(h, 2)) - 1));
-    const heated = d < r / 2 && unit(hash32(h, 3)) < DEBRIS_HEAT_SHARE;
+    const heated = d < r && unit(hash32(h, 3)) < DEBRIS_HEAT_SHARE;
     b.x0[i] = u.x;
     b.y0[i] = u.y;
     b.vx[i] = Math.cos(angle) * speed;
     b.vy[i] = Math.sin(angle) * speed - DEBRIS_LIFT * power;
-    b.life[i] = DEBRIS_LIFE_MS;
+    // 上へ飛んで生まれた高さへ戻るまで 2|vy|/g 秒。そこから DEBRIS_AFTER_RETURN_MS だけ落として消す
+    b.life[i] = Math.min(DEBRIS_LIFE_MS, (2000 * Math.abs(b.vy[i]!)) / DEBRIS_GRAVITY + DEBRIS_AFTER_RETURN_MS);
     b.ramp[i] = table.of(u.color, heated);
     b.step[i] = heated ? DEBRIS_HEAT_STEP_MS : 0;
     b.size[i] = size;

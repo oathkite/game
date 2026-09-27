@@ -29,12 +29,15 @@ export type ParticleBatch = {
   readonly gravity: number;
   /** 空気の抵抗（1/秒）。0 なら抵抗なし */
   readonly drag: number;
+  /** 色の段ごとの大きさ（art px）。あれば粒ごとの size の代わりに使う。煙が昇るにつれ膨らむ、炎が昇るにつれ細くなる、など */
+  readonly sizes?: readonly number[];
 };
 
 export type BatchOptions = {
   readonly ramps: readonly (readonly number[])[];
   readonly gravity: number;
   readonly drag: number;
+  readonly sizes?: readonly number[];
 };
 
 /** count 粒のまとまりの入れ物を作る。値は作った側が埋める */
@@ -53,6 +56,7 @@ export const allocBatch = (count: number, options: BatchOptions): ParticleBatch 
   ramps: options.ramps,
   gravity: options.gravity,
   drag: options.drag,
+  ...(options.sizes ? { sizes: options.sizes } : {}),
 });
 
 /** まとまりの粒がすべて消えるまでの ms */
@@ -112,10 +116,11 @@ export const sampleBatch = (b: ParticleBatch, t: number, bounds: ArtBounds, out:
     const px = Math.floor(x), py = Math.floor(y);
     if (px < bounds.left || px > bounds.right || py < bounds.top || py > bounds.bottom) continue;
     const ramp = b.ramps[b.ramp[i]!]!, step = b.step[i]! > 0 ? b.step[i]! : life / ramp.length;
+    const stage = Math.floor(tau / step), sizes = b.sizes;
     out.x[out.n] = px;
     out.y[out.n] = py;
-    out.color[out.n] = ramp[Math.min(ramp.length - 1, Math.floor(tau / step))]!;
-    out.size[out.n] = b.size[i]!;
+    out.color[out.n] = ramp[Math.min(ramp.length - 1, stage)]!;
+    out.size[out.n] = sizes ? sizes[Math.min(sizes.length - 1, stage)]! : b.size[i]!;
     out.n++;
   }
   return out.n - start;

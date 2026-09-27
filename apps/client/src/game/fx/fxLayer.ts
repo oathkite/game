@@ -10,9 +10,12 @@ import { createFrame, sampleBatch, spanOf, type ArtBounds, type ParticleBatch, t
 /** 1 回の描画で並べる粒の上限（層ごと）。超えた粒はその回だけ描かない（TBD-40） */
 export const FX_CAPACITY = 20000;
 
-export type FxDepth = "back" | "front";
+/** under は地形の奥（削れた地形の破片が地面の向こうへ落ちて見えなくなる）、back は地形の手前で機体の奥、front は機体の手前 */
+export type FxDepth = "under" | "back" | "front";
 
 export type FxLayer = {
+  /** 地形より奥の層 */
+  readonly under: ParticleContainer;
   /** 地形より手前、機体より奥の層 */
   readonly back: ParticleContainer;
   /** 機体より手前の層 */
@@ -74,9 +77,10 @@ const createDepth = () => {
 };
 
 export const createFxLayer = (): FxLayer => {
-  const depths = { back: createDepth(), front: createDepth() };
+  const depths = { under: createDepth(), back: createDepth(), front: createDepth() };
   let clock = 0, frozen = 0;
   return {
+    under: depths.under.container,
     back: depths.back.container,
     front: depths.front.container,
     now: () => clock,
@@ -90,11 +94,12 @@ export const createFxLayer = (): FxLayer => {
       const stop = Math.min(frozen, deltaMs);
       frozen -= stop;
       clock += deltaMs - stop;
+      depths.under.render(clock, bounds);
       depths.back.render(clock, bounds);
       depths.front.render(clock, bounds);
     },
-    count: () => depths.back.count() + depths.front.count(),
-    clear: () => { depths.back.clear(); depths.front.clear(); frozen = 0; },
-    destroy: () => { depths.back.container.destroy(); depths.front.container.destroy(); },
+    count: () => depths.under.count() + depths.back.count() + depths.front.count(),
+    clear: () => { depths.under.clear(); depths.back.clear(); depths.front.clear(); frozen = 0; },
+    destroy: () => { depths.under.container.destroy(); depths.back.container.destroy(); depths.front.container.destroy(); },
   };
 };

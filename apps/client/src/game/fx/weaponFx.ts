@@ -29,7 +29,8 @@ export const TRAIL_STYLES: Readonly<Record<WeaponId, TrailStyle | null>> = {
   triple: { every: 33, ramp: SMOKE, life: 300, size: 1, rise: 8, jitter: 3 },
   multiple: { every: 50, ramp: [PALETTE.fire1, PALETTE.fire2, PALETTE.fire3], life: 200, size: 1, rise: 0, jitter: 30 },
   drill: null,
-  laser: { every: 16, ramp: [PALETTE.energy0, PALETTE.energy1, PALETTE.energy2], life: 160, size: 1, rise: 0, jitter: 0 },
+  // 間を空けずに並べて 1 本の線に見せる。白い芯から発光色へ冷める（設計書 41.13 の評価で点線から改めた）
+  laser: { every: 4, ramp: [PALETTE.white, PALETTE.energy0, PALETTE.energy1, PALETTE.energy2], life: 380, size: 2, rise: 0, jitter: 0 },
   digger: null,
   floater: { every: 66, ramp: [PALETTE.energy1, PALETTE.energy2], life: 350, size: 2, rise: 0, jitter: 6 },
   stinger: { every: 16, ramp: [PALETTE.white, PALETTE.starDim], life: 110, size: 1, rise: 0, jitter: 0 },
@@ -70,6 +71,26 @@ const FIRE: ImpactPalette = { sparks: [PALETTE.white, PALETTE.fire1, PALETTE.fir
 const ENERGY: ImpactPalette = { sparks: [PALETTE.white, PALETTE.energy0, PALETTE.energy1, PALETTE.energy2], lightInner: PALETTE.energy0, lightOuter: PALETTE.energy2 };
 
 export const impactPaletteOf = (weapon: WeaponId): ImpactPalette => (weapon === "laser" || weapon === "floater" ? ENERGY : FIRE);
+
+const CROSS = 9;
+
+/** レーザー弾の段ごとの十字の閃光。5 × 5 art px の白い十字を 120 ms（腕の先は 70 ms）。位置はセル */
+export const crossFlash = (cx: number, cy: number, seed: number): ParticleBatch => {
+  const arms = [[0, 0], [1, 0], [2, 0], [-1, 0], [-2, 0], [0, 1], [0, 2], [0, -1], [0, -2]] as const;
+  const b = allocBatch(arms.length, { ramps: [[PALETTE.white, PALETTE.energy0]], gravity: 0, drag: 0 });
+  const x = Math.floor((cx + 0.5) * ART_PER_CELL), y = Math.floor((cy + 0.5) * ART_PER_CELL);
+  arms.forEach(([dx, dy], i) => {
+    b.x0[i] = x + dx; b.y0[i] = y + dy; b.life[i] = Math.abs(dx) + Math.abs(dy) === 2 ? 70 : 120;
+    b.size[i] = 1; b.fade[i] = unit(hash32(seed, CROSS, i));
+  });
+  return b;
+};
+
+/** 削れた地形の破片のうち熱い粒の色の段。レーザー弾と浮遊弾は発光色で冷める（設計書 41.13 の評価の 2 回目） */
+export const debrisHeatOf = (weapon: WeaponId): readonly number[] =>
+  weapon === "laser" || weapon === "floater"
+    ? [PALETTE.energy0, PALETTE.energy1, PALETTE.energy1, PALETTE.energy2, PALETTE.energy2, PALETTE.sky4, PALETTE.sky4]
+    : [PALETTE.fire1, PALETTE.fire2, PALETTE.fire3, PALETTE.fire3, PALETTE.fire5, PALETTE.fire5, PALETTE.fire5];
 
 /** 削れた地形の破片の勢いの倍率。掘削弾は土を多く高く噴き上げる */
 export const debrisPowerOf = (weapon: WeaponId): number => (weapon === "digger" ? 1.35 : 1);

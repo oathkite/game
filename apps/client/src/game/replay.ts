@@ -53,6 +53,9 @@ export type ReplayCallbacks = {
   readonly reduceMotion: boolean;
 };
 
+/** 最後の着弾が削れてから多段の合計を出すまで（ms） */
+export const TOTAL_AFTER_CARVE_MS = 150;
+
 /** 落下の速さ（セル/秒） */
 const FALL_CELLS_PER_S = 90;
 
@@ -90,6 +93,10 @@ type Run = {
   readonly trails: readonly (readonly { readonly x: number; readonly y: number }[])[];
   readonly impacts: readonly ImpactRun[];
   summaryAt: number | null;
+  /** 多段の合計を出したか。最後の着弾が削れてから TOTAL_AFTER_CARVE_MS で出す（設計書 41.13） */
+  totalShown: boolean;
+  /** 最後に地形が削れた時刻 */
+  lastCarveAt: number;
   /** 次の手番へ移ってよい時刻。飛翔の終わりからオンラインと同じ長さだけ留める（設計書 41.8） */
   readonly doneAt: number;
   phase: Phase;
@@ -253,6 +260,7 @@ const updateBullet = (run: Run, p: number): void => {
 /** 爆風が最大に達した瞬間。地形を削り、被弾した機体を白くし、HP を減らし始め、被弾と手応えの音を鳴らす */
 const carveImpact = (run: Run, ir: ImpactRun): void => {
   ir.carved = true;
+  run.lastCarveAt = run.elapsed;
   const { impact } = ir;
   const before = run.mask;
   run.mask = carve(run.mask, impact.terrainOp);
@@ -300,7 +308,7 @@ const updateImpact = (run: Run, ir: ImpactRun): void => {
     // 火花、煙、光は爆風が広がり始める瞬間に生まれる（設計書 41.6）
     if (!run.cb.reduceMotion) {
       const { cell, terrainOp, damage } = ir.impact;
-      run.renderer.effects.impact(cell.x, cell.y, terrainOp.radius, damageTier(Math.max(damage[0], damage[1])), hash32(0, run.job.id, ir.impact.projectile, ir.impact.stage), -HOLD_MS, run.job.shot.input.weapon);
+      run.renderer.effects.impact({ cx: cell.x, cy: cell.y, radius: terrainOp.radius, tier: damageTier(Math.max(damage[0], damage[1])), seed: hash32(0, run.job.id, ir.impact.projectile, ir.impact.stage), age: -HOLD_MS, weapon: run.job.shot.input.weapon, mask: run.mask });
     }
   }
   const { cell, terrainOp } = ir.impact;
@@ -349,13 +357,14 @@ const stepShot = (run: Run): void => {
   for (let p = 0; p < run.job.paths.length; p++) updateBullet(run, p);
   for (const ir of run.impacts) updateImpact(run, ir);
   updateHits(run);
-  if (run.summaryAt === null && run.impacts.every(ir => ir.carved) && shotDone(run)) {
-    run.summaryAt = run.elapsed;
+  if (!run.totalShown && run.impacts.every(ir => ir.carved) && run.elapsed - run.lastCarveAt >= TOTAL_AFTER_CARVE_MS) {
+    run.totalShown = true;
     for (const seat of [0, 1] as const) {
       const summary = damageSummary(run.impacts.map(ir => ir.impact.damage[seat]));
       if (summary.hits > 1) run.renderer.showDamage(seat, String(summary.total), "green", summary.big, true);
     }
   }
+  if (run.summaryAt === null && run.impacts.every(ir => ir.carved) && shotDone(run)) run.summaryAt = run.elapsed;
   const hit = run.impacts.some(ir => ir.impact.damage.some(amount => amount > 0));
   if (run.summaryAt !== null && run.elapsed - run.summaryAt >= (hit ? 1000 : 0)) enterFall(run);
 };
@@ -406,6 +415,8 @@ export const playReplay = (
     trails: job.paths.map(path => path.points.map(q => ({ x: q.x / ONE, y: q.y / ONE }))),
     impacts,
     summaryAt: null,
+    totalShown: false,
+    lastCarveAt: 0,
     // 決着のターンはこれまでどおり早くリザルトへ進めるので留めない
     doneAt: cb.roundEnd ? 0 : Math.max(0, ...job.paths.map((_, p) => flightEndOf(job, launchAt, p))) + replayTailMs(job.shot.impacts),
     phase: "shot",
