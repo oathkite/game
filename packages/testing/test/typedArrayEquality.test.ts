@@ -1,4 +1,4 @@
-import { describe, expect, it } from "vitest";
+import { describe, expect, it, vi } from "vitest";
 import { typedArrayEquality } from "../src/typedArrayEquality.js";
 
 describe("typedArrayEquality", () => {
@@ -82,5 +82,13 @@ describe("setup で登録した tester", () => {
 
   it("既定の比較と違い、添字以外の独自プロパティは比べない", () => {
     expect(Object.assign(new Uint8Array([1]), { extra: 1 })).toEqual(new Uint8Array([1]));
+  });
+
+  it("同じ global で setup をもう一度読んでも、tester を重ねて登録しない", async () => {
+    const add = vi.spyOn(expect, "addEqualityTesters");
+    vi.resetModules();
+    await import("../src/setup.js");
+    expect(add).not.toHaveBeenCalled();
+    add.mockRestore();
   });
 });
