@@ -34,7 +34,7 @@ export type RendererEffects = {
   readonly crater: (before: TerrainMask, after: TerrainMask, op: TerrainOp, seed: number, age?: number, weapon?: WeaponId) => void;
   /** 着弾。火花（I1）、煙（I2）、光（I4）、地形の表面の光、空の色の寄せ。ダメージ段階 3 では暗転（I5）も出す */
   readonly impact: (spec: ImpactSpec) => void;
-  /** 撃破の瞬間（delay ms 後）に 34 ms（60 fps で 2 コマ）だけ画面全体を白くし、空を赤く寄せる。1 秒に 1 回まで（I5） */
+  /** 撃破の瞬間（delay ms 後）に 34 ms だけ画面全体を白くし、空を赤く寄せる。白の長さはヒットストップで延ばさない。1 秒に 1 回まで（I5） */
   readonly killFlash: (delay?: number) => void;
   /** 発射。砲口の煙の輪（段階 4）、発射光の光、武器の軌跡の粒（段階 5）。points は弾道の点（セル、発射からの ms） */
   readonly launch: (weapon: WeaponId, points: readonly TrailPoint[], seed: number, age?: number) => void;
@@ -116,7 +116,7 @@ const emitSmoke = (d: Deps, sources: readonly SmokeSource[], now: number): reado
   return next < WRECK_SMOKE_COUNT ? [{ ...s, next }] : [];
 });
 
-export const createRendererEffects = (d: Deps): RendererEffects & { readonly tick: () => void } => {
+export const createRendererEffects = (d: Deps): RendererEffects & { readonly tick: (deltaMs: number) => void } => {
   let lastFlash = -Infinity, smokes: readonly SmokeSource[] = [];
   return {
     crater: (before, after, op, seed, age = 0, weapon = "cannon") => {
@@ -160,9 +160,9 @@ export const createRendererEffects = (d: Deps): RendererEffects & { readonly tic
     freeze: (ms) => { if (!d.reduced()) d.fx.freeze(ms); },
     particleCount: d.fx.count,
     clear: () => { d.fx.clear(); d.screenFx.clear(); lastFlash = -Infinity; smokes = []; },
-    tick: () => {
+    tick: (deltaMs) => {
       smokes = emitSmoke(d, smokes, d.fx.now());
-      d.screenFx.tick(d.fx.now(), d.screen());
+      d.screenFx.tick(d.fx.now(), d.screen(), deltaMs);
     },
   };
 };

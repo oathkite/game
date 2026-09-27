@@ -184,7 +184,7 @@ export const createRenderer = async (init: RendererInit): Promise<Renderer> => {
   };
   const effects = createRendererEffects({ fx, screenFx, texels: terrain.texels, screen: () => app.screen, reduced: () => reduced.matches, soil: TERRAIN_THEMES[theme].soil,
     tankAt: (seat) => { const pose = poses[seat]; return pose && pose.visible ? { x: pose.x, y: pose.y } : null; } });
-  app.ticker.add(() => { fx.tick(app.ticker.deltaMS, viewArt()); effects.tick(); });
+  app.ticker.add(() => { fx.tick(app.ticker.deltaMS, viewArt()); effects.tick(app.ticker.deltaMS); });
   app.ticker.add(() => {
     for (const t of tanks) t.tick?.(app.ticker.deltaMS, reduced.matches);
   });

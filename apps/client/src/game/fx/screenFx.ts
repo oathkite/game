@@ -9,7 +9,7 @@ import { brighterHalf, composeTables, DIM_TABLE, TINT_PRIORITY, type GradeTable,
 // 強さを Bayer の市松で段に分けて戻すと空が網のように見えたので、入りと戻りの 70 ms だけ明るい半分の色を置き換える表を挟む。
 // 撃破は全画面の白から入るので、入りの段を挟まない（挟むと、白の直後に元の夜空が 3 コマ見えた。評価の 4 回目）。
 // 撃破の寄せは武器の寄せと別に持ち、重なったら撃破を当てる。
-// 戦車、火球、粒、数字には当てない（暗転の手前に見える）。全画面の光は 34 ms（60 fps で 2 コマ）の白。
+// 戦車、火球、粒、数字には当てない（暗転の手前に見える）。全画面の光は 34 ms の白で、長さはコマの経過で数え、ヒットストップで延ばさない。
 
 /** 色の寄せの入りと戻りの段の長さ（ms） */
 export const TINT_EDGE_MS = 70;
@@ -44,6 +44,18 @@ export const shownTint = (tints: readonly Tint[], now: number): Tint | null => {
   const [top, below] = tints.filter((t) => tintPhaseAt(t, now) !== null).sort((a, b) => b.priority - a.priority);
   return top !== undefined && below !== undefined && tintPhaseAt(top, now) === "edge" ? below : top ?? null;
 };
+
+/** 全画面の光。from（描画の時計）に始まり、ms の間出す。age は始まってからコマの経過で数えた ms で、始まる前は null */
+type Flash = { readonly from: number; readonly ms: number; readonly age: number | null };
+
+/** 次のコマの光。始まりは描画の時計で決め、始まった後はコマの経過（deltaMs）で数えて、ms に達したら null にする。
+ * ヒットストップは描画の時計を止めるが、光は延ばさない。描画の時計で数えていたときは、レーザー弾の最後の段のヒットストップが光と重なり、FX ラボでは 34 ms の光が 6 コマ（96 ms）出た */
+const nextFlash = (flash: Flash | null, now: number, deltaMs: number): Flash | null => {
+  if (flash === null || (flash.age === null && now < flash.from)) return flash;
+  const age = flash.age === null ? now - flash.from : flash.age + deltaMs;
+  return age < flash.ms ? { ...flash, age } : null;
+};
+
 /** スポットライトの縁の市松の幅（セル） */
 const DIM_EDGE_CELLS = 3;
 /** 背景の 1 art px の画面の px（pixelBackdrop の PX と同じ） */
@@ -54,11 +66,12 @@ export type ScreenFx = {
   readonly flash: Graphics;
   /** from から ms の間、爆心（セル）の周り半径 radius（セル）を残して暗くする */
   readonly dimAt: (cx: number, cy: number, radius: number, from: number, ms: number) => void;
-  /** at から ms の間、画面全体を白くする */
+  /** at から ms の間、画面全体を白くする。ms はコマの経過で数え、ヒットストップで延ばさない */
   readonly flashAt: (at: number, ms: number) => void;
   /** from から ms の間、空の色を表で置き換える。entry が false なら入りの段を挟まない。priority が高い寄せは、効いている間、低い寄せより先に当てる */
   readonly tintAt: (table: GradeTable, from: number, ms: number, entry?: boolean, priority?: TintPriority) => void;
-  readonly tick: (now: number, screen: { readonly width: number; readonly height: number }) => void;
+  /** now は描画の時計、deltaMs はこのコマの描画の経過（ヒットストップでも止めない） */
+  readonly tick: (now: number, screen: { readonly width: number; readonly height: number }, deltaMs: number) => void;
   readonly clear: () => void;
   readonly destroy: () => void;
 };
@@ -89,7 +102,7 @@ export const createScreenFx = (view: View): ScreenFx => {
   const flash = new Graphics();
   flash.visible = false;
   let spot = { cx: 0, cy: 0, radius: 0, from: Infinity, until: -Infinity };
-  let flashFrom = Infinity, flashUntil = -Infinity, tints: readonly Tint[] = [];
+  let white: Flash | null = null, tints: readonly Tint[] = [];
   let terrainKey = "", skyKey = "";
   const place = (target: Container, grade: typeof terrainGrade, key: string, table: GradeTable | null, strength: number, px: number, withSpot: boolean): string => {
     if (!table) { if (target.filters) target.filters = null; return ""; }
@@ -104,9 +117,9 @@ export const createScreenFx = (view: View): ScreenFx => {
   return {
     flash,
     dimAt: (cx, cy, radius, from, ms) => { spot = { cx, cy, radius, from, until: from + ms }; },
-    flashAt: (at, ms) => { flashFrom = at; flashUntil = at + ms; },
+    flashAt: (at, ms) => { white = { from: at, ms, age: null }; },
     tintAt: (table, from, ms, entry = true, priority = TINT_PRIORITY.weapon) => { tints = nextTints(tints, { table, from, ms, entry, priority }); },
-    tick: (now, screen) => {
+    tick: (now, screen, deltaMs) => {
       const dimming = now >= spot.from && now < spot.until;
       terrainKey = place(view.terrain, terrainGrade, dimming ? "dim" : "", dimming ? DIM_TABLE : null, 1, view.cell() / 4, true);
       // 空は、暗転と色の寄せが重なったら続けて当てる。スポットライトは地形だけにする（空に残すと、寄せた空に元の色の円が浮いた）
@@ -115,13 +128,14 @@ export const createScreenFx = (view: View): ScreenFx => {
       const skyTable = dimming && tintTable ? composeTables(DIM_TABLE, tintTable) : dimming ? DIM_TABLE : tintTable;
       const key = `${dimming}/${phase && tint ? `${tableId(tint.table)}@${tint.from}` : ""}/${phase}`;
       skyKey = place(view.sky, skyGrade, key, skyTable, 1, BACKDROP_PX, false);
-      const flashing = now >= flashFrom && now < flashUntil;
+      white = nextFlash(white, now, deltaMs);
+      const flashing = white !== null && white.age !== null;
       if (flashing && !flash.visible) flash.clear().rect(0, 0, screen.width, screen.height).fill(PALETTE.white);
       flash.visible = flashing;
     },
     clear: () => {
       spot = { cx: 0, cy: 0, radius: 0, from: Infinity, until: -Infinity };
-      flashFrom = Infinity; flashUntil = -Infinity; tints = [];
+      white = null; tints = [];
       view.terrain.filters = null; view.sky.filters = null; terrainKey = ""; skyKey = "";
       flash.visible = false;
     },
