@@ -15,6 +15,7 @@ const url = arg("url", "http://127.0.0.1:5173");
 const out = arg("out", "fx-capture");
 const weapons = arg("weapons", "cannon").split(",");
 const marks = arg("marks", "-150,0,150,400,900,1600").split(",").map(Number);
+const targetHp = Number(arg("hp", "100"));
 
 const main = async (): Promise<void> => {
   mkdirSync(out, { recursive: true });
@@ -24,13 +25,14 @@ const main = async (): Promise<void> => {
   await page.waitForFunction(() => Boolean(window.__fxLab));
   await page.evaluate(() => document.fonts.ready);
   await page.addStyleTag({ content: "[data-testid=fx-panel]{display:none !important}" });
+  await page.evaluate((hp) => window.__fxLab!.setTargetHp(hp), targetHp);
   for (const weapon of weapons) {
     // 削る瞬間までの ms。先に 1 回撃って測り、同じ射撃を撃ち直して決めた時刻まで進める
     const carveAt = await page.evaluate((w) => {
       const lab = window.__fxLab!;
       lab.setLoop(false); lab.fire(w);
       let t = 0;
-      while (lab.stats().particles === 0 && t < 8000) { lab.step(16); t += 16; }
+      while (lab.stats().carves === 0 && t < 8000) { lab.step(16); t += 16; }
       return t;
     }, weapon);
     for (const mark of marks) {

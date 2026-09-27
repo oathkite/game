@@ -19,8 +19,15 @@ export type DamageLabelInit = {
   readonly onEnd: () => void;
 };
 
-/** 数字を出し、浮き上がって消えるまで自分で動く。返り値で途中でも消せる */
-export const spawnDamageLabel = (init: DamageLabelInit): (() => void) => {
+export type DamageLabel = {
+  /** 途中でも消す */
+  readonly stop: () => void;
+  /** 同じ機体に新しい数字が出たとき、1 行ぶん上へ押し上げる（設計書 41 の段階 4） */
+  readonly push: (px: number) => void;
+};
+
+/** 数字を出し、浮き上がって消えるまで自分で動く */
+export const spawnDamageLabel = (init: DamageLabelInit): DamageLabel => {
   const text = new Text({
     text: init.text,
     style: { fontFamily: "DotGothic16, monospace", fontSize: init.big ? 28 : 16, fill: init.big ? 0xffffff : COLOR_HEX[init.color], stroke: { color: 0x000000, width: 2 } },
@@ -33,7 +40,7 @@ export const spawnDamageLabel = (init: DamageLabelInit): (() => void) => {
   if (init.big) init.parent.addChild(sparks);
   const reduced = typeof matchMedia !== "undefined" && matchMedia("(prefers-reduced-motion: reduce)").matches;
   const duration = init.summary || init.big ? 1200 : 1000;
-  let elapsed = 0;
+  let elapsed = 0, lifted = 0;
   const stop = (): void => {
     init.ticker.remove(step);
     sparks.destroy();
@@ -42,7 +49,7 @@ export const spawnDamageLabel = (init: DamageLabelInit): (() => void) => {
   const step = (): void => {
     elapsed += init.ticker.deltaMS;
     const f = Math.min(1, elapsed / duration);
-    text.position.y = init.y - DAMAGE_LABEL_RISE_PX * f;
+    text.position.y = init.y - lifted - DAMAGE_LABEL_RISE_PX * f;
     if (init.big && !reduced) {
       text.scale.set(1 + 0.35 * Math.max(0, 1 - elapsed / 180));
       sparks.clear();
@@ -59,5 +66,5 @@ export const spawnDamageLabel = (init: DamageLabelInit): (() => void) => {
     }
   };
   init.ticker.add(step);
-  return stop;
+  return { stop, push: (px) => { lifted += px; } };
 };

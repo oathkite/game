@@ -100,7 +100,16 @@ const missesAt = (frame: LabFrame, line: Timeline): readonly (MissMark & { reado
   return mark ? [{ ...mark, key: `miss/${index}` }] : [];
 });
 
-const idle = (frame: LabFrame) => ({ players: frame.players, terrainOps: frame.terrainOps, bullets: [], trails: [] as readonly (readonly TrailDot[])[], effects: [] as readonly LabEffect[], hpBars: {} as Readonly<Record<string, HpBar>>, misses: [] as readonly (MissMark & { readonly key: string })[], fallingIds: [] as string[], recoil: 0, shotFlashes: [] as readonly ShotFlash[] });
+/** 発射した弾道。砲口の位置、飛び出す向き、発射からの ms（設計書 41 の段階 4 の煙の輪） */
+export type LabLaunch = { readonly key: string; readonly x: number; readonly y: number; readonly angle: number; readonly age: number };
+
+const launchesAt = (line: Timeline): readonly LabLaunch[] => line.replay.paths.flatMap((path, index) => {
+  const at = timeOf(line, path.launchTick), a = path.points[0], b = path.points[1] ?? a;
+  if (!a || !b || line.now < at) return [];
+  return [{ key: String(index), x: a.x, y: a.y, angle: Math.atan2(b.y - a.y, b.x - a.x), age: line.now - at }];
+});
+
+const idle = (frame: LabFrame) => ({ launches: [] as readonly LabLaunch[], players: frame.players, terrainOps: frame.terrainOps, bullets: [], trails: [] as readonly (readonly TrailDot[])[], effects: [] as readonly LabEffect[], hpBars: {} as Readonly<Record<string, HpBar>>, misses: [] as readonly (MissMark & { readonly key: string })[], fallingIds: [] as string[], recoil: 0, shotFlashes: [] as readonly ShotFlash[] });
 
 /** Replay server ticks at a shared pace, retaining a final 300ms settling window. */
 export const presentLabReplay = (frame: LabFrame, now: number) => {
@@ -125,7 +134,7 @@ export const presentLabReplay = (frame: LabFrame, now: number) => {
   const fallingIds = now >= settleAt && now < settleAt + 300 ? replay.playersBefore.filter(before => (frame.players.find(p => p.playerId === before.playerId)?.y ?? before.y) > before.y).map(p => p.playerId) : [];
   const launches = replay.paths.map(path => timeOf(line, path.launchTick));
   const flying = now < settleAt;
-  return { players, effects: effectsAt(frame, line), hpBars: hpBarsAt(line), misses: missesAt(frame, line), fallingIds, shotFlashes: shotFlashes(now, launches), recoil: shotRecoil(now, launches),
+  return { launches: launchesAt(line), players, effects: effectsAt(frame, line), hpBars: hpBarsAt(line), misses: missesAt(frame, line), fallingIds, shotFlashes: shotFlashes(now, launches), recoil: shotRecoil(now, launches),
     bullets: flying ? replay.paths.flatMap(path => projectileAt(path, tick)) : [], trails: flying ? replay.paths.map(path => trailAt(path, tick)) : [],
     terrainOps: frame.terrainOps.slice(0, replay.terrainOpsBefore + impacts.length) };
 };

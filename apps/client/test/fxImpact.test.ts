@@ -100,8 +100,8 @@ describe("hitstopClock", () => {
 
 type Presentation = ReturnType<typeof presentLabReplay>;
 const effect = (key: string, clock: number, over: Partial<LabEffect> = {}): LabEffect => ({ key, cx: 20, cy: 15, radius: 6, clock, damage: 0, damages: [], kills: [], final: false, ...over });
-const presentation = (effects: readonly LabEffect[]): Presentation => ({ players: [], terrainOps: [], bullets: [], trails: [], effects, hpBars: {}, misses: [], fallingIds: [], recoil: 0, shotFlashes: [] }) as Presentation;
-const api = () => ({ impact: vi.fn(), killFlash: vi.fn(), freeze: vi.fn() });
+const presentation = (effects: readonly LabEffect[]): Presentation => ({ launches: [], players: [], terrainOps: [], bullets: [], trails: [], effects, hpBars: {}, misses: [], fallingIds: [], recoil: 0, shotFlashes: [] }) as Presentation;
+const api = () => ({ impact: vi.fn(), killFlash: vi.fn(), freeze: vi.fn(), muzzle: vi.fn(), wreck: vi.fn() });
 
 describe("createLabImpactFx", () => {
   const replay = { startsAt: 1000, terrainOpsBefore: 2 };

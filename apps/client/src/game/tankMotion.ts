@@ -157,3 +157,13 @@ export const chargeAt = (charge: number, elapsedMs: number, reduced: boolean): C
   const shake = hot && !reduced ? (Math.floor(elapsedMs / 60) % 2 === 0 ? 1 : -1) : 0;
   return { dots, shake, hot };
 };
+
+/** アンテナのばねの周期（ms）。1 周期ごとに振れ幅が半分になる（設計書 41 の段階 4） */
+export const ANTENNA_PERIOD_MS = 240;
+
+/** 揺らしてから t ms 後のアンテナの先端のずれ（art px、整数）。amplitude は最初の振れ。1 art px 未満になったら 0 */
+export const antennaSwayAt = (t: number, amplitude: number, reduced: boolean): number => {
+  if (reduced || t < 0) return 0;
+  const value = amplitude * 0.5 ** (t / ANTENNA_PERIOD_MS) * Math.cos((2 * Math.PI * t) / ANTENNA_PERIOD_MS);
+  return Math.abs(value) < 0.5 ? 0 : Math.round(value);
+};

@@ -11,7 +11,7 @@ const fireUntilCarve = (page: Page, weapon: string): Promise<number> => page.eva
   lab.setLoop(false);
   lab.fire(w);
   let t = 0;
-  while (lab.stats().particles === 0 && t < 8000) { lab.step(16); t += 16; }
+  while (lab.stats().carves === 0 && t < 8000) { lab.step(16); t += 16; }
   return Math.round(t);
 }, weapon);
 

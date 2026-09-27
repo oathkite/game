@@ -21,6 +21,7 @@ import {
   IMPACT_TOTAL_MS,
   impactTimeMs,
   invertCells,
+  knockbackAt,
   invertOn,
   launchDelayMs,
   MISS_MS,
@@ -31,6 +32,8 @@ import {
 } from "./hitFeedback";
 import type { ProjectileView } from "./projectileView";
 import { hash32 } from "./fx/hash";
+import { TEAM_RAMPS } from "./palette";
+import { WRECK_BLINK_MS } from "./tankMotion";
 import { replayTailMs } from "@game/engine/replay-timing";
 import { trailDots } from "./trail";
 import type { EdgePoint, Renderer } from "./renderer";
@@ -57,8 +60,8 @@ type Fall = { readonly seat: Seat; readonly from: number; readonly to: number };
 
 type Phase = "shot" | "fall" | "hold" | "done";
 
-/** HP バーの減り。減る前の値から後の値へ、at から減らしていく */
-type Drain = { readonly before: number; readonly after: number; readonly at: number };
+/** HP バーの減り。減る前の値から後の値へ、at から減らしていく。from は爆心の x（押し戻しの向き）、damage はこの着弾のダメージ */
+type Drain = { readonly before: number; readonly after: number; readonly at: number; readonly from: number; readonly damage: number };
 
 /** 着弾 1 つの再生の状態 */
 type ImpactRun = {
@@ -98,6 +101,8 @@ type Run = {
   hp: [number, number];
   /** ヒットストップの残り（ms） */
   freezeLeft: number;
+  /** 発射の煙の輪を出した弾道 */
+  readonly launched: boolean[];
   readonly flashUntil: [number, number];
   readonly drains: [Drain | null, Drain | null];
   shake: { readonly at: number; readonly damage: readonly [number, number] } | null;
@@ -163,6 +168,7 @@ const poseAfterHit = (run: Run, seat: Seat, flash: boolean): TankPose => {
     recoil: seat === run.job.shot.input.seat ? shotRecoil(run.elapsed, run.launchAt) : 0,
     hpGhost: bar.hpGhost,
     ghostOn: bar.ghostOn,
+    nudge: drain && !run.cb.reduceMotion ? knockbackAt(run.elapsed - drain.at, drain.damage) * (after.x >= drain.from ? 1 : -1) : 0,
   });
 };
 
@@ -215,6 +221,11 @@ const updateBullet = (run: Run, p: number): void => {
     return;
   }
   const points = path.points;
+  if (!run.launched[p] && points[0]) {
+    run.launched[p] = true;
+    // 砲口の前に煙の輪（設計書 41 の段階 4）
+    run.renderer.effects.muzzle(points[0].x / ONE, points[0].y / ONE, angleAt(points, 1), hash32(0, run.job.id, p, 9), t);
+  }
   const frame = projectileFrameAt(t, path.impactAt, points.length);
   const last = points[points.length - 1];
   if (frame.ended && last) {
@@ -255,11 +266,16 @@ const carveImpact = (run: Run, ir: ImpactRun): void => {
     // 減り始めの値は、前の着弾の減りが途中なら今見えている値
     const prev = run.drains[seat];
     const shown = prev ? hpBarAt(run.elapsed - prev.at, prev.before, prev.after).hp : hpBefore[seat];
-    run.drains[seat] = { before: shown, after: run.hp[seat], at: run.elapsed };
+    run.drains[seat] = { before: shown, after: run.hp[seat], at: run.elapsed, from: impact.cell.x, damage };
     run.flashUntil[seat] = Math.max(run.flashUntil[seat], run.elapsed + flashMsOf(damage));
     run.renderer.showDamage(seat, damageLabelText(damage), shooterColor, damage >= 50);
     // 撃破の明滅（C5）が始まる瞬間。HP バーが減りきったとき
-    if (hpBefore[seat] > 0 && run.hp[seat] <= 0) run.renderer.effects.killFlash(HP_DRAIN_MS);
+    if (hpBefore[seat] > 0 && run.hp[seat] <= 0) {
+      run.renderer.effects.killFlash(HP_DRAIN_MS);
+      // 撃破の最初の爆発（38.3 の C5、明滅が始まってから 260 ms）で機体の色の破片を散らす
+      const after = run.job.playersAfter[seat];
+      run.renderer.effects.wreck(after.x, groundBeforeFall(run.job, seat), TEAM_RAMPS[after.colors.primary], hash32(0, run.job.id, seat, 11), HP_DRAIN_MS + WRECK_BLINK_MS);
+    }
   }
   if (impact.damage[0] > 0 || impact.damage[1] > 0) run.shake = { at: run.elapsed, damage: impact.damage };
   for (const name of damageSounds(impact.damage, hpBefore, run.hp, shooter, run.mySeat)) run.cb.sound(name);
@@ -385,6 +401,7 @@ export const playReplay = (
     mask: job.maskBefore,
     hp: [job.playersBefore[0].hp, job.playersBefore[1].hp],
     freezeLeft: 0,
+    launched: job.paths.map(() => false),
     flashUntil: [0, 0],
     drains: [null, null],
     shake: null,

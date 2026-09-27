@@ -9,7 +9,7 @@ import { drawLabImpacts, emitLabDebris, labEdgePoints, labShake, labTankHit } fr
 
 type Presentation = ReturnType<typeof presentLabReplay>;
 const effect = (clock: number, amount: number): LabEffect => ({ key: "0", cx: 20, cy: 15, radius: 6, clock, damage: amount, damages: amount > 0 ? [{ playerId: "p1", amount }] : [], kills: [], final: false });
-const presentation = (effects: readonly LabEffect[]): Presentation => ({ players: [], terrainOps: [], bullets: [], trails: [], effects, hpBars: {}, misses: [], fallingIds: [], recoil: 0, shotFlashes: [] }) as Presentation;
+const presentation = (effects: readonly LabEffect[]): Presentation => ({ launches: [], players: [], terrainOps: [], bullets: [], trails: [], effects, hpBars: {}, misses: [], fallingIds: [], recoil: 0, shotFlashes: [] }) as Presentation;
 const mask = (): TerrainMask => {
   const cells = new Uint8Array(40 * 30);
   for (let y = 15; y < 30; y++) for (let x = 0; x < 40; x++) cells[y * 40 + x] = 1;

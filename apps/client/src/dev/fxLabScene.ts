@@ -20,6 +20,8 @@ export type FxLabStats = {
   readonly workP95: number;
   readonly particles: number;
   readonly maxParticles: number;
+  /** 今の射撃で地形が削れた回数。決めた時刻を削る瞬間から数えるのに使う */
+  readonly carves: number;
 };
 
 export type FxLab = {
@@ -27,6 +29,8 @@ export type FxLab = {
   readonly setLoop: (on: boolean) => void;
   readonly setSpeed: (speed: number) => void;
   readonly setReduceMotion: (on: boolean) => void;
+  /** 的の HP。撃破の演出を見るときに下げる */
+  readonly setTargetHp: (hp: number) => void;
   readonly pause: () => void;
   readonly resume: () => void;
   /** 止めたまま ms だけ進める。16 ms ずつ描く（端数は切り上げて 1 コマ） */
@@ -108,7 +112,7 @@ const createMeter = (r: Renderer) => {
   r.app.ticker.add(begin, undefined, UPDATE_PRIORITY.INTERACTION);
   r.app.ticker.add(end, undefined, UPDATE_PRIORITY.UTILITY);
   return {
-    stats: (): FxLabStats => ({ frames: frames.length, frameP50: percentile(frames, 0.5), frameP95: percentile(frames, 0.95), workP50: percentile(work, 0.5), workP95: percentile(work, 0.95), particles: r.effects.particleCount(), maxParticles }),
+    stats: (): Omit<FxLabStats, "carves"> => ({ frames: frames.length, frameP50: percentile(frames, 0.5), frameP95: percentile(frames, 0.95), workP50: percentile(work, 0.5), workP95: percentile(work, 0.95), particles: r.effects.particleCount(), maxParticles }),
     reset: (): void => { frames = []; work = []; maxParticles = 0; },
   };
 };
@@ -123,9 +127,12 @@ const centerCamera = (r: Renderer, players: readonly [PlayerView, PlayerView], c
 export const createFxLab = async (host: HTMLElement, options: { readonly cell?: number; readonly still?: boolean } = {}): Promise<FxLab> => {
   const cell = options.cell ?? 8;
   const mask = labTerrain();
-  const players = [player(0, mask, SHOOTER_X), player(1, mask, TARGET_X)] as const;
+  let players: readonly [PlayerView, PlayerView] = [player(0, mask, SHOOTER_X), player(1, mask, TARGET_X)];
   const r = await createRenderer({ mapId: "ridgeline", host, layout: { cell, mapWidth: host.clientWidth, mapHeight: host.clientHeight, panelWidth: 0, panelCell: 1 }, mask, background: 0x000000, backgroundAlpha: 0, players, autoStart: !options.still });
   const meter = createMeter(r), aims = new Map<WeaponId, Aim>();
+  let carves = 0;
+  // 地形が削れた回数を数える renderer。再生には同じ描画を渡す
+  const counted: Renderer = { ...r, effects: { ...r.effects, crater: (...a) => { carves++; r.effects.crater(...a); } } };
   let stop: () => void = () => {}, loop = true, weapon: WeaponId = "cannon", reduceMotion = false, waitMs = -1;
   const reset = (): void => {
     r.effects.clear();
@@ -133,12 +140,12 @@ export const createFxLab = async (host: HTMLElement, options: { readonly cell?: 
     players.forEach((p, seat) => r.setTank(seat, poseOf(p, mask, seat === 0 ? aims.get(weapon)?.elevation ?? 45 : 45)));
   };
   const fire = (w: WeaponId): void => {
-    stop(); weapon = w; waitMs = -1;
+    stop(); weapon = w; waitMs = -1; carves = 0;
     const aim = aims.get(w) ?? aimAt(mask, players, w);
     aims.set(w, aim);
     reset();
     // 再生の番号は散らし方の種になるので、同じ武器は毎回同じ絵になるよう固定する（設計書 41.3）
-    stop = playReplay(r, jobOf(LAB_JOB_ID, mask, players, w, aim), [aim.elevation, 45], 0, { sound: () => {}, reduceMotion, done: () => { if (loop) waitMs = LOOP_GAP_MS; } });
+    stop = playReplay(counted, jobOf(LAB_JOB_ID, mask, players, w, aim), [aim.elevation, 45], 0, { sound: () => {}, reduceMotion, done: () => { if (loop) waitMs = LOOP_GAP_MS; } });
   };
   // 次の射撃までの待ちも描画の時計で数え、一時停止とコマ送りに従わせる
   r.app.ticker.add(() => {
@@ -153,6 +160,7 @@ export const createFxLab = async (host: HTMLElement, options: { readonly cell?: 
     setLoop: (on) => { loop = on; },
     setSpeed: (speed) => { r.app.ticker.speed = speed; },
     setReduceMotion: (on) => { reduceMotion = on; },
+    setTargetHp: (hp) => { players = [players[0], { ...players[1], hp }]; aims.clear(); },
     pause: () => { r.app.ticker.stop(); },
     resume: () => { r.app.ticker.start(); },
     step: (ms) => {
@@ -161,7 +169,7 @@ export const createFxLab = async (host: HTMLElement, options: { readonly cell?: 
       for (let i = 0; i < Math.ceil(ms / STEP_MS); i++) ticker.update(ticker.lastTime + STEP_MS);
       ticker.speed = speed;
     },
-    stats: meter.stats,
+    stats: () => ({ ...meter.stats(), carves }),
     resetStats: meter.reset,
     destroy: () => { stop(); r.destroy(); },
   };

@@ -4,7 +4,8 @@ import { Container, Graphics, Texture, TilingSprite } from "pixi.js";
 import { PALETTE } from "../palette";
 import { ART_PER_CELL, type PixelGrid, type Rect } from "../pixelGrid";
 import type { FxLayer } from "./fxLayer";
-import { BAYER4, craterGlow, impactSmoke, impactSparks, lightBurst } from "./impactFx";
+import { BAYER4, craterGlow, impactSmoke, impactSparks, lightBurst, muzzleSmoke, trackDust, wreckDebris } from "./impactFx";
+import type { Ramp } from "../palette";
 import { terrainDebris } from "./terrainDebris";
 
 // 再生の外で寿命が尽きるまで描く演出の入口。設計書 41。
@@ -17,6 +18,12 @@ export type RendererEffects = {
   readonly impact: (cx: number, cy: number, radius: number, tier: number, seed: number, age?: number) => void;
   /** 撃破の瞬間（delay ms 後）に 1 コマだけ画面全体を白くする。1 秒に 1 回まで（I5） */
   readonly killFlash: (delay?: number) => void;
+  /** 発射の煙の輪。位置はセル、angle は弾が飛び出す向き（設計書 41 の段階 4） */
+  readonly muzzle: (x: number, y: number, angle: number, seed: number, age?: number) => void;
+  /** 走行の土煙。位置はセルで接地点 */
+  readonly dust: (x: number, y: number, facing: 1 | -1, seed: number) => void;
+  /** 撃破の破片。delay ms 後に機体の色で散らす */
+  readonly wreck: (x: number, y: number, ramp: Ramp, seed: number, delay?: number) => void;
   /** 粒の時計を止める（ヒットストップ） */
   readonly freeze: (ms: number) => void;
   /** 今描いている粒の数。FX ラボと測定に使う */
@@ -69,10 +76,12 @@ type Deps = {
   readonly flash: Graphics;
   readonly screen: () => { readonly width: number; readonly height: number };
   readonly reduced: () => boolean;
+  /** 走行の土煙の色。ステージの土の色（明るい順） */
+  readonly soil: readonly number[];
 };
 
 export const createRendererEffects = (d: Deps): RendererEffects & { readonly tick: () => void } => {
-  let dimUntil = -Infinity, flashFrom = Infinity, flashUntil = -Infinity, lastFlash = -Infinity;
+  let dimFrom = Infinity, dimUntil = -Infinity, flashFrom = Infinity, flashUntil = -Infinity, lastFlash = -Infinity;
   return {
     crater: (before, after, op, seed, age = 0) => {
       const texels = d.texels;
@@ -83,19 +92,25 @@ export const createRendererEffects = (d: Deps): RendererEffects & { readonly tic
       d.fx.emit("front", impactSparks(cx, cy, radius, seed), age);
       d.fx.emit("back", impactSmoke(cx, cy, radius, seed), age);
       d.fx.emit("back", lightBurst({ cx, cy, radius: Math.min(radius * LIGHT_SCALE, LIGHT_MAX_CELLS) * ART_PER_CELL, duration: LIGHT_MS, strength: 1, inner: PALETTE.fire1, outer: PALETTE.fire3 }), age);
-      if (tier >= 3 && !d.reduced()) dimUntil = Math.max(dimUntil, d.fx.now() + DIM_MS - age);
+      // 火花や光と同じく、生まれる時刻（爆風が広がり始める瞬間）から暗くする
+      if (tier >= 3 && !d.reduced()) { dimFrom = d.fx.now() - age; dimUntil = dimFrom + DIM_MS; }
     },
     killFlash: (delay = 0) => {
       const at = d.fx.now() + Math.max(0, delay);
       if (d.reduced() || at - lastFlash < FLASH_GAP_MS) return;
       lastFlash = at; flashFrom = at; flashUntil = at + FLASH_MS;
     },
+    muzzle: (x, y, angle, seed, age = 0) => { if (!d.reduced()) d.fx.emit("front", muzzleSmoke(x, y, angle, seed), age); },
+    dust: (x, y, facing, seed) => { if (!d.reduced()) d.fx.emit("back", trackDust(x, y, facing, d.soil.slice(0, 2), seed)); },
+    wreck: (x, y, ramp, seed, delay = 0) => {
+      if (!d.reduced()) d.fx.emit("front", wreckDebris(x, y, [ramp.light, ramp.base, ramp.shadow, PALETTE.metal1, PALETTE.metal2], seed), -delay);
+    },
     freeze: (ms) => { if (!d.reduced()) d.fx.freeze(ms); },
     particleCount: d.fx.count,
-    clear: () => { d.fx.clear(); dimUntil = -Infinity; flashFrom = Infinity; flashUntil = -Infinity; lastFlash = -Infinity; },
+    clear: () => { d.fx.clear(); dimFrom = Infinity; dimUntil = -Infinity; flashFrom = Infinity; flashUntil = -Infinity; lastFlash = -Infinity; },
     tick: () => {
       const now = d.fx.now();
-      d.dim.visible = now < dimUntil;
+      d.dim.visible = now >= dimFrom && now < dimUntil;
       const flashing = now >= flashFrom && now < flashUntil;
       if (flashing && !d.flash.visible) {
         const s = d.screen();

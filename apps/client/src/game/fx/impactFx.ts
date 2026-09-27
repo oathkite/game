@@ -144,3 +144,48 @@ export const lightBurst = (spec: LightSpec): ParticleBatch => {
   });
   return b;
 };
+
+const MUZZLE = 5, DUST = 6, WRECK = 7;
+
+/** 発射の煙の輪（設計書 41 の段階 4）。発射光の後に砲口の前へ 8 粒を輪に広げ、空気の抵抗で止めて 600 ms で消す。位置はセル、angle は弾が飛び出す向き */
+export const muzzleSmoke = (x: number, y: number, angle: number, seed: number): ParticleBatch => {
+  const count = 8, b = allocBatch(count, { ramps: [SMOKE_STEPS], gravity: -8, drag: 4 });
+  for (let i = 0; i < count; i++) {
+    const h = hash32(seed, MUZZLE, i), ring = (i / count) * Math.PI * 2;
+    b.x0[i] = x * ART_PER_CELL; b.y0[i] = y * ART_PER_CELL;
+    b.vx[i] = Math.cos(angle) * 90 + Math.cos(ring) * 45;
+    b.vy[i] = Math.sin(angle) * 90 + Math.sin(ring) * 45;
+    b.t0[i] = 100; b.life[i] = 500 + 150 * unit(hash32(h, 1));
+    b.size[i] = 2; b.fade[i] = unit(hash32(h, 2));
+  }
+  return b;
+};
+
+/** 走行の土煙。後ろの履帯の下から地形の色の 1 art px の粒を 2 粒、後ろ上へ跳ね上げて 300 ms で落とす。位置はセルで接地点 */
+export const trackDust = (x: number, y: number, facing: 1 | -1, colors: readonly number[], seed: number): ParticleBatch => {
+  const count = 2, b = allocBatch(count, { ramps: [colors], gravity: 260, drag: 0 });
+  for (let i = 0; i < count; i++) {
+    const h = hash32(seed, DUST, i);
+    b.x0[i] = (x + 0.5 - facing * 3.5) * ART_PER_CELL + i; b.y0[i] = y * ART_PER_CELL - 1;
+    b.vx[i] = -facing * (10 + 25 * unit(hash32(h, 1)));
+    b.vy[i] = -(25 + 25 * unit(hash32(h, 2)));
+    b.life[i] = 280 + 120 * unit(hash32(h, 3));
+    b.size[i] = 1; b.fade[i] = unit(hash32(h, 4));
+  }
+  return b;
+};
+
+/** 撃破の破片。機体の色の段と金属の段の 24 粒を上へ扇に散らし、重さで落とす。位置はセルで接地点 */
+export const wreckDebris = (x: number, y: number, colors: readonly number[], seed: number): ParticleBatch => {
+  const count = 24, b = allocBatch(count, { ramps: colors.map(c => [c]), gravity: 420, drag: 0 });
+  for (let i = 0; i < count; i++) {
+    const h = hash32(seed, WRECK, i), angle = -Math.PI * (0.1 + 0.8 * unit(hash32(h, 1)));
+    const speed = 80 + 150 * unit(hash32(h, 2));
+    b.x0[i] = (x + 0.5) * ART_PER_CELL; b.y0[i] = (y - 2) * ART_PER_CELL;
+    b.vx[i] = Math.cos(angle) * speed; b.vy[i] = Math.sin(angle) * speed;
+    b.ramp[i] = i % colors.length;
+    b.life[i] = 1200 + 400 * unit(hash32(h, 3));
+    b.size[i] = unit(hash32(h, 4)) < 0.4 ? 2 : 1; b.fade[i] = unit(hash32(h, 5));
+  }
+  return b;
+};

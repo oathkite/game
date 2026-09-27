@@ -3,7 +3,7 @@ import { playSound } from "@/app/audio";
 import type { ShotFlash } from "./muzzlePose";
 import { COLOR_HEX, type Facing, type TankColors } from "@game/protocol";
 import { Container, Graphics, Text } from "pixi.js";
-import { chargeAt, idleRumble, landingAt, LOW_HP, wreckFrameAt, WRECK_SMOKE_FROM_MS } from "./tankMotion";
+import { antennaSwayAt, chargeAt, idleRumble, landingAt, LOW_HP, wreckFrameAt, WRECK_SMOKE_FROM_MS } from "./tankMotion";
 import { drawBursts, drawDust, drawLowHpSmoke, drawWreckSmoke } from "./tankFx";
 import { TEAM_RAMPS, type Ramp } from "./palette";
 import { ART_PER_CELL } from "./pixelGrid";
@@ -40,6 +40,8 @@ export type TankPose = {
   readonly acting?: boolean;
   /** 溜めているパワー（0〜1）。自分が溜めている間だけ渡す */
   readonly charge?: number;
+  /** 被弾で押し戻された横のずれ（art px）。爆心から遠ざかる向きが正の向き（設計書 41 の段階 4） */
+  readonly nudge?: number;
 };
 
 export type TankView = {
@@ -57,15 +59,24 @@ const hex = (c: string): number => Number.parseInt(c.slice(1), 16);
 type Ramps = { readonly hull: Ramp; readonly turret: Ramp };
 
 /** 状態の変わり目の時刻。setPose で記録し、tick の時計で経過を測る */
-type Moments = { first: boolean; hp: number; deathAt: number | null; falling: boolean; landAt: number | null };
+type Moments = { first: boolean; hp: number; deathAt: number | null; falling: boolean; landAt: number | null; recoil: number; flash: boolean; swayAt: number; swayAmp: number };
+
+/** アンテナを揺らす最初の振れ（art px、機体の前が正）。発射は後ろへ、被弾は前へ、着地と動き出しは後ろへ */
+const SWAY_FIRE = -3, SWAY_HIT = 2, SWAY_LAND = -2, SWAY_MOVE = -1;
+
+const swing = (m: Moments, clock: number, amplitude: number): void => { m.swayAt = clock; m.swayAmp = amplitude; };
 
 const noteMoments = (m: Moments, pose: TankPose, clock: number): void => {
   if (!m.first && m.hp > 0 && pose.hp <= 0) m.deathAt = clock;
   if (pose.hp > 0) m.deathAt = null;
-  if (m.falling && !pose.falling && pose.hp > 0) m.landAt = clock;
+  if (m.falling && !pose.falling && pose.hp > 0) { m.landAt = clock; swing(m, clock, SWAY_LAND); }
+  if (!m.first && (pose.recoil ?? 0) > 0 && m.recoil <= 0) swing(m, clock, SWAY_FIRE);
+  if (!m.first && pose.flash && !m.flash) swing(m, clock, SWAY_HIT);
   m.first = false;
   m.hp = pose.hp;
   m.falling = pose.falling === true;
+  m.recoil = pose.recoil ?? 0;
+  m.flash = pose.flash;
 };
 
 type Parts = {
@@ -130,12 +141,13 @@ const spriteInput = (f: Frame, ramps: Ramps, distance: number, squash: number, w
     rim: charge ? (charge.hot ? "hot" : "charge") : "none",
     flash: wrecked ? null : flashOf(pose, reduced),
     sparks: charge ? chargeSparks(pose.charge ?? 0, clock, reduced) : [],
+    antenna: wrecked ? 0 : antennaSwayAt(clock - f.moments.swayAt, f.moments.swayAmp, reduced),
   };
 };
 
 /** 絵が変わったかを比べる鍵。色は機体ごとに固定なので含めない */
 const spriteKey = (i: TankSpriteInput): string =>
-  `${i.facing}|${i.tilt}|${i.elevation}|${i.recoil}|${i.sink}|${i.treadPhase}|${i.white}|${i.wrecked}|${i.rim}|${i.flash}|${i.sparks.map(s => `${s.u},${s.v},${s.color}`).join(";")}`;
+  `${i.facing}|${i.tilt}|${i.elevation}|${i.recoil}|${i.sink}|${i.treadPhase}|${i.white}|${i.wrecked}|${i.rim}|${i.flash}|${i.antenna ?? 0}|${i.sparks.map(s => `${s.u},${s.v},${s.color}`).join(";")}`;
 
 const drawHpBar = (g: Graphics, fill: number, pose: TankPose): void => {
   g.clear();
@@ -164,7 +176,8 @@ export const createTankView = (selection: TankColors, nickname: string, team?: s
   const ramps: Ramps = { hull: TEAM_RAMPS[selection.primary], turret: TEAM_RAMPS[selection.secondary] };
   const nameColor = team ?? COLOR_HEX[selection.primary];
   const parts = buildParts(nickname, nameColor);
-  const moments: Moments = { first: true, hp: 0, deathAt: null, falling: false, landAt: null };
+  const moments: Moments = { first: true, hp: 0, deathAt: null, falling: false, landAt: null, recoil: 0, flash: false, swayAt: -Infinity, swayAmp: 0 };
+  let moving = false;
   let caretElapsed = 0, clock = 0, reduced = false, drawnKey = "", distance = 0, previousX: number | null = null;
   let lastPose: TankPose | null = null, rendered = false;
   const render = (): void => {
@@ -174,10 +187,13 @@ export const createTankView = (selection: TankColors, nickname: string, team?: s
     noteMoments(moments, pose, clock);
     parts.world.visible = pose.visible;
     parts.label.visible = pose.visible;
-    parts.world.position.set(snap(pose.x + 0.5), snap(pose.y));
+    parts.world.position.set(snap(pose.x + 0.5 + (pose.nudge ?? 0) / ART_PER_CELL), snap(pose.y));
     const signedDelta = previousX === null ? 0 : pose.x - previousX;
     previousX = pose.x;
-    if (pose.hp > 0 && pose.visible && !pose.falling && Math.abs(signedDelta) > .001 && Math.abs(signedDelta) <= 2.5) { distance += signedDelta; playSound("move"); }
+    const steps = pose.hp > 0 && pose.visible && !pose.falling && Math.abs(signedDelta) > .001 && Math.abs(signedDelta) <= 2.5;
+    if (steps) { distance += signedDelta; playSound("move"); }
+    if (steps && !moving) swing(moments, clock, SWAY_MOVE);
+    moving = steps;
     drawHpBar(parts.hpBar, hex(nameColor), pose);
     lastPose = pose;
     render();

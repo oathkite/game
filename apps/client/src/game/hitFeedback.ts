@@ -255,3 +255,15 @@ export const invertCells = (mask: TerrainMask, cx: number, cy: number, r: number
   }
   return { white, black };
 };
+
+/** 被弾の押し戻しの量（art px）。ダメージ段階 1〜3 で 1、2、2。60 ms で押され、120 ms で戻る（設計書 41 の段階 4） */
+export const KNOCKBACK_PX: readonly number[] = [0, 1, 2, 2];
+export const KNOCKBACK_OUT_MS = 60;
+export const KNOCKBACK_BACK_MS = 120;
+
+/** 削れてから t ms 後の押し戻しの量（art px、整数） */
+export const knockbackAt = (t: number, damage: number): number => {
+  const amount = KNOCKBACK_PX[damageTier(damage)] ?? 0;
+  if (t < 0 || t >= KNOCKBACK_OUT_MS + KNOCKBACK_BACK_MS) return 0;
+  return t < KNOCKBACK_OUT_MS ? amount : Math.round(amount * (1 - (t - KNOCKBACK_OUT_MS) / KNOCKBACK_BACK_MS));
+};

@@ -1,5 +1,7 @@
-import { blastFrameAt, CARVE_AT_MS, damageTier, debrisAt, flashMsOf, HITSTOP_MS, HOLD_MS, HP_DRAIN_MS, invertCells, invertOn, shakeOffsetAt, type HpBar, type Offset } from "@/game/hitFeedback";
+import { blastFrameAt, CARVE_AT_MS, damageTier, debrisAt, flashMsOf, HITSTOP_MS, HOLD_MS, HP_DRAIN_MS, invertCells, invertOn, knockbackAt, shakeOffsetAt, type HpBar, type Offset } from "@/game/hitFeedback";
 import { hash32, hashText } from "@/game/fx/hash";
+import type { Ramp } from "@/game/palette";
+import { WRECK_BLINK_MS } from "@/game/tankMotion";
 import type { ProjectileView } from "@/game/projectileView";
 import type { EdgePoint, RendererEffects } from "@/game/renderer";
 import type { presentLabReplay } from "@/networkLab/labReplay";
@@ -11,11 +13,16 @@ import { carve, type TerrainMask } from "@game/sim";
 
 type Presentation = ReturnType<typeof presentLabReplay>;
 
-/** 機体の被弾の姿。白くなる区間は爆風が最大になってからダメージの段階で決まる長さ */
-export const labTankHit = (presentation: Presentation, playerId: string): { readonly flash: boolean; readonly bar: HpBar | undefined } => ({
-  flash: presentation.effects.some(effect => effect.damages.some(d => d.playerId === playerId && effect.clock >= CARVE_AT_MS && effect.clock < CARVE_AT_MS + flashMsOf(d.amount))),
-  bar: presentation.hpBars[playerId],
-});
+/** 機体の被弾の姿。白くなる区間は爆風が最大になってからダメージの段階で決まる長さ。押し戻しは爆心から遠ざかる向き（設計書 41 の段階 4） */
+export const labTankHit = (presentation: Presentation, playerId: string, x = 0): { readonly flash: boolean; readonly bar: HpBar | undefined; readonly nudge: number } => {
+  const hits = presentation.effects.flatMap(effect => effect.damages.filter(d => d.playerId === playerId).map(d => ({ effect, amount: d.amount })));
+  const latest = hits.filter(h => h.effect.clock >= CARVE_AT_MS).sort((a, b) => a.effect.clock - b.effect.clock)[0];
+  return {
+    flash: hits.some(({ effect, amount }) => effect.clock >= CARVE_AT_MS && effect.clock < CARVE_AT_MS + flashMsOf(amount)),
+    bar: presentation.hpBars[playerId],
+    nudge: latest ? knockbackAt(latest.effect.clock - CARVE_AT_MS, latest.amount) * (x >= latest.effect.cx ? 1 : -1) : 0,
+  };
+};
 
 /** 爆風、破片、反転、外れの印、軌跡。毎フレーム clear した後に呼ぶ */
 export const drawLabImpacts = (view: ProjectileView, presentation: Presentation, mask: TerrainMask, reduced: boolean): void => {
@@ -63,21 +70,35 @@ const LATE_KILL_MS = 100;
 
 /** オンラインの着弾の層（設計書 41.6）。着弾ごとに 1 回だけ出す。途中から見たときは、着弾からの時刻だけ前に生まれたものとして出す。
  * 最後の着弾では削る瞬間に粒の時計も止め、labReplay.ts のヒットストップに合わせる */
+/** 撃破された機体の位置と主色。撃破の破片に使う */
+export type LabTank = { readonly x: number; readonly y: number; readonly ramp: Ramp };
+
 export const createLabImpactFx = () => {
   let replayKey = "";
-  const emitted = new Set<string>(), frozen = new Set<string>();
+  const emitted = new Set<string>(), frozen = new Set<string>(), launched = new Set<string>();
   return {
-    update: (effects: Pick<RendererEffects, "impact" | "killFlash" | "freeze">, presentation: Presentation, replay: { readonly startsAt: number; readonly terrainOpsBefore: number }, matchId: string, reduced: boolean): void => {
+    update: (effects: Pick<RendererEffects, "impact" | "killFlash" | "freeze" | "muzzle" | "wreck">, presentation: Presentation, replay: { readonly startsAt: number; readonly terrainOpsBefore: number }, matchId: string, reduced: boolean, tankOf: (playerId: string) => LabTank | undefined = () => undefined): void => {
       const key = `${matchId}/${replay.startsAt}`;
-      if (key !== replayKey) { replayKey = key; emitted.clear(); frozen.clear(); }
+      if (key !== replayKey) { replayKey = key; emitted.clear(); frozen.clear(); launched.clear(); }
       if (reduced) return;
       const match = hashText(matchId);
+      for (const l of presentation.launches) {
+        if (launched.has(l.key)) continue;
+        launched.add(l.key);
+        effects.muzzle(l.x, l.y, l.angle, hash32(match, replay.startsAt, Number(l.key), 9), l.age);
+      }
       for (const e of presentation.effects) {
         if (!emitted.has(e.key) && e.clock >= 0) {
           emitted.add(e.key);
           effects.impact(e.cx, e.cy, e.radius, damageTier(e.damage), hash32(match, replay.terrainOpsBefore + Number(e.key), 1), e.clock - HOLD_MS);
           const killIn = CARVE_AT_MS + HP_DRAIN_MS - e.clock;
-          if (e.kills.length > 0 && killIn > -LATE_KILL_MS) effects.killFlash(killIn);
+          if (e.kills.length > 0 && killIn > -LATE_KILL_MS) {
+            effects.killFlash(killIn);
+            for (const id of e.kills) {
+              const tank = tankOf(id);
+              if (tank) effects.wreck(tank.x, tank.y, tank.ramp, hash32(match, hashText(id), 11), killIn + WRECK_BLINK_MS);
+            }
+          }
         }
         if (e.final && !frozen.has(e.key) && e.clock >= CARVE_AT_MS) {
           frozen.add(e.key);

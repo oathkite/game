@@ -13,7 +13,7 @@ import type { WeaponId } from "@game/protocol";
 import type { LabFrame } from "@game/protocol/v2-lab";
 import { applyOps, buildInitialTerrain, tiltOf } from "@game/sim";
 import { createRenderer, type Renderer } from "@/game/renderer";
-import { cssHex, PALETTE } from "@/game/palette";
+import { cssHex, PALETTE, TEAM_RAMPS } from "@/game/palette";
 import { backdropTheme } from "@/game/pixelBackdrop";
 import { TERRAIN_THEMES } from "@/game/terrainPaint";
 import type { Layout } from "@/game/scale";
@@ -87,8 +87,8 @@ export const NetworkField = (props: Props) => {
           return { ...p, ...motion };
         });
         if (settling !== ownFalling) { settling = ownFalling; latest.current.onSettling?.(settling); }
-        shown.forEach((p, i) => { const hit = labTankHit(presentation, p.playerId); r.setTank(i, { x: p.x, y: p.y, tilt: tiltOf(mask, { x: Math.round(p.x), y: Math.round(p.y) }), facing: facing.get(p.playerId) ?? 1,
-          elevation: p.playerId === shot?.playerId ? shot.elevation : p.playerId === ownId ? elevation : 45, hp: hit.bar ? hit.bar.hp : p.eliminated ? 0 : p.hp, ...(hit.bar ? { hpGhost: hit.bar.hpGhost, ghostOn: hit.bar.ghostOn } : {}), visible: p.y < frame.map.height, falling: p.falling || presentation.fallingIds.includes(p.playerId), shotFlashes: p.playerId === shot?.playerId ? presentation.shotFlashes : [], recoil: p.playerId === shot?.playerId ? presentation.recoil : 0, aiming: frame.phase === "acting" && p.playerId === ownId && p.playerId === frame.actorId, charge: frame.phase === "acting" && p.playerId === ownId && p.playerId === frame.actorId ? latest.current.charge ?? 0 : 0, acting: frame.phase === "acting" && p.playerId === frame.actorId, flash: hit.flash }); });
+        shown.forEach((p, i) => { const hit = labTankHit(presentation, p.playerId, p.x); r.setTank(i, { x: p.x, y: p.y, tilt: tiltOf(mask, { x: Math.round(p.x), y: Math.round(p.y) }), facing: facing.get(p.playerId) ?? 1,
+          elevation: p.playerId === shot?.playerId ? shot.elevation : p.playerId === ownId ? elevation : 45, hp: hit.bar ? hit.bar.hp : p.eliminated ? 0 : p.hp, ...(hit.bar ? { hpGhost: hit.bar.hpGhost, ghostOn: hit.bar.ghostOn } : {}), visible: p.y < frame.map.height, falling: p.falling || presentation.fallingIds.includes(p.playerId), shotFlashes: p.playerId === shot?.playerId ? presentation.shotFlashes : [], recoil: p.playerId === shot?.playerId ? presentation.recoil : 0, aiming: frame.phase === "acting" && p.playerId === ownId && p.playerId === frame.actorId, charge: frame.phase === "acting" && p.playerId === ownId && p.playerId === frame.actorId ? latest.current.charge ?? 0 : 0, acting: frame.phase === "acting" && p.playerId === frame.actorId, flash: hit.flash, nudge: reducedNow ? 0 : hit.nudge }); });
         const actor = shown.find(p => p.playerId === frame.actorId); if (actor && frame.phase === "acting") rig.actor({ x: actor.x, y: actor.y - 6 });
         if (frame.replay && replayKey !== frame.replay.startsAt) {
           replayKey = frame.replay.startsAt; bullet = r.projectile("yellow", frame.replay.shooter.weapon);
@@ -126,7 +126,10 @@ export const NetworkField = (props: Props) => {
         bullet.clear();
         for (let i = 0; i < 9; i++) { const p = presentation.bullets[i]; bullet.setBullet(i, p?.x ?? null, p?.y ?? 0, p?.angle ?? 0); }
         drawLabImpacts(bullet, presentation, mask, reducedNow);
-        if (frame.phase === "replaying" && frame.replay) impactFx.update(r.effects, presentation, frame.replay, frame.matchId, reducedNow);
+        if (frame.phase === "replaying" && frame.replay) impactFx.update(r.effects, presentation, frame.replay, frame.matchId, reducedNow, (id) => {
+          const p = shown.find(t => t.playerId === id), colors = frame.players.find(t => t.playerId === id)?.colors;
+          return p && colors ? { x: p.x, y: p.y, ramp: TEAM_RAMPS[colors.primary] } : undefined;
+        });
         r.setShake(labShake(presentation, reducedNow));
         r.setEdgeMarkers(labEdgePoints(presentation, shown, colorOf), edgeBlinkOn(latest.current.serverNow, reducedNow));
         const first = presentation.bullets[0]; if (first) rig.shot(first);

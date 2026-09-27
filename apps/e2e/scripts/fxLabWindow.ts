@@ -8,6 +8,7 @@ export type FxLabStats = {
   readonly workP95: number;
   readonly particles: number;
   readonly maxParticles: number;
+  readonly carves: number;
 };
 
 export type FxLabHandle = {
@@ -16,6 +17,7 @@ export type FxLabHandle = {
   readonly step: (ms: number) => void;
   readonly stats: () => FxLabStats;
   readonly resetStats: () => void;
+  readonly setTargetHp: (hp: number) => void;
 };
 
 declare global {

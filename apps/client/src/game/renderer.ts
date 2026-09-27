@@ -16,11 +16,13 @@ import { createExplosionTextures } from "./explosionTextures";
 import { PALETTE, TEAM_RAMPS } from "./palette";
 import type { Layout } from "./scale";
 import { createTankView, type TankPose, type TankView } from "./tankView";
+import { TERRAIN_THEMES } from "./terrainPaint";
 import { createTerrainLayer, type TerrainLayer } from "./terrainLayer";
 import { createFxLayer } from "./fx/fxLayer";
 import type { ArtBounds } from "./fx/particles";
 import { createDimLayer, createFlashLayer, createRendererEffects, type RendererEffects } from "./fx/rendererEffects";
 import { ART_PER_CELL } from "./pixelGrid";
+import { hash32 } from "./fx/hash";
 
 // PixiJS の Application を 1 つ持ち、地形、戦車、弾の層をまとめる。
 // world はセル単位で描き、cell 倍に拡大する。名前の文字だけは拡大しない層に置く。
@@ -52,6 +54,10 @@ export type Renderer = {
 };
 
 export type { RendererEffects };
+
+/** 同じ機体の数字を積むときの 1 行の高さ（px）。文字の大きさ 16 と 28 に 2 px の隙間 */
+const DAMAGE_STACK_PX = 18;
+const DAMAGE_STACK_BIG_PX = 30;
 
 /** 粒を描く範囲の余白（art px）。画面揺れでずれた分も描く */
 const FX_MARGIN = 8;
@@ -172,13 +178,16 @@ export const createRenderer = async (init: RendererInit): Promise<Renderer> => {
       bottom: Math.ceil((top + app.screen.height / cell) * ART_PER_CELL) + FX_MARGIN,
     };
   };
-  const effects = createRendererEffects({ fx, texels: terrain.texels, dim, flash, screen: () => app.screen, reduced: () => reduced.matches });
+  const effects = createRendererEffects({ fx, texels: terrain.texels, dim, flash, screen: () => app.screen, reduced: () => reduced.matches, soil: TERRAIN_THEMES[theme].soil });
   app.ticker.add(() => { fx.tick(app.ticker.deltaMS, viewArt()); effects.tick(); });
   app.ticker.add(() => {
     for (const t of tanks) t.tick?.(app.ticker.deltaMS, reduced.matches);
   });
   const poses: (TankPose | null)[] = tanks.map(() => null);
+  const travel: number[] = tanks.map(() => 0);
   const labelStops = new Set<() => void>();
+  // 機体ごとの出ている数字。新しい数字が出たら古い数字を 1 行上へ押し上げ、縦に積む（設計書 41 の段階 4）
+  const stacks = tanks.map(() => new Set<{ readonly push: (px: number) => void }>());
   const labelOrigins = tanks.map(() => ({ x: 0, y: 0 }));
   const placeLabel = (seat: number): void => {
     const pose = poses[seat];
@@ -217,8 +226,16 @@ export const createRenderer = async (init: RendererInit): Promise<Renderer> => {
     },
     setTerrain: (mask, cut, history) => terrain.update(mask, cut, history),
     setTank: (seat, pose) => {
+      const before = poses[seat];
       poses[seat] = pose;
       applyPose(seat);
+      // 走行の土煙。1 セル進むごとに後ろの履帯の下から出す（設計書 41 の段階 4）
+      const moved = before ? Math.abs(pose.x - before.x) : 0;
+      if (before && moved > 0 && moved <= 2.5 && pose.hp > 0 && pose.visible && !pose.falling) {
+        const travelled = (travel[seat] ?? 0) + moved;
+        travel[seat] = travelled % 1;
+        if (travelled >= 1) effects.dust(pose.x, pose.y, pose.facing, hash32(seat, Math.round(pose.x * ART_PER_CELL)));
+      }
     },
     projectile: (color, weapon) => {
       if (projectile) projectile.destroy();
@@ -241,8 +258,11 @@ export const createRenderer = async (init: RendererInit): Promise<Renderer> => {
       if (!pose) return;
       // 名前の文字の上端から隙間を空けて出す。名前は px で描かれるので px で積む
       const y = tanks[seat]!.label.getBounds().minY - labels.getGlobalPosition().y - DAMAGE_LABEL_GAP_PX;
-      const stop = spawnDamageLabel({ parent: labels, ticker: app.ticker, text, color, big, summary, x: (pose.x + 0.5) * cell, y, onEnd: () => labelStops.delete(stop) });
-      labelStops.add(stop);
+      const stack = stacks[seat]!;
+      for (const shown of stack) shown.push(big ? DAMAGE_STACK_BIG_PX : DAMAGE_STACK_PX);
+      const label = spawnDamageLabel({ parent: labels, ticker: app.ticker, text, color, big, summary, x: (pose.x + 0.5) * cell, y, onEnd: () => { labelStops.delete(label.stop); stack.delete(label); } });
+      labelStops.add(label.stop);
+      stack.add(label);
     },
     setGuide: (dots) => {
       guide.clear();
@@ -267,7 +287,8 @@ export const createRenderer = async (init: RendererInit): Promise<Renderer> => {
       reveal.visible = true;
       terrain.sprite.mask = reveal;
     },
-    effects,
+    // 撃ち直すときは、出ている数字も消す（FX ラボ）
+    effects: { ...effects, clear: () => { effects.clear(); for (const stop of labelStops) safely(stop); labelStops.clear(); for (const stack of stacks) stack.clear(); } },
     destroy: () => {
       for (const stop of labelStops) safely(stop);
       labelStops.clear();
