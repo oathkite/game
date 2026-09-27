@@ -101,12 +101,15 @@ const missesAt = (frame: LabFrame, line: Timeline): readonly (MissMark & { reado
 });
 
 /** 発射した弾道。砲口の位置、飛び出す向き、発射からの ms（設計書 41 の段階 4 の煙の輪） */
-export type LabLaunch = { readonly key: string; readonly x: number; readonly y: number; readonly angle: number; readonly age: number };
+export type LabLaunch = { readonly key: string; readonly x: number; readonly y: number; readonly angle: number; readonly age: number;
+  /** 弾道の点（セル、発射からの ms）。武器の軌跡の粒に使う（設計書 41 の段階 5） */
+  readonly points: readonly { readonly x: number; readonly y: number; readonly at: number }[] };
 
 const launchesAt = (line: Timeline): readonly LabLaunch[] => line.replay.paths.flatMap((path, index) => {
   const at = timeOf(line, path.launchTick), a = path.points[0], b = path.points[1] ?? a;
   if (!a || !b || line.now < at) return [];
-  return [{ key: String(index), x: a.x, y: a.y, angle: Math.atan2(b.y - a.y, b.x - a.x), age: line.now - at }];
+  const points = path.points.map(p => ({ x: p.x, y: p.y, at: timeOf(line, p.tick) - at }));
+  return [{ key: String(index), x: a.x, y: a.y, angle: Math.atan2(b.y - a.y, b.x - a.x), age: line.now - at, points }];
 });
 
 const idle = (frame: LabFrame) => ({ launches: [] as readonly LabLaunch[], players: frame.players, terrainOps: frame.terrainOps, bullets: [], trails: [] as readonly (readonly TrailDot[])[], effects: [] as readonly LabEffect[], hpBars: {} as Readonly<Record<string, HpBar>>, misses: [] as readonly (MissMark & { readonly key: string })[], fallingIds: [] as string[], recoil: 0, shotFlashes: [] as readonly ShotFlash[] });

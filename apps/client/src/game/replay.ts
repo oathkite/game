@@ -223,8 +223,9 @@ const updateBullet = (run: Run, p: number): void => {
   const points = path.points;
   if (!run.launched[p] && points[0]) {
     run.launched[p] = true;
-    // 砲口の前に煙の輪（設計書 41 の段階 4）
-    run.renderer.effects.muzzle(points[0].x / ONE, points[0].y / ONE, angleAt(points, 1), hash32(0, run.job.id, p, 9), t);
+    // 砲口の煙の輪と発射光の光（段階 4）、武器の軌跡（段階 5）。弾がその点を通る時刻は、着弾ごとに止まる分を足して決める
+    const trail = points.map((q, i) => ({ x: q.x / ONE, y: q.y / ONE, at: i * STEP_MS + path.impactAt.filter(k => k < i).length * HOLD_MS }));
+    run.renderer.effects.launch(run.job.shot.input.weapon, trail, hash32(0, run.job.id, p, 9), t);
   }
   const frame = projectileFrameAt(t, path.impactAt, points.length);
   const last = points[points.length - 1];
@@ -252,7 +253,7 @@ const carveImpact = (run: Run, ir: ImpactRun): void => {
   const before = run.mask;
   run.mask = carve(run.mask, impact.terrainOp);
   // 削れた地形のドットを散らして落とす（設計書 41.5 の D1）。練習は対戦の識別子を 0 とする（41.3）
-  if (!run.cb.reduceMotion) run.renderer.effects.crater(before, run.mask, impact.terrainOp, hash32(0, run.job.id, impact.projectile, impact.stage));
+  if (!run.cb.reduceMotion) run.renderer.effects.crater(before, run.mask, impact.terrainOp, hash32(0, run.job.id, impact.projectile, impact.stage), 0, run.job.shot.input.weapon);
   if (ir.final && !run.cb.reduceMotion) { run.freezeLeft = HITSTOP_MS; run.renderer.effects.freeze(HITSTOP_MS); }
   run.cb.onImpact?.(run.mask, impact);
   run.renderer.setTerrain(run.mask, impact.terrainOp);
@@ -291,7 +292,7 @@ const updateImpact = (run: Run, ir: ImpactRun): void => {
     // 火花、煙、光は爆風が広がり始める瞬間に生まれる（設計書 41.6）
     if (!run.cb.reduceMotion) {
       const { cell, terrainOp, damage } = ir.impact;
-      run.renderer.effects.impact(cell.x, cell.y, terrainOp.radius, damageTier(Math.max(damage[0], damage[1])), hash32(0, run.job.id, ir.impact.projectile, ir.impact.stage), -HOLD_MS);
+      run.renderer.effects.impact(cell.x, cell.y, terrainOp.radius, damageTier(Math.max(damage[0], damage[1])), hash32(0, run.job.id, ir.impact.projectile, ir.impact.stage), -HOLD_MS, run.job.shot.input.weapon);
     }
   }
   const { cell, terrainOp } = ir.impact;

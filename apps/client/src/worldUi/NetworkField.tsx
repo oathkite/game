@@ -66,7 +66,7 @@ export const NetworkField = (props: Props) => {
         const nextTerrain = `${frame.matchId}/${presentation.terrainOps.length}`;
         if (nextTerrain !== terrainKey) {
           const before = mask, grew = terrainKey.startsWith(`${frame.matchId}/`) && presentation.terrainOps.length > opsCount;
-          if (grew && frame.phase === "replaying" && !reducedNow) emitLabDebris(r.effects, before, presentation.terrainOps.slice(opsCount), opsCount, frame.matchId);
+          if (grew && frame.phase === "replaying" && !reducedNow) emitLabDebris(r.effects, before, presentation.terrainOps.slice(opsCount), opsCount, frame.matchId, frame.replay?.shooter.weapon);
           terrainKey = nextTerrain; opsCount = presentation.terrainOps.length;
           mask = applyOps(baseTerrain(frame), presentation.terrainOps); r.setTerrain(mask, undefined, presentation.terrainOps);
         }

@@ -1,4 +1,4 @@
-import type { TerrainOp } from "@game/protocol";
+import type { TerrainOp, WeaponId } from "@game/protocol";
 import type { TerrainMask } from "@game/sim";
 import { Container, Graphics, Texture, TilingSprite } from "pixi.js";
 import { PALETTE } from "../palette";
@@ -7,19 +7,20 @@ import type { FxLayer } from "./fxLayer";
 import { BAYER4, craterGlow, impactSmoke, impactSparks, lightBurst, muzzleSmoke, trackDust, wreckDebris } from "./impactFx";
 import type { Ramp } from "../palette";
 import { terrainDebris } from "./terrainDebris";
+import { debrisPowerOf, impactPaletteOf, weaponTrail, type TrailPoint } from "./weaponFx";
 
 // 再生の外で寿命が尽きるまで描く演出の入口。設計書 41。
 // 練習（replay.ts）とオンライン（NetworkField.tsx）が同じ呼び方で使う。age は生まれてからの ms で、再接続などで途中から描くときに使う。
 
 export type RendererEffects = {
   /** 地形が削れた瞬間。削れた地形の破片（D1）と赤熱する縁（I3） */
-  readonly crater: (before: TerrainMask, after: TerrainMask, op: TerrainOp, seed: number, age?: number) => void;
+  readonly crater: (before: TerrainMask, after: TerrainMask, op: TerrainOp, seed: number, age?: number, weapon?: WeaponId) => void;
   /** 着弾。火花（I1）、煙（I2）、光（I4）。ダメージ段階 3 では暗転（I5）も出す。位置はセル */
-  readonly impact: (cx: number, cy: number, radius: number, tier: number, seed: number, age?: number) => void;
+  readonly impact: (cx: number, cy: number, radius: number, tier: number, seed: number, age?: number, weapon?: WeaponId) => void;
   /** 撃破の瞬間（delay ms 後）に 1 コマだけ画面全体を白くする。1 秒に 1 回まで（I5） */
   readonly killFlash: (delay?: number) => void;
-  /** 発射の煙の輪。位置はセル、angle は弾が飛び出す向き（設計書 41 の段階 4） */
-  readonly muzzle: (x: number, y: number, angle: number, seed: number, age?: number) => void;
+  /** 発射。砲口の煙の輪（段階 4）、発射光の光、武器の軌跡の粒（段階 5）。points は弾道の点（セル、発射からの ms） */
+  readonly launch: (weapon: WeaponId, points: readonly TrailPoint[], seed: number, age?: number) => void;
   /** 走行の土煙。位置はセルで接地点 */
   readonly dust: (x: number, y: number, facing: 1 | -1, seed: number) => void;
   /** 撃破の破片。delay ms 後に機体の色で散らす */
@@ -40,6 +41,8 @@ export const FLASH_GAP_MS = 1000;
 const LIGHT_SCALE = 1.3;
 const LIGHT_MAX_CELLS = 14;
 const LIGHT_MS = 300;
+const MUZZLE_LIGHT_CELLS = 6;
+const MUZZLE_LIGHT_MS = 140;
 
 /** 暗い層の 4 × 4 の模様。Bayer の閾値の小さい 4 つのドットだけを夜空のいちばん暗い色で塗る */
 const dimTexture = (): Texture => {
@@ -83,15 +86,16 @@ type Deps = {
 export const createRendererEffects = (d: Deps): RendererEffects & { readonly tick: () => void } => {
   let dimFrom = Infinity, dimUntil = -Infinity, flashFrom = Infinity, flashUntil = -Infinity, lastFlash = -Infinity;
   return {
-    crater: (before, after, op, seed, age = 0) => {
+    crater: (before, after, op, seed, age = 0, weapon = "cannon") => {
       const texels = d.texels;
-      if (texels) d.fx.emit("back", terrainDebris({ before, after, op, seed, texels: (rect) => texels(before, rect) }), age);
+      if (texels) d.fx.emit("back", terrainDebris({ before, after, op, seed, power: debrisPowerOf(weapon), texels: (rect) => texels(before, rect) }), age);
       d.fx.emit("back", craterGlow(before, after, op, seed), age);
     },
-    impact: (cx, cy, radius, tier, seed, age = 0) => {
-      d.fx.emit("front", impactSparks(cx, cy, radius, seed), age);
+    impact: (cx, cy, radius, tier, seed, age = 0, weapon = "cannon") => {
+      const colors = impactPaletteOf(weapon);
+      d.fx.emit("front", impactSparks(cx, cy, radius, seed, colors.sparks), age);
       d.fx.emit("back", impactSmoke(cx, cy, radius, seed), age);
-      d.fx.emit("back", lightBurst({ cx, cy, radius: Math.min(radius * LIGHT_SCALE, LIGHT_MAX_CELLS) * ART_PER_CELL, duration: LIGHT_MS, strength: 1, inner: PALETTE.fire1, outer: PALETTE.fire3 }), age);
+      d.fx.emit("back", lightBurst({ cx, cy, radius: Math.min(radius * LIGHT_SCALE, LIGHT_MAX_CELLS) * ART_PER_CELL, duration: LIGHT_MS, strength: 1, inner: colors.lightInner, outer: colors.lightOuter }), age);
       // 火花や光と同じく、生まれる時刻（爆風が広がり始める瞬間）から暗くする
       if (tier >= 3 && !d.reduced()) { dimFrom = d.fx.now() - age; dimUntil = dimFrom + DIM_MS; }
     },
@@ -100,7 +104,15 @@ export const createRendererEffects = (d: Deps): RendererEffects & { readonly tic
       if (d.reduced() || at - lastFlash < FLASH_GAP_MS) return;
       lastFlash = at; flashFrom = at; flashUntil = at + FLASH_MS;
     },
-    muzzle: (x, y, angle, seed, age = 0) => { if (!d.reduced()) d.fx.emit("front", muzzleSmoke(x, y, angle, seed), age); },
+    launch: (weapon, points, seed, age = 0) => {
+      const a = points[0], b = points[1];
+      if (d.reduced() || !a || !b) return;
+      d.fx.emit("front", muzzleSmoke(a.x, a.y, Math.atan2(b.y - a.y, b.x - a.x), seed), age);
+      // 発射光（40.5）の光。砲口から 6 セル、140 ms
+      d.fx.emit("back", lightBurst({ cx: a.x - 0.5, cy: a.y - 0.5, radius: MUZZLE_LIGHT_CELLS * ART_PER_CELL, duration: MUZZLE_LIGHT_MS, strength: 0.8, inner: PALETTE.fire1, outer: PALETTE.fire2 }), age);
+      const trail = weaponTrail(weapon, points, seed);
+      if (trail) d.fx.emit("back", trail, age);
+    },
     dust: (x, y, facing, seed) => { if (!d.reduced()) d.fx.emit("back", trackDust(x, y, facing, d.soil.slice(0, 2), seed)); },
     wreck: (x, y, ramp, seed, delay = 0) => {
       if (!d.reduced()) d.fx.emit("front", wreckDebris(x, y, [ramp.light, ramp.base, ramp.shadow, PALETTE.metal1, PALETTE.metal2], seed), -delay);

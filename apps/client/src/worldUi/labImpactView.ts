@@ -5,7 +5,7 @@ import { WRECK_BLINK_MS } from "@/game/tankMotion";
 import type { ProjectileView } from "@/game/projectileView";
 import type { EdgePoint, RendererEffects } from "@/game/renderer";
 import type { presentLabReplay } from "@/networkLab/labReplay";
-import type { TerrainOp } from "@game/protocol";
+import type { TerrainOp, WeaponId } from "@game/protocol";
 import { carve, type TerrainMask } from "@game/sim";
 
 // オンライン対戦の着弾の見せ方。設計書 38 の E1。練習（game/replay.ts）と同じ hitFeedback の時間の流れで描く。
@@ -54,13 +54,13 @@ const DEBRIS_BATCH_LIMIT = 8;
 
 /** 削れた地形の破片（設計書 41.5 の D1）。地形が増えた瞬間に、増えた削りを順に当てた mask の差から出す。
  * ハッシュの入力は対戦の識別子と、対戦の中での削りの通し番号（41.3）。どの画面でも同じ散り方になる */
-export const emitLabDebris = (effects: Pick<RendererEffects, "crater">, before: TerrainMask, ops: readonly TerrainOp[], firstIndex: number, matchId: string): void => {
+export const emitLabDebris = (effects: Pick<RendererEffects, "crater">, before: TerrainMask, ops: readonly TerrainOp[], firstIndex: number, matchId: string, weapon: WeaponId = "cannon"): void => {
   if (ops.length === 0 || ops.length > DEBRIS_BATCH_LIMIT) return;
   const match = hashText(matchId);
   let mask = before;
   ops.forEach((op, i) => {
     const after = carve(mask, op);
-    effects.crater(mask, after, op, hash32(match, firstIndex + i));
+    effects.crater(mask, after, op, hash32(match, firstIndex + i), 0, weapon);
     mask = after;
   });
 };
@@ -77,7 +77,8 @@ export const createLabImpactFx = () => {
   let replayKey = "";
   const emitted = new Set<string>(), frozen = new Set<string>(), launched = new Set<string>();
   return {
-    update: (effects: Pick<RendererEffects, "impact" | "killFlash" | "freeze" | "muzzle" | "wreck">, presentation: Presentation, replay: { readonly startsAt: number; readonly terrainOpsBefore: number }, matchId: string, reduced: boolean, tankOf: (playerId: string) => LabTank | undefined = () => undefined): void => {
+    update: (effects: Pick<RendererEffects, "impact" | "killFlash" | "freeze" | "launch" | "wreck">, presentation: Presentation, replay: { readonly startsAt: number; readonly terrainOpsBefore: number; readonly shooter?: { readonly weapon: WeaponId } }, matchId: string, reduced: boolean, tankOf: (playerId: string) => LabTank | undefined = () => undefined): void => {
+      const weapon = replay.shooter?.weapon ?? "cannon";
       const key = `${matchId}/${replay.startsAt}`;
       if (key !== replayKey) { replayKey = key; emitted.clear(); frozen.clear(); launched.clear(); }
       if (reduced) return;
@@ -85,12 +86,12 @@ export const createLabImpactFx = () => {
       for (const l of presentation.launches) {
         if (launched.has(l.key)) continue;
         launched.add(l.key);
-        effects.muzzle(l.x, l.y, l.angle, hash32(match, replay.startsAt, Number(l.key), 9), l.age);
+        effects.launch(weapon, l.points, hash32(match, replay.startsAt, Number(l.key), 9), l.age);
       }
       for (const e of presentation.effects) {
         if (!emitted.has(e.key) && e.clock >= 0) {
           emitted.add(e.key);
-          effects.impact(e.cx, e.cy, e.radius, damageTier(e.damage), hash32(match, replay.terrainOpsBefore + Number(e.key), 1), e.clock - HOLD_MS);
+          effects.impact(e.cx, e.cy, e.radius, damageTier(e.damage), hash32(match, replay.terrainOpsBefore + Number(e.key), 1), e.clock - HOLD_MS, weapon);
           const killIn = CARVE_AT_MS + HP_DRAIN_MS - e.clock;
           if (e.kills.length > 0 && killIn > -LATE_KILL_MS) {
             effects.killFlash(killIn);

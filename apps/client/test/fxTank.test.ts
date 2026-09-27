@@ -65,12 +65,12 @@ describe("オンラインの押し戻しと煙の輪と撃破の破片", () => {
     expect(labTankHit(presentation([effect(100)]), "p1", 30).nudge).toBe(0);
   });
   it("煙の輪は弾道ごとに 1 回、撃破では機体の色の破片を出す", () => {
-    const fx = createLabImpactFx(), api = { impact: vi.fn(), killFlash: vi.fn(), freeze: vi.fn(), muzzle: vi.fn(), wreck: vi.fn() };
-    const launches = [{ key: "0", x: 10, y: 10, angle: 0, age: 5 }];
+    const fx = createLabImpactFx(), api = { impact: vi.fn(), killFlash: vi.fn(), freeze: vi.fn(), launch: vi.fn(), wreck: vi.fn() };
+    const launches = [{ key: "0", x: 10, y: 10, angle: 0, age: 5, points: [{ x: 10, y: 10, at: 0 }, { x: 12, y: 9, at: 16 }] }];
     fx.update(api, presentation([], launches), { startsAt: 1, terrainOpsBefore: 0 }, "m", false);
     fx.update(api, presentation([effect(0, { kills: ["p1"] })], launches), { startsAt: 1, terrainOpsBefore: 0 }, "m", false, () => ({ x: 20, y: 15, ramp: TEAM_RAMPS.red }));
-    expect(api.muzzle).toHaveBeenCalledTimes(1);
-    expect(api.muzzle.mock.calls[0]![4]).toBe(5);
+    expect(api.launch).toHaveBeenCalledTimes(1);
+    expect(api.launch.mock.calls[0]![3]).toBe(5);
     expect(api.wreck).toHaveBeenCalledTimes(1);
   });
 });

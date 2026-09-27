@@ -40,6 +40,8 @@ export type DebrisInput = {
   readonly texels: (rect: Rect) => PixelGrid;
   readonly seed: number;
   readonly budget?: number;
+  /** 速さと上向きの勢いの倍率。掘削弾で大きくする（設計書 41 の段階 5） */
+  readonly power?: number;
 };
 
 const solid = (mask: TerrainMask, x: number, y: number): boolean =>
@@ -113,12 +115,13 @@ export const terrainDebris = (input: DebrisInput): ParticleBatch => {
     const dx = u.x + size / 2 - cx, dy = u.y + size / 2 - cy, d = Math.hypot(dx, dy);
     // 爆心より下のドットも、地中へは飛ばさず上へ噴き上げる。上下の向きは上にそろえる
     const angle = d > 0 ? Math.atan2(-Math.abs(dy), dx) : -unit(hash32(h, 1)) * Math.PI;
-    const speed = (DEBRIS_EDGE_SPEED + DEBRIS_CORE_SPEED * Math.max(0, 1 - d / r)) * (1 + DEBRIS_SPREAD * (2 * unit(hash32(h, 2)) - 1));
+    const power = input.power ?? 1;
+    const speed = power * (DEBRIS_EDGE_SPEED + DEBRIS_CORE_SPEED * Math.max(0, 1 - d / r)) * (1 + DEBRIS_SPREAD * (2 * unit(hash32(h, 2)) - 1));
     const heated = d < r / 2 && unit(hash32(h, 3)) < DEBRIS_HEAT_SHARE;
     b.x0[i] = u.x;
     b.y0[i] = u.y;
     b.vx[i] = Math.cos(angle) * speed;
-    b.vy[i] = Math.sin(angle) * speed - DEBRIS_LIFT;
+    b.vy[i] = Math.sin(angle) * speed - DEBRIS_LIFT * power;
     b.life[i] = DEBRIS_LIFE_MS;
     b.ramp[i] = table.of(u.color, heated);
     b.step[i] = heated ? DEBRIS_HEAT_STEP_MS : 0;
