@@ -52,7 +52,7 @@ export const FxLab = () => {
           {SPEEDS.map((s) => <option key={s} value={s}>{`x${s}`}</option>)}
         </select>
         <button type="button" onClick={() => { if (paused) lab?.resume(); else lab?.pause(); setPaused(!paused); }}>{paused ? "resume" : "pause"}</button>
-        <button type="button" disabled={!paused} onClick={() => lab?.step(1000 / 60)}>step</button>
+        <button type="button" disabled={!paused} onClick={() => lab?.step(16)}>step</button>
         <label><input type="checkbox" onChange={(e) => lab?.setReduceMotion(e.target.checked)} />reduce motion</label>
         <button type="button" onClick={() => lab?.resetStats()}>reset stats</button>
         <span data-testid="fx-stats">{statsText(stats)}</span>

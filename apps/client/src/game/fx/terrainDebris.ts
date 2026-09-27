@@ -14,12 +14,12 @@ export const DEBRIS_LIFE_MS = 2500;
 /** 重力（art px/秒²） */
 export const DEBRIS_GRAVITY = 420;
 /** 爆風の縁の速さと、爆心で足す速さ（art px/秒） */
-export const DEBRIS_EDGE_SPEED = 60;
-export const DEBRIS_CORE_SPEED = 200;
+export const DEBRIS_EDGE_SPEED = 50;
+export const DEBRIS_CORE_SPEED = 150;
 /** 速さのばらつき（±） */
 export const DEBRIS_SPREAD = 0.25;
 /** 上向きに足す速さ（art px/秒） */
-export const DEBRIS_LIFT = 120;
+export const DEBRIS_LIFT = 100;
 /** 熱で光らせる割合。爆心から半径の半分以内のドットだけ */
 export const DEBRIS_HEAT_SHARE = 0.25;
 /** 熱の色の段を進める ms。黄、橙、赤の 3 段で約 400 ms */

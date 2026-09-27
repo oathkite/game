@@ -19,7 +19,7 @@ import { createTankView, type TankPose, type TankView } from "./tankView";
 import { createTerrainLayer, type TerrainLayer } from "./terrainLayer";
 import { createFxLayer } from "./fx/fxLayer";
 import type { ArtBounds } from "./fx/particles";
-import { terrainDebris } from "./fx/terrainDebris";
+import { createDimLayer, createFlashLayer, createRendererEffects, type RendererEffects } from "./fx/rendererEffects";
 import { ART_PER_CELL } from "./pixelGrid";
 
 // PixiJS の Application を 1 つ持ち、地形、戦車、弾の層をまとめる。
@@ -51,14 +51,7 @@ export type Renderer = {
   readonly destroy: () => void;
 };
 
-export type RendererEffects = {
-  /** 削れた地形の破片（設計書 41.5 の D1）。seed はハッシュの入力、age は削れてからの ms */
-  readonly terrainDebris: (before: TerrainMask, after: TerrainMask, op: TerrainOp, seed: number, age?: number) => void;
-  /** 今描いている粒の数。FX ラボと測定に使う */
-  readonly particleCount: () => number;
-  /** 粒をすべて消す。FX ラボで撃ち直すときに使う */
-  readonly clear: () => void;
-};
+export type { RendererEffects };
 
 /** 粒を描く範囲の余白（art px）。画面揺れでずれた分も描く */
 const FX_MARGIN = 8;
@@ -149,6 +142,9 @@ export const createRenderer = async (init: RendererInit): Promise<Renderer> => {
   const reveal = new Graphics();
   world.addChild(reveal);
   const edges = new Graphics();
+  // 大きな着弾の暗転（設計書 41.6 の I5）。地形と背景の上、光と火球と機体の下
+  const dim = createDimLayer(init.mask.width, init.mask.height);
+  world.addChild(dim);
   // 手番をまたいで残る粒。地形より手前で、爆風と機体より奥（設計書 41.9）。火球の中の破片は火球に隠れ、外へ出たものが見える
   const fx = createFxLayer();
   world.addChild(fx.back);
@@ -164,6 +160,8 @@ export const createRenderer = async (init: RendererInit): Promise<Renderer> => {
   }
   world.addChild(fx.front);
   app.stage.addChild(edges);
+  const flash = createFlashLayer();
+  app.stage.addChild(flash);
   /** 見えている範囲（art px） */
   const viewArt = (): ArtBounds => {
     const left = -world.x / cell, top = -world.y / cell;
@@ -174,7 +172,8 @@ export const createRenderer = async (init: RendererInit): Promise<Renderer> => {
       bottom: Math.ceil((top + app.screen.height / cell) * ART_PER_CELL) + FX_MARGIN,
     };
   };
-  app.ticker.add(() => fx.tick(app.ticker.deltaMS, viewArt()));
+  const effects = createRendererEffects({ fx, texels: terrain.texels, dim, flash, screen: () => app.screen, reduced: () => reduced.matches });
+  app.ticker.add(() => { fx.tick(app.ticker.deltaMS, viewArt()); effects.tick(); });
   app.ticker.add(() => {
     for (const t of tanks) t.tick?.(app.ticker.deltaMS, reduced.matches);
   });
@@ -268,15 +267,7 @@ export const createRenderer = async (init: RendererInit): Promise<Renderer> => {
       reveal.visible = true;
       terrain.sprite.mask = reveal;
     },
-    effects: {
-      terrainDebris: (before, after, op, seed, age = 0) => {
-        const texels = terrain.texels;
-        if (!texels) return;
-        fx.emit("back", terrainDebris({ before, after, op, seed, texels: (rect) => texels(before, rect) }), age);
-      },
-      particleCount: fx.count,
-      clear: fx.clear,
-    },
+    effects,
     destroy: () => {
       for (const stop of labelStops) safely(stop);
       labelStops.clear();

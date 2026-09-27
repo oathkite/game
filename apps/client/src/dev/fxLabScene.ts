@@ -29,7 +29,7 @@ export type FxLab = {
   readonly setReduceMotion: (on: boolean) => void;
   readonly pause: () => void;
   readonly resume: () => void;
-  /** 止めたまま ms だけ進める。1/60 秒ずつ描く */
+  /** 止めたまま ms だけ進める。16 ms ずつ描く（端数は切り上げて 1 コマ） */
   readonly step: (ms: number) => void;
   readonly stats: () => FxLabStats;
   readonly resetStats: () => void;
@@ -43,7 +43,9 @@ const TARGET_X = 225;
 const LOOP_GAP_MS = 700;
 /** 測定に使う直近のフレーム数 */
 const SAMPLE_FRAMES = 600;
-const STEP_MS = 1000 / 60;
+/** コマ送りの 1 コマ（ms）。2 進数で割り切れる値にして、足し合わせても丸めの誤差が出ないようにする */
+const STEP_MS = 16;
+const LAB_JOB_ID = 1;
 
 /** なだらかな丘の地形。的の手前に小さな盛り上がりを置く */
 const labTerrain = (): TerrainMask =>
@@ -124,7 +126,7 @@ export const createFxLab = async (host: HTMLElement, options: { readonly cell?: 
   const players = [player(0, mask, SHOOTER_X), player(1, mask, TARGET_X)] as const;
   const r = await createRenderer({ mapId: "ridgeline", host, layout: { cell, mapWidth: host.clientWidth, mapHeight: host.clientHeight, panelWidth: 0, panelCell: 1 }, mask, background: 0x000000, backgroundAlpha: 0, players, autoStart: !options.still });
   const meter = createMeter(r), aims = new Map<WeaponId, Aim>();
-  let stop: () => void = () => {}, loop = true, weapon: WeaponId = "cannon", reduceMotion = false, nextId = 1, waitMs = -1;
+  let stop: () => void = () => {}, loop = true, weapon: WeaponId = "cannon", reduceMotion = false, waitMs = -1;
   const reset = (): void => {
     r.effects.clear();
     r.setTerrain(mask);
@@ -135,7 +137,8 @@ export const createFxLab = async (host: HTMLElement, options: { readonly cell?: 
     const aim = aims.get(w) ?? aimAt(mask, players, w);
     aims.set(w, aim);
     reset();
-    stop = playReplay(r, jobOf(nextId++, mask, players, w, aim), [aim.elevation, 45], 0, { sound: () => {}, reduceMotion, done: () => { if (loop) waitMs = LOOP_GAP_MS; } });
+    // 再生の番号は散らし方の種になるので、同じ武器は毎回同じ絵になるよう固定する（設計書 41.3）
+    stop = playReplay(r, jobOf(LAB_JOB_ID, mask, players, w, aim), [aim.elevation, 45], 0, { sound: () => {}, reduceMotion, done: () => { if (loop) waitMs = LOOP_GAP_MS; } });
   };
   // 次の射撃までの待ちも描画の時計で数え、一時停止とコマ送りに従わせる
   r.app.ticker.add(() => {
@@ -155,7 +158,7 @@ export const createFxLab = async (host: HTMLElement, options: { readonly cell?: 
     step: (ms) => {
       const ticker = r.app.ticker, speed = ticker.speed;
       ticker.speed = 1;
-      for (let left = ms; left > 0; left -= STEP_MS) ticker.update(ticker.lastTime + Math.min(STEP_MS, left));
+      for (let i = 0; i < Math.ceil(ms / STEP_MS); i++) ticker.update(ticker.lastTime + STEP_MS);
       ticker.speed = speed;
     },
     stats: meter.stats,

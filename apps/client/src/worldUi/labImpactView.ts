@@ -1,4 +1,4 @@
-import { blastFrameAt, CARVE_AT_MS, debrisAt, flashMsOf, invertCells, invertOn, shakeOffsetAt, type HpBar, type Offset } from "@/game/hitFeedback";
+import { blastFrameAt, CARVE_AT_MS, damageTier, debrisAt, flashMsOf, HITSTOP_MS, HOLD_MS, HP_DRAIN_MS, invertCells, invertOn, shakeOffsetAt, type HpBar, type Offset } from "@/game/hitFeedback";
 import { hash32, hashText } from "@/game/fx/hash";
 import type { ProjectileView } from "@/game/projectileView";
 import type { EdgePoint, RendererEffects } from "@/game/renderer";
@@ -47,13 +47,43 @@ const DEBRIS_BATCH_LIMIT = 8;
 
 /** 削れた地形の破片（設計書 41.5 の D1）。地形が増えた瞬間に、増えた削りを順に当てた mask の差から出す。
  * ハッシュの入力は対戦の識別子と、対戦の中での削りの通し番号（41.3）。どの画面でも同じ散り方になる */
-export const emitLabDebris = (effects: Pick<RendererEffects, "terrainDebris">, before: TerrainMask, ops: readonly TerrainOp[], firstIndex: number, matchId: string): void => {
+export const emitLabDebris = (effects: Pick<RendererEffects, "crater">, before: TerrainMask, ops: readonly TerrainOp[], firstIndex: number, matchId: string): void => {
   if (ops.length === 0 || ops.length > DEBRIS_BATCH_LIMIT) return;
   const match = hashText(matchId);
   let mask = before;
   ops.forEach((op, i) => {
     const after = carve(mask, op);
-    effects.terrainDebris(mask, after, op, hash32(match, firstIndex + i));
+    effects.crater(mask, after, op, hash32(match, firstIndex + i));
     mask = after;
   });
+};
+
+/** 撃破の全画面の光を、この ms より遅れて知ったときは出さない（途中参加で昔の撃破を光らせない） */
+const LATE_KILL_MS = 100;
+
+/** オンラインの着弾の層（設計書 41.6）。着弾ごとに 1 回だけ出す。途中から見たときは、着弾からの時刻だけ前に生まれたものとして出す。
+ * 最後の着弾では削る瞬間に粒の時計も止め、labReplay.ts のヒットストップに合わせる */
+export const createLabImpactFx = () => {
+  let replayKey = "";
+  const emitted = new Set<string>(), frozen = new Set<string>();
+  return {
+    update: (effects: Pick<RendererEffects, "impact" | "killFlash" | "freeze">, presentation: Presentation, replay: { readonly startsAt: number; readonly terrainOpsBefore: number }, matchId: string, reduced: boolean): void => {
+      const key = `${matchId}/${replay.startsAt}`;
+      if (key !== replayKey) { replayKey = key; emitted.clear(); frozen.clear(); }
+      if (reduced) return;
+      const match = hashText(matchId);
+      for (const e of presentation.effects) {
+        if (!emitted.has(e.key) && e.clock >= 0) {
+          emitted.add(e.key);
+          effects.impact(e.cx, e.cy, e.radius, damageTier(e.damage), hash32(match, replay.terrainOpsBefore + Number(e.key), 1), e.clock - HOLD_MS);
+          const killIn = CARVE_AT_MS + HP_DRAIN_MS - e.clock;
+          if (e.kills.length > 0 && killIn > -LATE_KILL_MS) effects.killFlash(killIn);
+        }
+        if (e.final && !frozen.has(e.key) && e.clock >= CARVE_AT_MS) {
+          frozen.add(e.key);
+          effects.freeze(Math.max(0, HITSTOP_MS - (e.clock - CARVE_AT_MS)));
+        }
+      }
+    },
+  };
 };

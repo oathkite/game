@@ -1,6 +1,6 @@
 import { shotFlashes, type ShotFlash } from "@/game/muzzlePose";
 import { shotRecoil } from "@/game/shotRecoil";
-import { CARVE_AT_MS, hpBarAt, IMPACT_TOTAL_MS, missMarkAt, type HpBar, type MissMark } from "@/game/hitFeedback";
+import { CARVE_AT_MS, hitstopClock, hpBarAt, IMPACT_TOTAL_MS, missMarkAt, type HpBar, type MissMark } from "@/game/hitFeedback";
 import { replayTailMs } from "@game/engine/replay-timing";
 import { trailDots, type TrailDot } from "@/game/trail";
 import type { LabFrame } from "@game/protocol/v2-lab";
@@ -20,6 +20,10 @@ export type LabEffect = {
   /** この着弾で最も大きいダメージ */
   readonly damage: number;
   readonly damages: readonly { readonly playerId: string; readonly amount: number }[];
+  /** この着弾で HP が 0 になった参加者（設計書 41.6 の全画面の光） */
+  readonly kills: readonly string[];
+  /** 最後の着弾で、その後に飛んでいる弾がない。削る瞬間にヒットストップを入れる */
+  readonly final: boolean;
 };
 
 const projectileAt = (path: Path, tick: number) => {
@@ -39,18 +43,38 @@ const trailAt = (path: Path, tick: number): readonly TrailDot[] => {
   return trailDots(passed, passed.length - 1, 1, TRAIL_RECENT_POINTS);
 };
 
-type Timeline = { readonly replay: Replay; readonly settleAt: number; readonly now: number };
+type Timeline = { readonly replay: Replay; readonly settleAt: number; readonly now: number; readonly freezeAt: number | null };
 const timeOf = (line: Timeline, tick: number): number => line.replay.startsAt + tick / Math.max(1, line.replay.ticks) * (line.settleAt - line.replay.startsAt);
 // 着弾の後には 1000 ms 以上残るので（設計書 41.8）、着弾の演出は縮めずに再生する
-const clockOf = (line: Timeline, at: number): number => line.now - at;
+const clockOf = (line: Timeline, at: number): number => hitstopClock(line.now, line.freezeAt) - at;
 
-const effectsAt = (frame: LabFrame, line: Timeline): readonly LabEffect[] => line.replay.impacts.flatMap((impact, index) => {
+/** 最後の着弾の添字。その後に飛んでいる弾があれば null */
+const finalImpactOf = (replay: Replay): number | null => {
+  if (replay.impacts.length === 0) return null;
+  const index = replay.impacts.reduce((best, impact, i) => (impact.tick > replay.impacts[best]!.tick ? i : best), 0);
+  return replay.paths.every(path => path.endTick <= replay.impacts[index]!.tick) ? index : null;
+};
+
+/** 着弾ごとに HP が 0 になった参加者 */
+const killsOf = (replay: Replay): readonly (readonly string[])[] => {
+  const hp = new Map(replay.playersBefore.map(p => [p.playerId, p.eliminated ? 0 : p.hp]));
+  return replay.impacts.map(impact => impact.damage.flatMap(d => {
+    const before = hp.get(d.playerId) ?? 0;
+    hp.set(d.playerId, before - d.amount);
+    return before > 0 && before - d.amount <= 0 ? [d.playerId] : [];
+  }));
+};
+
+const effectsAt = (frame: LabFrame, line: Timeline): readonly LabEffect[] => {
+  const final = finalImpactOf(line.replay), kills = killsOf(line.replay);
+  return line.replay.impacts.flatMap((impact, index) => {
   const at = timeOf(line, impact.tick), op = frame.terrainOps[line.replay.terrainOpsBefore + index];
   const clock = clockOf(line, at);
   if (line.now < at || clock >= IMPACT_TOTAL_MS || !op) return [];
   const damages = impact.damage.filter(d => d.amount > 0);
-  return [{ key: String(index), cx: op.cx, cy: op.cy, radius: op.radius, clock, damage: Math.max(0, ...damages.map(d => d.amount)), damages }];
-});
+  return [{ key: String(index), cx: op.cx, cy: op.cy, radius: op.radius, clock, damage: Math.max(0, ...damages.map(d => d.amount)), damages, kills: kills[index] ?? [], final: index === final }];
+  });
+};
 
 /** 被弾した機体の HP バー。最後に当たった着弾から、減る前の値を後の値へ減らしていく */
 const hpBarsAt = (line: Timeline): Readonly<Record<string, HpBar>> => {
@@ -84,7 +108,10 @@ export const presentLabReplay = (frame: LabFrame, now: number) => {
   if (frame.phase !== "replaying" || !replay || now >= replay.endsAt) return idle(frame);
   // 飛翔の終わりはサーバーと同じ関数で逆算する（設計書 41.8）
   const settleAt = replay.endsAt - replayTailMs(replay.impacts);
-  const line: Timeline = { replay, settleAt, now };
+  const base = { replay, settleAt, now, freezeAt: null };
+  const final = finalImpactOf(replay);
+  // 最後の着弾の削る瞬間から HITSTOP_MS だけ着弾の時計を止める（設計書 41.6）
+  const line: Timeline = { ...base, freezeAt: final === null ? null : timeOf(base, replay.impacts[final]!.tick) + CARVE_AT_MS };
   const t = Math.max(0, Math.min(1, (now - replay.startsAt) / Math.max(1, settleAt - replay.startsAt)));
   const tick = t * replay.ticks;
   const impacts = replay.impacts.filter(i => i.tick <= tick);

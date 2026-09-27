@@ -10,6 +10,10 @@ import {
   blastFrameAt,
   CARVE_AT_MS,
   damageLabelText,
+  damageTier,
+  HITSTOP_MS,
+  HOLD_MS,
+  HP_DRAIN_MS,
   damageSounds,
   debrisAt,
   flashMsOf,
@@ -64,6 +68,8 @@ type ImpactRun = {
   readonly at: number;
   exploded: boolean;
   carved: boolean;
+  /** 最後の着弾で、その後に飛んでいる弾がない。削る瞬間にヒットストップを入れる（設計書 41.6） */
+  readonly final: boolean;
 };
 
 /** 再生 1 回分の可変状態 */
@@ -90,6 +96,8 @@ type Run = {
   mask: TerrainMask;
   /** 着弾で減っていく HP */
   hp: [number, number];
+  /** ヒットストップの残り（ms） */
+  freezeLeft: number;
   readonly flashUntil: [number, number];
   readonly drains: [Drain | null, Drain | null];
   shake: { readonly at: number; readonly damage: readonly [number, number] } | null;
@@ -134,9 +142,12 @@ const timeline = (job: ReplayJob): { launchAt: number[]; impacts: ImpactRun[] } 
   const impacts = job.shot.impacts.map((impact) => {
     const path = job.paths[impact.projectile];
     const at = (launchAt[impact.projectile] ?? 0) + impactTimeMs(impact.stage, path?.impactAt ?? []);
-    return { impact, key: `${impact.projectile}/${impact.stage}`, at, exploded: false, carved: false };
+    return { impact, key: `${impact.projectile}/${impact.stage}`, at, exploded: false, carved: false, final: false };
   });
-  return { launchAt, impacts };
+  // 最後の着弾は、その後に弾が飛んでいないときだけヒットストップの対象にする
+  const last = impacts.reduce<ImpactRun | null>((a, b) => (a === null || b.at > a.at ? b : a), null);
+  const flightEnd = Math.max(0, ...job.paths.map((_, p) => flightEndOf(job, launchAt, p)));
+  return { launchAt, impacts: impacts.map(ir => (ir === last && flightEnd <= ir.at + HOLD_MS ? { ...ir, final: true } : ir)) };
 };
 
 /** 着弾後の位置で、地形は着弾前のまま描く。落下前の姿勢。HP バーは削れてからの時間で減らしていく */
@@ -230,7 +241,8 @@ const carveImpact = (run: Run, ir: ImpactRun): void => {
   const before = run.mask;
   run.mask = carve(run.mask, impact.terrainOp);
   // 削れた地形のドットを散らして落とす（設計書 41.5 の D1）。練習は対戦の識別子を 0 とする（41.3）
-  if (!run.cb.reduceMotion) run.renderer.effects.terrainDebris(before, run.mask, impact.terrainOp, hash32(0, run.job.id, impact.projectile, impact.stage));
+  if (!run.cb.reduceMotion) run.renderer.effects.crater(before, run.mask, impact.terrainOp, hash32(0, run.job.id, impact.projectile, impact.stage));
+  if (ir.final && !run.cb.reduceMotion) { run.freezeLeft = HITSTOP_MS; run.renderer.effects.freeze(HITSTOP_MS); }
   run.cb.onImpact?.(run.mask, impact);
   run.renderer.setTerrain(run.mask, impact.terrainOp);
   const shooter = run.job.shot.input.seat;
@@ -246,6 +258,8 @@ const carveImpact = (run: Run, ir: ImpactRun): void => {
     run.drains[seat] = { before: shown, after: run.hp[seat], at: run.elapsed };
     run.flashUntil[seat] = Math.max(run.flashUntil[seat], run.elapsed + flashMsOf(damage));
     run.renderer.showDamage(seat, damageLabelText(damage), shooterColor, damage >= 50);
+    // 撃破の明滅（C5）が始まる瞬間。HP バーが減りきったとき
+    if (hpBefore[seat] > 0 && run.hp[seat] <= 0) run.renderer.effects.killFlash(HP_DRAIN_MS);
   }
   if (impact.damage[0] > 0 || impact.damage[1] > 0) run.shake = { at: run.elapsed, damage: impact.damage };
   for (const name of damageSounds(impact.damage, hpBefore, run.hp, shooter, run.mySeat)) run.cb.sound(name);
@@ -258,6 +272,11 @@ const updateImpact = (run: Run, ir: ImpactRun): void => {
   if (!ir.exploded) {
     ir.exploded = true;
     run.cb.sound(weaponSound(run.job.shot.input.weapon, "impact"));
+    // 火花、煙、光は爆風が広がり始める瞬間に生まれる（設計書 41.6）
+    if (!run.cb.reduceMotion) {
+      const { cell, terrainOp, damage } = ir.impact;
+      run.renderer.effects.impact(cell.x, cell.y, terrainOp.radius, damageTier(Math.max(damage[0], damage[1])), hash32(0, run.job.id, ir.impact.projectile, ir.impact.stage), -HOLD_MS);
+    }
   }
   const { cell, terrainOp } = ir.impact;
   const frame = blastFrameAt(t, terrainOp.radius);
@@ -328,7 +347,9 @@ const stepFall = (run: Run): void => {
 };
 
 const stepFrame = (run: Run, deltaMs: number): void => {
-  run.elapsed += deltaMs;
+  const frozen = Math.min(run.freezeLeft, deltaMs);
+  run.freezeLeft -= frozen;
+  run.elapsed += deltaMs - frozen;
   if (run.phase === "shot") stepShot(run);
   else if (run.phase === "fall") stepFall(run);
   else if (run.phase === "hold") stepHold(run);
@@ -363,6 +384,7 @@ export const playReplay = (
     phaseStart: 0,
     mask: job.maskBefore,
     hp: [job.playersBefore[0].hp, job.playersBefore[1].hp],
+    freezeLeft: 0,
     flashUntil: [0, 0],
     drains: [null, null],
     shake: null,

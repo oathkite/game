@@ -23,6 +23,8 @@ export type FxLayer = {
   readonly emit: (depth: FxDepth, batch: ParticleBatch, age?: number) => void;
   /** 時計を進め、範囲（art px）の中の粒を並べ直す */
   readonly tick: (deltaMs: number, bounds: ArtBounds) => void;
+  /** 時計を ms だけ止める（ヒットストップ、設計書 41.6）。止めている間に来た描画の経過は捨てる */
+  readonly freeze: (ms: number) => void;
   /** 今並べている粒の数 */
   readonly count: () => number;
   readonly clear: () => void;
@@ -73,7 +75,7 @@ const createDepth = () => {
 
 export const createFxLayer = (): FxLayer => {
   const depths = { back: createDepth(), front: createDepth() };
-  let clock = 0;
+  let clock = 0, frozen = 0;
   return {
     back: depths.back.container,
     front: depths.front.container,
@@ -83,13 +85,16 @@ export const createFxLayer = (): FxLayer => {
       const bornAt = clock - age;
       depths[depth].add({ batch, bornAt, endAt: bornAt + spanOf(batch) });
     },
+    freeze: (ms) => { frozen = Math.max(frozen, ms); },
     tick: (deltaMs, bounds) => {
-      clock += deltaMs;
+      const stop = Math.min(frozen, deltaMs);
+      frozen -= stop;
+      clock += deltaMs - stop;
       depths.back.render(clock, bounds);
       depths.front.render(clock, bounds);
     },
     count: () => depths.back.count() + depths.front.count(),
-    clear: () => { depths.back.clear(); depths.front.clear(); },
+    clear: () => { depths.back.clear(); depths.front.clear(); frozen = 0; },
     destroy: () => { depths.back.container.destroy(); depths.front.container.destroy(); },
   };
 };

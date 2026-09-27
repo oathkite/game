@@ -19,7 +19,7 @@ export type ParticleBatch = {
   readonly ramp: Uint16Array;
   /** 色の段を 1 つ進める ms。0 なら寿命を段の数で割る */
   readonly step: Float32Array;
-  /** 粒の大きさ。1 か 2 art px 四方 */
+  /** 粒の大きさ。1〜3 art px 四方 */
   readonly size: Uint8Array;
   /** 消える順番を決める 0 以上 1 未満の値。ハッシュから作る */
   readonly fade: Float32Array;

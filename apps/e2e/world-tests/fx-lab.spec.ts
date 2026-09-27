@@ -2,7 +2,7 @@ import { expect, test, type Page } from "@playwright/test";
 import type {} from "../scripts/fxLabWindow";
 
 // FX ラボ（設計書 41.11）の決めた時刻の絵を比べ、演出の見た目の変化を検出する。
-// still=1 では描画の時計が自分では進まず、step で 1/60 秒ずつ進めるので、同じ時刻には毎回同じ絵になる。
+// still=1 では描画の時計が自分では進まず、step で 16 ms ずつ進めるので、同じ時刻には毎回同じ絵になる。
 // 絵を変えたときは --update-snapshots で基準を撮り直し、差分が意図した変化だけであることを画像で確かめる。
 
 /** 撃って、地形が削れて破片が出る瞬間まで進める。進めた ms を返す */
@@ -11,7 +11,7 @@ const fireUntilCarve = (page: Page, weapon: string): Promise<number> => page.eva
   lab.setLoop(false);
   lab.fire(w);
   let t = 0;
-  while (lab.stats().particles === 0 && t < 8000) { lab.step(1000 / 60); t += 1000 / 60; }
+  while (lab.stats().particles === 0 && t < 8000) { lab.step(16); t += 16; }
   return Math.round(t);
 }, weapon);
 

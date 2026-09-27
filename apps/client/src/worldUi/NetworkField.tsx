@@ -21,7 +21,7 @@ import { createCameraRig } from "@/prototype/cameraRig";
 import { loadCameraSettings } from "@/prototype/cameraSettings";
 import { worldToScreen } from "@/prototype/camera";
 import type { presentLabReplay } from "@/networkLab/labReplay";
-import { drawLabImpacts, emitLabDebris, labEdgePoints, labShake, labTankHit } from "./labImpactView";
+import { createLabImpactFx, drawLabImpacts, emitLabDebris, labEdgePoints, labShake, labTankHit } from "./labImpactView";
 import { edgeBlinkOn } from "@/game/edgeMarker";
 import { guideDots } from "@/game/trail";
 import { revealRowsAt } from "./openingTour";
@@ -57,7 +57,7 @@ export const NetworkField = (props: Props) => {
       if (disposed) { renderer.destroy(); return; }
       const r = renderer; let bullet = r.projectile("yellow", "cannon");
       let previousMoveX: number | undefined;
-      const damageEvents = new Set<string>();
+      const damageEvents = new Set<string>(), impactFx = createLabImpactFx();
       stop = r.onFrame(dt => {
         const { frame, players, presentation, elevation, ownId } = latest.current;
         const size = layout(), key = `${size.mapWidth}/${size.mapHeight}/${frame.map.width}/${frame.map.height}`;
@@ -126,6 +126,7 @@ export const NetworkField = (props: Props) => {
         bullet.clear();
         for (let i = 0; i < 9; i++) { const p = presentation.bullets[i]; bullet.setBullet(i, p?.x ?? null, p?.y ?? 0, p?.angle ?? 0); }
         drawLabImpacts(bullet, presentation, mask, reducedNow);
+        if (frame.phase === "replaying" && frame.replay) impactFx.update(r.effects, presentation, frame.replay, frame.matchId, reducedNow);
         r.setShake(labShake(presentation, reducedNow));
         r.setEdgeMarkers(labEdgePoints(presentation, shown, colorOf), edgeBlinkOn(latest.current.serverNow, reducedNow));
         const first = presentation.bullets[0]; if (first) rig.shot(first);

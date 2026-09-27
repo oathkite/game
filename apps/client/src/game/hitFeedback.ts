@@ -21,6 +21,11 @@ export const BLAST_MIN_RADIUS = 2;
 export const CARVE_AT_MS = HOLD_MS + EXPAND_MS;
 /** 着弾の演出の合計 */
 export const IMPACT_TOTAL_MS = HOLD_MS + EXPAND_MS + FLICKER_MS + RING_MS;
+/** 最後の着弾で、その後に飛んでいる弾がないときに画面全体を止める長さ（設計書 41.6） */
+export const HITSTOP_MS = 60;
+
+/** ヒットストップを入れた時刻 now'。止め始め（freezeAt）から HITSTOP_MS の間は freezeAt に留まり、その後は HITSTOP_MS だけ遅れて進む */
+export const hitstopClock = (now: number, freezeAt: number | null): number => (freezeAt === null ? now : now - Math.min(HITSTOP_MS, Math.max(0, now - freezeAt)));
 
 export type BlastFrame = {
   /** 弾を着弾点に止めて見せる */
