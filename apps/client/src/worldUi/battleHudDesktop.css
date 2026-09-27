@@ -1,12 +1,9 @@
 /* Cockpit proportions follow the reference; compact layouts keep their existing space. */
 @media (min-width:1200px) and (min-height:700px) {
   .battle-hp { height:8px; box-shadow:none; }
-  .battle-countdown { position:relative; isolation:isolate; width:64px; height:64px; font-size:32px; background:#000; box-shadow:none; }
-  .battle-countdown::before { content:""; position:absolute; z-index:-1; inset:-10px -16px -20px; pointer-events:none; background:#000; clip-path:polygon(0 0,100% 0,91% 91%,85% 100%,15% 100%,9% 91%); }
-  .battle-countdown::after { content:""; position:absolute; z-index:-1; inset:-10px -14px -18px; pointer-events:none; background:#000; clip-path:polygon(0 0,100% 0,91% 91%,85% 100%,15% 100%,9% 91%); }
-  .world-ui .battle-menu { top:92px; right:20px; }
-  .world-ui .battle-console:not(.has-touch) { height:160px; grid-template-columns:280px 156px minmax(0,1fr) 164px; gap:22px; padding:8px 20px; }
-  .battle-console:not(.has-touch) .battle-angle { width:144px; height:144px; justify-self:center; filter:drop-shadow(0 3px 3px #06152099); }
+  .battle-countdown { width:64px; height:64px; font-size:32px; box-shadow:none; }
+  .world-ui .battle-console:not(.has-touch) { height:160px; column-gap:22px; padding:8px 20px; }
+  .battle-console:not(.has-touch) .battle-angle { justify-self:center; }
   /* 風を出す操作盤（設計書 08 の 8.5）。下の段の分だけ角度メーターを縮める。
      風のメーターは 1 art px = 3 CSS px で描く。観戦中の帯（has-wind を持たない）も同じ大きさにする */
   .world-ui .battle-console.has-wind:not(.has-touch) { row-gap:8px; }
@@ -22,6 +19,5 @@
   .battle-console:not(.has-touch) .battle-weapons button > svg { width:52px; height:52px; }
   .battle-console:not(.has-touch) .battle-weapons span { font-size:14px; }
   .world-ui .network-world:has(.battle-console:not(.has-touch)) { grid-template-rows:76px minmax(0,1fr) 160px; }
-  .world-ui .network-world:has(.battle-console.has-touch) { grid-template-rows:76px minmax(0,1fr) 152px; }
-  .world-ui .kp-root:has(.battle-console) .kp-minimap,.world-ui .network-world:has(.battle-console) .network-overview { top:74px; width:220px; }
+  .world-ui .kp-root:has(.battle-console) .kp-minimap,.world-ui .network-world:has(.battle-console) .network-overview { width:220px; }
 }

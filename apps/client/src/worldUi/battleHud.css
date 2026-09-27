@@ -1,11 +1,11 @@
-.battle-hp { height:6px; background:#000; border-radius:0; overflow:hidden; grid-column:1/-1; }
+.battle-hp { height:6px; border-radius:0; overflow:hidden; grid-column:1/-1; }
 .battle-hp i { display:block; height:100%; background:var(--team); }
-.battle-countdown { flex-shrink:0; width:48px; height:48px; border:3px solid transparent; border-radius:0; display:grid; place-items:center; font-size:25px; font-weight:800; }
+.battle-countdown { flex-shrink:0; width:48px; height:48px; border-radius:0; display:grid; place-items:center; font-size:25px; font-weight:800; }
 .battle-countdown .timer { background:#000; border:0; padding:0; color:#33ff66; font:inherit; min-width:0; }
 /* 風のメーター（設計書 08 の 8.5） */
 .battle-wind { display:flex; align-items:center; gap:4px; pointer-events:none; font-size:16px; font-weight:400; line-height:1; white-space:nowrap; }
-.world-ui .battle-menu { position:absolute; top:10px; right:16px; width:44px; min-width:44px; height:44px; padding:8px!important; border:2px solid #718b9b!important; border-image:none!important; background:#000; color:#33ff66!important; }
-.world-ui .battle-console { height:120px; display:grid; grid-template-columns:188px 108px minmax(0,1fr) 112px; gap:16px; align-items:center; padding:6px 16px; background:#000; color:#33ff66; border:0; }
+.world-ui .battle-menu { position:absolute; width:44px; height:44px; padding:8px!important; border-image:none!important; background:#000; color:#33ff66!important; }
+.world-ui .battle-console { height:120px; display:grid; column-gap:16px; align-items:center; padding:6px 16px; background:#000; color:#33ff66; border:0; }
 /* 風を出す操作盤は 2 段にする（設計書 08 の 8.5）。上の段は角度とパワー、下の段は角度の真下に風、パワーの真下に残り移動。
    武器は 2 段にまたがる。操作盤の高さは変えず、下の段の分だけ角度メーターを縮める。
    列は simpleTheme.css の 3 列（角度、パワー、武器）を前提にし、タッチは battleTouch.css で並べ直す。
@@ -16,37 +16,27 @@
 .battle-console.has-wind > .battle-wind { grid-area:2/1; justify-self:center; }
 .battle-console.has-wind .battle-movement { grid-area:2/2; }
 .battle-console.has-wind .battle-weapons { grid-area:1/3/3/4; }
-.battle-angle { display:block; width:108px; height:108px; }
+.battle-angle { display:block; }
 .battle-power { display:block; width:100%; height:80px; overflow:visible; }
-.battle-console:not(.has-touch) .battle-power { isolation:isolate; }
-.battle-console:not(.has-touch) .battle-power::before { content:""; position:absolute; z-index:-1; inset:-6px -10px; pointer-events:none; border:2px solid #38566b; border-radius:0; background:#000; box-shadow:none; }
 .battle-weapons { display:flex; gap:8px; }
-.world-ui .battle-weapons button { position:relative; width:48px; min-width:48px!important; min-height:56px; padding:2px!important; border:2px solid #526c80!important; border-image:none!important; border-radius:0; color:#33ff66!important; background:#000; }
-.world-ui .battle-weapons button[aria-pressed=true] { border-color:#f8e98d!important; outline:none!important; box-shadow:none; }
+.world-ui .battle-weapons button { position:relative; width:48px; min-width:48px!important; padding:2px!important; border:2px solid #526c80!important; border-image:none!important; border-radius:0; color:#33ff66!important; background:#000; }
+.world-ui .battle-weapons button[aria-pressed=true] { outline:none!important; box-shadow:none; }
 /* 武器のアイコンは 13 × 13 art px。大きさを 13 の倍数にして 1 art px を整数の px にする（設計書 40.10） */
 .battle-weapons button > svg { width:39px; height:39px; display:block; margin:auto; }
 .battle-weapons span { font-size:11px; }
-.world-ui .battle-console.has-touch { height:152px; grid-template-rows:84px 50px; grid-template-columns:100px 84px minmax(0,1fr) 104px; gap:4px 12px; }
-.battle-console.has-touch .battle-angle { width:84px; height:84px; }
-.battle-touch { grid-column:1/-1; display:flex; justify-content:space-between; gap:12px; }
-.battle-touch > div { display:flex; gap:8px; }
 .world-ui .battle-touch button { min-height:44px!important; min-width:48px!important; padding:0 12px!important; margin:0; }
 .world-ui .network-world:has(.battle-console) { grid-template-rows:64px minmax(0,1fr) 120px; }
-.world-ui .network-world:has(.battle-console.has-touch) { grid-template-rows:64px minmax(0,1fr) 152px; }
 .world-ui .kp-root:has(.battle-console) .kp-world-help,.world-ui .kp-root:has(.battle-console) .kp-minimap span { display:none; }
-.world-ui .kp-root:has(.battle-console) .kp-minimap { top:12px; bottom:auto; width:150px; border:2px solid #718b9b; border-radius:0; }
+.world-ui .kp-root:has(.battle-console) .kp-minimap { top:12px; bottom:auto; width:150px; border-radius:0; }
 .world-ui .kp-root:has(.battle-console) .kp-minimap canvas { height:auto; }
-.world-ui .network-world:has(.battle-console) .network-overview { top:12px; bottom:auto; border:2px solid #718b9b; border-radius:0; }
+.world-ui .network-world:has(.battle-console) .network-overview { top:12px; bottom:auto; border-radius:0; }
 .battle-sr { position:absolute!important; width:1px; height:1px; overflow:hidden; clip-path:inset(50%); }
 @media(max-width:999px),(max-height:499px) {
- .world-ui .battle-menu { right:4px; width:40px; min-width:40px; }
+ .world-ui .battle-menu { width:40px; }
  .battle-countdown { width:40px; height:40px; font-size:21px; }
- .world-ui .battle-console { height:96px; padding:4px 8px; gap:8px; grid-template-columns:84px 84px minmax(0,1fr) 100px; }
- .battle-angle { width:84px; height:84px; }
+ .world-ui .battle-console { height:96px; padding:4px 8px; column-gap:8px; }
  .battle-power { height:68px; }.battle-weapons { gap:4px; }
  .world-ui .network-world:has(.battle-console) { grid-template-rows:64px minmax(0,1fr) 96px; }
- .world-ui .network-world:has(.battle-console.has-touch) { grid-template-rows:64px minmax(0,1fr) 152px; }
- .world-ui .battle-console.has-touch { grid-template-columns:84px 84px minmax(0,1fr) 100px; gap:4px 8px; }
  /* 風のメーター（--wind-meter）が入るよう角度の列を広げる */
  .world-ui.world-ui .battle-console.has-wind:not(.has-touch) { grid-template-columns:var(--wind-meter) minmax(0,1fr) 100px; }
  .world-ui .battle-console.has-wind { row-gap:4px; }
@@ -64,7 +54,6 @@
 @media(max-width:999px),(max-height:499px) { .world-ui .kp-root:has(.battle-console) .kp-minimap,.world-ui .network-world:has(.battle-console) .network-overview { width:100px; } .battle-power-labels { font-size:10px; } }
 .battle-menu-panel[open] { display:grid; gap:12px; }.battle-menu-panel::backdrop { background:#000; }
 .world-ui .network-world { position:relative; }
-.world-ui .battle-console::before { display:none; }
 .world-ui .network-world .battle-menu svg { width:26px; height:26px; }
 .battle-menu-panel textarea { display:block; box-sizing:border-box; width:100%; margin:8px 0; resize:vertical; font:12px var(--font-jp); }
 
