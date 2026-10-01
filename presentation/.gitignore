@@ -1,0 +1,9 @@
+# 合成音声の試し（イントネーションが合わず使わなかった。tts.py で作り直せる）
+audio/
+# 録音を処理した音声（clean_audio.py で作り直せる）。書き起こし（*.stt.json）は残す
+recordings/clean/*.wav
+recordings/clean/*.mp3
+# 映像の素材と書き出し（prepare-assets.sh と render-all.sh、assemble.py で作り直せる）
+video/assets/
+video/out/
+__pycache__/

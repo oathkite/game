@@ -1,0 +1,31 @@
+<!doctype html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<title>stage</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=DotGothic16&display=swap">
+<style>
+  html, body { margin: 0; background: #040705; overflow: hidden; }
+  canvas { display: block; width: 1920px; height: 1080px; }
+</style>
+</head>
+<body>
+<canvas id="stage" width="1920" height="1080"></canvas>
+<script type="module">
+  import { createStage } from './stage.js';
+  const params = new URLSearchParams(location.search);
+  const stage = await createStage(document.getElementById('stage'), params.get('ch'));
+  // render.mjs はこの関数を時刻ごとに呼んで 1 コマずつ撮る。
+  window.renderAt = t => stage.draw(t);
+  window.stageInfo = { duration: stage.duration };
+  if (params.has('play')) {
+    const start = performance.now();
+    const loop = async () => { await stage.draw((performance.now() - start) / 1000 % stage.duration); requestAnimationFrame(loop); };
+    loop();
+  } else {
+    await stage.draw(Number(params.get('t') || 0));
+  }
+  window.stageReady = true;
+</script>
+</body>
+</html>

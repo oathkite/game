@@ -1,0 +1,166 @@
+<!doctype html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>ナレーション録音</title>
+<style>
+  :root { --bg:#f6f5f1; --card:#fff; --line:#dedbd2; --text:#1d1d1b; --muted:#6b6a64; --accent:#1f7a45; --rec:#c8322b; }
+  * { box-sizing:border-box; }
+  body { margin:0; background:var(--bg); color:var(--text); font:15px/1.7 -apple-system,"Hiragino Sans",sans-serif; }
+  .app { display:grid; grid-template-columns:220px 1fr; min-height:100vh; }
+  nav { border-right:1px solid var(--line); padding:16px 8px; display:grid; gap:4px; align-content:start; }
+  nav button { text-align:left; font:inherit; padding:8px 10px; border:0; border-radius:8px; background:none; cursor:pointer; color:var(--text); }
+  nav button[aria-current="true"] { background:var(--card); box-shadow:0 0 0 1px var(--line); font-weight:600; }
+  nav small { display:block; color:var(--muted); font-size:12px; }
+  main { padding:24px; display:grid; gap:20px; align-content:start; max-width:900px; }
+  h1 { font-size:18px; margin:0; color:var(--muted); font-weight:500; }
+  .prompter { background:var(--card); border:1px solid var(--line); border-radius:12px; padding:24px 28px; font-size:24px; line-height:1.9; }
+  .prompter p { margin:0 0 6px; }
+  .controls { display:flex; align-items:center; gap:16px; flex-wrap:wrap; }
+  .rec { font:inherit; font-size:16px; padding:10px 22px; border-radius:999px; border:0; background:var(--rec); color:#fff; cursor:pointer; min-width:150px; }
+  .rec[data-on="true"] { background:var(--text); }
+  .meter { width:220px; height:10px; border-radius:5px; background:var(--line); overflow:hidden; }
+  .meter i { display:block; height:100%; width:0; background:var(--accent); }
+  .meter i.hot { background:var(--rec); }
+  .time { font-variant-numeric:tabular-nums; color:var(--muted); min-width:56px; }
+  .hint { color:var(--muted); font-size:13px; }
+  .takes { display:grid; gap:8px; }
+  .take { display:grid; grid-template-columns:72px 1fr auto; align-items:center; gap:10px; background:var(--card); border:1px solid var(--line); border-radius:10px; padding:8px 12px; }
+  .take[data-chosen="true"] { border-color:var(--accent); background:#e6f3ea; }
+  .take audio { width:100%; height:36px; }
+  .take button { font:inherit; padding:4px 12px; border-radius:8px; border:1px solid var(--accent); background:var(--card); color:var(--accent); cursor:pointer; }
+  .take[data-chosen="true"] button { background:var(--accent); color:#fff; }
+  .error { color:var(--rec); }
+  @media (max-width:700px) { .app { grid-template-columns:1fr; } nav { border-right:0; border-bottom:1px solid var(--line); grid-auto-flow:column; overflow-x:auto; } }
+</style>
+</head>
+<body>
+<div class="app">
+  <nav id="nav"></nav>
+  <main>
+    <h1 id="title"></h1>
+    <div class="prompter" id="prompter"></div>
+    <div class="controls">
+      <button class="rec" id="rec" type="button" data-on="false">録音する</button>
+      <div class="meter"><i id="level"></i></div>
+      <span class="time" id="time">0:00</span>
+      <span class="hint">Space で録音と停止、← → で章を移動</span>
+    </div>
+    <p class="error" id="error" hidden></p>
+    <div class="takes" id="takes"></div>
+  </main>
+</div>
+<script>
+  const $ = id => document.getElementById(id);
+  let state = { chapters: [], takes: {}, selections: {} };
+  let current = 0;
+  let recorder = null;
+  let stream = null;
+  let startedAt = 0;
+  let timer = 0;
+
+  const showError = message => { $('error').hidden = !message; $('error').textContent = message || ''; };
+
+  async function load() {
+    state = await (await fetch('/api/state')).json();
+    render();
+  }
+
+  function render() {
+    const ch = state.chapters[current];
+    $('nav').replaceChildren(...state.chapters.map((c, i) => {
+      const b = document.createElement('button');
+      const count = (state.takes[c.n] || []).length;
+      b.innerHTML = `${c.title}<small>${count ? `${count} take` : '未録音'}${state.selections[c.n] ? ' / 採用済み' : ''}</small>`;
+      b.setAttribute('aria-current', String(i === current));
+      b.onclick = () => { if (!recorder) { current = i; render(); } };
+      return b;
+    }));
+    $('title').textContent = ch.title;
+    $('prompter').replaceChildren(...ch.lines.map(t => Object.assign(document.createElement('p'), { textContent: t })));
+    const list = (state.takes[ch.n] || []).slice().reverse();
+    $('takes').replaceChildren(...list.map(name => {
+      const row = document.createElement('div');
+      row.className = 'take';
+      row.dataset.chosen = String(state.selections[ch.n] === name);
+      row.innerHTML = `<span>${name.match(/take\d+/)[0]}</span><audio controls preload="metadata" src="recordings/${name}"></audio><button type="button">${row.dataset.chosen === 'true' ? '採用中' : '採用する'}</button>`;
+      row.querySelector('button').onclick = () => select(ch.n, name);
+      return row;
+    }));
+  }
+
+  async function select(n, name) {
+    const res = await fetch(`/api/select?ch=${n}`, { method: 'POST', body: JSON.stringify({ take: name }) });
+    const data = await res.json();
+    if (!res.ok) return showError(data.error);
+    state.selections = data.selections;
+    render();
+  }
+
+  async function openMic() {
+    if (stream) return stream;
+    stream = await navigator.mediaDevices.getUserMedia({
+      audio: { channelCount: 1, echoCancellation: false, noiseSuppression: true, autoGainControl: false },
+    });
+    const ctx = new AudioContext();
+    const analyser = ctx.createAnalyser();
+    analyser.fftSize = 1024;
+    ctx.createMediaStreamSource(stream).connect(analyser);
+    const data = new Float32Array(analyser.fftSize);
+    const tick = () => {
+      analyser.getFloatTimeDomainData(data);
+      const peak = data.reduce((m, v) => Math.max(m, Math.abs(v)), 0);
+      $('level').style.width = `${Math.min(100, peak * 100)}%`;
+      $('level').classList.toggle('hot', peak > 0.95);
+      requestAnimationFrame(tick);
+    };
+    tick();
+    return stream;
+  }
+
+  async function start() {
+    showError('');
+    try {
+      await openMic();
+    } catch (e) {
+      return showError(`マイクを使えません（${e.name}）。ブラウザのマイクの許可を確かめてください。`);
+    }
+    const chunks = [];
+    const n = state.chapters[current].n;
+    recorder = new MediaRecorder(stream, { mimeType: 'audio/webm;codecs=opus', audioBitsPerSecond: 192000 });
+    recorder.ondataavailable = e => e.data.size && chunks.push(e.data);
+    recorder.onstop = async () => {
+      const res = await fetch(`/api/save?ch=${n}`, { method: 'POST', body: new Blob(chunks, { type: 'audio/webm' }) });
+      if (!res.ok) showError((await res.json()).error);
+      await load();
+    };
+    recorder.start();
+    startedAt = performance.now();
+    timer = setInterval(() => {
+      const s = Math.floor((performance.now() - startedAt) / 1000);
+      $('time').textContent = `${Math.floor(s / 60)}:${String(s % 60).padStart(2, '0')}`;
+    }, 200);
+    $('rec').dataset.on = 'true';
+    $('rec').textContent = '停止して保存';
+  }
+
+  function stop() {
+    recorder.stop();
+    recorder = null;
+    clearInterval(timer);
+    $('rec').dataset.on = 'false';
+    $('rec').textContent = '録音する';
+  }
+
+  $('rec').onclick = () => (recorder ? stop() : start());
+  document.addEventListener('keydown', e => {
+    if (e.target.closest('audio, button') && e.code === 'Space') e.preventDefault();
+    if (e.code === 'Space') { e.preventDefault(); recorder ? stop() : start(); }
+    if (!recorder && e.code === 'ArrowRight') { current = Math.min(current + 1, state.chapters.length - 1); render(); }
+    if (!recorder && e.code === 'ArrowLeft') { current = Math.max(current - 1, 0); render(); }
+  });
+  load();
+</script>
+</body>
+</html>

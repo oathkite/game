@@ -1,0 +1,878 @@
+<!doctype html><html><head><meta charset=utf8><meta name=viewport content="width=device-width,initial-scale=1,viewport-fit=cover"><style>:root{color-scheme:light;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}html{scroll-padding-top:env(safe-area-inset-top,0px)}body{margin:0;padding:0;font:14px -apple-system,BlinkMacSystemFont,sans-serif;background:#faf9f5;color:#141413}img{max-width:100%}[hidden]:not([hidden=until-found i]){display:none!important}</style></head><body>
+<title>TANK SHOOT 演出案</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=DotGothic16&family=BIZ+UDPGothic:wght@400;700&family=M+PLUS+1+Code:wght@400;500&display=swap">
+<style>
+:root {
+  color-scheme: dark;
+  --paper: #000;
+  --panel: #030d07;
+  --ink: #33ff66;
+  --ink-hi: #80ff9f;
+  --dim: #0f4d24;
+  --muted: #79cc96;
+  --text: #d9f5e1;
+  --terrain: #ffffff;
+  --warn: #ffe14d;
+  --judge: #ff66c4;
+  --dot: "DotGothic16", "M PLUS 1 Code", ui-monospace, monospace;
+  --body: "BIZ UDPGothic", "Hiragino Sans", "Noto Sans JP", system-ui, sans-serif;
+  --code: "M PLUS 1 Code", ui-monospace, "SFMono-Regular", Menlo, monospace;
+}
+* { box-sizing: border-box; }
+html { background: var(--paper); }
+body { background: var(--paper); color: var(--text); font-family: var(--body); font-size: 15px; line-height: 1.8; padding-inline: 16px; }
+.wrap { max-width: 1080px; margin: 0 auto; padding-block: 40px 80px; display: grid; gap: 64px; }
+h1, h2, h3 { font-family: var(--dot); font-weight: 400; color: var(--ink); text-wrap: balance; margin: 0; line-height: 1.35; }
+h1 { font-size: clamp(30px, 5vw, 48px); letter-spacing: .02em; }
+h2 { font-size: clamp(22px, 3vw, 28px); }
+h3 { font-size: 19px; }
+p { margin: 0; max-width: 68ch; }
+code { font-family: var(--code); font-size: .88em; color: var(--ink-hi); overflow-wrap: anywhere; }
+a { color: var(--ink); }
+:focus-visible { outline: 2px solid var(--ink-hi); outline-offset: 2px; }
+
+/* hero */
+.hero { display: grid; gap: 18px; padding-bottom: 32px; border-bottom: 2px solid var(--ink); }
+.eyebrow { font-family: var(--dot); color: var(--muted); letter-spacing: .12em; font-size: 13px; }
+.lead { font-size: 17px; color: var(--text); }
+.meta { display: flex; flex-wrap: wrap; gap: 8px 24px; font-family: var(--code); font-size: 12.5px; color: var(--muted); }
+.meta span b { color: var(--ink); font-weight: 500; }
+
+/* section heads */
+.sec { display: grid; gap: 24px; }
+.sec-head { display: grid; gap: 8px; }
+.sec-head p { color: var(--muted); }
+
+/* premise callout */
+.premise { border: 2px solid var(--warn); padding: 24px; display: grid; gap: 14px; background: var(--panel); }
+.premise h2 { color: var(--warn); }
+.premise blockquote { margin: 0; padding-left: 14px; border-left: 2px solid var(--dim); color: var(--text); font-size: 14px; }
+.legend { display: flex; flex-wrap: wrap; gap: 10px 20px; align-items: center; font-size: 13.5px; }
+
+/* chips */
+.chip { display: inline-block; font-family: var(--dot); font-size: 12.5px; line-height: 1; padding: 6px 8px 5px; border: 2px solid currentColor; white-space: nowrap; }
+.chip.in { color: var(--ink); }
+.chip.edge { color: var(--muted); border-style: dashed; }
+.chip.rev { color: var(--warn); }
+.chip.judge { color: var(--judge); }
+
+/* rules */
+.rules { display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 0; border-top: 2px solid var(--dim); }
+.rules div { padding: 16px 16px 16px 0; border-bottom: 2px solid var(--dim); display: grid; gap: 4px; }
+.rules b { font-family: var(--dot); font-weight: 400; color: var(--ink); font-size: 15px; }
+.rules span { font-size: 13.5px; color: var(--muted); }
+
+/* existing */
+.existing { display: flex; flex-wrap: wrap; gap: 8px; list-style: none; padding: 0; margin: 0; }
+.existing li { font-size: 13px; padding: 4px 10px; border: 2px solid var(--dim); color: var(--muted); }
+.existing li b { color: var(--text); font-weight: 400; }
+.existing li.practice { border-color: var(--muted); border-width: 2px 2px 2px 6px; }
+
+/* idea cards */
+.ideas { display: grid; gap: 20px; }
+.idea { display: grid; grid-template-columns: minmax(0, 5fr) minmax(0, 7fr); gap: 24px; padding: 20px; border: 2px solid var(--dim); background: var(--panel); }
+.idea.accent { border-color: var(--ink); }
+.demo { display: grid; gap: 8px; align-content: start; }
+.screen { position: relative; border: 2px solid var(--ink); background: #000; }
+.screen canvas { display: block; width: 100%; height: auto; aspect-ratio: 2 / 1; image-rendering: pixelated; image-rendering: crisp-edges; }
+.demo-bar { display: flex; justify-content: space-between; align-items: center; gap: 8px; font-size: 12px; color: var(--muted); }
+.replay { font-family: var(--dot); font-size: 12.5px; color: var(--ink); background: #000; border: 2px solid var(--ink); padding: 4px 10px; cursor: pointer; }
+.replay:hover { background: var(--dim); }
+.idea-body { display: grid; gap: 12px; align-content: start; }
+.idea-head { display: flex; flex-wrap: wrap; align-items: center; gap: 8px 12px; }
+.idea-id { font-family: var(--code); font-size: 12.5px; color: #000; background: var(--ink); padding: 2px 6px; }
+.idea-head h3 { flex: 1 1 200px; }
+.spec { display: grid; gap: 0; margin: 4px 0 0; border-top: 2px solid var(--dim); }
+.spec div { display: grid; grid-template-columns: 9.5em minmax(0, 1fr); gap: 12px; padding: 7px 0; border-bottom: 1px solid var(--dim); }
+.spec dt { font-family: var(--dot); color: var(--muted); font-size: 13px; }
+.spec dd { margin: 0; font-size: 13.5px; }
+.note { font-size: 13px; color: var(--muted); }
+
+/* loading demo (HTML) */
+.term { aspect-ratio: 2 / 1; padding: 14px 16px; font-family: var(--dot); font-size: clamp(11px, 1.5vw, 14px); line-height: 1.75; color: var(--ink); overflow: hidden; }
+.term .ok { color: var(--ink-hi); }
+.term .wait { color: var(--warn); }
+.term .cursor { display: inline-block; width: .6em; background: var(--ink); animation: blink 1s steps(2, start) infinite; }
+@keyframes blink { to { visibility: hidden; } }
+
+/* result demo (HTML) */
+.res { aspect-ratio: 2 / 1; padding: 10px 14px; font-family: var(--dot); color: var(--ink); overflow: hidden; display: grid; align-content: start; gap: 2px; }
+.res h4 { margin: 0 0 4px; font-weight: 400; font-size: clamp(14px, 2vw, 18px); }
+.res table { width: 100%; border-collapse: collapse; font-size: clamp(10px, 1.4vw, 13px); font-variant-numeric: tabular-nums; }
+.res td, .res th { text-align: left; padding: 3px 4px; border-bottom: 2px solid var(--ink); font-weight: 400; white-space: nowrap; }
+.res td.n { text-align: right; }
+.res tr.hide { visibility: hidden; }
+.res .crown { color: var(--warn); }
+.res .crown.off { visibility: hidden; }
+.sw { display: inline-block; width: .8em; height: .8em; vertical-align: -.05em; margin-right: 4px; }
+
+/* table */
+.table-wrap { overflow-x: auto; border-top: 2px solid var(--ink); }
+table.others { width: 100%; border-collapse: collapse; font-size: 13.5px; min-width: 760px; }
+table.others th, table.others td { text-align: left; vertical-align: top; padding: 10px 12px 10px 0; border-bottom: 1px solid var(--dim); }
+table.others th { font-family: var(--dot); font-weight: 400; color: var(--muted); font-size: 12.5px; }
+table.others td:first-child { font-family: var(--code); color: var(--ink); white-space: nowrap; }
+
+/* priority */
+.order { list-style: none; margin: 0; padding: 0; display: grid; gap: 0; counter-reset: step; border-top: 2px solid var(--ink); }
+.order li { counter-increment: step; display: grid; grid-template-columns: 3em minmax(0, 1fr); gap: 12px; padding: 16px 0; border-bottom: 2px solid var(--dim); }
+.order li::before { content: counter(step); font-family: var(--dot); font-size: 28px; color: var(--ink); line-height: 1; }
+.order b { font-family: var(--dot); font-weight: 400; color: var(--ink); font-size: 16px; }
+.order p { font-size: 14px; }
+
+.ask { display: grid; gap: 14px; border: 2px solid var(--ink); padding: 24px; }
+.ask ol { margin: 0; padding-left: 1.4em; display: grid; gap: 10px; }
+.ask li::marker { font-family: var(--dot); color: var(--ink); }
+.foot { font-size: 12.5px; color: var(--muted); border-top: 2px solid var(--dim); padding-top: 16px; }
+
+@media (max-width: 760px) {
+  .wrap { padding-block: 24px 56px; gap: 48px; }
+  .idea { grid-template-columns: minmax(0, 1fr); padding: 16px; gap: 16px; }
+  .spec div { grid-template-columns: minmax(0, 1fr); gap: 0; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .term .cursor { animation: none; }
+}
+</style>
+
+<main class="wrap">
+
+<header class="hero">
+  <div class="eyebrow">apps/client / 演出の強化案</div>
+  <h1>動きに状態を運ばせる</h1>
+  <p class="lead">キャラクター、エフェクト、ローディング、ページ切り替えの 4 領域で、今の緑と黒のドット表現を崩さずに手触りを厚くする案をまとめた。各案は「その動きで何が読めるようになるか」を先に書き、PixiJS と CSS のどこに置くか、時間の予算、動きを減らす設定での扱いまで添えている。デモはブラウザ上の近似で、実装の寸法や色とは一致しない。</p>
+  <div class="meta">
+    <span>基準 <b>main 91b772d</b></span>
+    <span>作成 <b>2026-09-23</b></span>
+    <span>対象 <b>apps/client/src/game, worldUi</b></span>
+    <span>案 <b>主要 12 + 候補 8</b></span>
+  </div>
+</header>
+
+<section class="premise" aria-labelledby="premise-h">
+  <h2 id="premise-h">先に決めること：36 章との関係</h2>
+  <p>設計書 <code>36-simple-dot-theme.md</code>（2026-09-13）は、画像によるグラフィック更新を取り下げたときに次のように定めている。</p>
+  <blockquote>装飾目的の動画・アニメーション制作は終了する。落下、弾の飛翔、着弾、手番のカメラ移動など、状態の把握に必要な動きは維持する。</blockquote>
+  <p>「よりリッチに」はこの方針と一部で衝突する。そこで各案に 36 章との関係を付けた。範囲内の案はそのまま進められる。改訂が必要な案を採るなら、36 章に理由を書き、<code>99-open-questions.md</code> の TBD を更新してから実装する（CLAUDE.md の「設計書が正」）。</p>
+  <div class="legend">
+    <span><span class="chip in">範囲内</span> 状態の把握に必要な動き</span>
+    <span><span class="chip edge">境界</span> 情報はあるが装飾寄り。解釈を決める</span>
+    <span><span class="chip rev">改訂が必要</span> 主に雰囲気のための動き</span>
+    <span><span class="chip judge">要判断</span> ゲーム性に影響する</span>
+  </div>
+</section>
+
+<section class="sec" aria-labelledby="rules-h">
+  <div class="sec-head">
+    <h2 id="rules-h">すべての案で守ること</h2>
+    <p>既存の <code>hitFeedback.ts</code> と <code>turnCaret.ts</code> の作り方に合わせる。</p>
+  </div>
+  <div class="rules">
+    <div><b>sim を触らない</b><span>演出は client だけに置く。当たり判定と地形 mask は変えず、e2e の mismatches 0 を保つ。</span></div>
+    <div><b>時間は純関数、乱数なし</b><span><code>blastFrameAt(t, …)</code> の形で「経過時間 → 見え方」を返す関数にして単体テストする。ばらつきは <code>DEBRIS_VELOCITIES</code> のような固定表か、着弾座標から決める。</span></div>
+    <div><b>ターンを延ばさない</b><span>着弾は練習で 590 ms（<code>IMPACT_TOTAL_MS</code>）、オンラインではサーバーが決めた再生時間（<code>labReplay.ts</code> の <code>endsAt</code>）の中。画面切り替えは 400 ms。新しい演出はこの中に重ねるか、進行を待たせない。</span></div>
+    <div><b>ドット単位で動かす</b><span>位置は整数セルか art px に丸める。CSS は <code>steps()</code> を使い、なめらかな補間で輪郭をぼかさない。HUD 層のドットは 2 px。</span></div>
+    <div><b>動きを減らす設定に従う</b><span><code>prefers-reduced-motion</code> では止めるか、最後の姿だけを出す。キャレット、揺れ、シャッターと同じ扱い。</span></div>
+    <div><b>画像素材を使わない</b><span>36 章に従い <code>Graphics.rect</code> と CSS だけで描く。関数は 50 行未満に分ける。</span></div>
+  </div>
+</section>
+
+<section class="sec" aria-labelledby="exist-h">
+  <div class="sec-head">
+    <h2 id="exist-h">すでにある演出</h2>
+    <p>コードを確認し、以下は重ねて提案していない。ただし太枠の演出は練習（<code>game/replay.ts</code>）にしかなく、オンライン対戦（<code>networkLab/labReplay.ts</code>）には届いていない（E1）。</p>
+  </div>
+  <ul class="existing">
+    <li><b>画面のシャッター</b> 400 ms</li>
+    <li><b>手番キャレット</b>の上下</li>
+    <li><b>YOUR TURN</b> 1800 ms</li>
+    <li class="practice"><b>被弾の白フラッシュ</b> 3 段階</li>
+    <li class="practice"><b>HP バー</b>の減少と明滅</li>
+    <li class="practice"><b>画面揺れ</b> 3 段階</li>
+    <li class="practice"><b>破片</b> 左右対称 8 方向</li>
+    <li class="practice"><b>爆風の広がり</b>、明滅、輪</li>
+    <li><b>ダメージ数字</b>と火花</li>
+    <li class="practice"><b>外れの印</b></li>
+    <li><b>発射光</b>と反動 3 art px</li>
+    <li><b>履帯</b>の回転</li>
+    <li><b>残骸</b>のシルエット</li>
+    <li><b>落下</b></li>
+    <li><b>背景の視差</b> 2 層</li>
+    <li><b>風の粒子</b> 24 個</li>
+    <li><b>開幕のマップ紹介</b></li>
+    <li><b>部屋のフェード</b> 240 ms</li>
+    <li><b>接続中</b>の点滅</li>
+  </ul>
+</section>
+
+<!-- キャラクター -->
+<section class="sec" aria-labelledby="char-h">
+  <div class="sec-head">
+    <h2 id="char-h">キャラクター</h2>
+    <p>今の機体は、移動と発射のとき以外は静止している。止まっている間にも状態を見せる。</p>
+  </div>
+  <div class="ideas">
+
+    <article class="idea" id="C1">
+      <div class="demo">
+        <div class="screen"><canvas data-demo="idle" width="96" height="48" role="img" aria-label="左の手番の機体だけが 1 ドットずつ振動し、右の機体は静止している"></canvas></div>
+        <div class="demo-bar"><span>左が手番</span><button class="replay" type="button" data-for="idle">もう一度</button></div>
+      </div>
+      <div class="idea-body">
+        <div class="idea-head"><span class="idea-id">C1</span><h3>手番の機体のエンジン振動</h3><span class="chip in">範囲内</span></div>
+        <p>手番の機体だけ、車体が 400 ms ごとに 1 art px 沈んで戻る。キャレットは名前の層にあるため、8 人が密集して名前が重なると誰の番かを追いにくい。機体そのものが動けば、名前を読まずに手番が分かる。</p>
+        <dl class="spec">
+          <div><dt>伝える状態</dt><dd>誰の手番か</dd></div>
+          <div><dt>置き場所</dt><dd><code>game/tankView.ts</code> の <code>tick</code>。時間は新しい <code>game/idleMotion.ts</code> の純関数</dd></div>
+          <div><dt>時間予算</dt><dd>常時。進行を待たせない</dd></div>
+          <div><dt>動きを減らす設定</dt><dd>止める</dd></div>
+          <div><dt>規模</dt><dd>S</dd></div>
+        </dl>
+      </div>
+    </article>
+
+    <article class="idea" id="C2">
+      <div class="demo">
+        <div class="screen"><canvas data-demo="charge" width="96" height="48" role="img" aria-label="パワーが溜まるにつれて砲口に点が集まり、上限近くで砲身が震えてから発射する"></canvas></div>
+        <div class="demo-bar"><span>上はパワー</span><button class="replay" type="button" data-for="charge">もう一度</button></div>
+      </div>
+      <div class="idea-body">
+        <div class="idea-head"><span class="idea-id">C2</span><h3>パワーを溜める間の砲口</h3><span class="chip edge">境界</span></div>
+        <p>パワーゲージを押している間、砲口へ点が集まり、70% を超えると砲身が 1 art px 震える。視線を HUD のゲージへ移さなくても溜まり具合が分かる。数値は HUD が正で、砲口は目安にとどめる。</p>
+        <dl class="spec">
+          <div><dt>伝える状態</dt><dd>溜めているパワーの目安</dd></div>
+          <div><dt>置き場所</dt><dd><code>TankPose</code> に <code>charge</code> を足し、<code>tankView.ts</code> で描く。値は <code>worldUi/useBattleInput.ts</code> から</dd></div>
+          <div><dt>時間予算</dt><dd>押している間だけ。発射で消す</dd></div>
+          <div><dt>動きを減らす設定</dt><dd>点を止め、数だけで見せる</dd></div>
+          <div><dt>規模</dt><dd>M。相手にも見せるならパワーを送信するかの判断が要る</dd></div>
+        </dl>
+      </div>
+    </article>
+
+    <article class="idea" id="C3">
+      <div class="demo">
+        <div class="screen"><canvas data-demo="landing" width="96" height="48" role="img" aria-label="機体が落ちて接地した瞬間に車体が沈み、左右に土煙が広がる"></canvas></div>
+        <div class="demo-bar"><span>接地で沈み、土煙</span><button class="replay" type="button" data-for="landing">もう一度</button></div>
+      </div>
+      <div class="idea-body">
+        <div class="idea-head"><span class="idea-id">C3</span><h3>着地の沈み込みと土煙</h3><span class="chip in">範囲内</span></div>
+        <p>落下が終わった瞬間に車体を 1 art px 沈めて 120 ms で戻し、左右へ白い土煙を 3 粒ずつ出す。今は落下が止まるだけなので、崩れた地形のどこに着いたかを見落としやすい。</p>
+        <dl class="spec">
+          <div><dt>伝える状態</dt><dd>落下の終わりと着地点</dd></div>
+          <div><dt>置き場所</dt><dd><code>tankView.ts</code> の <code>setPose</code> で <code>falling</code> が真から偽へ変わった瞬間に出す。移動中の落下（<code>fallMotion.ts</code>）も射撃後の落下（<code>labReplay.ts</code>、<code>replay.ts</code>）もここを通る</dd></div>
+          <div><dt>時間予算</dt><dd>400 ms。次の手番の開始と重なってよい</dd></div>
+          <div><dt>動きを減らす設定</dt><dd>土煙を出さず、沈み込みだけ</dd></div>
+          <div><dt>規模</dt><dd>S</dd></div>
+        </dl>
+      </div>
+    </article>
+
+    <article class="idea" id="C4">
+      <div class="demo">
+        <div class="screen"><canvas data-demo="smoke" width="96" height="48" role="img" aria-label="HP が少ない機体の砲塔から灰色の煙が立ちのぼり、ときどき火花が出る"></canvas></div>
+        <div class="demo-bar"><span>HP 2/10</span><button class="replay" type="button" data-for="smoke">もう一度</button></div>
+      </div>
+      <div class="idea-body">
+        <div class="idea-head"><span class="idea-id">C4</span><h3>HP が少ない機体の煙</h3><span class="chip in">範囲内</span></div>
+        <p>HP が 30 以下になったら砲塔から灰色の煙を立ちのぼらせ、ときどき 1 ドットの火花を出す。HP バーは 10 ドットと小さいため、引いた画面では誰が危ないかを読みにくい。狙う相手を選ぶ判断にそのまま効く。</p>
+        <dl class="spec">
+          <div><dt>伝える状態</dt><dd>撃破が近い機体</dd></div>
+          <div><dt>置き場所</dt><dd><code>tankView.ts</code> に煙の層を足す。粒の軌道は固定表</dd></div>
+          <div><dt>時間予算</dt><dd>常時。粒は 5 個まで</dd></div>
+          <div><dt>動きを減らす設定</dt><dd>煙を 1 粒の静止表示にする</dd></div>
+          <div><dt>規模</dt><dd>S</dd></div>
+        </dl>
+      </div>
+    </article>
+
+    <article class="idea" id="C5">
+      <div class="demo">
+        <div class="screen"><canvas data-demo="destroy" width="96" height="48" role="img" aria-label="機体が白く明滅し、時間差で 3 つの小爆発が起きたあと、灰色の残骸になって煙を上げる"></canvas></div>
+        <div class="demo-bar"><span>明滅、3 連爆発、残骸</span><button class="replay" type="button" data-for="destroy">もう一度</button></div>
+      </div>
+      <div class="idea-body">
+        <div class="idea-head"><span class="idea-id">C5</span><h3>撃破の 3 連爆発</h3><span class="chip in">範囲内</span></div>
+        <p>HP が 0 を割ったとき、今は残骸の姿へ一度に切り替わる。白い明滅のあと、時間差のある小爆発を 3 つ起こして残骸に替え、砲身を垂らし、煙を 1 本残す。誰が倒れたかを全員が確実に見る瞬間になる。</p>
+        <dl class="spec">
+          <div><dt>伝える状態</dt><dd>撃破された機体</dd></div>
+          <div><dt>置き場所</dt><dd>時間は <code>hitFeedback.ts</code> に <code>wreckFrameAt</code>。<code>tankView.ts</code> が HP 0 へ変わった時刻を覚えて描けば、練習とオンラインの両方に効く</dd></div>
+          <div><dt>時間予算</dt><dd>爆発は 600 ms 以内。煙は進行を待たせない</dd></div>
+          <div><dt>動きを減らす設定</dt><dd>爆発を出さず、すぐ残骸にする</dd></div>
+          <div><dt>規模</dt><dd>M</dd></div>
+        </dl>
+      </div>
+    </article>
+
+  </div>
+</section>
+
+<!-- エフェクト -->
+<section class="sec" aria-labelledby="fx-h">
+  <div class="sec-head">
+    <h2 id="fx-h">エフェクト</h2>
+    <p>着弾の中身を濃くする。長さは変えない。まずオンラインと練習の差を埋める。</p>
+  </div>
+  <div class="ideas">
+
+    <article class="idea accent" id="E1">
+      <div class="demo">
+        <div class="screen"><canvas data-demo="parity" width="96" height="48" role="img" aria-label="左は今のオンライン対戦の爆風で、単色の円が出て消えるだけ。右は練習の演出で、爆風が広がり、明滅し、輪になり、破片が飛び、画面が揺れる"></canvas></div>
+        <div class="demo-bar"><span>左 今のオンライン / 右 練習</span><button class="replay" type="button" data-for="parity">もう一度</button></div>
+      </div>
+      <div class="idea-body">
+        <div class="idea-head"><span class="idea-id">E1</span><h3>オンライン対戦に練習の着弾演出を揃える</h3><span class="chip in">範囲内</span></div>
+        <p>オンライン対戦の爆風は <code>labReplay.ts</code> が 300 ms だけ出す単色の円で、白フラッシュは一律 150 ms。練習の <code>replay.ts</code> が使う <code>hitFeedback.ts</code> の広がり、明滅、輪、破片、画面揺れ、HP バーの減少と明滅は届いていない。主に遊ばれる側の手応えが薄い。テスト済みの時間関数をオンラインでも呼び、着弾ごとの経過時間から同じ見え方を出す。新しい表現を作らずに済み、以後のエフェクト案（E2、E4、C5）も 1 か所に入れるだけで両方へ届く。</p>
+        <dl class="spec">
+          <div><dt>伝える状態</dt><dd>着弾の強さ、誰がどれだけ減ったか</dd></div>
+          <div><dt>置き場所</dt><dd><code>networkLab/labReplay.ts</code> の <code>effects</code> に着弾からの経過時間を持たせ、<code>worldUi/NetworkField.tsx</code> で <code>blastFrameAt</code>、<code>debrisAt</code>、<code>shakeOffsetAt</code>、<code>hpBarAt</code> を使う</dd></div>
+          <div><dt>時間予算</dt><dd>着弾の窓を 300 ms から 590 ms へ。サーバーの <code>endsAt</code> は変えず、ダメージを読ませる 1300 ms の中に収まるかを確かめる</dd></div>
+          <div><dt>動きを減らす設定</dt><dd>練習と同じ（揺れを止め、最大の姿を出す）</dd></div>
+          <div><dt>規模</dt><dd>M。オンラインは着弾と同時に地形が削れる（<code>terrainOps</code>）ため、練習の 190 ms 遅れに合わせるかを決める。外れ（ダメージ 0）のターンは最後の着弾から <code>endsAt</code> まで 300 ms しか無いので、そのターンだけ爆風を短くするか、server の <code>endsAt</code> を延ばすかも決める（後者は client だけの変更ではなくなる）</dd></div>
+        </dl>
+      </div>
+    </article>
+
+    <article class="idea accent" id="E2">
+      <div class="demo">
+        <div class="screen"><canvas data-demo="crumble" width="96" height="48" role="img" aria-label="爆風が広がったあと、えぐれた地形の縁が白いかけらになって崩れ落ちる"></canvas></div>
+        <div class="demo-bar"><span>削れた縁が崩れる</span><button class="replay" type="button" data-for="crumble">もう一度</button></div>
+      </div>
+      <div class="idea-body">
+        <div class="idea-head"><span class="idea-id">E2</span><h3>地形の縁が崩れる</h3><span class="chip in">範囲内</span></div>
+        <p>今は地形が一度に消える（練習では <code>CARVE_AT_MS</code> の 190 ms、オンラインでは着弾と同時）。削る前と後の mask の差から縁のセルを拾い、白いかけらとして 400 ms 落とす。えぐれた範囲が動きとして目に残るので、次の一手で足場を読むときに効く。破片はチーム色から地形の白に替わる。</p>
+        <dl class="spec">
+          <div><dt>伝える状態</dt><dd>地形がどこまで削れたか</dd></div>
+          <div><dt>置き場所</dt><dd>地形を削る直前と直後の mask の差を取る。練習は <code>replay.ts</code> の carve、オンラインは <code>terrainOps</code> の適用時。軌道は <code>debrisAt</code> と同じ固定の重力。E1 の後に入れると 1 か所で済む</dd></div>
+          <div><dt>時間予算</dt><dd>地形が削れてから 400 ms。着弾の合計は変えない</dd></div>
+          <div><dt>動きを減らす設定</dt><dd>かけらを出さない（今と同じ）</dd></div>
+          <div><dt>規模</dt><dd>M。縁のセルが多い大爆風では数に上限を置く</dd></div>
+        </dl>
+      </div>
+    </article>
+
+    <article class="idea" id="E3">
+      <div class="demo">
+        <div class="screen"><canvas data-demo="trail" width="96" height="48" role="img" aria-label="向かい風で曲がる弾道の後ろに、薄い点の軌跡が残る"></canvas></div>
+        <div class="demo-bar"><span>向かい風</span><button class="replay" type="button" data-for="trail">もう一度</button></div>
+      </div>
+      <div class="idea-body">
+        <div class="idea-head"><span class="idea-id">E3</span><h3>弾の軌跡</h3><span class="chip in">範囲内</span></div>
+        <p>弾の後ろに 2 ステップおきの点を残し、古いものから暗い緑に落とす。風で弾道がどれだけ曲がったかが一目で分かる。着弾で消す。前の射撃の軌跡を次の手番まで残すかは照準の助けになるため、別に判断する（候補表の E7）。</p>
+        <dl class="spec">
+          <div><dt>伝える状態</dt><dd>風の影響と弾道の形</dd></div>
+          <div><dt>置き場所</dt><dd><code>projectileView.ts</code> に軌跡の層。位置は再生中の弾道の位置列</dd></div>
+          <div><dt>時間予算</dt><dd>飛翔中だけ</dd></div>
+          <div><dt>動きを減らす設定</dt><dd>残す（動きではなく静的な点）</dd></div>
+          <div><dt>規模</dt><dd>S</dd></div>
+        </dl>
+      </div>
+    </article>
+
+    <article class="idea" id="E4">
+      <div class="demo">
+        <div class="screen"><canvas data-demo="weapons" width="96" height="48" role="img" aria-label="左から標準砲の円い爆風、レーザーの細い十字、掘削弾の縦長の爆風"></canvas></div>
+        <div class="demo-bar"><span>cannon / laser / drill</span><button class="replay" type="button" data-for="weapons">もう一度</button></div>
+      </div>
+      <div class="idea-body">
+        <div class="idea-head"><span class="idea-id">E4</span><h3>武器ごとの爆風の形</h3><span class="chip in">範囲内</span></div>
+        <p>爆風は全武器が同じ円で、違いは半径だけになっている。レーザーは横に細い十字、掘削弾は下へ長い楕円、浮遊砲は輪の脈動と、形で武器を見分けられるようにする。観戦者も何を撃ったかが分かる。形は見た目だけで、削る範囲は sim の円のまま。</p>
+        <dl class="spec">
+          <div><dt>伝える状態</dt><dd>撃った武器と、その当たり方</dd></div>
+          <div><dt>置き場所</dt><dd><code>weaponArt.ts</code> の <code>blastCells</code> を武器で分岐。時間は <code>blastFrameAt</code> のまま。<code>projectileView.ts</code> を通るので練習とオンラインの両方に効く</dd></div>
+          <div><dt>時間予算</dt><dd>今の着弾の時間の中</dd></div>
+          <div><dt>動きを減らす設定</dt><dd>最大の姿を 1 枚だけ出す</dd></div>
+          <div><dt>規模</dt><dd>M。見た目と削る範囲がずれて見えないかを実際に撃って確かめる</dd></div>
+        </dl>
+      </div>
+    </article>
+
+  </div>
+</section>
+
+<!-- ローディング -->
+<section class="sec" aria-labelledby="load-h">
+  <div class="sec-head">
+    <h2 id="load-h">ローディング</h2>
+    <p>今の待ち表示は <code>WorldScenes.tsx</code> の Suspense にある 1 行の文だけで、4 領域の中で最も弱い。</p>
+  </div>
+  <div class="ideas">
+
+    <article class="idea accent" id="L1">
+      <div class="demo">
+        <div class="screen"><div class="term" data-demo-html="term" role="img" aria-label="端末のログのように、画面の読み込み、サーバー接続、マップの展開、参加者の同期が 1 行ずつ出る"></div></div>
+        <div class="demo-bar"><span>本当の工程だけを出す</span><button class="replay" type="button" data-for="term">もう一度</button></div>
+      </div>
+      <div class="idea-body">
+        <div class="idea-head"><span class="idea-id">L1</span><h3>端末ログ風の待ち表示</h3><span class="chip in">範囲内</span></div>
+        <p>待っている工程を 1 行ずつ打ち出し、終わった行に OK を付ける。画面の読み込み、接続、マップの展開、参加者の同期と、実際に待っているものだけを出す。進捗率は分からないので、偽の % やバーは出さない。150 ms 以内に終わる待ちでは表示しない。</p>
+        <dl class="spec">
+          <div><dt>伝える状態</dt><dd>何を待っているか、どこで止まったか</dd></div>
+          <div><dt>置き場所</dt><dd>新しい <code>worldUi/SceneLoading.tsx</code>。Suspense の fallback と、<code>RoomScreen</code> の接続中の表示に使う。<code>loadScene.ts</code> の再試行も 1 行として出す</dd></div>
+          <div><dt>時間予算</dt><dd>待ちの長さに従う。演出のために待たせない</dd></div>
+          <div><dt>動きを減らす設定</dt><dd>打ち出しをやめ、行をそのまま出す</dd></div>
+          <div><dt>規模</dt><dd>S</dd></div>
+        </dl>
+      </div>
+    </article>
+
+  </div>
+</section>
+
+<!-- ページ切り替え -->
+<section class="sec" aria-labelledby="page-h">
+  <div class="sec-head">
+    <h2 id="page-h">ページ切り替え</h2>
+    <p>今はどの画面へ移るときも同じシャッターが下りる。</p>
+  </div>
+  <div class="ideas">
+
+    <article class="idea" id="P1">
+      <div class="demo">
+        <div class="screen"><canvas data-demo="wipe" width="96" height="48" role="img" aria-label="進むときは左から右へ縞が走って画面が替わり、対戦へ入るときは走査線が縦に開いて地形が現れる"></canvas></div>
+        <div class="demo-bar"><span>進む、そして対戦へ</span><button class="replay" type="button" data-for="wipe">もう一度</button></div>
+      </div>
+      <div class="idea-body">
+        <div class="idea-head"><span class="idea-id">P1</span><h3>行き先で変わるシャッター</h3><span class="chip edge">境界</span></div>
+        <p>進むとき（ロビーから部屋）は左から右へ、戻るときは右から左へ縞を走らせる。対戦へ入るときだけ、ブラウン管が点くように走査線を縦に開く。方向で「進んだか戻ったか」が分かり、対戦の始まりが他の移動と区別される。長さは今と同じ 400 ms で、8 段の <code>steps()</code> にする。</p>
+        <dl class="spec">
+          <div><dt>伝える状態</dt><dd>画面の移動の向き、対戦の開始</dd></div>
+          <div><dt>置き場所</dt><dd><code>WorldScenes.tsx</code> の <code>go</code> に向きを渡し、<code>.world-shutter</code> に <code>data-direction</code>。CSS は <code>worldUi.css</code> と <code>simpleTheme.css</code></dd></div>
+          <div><dt>時間予算</dt><dd>400 ms のまま。入力を止める <code>timer.current</code> も今のまま</dd></div>
+          <div><dt>動きを減らす設定</dt><dd>シャッターを出さない（今と同じ）</dd></div>
+          <div><dt>規模</dt><dd>S</dd></div>
+        </dl>
+      </div>
+    </article>
+
+    <article class="idea" id="P2">
+      <div class="demo">
+        <div class="screen"><div class="res" data-demo-html="result" role="img" aria-label="リザルトの行が上から順に現れ、数字が数え上がり、勝者の冠が 2 回明滅する">
+          <h4>チーム 1 の勝利</h4>
+          <table>
+            <thead><tr><th>プレイヤー名</th><th>結果</th><th>発射数</th><th>敵へのダメージ</th></tr></thead>
+            <tbody>
+              <tr data-row><td><span class="sw" style="background:#40D0FF"></span>KITA</td><td><svg class="crown" viewBox="0 0 7 5" width="12" height="9" aria-hidden="true"><path fill="currentColor" d="M0 0h1v1h1v1h1V0h1v2h1V1h1V0h1v5H0z"/></svg> 勝利</td><td class="n" data-to="12">12</td><td class="n" data-to="184">184</td></tr>
+              <tr data-row><td><span class="sw" style="background:#40D0FF"></span>MOMO</td><td><svg class="crown" viewBox="0 0 7 5" width="12" height="9" aria-hidden="true"><path fill="currentColor" d="M0 0h1v1h1v1h1V0h1v2h1V1h1V0h1v5H0z"/></svg> 勝利</td><td class="n" data-to="11">11</td><td class="n" data-to="132">132</td></tr>
+              <tr data-row><td><span class="sw" style="background:#FF66C4"></span>RIN</td><td>敗北</td><td class="n" data-to="13">13</td><td class="n" data-to="97">97</td></tr>
+              <tr data-row><td><span class="sw" style="background:#FF66C4"></span>SORA</td><td>敗北</td><td class="n" data-to="9">9</td><td class="n" data-to="41">41</td></tr>
+            </tbody>
+          </table>
+        </div></div>
+        <div class="demo-bar"><span>例のデータ</span><button class="replay" type="button" data-for="result">もう一度</button></div>
+      </div>
+      <div class="idea-body">
+        <div class="idea-head"><span class="idea-id">P2</span><h3>リザルトの段階表示</h3><span class="chip edge">境界</span></div>
+        <p>表が一度に出る今の形から、行を 90 ms おきに上から出し、数字を 8 段で数え上げ、勝者の冠を 2 回だけ明滅させる。行の出る順が並びの意味（勝者が上）を補う。クリックかキー入力で全部を即座に出せるようにし、待たせない。</p>
+        <dl class="spec">
+          <div><dt>伝える状態</dt><dd>勝敗と成績の順</dd></div>
+          <div><dt>置き場所</dt><dd><code>worldUi/ResultPlayers.tsx</code> と <code>resultPlayers.css</code>。行ごとに <code>--row</code> を渡し、CSS の <code>animation-delay</code> で出す</dd></div>
+          <div><dt>時間予算</dt><dd>全体で 800 ms 以内。自動クローズのタイマーには影響させない</dd></div>
+          <div><dt>動きを減らす設定</dt><dd>最初から全部を出す</dd></div>
+          <div><dt>規模</dt><dd>S</dd></div>
+        </dl>
+      </div>
+    </article>
+
+  </div>
+</section>
+
+<section class="sec" aria-labelledby="others-h">
+  <div class="sec-head">
+    <h2 id="others-h">ほかの候補</h2>
+    <p>デモは付けていない。効果が小さいか、先に決めることがある案。</p>
+  </div>
+  <div class="table-wrap">
+    <table class="others">
+      <thead><tr><th>ID</th><th>案</th><th>伝える状態</th><th>36 章</th><th>規模</th><th>補足</th></tr></thead>
+      <tbody>
+        <tr><td>C6</td><td>リザルトで勝者の機体が 2 回跳ね、敗者は灰色になる</td><td>勝敗（表でも読める）</td><td><span class="chip rev">改訂が必要</span></td><td>S</td><td>主に雰囲気のため。<code>TankPortrait</code> に状態を渡す</td></tr>
+        <tr><td>E5</td><td>直撃（ダメージ段階 3）で爆風の範囲だけ 1 フレーム白黒を反転する</td><td>大ダメージ</td><td><span class="chip in">範囲内</span></td><td>S</td><td>光に敏感な人への配慮で 1 フレーム・範囲限定・連続させない</td></tr>
+        <tr><td>E6</td><td>被弾した機体が画面外なら、画面の端に向きの印を点滅させる</td><td>見えていない被弾</td><td><span class="chip in">範囲内</span></td><td>M</td><td>カメラが被弾者を映さない場面がどれだけあるかを先に確かめる</td></tr>
+        <tr><td>E7</td><td>自分の前回の軌跡を次の手番まで薄く残す</td><td>前の弾道</td><td><span class="chip judge">要判断</span></td><td>S</td><td>照準の助けになり、難しさが変わる。全員に見せるかも決める</td></tr>
+        <tr><td>L2</td><td>進捗率が分かる読み込みだけ 10 ドットのバーを出す</td><td>残りの量</td><td><span class="chip in">範囲内</span></td><td>S</td><td>今は率が分かる読み込みがほぼ無い。L1 の後で要否を見る</td></tr>
+        <tr><td>L3</td><td>マップを初めて映すとき、地形を上から走査線で描き出す</td><td>マップの形</td><td><span class="chip edge">境界</span></td><td>M</td><td>開幕のマップ紹介の俯瞰 900 ms の中に収める。再接続では出さない</td></tr>
+        <tr><td>P3</td><td>START! を 1 文字 40 ms で打ち出す</td><td>開始の瞬間</td><td><span class="chip edge">境界</span></td><td>S</td><td>今の表示時間の中で終える。<code>StartSignal.tsx</code></td></tr>
+        <tr><td>P4</td><td>YOUR TURN を走査線が横に開くように出す</td><td>自分の手番</td><td><span class="chip edge">境界</span></td><td>S</td><td>1800 ms の表示のうち入りの 120 ms だけを替える。<code>yourTurn.css</code></td></tr>
+      </tbody>
+    </table>
+  </div>
+</section>
+
+<section class="sec" aria-labelledby="order-h">
+  <div class="sec-head">
+    <h2 id="order-h">試す順番のおすすめ</h2>
+    <p>36 章の範囲内で、効果が大きく、戻しやすいものから並べた。</p>
+  </div>
+  <ol class="order">
+    <li><div><b>E1 オンライン対戦に練習の着弾演出を揃える</b><p>新しい表現を作らず、テスト済みの関数を主なモードへ届けるだけで手応えが大きく変わる。以後のエフェクト案の土台になる。</p></div></li>
+    <li><div><b>L1 端末ログ風の待ち表示</b><p>今いちばん弱い画面で、ゲームの進行に一切触れない。1 PR で完結する。</p></div></li>
+    <li><div><b>E2 地形の縁が崩れる</b><p>毎ターン必ず見る着弾の手応えが増える。時間の純関数と単体テストで固めやすい。</p></div></li>
+    <li><div><b>C1 手番の振動 と C4 HP が少ない機体の煙</b><p>どちらも <code>tankView.ts</code> の同じ場所に入る。8 人対戦での読みやすさに直結する。</p></div></li>
+    <li><div><b>P2 リザルトの段階表示</b><p>CSS だけで済み、境界の案の中で危険が最も小さい。36 章の解釈を決める試金石になる。</p></div></li>
+  </ol>
+</section>
+
+<section class="ask" aria-labelledby="ask-h">
+  <h2 id="ask-h">決めてほしいこと</h2>
+  <ol>
+    <li><b>36 章の範囲</b>：「状態の把握に必要な動き」の範囲内で進めるか、境界と改訂が必要な案まで広げて 36 章を改訂するか。</li>
+    <li><b>最初に試す案</b>：上の順番どおり E1 から始めてよいか。入れ替えたいものはあるか。</li>
+    <li><b>ゲーム性に触れる案</b>：前回の軌跡（E7）と、溜めているパワーを相手に見せるか（C2）。</li>
+  </ol>
+</section>
+
+<p class="foot">デモは Canvas と CSS による近似で、実装の PixiJS 描画とは寸法・色・速度が一致しない。数値は現在のコード（<code>hitFeedback.ts</code>、<code>labReplay.ts</code>、<code>WorldScenes.tsx</code> など）から読んだもので、実際に遊んで確かめたものではない。手触りの最終判断は遊んでから行う。</p>
+
+</main>
+
+<script>
+(() => {
+  const W = 96, H = 48;
+  const C = { bg: "#000", ink: "#33ff66", dim: "#0f4d24", mid: "#1f8a42", white: "#ffffff", g1: "#b8c0bc", g2: "#818986", g3: "#454d4a", cyan: "#40D0FF", pink: "#FF66C4", yellow: "#FFE14D", orange: "#FF9F1C" };
+  const reduced = matchMedia("(prefers-reduced-motion: reduce)").matches;
+
+  const R = (ctx, x, y, w, h, c) => { ctx.fillStyle = c; ctx.fillRect(Math.round(x), Math.round(y), w, h); };
+  const clear = (ctx) => R(ctx, 0, 0, W, H, C.bg);
+  const ground = (ctx, y) => R(ctx, 0, y, W, H - y, C.white);
+  const disc = (ctx, cx, cy, r, c, ring) => {
+    for (let y = -r; y <= r; y++) for (let x = -r; x <= r; x++) {
+      const d = x * x + y * y;
+      if (d <= r * r + r && (!ring || d >= (r - 1) * (r - 1) + (r - 1))) R(ctx, cx + x, cy + y, 1, 1, c);
+    }
+  };
+
+  // 機体。x は中心、y は接地点。単位は 1 ドット
+  const tank = (ctx, x, y, o) => {
+    const p = Object.assign({ body: C.cyan, top: C.white, angle: 35, dy: 0, squash: 0, white: false, recoil: 0 }, o);
+    const b = p.white ? C.white : p.body, t = p.white ? C.white : p.top;
+    const dy = p.dy + p.squash, bx = x - p.recoil;
+    R(ctx, x - 6, y - 2, 12, 2, C.g3);
+    R(ctx, bx - 5 - p.squash, y - 5 + dy, 10 + p.squash * 2, 3, b);
+    R(ctx, bx - 2, y - 7 + dy, 5, 2, b);
+    const a = p.angle * Math.PI / 180;
+    for (let i = 1; i <= 6; i++) R(ctx, bx + Math.cos(a) * i, y - 7 + dy - Math.sin(a) * i, 1, 1, t);
+    return { mx: bx + Math.cos(a) * 7, my: y - 7 + dy - Math.sin(a) * 7 };
+  };
+  const wreck = (ctx, x, y) => {
+    R(ctx, x - 6, y - 2, 12, 2, C.g3);
+    R(ctx, x - 5, y - 4, 10, 2, C.g2);
+    R(ctx, x - 3, y - 5, 4, 1, C.g1);
+    R(ctx, x + 1, y - 5, 2, 1, C.g2);
+    for (let i = 1; i <= 5; i++) R(ctx, x + 2 + i, y - 5 + Math.floor(i / 2), 1, 1, C.g2);
+  };
+  const caret = (ctx, x, y, c, bob) => {
+    [5, 3, 1].forEach((w, i) => R(ctx, x - (w - 1) / 2, y + i + bob, w, 1, c));
+  };
+  const puffs = (ctx, x, y, t, period, n, spread) => {
+    const sway = [0, 1, -1, 1, 0];
+    for (let k = 0; k < n; k++) {
+      const ph = ((t + k * period / n) % period) / period;
+      const px = x + Math.round(sway[k % 5] * ph * spread + ph * 3);
+      const py = y - Math.round(ph * 16);
+      const c = ph < .35 ? C.g1 : ph < .7 ? C.g2 : C.g3;
+      const s = ph < .5 ? 2 : 1;
+      R(ctx, px, py, s, s, c);
+    }
+  };
+
+  const demos = {
+    idle: { period: 1600, still: 900, draw(ctx, t) {
+      clear(ctx); ground(ctx, 36);
+      const rumble = (Math.floor(t / 100) % 4) === 1 ? 1 : 0;
+      tank(ctx, 28, 36, { body: C.cyan, angle: 40, dy: rumble });
+      const bob = Math.round(1 + Math.sin(t / 800 * 2 * Math.PI));
+      caret(ctx, 28, 20, C.cyan, -bob);
+      tank(ctx, 70, 36, { body: C.pink, angle: 140 });
+    } },
+
+    charge: { period: 2800, still: 1450, draw(ctx, t) {
+      clear(ctx); ground(ctx, 38);
+      const p = Math.min(1, t / 1500);
+      R(ctx, 4, 4, 42, 4, C.dim);
+      R(ctx, 5, 5, Math.floor(p * 40), 2, p > .7 ? C.yellow : C.ink);
+      const firing = t >= 1500 && t < 1700;
+      const shake = !firing && t < 1500 && p > .7 ? (Math.floor(t / 60) % 2 ? 1 : -1) : 0;
+      const m = tank(ctx, 22, 38, { body: C.cyan, angle: 38 + shake, recoil: firing && t < 1580 ? 1 : 0 });
+      if (t < 1500) {
+        const n = 1 + Math.floor(p * 5);
+        for (let k = 0; k < n; k++) {
+          const ph = ((t + k * 70) % 350) / 350, r = Math.round(7 * (1 - ph)), a = k * 1.3;
+          R(ctx, m.mx + Math.cos(a) * r, m.my + Math.sin(a) * r, 1, 1, p > .7 ? C.yellow : C.ink);
+        }
+      }
+      if (firing) disc(ctx, m.mx + 1, m.my, t < 1600 ? 2 : 1, C.white);
+      if (t >= 1500 && t < 2500) {
+        const s = (t - 1500) / 1000;
+        R(ctx, m.mx + s * 70, m.my - s * 22 + s * s * 20, 2, 2, C.cyan);
+      }
+    } },
+
+    landing: { period: 2000, still: 640, draw(ctx, t) {
+      clear(ctx); ground(ctx, 38);
+      const land = 500;
+      if (t < land) {
+        const f = t / land;
+        tank(ctx, 48, 6 + 32 * f * f, { body: C.pink, angle: 150 });
+        return;
+      }
+      const e = t - land;
+      tank(ctx, 48, 38, { body: C.pink, angle: 150, squash: e < 120 ? 1 : 0 });
+      if (e < 420) {
+        const d = e / 420;
+        for (let k = 0; k < 3; k++) {
+          const off = 7 + k * 2 + Math.round(d * (6 + k * 4));
+          const up = Math.round(Math.sin(d * Math.PI) * (2 + k));
+          const c = d < .5 ? C.white : d < .8 ? C.g1 : C.g2;
+          R(ctx, 48 - off, 37 - up, 1, 1, c);
+          R(ctx, 48 + off, 37 - up, 1, 1, c);
+        }
+      }
+    } },
+
+    smoke: { period: 2400, still: 700, draw(ctx, t) {
+      clear(ctx); ground(ctx, 36);
+      tank(ctx, 48, 36, { body: C.cyan, angle: 30 });
+      R(ctx, 43, 38, 10, 1, C.dim);
+      R(ctx, 43, 38, 2, 1, C.cyan);
+      puffs(ctx, 47, 28, t, 2400, 5, 3);
+      if (t % 1200 < 80) R(ctx, 50, 29, 1, 1, C.yellow);
+    } },
+
+    destroy: { period: 3200, still: 1500, draw(ctx, t) {
+      clear(ctx); ground(ctx, 36);
+      if (t < 260) {
+        tank(ctx, 48, 36, { body: C.cyan, angle: 45, white: Math.floor(t / 50) % 2 === 0 });
+      } else if (t < 560) {
+        tank(ctx, 48, 36, { body: C.cyan, angle: 45 });
+      } else {
+        wreck(ctx, 48, 36);
+      }
+      [[-3, -5, 260], [3, -7, 400], [0, -3, 540]].forEach(([dx, dy, at]) => {
+        const e = t - at;
+        if (e < 0 || e >= 260) return;
+        if (e < 120) disc(ctx, 48 + dx, 36 + dy, 1 + Math.floor(e / 40), e < 60 ? C.white : C.yellow);
+        else if (e < 200) disc(ctx, 48 + dx, 36 + dy, 4, Math.floor(e / 40) % 2 ? C.orange : C.yellow);
+        else disc(ctx, 48 + dx, 36 + dy, 4, C.g2, true);
+      });
+      if (t >= 700) puffs(ctx, 47, 30, t - 700, 2000, 4, 2);
+    } },
+
+    parity: { period: 1800, still: 250, draw(ctx, t) {
+      clear(ctx);
+      const e = t - 200;
+      const sh = e >= 190 && e < 440 ? [[1, 0], [-1, 1], [0, -1], [1, 1], [-1, 0], [0, 1]][Math.floor((e - 190) / 33) % 6] : [0, 0];
+      const amp = e >= 190 && e < 440 ? Math.ceil(2 * (440 - e) / 250) : 0;
+      R(ctx, 0, 30, 47, 18, C.white);
+      R(ctx, 49 + sh[0] * amp, 30 + sh[1] * amp, 47, 18, C.white);
+      R(ctx, 47, 0, 2, H, C.dim);
+      if (t < 200) { R(ctx, 23, 29, 2, 2, C.cyan); R(ctx, 71, 29, 2, 2, C.cyan); return; }
+      if (e < 300) disc(ctx, 24, 30, 8, C.ink);
+      const ox = sh[0] * amp, oy = sh[1] * amp;
+      if (e < 70) { R(ctx, 71 + ox, 29 + oy, 2, 2, C.cyan); return; }
+      const f = e - 70;
+      if (f < 120) disc(ctx, 72 + ox, 30 + oy, 2 + Math.floor(6 * f / 120), C.ink);
+      else if (f < 420) { if (Math.floor((f - 120) / 80) % 2 === 0) disc(ctx, 72 + ox, 30 + oy, 8, C.ink); }
+      else if (f < 520) disc(ctx, 72 + ox, 30 + oy, 8, C.ink, true);
+      if (f >= 120 && f < 520) {
+        const s = (f - 120) / 1000;
+        [[-10, -91], [10, -91], [-29, -83], [29, -83], [-47, -68], [47, -68]].forEach(([vx, vy]) => {
+          const x = 72 + Math.trunc(vx * s * .35), y = 30 + Math.trunc((vy * s + 200 * s * s) * .35);
+          if (x > 49) R(ctx, x + ox, y + oy, 1, 1, C.ink);
+        });
+      }
+    } },
+
+    crumble: { period: 2600, still: 330, draw(ctx, t) {
+      clear(ctx);
+      const cx = 48, cy = 25, r = 8, carved = t >= 190;
+      const topOf = (x) => 30 - Math.round(Math.max(0, 6 - Math.abs(x - 48) / 5));
+      const solid = (x, y) => {
+        if (y < topOf(x)) return false;
+        if (carved && (x - cx) * (x - cx) + (y - cy) * (y - cy) <= r * r + r) return false;
+        return true;
+      };
+      for (let y = 18; y < H; y++) {
+        let run = -1;
+        for (let x = 0; x <= W; x++) {
+          const s = x < W && solid(x, y);
+          if (s && run < 0) run = x;
+          if (!s && run >= 0) { R(ctx, run, y, x - run, 1, C.white); run = -1; }
+        }
+      }
+      if (t < 70) { R(ctx, cx - 1, cy - 1, 2, 2, C.cyan); return; }
+      const e = t - 70;
+      if (e < 120) disc(ctx, cx, cy, 2 + Math.floor((r - 2) * e / 120), C.ink);
+      else if (e < 420) { if (Math.floor((e - 120) / 80) % 2 === 0) disc(ctx, cx, cy, r, C.ink); }
+      else if (e < 520) disc(ctx, cx, cy, r, C.ink, true);
+      if (carved && t < 600) {
+        const s = (t - 190) / 1000;
+        for (let a = 0; a < 16; a++) {
+          const ang = Math.PI + (a / 15) * Math.PI;
+          const rx = cx + Math.round(Math.cos(ang) * (r + 1));
+          const ry = cy - Math.round(Math.sin(ang) * (r + 1));
+          if (ry < topOf(rx)) continue;
+          const vx = Math.trunc(Math.cos(ang) * 18), vy = -20 - (a % 3) * 8;
+          const x = rx + Math.trunc(vx * s), y = ry + Math.trunc(vy * s + 220 * s * s);
+          R(ctx, x, y, 1, 1, s < .25 ? C.white : C.g1);
+        }
+      }
+    } },
+
+    trail: { period: 2600, still: 1300, draw(ctx, t) {
+      clear(ctx); ground(ctx, 40);
+      R(ctx, 74, 4, 2, 1, C.ink); R(ctx, 73, 5, 1, 1, C.ink); R(ctx, 74, 6, 2, 1, C.ink);
+      R(ctx, 78, 4, 2, 1, C.ink); R(ctx, 77, 5, 1, 1, C.ink); R(ctx, 78, 6, 2, 1, C.ink);
+      const m = tank(ctx, 12, 40, { body: C.cyan, angle: 55 });
+      const pos = (i) => { const s = i / 60; return { x: m.mx + 62 * s - 26 * s * s, y: m.my - 58 * s + 40 * s * s }; };
+      const i = Math.floor(t / 16.7), end = 108;
+      const last = Math.min(i, end);
+      for (let k = 0; k < last; k += 3) {
+        const age = last - k;
+        const p = pos(k);
+        R(ctx, p.x, p.y, 1, 1, age < 20 ? C.mid : C.dim);
+      }
+      if (i < end) { const p = pos(i); R(ctx, p.x, p.y, 2, 2, C.cyan); }
+      else if (i < end + 30) { const p = pos(end); disc(ctx, p.x, Math.min(p.y, 39), 1 + Math.floor((i - end) / 6), C.ink); }
+    } },
+
+    weapons: { period: 1600, still: 330, draw(ctx, t) {
+      clear(ctx); ground(ctx, 30);
+      if (t < 70) { [16, 48, 80].forEach(x => R(ctx, x, 29, 2, 2, C.white)); return; }
+      const e = t - 70;
+      const grow = e < 120 ? e / 120 : 1;
+      const on = e < 120 || (e < 420 && Math.floor((e - 120) / 80) % 2 === 0) || (e >= 420 && e < 520);
+      if (!on || e >= 520) return;
+      const ring = e >= 420;
+      disc(ctx, 16, 30, Math.max(1, Math.round(8 * grow)), C.ink, ring);
+      const lx = Math.round(14 * grow);
+      if (!ring) { R(ctx, 48 - lx, 30, lx * 2 + 1, 1, C.cyan); R(ctx, 48, 30 - Math.round(3 * grow), 1, Math.round(6 * grow) + 1, C.cyan); }
+      else { R(ctx, 48 - lx, 29, 1, 3, C.cyan); R(ctx, 48 + lx, 29, 1, 3, C.cyan); }
+      const ry = Math.round(10 * grow), rx = Math.max(1, Math.round(3 * grow));
+      for (let y = -Math.round(ry / 3); y <= ry; y++) for (let x = -rx; x <= rx; x++) {
+        const inside = (x * x) / (rx * rx) + (y * y) / (ry * ry) <= 1;
+        const edge = inside && (x * x) / ((rx - 1 || 1) * (rx - 1 || 1)) + (y * y) / ((ry - 1) * (ry - 1)) > 1;
+        if (inside && (!ring || edge)) R(ctx, 80 + x, 30 + y, 1, 1, C.orange);
+      }
+    } },
+
+    wipe: { period: 3600, still: 2150, draw(ctx, t) {
+      const lobby = () => { clear(ctx); R(ctx, 6, 6, 40, 36, C.dim); R(ctx, 8, 8, 36, 32, C.bg); tank(ctx, 26, 30, { body: C.cyan, angle: 40 }); R(ctx, 52, 10, 38, 5, C.ink); R(ctx, 52, 20, 38, 3, C.dim); R(ctx, 52, 27, 38, 3, C.dim); R(ctx, 52, 36, 38, 6, C.ink); };
+      const rooms = () => { clear(ctx); R(ctx, 6, 6, 50, 4, C.ink); for (let k = 0; k < 4; k++) { R(ctx, 6, 14 + k * 8, 84, 1, C.ink); R(ctx, 8, 17 + k * 8, 20, 2, C.mid); R(ctx, 76, 17 + k * 8, 12, 2, C.mid); } };
+      const battle = () => { clear(ctx); for (let x = 0; x < W; x++) { const h = 32 + Math.round(Math.sin(x / 9) * 4); R(ctx, x, h, 1, H - h, C.white); } tank(ctx, 22, 32 + Math.round(Math.sin(22 / 9) * 4), { body: C.cyan, angle: 40 }); tank(ctx, 74, 32 + Math.round(Math.sin(74 / 9) * 4), { body: C.pink, angle: 140 }); };
+      const bars = (cover) => { const n = Math.min(8, cover); for (let k = 0; k < n; k++) { R(ctx, k * 12, 0, 12, H, C.bg); R(ctx, k * 12 + 11, 0, 1, H, C.ink); } };
+      if (t < 700) return lobby();
+      if (t < 900) { lobby(); return bars(Math.floor((t - 700) / 25) + 1); }
+      if (t < 1100) { rooms(); const k = 8 - Math.floor((t - 900) / 25); for (let j = 8 - k; j < 8; j++) { R(ctx, j * 12, 0, 12, H, C.bg); R(ctx, j * 12, 0, 1, H, C.ink); } return; }
+      if (t < 1800) return rooms();
+      if (t < 1950) { clear(ctx); const w = Math.round(W * (t - 1800) / 150); R(ctx, (W - w) / 2, 23, w, 1, C.white); return; }
+      if (t < 2150) { battle(); const open = Math.round(24 * (t - 1950) / 200); R(ctx, 0, 0, W, 24 - open, C.bg); R(ctx, 0, 24 + open, W, H, C.bg); R(ctx, 0, 24 - open, W, 1, C.ink); R(ctx, 0, 23 + open, W, 1, C.ink); return; }
+      battle();
+    } },
+  };
+
+  // Canvas のデモ。見えている間だけ 30 fps で動かす。動きを減らす設定では代表の 1 枚を出し、ボタンで 1 回だけ再生する
+  const runners = {};
+  document.querySelectorAll("canvas[data-demo]").forEach((canvas) => {
+    const name = canvas.dataset.demo, demo = demos[name];
+    const ctx = canvas.getContext("2d");
+    let start = performance.now(), visible = false, raf = 0, lastFrame = -1, once = reduced;
+    const frame = (now) => {
+      raf = 0;
+      let t = now - start;
+      if (once && t >= demo.period) { demo.draw(ctx, demo.still); return; }
+      t %= demo.period;
+      const f = Math.floor(t / 33);
+      if (f !== lastFrame) { lastFrame = f; demo.draw(ctx, t); }
+      if (visible) raf = requestAnimationFrame(frame);
+    };
+    const play = () => { start = performance.now(); lastFrame = -1; if (!raf) raf = requestAnimationFrame(frame); };
+    demo.draw(ctx, demo.still);
+    runners[name] = () => { once = reduced; visible = true; play(); };
+    if (!reduced) {
+      new IntersectionObserver(([entry]) => {
+        visible = entry.isIntersecting;
+        if (visible && !raf) raf = requestAnimationFrame(frame);
+      }).observe(canvas);
+    }
+  });
+
+  // 端末ログのデモ
+  const term = document.querySelector('[data-demo-html="term"]');
+  const lines = [
+    ["> 画面を読み込み中", "OK"],
+    ["> サーバーへ接続 (tokyo)", "OK"],
+    ["> マップ ridgeline を展開", "OK"],
+    ["> 参加者を同期 3/4", null],
+  ];
+  let termTimers = [];
+  const renderTerm = (upto, typed) => {
+    term.innerHTML = "";
+    lines.forEach(([text, ok], i) => {
+      if (i > upto) return;
+      const row = document.createElement("div");
+      const shown = i < upto ? text : text.slice(0, typed);
+      row.textContent = shown;
+      if (i < upto || typed >= text.length) {
+        const pad = document.createElement("span");
+        pad.textContent = " " + ".".repeat(Math.max(3, 26 - text.length)) + " ";
+        row.appendChild(pad);
+        const tag = document.createElement("span");
+        if (ok && i < upto) { tag.className = "ok"; tag.textContent = ok; }
+        else if (!ok) { tag.className = "wait"; tag.textContent = "待機中 "; }
+        row.appendChild(tag);
+        if (!ok || i === upto) { const cur = document.createElement("span"); cur.className = "cursor"; cur.innerHTML = "&nbsp;"; row.appendChild(cur); }
+      }
+      term.appendChild(row);
+    });
+  };
+  const playTerm = () => {
+    termTimers.forEach(clearTimeout); termTimers = [];
+    if (reduced) { renderTerm(3, 99); return; }
+    let at = 0;
+    lines.forEach(([text], i) => {
+      for (let c = 0; c <= text.length; c++) { termTimers.push(setTimeout(() => renderTerm(i, c), at)); at += 28; }
+      at += i === 1 ? 700 : 420;
+    });
+    termTimers.push(setTimeout(playTerm, at + 2600));
+  };
+  renderTerm(3, 99);
+  runners.term = playTerm;
+  if (!reduced) setTimeout(playTerm, 400);
+
+  // リザルトのデモ
+  const res = document.querySelector('[data-demo-html="result"]');
+  const rows = [...res.querySelectorAll("[data-row]")];
+  let resTimers = [];
+  const playResult = () => {
+    resTimers.forEach(clearTimeout); resTimers = [];
+    if (reduced) { rows.forEach(r => r.classList.remove("hide")); return; }
+    rows.forEach(r => r.classList.add("hide"));
+    rows.forEach((row, i) => {
+      resTimers.push(setTimeout(() => {
+        row.classList.remove("hide");
+        row.querySelectorAll("[data-to]").forEach(cell => {
+          const to = Number(cell.dataset.to);
+          for (let s = 0; s <= 8; s++) resTimers.push(setTimeout(() => { cell.textContent = String(Math.floor(to * s / 8)); }, s * 40));
+        });
+      }, 150 + i * 90));
+    });
+    const crowns = [...res.querySelectorAll(".crown")];
+    [0, 1, 2, 3].forEach(k => resTimers.push(setTimeout(() => crowns.forEach(c => c.classList.toggle("off", k % 2 === 0)), 700 + k * 120)));
+    resTimers.push(setTimeout(() => crowns.forEach(c => c.classList.remove("off")), 700 + 4 * 120));
+    resTimers.push(setTimeout(playResult, 4200));
+  };
+  runners.result = playResult;
+  if (!reduced) {
+    let started = false;
+    new IntersectionObserver(([entry]) => { if (entry.isIntersecting && !started) { started = true; playResult(); } }).observe(res);
+  }
+
+  document.querySelectorAll(".replay").forEach((btn) => {
+    btn.addEventListener("click", () => { const run = runners[btn.dataset.for]; if (run) run(); });
+  });
+})();
+</script>
+
+</body></html>
