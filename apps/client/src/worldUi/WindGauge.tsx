@@ -6,7 +6,7 @@ import { WIND_METER_HALF, WIND_METER_HEIGHT, mirrorRects, windArrowRects, windSt
 type Side = -1 | 1;
 
 // ほかのドット絵（WeaponIcon など）と同じく SVG の rect で描く。
-// オンラインの画面は毎フレーム描き直すので、片側ごとの目盛りと強さ 0 から WIND_MAX までの矢印を先に作っておく
+// オンラインの画面は frame を受け取るたびに描き直すので、片側ごとの目盛りと強さ 0 から WIND_MAX までの矢印を先に作っておく
 const rectsOf = (rects: readonly Rect[]) => rects.map(r => <rect key={`${r.left}/${r.top}`} x={r.left} y={r.top} width={r.width} height={r.height} />);
 const scaleOf = (side: Side) => {
   const orient = <T extends Rect>(rects: readonly T[]): readonly T[] => side < 0 ? mirrorRects(rects) : rects;
