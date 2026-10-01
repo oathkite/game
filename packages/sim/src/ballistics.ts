@@ -52,6 +52,8 @@ export type ShotOutcome = {
   readonly mask: TerrainMask;
   /** 弾道ごとの位置列。添字は Impact.projectile と対応する */
   readonly paths: readonly ProjectilePath[];
+  /** ダブルシュートで 2 発目を撃ったときの、1 発目の弾道の本数と、1 発目で両者が落ちた後の位置。再生で 1 発目の後の落下を描く */
+  readonly firstShot?: FirstShot;
 };
 
 const ringOuts = (mask: TerrainMask, ps: readonly [TankPos, TankPos]): Seat[] => {
@@ -126,6 +128,7 @@ export const simulateShot = (
   return {
     mask: v.mask,
     paths: v.paths,
+    ...(v.firstShot ? { firstShot: v.firstShot } : {}),
     result: { input, impacts: v.impacts.map(i => ({ ...i, damage: [i.damage[0]!, i.damage[1]!] })), hpAfter: [v.hpAfter[0]!, v.hpAfter[1]!], xAfter: [after[0].x, after[1].x], yAfter: [after[0].y, after[1].y], ringOut, finished: judge([v.hpAfter[0]!, v.hpAfter[1]!], ringOut), ...(v.teleport !== undefined ? { teleport: v.teleport } : {}) },
   };
 };
