@@ -147,6 +147,7 @@ type TrajectoryInput = {
   readonly elevation: number;// 10 から 90 の整数（度）。車体基準の仰角
   readonly power: number;    // 0 から 100 の整数
   readonly wind: number;     // -10 から 10 の整数
+  readonly item?: ItemId;    // 使ったアイテム（42 章）。使わない手番は持たない。テレポートなら weapon は標準砲
 };
 
 type TerrainOp = {
@@ -173,12 +174,15 @@ type ShotResult = {
   readonly ringOut: readonly Seat[];
   /** 決着していれば勝者と理由。ターン数と成績は対戦全体の状態から埋めるので、ここでは持たない */
   readonly finished: { readonly winner: Seat | null; readonly reason: "hp" | "ringOut" } | null;
+  /** テレポートの着地点（42 章）。テレポートを使った射撃だけが持ち、移れなければ null */
+  readonly teleport?: { readonly x: number; readonly y: number } | null;
 };
 ```
 
 `TrajectoryInput` は弾道を再計算するのに必要なものをすべて含み、それ以外を含まない。
 武器はスロット（0 か 1 か）ではなく武器そのもので持つ。装備を知らない観戦者や再接続後のクライアントも、この入力だけで同じ結果を出せるようにするためである。
 地形は `terrainOps` から復元する前提なので、入力には含めない。
+アイテムも入力に載せる。ダブルシュートの 2 発目とテレポートの着地点は、入力と地形から決まるので、結果に別の入力を足さずに再計算できる。
 着弾は 1 つではなく列で持つ。最初の版は「着弾点 1 つ、地形の円 1 つ、ダメージ 1 組」だったが、扇に広がる武器と貫通する武器（10 章）を入れるために一般化した。1 発 1 段の武器では列の長さが 1 で、値は最初の版と同じである。
 車体の傾きも地形と x から求まるので含めない。
 発射角は「傾き + 仰角」を向きに応じて鏡像にした値で、物理コードの中で求める。
