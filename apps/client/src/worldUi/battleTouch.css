@@ -54,7 +54,7 @@
 /* スマートフォンの縦持ち（2026-10-02）。操作盤を高くし、パワーと残り移動を盤の全幅の段に分けて読みやすくする。
    上の段は十字キー、角度（その下に風）、武器とアイテム、発射の順に並べ、発射は残りの幅と段の高さいっぱいに広げる */
 @media (orientation:portrait) and (max-width:599px) {
-  .world-ui .battle-console.has-touch, .world-ui .battle-console.has-touch.has-wind { height:216px; grid-template:96px auto auto/96px var(--wind-meter, 72px) 84px minmax(0,1fr); gap:6px; align-content:start; }
+  .world-ui .battle-console.has-touch, .world-ui .battle-console.has-touch.has-wind { height:216px; grid-template:96px auto auto/96px var(--wind-meter, 72px) 84px minmax(0,1fr); gap:6px 4px; align-content:start; }
   .battle-console.has-touch .battle-angle, .battle-console.has-touch.has-wind .battle-angle { grid-area:1/2; align-self:start; justify-self:center; }
   .battle-console.has-touch.has-wind > .battle-wind { grid-area:1/2; align-self:end; justify-self:center; }
   .world-ui .battle-console.has-touch .battle-power, .world-ui .battle-console.has-touch.has-wind .battle-power { grid-area:2/1/3/-1; height:76px; }
