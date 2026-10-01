@@ -1,5 +1,5 @@
 import { test, expect } from "@playwright/test";
-import { assignTeam, chooseWeapon, createRoom, enterRooms, joinByCode, members, readyUp, teamOf, waitForBattle } from "./roomFlow";
+import { assignTeam, canAct, chooseWeapon, createRoom, enterRooms, joinByCode, members, readyUp, teamOf, waitForBattle } from "./roomFlow";
 test("room code, teams, ready, selected weapons and return to preparation", async ({ browser }) => {
   test.setTimeout(150000);
   const contexts = await Promise.all([browser.newContext({ locale: "ja-JP", viewport: { width: 1440, height: 900 } }), browser.newContext({ locale: "ja-JP", hasTouch: true, viewport: { width: 844, height: 390 } })]);
@@ -68,7 +68,7 @@ test("room code, teams, ready, selected weapons and return to preparation", asyn
     expect(winds[0]).toEqual(expect.any(Number));
     expect(winds[1]).toBe(winds[0]);
     await expect(a!.getByRole("button", { name: "トリプル弾", exact: true })).toHaveAttribute("aria-pressed", "true");
-    const shooter = await a!.getByRole("button", { name: "トリプル弾", exact: true }).isEnabled() ? a! : b!;
+    const shooter = await canAct(a!) ? a! : b!;
     if (shooter === a) { await shooter.keyboard.down("Space"); await shooter.waitForTimeout(400); await shooter.keyboard.up("Space"); } else { const fire = shooter.getByRole("button", { name: "発射", exact: true }); await fire.hover(); await shooter.mouse.down(); await shooter.waitForTimeout(400); await shooter.mouse.up(); }
     await expect(a!.getByTestId("phase")).toHaveText("射撃を再生中");
     await expect(a!.getByTestId("phase")).toHaveText("操作中", { timeout: 12000 });

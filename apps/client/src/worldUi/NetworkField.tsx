@@ -20,7 +20,7 @@ import type { Layout } from "@/game/scale";
 import { createCameraRig } from "@/prototype/cameraRig";
 import { loadCameraSettings } from "@/prototype/cameraSettings";
 import { worldToScreen } from "@/prototype/camera";
-import type { presentLabReplay } from "@/networkLab/labReplay";
+import type { LiveSample } from "@/networkLab/liveView";
 import { createLabImpactFx, drawLabImpacts, emitLabDebris, labEdgePoints, labShake, labTankHit } from "./labImpactView";
 import { edgeBlinkOn } from "@/game/edgeMarker";
 import { guideDots } from "@/game/trail";
@@ -30,7 +30,8 @@ import { SceneLoading } from "./SceneLoading";
 import { replayTailMs } from "@game/engine/replay-timing";
 import { TOTAL_AFTER_CARVE_MS } from "@/game/replay";
 
-type Props = { readonly serverNow: number; readonly onSettling?: (settling: boolean) => void; readonly followTurns?: boolean; readonly blocked?: boolean; readonly frame: LabFrame; readonly players: LabFrame["players"]; readonly presentation: ReturnType<typeof presentLabReplay>; readonly elevation: number; readonly ownId: string; readonly selectedWeapon?: WeaponId; readonly charge?: number };
+/** sample は今の時点の位置と再生を返す。毎フレーム変わる値は props にせず、描画ループの中で読む */
+type Props = { readonly sample: () => LiveSample; readonly onSettling?: (settling: boolean) => void; readonly followTurns?: boolean; readonly blocked?: boolean; readonly frame: LabFrame; readonly elevation: number; readonly ownId: string; readonly selectedWeapon?: WeaponId; readonly charge?: number };
 const baseTerrain = (frame: LabFrame) => buildInitialTerrain(frame.map);
 export const NetworkField = (props: Props) => {
   const host = useRef<HTMLDivElement>(null), mini = useRef<HTMLCanvasElement>(null), latest = useRef(props); latest.current = props;
@@ -38,8 +39,8 @@ export const NetworkField = (props: Props) => {
   const { t } = useLanguage();
   const [signal, setSignal] = useState(false);
   const [loaded, setLoaded] = useState(false), [error, setError] = useState(false);
-  const openingActive = () => Boolean(latest.current.frame.opening && latest.current.serverNow < latest.current.frame.opening.endsAt);
-  const focus = (immediate = false) => { if (openingActive()) return; const p = latest.current.players.find(p => p.playerId === latest.current.frame.actorId) ?? latest.current.frame.players.find(p => p.playerId === latest.current.frame.actorId); if (p) rig.focus({ x: p.x, y: p.y - 6 }, "actor", immediate || matchMedia("(prefers-reduced-motion: reduce)").matches); };
+  const openingActive = () => Boolean(latest.current.frame.opening && latest.current.sample().serverNow < latest.current.frame.opening.endsAt);
+  const focus = (immediate = false) => { if (openingActive()) return; const p = latest.current.sample().players.find(p => p.playerId === latest.current.frame.actorId) ?? latest.current.frame.players.find(p => p.playerId === latest.current.frame.actorId); if (p) rig.focus({ x: p.x, y: p.y - 6 }, "actor", immediate || matchMedia("(prefers-reduced-motion: reduce)").matches); };
   useEffect(() => {
     const element = host.current; if (!element) return;
     let disposed = false, renderer: Renderer | null = null, stop = () => {};
@@ -59,8 +60,14 @@ export const NetworkField = (props: Props) => {
       const r = renderer; let bullet = r.projectile("yellow", "cannon");
       let previousMoveX: number | undefined;
       const damageEvents = new Set<string>(), impactFx = createLabImpactFx();
+      // e2e が読む表示位置。変わったときだけ書く
+      let shownPositions = "";
+      const writePositions = (players: LabFrame["players"]): void => { const next = JSON.stringify(players); if (next !== shownPositions) { shownPositions = next; element.dataset.positions = next; } };
+      writePositions(latest.current.sample().players);
       stop = r.onFrame(dt => {
-        const { frame, players, presentation, elevation, ownId } = latest.current;
+        const { elevation, ownId } = latest.current, { frame, players, presentation, serverNow, own: predicted } = latest.current.sample();
+        const openingNow = Boolean(frame.opening && serverNow < frame.opening.endsAt);
+        writePositions(players);
         const size = layout(), key = `${size.mapWidth}/${size.mapHeight}/${frame.map.width}/${frame.map.height}`;
         if (key !== previousSize) { previousSize = key; r.setLayout(size); rig.resize({ width: size.mapWidth, height: size.mapHeight, scale: size.cell }, { left: 0, top: -100, right: frame.map.width, bottom: frame.map.height }); }
         const reducedNow = matchMedia("(prefers-reduced-motion: reduce)").matches;
@@ -72,11 +79,11 @@ export const NetworkField = (props: Props) => {
           mask = applyOps(baseTerrain(frame), presentation.terrainOps); r.setTerrain(mask, undefined, presentation.terrainOps);
         }
         const nextTurn = `${frame.matchId}/${frame.turnId}`;
-        if (nextTurn !== turnKey && latest.current.serverNow >= (frame.delay?.revealUntil ?? 0) - 600) { if (latest.current.followTurns !== false) focus(turnKey === ""); turnKey = nextTurn; }
+        if (nextTurn !== turnKey && serverNow >= (frame.delay?.revealUntil ?? 0) - 600) { if (latest.current.followTurns !== false) focus(turnKey === ""); turnKey = nextTurn; }
         const own = players.find(p => p.playerId === ownId);
-        if (!openingActive() && latest.current.serverNow >= (frame.delay?.revealUntil ?? 0) && frame.phase === "acting" && frame.actorId === ownId && own && previousMoveX !== undefined && own.x !== previousMoveX) rig.moveActor({ x: own.x, y: own.y - 6 }, matchMedia("(prefers-reduced-motion: reduce)").matches);
+        if (!openingNow && serverNow >= (frame.delay?.revealUntil ?? 0) && frame.phase === "acting" && frame.actorId === ownId && own && previousMoveX !== undefined && own.x !== previousMoveX) rig.moveActor({ x: own.x, y: own.y - 6 }, matchMedia("(prefers-reduced-motion: reduce)").matches);
         previousMoveX = own?.x;
-        facing.set(frame.actorId, frame.movement.facing);
+        facing.set(frame.actorId, predicted?.facing ?? frame.movement.facing);
         const shot = frame.phase === "replaying" ? frame.replay?.shooter : null;
         if (shot) { facing.set(shot.playerId, shot.facing);  }
         if (fallMatch !== frame.matchId) { falls.reset(); fallMatch = frame.matchId; }
@@ -102,7 +109,7 @@ export const NetworkField = (props: Props) => {
         const replay = frame.phase === "replaying" ? frame.replay : null;
         if (replay) {
           const flightMs = Math.max(1, replay.endsAt - replay.startsAt - replayTailMs(replay.impacts));
-          const elapsed = latest.current.serverNow - replay.startsAt;
+          const elapsed = serverNow - replay.startsAt;
           replay.impacts.forEach((impact, index) => {
             const event = `${replay.startsAt}/${index}`;
             // 練習と同じく、爆風が最大になって機体が白くなる瞬間に数字を出す（設計書 38 の E1）
@@ -134,24 +141,23 @@ export const NetworkField = (props: Props) => {
           return p && colors ? { x: p.x, y: p.y, ramp: TEAM_RAMPS[colors.primary], seat: shown.indexOf(p) } : undefined;
         }, mask);
         r.setShake(labShake(presentation, reducedNow));
-        r.setEdgeMarkers(labEdgePoints(presentation, shown, colorOf), edgeBlinkOn(latest.current.serverNow, reducedNow));
+        r.setEdgeMarkers(labEdgePoints(presentation, shown, colorOf), edgeBlinkOn(serverNow, reducedNow));
         const first = presentation.bullets[0]; if (first) rig.shot(first);
-        const opening = frame.opening && latest.current.serverNow < frame.opening.endsAt;
-        if (opening) {
+        if (openingNow) {
           const order = frame.opening!.playerIds.flatMap(id => players.filter(p => p.playerId === id));
-          const tour = openingPose(latest.current.serverNow - frame.opening!.startsAt, order, frame.map,
+          const tour = openingPose(serverNow - frame.opening!.startsAt, order, frame.map,
             { width: size.mapWidth, height: size.mapHeight, scale: cell }, reduced);
           r.setLayout({ ...size, cell: tour.scale });
           rig.resize({ width: size.mapWidth, height: size.mapHeight, scale: tour.scale }, rig.get().bounds);
           rig.focus(tour.center, "actor", true);
-          r.setReveal(revealRowsAt(latest.current.serverNow - frame.opening!.startsAt, frame.map.height, reduced));
+          r.setReveal(revealRowsAt(serverNow - frame.opening!.startsAt, frame.map.height, reduced));
           if (signalVisible !== tour.start) { signalVisible = tour.start; setSignal(tour.start); }
         } else if (wasOpening) {
           r.setReveal(null);
           r.setLayout(size); rig.resize({ width: size.mapWidth, height: size.mapHeight, scale: cell }, rig.get().bounds);
           signalVisible = false; setSignal(false); focus();
         }
-        wasOpening = Boolean(opening); element.dataset.opening = String(Boolean(opening));
+        wasOpening = openingNow; element.dataset.opening = String(openingNow);
         const center = rig.tick(dt, performance.now(), matchMedia("(prefers-reduced-motion: reduce)").matches);
         const offset = worldToScreen({ x: 0, y: 0 }, center, rig.get().viewport); r.setCameraOffset(Math.round(offset.x), Math.round(offset.y));
         drawOverview(mini.current, mask, players, rig.get(), frame.map.id);
@@ -165,8 +171,8 @@ export const NetworkField = (props: Props) => {
   useEffect(() => {
     let turn = "", selected = "";
     const down = (e: KeyboardEvent) => {
-      const { frame, players, blocked } = latest.current;
-      if (e.repeat || e.ctrlKey || e.metaKey || e.altKey || e.shiftKey || (blocked || Boolean(frame.opening && latest.current.serverNow < frame.opening.endsAt)) || innerHeight > innerWidth || (e.target instanceof HTMLElement && e.target.matches("input,select,textarea,[contenteditable]"))) return;
+      const { frame, blocked } = latest.current, { players, serverNow } = latest.current.sample();
+      if (e.repeat || e.ctrlKey || e.metaKey || e.altKey || e.shiftKey || (blocked || Boolean(frame.opening && serverNow < frame.opening.endsAt)) || innerHeight > innerWidth || (e.target instanceof HTMLElement && e.target.matches("input,select,textarea,[contenteditable]"))) return;
       if (e.code !== "Tab" || frame.phase === "finished") return;
       e.preventDefault();
       if (drag.current) return;
@@ -186,7 +192,7 @@ export const NetworkField = (props: Props) => {
   const point = (e: PointerEvent<HTMLDivElement>) => { const box = e.currentTarget.getBoundingClientRect(); return { x: e.clientX - box.left, y: e.clientY - box.top }; };
   return <div className="network-field">
     <StartSignal visible={signal} />
-    <div ref={host} className="network-pixi" data-testid="network-world" data-loaded={loaded} data-positions={JSON.stringify(props.players)} tabIndex={0} aria-label={t("対戦フィールド。ドラッグ・ホイールで見回す、Cで手番へ")} onKeyDown={e => { if (e.key.toLowerCase() === "c") focus(); }}
+    <div ref={host} className="network-pixi" data-testid="network-world" data-loaded={loaded} tabIndex={0} aria-label={t("対戦フィールド。ドラッグ・ホイールで見回す、Cで手番へ")} onKeyDown={e => { if (e.key.toLowerCase() === "c") focus(); }}
       onWheel={e => { if (!openingActive() && !drag.current && !e.ctrlKey) wheelPan(rig, e.deltaX, e.deltaY, e.deltaMode); }}
       onPointerDown={e => { if (openingActive() || !e.isPrimary || e.button !== 0) return; e.currentTarget.setPointerCapture(e.pointerId); drag.current = { ...point(e), at: performance.now() }; rig.stop(); }}
       onPointerMove={e => { if (openingActive() || !e.isPrimary) return; const p = point(e), now = performance.now(); if (drag.current) { rig.pan({ x: p.x - drag.current.x, y: p.y - drag.current.y }, now - drag.current.at, now); drag.current = { ...p, at: now }; } else if (e.pointerType === "mouse") rig.edge(p, now); }}

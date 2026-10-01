@@ -1,6 +1,6 @@
 import { assertRosterReadable, turnOrder } from "./rosterReadability";
 import { expect, test } from "@playwright/test";
-import { assignTeam, createRoom, enterRooms, joinByCode, members, readyUp, teamLabel, teamOf, waitForBattle } from "./roomFlow";
+import { assignTeam, canAct, createRoom, enterRooms, joinByCode, members, readyUp, teamLabel, teamOf, waitForBattle } from "./roomFlow";
 
 test("eight independent players complete a 4v4 match and return together", async ({ browser }) => {
   test.setTimeout(180000);
@@ -52,14 +52,14 @@ test("eight independent players complete a 4v4 match and return together", async
     for (const page of pages) await waitForBattle(page);
     // Cold loading eight renderers can span a turn; start input checks early in a live turn.
     await expect.poll(async () => Number(await owner.locator(".countdown-dial > span").innerText()), { timeout: 25000 }).toBeGreaterThanOrEqual(18);
-    await expect.poll(async () => (await Promise.all(pages.map(page => page.locator(".battle-weapons button").first().isEnabled()))).filter(Boolean), { timeout: 15000 }).toHaveLength(1);
+    await expect.poll(async () => (await Promise.all(pages.map(canAct))).filter(Boolean), { timeout: 15000 }).toHaveLength(1);
     // 全員の最初の予約は同じ時刻なので、射撃した人の次の予約は2番目の人より後になる。
     const nextName = await turnOrder(owner).nth(1).locator(".turn-order-player").textContent();
     const nextPage = pages[Number(nextName!.replace("Pilot", "")) - 1]!;
     await nextPage.getByRole("button", { name: "設定を開く", exact: true }).click();
     await expect(nextPage.getByRole("dialog", { name: "対戦設定" })).toBeVisible();
     await expect(nextPage.getByText("あなたの手番です", { exact: true })).toHaveCount(0);
-    const actors = await Promise.all(pages.map(page => page.locator(".battle-weapons button").first().isEnabled()));
+    const actors = await Promise.all(pages.map(canAct));
     expect(actors.filter(Boolean)).toHaveLength(1);
     const shooter = pages[actors.indexOf(true)]!;
     // 残り時間は数字だけで示す（63dc954 で輪を外した）。

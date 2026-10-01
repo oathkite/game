@@ -1,5 +1,5 @@
 import { expect, test } from "@playwright/test";
-import { createRoom, enterRooms, joinListed, members, presetNickname, readyUp, waitForBattle } from "./roomFlow";
+import { canAct, createRoom, enterRooms, joinListed, members, presetNickname, readyUp, waitForBattle } from "./roomFlow";
 test("invitation skips the title and an independent spectator watches without controls", async ({ browser }) => {
   const contexts = await Promise.all([browser.newContext({ locale: "ja-JP" }), browser.newContext({ locale: "ja-JP" }), browser.newContext({ locale: "ja-JP", hasTouch: true, viewport: { width: 844, height: 390 } })]);
   const [a, b, viewer] = await Promise.all(contexts.map(c => c.newPage()));
@@ -37,7 +37,7 @@ test("invitation skips the title and an independent spectator watches without co
     }
     await viewer!.screenshot({ path: "test-results/invite-spectator.png" });
     await viewer!.getByLabel("手動視点を維持").check();
-    const actor = await a!.getByRole("button", { name: "標準砲", exact: true }).isEnabled() ? a! : b!;
+    const actor = await canAct(a!) ? a! : b!;
     await actor.keyboard.down("Space"); await actor.waitForTimeout(350); await actor.keyboard.up("Space");
     await expect(viewer!.getByTestId("phase")).toHaveText("射撃を再生中");
     await expect(viewer!.getByTestId("phase")).toHaveText("操作中", { timeout: 12000 });

@@ -1,10 +1,8 @@
 import { expect, test } from "@playwright/test";
 import { createRoom, enterRooms, joinByCode, readyUp, waitForBattle } from "./roomFlow";
 import { turnOrder } from "./rosterReadability";
-// 既知の不具合: 手番順リスト（TurnOrderList）は document.body への portal なので、対戦が終わっても結果画面の見出しと表に重なって残る。
-// 直ったら test.fail を外す。
+// 手番順リスト（TurnOrderList）は document.body への portal なので、結果画面でも出すと見出しと表に重なる。対戦が終わったら出さない
 test("the turn order list leaves the screen when the result is shown", async ({ browser }) => {
-  test.fail(true, "手番順リストが結果画面に残って重なる");
   const contexts = await Promise.all([0, 1].map(() => browser.newContext({ locale: "ja-JP", viewport: { width: 1440, height: 900 } })));
   const [owner, guest] = await Promise.all(contexts.map(context => context.newPage()));
   try {

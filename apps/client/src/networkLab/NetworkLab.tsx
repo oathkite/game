@@ -23,14 +23,15 @@ import { SceneLoading } from "@/worldUi/SceneLoading";
 import { LAB_CONNECTED_STATUS, LAB_CONNECTING_STATUS, labLoadingSteps } from "@/worldUi/connectionSteps";
 import { useBattleInput } from "@/worldUi/useBattleInput";
 import { DEFAULT_LOADOUT, WEAPON_LABELS } from "@game/protocol";
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { labOutputSchema, type LabFrame } from "@game/protocol/v2-lab";
 import { NetworkField } from "@/worldUi/NetworkField";
-import { presentLabReplay } from "./labReplay";
+import { battleClock, clockKey, sampleLive, type BattleClock, type LiveSample } from "./liveView";
+import { createMovePredictor, type MovePredictor } from "./movePrediction";
+import { canPrepare } from "./onlinePreparation";
 import { createRemoteMotion } from "./remoteMotion";
 import "./networkLab.css";
 
-type Position = { readonly playerId: string; readonly x: number; readonly y: number };
 export type RoomConnection = { readonly spectator?: boolean; readonly socket: WebSocket; readonly playerId: string; readonly frame: LabFrame };
 export const NetworkLab = ({ worldArt = false, onExit, connection }: { readonly worldArt?: boolean; readonly onExit?: () => void; readonly connection?: RoomConnection }) => {
   const { t } = useLanguage();
@@ -46,22 +47,40 @@ export const NetworkLab = ({ worldArt = false, onExit, connection }: { readonly 
   const [reportStatus, setReportStatus] = useState("");
   const [slot, setSlot] = useState<0 | 1>(0);
   const [elevation, setElevation] = useState(45), [power, setPower] = useState(50);
-  const [frame, setFrame] = useState<LabFrame | null>(null), [positions, setPositions] = useState<Position[]>([]);
+  const [frame, setFrame] = useState<LabFrame | null>(null);
   useEffect(() => {
     if (!frame) return;
     setMusic(frame.phase === "finished" ? "result" : stageMusic(frame.map.id));
     if (frame?.phase === "finished") playSound("matchFinish");
   }, [frame?.phase === "finished", frame?.map.id, playerId, spectator]);
-  const [serverNow, setServerNow] = useState(0);
+  // 毎フレーム変わる位置と再生は NetworkField が sample で読む。React は秒や操作の可否が変わったときだけ描き直す
+  const [view, setView] = useState<{ readonly clock: BattleClock; readonly live: LiveSample } | null>(null);
+  const sampler = useRef<(() => LiveSample) | null>(null);
+  const sample = useCallback((): LiveSample => sampler.current!(), []);
   const clock = useRef({ time: 0, received: 0 });
   const socket = useRef<WebSocket | null>(null), latest = useRef<LabFrame | null>(null);
-  const sequence = useRef(0), commandId = useRef(0), pending = useRef(false);
+  const commandId = useRef(0), prediction = useRef<MovePredictor | null>(null);
   useEffect(() => {
     const ws = connection?.socket ?? new WebSocket(`ws://${location.hostname}:8794`);
     socket.current = ws;
     const sounds = createBattleSounds();
     const motion = new Map<string, ReturnType<typeof createRemoteMotion>>();
-    let ownId = connection?.playerId ?? "", active = true, versionMismatch = false, animation = 0;
+    // 自分の手番の移動は ack を待たずに予測で動かす（設計書 22.5）
+    const predictor = createMovePredictor(); prediction.current = predictor;
+    let ownId = connection?.playerId ?? "", active = true, versionMismatch = false, animation = 0, shownKey = "";
+    const reduced = typeof matchMedia === "function" ? matchMedia("(prefers-reduced-motion: reduce)") : null;
+    sampler.current = () => {
+      const at = performance.now(), own = predictor.pose();
+      const positions = [...motion.entries()].flatMap(([id, buffer]) => { const p = id === ownId && own ? own : buffer.at(at); return p ? [{ playerId: id, x: p.x, y: p.y }] : []; });
+      return sampleLive(latest.current!, clock.current.time + at - clock.current.received, positions, reduced?.matches ?? false, own);
+    };
+    // 開発用の SVG 画面（worldArt なし）は、位置を React で描くので毎フレーム描き直す
+    const refresh = (): void => {
+      if (!latest.current) return;
+      const live = sampler.current!(), next = battleClock(latest.current, live, ownId);
+      const key = worldArt ? clockKey(next) : String(live.serverNow);
+      if (key !== shownKey) { shownKey = key; setView({ clock: next, live }); }
+    };
     if (connection) { setPlayerId(ownId); setStatus(LAB_CONNECTED_STATUS); }
     if (!connection) ws.onopen = () => {
       if (!active) return;
@@ -80,84 +99,85 @@ export const NetworkLab = ({ worldArt = false, onExit, connection }: { readonly 
         sessionStorage.setItem("keropod.network-lab-token", message.token);
       } else if (message.type === "lab.error") setStatus(message.reason);
       else if (message.type === "lab.ack") {
-        pending.current = false;
-        if (message.snapshot) sequence.current = message.snapshot.ackMoveSeq;
+        predictor.ack(message.reason, message.snapshot);
         setStatus(message.reason);
       } else {
         if (!compatibleMatch(message.build, message.map)) { versionMismatch = true; setStatus("ゲームの更新が必要です。再読み込みしてください。"); ws.close(); return; }
         if (latest.current && message.matchId === latest.current.matchId && message.eventSeq < latest.current.eventSeq) return;
         if (message.matchId !== latest.current?.matchId) { motion.clear(); setReportStatus(""); }
-        if (message.matchId !== latest.current?.matchId || message.turnId !== latest.current?.turnId) { pending.current = false; sequence.current = message.movement.ackMoveSeq; }
-        if (!pending.current) sequence.current = message.movement.ackMoveSeq;
         clock.current = { time: message.serverTime, received: performance.now() };
         latest.current = message; setFrame(message);
+        predictor.frame(message, ownId, performance.now());
         for (const p of message.players) {
           const buffer = motion.get(p.playerId) ?? createRemoteMotion();
           buffer.push(p, performance.now(), message.eventSeq, p.playerId === ownId || message.phase !== "acting" || p.eliminated || (p.playerId === message.actorId && message.movement.stoppedByFall));
           motion.set(p.playerId, buffer);
         }
+        refresh();
       }
     };
-    const closed = () => { if (active && !versionMismatch) { setStatus("切断：再読み込みで復帰"); setReportStatus(previous => previous === "送信中…" ? "通報を送信できませんでした。" : previous); pending.current = false; } };
+    const closed = () => { if (active && !versionMismatch) { setStatus("切断：再読み込みで復帰"); setReportStatus(previous => previous === "送信中…" ? "通報を送信できませんでした。" : previous); } };
     const failed = () => { if (active) setStatus("接続に失敗しました"); };
     const message = (event: MessageEvent) => { try { receive(JSON.parse(String(event.data))); } catch { return; } };
     ws.addEventListener("message", message); ws.addEventListener("close", closed); ws.addEventListener("error", failed);
     if (connection) receive(connection.frame);
     const draw = (): void => {
-      const now = clock.current.time + performance.now() - clock.current.received;
-      setServerNow(now);
       if (latest.current) {
-        const events = sounds(latest.current, now);
+        const events = sounds(latest.current, clock.current.time + performance.now() - clock.current.received);
         if (!document.hidden) events.forEach(playSound);
       }
-      setPositions([...motion.entries()].flatMap(([id, buffer]) => { const p = buffer.at(performance.now()); return p ? [{ playerId: id, ...p }] : []; }));
+      refresh();
       animation = requestAnimationFrame(draw);
     };
     animation = requestAnimationFrame(draw);
     return () => { active = false; cancelAnimationFrame(animation); ws.removeEventListener("message", message); ws.removeEventListener("close", closed); ws.removeEventListener("error", failed); if (!connection) ws.close(); socket.current = null; };
-  }, [connection]);
+  }, [connection, worldArt]);
+  // 送る前に予測を進める。予測が送らない歩（壁、歩数切れ、送信の頻度の上限）はサーバーへも送らない
   const move = (direction: -1 | 1): void => {
-    const current = latest.current, ws = socket.current;
-    if (!current || current.actorId !== playerId || !ws || ws.readyState !== WebSocket.OPEN || pending.current) return;
-    pending.current = true;
-    ws.send(JSON.stringify({ version: 2, type: "move.command", matchId: current.matchId, turnId: current.turnId,
-      commandId: `${playerId}-${++commandId.current}-${Date.now()}`, moveSeq: sequence.current + 1, direction, steps: 1 }));
+    const ws = socket.current;
+    if (!ws || ws.readyState !== WebSocket.OPEN) return;
+    const command = prediction.current?.move(direction, performance.now());
+    if (command) ws.send(JSON.stringify({ version: 2, type: "move.command", ...command, commandId: `${playerId}-${++commandId.current}-${Date.now()}`, direction, steps: 1 }));
   };
   const fire = (shotPower = power): void => {
-    const current = latest.current, ws = socket.current;
-    if (!current || current.phase !== "acting" || current.actorId !== playerId || !ws || ws.readyState !== WebSocket.OPEN || pending.current) return;
-    pending.current = true;
-    ws.send(JSON.stringify({ version: 2, type: "turn.fire", matchId: current.matchId, turnId: current.turnId,
-      commandId: `fire-${playerId}-${++commandId.current}-${Date.now()}`, ackMoveSeq: sequence.current,
-      slot, facing: current.movement.facing, elevation, power: shotPower }));
+    const ws = socket.current;
+    if (!ws || ws.readyState !== WebSocket.OPEN) return;
+    const shot = prediction.current?.fire();
+    if (shot) ws.send(JSON.stringify({ version: 2, type: "turn.fire", ...shot, commandId: `fire-${playerId}-${++commandId.current}-${Date.now()}`, slot, elevation, power: shotPower }));
   };
   const action = (type: "lab.rematch" | "lab.surrender"): void => {
     if (frame && socket.current?.readyState === WebSocket.OPEN) socket.current.send(JSON.stringify({ type, matchId: frame.matchId }));
   };
-  const presentation = frame ? presentLabReplay(frame, serverNow, typeof matchMedia === "function" && matchMedia("(prefers-reduced-motion: reduce)").matches) : null;
-  const shownPlayers = frame?.phase === "replaying" ? presentation!.players : positions.map(p => ({ ...frame!.players.find(player => player.playerId === p.playerId)!, ...p }));
+  const serverNow = view?.clock.serverNow ?? 0, revealed = view?.clock.revealed ?? false, terrain = view?.clock.terrain ?? 0;
+  const presentation = view?.live.presentation ?? null, shownPlayers = view?.live.players ?? [];
   const loadout = frame?.players.find(p => p.playerId === playerId)?.loadout ?? DEFAULT_LOADOUT;
-  const seconds = frame?.phase === "acting" ? Math.max(0, Math.min(20, Math.ceil((frame.deadlineAt - serverNow) / 1000))) : null;
+  const seconds = view?.clock.seconds ?? null;
   const phaseLabel = frame?.phase === "replaying" ? "射撃を再生中" : frame?.phase === "finished" ? "対戦終了" : "操作中";
   const observing = spectator || Boolean(frame?.players.find(p => p.playerId === playerId)?.eliminated);
-  const opening = Boolean(frame?.opening && serverNow < frame.opening.endsAt);
-  const canControl = !opening && serverNow >= (frame?.delay?.revealUntil ?? 0) && frame?.phase === "acting" && frame.actorId === playerId && socket.current?.readyState === WebSocket.OPEN;
+  const opening = view?.clock.opening ?? false;
+  const canControl = !opening && revealed && frame?.phase === "acting" && frame.actorId === playerId && socket.current?.readyState === WebSocket.OPEN;
   const canAct = canControl && !settling;
-  const input = useBattleInput(Boolean(worldArt && canControl && !menu && !confirmLeave), move, delta => setElevation(v => Math.max(10, Math.min(90, v + delta))), fire, setSlot, settling);
+  // 相手の手番は、次の自分の手番へ向けて角度と武器だけを変えられる
+  const preparing = Boolean(frame && view && canPrepare(frame, playerId, view.clock, observing));
+  const input = useBattleInput(Boolean(worldArt && canControl && !menu && !confirmLeave), move, delta => setElevation(v => Math.max(10, Math.min(90, v + delta))), fire, setSlot, settling, Boolean(worldArt && preparing && !menu && !confirmLeave));
   useBrowserBackAction(Boolean(worldArt && onExit), () => { input.cancel(); setMenu(false); setConfirmLeave(true); });
   const hudPlayers = frame?.players.map(p => ({ id: p.playerId, name: p.nickname ?? p.playerId, hp: p.hp, colors: p.colors, team: Number(p.teamId.slice(1)) })) ?? [];
-  const own = shownPlayers.find(p => p.playerId === playerId);
-  const ownFacing = useRef<-1 | 1>(1);
-  if (frame?.actorId === playerId) ownFacing.current = frame.movement.facing;
-  const ground = useMemo(() => own && presentation && frame ? tiltOf(applyOps(buildInitialTerrain(frame.map), presentation.terrainOps), own) : 0, [own?.x, own?.y, frame?.eventSeq, frame?.matchId]);
-  if (worldArt) return <main className="network-lab network-world" onPointerDown={() => unlockAudio()} onKeyDown={() => unlockAudio()}>
+  const own = view?.clock.own ?? null;
+  const ownFacing = useRef<-1 | 1>(1), moving = view?.clock.move ?? null;
+  if (moving) ownFacing.current = moving.facing; else if (frame?.actorId === playerId) ownFacing.current = frame.movement.facing;
+  // 地形は削られたときだけ作り直す。自機が動くたびには作らない
+  const shownTerrain = useMemo(() => frame ? applyOps(buildInitialTerrain(frame.map), frame.terrainOps.slice(0, terrain)) : null, [frame?.matchId, terrain]);
+  const ground = own && shownTerrain ? tiltOf(shownTerrain, own) : 0;
+  // 手番順リストは document.body への portal なので、結果画面では出さない（出すと見出しと表に重なる）
+  const delay = frame?.phase !== "finished" ? frame?.delay : undefined;
+  if (worldArt) return <main className="network-lab network-world" data-control={canAct ? "act" : preparing ? "prepare" : "none"} onPointerDown={() => unlockAudio()} onKeyDown={() => unlockAudio()}>
     <YourTurn turnKey={`${frame?.matchId}/${frame?.turnId}`} active={Boolean(!observing && canControl)} />
     <BattleOverlay clock={<CountdownDial seconds={seconds} />} onMenu={() => { input.cancel(); setMenu(true); }} />
     <span className="battle-sr" data-testid="identity">{playerId}</span><span className="battle-sr" data-testid="phase">{t(phaseLabel)}</span>
-    {frame && presentation ? <NetworkField key={frame.matchId} serverNow={serverNow} charge={input.gauge.charging ? input.gauge.value / 100 : 0} onSettling={setSettling} blocked={menu || confirmLeave || input.gauge.charging || serverNow < (frame.delay?.revealUntil ?? 0)} frame={frame} players={shownPlayers} presentation={presentation} elevation={elevation} ownId={playerId} followTurns={!observing || !keepView} {...(!observing ? { selectedWeapon: loadout[slot] } : {})} /> : <SceneLoading steps={labLoadingSteps(status, t)} />}
-    {observing && frame?.delay && <TurnOrderList info={{ onOpen: input.cancel, serverNow, state: frame.delay, playerId, acting: false, players: frame.players.map(p => ({ id: p.playerId, name: p.nickname ?? p.playerId, colors: p.colors, eliminated: p.eliminated })) }} />}
-    {observing ? <footer className="battle-console"><span role="status">{t("観戦中")}</span><label><input type="checkbox" checked={keepView} onChange={e => setKeepView(e.target.checked)} />{t("手動視点を維持")}</label>{frame && <WindGauge wind={frame.wind} />}</footer> : <BattleConsole delay={frame?.delay ? { onOpen: input.cancel, serverNow, state: frame.delay, playerId, acting: frame.actorId === playerId && frame.phase === "acting", players: frame.players.map(p => ({ id: p.playerId, name: p.nickname ?? p.playerId, colors: p.colors, eliminated: p.eliminated })) } : undefined} player={hudPlayers.find(p => p.id === playerId)} steps={frame?.actorId === playerId ? frame.movement.stepsLeft : 0} tilt={ground} elevation={elevation} facing={ownFacing.current} power={input.gauge.value} loadout={loadout} slot={slot} wind={frame ? frame.wind : null} disabled={!canAct || menu || confirmLeave || input.gauge.charging} selectSlot={setSlot}>
-      {touch && <BattleTouchControls disabled={!canAct || confirmLeave || menu} button={input.button} steps />}
+    {frame && view ? <NetworkField key={frame.matchId} sample={sample} charge={input.gauge.charging ? input.gauge.value / 100 : 0} onSettling={setSettling} blocked={menu || confirmLeave || input.gauge.charging || !revealed} frame={frame} elevation={elevation} ownId={playerId} followTurns={!observing || !keepView} {...(!observing ? { selectedWeapon: loadout[slot] } : {})} /> : <SceneLoading steps={labLoadingSteps(status, t)} />}
+    {observing && frame && delay && <TurnOrderList info={{ onOpen: input.cancel, serverNow, state: delay, playerId, acting: false, players: frame.players.map(p => ({ id: p.playerId, name: p.nickname ?? p.playerId, colors: p.colors, eliminated: p.eliminated })) }} />}
+    {observing ? <footer className="battle-console"><span role="status">{t("観戦中")}</span><label><input type="checkbox" checked={keepView} onChange={e => setKeepView(e.target.checked)} />{t("手動視点を維持")}</label>{frame && <WindGauge wind={frame.wind} />}</footer> : <BattleConsole delay={frame && delay ? { onOpen: input.cancel, serverNow, state: delay, playerId, acting: frame.actorId === playerId && frame.phase === "acting", players: frame.players.map(p => ({ id: p.playerId, name: p.nickname ?? p.playerId, colors: p.colors, eliminated: p.eliminated })) } : undefined} player={hudPlayers.find(p => p.id === playerId)} steps={moving ? moving.stepsLeft : frame?.actorId === playerId ? frame.movement.stepsLeft : 0} tilt={ground} elevation={elevation} facing={ownFacing.current} power={input.gauge.value} loadout={loadout} slot={slot} wind={frame ? frame.wind : null} disabled={(!canAct && !preparing) || menu || confirmLeave || input.gauge.charging} selectSlot={setSlot}>
+      {touch && <BattleTouchControls disabled={!canAct || confirmLeave || menu} aimDisabled={(!canAct && !preparing) || confirmLeave || menu} button={input.button} steps />}
     </BattleConsole>}
     {latency !== null && latency > 300 && <span className="network-latency" role="status">{t("通信遅延")} {latency} ms</span>}
     {confirmLeave && onExit && <LeaveBattleDialog online playing={!observing && frame?.phase !== "finished"} close={() => setConfirmLeave(false)} leave={onExit} />}
@@ -165,7 +185,7 @@ export const NetworkLab = ({ worldArt = false, onExit, connection }: { readonly 
       if (socket.current?.readyState !== WebSocket.OPEN) { setReportStatus("通報を送信できませんでした。"); return; }
       setReportStatus("送信中…"); socket.current.send(JSON.stringify({ type: "room.report", matchId: frame.matchId, targetId, reason }));
     } } } : {})} {...(frame ? { diagnostics: matchDiagnostics(frame) } : {})} spectator={observing} close={() => setMenu(false)} surrender={() => { action("lab.surrender"); setMenu(false); }} exit={onExit} finished={!frame || frame.phase === "finished"} />}
-    {frame?.phase === "finished" && <section className="network-finished terminal-screen result-terminal"><header className="result-header"><h2>{t(resultTitle(frame.result, spectator ? undefined : frame.players.find(p => p.playerId === playerId)?.teamId))}</h2>{frame.returnStatus && <p className="result-return-timer" role="timer">{t("部屋へ戻るまで {seconds}秒", { seconds: Math.max(0, Math.ceil((frame.returnStatus.deadlineAt - serverNow) / 1000)) })}</p>}</header><ResultPlayers players={frame.players} result={frame.result} {...(frame.stats ? { stats: frame.stats } : {})} /><div className="result-actions"><button onClick={onExit}>{t("退出する")}</button>{!spectator && connection && <button className="result-primary" disabled={Boolean(connection && frame.returnStatus?.readyIds.includes(playerId))} onClick={() => action("lab.rematch")}>{frame.returnStatus?.readyIds.includes(playerId) ? t("帰還待ち") : t("部屋に戻る")}</button>}</div></section>}
+    {frame?.phase === "finished" && <section className="network-finished terminal-screen result-terminal"><header className="result-header"><h2>{t(resultTitle(frame.result, spectator ? undefined : frame.players.find(p => p.playerId === playerId)?.teamId))}</h2>{frame.returnStatus && <p className="result-return-timer" role="timer">{t("部屋へ戻るまで {seconds}秒", { seconds: view?.clock.returnSeconds ?? 0 })}</p>}</header><ResultPlayers players={frame.players} result={frame.result} {...(frame.stats ? { stats: frame.stats } : {})} /><div className="result-actions"><button onClick={onExit}>{t("退出する")}</button>{!spectator && connection && <button className="result-primary" disabled={Boolean(connection && frame.returnStatus?.readyIds.includes(playerId))} onClick={() => action("lab.rematch")}>{frame.returnStatus?.readyIds.includes(playerId) ? t("帰還待ち") : t("部屋に戻る")}</button>}</div></section>}
     {status === "invalid-session" && <div className="network-finished"><p>{t("接続の有効期限が切れました。")}</p><button onClick={() => { sessionStorage.removeItem("keropod.network-lab-token"); location.reload(); }}>{t("新しい接続で参加")}</button></div>}
     {!connection && status.startsWith("切断") && <p className="network-connection" role="status">{t("切断されました。再読み込みで復帰できます。")}</p>}
   </main>;
