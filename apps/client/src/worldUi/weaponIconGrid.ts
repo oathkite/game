@@ -26,12 +26,11 @@ export const weaponIconGrid = (weapon: WeaponId, color: PlayerColor = "green"): 
 };
 
 /**
- * 絵の中心を表示の中心に合わせた表示範囲。大きさは ICON_VIEW のまま（1 art px を整数の px で描くため）。
- * 弾の絵は左右と上下で対称ではないので、枠の中心に置くと 0.5 から 1.5 art px ずれる。ずらす量は 0.5 art px 単位になる
+ * 絵の中心を表示の中心へ動かす量（art px）。弾の絵は左右と上下で対称でないので、枠の中心に置くと 0.5 から 1.5 art px ずれる。
+ * 動かす量は 0.5 art px 単位になる。表示範囲は ICON_VIEW の整数のまま保ち、描くときに px へ丸めて動かす（WeaponIcon）
  */
-export type IconView = { readonly left: number; readonly top: number; readonly width: number; readonly height: number };
-export const iconViewBox = (grid: PixelGrid): IconView => {
+export const iconShift = (grid: PixelGrid): { readonly x: number; readonly y: number } => {
   const b = opaqueBounds(grid);
-  if (!b) return ICON_VIEW;
-  return { left: b.left + b.width / 2 - ICON_VIEW.width / 2, top: b.top + b.height / 2 - ICON_VIEW.height / 2, width: ICON_VIEW.width, height: ICON_VIEW.height };
+  if (!b) return { x: 0, y: 0 };
+  return { x: ICON_VIEW.left + ICON_VIEW.width / 2 - (b.left + b.width / 2), y: ICON_VIEW.top + ICON_VIEW.height / 2 - (b.top + b.height / 2) };
 };

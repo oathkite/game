@@ -19,8 +19,11 @@
 .battle-angle { display:block; }
 .battle-power { display:block; width:100%; height:80px; overflow:visible; }
 .battle-weapons { display:flex; gap:8px; }
-.world-ui .battle-weapons button { position:relative; width:48px; min-width:48px!important; padding:2px!important; border:2px solid #526c80!important; border-image:none!important; border-radius:0; color:#33ff66!important; background:#000; }
+.world-ui .battle-weapons button { position:relative; width:47px; min-width:47px!important; padding:2px!important; border:2px solid #526c80!important; border-image:none!important; border-radius:0; color:#33ff66!important; background:#000; }
 .world-ui .battle-weapons button[aria-pressed=true] { outline:none!important; box-shadow:none; }
+/* 39 px のアイコンを px の境界に置くため、ボタンの中身を 39 px にする。幅は 47 = 39 + 余白 2 × 2 + 枠 2 × 2。
+   高さは操作盤の中で中央に寄せても半端にならない 48 px にし、下の余白を 1 px 増やす。デスクトップ（battleHudDesktop.css と同じ条件）は 76 px のボタンに 52 px なので触らない */
+@media (max-width:1199px), (max-height:699px) { .world-ui .battle-console:not(.has-touch) .battle-weapons > button { height:48px; min-height:48px; padding:2px 2px 3px!important; } }
 /* 武器のアイコンは 13 × 13 art px。大きさを 13 の倍数にして 1 art px を整数の px にする（設計書 40.10） */
 .battle-weapons button > svg { width:39px; height:39px; display:block; margin:auto; }
 /* アイテム（設計書 42.1）。武器の上の段に、アイコンだけの低いボタンを武器と同じ幅で並べる */
