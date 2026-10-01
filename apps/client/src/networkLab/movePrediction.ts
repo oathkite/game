@@ -36,10 +36,10 @@ const staleAll = (sent: readonly Sent[]): readonly Sent[] => sent.map(e => ({ ..
 const pending = (p: Prediction, base: Base) => [...p.recorded, ...p.sent].flatMap(e => e.kind === "move" && !e.stale && e.moveSeq > base.ackMoveSeq ? [e] : []);
 const unconfirmed = (moves: readonly Move[], base: Base | null): readonly Move[] => base ? moves.filter(e => e.moveSeq > base.ackMoveSeq) : [];
 
-/** サーバーの applyMove と同じ 1 歩。進めなければ向きも変えない */
+/** サーバーの applyMove と同じ 1 歩。進めなくても向きは変わる（設計書 1.9）。脱落の後は動かない */
 const stepPose = (mask: TerrainMask, pose: OwnPose, direction: -1 | 1): OwnPose => {
   const moved = walk(mask, pose, direction, pose.eliminated ? 0 : Math.min(1, pose.stepsLeft));
-  return { x: moved.x, y: moved.y, facing: moved.stepsUsed > 0 ? direction : pose.facing, stepsLeft: pose.stepsLeft - moved.stepsUsed, eliminated: pose.eliminated || isRingOut(mask, moved) };
+  return { x: moved.x, y: moved.y, facing: pose.eliminated ? pose.facing : direction, stepsLeft: pose.stepsLeft - moved.stepsUsed, eliminated: pose.eliminated || isRingOut(mask, moved) };
 };
 
 export const predictedPose = (p: Prediction, mask: TerrainMask): OwnPose | null => {
@@ -59,12 +59,16 @@ export const syncTurn = (p: Prediction, snapshot: MoveSnapshot, ownTurn: boolean
   return { base: baseOf(snapshot), sent: staleAll(p.sent), recorded: [], credit: MOVE_BURST, creditAt: now, firing: false };
 };
 
-/** 1 歩を送るなら、命令に入れる moveSeq を返す。歩数切れ、壁、奈落の後、budget を超える歩は送らない（サーバーも動かさない） */
+/**
+ * 1 歩を送るなら、命令に入れる moveSeq を返す。進めない歩（壁、歩数切れ）は向きが変わるときだけ送る。
+ * 奈落の後と、budget を超える入力は送らない。サーバーも位置と向きを変えない入力で、記録と配信を増やさないためである
+ */
 export const requestMove = (p: Prediction, mask: TerrainMask, direction: -1 | 1, now: number): { readonly prediction: Prediction; readonly command: TurnCommand & { readonly moveSeq: number } } | null => {
   const pose = predictedPose(p, mask);
-  if (!p.base || !pose || p.firing || pose.eliminated || pose.stepsLeft <= 0) return null;
+  if (!p.base || !pose || p.firing || pose.eliminated) return null;
+  const moves = pose.stepsLeft > 0 && walk(mask, pose, direction, 1).stepsUsed > 0;
   const creditAt = Math.max(p.creditAt, now), credit = Math.min(MOVE_BURST, p.credit + (creditAt - p.creditAt) / MOVE_INTERVAL_MS);
-  if (credit < 1 || walk(mask, pose, direction, 1).stepsUsed === 0) return null;
+  if (credit < 1 || (!moves && direction === pose.facing)) return null;
   const moveSeq = p.base.ackMoveSeq + pending(p, p.base).length + 1;
   return { prediction: { ...p, sent: [...p.sent, { kind: "move", moveSeq, direction, stale: false }], credit: credit - 1, creditAt },
     command: { matchId: p.base.matchId, turnId: p.base.turnId, moveSeq } };

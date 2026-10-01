@@ -32,8 +32,9 @@ const applyMove = (state: MovementState, mask: TerrainMask, command: MoveCommand
   const moved = walk(mask, state, command.direction, stopped ? 0 : allowed);
   const reason: MoveReason = stopped ? "stopped" : state.stepsLeft === 0 ? "no-budget" : allowed === 0 ? "rate-limited" :
     moved.stepsUsed === 0 ? "blocked" : moved.stepsUsed < command.steps ? "partial" : "accepted";
+  // 進めない歩でも向きだけは変わる（設計書 1.9）。撃った後と脱落の後は変わらない
   const next: MovementState = { ...state, x: moved.x, y: moved.y,
-    facing: moved.stepsUsed > 0 ? command.direction : state.facing,
+    facing: stopped ? state.facing : command.direction,
     stepsLeft: state.stepsLeft - moved.stepsUsed, credit: credit - moved.stepsUsed, creditAt,
     stoppedByFall: moved.fell, eliminated: state.eliminated || isRingOut(mask, moved),
     ackMoveSeq: command.moveSeq, eventSeq: state.eventSeq + 1 };

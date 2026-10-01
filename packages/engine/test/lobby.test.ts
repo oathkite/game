@@ -20,7 +20,7 @@ it("requires two assigned teams and every member ready at the current revision",
   const started = startLobby(room, "p1", room.revision, noRandom);
   expect(started.reason).toBe("started");
   expect(started.setup?.members).toHaveLength(2);
-  expect(started.setup?.ruleSetVersion).toBe("keropod-v2.4-delay");
+  expect(started.setup?.ruleSetVersion).toBe("keropod-v2.5-delay");
   expect(started.setup?.map).toEqual(TEST_ARENA);
   expect(started.setup?.map).not.toBe(TEST_ARENA);
   expect(editLobby(started.room, "p1", command(started.room, "room.assignTeam", { playerId: "p2", teamId: "t0" })).reason).toBe("locked");

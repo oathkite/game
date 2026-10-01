@@ -21,8 +21,10 @@ const step = (p: Prediction, direction: -1 | 1, now: number) => {
 };
 
 describe("parity with the server's handleMove", () => {
-  // 送った命令はすぐサーバーで処理し、ack は 3 命令ぶん遅れて届く（往復 300 ms）。予測は常にサーバーの位置と一致する
-  it("predicts every step the server takes on every multiplayer map, including walls, falls and the end of the budget", () => {
+  // 送った命令はすぐサーバーで処理し、ack は 3 命令ぶん遅れて届く（往復 300 ms）。予測は常にサーバーの位置と向きに一致する。
+  // 押す向きは途中で折り返し、歩数を使い切った後も左右に押す
+  const pattern = (d: -1 | 1): readonly (-1 | 1)[] => [...Array<-1 | 1>(14).fill(d), ...Array<-1 | 1>(5).fill(d === 1 ? -1 : 1), ...Array<-1 | 1>(16).fill(d), d === 1 ? -1 : 1, d, d === 1 ? -1 : 1];
+  it("predicts every step and turn the server takes on every multiplayer map, including walls, falls and the end of the budget", () => {
     let checked = 0;
     const seen = new Set<string>();
     for (const map of MULTIPLAYER_MAPS) {
@@ -33,19 +35,21 @@ describe("parity with the server's handleMove", () => {
         let server = createMovement({ matchId: "m", turnId: 1, playerId: "p1", ...spawn, facing: 1, startsAt: 0, deadlineAt: 20000 });
         let client = syncTurn(EMPTY_PREDICTION, movementSnapshot(server, 0), true, 0);
         const inFlight: { reason: string; snapshot: MoveSnapshot | null }[] = [];
-        for (let i = 0; i < 36; i++) {
-          const now = i * 100, request = requestMove(client, terrain, direction, now);
+        for (const [i, pressed] of pattern(direction).entries()) {
+          const now = i * 100, request = requestMove(client, terrain, pressed, now);
           if (request) {
             client = request.prediction;
-            const reply = handleMove(server, terrain, "p1", command(request.command.moveSeq, direction), now + 40);
-            expect(reply.reason).toBe("accepted");
+            const reply = handleMove(server, terrain, "p1", command(request.command.moveSeq, pressed), now + 40);
+            // 予測が送る命令は、進む歩か、進めずに向きだけを変える歩
+            expect(["accepted", "blocked", "no-budget"]).toContain(reply.reason);
+            if (reply.reason !== "accepted") seen.add(`turn-${reply.reason}`);
             server = reply.state; inFlight.push(reply);
             if (reply.state.stoppedByFall) seen.add("fell");
             if (reply.state.eliminated) seen.add("ring-out");
           } else {
-            // 予測が送らない歩は、サーバーに送っても動かない（壁、歩数切れ、奈落の後）
-            const probe = handleMove(server, terrain, "p1", command(server.ackMoveSeq + 1, direction), now + 40);
-            expect([probe.state.x, probe.state.y]).toEqual([server.x, server.y]);
+            // 予測が送らない入力は、サーバーに送っても位置も向きも変えない（同じ向きの壁と歩数切れ、奈落の後）
+            const probe = handleMove(server, terrain, "p1", command(server.ackMoveSeq + 1, pressed), now + 40);
+            expect(poseOf(probe.state)).toEqual(poseOf(server));
             seen.add(probe.reason);
           }
           if (inFlight.length > 3) { const reply = inFlight.shift()!; client = acknowledge(client, reply.reason, reply.snapshot); }
@@ -59,7 +63,7 @@ describe("parity with the server's handleMove", () => {
       }
     }
     expect(checked).toBeGreaterThan(1000);
-    expect([...seen].sort()).toEqual(["blocked", "fell", "no-budget", "ring-out", "stopped"]);
+    expect([...seen].sort()).toEqual(["blocked", "fell", "no-budget", "ring-out", "stopped", "turn-blocked", "turn-no-budget"]);
   });
 });
 
@@ -75,12 +79,18 @@ describe("sending", () => {
     for (let i = 0; i < 30; i++) p = step(p, 1, i * 100).prediction;
     expect(predictedPose(p, mask)).toMatchObject({ x: 130, stepsLeft: 0 });
     expect(requestMove(p, mask, 1, 3000)).toBeNull();
+    // 歩数を使い切っても、逆を押せば向きだけ変わる（設計書 1.9）
+    const turned = requestMove(p, mask, -1, 3000)!;
+    expect(turned.command.moveSeq).toBe(31);
+    expect(predictedPose(turned.prediction, mask)).toMatchObject({ x: 130, stepsLeft: 0, facing: -1 });
   });
 
-  it("does not send a step into a wall or off the edge, and keeps the facing the server keeps", () => {
+  it("turns without a step at the edge, and sends nothing that would change neither the position nor the facing", () => {
     const edge = own(start(0));
-    expect(requestMove(edge, mask, -1, 0)).toBeNull();
-    expect(predictedPose(edge, mask)).toMatchObject({ x: 0, facing: 1 });
+    const turned = step(edge, -1, 0);
+    expect(predictedPose(turned.prediction, mask)).toMatchObject({ x: 0, facing: -1, stepsLeft: 30 });
+    expect(requestMove(turned.prediction, mask, -1, 100)).toBeNull();
+    expect(predictedPose(step(turned.prediction, 1, 100).prediction, mask)).toMatchObject({ x: 1, facing: 1, stepsLeft: 29 });
   });
 
   it("refuses to move or fire outside the player's own acting turn", () => {

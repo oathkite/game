@@ -35,6 +35,19 @@ it("walls do not consume movement and invalid input cannot mutate state", () => 
   expect(handleMove(state, flatMask(), "p", command(), 21000).reason).toBe("outside-turn");
 });
 
+// 進めない歩でも、押した方向へ向きだけは変わる（設計書 1.9）。撃った後と脱落の後は変わらない
+it("turns to the pressed direction when the step is blocked or the budget is spent, but not once stopped", () => {
+  const blocked = handleMove({ ...start(), facing: -1 }, wallMask(61, 100), "p", command(1, 1), 1000);
+  expect(blocked.reason).toBe("blocked"); expect(blocked.state).toMatchObject({ x: 60, stepsLeft: 30, facing: 1 });
+  let spent = start();
+  for (let seq = 1; seq <= 30; seq++) spent = handleMove(spent, flatMask(), "p", command(seq, 1), 1000 + seq * 100).state;
+  const turned = handleMove(spent, flatMask(), "p", { ...command(31, 1), direction: -1 }, 5000);
+  expect(turned.reason).toBe("no-budget"); expect(turned.state).toMatchObject({ x: 90, stepsLeft: 0, facing: -1 });
+  expect(turned.snapshot).toMatchObject({ facing: -1, ackMoveSeq: 31 });
+  const locked = handleMove({ ...start(), locked: true }, flatMask(), "p", { ...command(1, 1), direction: -1 }, 1000);
+  expect(locked.reason).toBe("stopped"); expect(locked.state.facing).toBe(1);
+});
+
 it("partially accepts remaining credit, remembers rejection, and cannot bank a burst", () => {
   const first = handleMove(start(), flatMask(), "p", command(), 1000).state;
   const partial = handleMove(first, flatMask(), "p", command(2), 1100);
