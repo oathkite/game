@@ -74,6 +74,12 @@ export const readyUp = async (page: Page): Promise<void> => {
   await expect(page.getByRole("button", { name: "準備完了済み", exact: true })).toBeVisible();
 };
 
+/** 対戦の操作盤の状態。act は自分の手番、prepare は相手の手番の準備（武器と角度だけ変えられる。設計書 30 章）、none はどちらでもない */
+export const control = (page: Page) => page.locator("main[data-control]");
+
+/** 移動と発射を受け付けている画面か。相手の手番でも武器のボタンは押せるので、武器のボタンでは見分けない */
+export const canAct = async (page: Page): Promise<boolean> => await control(page).getAttribute("data-control") === "act";
+
 /** 対戦画面の読み込みと開始時のマップ紹介が終わり、手番の操作を受け付けるまで待つ。 */
 export const waitForBattle = async (page: Page): Promise<void> => {
   const world = page.getByTestId("network-world");

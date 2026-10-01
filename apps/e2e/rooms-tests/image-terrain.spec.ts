@@ -1,5 +1,5 @@
 import { expect, test } from "@playwright/test";
-import { createRoom, joinByCode, members, readyUp, teamOf } from "./roomFlow";
+import { control, createRoom, joinByCode, members, readyUp, teamOf } from "./roomFlow";
 import type { LabFrame } from "@game/protocol/v2-lab";
 test("authored terrain is shared after firing and reconnecting", async ({ browser }) => {
   const mapId = String(test.info().project.metadata.mapId ?? "rock-arch");
@@ -36,7 +36,7 @@ test("authored terrain is shared after firing and reconnecting", async ({ browse
     await expect.poll(() => frames[0]!.opening ? Date.now() >= frames[0]!.opening!.endsAt : true, { timeout: 15000 }).toBe(true);
     const actor = frames[0]!.players.find(p => p.playerId === frames[0]!.actorId)!;
     const shooter = pages[Number(actor.nickname!.slice(-1))]!;
-    await expect(shooter.locator(".battle-weapons button").first()).toBeEnabled();
+    await expect(control(shooter)).toHaveAttribute("data-control", "act");
     await shooter.keyboard.down("Space"); await shooter.waitForTimeout(150); await shooter.keyboard.up("Space");
     await expect.poll(() => frames[0]!.terrainOps.length, { timeout: 15000 }).toBeGreaterThan(0);
     await expect.poll(() => frames[0]!.phase, { timeout: 15000 }).toBe("acting");

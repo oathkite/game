@@ -1,5 +1,5 @@
 import { expect, test, type Browser, type Page } from "@playwright/test";
-import { assignTeam, createRoom, enterRooms, joinByCode, readyUp, teamLabel, teamOf, waitForBattle } from "./roomFlow";
+import { assignTeam, canAct, createRoom, enterRooms, joinByCode, readyUp, teamLabel, teamOf, waitForBattle } from "./roomFlow";
 import type { LabFrame } from "@game/protocol/v2-lab";
 
 const formations = [[1, 7], [1, 1, 1, 1, 1, 1, 1, 1], [2, 2, 2], [1, 1, 1, 2]];
@@ -47,7 +47,7 @@ for (const formation of formations) test(`formation ${formation.join(":")} share
     const owner = pages[0]!;
     await expect.poll(async () => Number(await owner.locator(".countdown-dial > span").innerText()), { timeout: 25000 }).toBeGreaterThanOrEqual(18);
     // 手番の操作はカメラの移動と並行して少し遅れて始まる（turn-delay.md）。
-    const enabled = () => Promise.all(pages.map(page => page.locator(".battle-weapons button").first().isEnabled()));
+    const enabled = () => Promise.all(pages.map(canAct));
     await expect.poll(async () => (await enabled()).filter(Boolean).length, { timeout: 15000 }).toBe(1);
     const active = await enabled();
     const shooter = pages[active.indexOf(true)]!;

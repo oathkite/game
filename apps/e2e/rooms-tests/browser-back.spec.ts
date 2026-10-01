@@ -1,5 +1,5 @@
 import { test, expect } from "@playwright/test";
-import { createRoom, enterRooms, joinListed, members, readyUp, waitForBattle } from "./roomFlow";
+import { canAct, createRoom, enterRooms, joinListed, members, readyUp, waitForBattle } from "./roomFlow";
 
 test("back from an invited battle preserves the session until confirmed, then surrenders", async ({ browser, baseURL }) => {
   const contexts = await Promise.all([browser.newContext({ locale: "ja-JP" }), browser.newContext({ locale: "ja-JP" })]);
@@ -13,7 +13,7 @@ test("back from an invited battle preserves the session until confirmed, then su
     await readyUp(guest!);
     await owner!.getByRole("button", { name: "対戦開始", exact: true }).click();
     for (const page of [owner!, guest!]) await waitForBattle(page);
-    const shooter = await owner!.locator(".battle-weapons button").first().isEnabled() ? owner! : guest!;
+    const shooter = await canAct(owner!) ? owner! : guest!;
     const observer = shooter === owner ? guest! : owner!;
     await observer.getByRole("button", { name: "設定を開く", exact: true }).click();
     const settings = observer.getByRole("dialog", { name: "対戦設定" });
