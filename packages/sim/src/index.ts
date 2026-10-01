@@ -29,6 +29,8 @@ export {
   simulateShot,
   simulateCombat,
   simulateCombatWithItem,
+  fireSecond,
+  type TeamCombatant,
   type CombatOutcome,
   type CombatImpact,
   type Combatant,

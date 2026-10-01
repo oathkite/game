@@ -170,14 +170,27 @@ const teleportCombat = (mask: TerrainMask, players: readonly Combatant[], shoote
     ringOut: ringOutsOf(mask, positions), teleport: flight.landing };
 };
 
+/** アイテムの射撃に渡す機体。team を省けば 1 機ずつ別のチームとして扱う（2 人対戦） */
+export type TeamCombatant = Combatant & { readonly team?: string };
+
 /**
- * ダブルシュートの射撃。1 発目で全員が落ちた後、撃った側が生きていれば、落ちた後の位置と傾きから同じ仰角とパワーでもう一度撃つ。
+ * 1 発目の後に 2 発目を撃つか（設計書 42.2）。撃った側が生きていて、かつ試合が決まっていないときだけ撃つ。
+ * 試合が決まったかは、HP が残り奈落にいない機体のチームが 2 つ以上あるかで見る
+ */
+export const fireSecond = (players: readonly TeamCombatant[], shooter: number, first: Pick<CombatOutcome, "hpAfter" | "ringOut">): boolean => {
+  const alive = (i: number): boolean => first.hpAfter[i]! > 0 && !first.ringOut.includes(i);
+  const teams = new Set(players.flatMap((p, i) => alive(i) ? [p.team ?? String(i)] : []));
+  return alive(shooter) && teams.size >= 2;
+};
+
+/**
+ * ダブルシュートの射撃。1 発目で全員が落ちた後、撃った側が生きていて試合が決まっていなければ、落ちた後の位置と傾きから同じ仰角とパワーでもう一度撃つ。
  * 2 発目の弾道の番号は 1 発目の続きにする
  */
-const doubleCombat = (mask: TerrainMask, players: readonly Combatant[], shooter: number, input: Omit<TrajectoryInput, "seat">, removeDefeated: boolean): CombatOutcome => {
+const doubleCombat = (mask: TerrainMask, players: readonly TeamCombatant[], shooter: number, input: Omit<TrajectoryInput, "seat">, removeDefeated: boolean): CombatOutcome => {
   const first = simulateCombat(mask, players, input, removeDefeated);
+  if (!fireSecond(players, shooter, first)) return first;
   const at = first.positions[shooter]!;
-  if (first.hpAfter[shooter]! <= 0 || isRingOut(first.mask, at)) return first;
   const after = players.map((_, i) => ({ ...first.positions[i]!, hp: first.hpAfter[i]! }));
   const second = simulateCombat(first.mask, after, { ...input, x: at.x, y: at.y }, removeDefeated);
   const offset = first.paths.length;
@@ -190,7 +203,7 @@ const doubleCombat = (mask: TerrainMask, players: readonly Combatant[], shooter:
  * アイテムを使わなければ simulateCombat と同じ
  */
 export const simulateCombatWithItem = (
-  mask: TerrainMask, players: readonly Combatant[], shooter: number, input: Omit<TrajectoryInput, "seat">, removeDefeated = true,
+  mask: TerrainMask, players: readonly TeamCombatant[], shooter: number, input: Omit<TrajectoryInput, "seat">, removeDefeated = true,
 ): CombatOutcome => {
   if (input.item === "double") return doubleCombat(mask, players, shooter, input, removeDefeated);
   if (input.item === "teleport") return teleportCombat(mask, players, shooter, input, removeDefeated);

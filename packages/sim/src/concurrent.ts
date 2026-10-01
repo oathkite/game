@@ -1,6 +1,6 @@
 import type { CellPoint, TrajectoryInput } from "@game/protocol";
 import { MAX_STEPS } from "./constants.js";
-import { damageAt, type Combatant, type CombatImpact, type CombatOutcome } from "./ballistics.js";
+import { damageAt, fireSecond, type Combatant, type CombatImpact, type CombatOutcome, type TeamCombatant } from "./ballistics.js";
 import { checkCell, launch, motionOf, muzzleOf, settle, stepFlight, type FixedPoint, type Flight, type Hit, type Motion, type ProjectilePath } from "./flight.js";
 import { carve, type TerrainMask } from "./terrain.js";
 import { isRingOut, settle as settleTank, tankCenterY, type TankPos } from "./tank.js";
@@ -91,11 +91,11 @@ const teleportConcurrent = (mask: TerrainMask, players: readonly Combatant[], sh
     paths: [{ points: flight.points, impactAt: [], pointTicks: flight.points.map((_, i) => i), launchTick: 0 }] };
 };
 
-/** ダブルシュートの射撃。1 発目の最後の tick から DOUBLE_GAP_TICKS 置いて、落ちた後の位置から 2 発目を撃つ */
-const doubleConcurrent = (mask: TerrainMask, players: readonly Combatant[], shooter: number, input: Omit<TrajectoryInput, "seat">): ConcurrentOutcome => {
+/** ダブルシュートの射撃。試合が続くなら、1 発目の最後の tick から DOUBLE_GAP_TICKS 置いて、落ちた後の位置から 2 発目を撃つ */
+const doubleConcurrent = (mask: TerrainMask, players: readonly TeamCombatant[], shooter: number, input: Omit<TrajectoryInput, "seat">): ConcurrentOutcome => {
   const first = simulateConcurrentCombat(mask, players, input);
+  if (!fireSecond(players, shooter, first)) return first;
   const at = first.positions[shooter]!;
-  if (first.hpAfter[shooter]! <= 0 || isRingOut(first.mask, at)) return first;
   const after = players.map((_, i) => ({ ...first.positions[i]!, hp: first.hpAfter[i]! }));
   const second = simulateConcurrentCombat(first.mask, after, { ...input, x: at.x, y: at.y });
   const ticks = first.ticks + DOUBLE_GAP_TICKS, count = first.paths.length;
@@ -104,8 +104,8 @@ const doubleConcurrent = (mask: TerrainMask, players: readonly Combatant[], shoo
     impacts: [...first.impacts, ...second.impacts.map(i => ({ ...i, projectile: i.projectile + count, tick: i.tick + ticks }))] };
 };
 
-/** アイテム（設計書 42）を含めた v2 の 1 手番の射撃。shooter は players の中の撃つ側の添字。アイテムを使わなければ simulateConcurrentCombat と同じ */
-export const simulateConcurrentCombatWithItem = (initial: TerrainMask, players: readonly Combatant[], shooter: number, input: Omit<TrajectoryInput, "seat">): ConcurrentOutcome => {
+/** アイテム（設計書 42）を含めた v2 の 1 手番の射撃。shooter は players の中の撃つ側の添字で、players にはチームを持たせる。アイテムを使わなければ simulateConcurrentCombat と同じ */
+export const simulateConcurrentCombatWithItem = (initial: TerrainMask, players: readonly TeamCombatant[], shooter: number, input: Omit<TrajectoryInput, "seat">): ConcurrentOutcome => {
   if (input.item === "double") return doubleConcurrent(initial, players, shooter, input);
   if (input.item === "teleport") return teleportConcurrent(initial, players, shooter, input);
   return simulateConcurrentCombat(initial, players, input);

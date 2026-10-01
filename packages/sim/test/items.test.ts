@@ -56,6 +56,15 @@ describe("ダブルシュート", () => {
     expect(secondStart).not.toEqual(out.paths[0]!.points[0]);
   });
 
+  it("1 対 1 で 1 発目に相手が倒れたら、試合が決まったので 2 発目を撃たない", () => {
+    const mask = flatMask();
+    const players = [on(mask, 60), on(mask, 150, 1)];
+    const input = shot({ elevation: 45, power: 50 });
+    const single = simulateCombat(mask, players, input, false);
+    expect(single.hpAfter[1]!).toBeLessThanOrEqual(0);
+    expect(simulateCombatWithItem(mask, players, 0, { ...input, item: "double" }, false)).toEqual(single);
+  });
+
   it("1 発目で撃った側が倒れたら 2 発目を撃たない", () => {
     const mask = wallMask(104, 130);
     const players = [on(mask, 100, 1), on(mask, 300)];
@@ -182,6 +191,24 @@ describe("多人数の同時処理（v2）", () => {
     expect(out.ticks).toBe(offset + second.ticks);
     expect(out.hpAfter).toEqual(second.hpAfter);
     expect(out.mask.cells).toEqual(second.mask.cells);
+  });
+
+  // 1 発目で 72 の相手が倒れる配置。300 の機体は爆風の外にいる
+  const input = shot({ elevation: 10, power: 40 });
+  const targetDown = (teams: readonly string[]) =>
+    [{ x: 60, y: 150, hp: 100 }, { x: 72, y: 150, hp: 1 }, { x: 300, y: 150, hp: 100 }].map((p, i) => ({ ...p, team: teams[i]! }));
+
+  it("狙った相手が倒れても、ほかの敵が残っていれば試合が続くので 2 発目を撃つ", () => {
+    for (const teams of [["a", "b", "c"], ["a", "b", "b"]]) {
+      const first = simulateConcurrentCombat(flatMask(), targetDown(teams), input);
+      expect(first.hpAfter[1]!).toBeLessThanOrEqual(0);
+      expect(simulateConcurrentCombatWithItem(flatMask(), targetDown(teams), 0, { ...input, item: "double" }).paths).toHaveLength(2);
+    }
+  });
+
+  it("1 発目で敵のチームが残らなければ、試合が決まったので 2 発目を撃たない", () => {
+    const players = targetDown(["a", "b", "a"]);
+    expect(simulateConcurrentCombatWithItem(flatMask(), players, 0, { ...input, item: "double" })).toEqual(simulateConcurrentCombat(flatMask(), players, input));
   });
 
   it("1 発目で撃った側が倒れたら 2 発目を撃たない", () => {
