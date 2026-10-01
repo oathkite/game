@@ -1,5 +1,6 @@
 import { z } from "zod";
 import { MAP_CHOICES, MAP_NAMES, MAP_WIDTH, MAX_MESSAGE_BYTES, NICKNAME_MAX, PLAYER_COLORS, ROOM_CODE_ALPHABET, ROOM_CODE_LENGTH, ROOM_TITLE_MAX } from "./constants.js";
+import { ITEM_IDS } from "./items.js";
 import { isValidLoadout, WEAPON_IDS } from "./weapons.js";
 
 // クライアントからサーバーへ届くメッセージの Zod スキーマ。設計書 05 の 5.2。
@@ -83,6 +84,8 @@ export const turnFireSchema = z.object({
   elevation: z.number().int().min(10).max(90),
   power: z.number().int().min(0).max(100),
   x: z.number().int().min(0).max(MAP_WIDTH - 1),
+  /** その手番に使うアイテム（設計書 42）。使わなければ持たない */
+  item: z.enum(ITEM_IDS).optional(),
 });
 
 export const clientMessageSchema = z.discriminatedUnion("type", [

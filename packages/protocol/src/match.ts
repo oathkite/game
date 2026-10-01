@@ -46,7 +46,7 @@ export type TrajectoryInput = {
   /** -10 から 10 の整数 */
   readonly wind: number;
   /** その手番に使ったアイテム（設計書 42）。使っていなければ持たない。テレポートなら weapon は標準砲 */
-  readonly item?: ItemId;
+  readonly item?: ItemId | undefined;
 };
 
 export type TerrainOp = {

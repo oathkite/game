@@ -1,5 +1,5 @@
 import { ROUND_REVEAL_MS, finishDelay, nextDelayTurn, actionCost } from "@game/protocol";
-import { weaponOf, type ClientMessageOf, type FinishReason, type MatchResult, type PassReason, type Seat, type ServerMessageOf } from "@game/protocol";
+import { shotWeapon, weaponOf, type ClientMessageOf, type FinishReason, type MatchResult, type PassReason, type Seat, type ServerMessageOf } from "@game/protocol";
 import { damageDealtTo, initialWind, nextWind, simulateShot, validateMove, weaponSpec, WIND_DELTA_MAX, WIND_MAX } from "@game/sim";
 import { otherSeat, type Effect, type EngineState, type Step } from "./types.js";
 
@@ -75,8 +75,11 @@ export const resolveFire = (state: EngineState, seat: Seat, fire: ClientMessageO
   // 移動の検証が移動後の位置（y を含む）を決める。クライアントは x しか送らない
   const moved = validateMove(state.mask, player, fire.x);
   if (!moved) return pass(state, "invalidFire", now);
-  const weapon = weaponOf(player.loadout, fire.slot);
-  const input = { seat, weapon, x: moved.x, y: moved.y, facing: fire.facing, elevation: fire.elevation, power: fire.power, wind: state.match.wind.value };
+  // アイテムは 1 試合にそれぞれ 1 回。テレポートの手番は標準砲で撃つ（設計書 42）
+  const item = fire.item, used = player.itemsUsed ?? [];
+  if (item && used.includes(item)) return pass(state, "invalidFire", now);
+  const weapon = shotWeapon(weaponOf(player.loadout, fire.slot), item);
+  const input = { seat, weapon, x: moved.x, y: moved.y, facing: fire.facing, elevation: fire.elevation, power: fire.power, wind: state.match.wind.value, ...(item ? { item } : {}) };
   const [p0, p1] = state.match.players;
   const outcome = simulateShot(state.mask, [{ x: p0.x, y: p0.y, hp: p0.hp }, { x: p1.x, y: p1.y, hp: p1.hp }], input);
   const r = outcome.result;
@@ -87,14 +90,15 @@ export const resolveFire = (state: EngineState, seat: Seat, fire: ClientMessageO
   const direct = r.impacts.some((i) => i.damage[opp] > 0 && i.damage[opp] === stages[i.stage]?.damageMax) ? 1 : 0;
   const dealt = { damageDealt: stat.damageDealt + damageDealtTo(r, opp), directHits: stat.directHits + direct };
   const stats: EngineState["stats"] = seat === 0 ? [dealt, state.stats[1]] : [state.stats[0], dealt];
+  const usedAfter = item ? { itemsUsed: [...used, item] } : {};
   const players: EngineState["match"]["players"] = [
-    { ...p0, hp: r.hpAfter[0], x: r.xAfter[0], y: r.yAfter[0], facing: seat === 0 ? fire.facing : p0.facing },
-    { ...p1, hp: r.hpAfter[1], x: r.xAfter[1], y: r.yAfter[1], facing: seat === 1 ? fire.facing : p1.facing },
+    { ...p0, hp: r.hpAfter[0], x: r.xAfter[0], y: r.yAfter[0], facing: seat === 0 ? fire.facing : p0.facing, ...(seat === 0 ? usedAfter : {}) },
+    { ...p1, hp: r.hpAfter[1], x: r.xAfter[1], y: r.yAfter[1], facing: seat === 1 ? fire.facing : p1.facing, ...(seat === 1 ? usedAfter : {}) },
   ];
   const finished: MatchResult | null = r.finished
     ? { winner: r.finished.winner, reason: r.finished.reason, turns: state.match.turnNumber, stats }
     : null;
-  const delay = state.delay ? finishDelay(state.delay, String(seat), actionCost(state.movedSteps ?? Math.abs(moved.x - player.x), weapon)) : undefined;
+  const delay = state.delay ? finishDelay(state.delay, String(seat), actionCost(state.movedSteps ?? Math.abs(moved.x - player.x), weapon, item)) : undefined;
   const message: ServerMessageOf<"turn.result"> = { type: "turn.result", turnNumber: state.match.turnNumber, shot: r, finished, ...(delay ? { delay } : {}) };
   const resolved: EngineState = {
     ...state,
@@ -120,7 +124,8 @@ export const resolveFire = (state: EngineState, seat: Seat, fire: ClientMessageO
     ...resolved,
     match: { ...resolved.match, phase: "replaying" },
     replayDone,
-    replayWakeAt: now + state.config.replayWaitMs,
+    // ダブルシュートは 2 発ぶん再生するので、待ちの打ち切りも 2 倍にする（設計書 42.7）
+    replayWakeAt: now + state.config.replayWaitMs * (item === "double" ? 2 : 1),
   };
   if (replayDone[0] && replayDone[1]) {
     const started = startTurn(replaying, now);
