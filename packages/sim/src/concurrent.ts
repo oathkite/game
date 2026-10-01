@@ -3,12 +3,15 @@ import { MAX_STEPS } from "./constants.js";
 import { damageAt, type Combatant, type CombatImpact, type CombatOutcome } from "./ballistics.js";
 import { checkCell, launch, motionOf, muzzleOf, settle, stepFlight, type FixedPoint, type Flight, type Hit, type Motion, type ProjectilePath } from "./flight.js";
 import { carve, type TerrainMask } from "./terrain.js";
-import { isRingOut, settle as settleTank, tankCenterY } from "./tank.js";
+import { isRingOut, settle as settleTank, tankCenterY, type TankPos } from "./tank.js";
+import { flyTeleport } from "./teleport.js";
 import { weaponSpec, type WeaponSpec } from "./weapons.js";
 
 export const COMBAT_TICK_MS = 1000 / 60;
 export const VOLLEY_GAP_TICKS = 11;
 export const IMPACT_HOLD_TICKS = 4;
+/** ダブルシュートで 1 発目の最後の tick から 2 発目を撃つまでの間（設計書 42.2、TBD-46）。0.5 秒 */
+export const DOUBLE_GAP_TICKS = 30;
 export type TimedProjectilePath = ProjectilePath & { readonly pointTicks: readonly number[]; readonly launchTick: number };
 export type TimedCombatImpact = CombatImpact & { readonly tick: number };
 export type ConcurrentOutcome = Omit<CombatOutcome, "paths" | "impacts"> & {
@@ -76,4 +79,34 @@ export const simulateConcurrentCombat = (initial: TerrainMask, players: readonly
   return { mask, hpAfter: hp, positions, impacts, ticks,
     ringOut: positions.flatMap((p, i) => isRingOut(mask, p) ? [i] : []),
     paths: projectiles.map(p => ({ points: p.points, impactAt: p.impactAt, pointTicks: p.pointTicks, launchTick: p.launchTick })) };
+};
+
+/** テレポートの射撃。弾は 1 tick に 1 点ずつ進み、地形も HP も変えない */
+const teleportConcurrent = (mask: TerrainMask, players: readonly Combatant[], shooter: number, input: Omit<TrajectoryInput, "seat">): ConcurrentOutcome => {
+  const centers = players.flatMap(p => !isRingOut(mask, p) && p.hp > 0 ? [{ x: p.x, y: tankCenterY(p) }] : []);
+  const flight = flyTeleport(mask, centers, input);
+  const positions: TankPos[] = players.map((p, i) => i === shooter && flight.landing ? flight.landing : { x: p.x, y: p.y });
+  return { mask, hpAfter: players.map(p => p.hp), positions, impacts: [], ticks: flight.points.length - 1, teleport: flight.landing,
+    ringOut: positions.flatMap((p, i) => isRingOut(mask, p) ? [i] : []),
+    paths: [{ points: flight.points, impactAt: [], pointTicks: flight.points.map((_, i) => i), launchTick: 0 }] };
+};
+
+/** ダブルシュートの射撃。1 発目の最後の tick から DOUBLE_GAP_TICKS 置いて、落ちた後の位置から 2 発目を撃つ */
+const doubleConcurrent = (mask: TerrainMask, players: readonly Combatant[], shooter: number, input: Omit<TrajectoryInput, "seat">): ConcurrentOutcome => {
+  const first = simulateConcurrentCombat(mask, players, input);
+  const at = first.positions[shooter]!;
+  if (first.hpAfter[shooter]! <= 0 || isRingOut(first.mask, at)) return first;
+  const after = players.map((_, i) => ({ ...first.positions[i]!, hp: first.hpAfter[i]! }));
+  const second = simulateConcurrentCombat(first.mask, after, { ...input, x: at.x, y: at.y });
+  const ticks = first.ticks + DOUBLE_GAP_TICKS, count = first.paths.length;
+  return { ...second, ticks: ticks + second.ticks,
+    paths: [...first.paths, ...second.paths.map(p => ({ ...p, launchTick: p.launchTick + ticks, pointTicks: p.pointTicks.map(t => t + ticks) }))],
+    impacts: [...first.impacts, ...second.impacts.map(i => ({ ...i, projectile: i.projectile + count, tick: i.tick + ticks }))] };
+};
+
+/** アイテム（設計書 42）を含めた v2 の 1 手番の射撃。shooter は players の中の撃つ側の添字。アイテムを使わなければ simulateConcurrentCombat と同じ */
+export const simulateConcurrentCombatWithItem = (initial: TerrainMask, players: readonly Combatant[], shooter: number, input: Omit<TrajectoryInput, "seat">): ConcurrentOutcome => {
+  if (input.item === "double") return doubleConcurrent(initial, players, shooter, input);
+  if (input.item === "teleport") return teleportConcurrent(initial, players, shooter, input);
+  return simulateConcurrentCombat(initial, players, input);
 };

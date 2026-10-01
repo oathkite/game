@@ -47,6 +47,13 @@ export const GOLDEN_CASES: readonly GoldenCase[] = [
   { name: "掘削弾 平地 直撃", mask: flatMask, players: two(60, 72), input: shot({ weapon: "digger", x: 60, elevation: 10, power: 40, wind: 0 }) },
   { name: "浮遊弾 谷 向かい風 10", mask: valleyMask, players: two(60, 340), input: shot({ weapon: "floater", x: 60, elevation: 45, power: 72, wind: -10 }) },
   { name: "針弾 平地 直撃", mask: flatMask, players: two(60, 72), input: shot({ weapon: "stinger", x: 60, elevation: 10, power: 40, wind: 0 }) },
+  // アイテム（設計書 42）。ダブルシュートは落下後の位置からもう一度撃ち、テレポートは削らずに着地点へ移る
+  { name: "ダブルシュート 平地 穴に落ちた相手へもう一度", mask: flatMask, players: two(60, 150), input: shot({ x: 60, elevation: 45, power: 50, wind: 0, item: "double" }) },
+  { name: "ダブルシュート トリプル弾 谷 追い風 3", mask: valleyMask, players: two(60, 340), input: shot({ weapon: "triple", x: 60, elevation: 45, power: 72, wind: 3, item: "double" }) },
+  { name: "ダブルシュート 壁の中で爆発 落ちた後から撃つ", mask: () => wallMask(104, 130), players: two(100, 300), input: shot({ x: 100, elevation: 10, power: 50, wind: 0, item: "double" }) },
+  { name: "テレポート 谷 基本の直接射撃", mask: valleyMask, players: two(60, 340), input: shot({ x: 60, elevation: 45, power: 72, wind: 0, item: "teleport" }) },
+  { name: "テレポート 平地 相手に当たって隣へ", mask: flatMask, players: two(60, 72), input: shot({ x: 60, elevation: 10, power: 40, wind: 0, item: "teleport" }) },
+  { name: "テレポート 平地 右端から右へ 消失", mask: flatMask, players: two(390, 60), input: shot({ x: 390, elevation: 10, power: 100, wind: 0, item: "teleport" }) },
 ];
 
 export type GoldenRecord = {
