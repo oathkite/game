@@ -36,6 +36,17 @@ describe("ダブルシュート", () => {
     expect(out.hpAfter[1]!).toBeLessThan(first.hpAfter[1]!);
   });
 
+  it("2 発目を撃ったら、1 発目の弾道の本数と、1 発目で全員が落ちた後の位置を持つ", () => {
+    const mask = flatMask();
+    const players = [on(mask, 60), on(mask, 150)];
+    const input = shot({ elevation: 45, power: 50, item: "double" });
+    const { first } = twice(mask, players, 0, input);
+    const out = simulateCombatWithItem(mask, players, 0, input, false);
+    expect(out.firstShot).toEqual({ paths: 1, positions: first.positions });
+    expect(first.positions[1]!.y).toBeGreaterThan(150);
+    expect("firstShot" in simulateCombatWithItem(mask, [on(mask, 60), on(mask, 150, 1)], 0, input, false)).toBe(false);
+  });
+
   it("扇の武器は弾道をすべてもう一度撃ち、2 発目の弾道の番号は 1 発目の続きになる", () => {
     const mask = flatMask();
     const out = simulateCombatWithItem(mask, [on(mask, 60), on(mask, 300)], 0, shot({ weapon: "triple", item: "double" }), false);
@@ -189,6 +200,7 @@ describe("多人数の同時処理（v2）", () => {
     expect(out.paths[1]!.pointTicks).toEqual(second.paths[0]!.pointTicks.map(t => t + offset));
     expect(out.impacts.map(i => [i.projectile, i.tick])).toEqual([[0, first.impacts[0]!.tick], [1, second.impacts[0]!.tick + offset]]);
     expect(out.ticks).toBe(offset + second.ticks);
+    expect(out.firstShot).toEqual({ paths: 1, positions: first.positions, tick: first.ticks });
     expect(out.hpAfter).toEqual(second.hpAfter);
     expect(out.mask.cells).toEqual(second.mask.cells);
   });

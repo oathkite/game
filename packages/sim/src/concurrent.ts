@@ -1,6 +1,6 @@
 import type { CellPoint, TrajectoryInput } from "@game/protocol";
 import { MAX_STEPS } from "./constants.js";
-import { damageAt, fireSecond, type Combatant, type CombatImpact, type CombatOutcome, type TeamCombatant } from "./ballistics.js";
+import { damageAt, fireSecond, type Combatant, type CombatImpact, type CombatOutcome, type FirstShot, type TeamCombatant } from "./ballistics.js";
 import { checkCell, launch, motionOf, muzzleOf, settle, stepFlight, type FixedPoint, type Flight, type Hit, type Motion, type ProjectilePath } from "./flight.js";
 import { carve, type TerrainMask } from "./terrain.js";
 import { isRingOut, settle as settleTank, tankCenterY, type TankPos } from "./tank.js";
@@ -14,8 +14,10 @@ export const IMPACT_HOLD_TICKS = 4;
 export const DOUBLE_GAP_TICKS = 30;
 export type TimedProjectilePath = ProjectilePath & { readonly pointTicks: readonly number[]; readonly launchTick: number };
 export type TimedCombatImpact = CombatImpact & { readonly tick: number };
-export type ConcurrentOutcome = Omit<CombatOutcome, "paths" | "impacts"> & {
+export type ConcurrentOutcome = Omit<CombatOutcome, "paths" | "impacts" | "firstShot"> & {
   readonly paths: readonly TimedProjectilePath[]; readonly impacts: readonly TimedCombatImpact[]; readonly ticks: number;
+  /** ダブルシュートの 1 発目の終わり。tick は 1 発目の最後の tick で、2 発目はその DOUBLE_GAP_TICKS 後に撃つ */
+  readonly firstShot?: FirstShot & { readonly tick: number };
 };
 type Projectile = {
   readonly index: number; readonly launchTick: number; readonly flight: Flight;
@@ -99,7 +101,7 @@ const doubleConcurrent = (mask: TerrainMask, players: readonly TeamCombatant[], 
   const after = players.map((_, i) => ({ ...first.positions[i]!, hp: first.hpAfter[i]! }));
   const second = simulateConcurrentCombat(first.mask, after, { ...input, x: at.x, y: at.y });
   const ticks = first.ticks + DOUBLE_GAP_TICKS, count = first.paths.length;
-  return { ...second, ticks: ticks + second.ticks,
+  return { ...second, ticks: ticks + second.ticks, firstShot: { paths: count, positions: first.positions, tick: first.ticks },
     paths: [...first.paths, ...second.paths.map(p => ({ ...p, launchTick: p.launchTick + ticks, pointTicks: p.pointTicks.map(t => t + ticks) }))],
     impacts: [...first.impacts, ...second.impacts.map(i => ({ ...i, projectile: i.projectile + count, tick: i.tick + ticks }))] };
 };
