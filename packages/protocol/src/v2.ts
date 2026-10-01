@@ -1,5 +1,6 @@
 import { tankColorsSchema } from "./schemas.js";
 import { z } from "zod";
+import { ITEM_IDS } from "./items.js";
 import { WEAPON_IDS } from "./weapons.js";
 
 const id = z.string().trim().min(1).max(128);
@@ -23,6 +24,8 @@ export const fireCommandSchema = z.object({
   version: z.literal(2), type: z.literal("turn.fire"), matchId: id, turnId: sequence.min(1), commandId: id,
   ackMoveSeq: sequence, slot: z.union([z.literal(0), z.literal(1)]),
   facing: z.union([z.literal(-1), z.literal(1)]), elevation: z.number().int().min(10).max(90), power: z.number().int().min(0).max(100),
+  /** その手番に使うアイテム（設計書 42）。使わなければ持たない */
+  item: z.enum(ITEM_IDS).optional(),
 }).strict();
 export type FireCommand = z.infer<typeof fireCommandSchema>;
 

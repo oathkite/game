@@ -2,6 +2,7 @@ import { delaySchema } from "./delay.js";
 import { tankColorsSchema } from "./schemas.js";
 import { clientBuildSchema, matchBuildSchema } from "./build.js";
 import { z } from "zod";
+import { ITEM_IDS } from "./items.js";
 import { WEAPON_IDS } from "./weapons.js";
 import { fireCommandSchema, moveCommandSchema, moveSnapshotSchema } from "./v2.js";
 
@@ -10,7 +11,10 @@ export const labJoinSchema = z.object({ type: z.literal("lab.join"), build: clie
 export const labInputSchema = z.union([labJoinSchema, moveCommandSchema, fireCommandSchema,
   z.object({ type: z.literal("lab.rematch"), matchId: z.string() }).strict(),
   z.object({ type: z.literal("lab.surrender"), matchId: z.string() }).strict()]);
-const labPlayerSchema = z.object({ playerId: z.string(), x: z.number(), y: z.number(), hp: z.number(), teamId: z.string(), eliminated: z.boolean(), nickname: z.string().optional(), colors: tankColorsSchema.optional(), loadout: z.tuple([z.enum(WEAPON_IDS), z.enum(WEAPON_IDS)]).optional() });
+const labPlayerSchema = z.object({ playerId: z.string(), x: z.number(), y: z.number(), hp: z.number(), teamId: z.string(), eliminated: z.boolean(), nickname: z.string().optional(), colors: tankColorsSchema.optional(), loadout: z.tuple([z.enum(WEAPON_IDS), z.enum(WEAPON_IDS)]).optional(),
+  /** 使い終えたアイテム（設計書 42） */
+  itemsUsed: z.array(z.enum(ITEM_IDS)).max(2).optional() });
+const cellSchema = z.object({ x: z.number().int(), y: z.number().int() });
 export const labFrameSchema = z.object({
   delay: delaySchema.optional(),
   build: matchBuildSchema,
@@ -32,7 +36,11 @@ export const labFrameSchema = z.object({
   result: z.union([z.object({ type: z.literal("ongoing") }), z.object({ type: z.literal("draw") }), z.object({ type: z.literal("win"), teamId: z.string() })]),
   terrainOps: z.array(z.object({ cx: z.number(), cy: z.number(), radius: z.number() })),
   replay: z.object({ startsAt: z.number(), endsAt: z.number(), terrainOpsBefore: z.number().int().nonnegative(), playersBefore: z.array(labPlayerSchema).min(2).max(8), ticks: z.number().int().nonnegative(),
-    shooter: z.object({ playerId: z.string(), facing: z.union([z.literal(-1), z.literal(1)]), elevation: z.number(), weapon: z.enum(WEAPON_IDS) }),
+    shooter: z.object({ playerId: z.string(), facing: z.union([z.literal(-1), z.literal(1)]), elevation: z.number(), weapon: z.enum(WEAPON_IDS), item: z.enum(ITEM_IDS).optional() }),
+    /** テレポートの着地点。テレポートを使った射撃だけが持ち、移れなければ null */
+    teleport: cellSchema.nullable().optional(),
+    /** ダブルシュートで 2 発目を撃ったときの、1 発目の最後の tick と、1 発目で全員が落ちた後の位置 */
+    firstShot: z.object({ tick: z.number().int().nonnegative(), players: z.array(cellSchema.extend({ playerId: z.string() })).min(2).max(8) }).optional(),
     impacts: z.array(z.object({ tick: z.number().int().nonnegative(), damage: z.array(z.object({ playerId: z.string(), amount: z.number() })) })),
     paths: z.array(z.object({ launchTick: z.number().int().nonnegative(), endTick: z.number().int().nonnegative(), points: z.array(z.object({ x: z.number(), y: z.number(), tick: z.number().int().nonnegative() })) })) }).nullable(),
 });
