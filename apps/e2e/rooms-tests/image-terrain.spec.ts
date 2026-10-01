@@ -1,6 +1,12 @@
-import { expect, test } from "@playwright/test";
+import { expect, test, type Page } from "@playwright/test";
 import { control, createRoom, joinByCode, members, readyUp, teamOf } from "./roomFlow";
 import type { LabFrame } from "@game/protocol/v2-lab";
+// 地形を確実に削る弱い弾を撃つ。page.keyboard で 150 ms 押すと、CDP を通る分だけ押す時間が伸びてパワーが 20〜40 になり、
+// 席と風によっては弾が地形に当たらずに抜けて、このテストが揺らいでいた。ページの中で 100 ms で離して、パワー 6 前後にする
+const tapFire = (page: Page) => page.evaluate(() => new Promise<void>(resolve => {
+  window.dispatchEvent(new KeyboardEvent("keydown", { code: "Space" }));
+  setTimeout(() => { window.dispatchEvent(new KeyboardEvent("keyup", { code: "Space" })); resolve(); }, 100);
+}));
 test("authored terrain is shared after firing and reconnecting", async ({ browser }) => {
   const mapId = String(test.info().project.metadata.mapId ?? "rock-arch");
   const contexts = await Promise.all([0, 1].map(() => browser.newContext({ locale: "ja-JP", viewport: { width: 1280, height: 800 } })));
@@ -37,7 +43,7 @@ test("authored terrain is shared after firing and reconnecting", async ({ browse
     const actor = frames[0]!.players.find(p => p.playerId === frames[0]!.actorId)!;
     const shooter = pages[Number(actor.nickname!.slice(-1))]!;
     await expect(control(shooter)).toHaveAttribute("data-control", "act");
-    await shooter.keyboard.down("Space"); await shooter.waitForTimeout(150); await shooter.keyboard.up("Space");
+    await tapFire(shooter);
     await expect.poll(() => frames[0]!.terrainOps.length, { timeout: 15000 }).toBeGreaterThan(0);
     await expect.poll(() => frames[0]!.phase, { timeout: 15000 }).toBe("acting");
     await expect.poll(() => frames[1]!.terrainOps).toEqual(frames[0]!.terrainOps);
