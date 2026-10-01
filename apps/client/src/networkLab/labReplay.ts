@@ -112,6 +112,26 @@ const launchesAt = (line: Timeline): readonly LabLaunch[] => line.replay.paths.f
   return [{ key: String(index), x: a.x, y: a.y, angle: Math.atan2(b.y - a.y, b.x - a.x), age: line.now - at, points }];
 });
 
+const FALL_MS = 300;
+type Position = { readonly x: number; readonly y: number };
+type Fall = { readonly at: number; readonly positions: ReadonlyMap<string, { readonly from: Position; readonly to: Position; readonly teleport: boolean }> };
+
+/**
+ * 機体が動く時刻と、動く前と後の位置。新しい順に並べる。
+ * ダブルシュート（設計書 42.2）は 1 発目の後にも一度落とす。テレポートした機体は滑らせずに着地点へ移す（42.3）
+ */
+const fallsOf = (frame: LabFrame, replay: Replay, firstAt: number, settleAt: number): readonly Fall[] => {
+  const mid = replay.firstShot, teleported = replay.teleport ? replay.shooter.playerId : null;
+  const midOf = (id: string, before: Position): Position => mid?.players.find(p => p.playerId === id) ?? before;
+  const last: Fall = { at: settleAt, positions: new Map(replay.playersBefore.map(before => {
+    const after = frame.players.find(p => p.playerId === before.playerId)!, from = midOf(before.playerId, before);
+    const teleport = before.playerId === teleported;
+    return [before.playerId, { from: teleport ? after : from, to: after, teleport }];
+  })) };
+  if (!mid) return [last];
+  return [last, { at: firstAt, positions: new Map(replay.playersBefore.map(before => [before.playerId, { from: before, to: midOf(before.playerId, before), teleport: false }])) }];
+};
+
 const idle = (frame: LabFrame) => ({ launches: [] as readonly LabLaunch[], players: frame.players, terrainOps: frame.terrainOps, bullets: [], trails: [] as readonly (readonly TrailDot[])[], effects: [] as readonly LabEffect[], hpBars: {} as Readonly<Record<string, HpBar>>, misses: [] as readonly (MissMark & { readonly key: string })[], fallingIds: [] as string[], recoil: 0, shotFlashes: [] as readonly ShotFlash[] });
 
 /** Replay server ticks at a shared pace, retaining a final 300ms settling window. */
@@ -127,14 +147,17 @@ export const presentLabReplay = (frame: LabFrame, now: number, reduced = false) 
   const t = Math.max(0, Math.min(1, (now - replay.startsAt) / Math.max(1, settleAt - replay.startsAt)));
   const tick = t * replay.ticks;
   const impacts = replay.impacts.filter(i => i.tick <= tick);
-  const fall = smooth(Math.max(0, Math.min(1, (now - settleAt) / 300)));
+  const falls = fallsOf(frame, replay, timeOf(base, replay.firstShot?.tick ?? 0), settleAt);
   const players = replay.playersBefore.map(before => {
     const after = frame.players.find(p => p.playerId === before.playerId)!;
-    if (now >= settleAt) return { ...after, x: before.x + (after.x - before.x) * fall, y: before.y + (after.y - before.y) * fall };
+    const step = falls.find(f => now >= f.at), fall = step?.positions.get(before.playerId);
+    const progress = step ? smooth(Math.max(0, Math.min(1, (now - step.at) / FALL_MS))) : 0;
+    const pose = fall ? { x: fall.from.x + (fall.to.x - fall.from.x) * progress, y: fall.from.y + (fall.to.y - fall.from.y) * progress } : { x: before.x, y: before.y };
+    if (now >= settleAt) return { ...after, ...pose };
     const hp = before.hp - impacts.reduce((sum, impact) => sum + (impact.damage.find(d => d.playerId === before.playerId)?.amount ?? 0), 0);
-    return { ...before, hp, eliminated: before.eliminated || hp <= 0 };
+    return { ...before, ...pose, hp, eliminated: before.eliminated || hp <= 0 };
   });
-  const fallingIds = now >= settleAt && now < settleAt + 300 ? replay.playersBefore.filter(before => (frame.players.find(p => p.playerId === before.playerId)?.y ?? before.y) > before.y).map(p => p.playerId) : [];
+  const fallingIds = falls.flatMap(f => now >= f.at && now < f.at + FALL_MS ? [...f.positions].filter(([, p]) => p.to.y > p.from.y && !p.teleport).map(([id]) => id) : []);
   const launches = replay.paths.map(path => timeOf(line, path.launchTick));
   const flying = now < settleAt;
   return { launches: launchesAt(line), players, effects: effectsAt(frame, line), hpBars: hpBarsAt(line), misses: missesAt(frame, line), fallingIds, shotFlashes: shotFlashes(now, launches), recoil: shotRecoil(now, launches),

@@ -22,7 +22,7 @@ import { useTouchControls } from "@/worldUi/useTouchControls";
 import { SceneLoading } from "@/worldUi/SceneLoading";
 import { LAB_CONNECTED_STATUS, LAB_CONNECTING_STATUS, labLoadingSteps } from "@/worldUi/connectionSteps";
 import { useBattleInput } from "@/worldUi/useBattleInput";
-import { DEFAULT_LOADOUT, WEAPON_LABELS } from "@game/protocol";
+import { DEFAULT_LOADOUT, shotWeapon, WEAPON_LABELS, type ItemId } from "@game/protocol";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { labOutputSchema, type LabFrame } from "@game/protocol/v2-lab";
 import { NetworkField } from "@/worldUi/NetworkField";
@@ -46,6 +46,8 @@ export const NetworkLab = ({ worldArt = false, onExit, connection }: { readonly 
   useEffect(() => { if (connection) return measureLatency(connection.socket, setLatency); setLatency(null); }, [connection]);
   const [reportStatus, setReportStatus] = useState("");
   const [slot, setSlot] = useState<0 | 1>(0);
+  // 武器のスロットと違い、アイテムの選択は手番をまたがない（設計書 42.1）
+  const [item, setItem] = useState<ItemId | null>(null);
   const [elevation, setElevation] = useState(45), [power, setPower] = useState(50);
   const [frame, setFrame] = useState<LabFrame | null>(null);
   useEffect(() => {
@@ -143,7 +145,7 @@ export const NetworkLab = ({ worldArt = false, onExit, connection }: { readonly 
     const ws = socket.current;
     if (!ws || ws.readyState !== WebSocket.OPEN) return;
     const shot = prediction.current?.fire();
-    if (shot) ws.send(JSON.stringify({ version: 2, type: "turn.fire", ...shot, commandId: `fire-${playerId}-${++commandId.current}-${Date.now()}`, slot, elevation, power: shotPower }));
+    if (shot) ws.send(JSON.stringify({ version: 2, type: "turn.fire", ...shot, commandId: `fire-${playerId}-${++commandId.current}-${Date.now()}`, slot, elevation, power: shotPower, ...(item ? { item } : {}) }));
   };
   const action = (type: "lab.rematch" | "lab.surrender"): void => {
     if (frame && socket.current?.readyState === WebSocket.OPEN) socket.current.send(JSON.stringify({ type, matchId: frame.matchId }));
@@ -151,6 +153,8 @@ export const NetworkLab = ({ worldArt = false, onExit, connection }: { readonly 
   const serverNow = view?.clock.serverNow ?? 0, revealed = view?.clock.revealed ?? false, terrain = view?.clock.terrain ?? 0;
   const presentation = view?.live.presentation ?? null, shownPlayers = view?.live.players ?? [];
   const loadout = frame?.players.find(p => p.playerId === playerId)?.loadout ?? DEFAULT_LOADOUT;
+  const itemsUsed = frame?.players.find(p => p.playerId === playerId)?.itemsUsed ?? [];
+  useEffect(() => { setItem(null); }, [frame?.matchId, frame?.turnId]);
   const seconds = view?.clock.seconds ?? null;
   const phaseLabel = frame?.phase === "replaying" ? "射撃を再生中" : frame?.phase === "finished" ? "対戦終了" : "操作中";
   const observing = spectator || Boolean(frame?.players.find(p => p.playerId === playerId)?.eliminated);
@@ -174,9 +178,9 @@ export const NetworkLab = ({ worldArt = false, onExit, connection }: { readonly 
     <YourTurn turnKey={`${frame?.matchId}/${frame?.turnId}`} active={Boolean(!observing && canControl)} />
     <BattleOverlay clock={<CountdownDial seconds={seconds} />} onMenu={() => { input.cancel(); setMenu(true); }} />
     <span className="battle-sr" data-testid="identity">{playerId}</span><span className="battle-sr" data-testid="phase">{t(phaseLabel)}</span>
-    {frame && view ? <NetworkField key={frame.matchId} sample={sample} charge={input.gauge.charging ? input.gauge.value / 100 : 0} onSettling={setSettling} blocked={menu || confirmLeave || input.gauge.charging || !revealed} frame={frame} elevation={elevation} ownId={playerId} followTurns={!observing || !keepView} {...(!observing ? { selectedWeapon: loadout[slot] } : {})} /> : <SceneLoading steps={labLoadingSteps(status, t)} />}
+    {frame && view ? <NetworkField key={frame.matchId} sample={sample} charge={input.gauge.charging ? input.gauge.value / 100 : 0} onSettling={setSettling} blocked={menu || confirmLeave || input.gauge.charging || !revealed} frame={frame} elevation={elevation} ownId={playerId} followTurns={!observing || !keepView} {...(!observing ? { selectedWeapon: shotWeapon(loadout[slot], item ?? undefined) } : {})} /> : <SceneLoading steps={labLoadingSteps(status, t)} />}
     {observing && frame && delay && <TurnOrderList info={{ onOpen: input.cancel, serverNow, state: delay, playerId, acting: false, players: frame.players.map(p => ({ id: p.playerId, name: p.nickname ?? p.playerId, colors: p.colors, eliminated: p.eliminated })) }} />}
-    {observing ? <footer className="battle-console"><span role="status">{t("観戦中")}</span><label><input type="checkbox" checked={keepView} onChange={e => setKeepView(e.target.checked)} />{t("手動視点を維持")}</label>{frame && <WindGauge wind={frame.wind} />}</footer> : <BattleConsole delay={frame && delay ? { onOpen: input.cancel, serverNow, state: delay, playerId, acting: frame.actorId === playerId && frame.phase === "acting", players: frame.players.map(p => ({ id: p.playerId, name: p.nickname ?? p.playerId, colors: p.colors, eliminated: p.eliminated })) } : undefined} player={hudPlayers.find(p => p.id === playerId)} steps={moving ? moving.stepsLeft : frame?.actorId === playerId ? frame.movement.stepsLeft : 0} tilt={ground} elevation={elevation} facing={ownFacing.current} power={input.gauge.value} loadout={loadout} slot={slot} wind={frame ? frame.wind : null} disabled={(!canAct && !preparing) || menu || confirmLeave || input.gauge.charging} selectSlot={setSlot}>
+    {observing ? <footer className="battle-console"><span role="status">{t("観戦中")}</span><label><input type="checkbox" checked={keepView} onChange={e => setKeepView(e.target.checked)} />{t("手動視点を維持")}</label>{frame && <WindGauge wind={frame.wind} />}</footer> : <BattleConsole delay={frame && delay ? { onOpen: input.cancel, serverNow, state: delay, playerId, acting: frame.actorId === playerId && frame.phase === "acting", players: frame.players.map(p => ({ id: p.playerId, name: p.nickname ?? p.playerId, colors: p.colors, eliminated: p.eliminated })) } : undefined} player={hudPlayers.find(p => p.id === playerId)} steps={moving ? moving.stepsLeft : frame?.actorId === playerId ? frame.movement.stepsLeft : 0} tilt={ground} elevation={elevation} facing={ownFacing.current} power={input.gauge.value} loadout={loadout} slot={slot} wind={frame ? frame.wind : null} items={{ used: itemsUsed, selected: item, disabled: !canAct || menu || confirmLeave || input.gauge.charging, select: setItem }} disabled={(!canAct && !preparing) || menu || confirmLeave || input.gauge.charging} selectSlot={setSlot}>
       {touch && <BattleTouchControls disabled={!canAct || confirmLeave || menu} aimDisabled={(!canAct && !preparing) || confirmLeave || menu} button={input.button} steps />}
     </BattleConsole>}
     {latency !== null && latency > 300 && <span className="network-latency" role="status">{t("通信遅延")} {latency} ms</span>}

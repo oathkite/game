@@ -8,6 +8,11 @@
  .battle-console.has-touch .battle-weapons { grid-column:4; align-self:start; gap:4px; }
  .world-ui .battle-console.has-touch .battle-weapons button { width:40px; min-width:40px!important; min-height:44px; height:44px; }
  .battle-console.has-touch .battle-weapons button > svg { width:26px; height:26px; }
+ /* アイテムの段を置くとき、武器とアイテムを発射のボタン（高さ 44px）の上に収める（設計書 42.1） */
+ .battle-console.has-touch .battle-weapons:has(.battle-items) { row-gap:2px; align-content:start; }
+ .world-ui .battle-console.has-touch .battle-weapons:has(.battle-items) > button { min-height:32px; height:32px; }
+ .world-ui .battle-console.has-touch .battle-weapons .battle-items button { min-height:0; height:16px; }
+ .world-ui .battle-console.has-touch .battle-weapons .battle-items button > svg { width:12px; height:12px; }
  .battle-console.has-touch .battle-touch { display:contents; }
  .battle-console.has-touch .battle-dpad { position:absolute; top:8px; left:8px; }
  .world-ui .battle-console.has-touch .battle-touch-fire { position:absolute; right:8px; bottom:8px; width:84px; height:44px; padding:0!important; }

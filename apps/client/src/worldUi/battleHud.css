@@ -23,7 +23,14 @@
 .world-ui .battle-weapons button[aria-pressed=true] { outline:none!important; box-shadow:none; }
 /* 武器のアイコンは 13 × 13 art px。大きさを 13 の倍数にして 1 art px を整数の px にする（設計書 40.10） */
 .battle-weapons button > svg { width:39px; height:39px; display:block; margin:auto; }
-.battle-weapons span { font-size:11px; }
+/* アイテム（設計書 42.1）。武器の上の段に、アイコンだけの低いボタンを武器と同じ幅で並べる */
+.battle-weapons:has(.battle-items) { display:grid; grid-template-columns:repeat(2,auto); align-content:center; }
+.battle-items { grid-row:1; grid-column:1/-1; display:grid; grid-template-columns:subgrid; gap:inherit; }
+.world-ui .battle-weapons .battle-items button { width:auto; min-width:0!important; min-height:0; height:22px; padding:0!important; border-color:#0f4d24!important; }
+.world-ui .battle-weapons .battle-items button[aria-pressed=true] { border-color:#33ff66!important; }
+.world-ui .battle-weapons .battle-items button[data-used] { opacity:.35; }
+/* 武器のアイコンを大きくする規則（battleHudDesktop.css、battleTouch.css）より優先する */
+.world-ui .battle-console .battle-weapons .battle-items button > svg { width:16px; height:16px; display:block; margin:auto; }
 .world-ui .battle-touch button { min-height:44px!important; min-width:48px!important; padding:0 12px!important; margin:0; }
 .world-ui .network-world:has(.battle-console) { grid-template-rows:64px minmax(0,1fr) 120px; }
 .world-ui .kp-root:has(.battle-console) .kp-world-help,.world-ui .kp-root:has(.battle-console) .kp-minimap span { display:none; }

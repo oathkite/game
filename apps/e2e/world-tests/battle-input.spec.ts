@@ -57,14 +57,14 @@ test("touch controls remain usable and a physical gameplay key switches to keybo
     await startFreePractice(page);
     const fire = page.getByRole("button", { name: "発射", exact: true });
     await expect(fire).toBeVisible();
-    // タッチ操作のときは武器ボタンにキーの表示を出さない。
+    // 武器ボタンにはキーの表示を出さない。アイテムの段を置く高さを空けるため（2026-10-02、設計書 42.1）
     await expect(page.locator(".battle-weapons button span")).toHaveCount(0);
     const angle = Number((await page.getByTestId("camera-angle").textContent())!.replace("°", ""));
     await page.getByRole("button", { name: "角度を上げる" }).tap();
     await expect(page.getByTestId("camera-angle")).toHaveText(`${angle + 1}°`);
     await page.keyboard.press("ArrowDown");
     await expect(fire).toHaveCount(0);
-    await expect(page.locator(".battle-weapons button span")).toHaveText(["Q", "E"]);
+    await expect(page.locator(".battle-weapons button span")).toHaveCount(0);
     await expect(page.getByTestId("camera-angle")).toHaveText(`${angle}°`);
   } finally { await context.close(); }
 });
