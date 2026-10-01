@@ -41,6 +41,25 @@ test("online battle uses each item once and teleports the shooter", async ({ bro
         if (fire) expect(weapon.x + weapon.width <= fire.x || weapon.y + weapon.height <= fire.y).toBe(true);
       }
     }
+    // 縦持ちでも、アイテムは武器の真上に並び、合計の高さが発射のボタンに揃う。パワーと残り移動は盤の全幅の段に置く
+    await pages[1]!.setViewportSize({ width: 390, height: 844 });
+    await expect.poll(async () => (await pages[1]!.locator(".battle-console").boundingBox())!.height).toBe(216);
+    {
+      const page = pages[1]!, panel = (await page.locator(".battle-console").boundingBox())!;
+      const fire = (await page.getByRole("button", { name: "発射", exact: true }).boundingBox())!, arsenal = (await page.locator(".battle-weapons").boundingBox())!;
+      expect(Math.abs(arsenal.y - fire.y)).toBeLessThanOrEqual(1); expect(Math.abs(arsenal.height - fire.height)).toBeLessThanOrEqual(1);
+      const weapons = await page.locator(".battle-weapons > button").evaluateAll(buttons => buttons.map(b => b.getBoundingClientRect().toJSON() as DOMRect));
+      for (const [i, name] of ["ダブルシュート", "テレポート"].entries()) {
+        const box = (await item(page, name).boundingBox())!;
+        expect(Math.abs(box.x - weapons[i]!.x)).toBeLessThanOrEqual(1); expect(box.y + box.height).toBeLessThanOrEqual(weapons[i]!.y);
+      }
+      for (const selector of [".battle-power", ".battle-movement"]) {
+        const meter = (await page.locator(selector).boundingBox())!;
+        expect(meter.width).toBeGreaterThanOrEqual(panel.width - 17); expect(meter.y).toBeGreaterThanOrEqual(fire.y + fire.height);
+      }
+      await page.screenshot({ path: "test-results/items-portrait.png" });
+    }
+    await pages[1]!.setViewportSize({ width: 844, height: 390 });
     // 相手の手番の準備では、角度と武器は変えられてもアイテムは選べない（42.1）
     await expect(control(observer)).toHaveAttribute("data-control", "prepare");
     await expect(item(observer, "テレポート")).toBeDisabled();
