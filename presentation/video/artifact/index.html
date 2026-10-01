@@ -1,0 +1,91 @@
+<title>AI と二人でゲームを作った話</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=DotGothic16&family=Noto+Sans+JP:wght@400;700&display=swap">
+<style>
+  /* ゲームの画面と同じ、黒い地に緑の燐光。見出しと時刻はゲームと同じドットのフォント。
+     動画を主役に置き、その下に章の頭出しを並べる。暗い見た目で統一するので、テーマは切り替えない。 */
+  :root {
+    color-scheme: dark;
+    --ground: #040705;
+    --surface: #0a120d;
+    --surface-on: #0e2014;
+    --line: #1f4a2b;
+    --green: #33ff66;
+    --text: #d8f5e0;
+    --muted: #86a792;
+    --dot: 'DotGothic16', 'Osaka-Mono', monospace;
+    --body: 'Noto Sans JP', 'Hiragino Sans', 'Yu Gothic', sans-serif;
+  }
+  html, body { background: var(--ground); }
+  body { color: var(--text); font-family: var(--body); font-size: 15px; line-height: 1.7; padding-inline: 16px; }
+  .wrap { max-width: 1100px; margin: 0 auto; padding-block: 40px 56px; display: grid; gap: 28px; }
+  header { display: grid; gap: 6px; }
+  .kicker { font-family: var(--dot); color: var(--green); font-size: 15px; letter-spacing: .08em; }
+  h1 { font-family: var(--dot); font-weight: 400; font-size: clamp(30px, 5.5vw, 56px); line-height: 1.15; margin: 0; color: var(--green); letter-spacing: .03em; text-wrap: balance; }
+  .lead { margin: 0; max-width: 62ch; }
+  .player { border: 2px solid var(--line); background: var(--ground); }
+  video { display: block; width: 100%; max-width: 100%; aspect-ratio: 16 / 9; background: var(--ground); }
+  .meta { display: flex; flex-wrap: wrap; gap: 4px 20px; color: var(--muted); font-size: 13px; font-variant-numeric: tabular-nums; margin-top: -16px; }
+  h2 { font-family: var(--dot); font-weight: 400; font-size: 20px; color: var(--green); margin: 0 0 10px; letter-spacing: .04em; }
+  ol { list-style: none; margin: 0; padding: 0; display: grid; grid-template-columns: repeat(auto-fill, minmax(240px, 1fr)); gap: 8px; }
+  li { min-width: 0; }
+  .chapter { width: 100%; height: 100%; display: grid; grid-template-columns: 56px 1fr; gap: 12px; align-items: baseline; text-align: left; padding: 12px 14px; background: var(--surface); border: 2px solid var(--line); color: var(--text); font: inherit; cursor: pointer; }
+  .chapter:hover { border-color: var(--green); }
+  .chapter:focus-visible { outline: 2px solid var(--green); outline-offset: 2px; }
+  .chapter[aria-current="true"] { border-color: var(--green); background: var(--surface-on); }
+  .t { font-family: var(--dot); color: var(--green); font-variant-numeric: tabular-nums; }
+  .chapter b { display: block; font-weight: 700; }
+  .chapter small { display: block; color: var(--muted); font-size: 13px; line-height: 1.5; }
+  .notes { display: grid; gap: 6px; margin: 0; padding: 0; list-style: none; color: var(--muted); font-size: 13px; max-width: 75ch; }
+  .notes a { color: var(--text); }
+</style>
+
+<div class="wrap">
+  <header>
+    <div class="kicker">TANK SHOOT / 制作の話</div>
+    <h1>AI と二人でゲームを作った話</h1>
+    <p class="lead">中学生のころに遊んだ「ポトリス 2」をブラウザで作ってみようと思い、コードを書かずに AI と二人で作りました。初日に動いたのに面白くなかったところから、面白さが生まれるまでの場面と、そのときの AI の使い方を話しています。</p>
+  </header>
+
+  <div class="player">
+    <video id="video" controls playsinline preload="metadata" poster="poster.jpg">
+      <source src="TANK-SHOOT-presentation-20261001.mp4" type="video/mp4">
+    </video>
+  </div>
+  <div class="meta"><span>4分49秒</span><span>1920×1080 / 30fps</span><span>ナレーション：作者本人の録音</span><span>BGM：ゲームの曲（hangar、ridgeline、result）</span></div>
+
+  <section>
+    <h2>章</h2>
+    <ol id="chapters">
+      <li><button class="chapter" type="button" data-t="0"><span class="t">0:00</span><span><b>作ったもの、作った理由</b><small>TANK SHOOT とポトリス 2</small></span></button></li>
+      <li><button class="chapter" type="button" data-t="33.6"><span class="t">0:34</span><span><b>初日に動いた、でも面白くなかった</b><small>設計書から始めて、遊びながら直す</small></span></button></li>
+      <li><button class="chapter" type="button" data-t="73.3"><span class="t">1:13</span><span><b>カメラを寄せる</b><small>スマートフォンでは戦車が小さい</small></span></button></li>
+      <li><button class="chapter" type="button" data-t="103.5"><span class="t">1:44</span><span><b>形は、描いて伝える</b><small>アーティファクトで地形を描くツール</small></span></button></li>
+      <li><button class="chapter" type="button" data-t="135.9"><span class="t">2:16</span><span><b>絵は、ドットで描き直す</b><small>GPT Image 2.5 からドット絵へ</small></span></button></li>
+      <li><button class="chapter" type="button" data-t="172.3"><span class="t">2:52</span><span><b>エフェクトは、作例をまねる</b><small>Opus 5.5 と X の作例</small></span></button></li>
+      <li><button class="chapter" type="button" data-t="203.7"><span class="t">3:24</span><span><b>音楽は、任せきる</b><small>Suno のループから、AI の作曲へ</small></span></button></li>
+      <li><button class="chapter" type="button" data-t="234.8"><span class="t">3:55</span><span><b>振り返り</b><small>知識と、学び続けること</small></span></button></li>
+    </ol>
+  </section>
+
+  <ul class="notes">
+    <li>台本と映像は Claude Code が作りました。映像は HTML で描いた絵を 1 コマずつ撮り、録音の各行の話し始めに合わせて切り替えています。</li>
+    <li>5 章のエフェクトの作例は、Rehan Sheikh さんの <a href="https://x.com/rehan_shei/status/2102794467032154206">X の投稿</a>の動画を、本人の了承を得て使っています。</li>
+    <li>1 章の初日の画面は、その日に作った画面のモックです。弾が飛んで地面が削れる動き、3 章の言葉で頼んだ地形、0 章の 8 台の戦車は、説明のために描いた図です。</li>
+    <li>ゲームの紹介：<a href="https://claude.ai/artifact/3DFUbiRo3YDtrVra6ZSB4c">約48秒の紹介動画</a></li>
+  </ul>
+</div>
+
+<script>
+  const video = document.getElementById('video');
+  const buttons = [...document.querySelectorAll('.chapter')];
+  const starts = buttons.map(b => Number(b.dataset.t));
+  buttons.forEach((b, i) => b.addEventListener('click', () => {
+    video.currentTime = starts[i];
+    video.play().catch(() => {});
+  }));
+  video.addEventListener('timeupdate', () => {
+    let current = -1;
+    starts.forEach((s, i) => { if (video.currentTime >= s) current = i; });
+    buttons.forEach((b, i) => b.setAttribute('aria-current', String(i === current)));
+  });
+</script>

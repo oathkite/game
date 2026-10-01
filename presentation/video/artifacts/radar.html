@@ -1,0 +1,545 @@
+<!doctype html><html><head><meta charset=utf8><meta name=viewport content="width=device-width,initial-scale=1"><style>:root{color-scheme:light}body{margin:0;padding:0;font:14px -apple-system,BlinkMacSystemFont,sans-serif;background:#faf9f5;color:#141413}img{max-width:100%}[hidden]:not([hidden=until-found]){display:none!important}</style></head><body>
+<title>Radar Fortress</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=DotGothic16&display=swap">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Geist+Pixel&display=swap">
+<style>
+  :root {
+    --bg: #000000;
+    --ui: #33FF66;
+    --ui-dim: #0F4D24;
+    --ui-mid: #1E9A44;
+    --terrain: #FFFFFF;
+    --p1: #FF4040;
+    --p2: #4D7CFF;
+    --font-num: "Geist Pixel", "DotGothic16", monospace;
+    --font-jp: "DotGothic16", "Geist Pixel", monospace;
+  }
+  html, body { background: var(--bg); color: var(--ui); }
+  body {
+    font-family: var(--font-jp);
+    font-size: 16px;
+    line-height: 1.5;
+    -webkit-font-smoothing: none;
+    font-smooth: never;
+    padding: 32px 16px 64px;
+  }
+  .wrap { max-width: 1120px; margin: 0 auto; display: grid; gap: 48px; }
+  h1 { font-family: var(--font-num); font-size: 32px; font-weight: 400; letter-spacing: 0.08em; margin: 0; text-transform: uppercase; }
+  .lead { color: var(--ui-mid); margin: 8px 0 0; max-width: 62ch; }
+  .lead b { color: var(--ui); font-weight: 400; }
+  section { display: grid; gap: 12px; }
+  .cap { display: flex; justify-content: space-between; align-items: baseline; gap: 16px; border-bottom: 1px solid var(--ui-dim); padding-bottom: 6px; }
+  .cap h2 { font-size: 16px; font-weight: 400; margin: 0; letter-spacing: 0.15em; }
+  .cap span { font-family: var(--font-num); color: var(--ui-mid); font-size: 13px; }
+
+  /* screen frame: 16:9, integer cell scale set by JS */
+  .screen {
+    position: relative;
+    aspect-ratio: 16 / 9;
+    background: var(--bg);
+    border: 2px solid var(--ui-dim);
+    outline: 1px solid var(--ui-dim);
+    outline-offset: 4px;
+    overflow: hidden;
+  }
+
+  /* ---------- Lobby ---------- */
+  .lobby { display: grid; height: 100%; }
+  @media (prefers-reduced-motion: reduce) { .blink { animation: none; } }
+  .blink { animation: blink 1s steps(1) infinite; }
+  @keyframes blink { 50% { opacity: 0; } }
+  .panel { display: grid; align-content: center; gap: 18px; padding: 6% 0; width: min(520px, 80%); margin: 0 auto; }
+  .field { display: grid; gap: 4px; }
+  .field label { font-size: 13px; letter-spacing: 0.2em; color: var(--ui-mid); }
+  .box { border: 2px solid var(--ui); padding: 6px 10px; font-family: var(--font-num); font-size: 22px; letter-spacing: 0.15em; display: flex; justify-content: space-between; }
+  .box small { font-family: var(--font-jp); font-size: 13px; letter-spacing: 0; color: var(--ui-mid); align-self: center; }
+  .swatches { display: grid; grid-template-columns: repeat(7, 1fr); gap: 6px; }
+  .sw { aspect-ratio: 1; border: 2px solid transparent; }
+  .sw.sel { border-color: var(--ui); outline: 2px solid var(--bg); outline-offset: -4px; }
+  .sw.taken { opacity: 0.25; position: relative; }
+  .sw.taken::after { content: ""; position: absolute; inset: 40%; background: var(--bg); }
+  .btn { border: 2px solid var(--ui); background: var(--ui); color: var(--bg); text-align: center; padding: 8px; letter-spacing: 0.3em; font-size: 16px; }
+  .status { font-size: 13px; color: var(--ui-mid); display: flex; gap: 8px; align-items: center; }
+  .dot { width: 8px; height: 8px; background: var(--p2); }
+
+  /* ---------- Lobby list / Room / Result ---------- */
+  .list { display: grid; height: 100%; }
+  .rows { display: grid; align-content: center; gap: 8px; padding: 6% 0; width: min(640px, 84%); margin: 0 auto; }
+  .rowh { display: grid; grid-template-columns: 1fr 64px 40px 40px 64px; gap: 8px; font-size: 11px; letter-spacing: 0.2em; color: var(--ui-mid); padding: 0 10px; }
+  .row { display: grid; grid-template-columns: 1fr 64px 40px 40px 64px; gap: 8px; align-items: center; border: 2px solid var(--ui-dim); padding: 6px 10px; font-size: 14px; }
+  .row.open { border-color: var(--ui); }
+  .row .n { font-family: var(--font-num); letter-spacing: 0.05em; }
+  .row .st { font-size: 11px; letter-spacing: 0.15em; text-align: right; }
+  .row .st.busy { color: var(--ui-mid); }
+  .lobbybar { display: flex; gap: 8px; margin-top: 8px; }
+  .lobbybar .btn { flex: 1; padding: 6px; font-size: 13px; }
+  .lobbybar .box { flex: 1; font-size: 14px; padding: 4px 10px; }
+  .me { display: flex; align-items: center; gap: 8px; font-size: 13px; color: var(--ui-mid); }
+  .me i { width: 10px; height: 10px; background: var(--p1); display: inline-block; }
+  .members { display: grid; gap: 6px; }
+  .mem { display: grid; grid-template-columns: 14px 1fr auto; gap: 10px; align-items: center; border: 2px solid var(--ui-dim); padding: 6px 10px; font-size: 14px; }
+  .mem i { width: 12px; height: 12px; display: block; }
+  .mem .tagx { font-size: 11px; letter-spacing: 0.2em; color: var(--ui-mid); }
+  .mem .tagx.on { color: var(--ui); }
+  .mem.empty { color: var(--ui-dim); border-style: dashed; }
+  .btn.dim { background: transparent; color: var(--ui-dim); border-color: var(--ui-dim); }
+  .btn.ghost { background: transparent; color: var(--ui); }
+  .result { display: grid; grid-template-rows: auto 1fr auto; height: 100%; padding: 5% 8%; gap: 16px; }
+  .result h3 { margin: 0; font-family: var(--font-num); font-size: 40px; font-weight: 400; letter-spacing: 0.1em; text-align: center; line-height: 1; }
+  .result .sub { text-align: center; font-size: 13px; color: var(--ui-mid); margin-top: 6px; }
+  /* 横罫線だけ。外枠と縦線は置かない */
+  /* 同じ行のセルは高さを揃え（stretch）、中身だけ縦中央にする。罫線が文字サイズでずれないようにする */
+  .stats { display: grid; grid-template-columns: 1fr 140px 1fr; align-items: stretch; align-content: center; width: min(560px, 100%); margin: 0 auto; }
+  .stats > div { display: flex; align-items: center; min-height: 44px; padding: 0 8px; border-bottom: 1px solid var(--ui-dim); line-height: 1; }
+  .stats .k { justify-content: center; }
+  .stats .who2.r, .stats .v2.r { justify-content: flex-end; }
+  .stats .who2 { font-size: 16px; }
+  .stats .who2.r { text-align: right; }
+  .stats .k { font-size: 11px; letter-spacing: 0.2em; color: var(--ui-mid); text-align: center; }
+  .stats .v2 { font-family: var(--font-num); font-size: 24px; }
+  .stats .v2.r { text-align: right; }
+  .stats > .hd { border-bottom: 2px solid var(--ui); }
+  .result .acts { display: flex; gap: 8px; justify-content: center; }
+  .result .acts .btn { min-width: 160px; }
+  .setup { display: grid; grid-template-columns: 1fr 1fr; height: 100%; }
+  .preview { display: grid; place-items: center; border-right: 1px solid var(--ui-dim); overflow: hidden; }
+  /* 表示サイズは JS が整数倍で決める。ハーフピクセルでにじませない */
+  .preview canvas { image-rendering: pixelated; image-rendering: crisp-edges; }
+  .panel.compact { gap: 10px; width: min(420px, 82%); }
+  .panel.compact .box { font-size: 16px; padding: 4px 10px; }
+  .panel.compact .swatches { gap: 4px; }
+  .panel.compact .btn { padding: 6px; font-size: 14px; }
+  @media (max-width: 720px) { .setup { grid-template-columns: 1fr; } .preview { display: none; } }
+  .search { display: flex; gap: 8px; }
+  .search .box { flex: 1; font-size: 14px; padding: 4px 10px; font-family: var(--font-jp); letter-spacing: 0.05em; }
+  .search .box.dim { border-color: var(--ui-dim); color: var(--ui-mid); }
+  .pager { display: flex; gap: 6px; justify-content: center; align-items: center; font-family: var(--font-num); font-size: 13px; color: var(--ui-mid); margin-top: 4px; }
+  .pager .pg { border: 2px solid var(--ui-dim); padding: 2px 8px; }
+  .pager .pg.cur { border-color: var(--ui); color: var(--ui); }
+  .row .act { font-size: 11px; letter-spacing: 0.15em; border: 2px solid var(--ui); padding: 2px 6px; text-align: center; }
+  .row .act.spec { border-color: var(--ui-mid); color: var(--ui-mid); }
+  .mem .cc { display: flex; gap: 2px; } .mem .cc i { width: 6px; }
+
+  /* ---------- Game ---------- */
+  .game { display: grid; grid-template-columns: 96px 1fr 96px; height: 100%; }
+  .side { display: grid; align-content: end; justify-items: center; gap: 22px; padding: 14px 10px; border-color: var(--ui-dim); }
+  .arc { width: 72px; height: 72px; image-rendering: auto; }
+  .side.l { border-right: 1px solid var(--ui-dim); grid-template-rows: auto 1fr auto auto auto; align-content: stretch; }
+  .side.l .spacer { min-height: 0; }
+  .side.r { border-left: 1px solid var(--ui-dim); }
+  .ctl { display: grid; gap: 6px; justify-items: center; justify-self: center; text-align: center; }
+  .ctl .lbl { font-size: 11px; letter-spacing: 0.2em; color: var(--ui-mid); }
+  .ctl .val { font-family: var(--font-num); font-size: 22px; line-height: 1; }
+  .ctl .val small { font-family: var(--font-jp); font-size: 12px; }
+  .key { width: 40px; height: 40px; border: 2px solid var(--ui); display: grid; place-items: center; font-family: var(--font-num); font-size: 18px; }
+  .key.dim { border-color: var(--ui-dim); color: var(--ui-dim); }
+  .keys { display: flex; gap: 6px; }
+  .dpad { display: grid; grid-template-columns: repeat(3, 24px); grid-template-rows: repeat(3, 24px); gap: 2px; }
+  .dpad .key { width: 24px; height: 24px; font-size: 12px; }
+  .dpad .k-up { grid-area: 1 / 2; } .dpad .k-dn { grid-area: 3 / 2; }
+  .dpad .k-lf { grid-area: 2 / 1; } .dpad .k-rt { grid-area: 2 / 3; }
+  .dpad .k-c { grid-area: 2 / 2; background: var(--ui-dim); }
+  .steps { display: flex; gap: 2px; }
+  .steps i { width: 3px; height: 10px; background: var(--ui-dim); display: block; }
+  .steps i.on { background: var(--ui); }
+  .windwin { width: 80px; height: 40px; border: 2px solid var(--ui); position: relative; overflow: hidden; }
+  .windwin canvas { width: 100%; height: 100%; }
+  .side.r { grid-template-rows: 1fr auto; align-content: stretch; }
+  .side.r .ctl.g { height: 100%; align-self: stretch; }
+  .gauge { display: flex; flex-direction: column-reverse; gap: 1px; width: 40px; height: 100%; }
+  .gauge i { display: block; flex: 1 1 0; min-height: 0; background: var(--ui-dim); }
+  .gauge i.on { background: var(--ui); }
+  .fire { width: 64px; height: 64px; border: 2px solid var(--ui); display: grid; place-items: center; letter-spacing: 0.2em; font-size: 13px; }
+  .field-area { position: relative; display: grid; grid-template-rows: 1fr; border-top: 2px solid var(--ui-dim); }
+  /* ペイン上辺に接する。上辺の枠線は持たず、左右と下の 3 辺だけ */
+  .over-timer { position: absolute; top: -2px; left: 50%; transform: translateX(-50%); z-index: 2; background: var(--bg); border: 2px solid var(--ui); border-top: 2px solid var(--ui); padding: 2px 12px 4px; min-width: 64px; text-align: center; font-variant-numeric: tabular-nums; }
+  .hud { display: grid; grid-template-columns: 1fr auto 1fr; align-items: center; padding: 8px 14px; gap: 12px; border-bottom: 1px solid var(--ui-dim); font-family: var(--font-num); }
+  .hp { display: flex; gap: 2px; }
+  .hp i { width: 6px; height: 12px; display: block; }
+  .hp.p1 i { background: var(--p1); } .hp.p2 i { background: var(--p2); justify-content: flex-end; }
+  .hp i.off { background: var(--ui-dim); }
+  .hp.p2 { justify-content: flex-end; }
+  .name { font-family: var(--font-jp); font-size: 12px; }
+  .name.p1 { color: var(--p1); } .name.p2 { color: var(--p2); text-align: right; }
+  .who { display: grid; gap: 2px; }
+  .who.r { justify-items: end; }
+  .wind { display: grid; justify-items: center; gap: 2px; }
+  .wind .lbl { font-size: 11px; letter-spacing: 0.2em; color: var(--ui-mid); font-family: var(--font-jp); }
+  .wind .v { font-size: 22px; line-height: 1; display: flex; gap: 8px; align-items: center; }
+  .wind .t { font-size: 12px; color: var(--ui-mid); }
+  canvas { width: 100%; height: 100%; image-rendering: pixelated; image-rendering: crisp-edges; display: block; }
+  .cv { position: relative; overflow: visible; display: grid; place-items: center; }
+  /* 400x225 セルの縦横比を保つ枠。ペインに収まる最大サイズで、余白は黒のまま残す（レターボックス） */
+  .stage { position: relative; aspect-ratio: 16 / 9; width: min(100%, calc(100cqh * 16 / 9)); max-height: 100%; }
+  .field-area { container-type: size; }
+  .stage > canvas { width: 100%; height: 100%; }
+  .stage .over { position: absolute; inset: 0; image-rendering: auto; }
+  .turn { font-family: var(--font-num); font-size: 18px; color: var(--ui); }
+  .stage .tag { position: absolute; transform: translate(-50%, -100%); font-family: var(--font-jp); font-size: 12px; line-height: 1; white-space: nowrap; background: var(--bg); padding: 1px 3px; }
+  .stage .tag.p1 { color: var(--p1); } .stage .tag.p2 { color: var(--p2); }
+
+  .notes { display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 12px 32px; font-size: 14px; color: var(--ui-mid); }
+  .notes b { color: var(--ui); font-weight: 400; }
+  .notes p { margin: 0; }
+  @media (max-width: 720px) {
+    .game { grid-template-columns: 64px 1fr 64px; }
+    .key { width: 28px; height: 28px; font-size: 14px; }
+    .fire { width: 48px; height: 48px; font-size: 10px; }
+  }
+</style>
+
+<div class="wrap">
+  <header>
+    <h1>Radar Fortress</h1>
+    <p class="lead">設計書 第 8 章と第 9 章のモック。5 画面を流れの順に並べる。<b>黒地、緑の UI、白い地形、色付きの戦車</b>。地形と戦車と弾は 1 セル 4 px の正方形だけで描き、拡大は整数倍に限る。ゲーム画面はマップ「谷」を 400×225 セルで実際に描画している。</p>
+  </header>
+
+  <section>
+    <div class="cap"><h2>1. プレイヤー設定</h2><span>初回起動 / いつでも変更可</span></div>
+    <div class="screen">
+      <div class="setup">
+        <div class="preview"><canvas id="pv" width="20" height="12"></canvas></div>
+        <div class="panel compact">
+          <div class="field">
+            <label>プレイヤー名</label>
+            <div class="box" style="font-family:var(--font-jp);letter-spacing:0.05em;">きた <small>1〜12 文字</small></div>
+          </div>
+          <div class="field">
+            <label>車体の色（主色）</label>
+            <div class="swatches">
+              <div class="sw sel" style="background:#FF4040"></div>
+              <div class="sw" style="background:#FF9F1C"></div>
+              <div class="sw" style="background:#FFE14D"></div>
+              <div class="sw" style="background:#40D0FF"></div>
+              <div class="sw" style="background:#4D7CFF"></div>
+              <div class="sw" style="background:#FF66C4"></div>
+              <div class="sw" style="background:#B070FF"></div>
+            </div>
+          </div>
+          <div class="field">
+            <label>砲塔の色（副色）</label>
+            <div class="swatches">
+              <div class="sw" style="background:#FF4040"></div>
+              <div class="sw" style="background:#FF9F1C"></div>
+              <div class="sw sel" style="background:#FFE14D"></div>
+              <div class="sw" style="background:#40D0FF"></div>
+              <div class="sw" style="background:#4D7CFF"></div>
+              <div class="sw" style="background:#FF66C4"></div>
+              <div class="sw" style="background:#B070FF"></div>
+            </div>
+          </div>
+          <div class="field">
+            <label>機体</label>
+            <div class="box dim" style="font-family:var(--font-jp);letter-spacing:0.05em;color:var(--ui-dim);border-color:var(--ui-dim)">標準 <small>将来ここで選択</small></div>
+          </div>
+          <div class="btn">ロビーへ</div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section>
+    <div class="cap"><h2>2. ロビー</h2><span>公開部屋の一覧</span></div>
+    <div class="screen">
+      <div class="list">
+        <div class="rows">
+          <div class="me"><i></i>きた<span style="margin-left:auto">設定を変える</span></div>
+          <div class="search">
+            <div class="box">検索 <small>部屋名</small></div>
+            <div class="box dim">すべて ▾</div>
+            <div class="box dim">マップ ▾</div>
+          </div>
+          <div class="rowh"><span>部屋</span><span>マップ</span><span>人数</span><span>観戦</span><span></span></div>
+          <div class="row open"><span>TANAKA の部屋</span><span>谷</span><span class="n">1/2</span><span class="n">0</span><span class="act">入る</span></div>
+          <div class="row open"><span>山越え練習</span><span>山越え</span><span class="n">1/2</span><span class="n">0</span><span class="act">入る</span></div>
+          <div class="row"><span>夜勤あけ</span><span>浮島</span><span class="n">2/2</span><span class="n">3</span><span class="act spec">観戦</span></div>
+          <div class="row"><span>ぶっとばす</span><span>谷</span><span class="n">2/2</span><span class="n">1</span><span class="act spec">観戦</span></div>
+          <div class="pager"><span class="pg">◀</span><span class="pg cur">1</span><span class="pg">2</span><span class="pg">3</span><span>…</span><span class="pg">12</span><span class="pg">▶</span><span style="margin-left:8px">全 233 件</span></div>
+          <div class="lobbybar">
+            <div class="btn">部屋を作る</div>
+            <div class="box">コードで入る <small>K7Q42X</small></div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section>
+    <div class="cap"><h2>3. 部屋</h2><span>ROOM K7Q-42X / 公開 / オーナー視点</span></div>
+    <div class="screen">
+      <div class="lobby">
+        <div class="panel">
+          <div class="field">
+            <label>きたの部屋</label>
+            <div class="box">K7Q-42X <small>招待リンクをコピー</small></div>
+          </div>
+          <div class="field">
+            <label>参加者</label>
+            <div class="members">
+              <div class="mem"><span class="cc"><i style="background:#FF4040"></i><i style="background:#FFE14D"></i></span><span>きた</span><span class="tagx on">OWNER</span></div>
+              <div class="mem"><span class="cc"><i style="background:#4D7CFF"></i><i style="background:#40D0FF"></i></span><span>TANAKA</span><span class="tagx on blink">READY</span></div>
+              <div class="mem empty"><span></span><span>観戦 1 人</span><span class="tagx">SPECTATOR</span></div>
+            </div>
+          </div>
+          <div class="field">
+            <label>マップ</label>
+            <div class="box" style="font-family:var(--font-jp);letter-spacing:0.05em;">谷 <small>変更 ▶</small></div>
+          </div>
+          <div class="lobbybar">
+            <div class="btn">開始</div>
+            <div class="btn ghost">退出</div>
+            <div class="btn dim">解散</div>
+          </div>
+          <div class="status">相手が READY。開始できます</div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section>
+    <div class="cap"><h2>4. ゲーム画面</h2><span>手番：きた / 残り 14 秒</span></div>
+    <div class="screen">
+      <div class="game">
+        <div class="side l">
+          <div class="ctl"><div class="windwin"><canvas id="wc" width="20" height="10"></canvas></div><div class="lbl">WIND</div></div>
+          <div class="spacer"></div>
+          <div class="ctl">
+            <div class="lbl">角度</div>
+            <canvas class="arc" id="arc" width="72" height="72"></canvas>
+            <div class="val" id="fireang">38<small>°</small></div>
+            <div class="lbl" style="letter-spacing:0;display:flex;gap:6px"><span>地面 <span id="tilt"></span></span><span>仰角 38</span></div>
+          </div>
+          <div class="ctl">
+            <div class="lbl">移動</div>
+            <div class="steps" id="steps"></div>
+          </div>
+          <div class="ctl">
+            <div class="dpad">
+              <div class="key k-up">▲</div>
+              <div class="key k-lf dim">◀</div>
+              <div class="key k-c"></div>
+              <div class="key k-rt">▶</div>
+              <div class="key k-dn">▼</div>
+            </div>
+          </div>
+        </div>
+
+        <div class="field-area">
+          <div class="cv">
+            <div class="stage">
+              <div class="turn over-timer">0:14</div>
+              <canvas id="c" width="400" height="225"></canvas>
+              <canvas id="c2" width="1600" height="900" class="over"></canvas>
+              <div class="tag p1" id="tag1">きた</div>
+              <div class="tag p2" id="tag2">TANAKA</div>
+            </div>
+          </div>
+        </div>
+
+        <div class="side r">
+          <div class="ctl g">
+            <div class="gauge" id="gauge"></div>
+          </div>
+          <div class="ctl">
+            <div class="fire">FIRE</div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section>
+    <div class="cap"><h2>5. リザルト</h2><span>決着 / 同じ部屋に戻る</span></div>
+    <div class="screen">
+      <div class="result">
+        <div>
+          <h3 style="color:var(--p1)">きた WIN</h3>
+          <div class="sub">リングアウト / 7 ターン</div>
+        </div>
+        <div class="stats">
+          <div class="who2 hd" style="color:var(--p1)">きた</div><div class="k hd">VS</div><div class="who2 r hd" style="color:var(--p2)">TANAKA</div>
+          <div class="v2">35</div><div class="k">与ダメージ</div><div class="v2 r">60</div>
+          <div class="v2">1</div><div class="k">直撃</div><div class="v2 r">2</div>
+          <div class="v2" style="color:var(--ui-dim)">--</div><div class="k">スコア（将来）</div><div class="v2 r" style="color:var(--ui-dim)">--</div>
+        </div>
+        <div class="acts">
+          <div class="btn">部屋に戻る</div>
+          <div class="btn ghost">退出</div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section class="notes">
+    <p><b>セル</b>：1600×900 px を 4 px 刻みで 400×225。Canvas を 400×225 で描き、16:9 を保つ枠に収めて pixelated で拡大している。枠に余る部分は黒のまま残す。設計では拡大率を整数に限る。</p>
+    <p><b>画面の流れ</b>：設定、ロビー、部屋、対戦、リザルト。リザルトの「部屋に戻る」で 3 に戻り、ready を解除してオーナーが再開始する。</p>
+    <p><b>色の役割</b>：緑は UI だけ。白は地形だけ。戦車は主色（車体、弾、HP、名前）と副色（砲塔と主砲）の 2 色。相手と見分けるのは主色で、衝突を避けるのも主色だけ。被弾時だけ戦車が白く点滅する。</p>
+    <p><b>ロビー</b>：部屋名で検索、状態とマップで絞り込み、20 件ずつのページ送り。対戦中の部屋には観戦で入れる。</p>
+    <p><b>フォント</b>：数字は Geist Pixel、日本語は DotGothic16。この環境で Geist Pixel が読めない場合は DotGothic16 に落ちる。</p>
+    <p><b>風の小窓</b>：数値は出さない。葉のドットが上から降り落ち、横に流される速さが風に比例し、落ちる速さも風が強いほど速くなる。無風なら真下にゆっくり落ちる。突風は明示せず、葉の流れが急に変わることで気付く。</p>
+    <p><b>名前と HP</b>：名前は戦車の頭上、HP は足元に 10 セルのバー（1 セル 10 HP、黒い下地つき）。風の小窓は左ペインの上端に置き、残り時間はマップの上端中央に直接重ねる。上部の HUD 行は持たない。</p>
+    <p><b>主砲と角度計</b>：仰角は車体基準で、撃てるのは 10〜90 度。車体と主砲は正方形の集まりのまま地面の傾きに合わせて回転して描き、正方形はセル格子に揃えない。発射角は傾きと仰角の和になる。角度計はポトリス式の正円で、中心を貫く点線が車体の軸（地面の傾き）、明るい針が発射角、明るい弧が撃てる範囲。大きな数値は発射角（傾き + 仰角）で、下に地面の傾きと仰角を小さく添える。向きは左右キーで変わり、針の向きで分かる。</p>
+    <p><b>操作</b>：十字キーと矢印キーは同じ。上下が角度、左右が移動。FIRE ボタンとスペースキーも同じで、押し始めで溜め、離した瞬間に発射。残り歩数は 15 セルのメーターで数値は出さない。</p>
+    <p><b>手がかり</b>：予測線も前回の軌跡も出さない。風を読む材料は葉の小窓と、前のターンの着弾を自分で覚えていることだけ。</p>
+  </section>
+</div>
+
+<script>
+(() => {
+  const W = 400, H = 225;
+  const c = document.getElementById('c');
+  const g = c.getContext('2d');
+  g.imageSmoothingEnabled = false;
+
+  // 地形「谷」: 左右の高台、中央の深い谷
+  const ground = new Array(W);
+  for (let x = 0; x < W; x++) {
+    const t = x / W;
+    let h = 150;
+    h -= 55 * Math.exp(-Math.pow((t - 0.5) / 0.16, 2));            // 谷
+    h += 10 * Math.sin(t * 19) + 5 * Math.sin(t * 53 + 1);          // 起伏
+    if (t < 0.18) h -= 12 * (0.18 - t) / 0.18;                      // 左高台
+    if (t > 0.82) h -= 16 * (t - 0.82) / 0.18;                      // 右高台
+    ground[x] = Math.round(H - h);
+  }
+  // 過去の爆発跡（半径 10 セル）
+  const craters = [[262, 74], [95, 82], [205, 190]];
+
+  const img = g.createImageData(W, H);
+  const put = (x, y, r, gg, b) => {
+    if (x < 0 || y < 0 || x >= W || y >= H) return;
+    const i = (y * W + x) * 4; img.data[i] = r; img.data[i+1] = gg; img.data[i+2] = b; img.data[i+3] = 255;
+  };
+  const solid = (x, y) => {
+    if (y < ground[x]) return false;
+    for (const [cx, cy] of craters) { const dx = x - cx, dy = y - cy; if (dx*dx + dy*dy <= 100) return false; }
+    return true;
+  };
+  for (let y = 0; y < H; y++) for (let x = 0; x < W; x++) {
+    if (solid(x, y)) put(x, y, 255, 255, 255); else put(x, y, 0, 0, 0);
+  }
+  const surface = x => { for (let y = 0; y < H; y++) if (solid(x, y)) return y; return H; };
+
+  // 戦車 7x5 のドット絵（1 = 車体）
+  const tank = [
+    "..111..",
+    ".11111.",
+    "1111111",
+    "1111111",
+    ".1.1.1.",
+  ];
+  // 車体の傾き: 左右 3 セルの地表の高さの差から求める（右が高いと正）
+  const tiltDeg = cx => Math.round(Math.atan2(surface(cx - 3) - surface(cx + 3), 6) * 180 / Math.PI);
+  // 主砲: 付け根から 4 セル。発射角 = 車体の傾き + 仰角（向きが左なら鏡像）
+  const worldAngle = (cx, elev, facing) => facing > 0 ? tiltDeg(cx) + elev : 180 - (-tiltDeg(cx) + elev);
+  // 車体と主砲はセル格子とは別のレイヤーに、正方形の集まりのまま全体を回転させて描く。
+  // 正方形は格子に揃わなくてよい（設計書 8.1 の例外）。回転の中心は接地点、1 セル = 4 px。
+  const c2 = document.getElementById('c2'), g2 = c2.getContext('2d');
+  const S = 4;
+  // 部品分け: 上 2 段が砲塔（副色）、下 3 段が車体（主色）。主砲は砲塔の一部で副色
+  const paintTank = (ctx, S, primary, secondary, elev, facing) => {
+    for (let r = 0; r < 5; r++) for (let q = 0; q < 7; q++) {
+      if (tank[r][q] !== '1') continue;
+      ctx.fillStyle = r < 2 ? `rgb(${secondary.join(',')})` : `rgb(${primary.join(',')})`;
+      ctx.fillRect((q - 3.5) * S, (r - 5) * S, S, S);
+    }
+    ctx.fillStyle = `rgb(${secondary.join(',')})`;
+    ctx.save();
+    ctx.translate(0, -4 * S + S / 2);
+    ctx.rotate(facing > 0 ? -elev * Math.PI / 180 : -(180 - elev) * Math.PI / 180);
+    for (let k = 1; k <= 4; k++) ctx.fillRect(k * S - S / 2, -S / 2, S, S);
+    ctx.restore();
+  };
+  const drawTank = (cx, color, elev, facing, secondary) => {
+    const sy = surface(cx) - 5;
+    const tilt = tiltDeg(cx);
+    g2.save();
+    g2.translate((cx + 0.5) * S, (sy + 5) * S);        // 接地点
+    g2.rotate(-tilt * Math.PI / 180);
+    paintTank(g2, S, color, secondary, elev, facing);
+    g2.restore();
+    return sy;
+  };
+  // HP バー: 戦車の足元 1 セル下。黒い下地 12x3 の中に 10x1 のバー。1 セル = 10 HP
+  const drawHp = (cx, color, hp) => {
+    const top = surface(cx) + 1;
+    for (let r = 0; r < 3; r++) for (let q = 0; q < 12; q++) put(cx - 6 + q, top + r, 0, 0, 0);
+    const n = Math.ceil(hp / 10);
+    for (let q = 0; q < n; q++) put(cx - 5 + q, top + 1, ...color);
+  };
+  const RED = [255, 64, 64], BLUE = [77, 124, 255];
+  const p1x = 60, p2x = 335;
+  const YEL = [255, 225, 77], CYAN = [64, 208, 255];
+  drawTank(p1x, RED, 38, +1, YEL);   // 右向き、仰角 38 度。主色 赤、副色 黄
+  drawTank(p2x, BLUE, 52, -1, CYAN); // 左向き、仰角 52 度。主色 青、副色 水色
+  // プレイヤー設定のプレビュー: 元は 20x12 セル。左ペインに収まる最大の整数倍で表示する
+  const pv = document.getElementById('pv'), pg = pv.getContext('2d');
+  pg.fillStyle = '#000'; pg.fillRect(0, 0, 20, 12);
+  pg.fillStyle = '#fff'; pg.fillRect(0, 10, 20, 2);
+  pg.save(); pg.translate(9, 10); paintTank(pg, 1, RED, YEL, 30, +1); pg.restore();
+  const fitPreview = () => {
+    const box = pv.parentElement.getBoundingClientRect();
+    const k = Math.max(1, Math.floor(Math.min((box.width - 32) / 20, (box.height - 32) / 12)));
+    pv.style.width = (20 * k) + 'px'; pv.style.height = (12 * k) + 'px';
+  };
+  fitPreview();
+  new ResizeObserver(fitPreview).observe(pv.parentElement);
+  drawHp(p1x, RED, 65);
+  drawHp(p2x, BLUE, 35);
+  // 名前タグ: 戦車の上端から 7 セル上に、Canvas 座標を % に変換して HTML を重ねる
+  const tag = (id, cx) => { const el = document.getElementById(id); const top = surface(cx) - 5 - 7; el.style.left = (cx / W * 100) + '%'; el.style.top = (top / H * 100) + '%'; };
+  tag('tag1', p1x); tag('tag2', p2x);
+
+  g.putImageData(img, 0, 0);
+
+  // 角度計（ポトリス式）: 半円。中心を通る線が車体の軸（地面の傾き）、針が発射角。
+  // 撃てる範囲（軸から 10〜90 度、左右両側）を明るい弧、それ以外を暗い弧で描く。針と軸はセルで組めないので線。
+  const ELEV = 38, FACING = +1, TILT = tiltDeg(p1x);
+  const ac = document.getElementById('arc'), ag = ac.getContext('2d');
+  const OX = 36, OY = 36, R = 32;
+  ag.fillStyle = '#000'; ag.fillRect(0, 0, 72, 72);
+  ag.lineWidth = 2;
+  const arc = (a0, a1, col) => { ag.strokeStyle = col; ag.beginPath(); ag.arc(OX, OY, R, -a1 * Math.PI / 180, -a0 * Math.PI / 180); ag.stroke(); };
+  arc(0, 360, '#0F4D24');
+  arc(TILT + 10, TILT + 90, '#33FF66');           // 右向きに撃てる範囲
+  arc(180 - (-TILT + 90), 180 - (-TILT + 10), '#33FF66'); // 左向きに撃てる範囲
+  const ray = (deg, r0, r1, col, dash) => { const r = deg * Math.PI / 180; ag.strokeStyle = col; ag.setLineDash(dash || []); ag.beginPath(); ag.moveTo(OX + Math.cos(r) * r0, OY - Math.sin(r) * r0); ag.lineTo(OX + Math.cos(r) * r1, OY - Math.sin(r) * r1); ag.stroke(); ag.setLineDash([]); };
+  for (let d = 0; d < 360; d += 30) ray(d, R - 4, R, '#0F4D24');
+  ray(TILT, -R + 2, R - 2, '#1E9A44', [2, 2]);     // 車体の軸（地面の傾き）。中心を貫く
+  ray(worldAngle(p1x, ELEV, FACING), 0, R - 2, '#33FF66'); // 針（発射角）
+  ag.fillStyle = '#33FF66'; ag.fillRect(OX - 2, OY - 2, 4, 4);
+  document.getElementById('tilt').textContent = (TILT >= 0 ? '+' : '') + TILT;
+  // 発射角 = 傾き + 仰角（水平からの角度）。ユーザーに計算させない
+  document.getElementById('fireang').innerHTML = (TILT + ELEV) + '<small>°</small>';
+  // 残り歩数メーター 15 セル、残り 9
+  const st = document.getElementById('steps');
+  for (let i = 0; i < 15; i++) { const s = document.createElement('i'); if (i < 9) s.className = 'on'; st.appendChild(s); }
+  // 風の小窓: 48x14 セル。葉のドットが風向きへ流れる。速さは |wind| に比例
+  const WIND = -7; // 左向き 7
+  const wc = document.getElementById('wc'), wg = wc.getContext('2d');
+  const leaves = Array.from({length: 5}, (_, i) => ({ x: (i * 7.7) % 20, y: (i * 4.3) % 10, ph: i * 1.3 }));
+  const FALL = 3 * (1 + Math.abs(WIND) / 10); // 落下も風の強さで速くなる。風 0 で 3、風 10 で 6 セル/秒
+  const reduced = matchMedia('(prefers-reduced-motion: reduce)').matches;
+  let last = performance.now();
+  const tick = now => {
+    const dt = Math.min(0.05, (now - last) / 1000); last = now;
+    wg.fillStyle = '#000'; wg.fillRect(0, 0, 20, 10);
+    wg.fillStyle = '#33FF66';
+    for (const l of leaves) {
+      if (!reduced) { l.x += WIND * 1 * dt; l.y += FALL * dt; l.ph += dt * 3; }
+      if (l.x < -2) l.x += 24; if (l.x > 22) l.x -= 24;
+      if (l.y > 11) { l.y -= 13; l.x = Math.random() * 20; }
+      const yy = Math.round(l.y);
+      const xx = Math.round(l.x + Math.sin(l.ph) * 0.8);
+      wg.fillRect(xx, yy, 2, 1); wg.fillRect(xx + 1, yy - 1, 1, 1);
+    }
+    requestAnimationFrame(tick);
+  };
+  requestAnimationFrame(tick);
+  // パワーゲージ 100 段（1 段 = パワー 1）、下から積む。64 まで点灯
+  const gauge = document.getElementById('gauge');
+  for (let i = 0; i < 100; i++) { const s = document.createElement('i'); if (i < 64) s.className = 'on'; gauge.appendChild(s); }
+})();
+</script>
+
+</body></html>
