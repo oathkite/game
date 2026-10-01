@@ -26,6 +26,8 @@ test("portrait touch console puts power and movement on full-width rows", async 
     expect(b[".battle-weapons"]!.right).toBeLessThanOrEqual(fire.left);
     expect(fire.right).toBeLessThanOrEqual(panel.right - 8 + 1);
     expect(fire.height).toBeGreaterThanOrEqual(88);
+    // 武器の段の高さは発射のボタンの高さに揃う
+    expect(Math.abs(b[".battle-weapons"]!.top - fire.top)).toBeLessThanOrEqual(1); expect(Math.abs(b[".battle-weapons"]!.height - fire.height)).toBeLessThanOrEqual(1);
   } finally { await context.close(); }
 });
 
@@ -38,5 +40,6 @@ test("landscape touch console puts weapons left of a full-height fire button", a
     expect(b[".battle-power"]!.right).toBeLessThanOrEqual(b[".battle-weapons"]!.left);
     expect(fire.height).toBeGreaterThanOrEqual(88);
     expect(fire.right).toBeLessThanOrEqual(844);
+    expect(Math.abs(b[".battle-weapons"]!.top - fire.top)).toBeLessThanOrEqual(1); expect(Math.abs(b[".battle-weapons"]!.height - fire.height)).toBeLessThanOrEqual(1);
   } finally { await context.close(); }
 });

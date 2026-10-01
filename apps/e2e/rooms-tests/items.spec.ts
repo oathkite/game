@@ -26,6 +26,9 @@ test("online battle uses each item once and teleports the shooter", async ({ bro
     // アイテムは武器の真上に、武器と同じ幅で並ぶ。タッチの画面では発射のボタンに重ならない。横持ちの発射のボタンは操作盤の高さいっぱいに広がる
     const touchFire = (await pages[1]!.getByRole("button", { name: "発射", exact: true }).boundingBox())!;
     expect(touchFire.height).toBeGreaterThanOrEqual(88);
+    // アイテムと武器の段の合計の高さは、発射のボタンの高さに揃う
+    const arsenal = (await pages[1]!.locator(".battle-weapons").boundingBox())!;
+    expect(Math.abs(arsenal.y - touchFire.y)).toBeLessThanOrEqual(1); expect(Math.abs(arsenal.height - touchFire.height)).toBeLessThanOrEqual(1);
     for (const page of pages) {
       const weapons = await page.locator(".battle-weapons > button").evaluateAll(buttons => buttons.map(b => b.getBoundingClientRect().toJSON() as DOMRect));
       const fireButton = page.getByRole("button", { name: "発射", exact: true });

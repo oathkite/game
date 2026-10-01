@@ -33,19 +33,24 @@
    パワーと残り移動の列はその分だけ縮む。武器とアイテムは発射のボタンの上に詰めなくてよいので、元の高さに戻す */
 @media (orientation:landscape) and (max-height:499px) {
   .world-ui .battle-console.has-touch, .world-ui .battle-console.has-touch.has-wind { grid-template-columns:96px var(--wind-meter, 72px) minmax(0,1fr) 84px 96px; }
-  .battle-console.has-touch .battle-weapons, .battle-console.has-touch.has-wind .battle-weapons { grid-area:1/4/-1/5; align-self:center; }
+  .battle-console.has-touch .battle-weapons, .battle-console.has-touch.has-wind .battle-weapons { grid-area:1/4/-1/5; }
   .battle-console.has-touch.has-wind > .battle-wind { grid-column:2; justify-self:center; }
   .battle-console.has-touch.has-wind .battle-movement { margin-left:0; }
-  .battle-console.has-touch .battle-weapons:has(.battle-items) { row-gap:4px; align-content:center; }
-  .world-ui .battle-console.has-touch .battle-weapons:has(.battle-items) > button { min-height:44px; height:44px; }
-  .world-ui .battle-console.has-touch .battle-weapons .battle-items button { height:24px; }
-  .world-ui .battle-console.has-touch .battle-weapons .battle-items button > svg { width:16px; height:16px; }
   .world-ui .battle-console.has-touch .battle-touch-fire { position:static; grid-area:1/5/-1/6; width:96px; height:auto; align-self:stretch; }
 }
 
 .world-ui .network-world:has(.battle-console.has-touch) { grid-template-rows:64px minmax(0,1fr) 112px; }
 @media(min-width:1200px) and (min-height:700px) { .world-ui .network-world:has(.battle-console.has-touch) { grid-template-rows:76px minmax(0,1fr) 112px; } }
 @media(max-width:999px),(max-height:499px) { .world-ui .network-world:has(.battle-console.has-touch) { grid-template-rows:48px minmax(0,1fr) 112px; } }
+/* スマートフォンの横持ちと縦持ち（2026-10-02）。武器とアイテムの入れ物を発射のボタンと同じ高さに伸ばし、合計の高さを揃える。
+   アイテムの段は 28px に固め、武器のボタンが残りを埋める。アイテムが無い画面（練習とチャレンジ）では武器のボタンが全部を埋める */
+@media (orientation:landscape) and (max-height:499px), (orientation:portrait) and (max-width:599px) {
+  .battle-console.has-touch .battle-weapons, .battle-console.has-touch.has-wind .battle-weapons { align-self:stretch; align-items:stretch; }
+  .battle-console.has-touch .battle-weapons:has(.battle-items) { grid-template-rows:28px minmax(0,1fr); row-gap:4px; align-content:stretch; }
+  .world-ui .battle-console.has-touch .battle-weapons > button, .world-ui .battle-console.has-touch .battle-weapons:has(.battle-items) > button { min-height:44px; height:auto; }
+  .world-ui .battle-console.has-touch .battle-weapons .battle-items button { height:auto; }
+  .world-ui .battle-console.has-touch .battle-weapons .battle-items button > svg { width:16px; height:16px; }
+}
 /* スマートフォンの縦持ち（2026-10-02）。操作盤を高くし、パワーと残り移動を盤の全幅の段に分けて読みやすくする。
    上の段は十字キー、角度（その下に風）、武器とアイテム、発射の順に並べ、発射は残りの幅と段の高さいっぱいに広げる */
 @media (orientation:portrait) and (max-width:599px) {
@@ -55,11 +60,7 @@
   .world-ui .battle-console.has-touch .battle-power, .world-ui .battle-console.has-touch.has-wind .battle-power { grid-area:2/1/3/-1; height:76px; }
   .battle-console.has-touch .battle-movement, .battle-console.has-touch.has-wind .battle-movement { grid-area:3/1/4/-1; width:auto; margin-left:0; }
   .battle-console.has-touch .battle-gauges { grid-area:2/1/4/-1; }
-  .battle-console.has-touch .battle-weapons, .battle-console.has-touch.has-wind .battle-weapons { grid-area:1/3; align-self:center; }
-  .battle-console.has-touch .battle-weapons:has(.battle-items) { row-gap:4px; align-content:center; }
-  .world-ui .battle-console.has-touch .battle-weapons:has(.battle-items) > button { min-height:44px; height:44px; }
-  .world-ui .battle-console.has-touch .battle-weapons .battle-items button { height:24px; }
-  .world-ui .battle-console.has-touch .battle-weapons .battle-items button > svg { width:16px; height:16px; }
+  .battle-console.has-touch .battle-weapons, .battle-console.has-touch.has-wind .battle-weapons { grid-area:1/3; }
   .world-ui .battle-console.has-touch .battle-touch > .battle-touch-fire { position:static; grid-area:1/4; width:auto; min-width:0!important; height:auto; align-self:stretch; }
   .world-ui .network-world:has(.battle-console.has-touch) { grid-template-rows:48px minmax(0,1fr) 216px; }
 }
