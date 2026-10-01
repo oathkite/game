@@ -1,4 +1,5 @@
 import { z } from "zod";
+import { shotWeapon, type ItemId } from "./items.js";
 import type { WeaponId } from "./weapons.js";
 
 export const WEAPON_DELAY: Readonly<Record<WeaponId, number>> = {
@@ -6,7 +7,15 @@ export const WEAPON_DELAY: Readonly<Record<WeaponId, number>> = {
 };
 export const ROUND_REVEAL_MS = 600;
 export const PASS_DELAY = 65;
-export const actionCost = (steps: number, weapon?: WeaponId): number => 50 + Math.max(0, Math.min(30, Math.round(steps))) + (weapon ? WEAPON_DELAY[weapon] : PASS_DELAY);
+/** テレポートの加算（設計書 42.4、TBD-45）。弾は標準砲で飛ぶので、武器の部分は標準砲のコストになる */
+export const TELEPORT_DELAY = 40;
+/** アイテムの加算。ダブルシュートは撃った武器のコストをもう一度、テレポートは一律（設計書 42.4） */
+export const itemDelay = (item: ItemId, weapon: WeaponId): number => (item === "double" ? WEAPON_DELAY[weapon] : TELEPORT_DELAY);
+/** 1 手番のコスト。weapon は選んだ武器でよく、テレポートなら標準砲として数える。撃たずに終えた手番はアイテムを使っていないので、weapon が無ければ item は数えない */
+export const actionCost = (steps: number, weapon?: WeaponId, item?: ItemId): number => {
+  const fired = weapon && shotWeapon(weapon, item);
+  return 50 + Math.max(0, Math.min(30, Math.round(steps))) + (fired ? WEAPON_DELAY[fired] + (item ? itemDelay(item, fired) : 0) : PASS_DELAY);
+};
 export const delaySchema = z.object({
   readyAt: z.record(z.string(), z.number().int().nonnegative()),
   clock: z.number().int().nonnegative(),
