@@ -27,6 +27,7 @@ import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { labOutputSchema, type LabFrame } from "@game/protocol/v2-lab";
 import { NetworkField } from "@/worldUi/NetworkField";
 import { battleClock, clockKey, sampleLive, type BattleClock, type LiveSample } from "./liveView";
+import { createMovePredictor, type MovePredictor } from "./movePrediction";
 import { createRemoteMotion } from "./remoteMotion";
 import "./networkLab.css";
 
@@ -57,18 +58,20 @@ export const NetworkLab = ({ worldArt = false, onExit, connection }: { readonly 
   const sample = useCallback((): LiveSample => sampler.current!(), []);
   const clock = useRef({ time: 0, received: 0 });
   const socket = useRef<WebSocket | null>(null), latest = useRef<LabFrame | null>(null);
-  const sequence = useRef(0), commandId = useRef(0), pending = useRef(false);
+  const commandId = useRef(0), prediction = useRef<MovePredictor | null>(null);
   useEffect(() => {
     const ws = connection?.socket ?? new WebSocket(`ws://${location.hostname}:8794`);
     socket.current = ws;
     const sounds = createBattleSounds();
     const motion = new Map<string, ReturnType<typeof createRemoteMotion>>();
+    // 自分の手番の移動は ack を待たずに予測で動かす（設計書 22.5）
+    const predictor = createMovePredictor(); prediction.current = predictor;
     let ownId = connection?.playerId ?? "", active = true, versionMismatch = false, animation = 0, shownKey = "";
     const reduced = typeof matchMedia === "function" ? matchMedia("(prefers-reduced-motion: reduce)") : null;
     sampler.current = () => {
-      const at = performance.now();
-      const positions = [...motion.entries()].flatMap(([id, buffer]) => { const p = buffer.at(at); return p ? [{ playerId: id, ...p }] : []; });
-      return sampleLive(latest.current!, clock.current.time + at - clock.current.received, positions, reduced?.matches ?? false);
+      const at = performance.now(), own = predictor.pose();
+      const positions = [...motion.entries()].flatMap(([id, buffer]) => { const p = id === ownId && own ? own : buffer.at(at); return p ? [{ playerId: id, x: p.x, y: p.y }] : []; });
+      return sampleLive(latest.current!, clock.current.time + at - clock.current.received, positions, reduced?.matches ?? false, own);
     };
     // 開発用の SVG 画面（worldArt なし）は、位置を React で描くので毎フレーム描き直す
     const refresh = (): void => {
@@ -95,17 +98,15 @@ export const NetworkLab = ({ worldArt = false, onExit, connection }: { readonly 
         sessionStorage.setItem("keropod.network-lab-token", message.token);
       } else if (message.type === "lab.error") setStatus(message.reason);
       else if (message.type === "lab.ack") {
-        pending.current = false;
-        if (message.snapshot) sequence.current = message.snapshot.ackMoveSeq;
+        predictor.ack(message.reason, message.snapshot);
         setStatus(message.reason);
       } else {
         if (!compatibleMatch(message.build, message.map)) { versionMismatch = true; setStatus("ゲームの更新が必要です。再読み込みしてください。"); ws.close(); return; }
         if (latest.current && message.matchId === latest.current.matchId && message.eventSeq < latest.current.eventSeq) return;
         if (message.matchId !== latest.current?.matchId) { motion.clear(); setReportStatus(""); }
-        if (message.matchId !== latest.current?.matchId || message.turnId !== latest.current?.turnId) { pending.current = false; sequence.current = message.movement.ackMoveSeq; }
-        if (!pending.current) sequence.current = message.movement.ackMoveSeq;
         clock.current = { time: message.serverTime, received: performance.now() };
         latest.current = message; setFrame(message);
+        predictor.frame(message, ownId, performance.now());
         for (const p of message.players) {
           const buffer = motion.get(p.playerId) ?? createRemoteMotion();
           buffer.push(p, performance.now(), message.eventSeq, p.playerId === ownId || message.phase !== "acting" || p.eliminated || (p.playerId === message.actorId && message.movement.stoppedByFall));
@@ -114,7 +115,7 @@ export const NetworkLab = ({ worldArt = false, onExit, connection }: { readonly 
         refresh();
       }
     };
-    const closed = () => { if (active && !versionMismatch) { setStatus("切断：再読み込みで復帰"); setReportStatus(previous => previous === "送信中…" ? "通報を送信できませんでした。" : previous); pending.current = false; } };
+    const closed = () => { if (active && !versionMismatch) { setStatus("切断：再読み込みで復帰"); setReportStatus(previous => previous === "送信中…" ? "通報を送信できませんでした。" : previous); } };
     const failed = () => { if (active) setStatus("接続に失敗しました"); };
     const message = (event: MessageEvent) => { try { receive(JSON.parse(String(event.data))); } catch { return; } };
     ws.addEventListener("message", message); ws.addEventListener("close", closed); ws.addEventListener("error", failed);
@@ -130,20 +131,18 @@ export const NetworkLab = ({ worldArt = false, onExit, connection }: { readonly 
     animation = requestAnimationFrame(draw);
     return () => { active = false; cancelAnimationFrame(animation); ws.removeEventListener("message", message); ws.removeEventListener("close", closed); ws.removeEventListener("error", failed); if (!connection) ws.close(); socket.current = null; };
   }, [connection, worldArt]);
+  // 送る前に予測を進める。予測が送らない歩（壁、歩数切れ、送信の頻度の上限）はサーバーへも送らない
   const move = (direction: -1 | 1): void => {
-    const current = latest.current, ws = socket.current;
-    if (!current || current.actorId !== playerId || !ws || ws.readyState !== WebSocket.OPEN || pending.current) return;
-    pending.current = true;
-    ws.send(JSON.stringify({ version: 2, type: "move.command", matchId: current.matchId, turnId: current.turnId,
-      commandId: `${playerId}-${++commandId.current}-${Date.now()}`, moveSeq: sequence.current + 1, direction, steps: 1 }));
+    const ws = socket.current;
+    if (!ws || ws.readyState !== WebSocket.OPEN) return;
+    const command = prediction.current?.move(direction, performance.now());
+    if (command) ws.send(JSON.stringify({ version: 2, type: "move.command", ...command, commandId: `${playerId}-${++commandId.current}-${Date.now()}`, direction, steps: 1 }));
   };
   const fire = (shotPower = power): void => {
-    const current = latest.current, ws = socket.current;
-    if (!current || current.phase !== "acting" || current.actorId !== playerId || !ws || ws.readyState !== WebSocket.OPEN || pending.current) return;
-    pending.current = true;
-    ws.send(JSON.stringify({ version: 2, type: "turn.fire", matchId: current.matchId, turnId: current.turnId,
-      commandId: `fire-${playerId}-${++commandId.current}-${Date.now()}`, ackMoveSeq: sequence.current,
-      slot, facing: current.movement.facing, elevation, power: shotPower }));
+    const ws = socket.current;
+    if (!ws || ws.readyState !== WebSocket.OPEN) return;
+    const shot = prediction.current?.fire();
+    if (shot) ws.send(JSON.stringify({ version: 2, type: "turn.fire", ...shot, commandId: `fire-${playerId}-${++commandId.current}-${Date.now()}`, slot, elevation, power: shotPower }));
   };
   const action = (type: "lab.rematch" | "lab.surrender"): void => {
     if (frame && socket.current?.readyState === WebSocket.OPEN) socket.current.send(JSON.stringify({ type, matchId: frame.matchId }));
@@ -161,8 +160,8 @@ export const NetworkLab = ({ worldArt = false, onExit, connection }: { readonly 
   useBrowserBackAction(Boolean(worldArt && onExit), () => { input.cancel(); setMenu(false); setConfirmLeave(true); });
   const hudPlayers = frame?.players.map(p => ({ id: p.playerId, name: p.nickname ?? p.playerId, hp: p.hp, colors: p.colors, team: Number(p.teamId.slice(1)) })) ?? [];
   const own = view?.clock.own ?? null;
-  const ownFacing = useRef<-1 | 1>(1);
-  if (frame?.actorId === playerId) ownFacing.current = frame.movement.facing;
+  const ownFacing = useRef<-1 | 1>(1), moving = view?.clock.move ?? null;
+  if (moving) ownFacing.current = moving.facing; else if (frame?.actorId === playerId) ownFacing.current = frame.movement.facing;
   // 地形は削られたときだけ作り直す。自機が動くたびには作らない
   const shownTerrain = useMemo(() => frame ? applyOps(buildInitialTerrain(frame.map), frame.terrainOps.slice(0, terrain)) : null, [frame?.matchId, terrain]);
   const ground = own && shownTerrain ? tiltOf(shownTerrain, own) : 0;
@@ -172,7 +171,7 @@ export const NetworkLab = ({ worldArt = false, onExit, connection }: { readonly 
     <span className="battle-sr" data-testid="identity">{playerId}</span><span className="battle-sr" data-testid="phase">{t(phaseLabel)}</span>
     {frame && view ? <NetworkField key={frame.matchId} sample={sample} charge={input.gauge.charging ? input.gauge.value / 100 : 0} onSettling={setSettling} blocked={menu || confirmLeave || input.gauge.charging || !revealed} frame={frame} elevation={elevation} ownId={playerId} followTurns={!observing || !keepView} {...(!observing ? { selectedWeapon: loadout[slot] } : {})} /> : <SceneLoading steps={labLoadingSteps(status, t)} />}
     {observing && frame?.delay && <TurnOrderList info={{ onOpen: input.cancel, serverNow, state: frame.delay, playerId, acting: false, players: frame.players.map(p => ({ id: p.playerId, name: p.nickname ?? p.playerId, colors: p.colors, eliminated: p.eliminated })) }} />}
-    {observing ? <footer className="battle-console"><span role="status">{t("観戦中")}</span><label><input type="checkbox" checked={keepView} onChange={e => setKeepView(e.target.checked)} />{t("手動視点を維持")}</label>{frame && <WindGauge wind={frame.wind} />}</footer> : <BattleConsole delay={frame?.delay ? { onOpen: input.cancel, serverNow, state: frame.delay, playerId, acting: frame.actorId === playerId && frame.phase === "acting", players: frame.players.map(p => ({ id: p.playerId, name: p.nickname ?? p.playerId, colors: p.colors, eliminated: p.eliminated })) } : undefined} player={hudPlayers.find(p => p.id === playerId)} steps={frame?.actorId === playerId ? frame.movement.stepsLeft : 0} tilt={ground} elevation={elevation} facing={ownFacing.current} power={input.gauge.value} loadout={loadout} slot={slot} wind={frame ? frame.wind : null} disabled={!canAct || menu || confirmLeave || input.gauge.charging} selectSlot={setSlot}>
+    {observing ? <footer className="battle-console"><span role="status">{t("観戦中")}</span><label><input type="checkbox" checked={keepView} onChange={e => setKeepView(e.target.checked)} />{t("手動視点を維持")}</label>{frame && <WindGauge wind={frame.wind} />}</footer> : <BattleConsole delay={frame?.delay ? { onOpen: input.cancel, serverNow, state: frame.delay, playerId, acting: frame.actorId === playerId && frame.phase === "acting", players: frame.players.map(p => ({ id: p.playerId, name: p.nickname ?? p.playerId, colors: p.colors, eliminated: p.eliminated })) } : undefined} player={hudPlayers.find(p => p.id === playerId)} steps={moving ? moving.stepsLeft : frame?.actorId === playerId ? frame.movement.stepsLeft : 0} tilt={ground} elevation={elevation} facing={ownFacing.current} power={input.gauge.value} loadout={loadout} slot={slot} wind={frame ? frame.wind : null} disabled={!canAct || menu || confirmLeave || input.gauge.charging} selectSlot={setSlot}>
       {touch && <BattleTouchControls disabled={!canAct || confirmLeave || menu} button={input.button} steps />}
     </BattleConsole>}
     {latency !== null && latency > 300 && <span className="network-latency" role="status">{t("通信遅延")} {latency} ms</span>}

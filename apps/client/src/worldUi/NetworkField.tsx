@@ -65,7 +65,7 @@ export const NetworkField = (props: Props) => {
       const writePositions = (players: LabFrame["players"]): void => { const next = JSON.stringify(players); if (next !== shownPositions) { shownPositions = next; element.dataset.positions = next; } };
       writePositions(latest.current.sample().players);
       stop = r.onFrame(dt => {
-        const { elevation, ownId } = latest.current, { frame, players, presentation, serverNow } = latest.current.sample();
+        const { elevation, ownId } = latest.current, { frame, players, presentation, serverNow, own: predicted } = latest.current.sample();
         const openingNow = Boolean(frame.opening && serverNow < frame.opening.endsAt);
         writePositions(players);
         const size = layout(), key = `${size.mapWidth}/${size.mapHeight}/${frame.map.width}/${frame.map.height}`;
@@ -83,7 +83,7 @@ export const NetworkField = (props: Props) => {
         const own = players.find(p => p.playerId === ownId);
         if (!openingNow && serverNow >= (frame.delay?.revealUntil ?? 0) && frame.phase === "acting" && frame.actorId === ownId && own && previousMoveX !== undefined && own.x !== previousMoveX) rig.moveActor({ x: own.x, y: own.y - 6 }, matchMedia("(prefers-reduced-motion: reduce)").matches);
         previousMoveX = own?.x;
-        facing.set(frame.actorId, frame.movement.facing);
+        facing.set(frame.actorId, predicted?.facing ?? frame.movement.facing);
         const shot = frame.phase === "replaying" ? frame.replay?.shooter : null;
         if (shot) { facing.set(shot.playerId, shot.facing);  }
         if (fallMatch !== frame.matchId) { falls.reset(); fallMatch = frame.matchId; }

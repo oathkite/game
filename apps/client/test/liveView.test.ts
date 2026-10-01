@@ -45,3 +45,14 @@ it("counts down the opening tour and the return to the room", () => {
   expect(battleClock(finished, sampleLive(finished, 1000, positions, false), "p1")).toMatchObject({ seconds: null, returnSeconds: 60 });
   expect(battleClock(finished, sampleLive(finished, 62000, positions, false), "p1").returnSeconds).toBe(0);
 });
+
+it("shows the predicted own move and redraws when its facing or remaining steps change", () => {
+  const pose = { x: 21, y: 150, facing: 1 as const, stepsLeft: 29, eliminated: false };
+  const live = sampleLive(frame, 1700, [{ playerId: "p1", x: 21, y: 150 }, positions[1]!], false, pose);
+  expect(live.own).toBe(pose);
+  const clock = battleClock(frame, live, "p1");
+  expect(clock.move).toEqual({ facing: 1, stepsLeft: 29 });
+  const turned = battleClock(frame, sampleLive(frame, 1700, [{ playerId: "p1", x: 21, y: 150 }, positions[1]!], false, { ...pose, facing: -1 }), "p1");
+  expect(clockKey(turned)).not.toBe(clockKey(clock));
+  expect(battleClock(frame, sampleLive(frame, 1700, positions, false), "p1").move).toBeNull();
+});
