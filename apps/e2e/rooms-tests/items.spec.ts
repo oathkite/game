@@ -23,7 +23,9 @@ test("online battle uses each item once and teleports the shooter", async ({ bro
     const actor = await canAct(pages[0]!) ? pages[0]! : pages[1]!, observer = actor === pages[0] ? pages[1]! : pages[0]!;
     const actorId = await actor.getByTestId("identity").innerText();
 
-    // アイテムは武器の真上に、武器と同じ幅で並ぶ。タッチの画面では発射のボタンに重ならない
+    // アイテムは武器の真上に、武器と同じ幅で並ぶ。タッチの画面では発射のボタンに重ならない。横持ちの発射のボタンは操作盤の高さいっぱいに広がる
+    const touchFire = (await pages[1]!.getByRole("button", { name: "発射", exact: true }).boundingBox())!;
+    expect(touchFire.height).toBeGreaterThanOrEqual(88);
     for (const page of pages) {
       const weapons = await page.locator(".battle-weapons > button").evaluateAll(buttons => buttons.map(b => b.getBoundingClientRect().toJSON() as DOMRect));
       const fireButton = page.getByRole("button", { name: "発射", exact: true });
@@ -32,7 +34,8 @@ test("online battle uses each item once and teleports the shooter", async ({ bro
         const box = (await item(page, name).boundingBox())!, weapon = weapons[i]!;
         expect(Math.abs(box.x - weapon.x)).toBeLessThanOrEqual(1); expect(Math.abs(box.width - weapon.width)).toBeLessThanOrEqual(1);
         expect(box.y + box.height).toBeLessThanOrEqual(weapon.y);
-        if (fire) expect(weapon.y + weapon.height).toBeLessThanOrEqual(fire.y);
+        // 横持ちでは発射のボタンの左に、縦持ちでは上に並ぶ。どちらでも重ならない
+        if (fire) expect(weapon.x + weapon.width <= fire.x || weapon.y + weapon.height <= fire.y).toBe(true);
       }
     }
     // 相手の手番の準備では、角度と武器は変えられてもアイテムは選べない（42.1）

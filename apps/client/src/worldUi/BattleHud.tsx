@@ -10,6 +10,9 @@ import "./battleHud.css";
 import "./battleHudDesktop.css";
 import "./battleTouch.css";
 
+/** タッチの操作盤の高さ。縦持ちのスマートフォンはパワーと残り移動を別の段に分けるので高い。battleTouch.css の media query と同じ条件で決める */
+export const touchConsoleHeight = (width: number, height: number): number => (height >= width && width < 600 ? 216 : 112);
+
 export type HudPlayer = { readonly id: string; readonly name: string; readonly hp: number; readonly team: number; readonly colors?: TankColors | undefined };
 export const BattleOverlay = ({ clock, onMenu }: { readonly clock: ReactNode; readonly onMenu: () => void }) => { const { t } = useLanguage();
   return <>
