@@ -1,7 +1,7 @@
 import { expect, it, vi } from "vitest";
 import type { TrajectoryInput } from "@game/protocol";
 import { DOUBLE_GAP_TICKS, flatMask, simulateShot, shot } from "@game/sim";
-import { playReplay } from "../src/game/replay";
+import { leadsVolley, playReplay } from "../src/game/replay";
 import type { Renderer } from "../src/game/renderer";
 import type { PlayerView, ReplayJob } from "../src/match/types";
 
@@ -71,4 +71,13 @@ it("テレポートした機体は飛翔の間は撃った位置にいて、落�
   expect(poses.some(p => p.falling)).toBe(false);
   expect(poses.at(-1)).toMatchObject(landing);
   expect(done).toHaveBeenCalled();
+});
+
+it("カメラが追う弾は、1 発目の先頭の弾道とダブルシュートの 2 発目の先頭の弾道", () => {
+  const double = jobOf(shot({ x: 60, elevation: 45, power: 50, weapon: "triple", item: "double" }), players(60, 150));
+  const first = double.firstShot!.paths;
+  expect(first).toBe(3);
+  expect(double.paths.map((_, p) => leadsVolley(double, p))).toEqual([true, false, false, true, false, false]);
+  const single = jobOf(shot({ x: 60, elevation: 45, power: 50, weapon: "triple" }), players(60, 150));
+  expect(single.paths.map((_, p) => leadsVolley(single, p))).toEqual([true, false, false]);
 });

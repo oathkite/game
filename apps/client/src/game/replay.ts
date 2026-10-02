@@ -172,6 +172,9 @@ const computeFalls = (job: ReplayJob): Fall[] => {
   return falls;
 };
 
+/** 弾道 p が撃った弾の並びの先頭か。カメラはこの弾を追う。ダブルシュートは 2 発目の先頭も含む（設計書 42.2） */
+export const leadsVolley = (job: ReplayJob, p: number): boolean => p === 0 || p === job.firstShot?.paths;
+
 /** 時刻（ms）を比べるときに許す誤差 */
 const TIME_EPSILON_MS = 1e-6;
 
