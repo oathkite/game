@@ -1,8 +1,8 @@
-import type { Facing, Seat, WeaponSlot } from "@game/protocol";
+import type { Facing, ItemId, Seat, WeaponSlot } from "@game/protocol";
 import { STEPS_PER_TURN } from "@game/sim";
 import { createListeners } from "@/net/connection";
 import type { Connection } from "@/net/connection";
-import { applyElevation, applySlot, applyStep, canStep as canStepView } from "./control";
+import { applyElevation, applyItem, applySlot, applyStep, canStep as canStepView } from "./control";
 import { reduce, type ReduceOptions } from "./reduce";
 import { EMPTY_VIEW, type LocalControl, type MatchView } from "./types";
 
@@ -17,6 +17,8 @@ export type MatchStore = {
   readonly canStep: (dir: Facing) => boolean;
   /** このターンに撃つ武器のスロットを選ぶ */
   readonly selectSlot: (slot: WeaponSlot) => void;
+  /** このターンに使うアイテムを選ぶ。null で外す（設計書 42.1） */
+  readonly selectItem: (item: ItemId | null) => void;
   readonly fire: (power: number) => void;
   readonly completeReplay: (id: number) => void;
   readonly surrender: () => void;
@@ -71,10 +73,15 @@ export const createMatchStore = (connection: Connection, initialOptions: ReduceO
     if (next !== view) set(next);
   };
 
+  const selectItem = (item: ItemId | null): void => {
+    const next = applyItem(view, item);
+    if (next !== view) set(next);
+  };
+
   const fire = (power: number): void => {
     const c = view.control;
     if (view.phase !== "acting" || !c) return;
-    connection.send({ type: "turn.fire", slot: c.slot, facing: c.facing, elevation: c.elevation, power, x: c.x });
+    connection.send({ type: "turn.fire", slot: c.slot, facing: c.facing, elevation: c.elevation, power, x: c.x, ...(c.item ? { item: c.item } : {}) });
     set({ ...view, phase: "fired" });
   };
 
@@ -100,7 +107,7 @@ export const createMatchStore = (connection: Connection, initialOptions: ReduceO
     const acting = seat !== null && !spectator && view.currentSeat === seat && view.deadlineAt !== null && (view.phase === "waiting" || view.phase === "acting");
     const player = view.players?.[seat ?? 0];
     const control: LocalControl | null =
-      acting && player ? { x: player.x, y: player.y, facing: player.facing, elevation: view.lastElevation, slot: view.lastSlot, stepsLeft: STEPS_PER_TURN, fell: false } : null;
+      acting && player ? { x: player.x, y: player.y, facing: player.facing, elevation: view.lastElevation, slot: view.lastSlot, item: null, stepsLeft: STEPS_PER_TURN, fell: false } : null;
     set({ ...view, mySeat: seat, spectator, phase: acting ? "acting" : view.phase === "acting" ? "waiting" : view.phase, control: acting ? control : view.phase === "acting" ? null : view.control });
   };
 
@@ -111,6 +118,7 @@ export const createMatchStore = (connection: Connection, initialOptions: ReduceO
     moveStep,
     changeElevation,
     selectSlot,
+    selectItem,
     canStep: (dir) => canStepView(view, dir),
     fire,
     completeReplay,

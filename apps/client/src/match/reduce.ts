@@ -30,6 +30,7 @@ const freshControl = (player: PlayerView, elevation: number, slot: WeaponSlot): 
   facing: player.facing,
   elevation: Math.min(ELEVATION_MAX, Math.max(ELEVATION_MIN, elevation)),
   slot,
+  item: null,
   stepsLeft: STEPS_PER_TURN,
   fell: false,
 });
@@ -76,6 +77,7 @@ const onResult = (view: MatchView, shot: ShotResult, replayId: number): Reduced 
     x: shot.xAfter[p.seat],
     y: shot.yAfter[p.seat],
     facing: p.seat === shot.input.seat ? shot.input.facing : p.facing,
+    ...(p.seat === shot.input.seat && shot.input.item ? { itemsUsed: [...(p.itemsUsed ?? []), shot.input.item] } : {}),
   });
   const job: ReplayJob = {
     id: replayId,
@@ -85,6 +87,7 @@ const onResult = (view: MatchView, shot: ShotResult, replayId: number): Reduced 
     maskAfter,
     playersBefore: view.players,
     playersAfter: [after(p0), after(p1)],
+    ...(local.firstShot ? { firstShot: local.firstShot } : {}),
   };
   return just(
     { ...view, phase: "replaying", replay: job, control: null, deadlineAt: null, mismatches: view.mismatches + (mismatch ? 1 : 0) },
