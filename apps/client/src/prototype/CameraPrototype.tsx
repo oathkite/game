@@ -29,6 +29,7 @@ import { Timer } from "@/ui/Timer";
 import { CameraSettingsPanel } from "./CameraSettingsPanel";
 import { cameraLayout } from "./camera";
 import { decidedWind } from "@/match/wind";
+import { hudPose } from "@/match/hudPose";
 import { createCameraRig } from "./cameraRig";
 import { PrototypeCanvas } from "./PrototypeCanvas";
 import { usePrototypeInput } from "./usePrototypeInput";
@@ -102,7 +103,7 @@ const Battle = ({ store, begin, worldArt, cpu, cpuLevel, onExit, onResult }: { r
     });
   }, [view.phase, view.result, view.players, onResult]);
   const hudPlayers = view.players?.map(p => ({ id: String(p.seat), name: p.nickname, hp: p.hp, colors: p.colors, team: p.seat })) ?? [];
-  const pose = view.control ?? actor;
+  const pose = hudPose(view, hudSeat);
   const ground = view.mask && pose ? tiltOf(view.mask, pose) : 0;
   return <main className="kp-root" onContextMenu={(e) => e.preventDefault()} onPointerDown={() => unlockAudio()}>
     {worldArt && <div className="practice-battle-status" role="status">{cpu ? t(view.phase === "waiting" ? "CPUの番" : "CPU戦") : t("自由練習")}{cpu && <span className="cpu-level-label">{t(CPU_LEVEL_LABELS[cpuLevel ?? "normal"])}</span>}</div>}

@@ -10,6 +10,7 @@ import { cameraLayout } from "@/prototype/camera";
 import { PrototypeCanvas } from "@/prototype/PrototypeCanvas";
 import { usePrototypeInput } from "@/prototype/usePrototypeInput";
 import { setMusic } from "@/app/audio";
+import { hudPose } from "@/match/hudPose";
 import { createChallengeStore, type ChallengeStore } from "./store";
 import type { ChallengeStage } from "./stages";
 import type { ChallengeState } from "./challenge";
@@ -69,7 +70,7 @@ const ChallengeGame = (props: Props & { readonly store: ChallengeStore }) => {
   const blocked = menu || state.status !== "playing";
   const input = usePrototypeInput(store, rig, ready && state.view.phase === "acting", blocked, () => { if (state.status === "playing") setMenu(v => !v); });
   useBrowserBackAction(true, () => { input.cancel(); setMenu(true); });
-  const pose = state.view.control ?? state.view.players![0];
+  const pose = hudPose(state.view, 0)!;
   const remaining = state.targets.filter(t => !t.destroyed).length;
   return <main className="kp-root challenge-game" onContextMenu={e => e.preventDefault()}>
     <BattleOverlay clock={<div className="challenge-status"><strong>{stage.id} {t(stage.title)}</strong><span>{t("的 {targets} · 残り {shots}発", { targets: remaining, shots: stage.shots - state.used })}</span></div>} onMenu={() => { input.cancel(); setMenu(true); }} />
