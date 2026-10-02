@@ -1,4 +1,5 @@
 import type { ChallengeStore } from "@/practice/store";
+import { challengeOpeningOrder } from "@/practice/opening";
 import { useWindowEdgePan } from "./useWindowEdgePan";
 import { createTankView } from "@/game/tankView";
 import { openingPose, revealRowsAt } from "@/worldUi/openingTour";
@@ -71,8 +72,9 @@ export const PrototypeCanvas = ({ store, rig, layout, handlers, blocked, followS
       rig.resize(viewportOf(latest.current.layout), { left: 0, top: -100, right: view.mask.width, bottom: view.mask.height });
       rig.focus(actorPoint(view), "actor", true);
       const openingAt = performance.now();
-      let opening = Boolean(worldArt && view.phase === "loading"), signalVisible = false;
-      const order = [view.players[view.currentSeat], view.players[view.currentSeat === 0 ? 1 : 0]];
+      // 的当ては読み込みの段階を持たないが、通常の対戦と同じく俯瞰から自機、的の順に回ってから始める（設計書 37）
+      let opening = Boolean(worldArt && (view.phase === "loading" || practice)), signalVisible = false;
+      const order = practice ? challengeOpeningOrder(view.players[0], practice.getTargets()) : [view.players[view.currentSeat], view.players[view.currentSeat === 0 ? 1 : 0]];
       setLoaded(true); onReady(!opening);
       let previousMoveX: number | undefined;
       stopFrames = r.onFrame((dt) => {

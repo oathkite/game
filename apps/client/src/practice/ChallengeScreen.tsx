@@ -11,6 +11,7 @@ import { PrototypeCanvas } from "@/prototype/PrototypeCanvas";
 import { usePrototypeInput } from "@/prototype/usePrototypeInput";
 import { setMusic } from "@/app/audio";
 import { hudPose } from "@/match/hudPose";
+import { loadCameraScale } from "@/worldUi/displayScale";
 import { createChallengeStore, type ChallengeStore } from "./store";
 import type { ChallengeStage } from "./stages";
 import type { ChallengeState } from "./challenge";
@@ -66,7 +67,8 @@ const ChallengeGame = (props: Props & { readonly store: ChallengeStore }) => {
   useEffect(() => {
     if (state.status === "clear" && !recorded.current) { recorded.current = true; props.onClear(state.used); }
   }, [state.status, state.used, props.onClear]);
-  const layout = useMemo(() => ({ ...cameraLayout(size.w, size.h, 4), mapHeight: Math.max(1, size.h - 160) }), [size]);
+  // 通常の対戦と同じ倍率で寄せる（設計書 37）
+  const layout = useMemo(() => ({ ...cameraLayout(size.w, size.h, loadCameraScale()), mapHeight: Math.max(1, size.h - 160) }), [size]);
   const blocked = menu || state.status !== "playing";
   const input = usePrototypeInput(store, rig, ready && state.view.phase === "acting", blocked, () => { if (state.status === "playing") setMenu(v => !v); });
   useBrowserBackAction(true, () => { input.cancel(); setMenu(true); });
