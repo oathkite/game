@@ -8,7 +8,7 @@ import type { OwnPose } from "./movePrediction";
 type Position = { readonly playerId: string; readonly x: number; readonly y: number };
 export type Presentation = ReturnType<typeof presentLabReplay>;
 /** frame はこの表示を作った受信 frame。描画ループは props の frame ではなくこれを使い、位置と手番の情報を同じ時点に揃える。
-    own は自分の手番の移動の予測（positions の自機はこの位置になっている）。prepared は相手の手番に準備した向き */
+    own は自分の手番の移動の予測（positions の自機はこの位置になっている）。prepared は自分の手番でないときの、次の自分の手番に使う向き */
 export type LiveSample = { readonly frame: LabFrame; readonly serverNow: number; readonly presentation: Presentation; readonly players: LabFrame["players"]; readonly own: OwnPose | null; readonly prepared: -1 | 1 | null };
 
 /** serverNow の時点の表示。再生中は再生の位置、それ以外は受信 buffer で補間した位置を参加者に重ねる */
@@ -19,6 +19,24 @@ export const sampleLive = (frame: LabFrame, serverNow: number, positions: readon
     return player ? [{ ...player, x: p.x, y: p.y }] : [];
   });
   return { frame, serverNow, presentation, players, own, prepared };
+};
+
+type Facing = -1 | 1;
+type FacingFrame = Pick<LabFrame, "phase" | "actorId" | "movement"> & { readonly replay: { readonly shooter: { readonly playerId: string; readonly facing: Facing } } | null };
+
+/**
+ * このフレームで向きを決め直す戦車（設計書 30 章）。返さない戦車は前のフレームの向きのまま描く。
+ * サーバーは手番の初めを右向きにするので、ほかの参加者の手番は、サーバーがその手番の歩を記録するまで前に見えた向き（撃った向きか最後に向いた向き）で描く。
+ * 自分の手番は移動の予測の向き、射撃の再生中は撃った向き、ほかの参加者の手番の自機は次の自分の手番に使う向きで描く
+ */
+export const facingUpdates = ({ frame, own, prepared }: { readonly frame: FacingFrame; readonly own: OwnPose | null; readonly prepared: Facing | null }, ownId: string): readonly (readonly [string, Facing])[] => {
+  const shot = frame.phase === "replaying" ? frame.replay?.shooter : null;
+  const actor = own ? own.facing : frame.movement.ackMoveSeq > 0 ? frame.movement.facing : null;
+  return [
+    ...(actor !== null ? [[frame.actorId, actor] as const] : []),
+    ...(shot ? [[shot.playerId, shot.facing] as const] : []),
+    ...(prepared && frame.actorId !== ownId && shot?.playerId !== ownId ? [[ownId, prepared] as const] : []),
+  ];
 };
 
 /** React が描き直す値。serverNow はこの値を作った時刻で、次に描き直すまで進まない */

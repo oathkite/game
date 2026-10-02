@@ -20,7 +20,7 @@ import type { Layout } from "@/game/scale";
 import { createCameraRig } from "@/prototype/cameraRig";
 import { loadCameraSettings } from "@/prototype/cameraSettings";
 import { worldToScreen } from "@/prototype/camera";
-import type { LiveSample } from "@/networkLab/liveView";
+import { facingUpdates, type LiveSample } from "@/networkLab/liveView";
 import { createLabImpactFx, drawLabImpacts, emitLabDebris, labEdgePoints, labShake, labTankHit } from "./labImpactView";
 import { edgeBlinkOn } from "@/game/edgeMarker";
 import { guideDots } from "@/game/trail";
@@ -60,8 +60,8 @@ export const NetworkField = (props: Props) => {
       const r = renderer; let bullet = r.projectile("yellow", "cannon");
       let previousMoveX: number | undefined;
       const damageEvents = new Set<string>(), impactFx = createLabImpactFx();
-      // e2e が読む表示位置。変わったときだけ書く
-      let shownPositions = "";
+      // e2e が読む表示位置と向き。変わったときだけ書く
+      let shownPositions = "", shownFacings = "";
       const writePositions = (players: LabFrame["players"]): void => { const next = JSON.stringify(players); if (next !== shownPositions) { shownPositions = next; element.dataset.positions = next; } };
       writePositions(latest.current.sample().players);
       stop = r.onFrame(dt => {
@@ -83,11 +83,9 @@ export const NetworkField = (props: Props) => {
         const own = players.find(p => p.playerId === ownId);
         if (!openingNow && serverNow >= (frame.delay?.revealUntil ?? 0) && frame.phase === "acting" && frame.actorId === ownId && own && previousMoveX !== undefined && own.x !== previousMoveX) rig.moveActor({ x: own.x, y: own.y - 6 }, matchMedia("(prefers-reduced-motion: reduce)").matches);
         previousMoveX = own?.x;
-        facing.set(frame.actorId, predicted?.facing ?? frame.movement.facing);
+        for (const [id, value] of facingUpdates({ frame, own: predicted, prepared }, ownId)) facing.set(id, value);
+        const facings = JSON.stringify(Object.fromEntries(facing)); if (facings !== shownFacings) { shownFacings = facings; element.dataset.facings = facings; }
         const shot = frame.phase === "replaying" ? frame.replay?.shooter : null;
-        if (shot) { facing.set(shot.playerId, shot.facing);  }
-        // 相手の手番に準備した向き（設計書 30 章）は自分の画面だけに出す
-        if (prepared && frame.actorId !== ownId && shot?.playerId !== ownId) facing.set(ownId, prepared);
         if (fallMatch !== frame.matchId) { falls.reset(); fallMatch = frame.matchId; }
         const now = performance.now(), reduced = matchMedia("(prefers-reduced-motion: reduce)").matches;
         let ownFalling = false;

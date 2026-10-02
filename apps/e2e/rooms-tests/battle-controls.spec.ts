@@ -75,6 +75,24 @@ test("room battle takes keyboard, touch and camera input from both players", asy
     await expect.poll(worldAngle).toBeGreaterThan(90);
     await expect(observer.locator(".battle-weapons button").nth(1)).toHaveAttribute("aria-pressed", "true");
     await expect(elevation).toHaveAttribute("data-elevation", String(prepared + 1));
+    // 撃った向きは、相手の手番に何も押さなくても次の自分の手番へ引き継ぐ（設計書 30 章）。
+    // サーバーは手番の初めを右向きにするが、相手の画面でも、歩を記録するまでは撃った向きで描く
+    const shownFacing = async () => (JSON.parse(await actor.getByTestId("network-world").getAttribute("data-facings") ?? "{}") as Record<string, number>)[observerId];
+    await observer.keyboard.down("Space"); await observer.waitForTimeout(400); await observer.keyboard.up("Space");
+    await expect(observer.getByTestId("phase")).toHaveText("射撃を再生中");
+    await expect.poll(shownFacing).toBe(-1);
+    await expect(observer.getByTestId("phase")).toHaveText("操作中", { timeout: 10000 });
+    // 手番の順は行動のコストで決まるので、相手の手番を挟むとは限らない
+    await expect.poll(async () => (await Promise.all(pages.map(canAct))).filter(Boolean).length).toBe(1);
+    if (await canAct(actor)) {
+      expect(await shownFacing()).toBe(-1);
+      await actor.keyboard.down("Space"); await actor.waitForTimeout(400); await actor.keyboard.up("Space");
+      await expect(observer.getByTestId("phase")).toHaveText("射撃を再生中");
+      await expect(observer.getByTestId("phase")).toHaveText("操作中", { timeout: 10000 });
+    }
+    await expect(control(observer)).toHaveAttribute("data-control", "act");
+    await expect.poll(worldAngle).toBeGreaterThan(90);
+    expect(await shownFacing()).toBe(-1);
     await expectSameWind(pages);
     await desktop!.screenshot({ path: "test-results/room-controls-desktop.png" });
     await mobile!.screenshot({ path: "test-results/room-controls-mobile.png" });
