@@ -94,8 +94,8 @@ export const PrototypeCanvas = ({ store, rig, layout, handlers, blocked, followS
           // 自分の射撃の軌跡を次の自分の手番まで残す（設計書 38 の E7）
           if (job.shot.input.seat === v.mySeat) guide = guideDots(job.paths.map(path => path.points.map(q => ({ x: q.x / ONE, y: q.y / ONE }))));
           if (current.followShot) rig.focus(job.shot.input, "shot", reduced.matches);
-          const replayRenderer: Renderer = { ...r, setTank: (seat, pose) => r.setTank(seat, withPrepared(store.getView(), seat, pose)), projectile: (color, weapon) => {
-            const projectile = r.projectile(color, weapon);
+          const replayRenderer: Renderer = { ...r, setTank: (seat, pose) => r.setTank(seat, withPrepared(store.getView(), seat, pose)), projectile: (color, weapon, item) => {
+            const projectile = r.projectile(color, weapon, item);
             return { ...projectile, setBullet: (index, x, y, angle) => { projectile.setBullet(index, x, y, angle); if (x !== null && leadsVolley(job, index)) rig.shot({ x, y }); } };
           } };
           stopReplay = playReplay(replayRenderer, job, elevations, v.mySeat, { sound: playSound, reduceMotion: reduced.matches, roundEnd: Boolean(v.delay), onImpact: (mask, impact) => practice?.showImpact(mask, impact), done: () => {

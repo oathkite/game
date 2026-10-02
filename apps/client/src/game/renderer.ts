@@ -5,7 +5,7 @@ import { backdropTheme, createPixelBackdrop } from "./pixelBackdrop";
 import type { TerrainOp } from "@game/protocol";
 import { createImageTerrainLayer } from "./imageTerrainLayer";
 import { fitTankLabel } from "./tankLabelLayout";
-import type { TankColors, WeaponId } from "@game/protocol";
+import type { ItemId, TankColors, WeaponId } from "@game/protocol";
 import type { TerrainMask } from "@game/sim";
 import { Application, Container, Graphics, type Texture } from "pixi.js";
 import { type EdgeSide, edgeMarker } from "./edgeMarker";
@@ -37,7 +37,8 @@ export type Renderer = {
   readonly setTerrain: (mask: TerrainMask, cut?: TerrainOp, history?: readonly TerrainOp[]) => void;
   readonly setTank: (seat: number, pose: TankPose) => void;
   /** 弾の層を作り直す。色は撃つ側の主色、大きさは武器で決まる */
-  readonly projectile: (color: TankColors["primary"], weapon: WeaponId) => ProjectileView;
+  /** 射撃 1 回の弾と爆風。テレポートの手番（item）は標準砲で撃つが、弾の絵をロケットにする（設計書 42.3） */
+  readonly projectile: (color: TankColors["primary"], weapon: WeaponId, item?: ItemId) => ProjectileView;
   readonly onFrame: (fn: (deltaMs: number) => void) => () => void;
   /** 画面全体を整数セルだけずらす。着弾の揺れに使う */
   readonly setShake: (offset: Offset) => void;
@@ -242,9 +243,9 @@ export const createRenderer = async (init: RendererInit): Promise<Renderer> => {
         if (travelled >= 1) effects.dust(pose.x, pose.y, pose.facing, hash32(seat, Math.round(pose.x * ART_PER_CELL)));
       }
     },
-    projectile: (color, weapon) => {
+    projectile: (color, weapon, item) => {
       if (projectile) projectile.destroy();
-      projectile = createProjectileView({ ramp: TEAM_RAMPS[color], explosions }, weapon, init.projectileTextures?.[weapon], init.impactTextures?.[weapon]);
+      projectile = createProjectileView({ ramp: TEAM_RAMPS[color], explosions, ...(item === "teleport" ? { art: "teleport" as const } : {}) }, weapon, init.projectileTextures?.[weapon], init.impactTextures?.[weapon]);
       projectileLayer.addChild(projectile.container);
       return projectile;
     },

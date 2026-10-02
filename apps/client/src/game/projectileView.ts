@@ -4,7 +4,7 @@ import { blastStage } from "./explosionSprite";
 import type { ExplosionTextures } from "./explosionTextures";
 import { PALETTE, type Ramp } from "./palette";
 import { ART_PER_CELL, colorRuns, type PixelGrid } from "./pixelGrid";
-import { projectilePixels } from "./projectileSprite";
+import { projectilePixels, type ProjectileArt } from "./projectileSprite";
 import type { TrailDot } from "./trail";
 import { projectileArtScale } from "./weaponArt";
 
@@ -29,8 +29,8 @@ export type ProjectileView = {
   readonly destroy: () => void;
 };
 
-/** ドットの絵を描くのに要るもの。撃った側の主色の段、爆発の texture */
-export type PixelFx = { readonly ramp: Ramp; readonly explosions: ExplosionTextures };
+/** ドットの絵を描くのに要るもの。撃った側の主色の段、爆発の texture、弾の絵（省略すれば武器の絵。テレポートはロケット） */
+export type PixelFx = { readonly ramp: Ramp; readonly explosions: ExplosionTextures; readonly art?: ProjectileArt };
 
 const ART = 1 / ART_PER_CELL;
 const snap = (cells: number): number => Math.round(cells * ART_PER_CELL) / ART_PER_CELL;
@@ -70,7 +70,7 @@ const drawGrid = (g: Graphics, grid: PixelGrid): void => {
 };
 
 /** 弾の列。弾道の数だけ Graphics を持ち、向きと火花のコマが変わったときだけ描き直す */
-const pixelBullets = (parent: Container, weapon: WeaponId, ramp: Ramp) => {
+const pixelBullets = (parent: Container, weapon: ProjectileArt, ramp: Ramp) => {
   const list: { readonly g: Graphics; drawn: PixelGrid | null }[] = [];
   return (index: number, x: number | null, y: number, angle: number): void => {
     while (list.length <= index) {
@@ -151,7 +151,7 @@ export const createProjectileView = (fx: PixelFx, weapon: WeaponId, texture?: Te
   const trailLayer = keyedLayer(trails!), invertLayer = keyedLayer(inverts!), debrisLayer = keyedLayer(debris!), missLayer = keyedLayer(misses!);
   const impactSprites = new Map<string, Sprite>();
   const blastSprites = pixelBlasts(blasts!, weapon, fx);
-  const setBullet = texture ? spriteBullets(bullets!, texture, projectileArtScale(weapon)) : pixelBullets(bullets!, weapon, fx.ramp);
+  const setBullet = texture ? spriteBullets(bullets!, texture, projectileArtScale(weapon)) : pixelBullets(bullets!, fx.art ?? weapon, fx.ramp);
 
   return {
     container,

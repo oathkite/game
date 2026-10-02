@@ -52,4 +52,18 @@ describe("projectilePixels", () => {
   it("掘削弾の導火線の火花はコマで瞬く", () => {
     expect(Array.from(projectilePixels("digger", TEAM_RAMPS.red, 0, 0).pixels).join()).not.toBe(Array.from(projectilePixels("digger", TEAM_RAMPS.red, 0, 1).pixels).join());
   });
+  it("テレポート弾はロケットの絵。標準砲と違い、横長で、主色の先端と尾の炎を持ち、向きで描き直す（設計書 42.3）", () => {
+    const rocket = projectilePixels("teleport", TEAM_RAMPS.red, 0, 0);
+    expect(Array.from(rocket.pixels).join()).not.toBe(Array.from(projectilePixels("cannon", TEAM_RAMPS.red, 0, 0).pixels).join());
+    const right = opaqueBounds(rocket)!, up = opaqueBounds(projectilePixels("teleport", TEAM_RAMPS.red, -Math.PI / 2, 0))!;
+    expect(right.width).toBeGreaterThan(right.height);
+    expect(up.height).toBeGreaterThan(up.width);
+    expect(PROJECTILE_ROTATES.teleport).toBe(true);
+    const c = colors(rocket);
+    expect(c.has(TEAM_RAMPS.red.base) || c.has(TEAM_RAMPS.red.light)).toBe(true);
+    expect(c.has(PALETTE.fire2) || c.has(PALETTE.fire4)).toBe(true);
+    for (const color of colors(projectilePixels("teleport", TEAM_RAMPS.cyan, 1, 1))) expect(isPaletteColor(color)).toBe(true);
+    // 尾の炎はコマで揺れる
+    expect(Array.from(rocket.pixels).join()).not.toBe(Array.from(projectilePixels("teleport", TEAM_RAMPS.red, 0, 1).pixels).join());
+  });
 });

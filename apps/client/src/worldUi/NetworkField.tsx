@@ -101,7 +101,7 @@ export const NetworkField = (props: Props) => {
           elevation: p.playerId === shot?.playerId ? shot.elevation : p.playerId === ownId ? elevation : 45, hp: hit.bar ? hit.bar.hp : p.eliminated ? 0 : p.hp, ...(hit.bar ? { hpGhost: hit.bar.hpGhost, ghostOn: hit.bar.ghostOn } : {}), visible: p.y < frame.map.height, falling: p.falling || presentation.fallingIds.includes(p.playerId), shotFlashes: p.playerId === shot?.playerId ? presentation.shotFlashes : [], recoil: p.playerId === shot?.playerId ? presentation.recoil : 0, aiming: frame.phase === "acting" && p.playerId === ownId && p.playerId === frame.actorId, charge: frame.phase === "acting" && p.playerId === ownId && p.playerId === frame.actorId ? latest.current.charge ?? 0 : 0, acting: frame.phase === "acting" && p.playerId === frame.actorId, flash: hit.flash, nudge: reducedNow ? 0 : hit.nudge }); });
         const actor = shown.find(p => p.playerId === frame.actorId); if (actor && frame.phase === "acting") rig.actor({ x: actor.x, y: actor.y - 6 });
         if (frame.replay && replayKey !== frame.replay.startsAt) {
-          replayKey = frame.replay.startsAt; bullet = r.projectile("yellow", frame.replay.shooter.weapon);
+          replayKey = frame.replay.startsAt; bullet = r.projectile("yellow", frame.replay.shooter.weapon, frame.replay.shooter.item);
           // 自分の射撃の軌跡を次の自分の手番まで残す（設計書 38 の E7）。相手には見せない
           if (frame.replay.shooter.playerId === ownId) guide = guideDots(frame.replay.paths.map(path => path.points));
           const p = presentation.bullets[0]; if (p) rig.focus(p, "shot");

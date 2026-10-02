@@ -451,7 +451,7 @@ export const playReplay = (
   const run: Run = {
     renderer,
     job,
-    view: renderer.projectile(shooter.colors.primary, job.shot.input.weapon),
+    view: renderer.projectile(shooter.colors.primary, job.shot.input.weapon, job.shot.input.item),
     elevations,
     mySeat,
     cb,
