@@ -90,6 +90,8 @@ export type MatchView = {
   readonly lastElevation: number;
   /** 最後に選んだ武器のスロット。ターンをまたいで引き継ぐ */
   readonly lastSlot: WeaponSlot;
+  /** 相手の手番に準備した向き（設計書 30 章、37.6）。次の自分の手番の初めの向きにし、手番が始まったら外す */
+  readonly preparedFacing: Facing | null;
 };
 
 export const EMPTY_VIEW: MatchView = {
@@ -111,4 +113,5 @@ export const EMPTY_VIEW: MatchView = {
   skipNextResult: false,
   lastElevation: 45,
   lastSlot: 0,
+  preparedFacing: null,
 };

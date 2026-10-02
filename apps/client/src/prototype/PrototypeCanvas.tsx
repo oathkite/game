@@ -1,4 +1,5 @@
 import type { ChallengeStore } from "@/practice/store";
+import { challengeOpeningOrder } from "@/practice/opening";
 import { useWindowEdgePan } from "./useWindowEdgePan";
 import { createTankView } from "@/game/tankView";
 import { openingPose, revealRowsAt } from "@/worldUi/openingTour";
@@ -11,7 +12,7 @@ import { teamColor } from "@/worldUi/teamColors";
 import { useEffect, useRef, useState, type HTMLAttributes } from "react";
 import { isRingOut, ONE, tiltOf } from "@game/sim";
 import { createRenderer, type Renderer } from "@/game/renderer";
-import { playReplay } from "@/game/replay";
+import { leadsVolley, playReplay } from "@/game/replay";
 import type { TankPose } from "@/game/tankView";
 import type { Layout } from "@/game/scale";
 import type { MatchStore } from "@/match/matchStore";
@@ -28,13 +29,16 @@ export const actorPoint = (view: MatchView) => {
   const actor = view.control ?? view.players?.[view.currentSeat] ?? { x: 90, y: 130 };
   return { x: actor.x, y: actor.y - 6 };
 };
+/** 相手の手番に準備した向きで自機を描く（設計書 37.6）。自分の手番と自分の射撃の再生では、操作か撃った向きのまま */
+const withPrepared = (v: MatchView, seat: number, pose: TankPose): TankPose =>
+  seat === v.mySeat && v.preparedFacing && !v.control && v.replay?.shot.input.seat !== seat ? { ...pose, facing: v.preparedFacing } : pose;
 const posesOf = (v: MatchView, elevations: readonly number[]): readonly TankPose[] => {
   if (!v.mask || !v.players) return [];
   return v.players.map((p, seat) => {
     const control = seat === v.mySeat ? v.control : seat === 1 ? v.cpuPose ?? null : null;
     const position = control ?? p;
-    return { x: position.x, y: position.y, tilt: tiltOf(v.mask!, position), facing: position.facing, elevation: control?.elevation ?? (seat === v.mySeat ? v.lastElevation : elevations[seat]) ?? 45,
-      hp: p.hp, visible: !isRingOut(v.mask!, position), flash: false, aiming: control !== null && v.phase === "acting", acting: turnSeatOf(v) === seat };
+    return withPrepared(v, seat, { x: position.x, y: position.y, tilt: tiltOf(v.mask!, position), facing: position.facing, elevation: control?.elevation ?? (seat === v.mySeat ? v.lastElevation : elevations[seat]) ?? 45,
+      hp: p.hp, visible: !isRingOut(v.mask!, position), flash: false, aiming: control !== null && v.phase === "acting", acting: turnSeatOf(v) === seat });
   });
 };
 
@@ -53,6 +57,9 @@ export const PrototypeCanvas = ({ store, rig, layout, handlers, blocked, followS
     let stopFrames = () => {}, stopReplay = () => {};
     let replayId: number | null = null, lastTurn = -1, lastMask: MatchView["mask"] = null;
     let activeReplay = false, previousLayout = latest.current.layout;
+    // 再生が最後に描いた機体の姿勢。再生は撃っていない機体を毎フレームは描かないので、相手の再生中に向きを準備したらここから描き直す
+    const replayPoses: (TankPose | undefined)[] = [];
+    let shownPrepared: MatchView["preparedFacing"] = null;
     const falls = createFallMotion();
     let available = true;
     const elevations: [number, number] = [45, 45];
@@ -68,8 +75,9 @@ export const PrototypeCanvas = ({ store, rig, layout, handlers, blocked, followS
       rig.resize(viewportOf(latest.current.layout), { left: 0, top: -100, right: view.mask.width, bottom: view.mask.height });
       rig.focus(actorPoint(view), "actor", true);
       const openingAt = performance.now();
-      let opening = Boolean(worldArt && view.phase === "loading"), signalVisible = false;
-      const order = [view.players[view.currentSeat], view.players[view.currentSeat === 0 ? 1 : 0]];
+      // 的当ては読み込みの段階を持たないが、通常の対戦と同じく俯瞰から自機、的の順に回ってから始める（設計書 37）
+      let opening = Boolean(worldArt && (view.phase === "loading" || practice)), signalVisible = false;
+      const order = practice ? challengeOpeningOrder(view.players[0], practice.getTargets()) : [view.players[view.currentSeat], view.players[view.currentSeat === 0 ? 1 : 0]];
       setLoaded(true); onReady(!opening);
       let previousMoveX: number | undefined;
       stopFrames = r.onFrame((dt) => {
@@ -91,9 +99,9 @@ export const PrototypeCanvas = ({ store, rig, layout, handlers, blocked, followS
           // 自分の射撃の軌跡を次の自分の手番まで残す（設計書 38 の E7）
           if (job.shot.input.seat === v.mySeat) guide = guideDots(job.paths.map(path => path.points.map(q => ({ x: q.x / ONE, y: q.y / ONE }))));
           if (current.followShot) rig.focus(job.shot.input, "shot", reduced.matches);
-          const replayRenderer: Renderer = { ...r, projectile: (color, weapon) => {
-            const projectile = r.projectile(color, weapon);
-            return { ...projectile, setBullet: (index, x, y, angle) => { projectile.setBullet(index, x, y, angle); if (index === 0 && x !== null) rig.shot({ x, y }); } };
+          const replayRenderer: Renderer = { ...r, setTank: (seat, pose) => { replayPoses[seat] = pose; r.setTank(seat, withPrepared(store.getView(), seat, pose)); }, projectile: (color, weapon, item) => {
+            const projectile = r.projectile(color, weapon, item);
+            return { ...projectile, setBullet: (index, x, y, angle) => { projectile.setBullet(index, x, y, angle); if (x !== null && leadsVolley(job, index)) rig.shot({ x, y }); } };
           } };
           stopReplay = playReplay(replayRenderer, job, elevations, v.mySeat, { sound: playSound, reduceMotion: reduced.matches, roundEnd: Boolean(v.delay), onImpact: (mask, impact) => practice?.showImpact(mask, impact), done: () => {
             activeReplay = false;
@@ -103,6 +111,9 @@ export const PrototypeCanvas = ({ store, rig, layout, handlers, blocked, followS
           } });
         }
         if (!v.replay && activeReplay) { stopReplay(); activeReplay = false; }
+        const replayPose = v.mySeat === null ? undefined : replayPoses[v.mySeat];
+        if (activeReplay && replayPose && v.mySeat !== null && v.preparedFacing !== shownPrepared) r.setTank(v.mySeat, withPrepared(v, v.mySeat, replayPose));
+        shownPrepared = v.preparedFacing;
         const showGuide = Boolean(guide) && !activeReplay && !opening && v.phase === "acting" && v.control !== null;
         if (showGuide !== guideShown) { guideShown = showGuide; r.setGuide(showGuide ? guide : null); }
         if (!activeReplay) {

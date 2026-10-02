@@ -3,18 +3,20 @@ import type { ButtonHTMLAttributes } from "react";
 import { useLanguage } from "@/i18n/locale";
 
 type Action = "left" | "right" | "up" | "down" | "fire";
-export const BattleTouchControls = ({ disabled, button, steps = false, aimDisabled = disabled }: {
+export const BattleTouchControls = ({ disabled, button, steps = false, aimDisabled = disabled, moveDisabled = disabled }: {
   readonly disabled: boolean;
   readonly aimDisabled?: boolean;
+  /** 左右。相手の手番の準備では向きだけを変える（設計書 30 章） */
+  readonly moveDisabled?: boolean;
   readonly button: (action: Action) => ButtonHTMLAttributes<HTMLButtonElement>;
   readonly steps?: boolean;
 }) => {
   const { t } = useLanguage();
   return <><div className="battle-dpad">
     <button className="dpad-up" aria-label={t("角度を上げる")} disabled={aimDisabled} {...button("up")}><DotIcon name="up" /></button>
-    <button className="dpad-left" aria-label={t(steps ? "左へ1歩" : "左へ移動")} disabled={disabled} {...button("left")}><DotIcon name="left" /></button>
+    <button className="dpad-left" aria-label={t(steps ? "左へ1歩" : "左へ移動")} disabled={moveDisabled} {...button("left")}><DotIcon name="left" /></button>
     <i aria-hidden="true" />
-    <button className="dpad-right" aria-label={t(steps ? "右へ1歩" : "右へ移動")} disabled={disabled} {...button("right")}><DotIcon name="right" /></button>
+    <button className="dpad-right" aria-label={t(steps ? "右へ1歩" : "右へ移動")} disabled={moveDisabled} {...button("right")}><DotIcon name="right" /></button>
     <button className="dpad-down" aria-label={t("角度を下げる")} disabled={aimDisabled} {...button("down")}><DotIcon name="down" /></button>
   </div><button className="battle-touch-fire" aria-label={t("発射")} disabled={disabled} {...button("fire")}>{t("発射")}</button></>;
 };

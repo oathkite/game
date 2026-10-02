@@ -74,7 +74,7 @@ export const NetworkLab = ({ worldArt = false, onExit, connection }: { readonly 
     sampler.current = () => {
       const at = performance.now(), own = predictor.pose();
       const positions = [...motion.entries()].flatMap(([id, buffer]) => { const p = id === ownId && own ? own : buffer.at(at); return p ? [{ playerId: id, x: p.x, y: p.y }] : []; });
-      return sampleLive(latest.current!, clock.current.time + at - clock.current.received, positions, reduced?.matches ?? false, own);
+      return sampleLive(latest.current!, clock.current.time + at - clock.current.received, positions, reduced?.matches ?? false, own, predictor.prepared());
     };
     // 開発用の SVG 画面（worldArt なし）は、位置を React で描くので毎フレーム描き直す
     const refresh = (): void => {
@@ -141,6 +141,8 @@ export const NetworkLab = ({ worldArt = false, onExit, connection }: { readonly 
     const command = prediction.current?.move(direction, performance.now());
     if (command) ws.send(JSON.stringify({ version: 2, type: "move.command", ...command, commandId: `${playerId}-${++commandId.current}-${Date.now()}`, direction, steps: 1 }));
   };
+  // 相手の手番の向きの準備は送らない。次の自分の手番で、動くまでこの向きで撃つ（設計書 30 章、22.5）
+  const face = (direction: -1 | 1): void => prediction.current?.prepareFacing(direction);
   const fire = (shotPower = power): void => {
     const ws = socket.current;
     if (!ws || ws.readyState !== WebSocket.OPEN) return;
@@ -161,14 +163,16 @@ export const NetworkLab = ({ worldArt = false, onExit, connection }: { readonly 
   const opening = view?.clock.opening ?? false;
   const canControl = !opening && revealed && frame?.phase === "acting" && frame.actorId === playerId && socket.current?.readyState === WebSocket.OPEN;
   const canAct = canControl && !settling;
-  // 相手の手番は、次の自分の手番へ向けて角度と武器だけを変えられる
+  // 相手の手番は、次の自分の手番へ向けて角度と武器と向きだけを変えられる
   const preparing = Boolean(frame && view && canPrepare(frame, playerId, view.clock, observing));
-  const input = useBattleInput(Boolean(worldArt && canControl && !menu && !confirmLeave), move, delta => setElevation(v => Math.max(10, Math.min(90, v + delta))), fire, setSlot, settling, Boolean(worldArt && preparing && !menu && !confirmLeave));
+  const input = useBattleInput(Boolean(worldArt && canControl && !menu && !confirmLeave), move, delta => setElevation(v => Math.max(10, Math.min(90, v + delta))), fire, setSlot, settling, Boolean(worldArt && preparing && !menu && !confirmLeave), face);
   useBrowserBackAction(Boolean(worldArt && onExit), () => { input.cancel(); setMenu(false); setConfirmLeave(true); });
   const hudPlayers = frame?.players.map(p => ({ id: p.playerId, name: p.nickname ?? p.playerId, hp: p.hp, colors: p.colors, team: Number(p.teamId.slice(1)) })) ?? [];
   const own = view?.clock.own ?? null;
   const ownFacing = useRef<-1 | 1>(1), moving = view?.clock.move ?? null;
-  if (moving) ownFacing.current = moving.facing; else if (frame?.actorId === playerId) ownFacing.current = frame.movement.facing;
+  // 自分の射撃の再生中は撃った向き。サーバーの移動の向きは、準備した向きで撃ったときに撃った向きと違う
+  const shooter = frame?.phase === "replaying" && frame.replay?.shooter.playerId === playerId ? frame.replay.shooter : null;
+  if (moving) ownFacing.current = moving.facing; else if (shooter) ownFacing.current = shooter.facing; else if (view?.clock.prepared) ownFacing.current = view.clock.prepared; else if (frame?.actorId === playerId) ownFacing.current = frame.movement.facing;
   // 地形は削られたときだけ作り直す。自機が動くたびには作らない
   const shownTerrain = useMemo(() => frame ? applyOps(buildInitialTerrain(frame.map), frame.terrainOps.slice(0, terrain)) : null, [frame?.matchId, terrain]);
   const ground = own && shownTerrain ? tiltOf(shownTerrain, own) : 0;
@@ -181,7 +185,7 @@ export const NetworkLab = ({ worldArt = false, onExit, connection }: { readonly 
     {frame && view ? <NetworkField key={frame.matchId} sample={sample} charge={input.gauge.charging ? input.gauge.value / 100 : 0} onSettling={setSettling} blocked={menu || confirmLeave || input.gauge.charging || !revealed} frame={frame} elevation={elevation} ownId={playerId} followTurns={!observing || !keepView} {...(!observing ? { selectedWeapon: shotWeapon(loadout[slot], item ?? undefined) } : {})} /> : <SceneLoading steps={labLoadingSteps(status, t)} />}
     {observing && frame && delay && <TurnOrderList info={{ onOpen: input.cancel, serverNow, state: delay, playerId, acting: false, players: frame.players.map(p => ({ id: p.playerId, name: p.nickname ?? p.playerId, colors: p.colors, eliminated: p.eliminated })) }} />}
     {observing ? <footer className="battle-console"><span role="status">{t("観戦中")}</span><label><input type="checkbox" checked={keepView} onChange={e => setKeepView(e.target.checked)} />{t("手動視点を維持")}</label>{frame && <WindGauge wind={frame.wind} />}</footer> : <BattleConsole delay={frame && delay ? { onOpen: input.cancel, serverNow, state: delay, playerId, acting: frame.actorId === playerId && frame.phase === "acting", players: frame.players.map(p => ({ id: p.playerId, name: p.nickname ?? p.playerId, colors: p.colors, eliminated: p.eliminated })) } : undefined} player={hudPlayers.find(p => p.id === playerId)} steps={moving ? moving.stepsLeft : frame?.actorId === playerId ? frame.movement.stepsLeft : 0} tilt={ground} elevation={elevation} facing={ownFacing.current} power={input.gauge.value} loadout={loadout} slot={slot} wind={frame ? frame.wind : null} items={{ used: itemsUsed, selected: item, disabled: !canAct || menu || confirmLeave || input.gauge.charging, select: setItem }} disabled={(!canAct && !preparing) || menu || confirmLeave || input.gauge.charging} selectSlot={setSlot}>
-      {touch && <BattleTouchControls disabled={!canAct || confirmLeave || menu} aimDisabled={(!canAct && !preparing) || confirmLeave || menu} button={input.button} steps />}
+      {touch && <BattleTouchControls disabled={!canAct || confirmLeave || menu} aimDisabled={(!canAct && !preparing) || confirmLeave || menu} moveDisabled={(!canAct && !preparing) || confirmLeave || menu} button={input.button} steps />}
     </BattleConsole>}
     {latency !== null && latency > 300 && <span className="network-latency" role="status">{t("通信遅延")} {latency} ms</span>}
     {confirmLeave && onExit && <LeaveBattleDialog online playing={!observing && frame?.phase !== "finished"} close={() => setConfirmLeave(false)} leave={onExit} />}

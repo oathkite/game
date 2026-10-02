@@ -6,7 +6,7 @@ import type { SoundName } from "@/app/audio";
 import { CARVE_AT_MS, HP_DRAIN_MS } from "@/game/hitFeedback";
 import { WRECK_BLINK_MS } from "@/game/tankMotion";
 export type SoundFrame = Pick<LabFrame, "matchId" | "turnId" | "phase"> & {
-  readonly replay: null | Pick<NonNullable<LabFrame["replay"]>, "startsAt" | "endsAt" | "ticks"> & {
+  readonly replay: null | Pick<NonNullable<LabFrame["replay"]>, "startsAt" | "endsAt" | "ticks" | "teleport"> & {
     readonly shooter?: { readonly weapon: WeaponId };
     readonly paths: readonly { readonly launchTick: number; readonly endTick?: number }[];
     readonly impacts: readonly { readonly tick: number; readonly damage: readonly { readonly amount: number; readonly playerId?: string }[] }[];
@@ -46,7 +46,7 @@ export const createBattleSounds = () => {
     const replay = frame.replay;
     if (frame.phase === "replaying" && replay) {
       const start = replay.startsAt;
-      const duration = Math.max(1, replay.endsAt - replayTailMs(replay.impacts) - start);
+      const duration = Math.max(1, replay.endsAt - replayTailMs(replay.impacts, Boolean(replay.teleport)) - start);
       const fresh = before.frame.phase !== "replaying" || before.frame.turnId !== frame.turnId || before.frame.replay?.startsAt !== start;
       const from = fresh && now - start <= 500 ? Math.min(before.now, start - 0.001) : before.now;
       const crossed = (tick: number, offsetMs = 0) => {

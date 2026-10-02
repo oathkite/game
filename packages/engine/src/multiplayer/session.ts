@@ -100,7 +100,7 @@ export const fireInSession = (state: BattleSession, playerId: string, raw: unkno
   const limit = item === "double" ? 2 * REPLAY_MAX_MS : REPLAY_MAX_MS;
   const duration = Math.min(limit, Math.max(500, shot.ticks * COMBAT_TICK_MS + REPLAY_SETTLE_MS));
   // 着弾の後に留める長さ（設計書 41.8）。クライアントも同じ関数で飛翔の終わりを逆算する
-  const holdMs = replayHoldMs(shot.impacts);
+  const holdMs = replayHoldMs(shot.impacts, Boolean(shot.teleport));
   const next: BattleSession = { ...state, ...(state.stats ? { stats: recordShotStats(state.stats, state.roster.members, playerId, state.players, shot.impacts) } : {}), roster: { ...shot.roster, ...(state.roster.delay ? { delay: finishDelay(state.roster.delay, playerId, actionCost(30 - state.movement.stepsLeft, weapon, item)) } : {}) }, players: shot.players,
     ...(item ? { itemsUsed: { ...state.itemsUsed, [playerId]: [...used, item] } } : {}), mask: shot.mask, phase: "replaying",
     movement: { ...state.movement, locked: true, eventSeq: state.movement.eventSeq + 1 },

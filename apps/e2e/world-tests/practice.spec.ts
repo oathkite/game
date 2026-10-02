@@ -18,6 +18,13 @@ test("プラクティス入口、未解放ステージ、自由練習、横画�
   await page.getByRole("button", { name: "ターゲットチャレンジ", exact: true }).click();
   await page.getByRole("button", { name: "ステージ1をはじめる" }).click();
   await expect(page.locator(".kp-canvas canvas")).toBeVisible();
+  // 通常の対戦と同じ倍率で、俯瞰から自機、的の順に回ってから始める（設計書 37）
+  const world = page.getByTestId("camera-world");
+  await expect(world).toHaveAttribute("data-scale", "8");
+  await expect(world).toHaveAttribute("data-opening", "true");
+  await expect(page.getByRole("button", { name: "発射", exact: true })).toBeDisabled();
+  await expect(world).toHaveAttribute("data-opening", "false", { timeout: 15000 });
+  await expect(page.getByRole("button", { name: "発射", exact: true })).toBeEnabled();
   await page.screenshot({ path: "test-results/challenge-desktop.png" });
   await page.getByRole("button", { name: "設定を開く", exact: true }).click();
   await expect(page.getByRole("dialog")).toBeVisible();
@@ -56,7 +63,8 @@ test("実操作で全8面をクリアし、解放・BESTを再読み込み後も
     await expect(page.locator(".kp-canvas canvas")).toBeVisible();
     let elevation = 45;
     for (const action of actions) {
-      await expect(page.getByRole("button", { name: "発射", exact: true })).toBeEnabled();
+      // 各ステージの初めは開幕の俯瞰と START を待つ（設計書 37）
+      await expect(page.getByRole("button", { name: "発射", exact: true })).toBeEnabled({ timeout: 20000 });
       for (let i = 0; i < action.move; i++) await page.keyboard.press("ArrowRight");
       for (let i = 0; i < Math.abs(action.elevation - elevation); i++) await page.keyboard.press(action.elevation > elevation ? "ArrowUp" : "ArrowDown");
       elevation = action.elevation;
@@ -98,7 +106,8 @@ test("弾切れ後に再挑戦でき、メニューを開くと長押し射撃�
   await expect(page.getByRole("heading", { name: "もう一度挑戦しよう" })).toBeVisible({ timeout: 20000 });
   await page.getByRole("button", { name: "もう一度", exact: true }).click();
   await expect(page.locator(".challenge-status")).toContainText("的 1 · 残り 5発");
-  await expect(page.getByRole("button", { name: "発射", exact: true })).toBeEnabled();
+  // もう一度でも開幕の俯瞰から始める
+  await expect(page.getByRole("button", { name: "発射", exact: true })).toBeEnabled({ timeout: 15000 });
   await page.getByRole("button", { name: "設定を開く", exact: true }).click();
   await page.getByRole("button", { name: "ステージ選択へ戻る" }).click();
   await expect(page.getByRole("button", { name: "02 丘の向こう 未解放" })).toBeDisabled();
@@ -117,7 +126,7 @@ test("縦画面で操作でき、ブラウザの戻るは練習メニューを�
   await page.getByRole("button", { name: "ターゲットチャレンジ", exact: true }).click();
   await expect(page.getByRole("heading", { name: "ターゲットチャレンジ" })).toBeVisible();
   await page.getByRole("button", { name: "ステージ1をはじめる" }).click();
-  await expect(page.getByRole("button", { name: "発射", exact: true })).toBeEnabled();
+  await expect(page.getByRole("button", { name: "発射", exact: true })).toBeEnabled({ timeout: 15000 });
   for (const label of ["発射", "左へ移動", "右へ移動", "角度を上げる", "角度を下げる", "設定を開く"]) {
     const box = (await page.getByRole("button", { name: label, exact: true }).boundingBox())!;
     expect(box.x).toBeGreaterThanOrEqual(0);

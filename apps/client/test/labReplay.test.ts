@@ -1,3 +1,5 @@
+import { replayTailMs } from "@game/engine/replay-timing";
+import { TELEPORT_ARRIVE_MS, TELEPORT_DEPART_MS } from "../src/game/teleportMotion";
 import { expect, it } from "vitest";
 import { labFrameSchema } from "@game/protocol/v2-lab";
 import { presentLabReplay } from "../src/networkLab/labReplay";
@@ -145,13 +147,20 @@ it("ダブルシュートは 1 発目の後に一度落とし、2 発目の後�
   expect(p2(2000)).toMatchObject({ y: 170, hp: 80 });
 });
 
-it("テレポートした機体は着地点へ横に滑らず移り、落下として数えない", () => {
+it("テレポートした機体は着弾で白く光って消え、着地点に白く現れ、落下として数えない（設計書 42.3）", () => {
   const players = still.map(p => p.playerId === "p1" ? { ...p, x: 200, y: 170 } : p);
-  const teleport = withItem({ shooter: { ...frame.replay!.shooter, item: "teleport" }, teleport: { x: 200, y: 170 }, endsAt: 1900, impacts: [],
+  // 飛翔は 1000〜1600 ms。着弾の後にテレポートの演出の長さを残す
+  const teleport = withItem({ shooter: { ...frame.replay!.shooter, item: "teleport" }, teleport: { x: 200, y: 170 }, endsAt: 1600 + replayTailMs([], true), ticks: 60, impacts: [],
     paths: [{ launchTick: 0, endTick: 60, points: [{ x: 20, y: 140, tick: 0 }, { x: 200, y: 165, tick: 60 }] }] }, players);
-  const p1 = (now: number) => presentLabReplay(teleport, now).players.find(p => p.playerId === "p1")!;
+  const at = (now: number) => presentLabReplay(teleport, now);
+  const p1 = (now: number) => at(now).players.find(p => p.playerId === "p1")!;
   expect(p1(1500)).toMatchObject({ x: 20, y: 150 });
-  expect(p1(1650)).toMatchObject({ x: 200, y: 170 });
-  expect(presentLabReplay(teleport, 1650).fallingIds).toEqual([]);
-  expect(presentLabReplay(teleport, 1650).effects).toEqual([]);
+  expect(at(1500).teleport?.pose).toEqual({ at: "from", white: false });
+  expect(at(1600 + 10).teleport).toMatchObject({ playerId: "p1", age: 10, pose: { at: "from", white: true }, from: { x: 20, y: 150 }, to: { x: 200, y: 170 }, hit: { x: 200, y: 165 } });
+  expect(at(1600 + TELEPORT_DEPART_MS + 10).teleport?.pose.at).toBe("hidden");
+  expect(p1(1600 + TELEPORT_ARRIVE_MS + 10)).toMatchObject({ x: 200, y: 170 });
+  expect(at(1600 + TELEPORT_ARRIVE_MS + 10).teleport?.pose).toEqual({ at: "to", white: true });
+  expect(at(1650).fallingIds).toEqual([]);
+  expect(at(1650).effects).toEqual([]);
+  expect(at(1600 + replayTailMs([], true)).teleport).toBeNull();
 });

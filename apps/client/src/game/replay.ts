@@ -31,11 +31,13 @@ import {
   STEP_MS,
 } from "./hitFeedback";
 import type { ProjectileView } from "./projectileView";
+import { projectileArtOf } from "./projectileSprite";
 import { hash32 } from "./fx/hash";
 import { TEAM_RAMPS } from "./palette";
 import { WRECK_BLINK_MS } from "./tankMotion";
 import { replayTailMs } from "@game/engine/replay-timing";
 import { trailDots } from "./trail";
+import { TELEPORT_FX_MS, teleportPoseAt } from "./teleportMotion";
 import type { EdgePoint, Renderer } from "./renderer";
 import { edgeBlinkOn } from "./edgeMarker";
 import type { TankPose } from "./tankView";
@@ -89,6 +91,10 @@ type Run = {
   readonly falls: readonly Fall[];
   /** ダブルシュートで 1 発目の後に機体を落とし始める時刻。2 発目を撃たない射撃は null（設計書 42.2） */
   readonly midFallAt: number | null;
+  /** テレポートで着地点へ移れた射撃で、弾が着地点に当たる時刻。光の柱と機体の出現をここから数える（設計書 42.3） */
+  readonly teleportAt: number | null;
+  /** テレポートの光の柱を出したか */
+  teleportShown: boolean;
   /** 弾道ごとの発射の遅れ */
   readonly launchAt: readonly number[];
   /** 弾道ごとの位置列をセルに直したもの。軌跡に使う */
@@ -172,6 +178,9 @@ const computeFalls = (job: ReplayJob): Fall[] => {
   return falls;
 };
 
+/** 弾道 p が撃った弾の並びの先頭か。カメラはこの弾を追う。ダブルシュートは 2 発目の先頭も含む（設計書 42.2） */
+export const leadsVolley = (job: ReplayJob, p: number): boolean => p === 0 || p === job.firstShot?.paths;
+
 /** 時刻（ms）を比べるときに許す誤差 */
 const TIME_EPSILON_MS = 1e-6;
 
@@ -210,10 +219,12 @@ const poseAfterHit = (run: Run, seat: Seat, flash: boolean): TankPose => {
   const after = run.job.playersAfter[seat];
   const drain = run.drains[seat];
   const bar = drain ? hpBarAt(run.elapsed - drain.at, drain.before, drain.after) : { hp: run.hp[seat], hpGhost: run.hp[seat], ghostOn: false };
-  // 落下前なので、撃った側は移動後の地表、相手はターン開始時の地表に立つ。テレポートした機体は撃った位置に置く
-  const x = teleported(run.job, seat) ? run.job.shot.input.x : after.x;
-  return poseOf({ ...before, hp: bar.hp, x, y: groundDuringShot(run, seat), facing: after.facing }, run.job.maskBefore, elevationOf(run, seat), {
-    flash,
+  // 落下前なので、撃った側は移動後の地表、相手はターン開始時の地表に立つ。テレポートした機体は撃った位置で光って消え、着地点に現れる
+  const warp = teleported(run.job, seat) && run.teleportAt !== null ? teleportPoseAt(run.elapsed - run.teleportAt, run.cb.reduceMotion) : null;
+  const x = warp?.at === "to" ? after.x : warp ? run.job.shot.input.x : after.x, y = warp?.at === "to" ? after.y : groundDuringShot(run, seat);
+  return poseOf({ ...before, hp: bar.hp, x, y, facing: after.facing }, run.job.maskBefore, elevationOf(run, seat), {
+    flash: flash || warp?.white === true,
+    ...(warp?.at === "hidden" ? { visible: false } : {}),
     shotFlashes: seat === run.job.shot.input.seat ? shotFlashes(run.elapsed, run.launchAt) : [],
     recoil: seat === run.job.shot.input.seat ? shotRecoil(run.elapsed, run.launchAt) : 0,
     hpGhost: bar.hpGhost,
@@ -277,14 +288,15 @@ const updateBullet = (run: Run, p: number): void => {
     if (p > 0 && p === run.job.firstShot?.paths) run.cb.sound(weaponSound(run.job.shot.input.weapon, "fire"));
     // 砲口の煙の輪と発射光の光（段階 4）、武器の軌跡（段階 5）。弾がその点を通る時刻は、着弾ごとに止まる分を足して決める
     const trail = points.map((q, i) => ({ x: q.x / ONE, y: q.y / ONE, at: i * STEP_MS + path.impactAt.filter(k => k < i).length * HOLD_MS }));
-    run.renderer.effects.launch(run.job.shot.input.weapon, trail, hash32(0, run.job.id, p, 9), t);
+    run.renderer.effects.launch(projectileArtOf(run.job.shot.input.weapon, run.job.shot.input.item), trail, hash32(0, run.job.id, p, 9), t);
   }
   const frame = projectileFrameAt(t, path.impactAt, points.length);
   const last = points[points.length - 1];
   if (frame.ended && last) {
     run.view.setBullet(p, null, 0, 0);
     run.view.setTrail(p, []);
-    const mark = path.impactAt.length === 0 ? missMarkAt(t - (points.length - 1) * STEP_MS, cellOfPoint(last)) : null;
+    // テレポートで着地点へ移れた弾は外れではないので、印を出さない
+    const mark = path.impactAt.length === 0 && !run.job.shot.teleport ? missMarkAt(t - (points.length - 1) * STEP_MS, cellOfPoint(last)) : null;
     run.view.setMissMark(`miss/${p}`, mark ? mark.x : null, mark?.y ?? 0, mark?.on ?? false);
     return;
   }
@@ -391,11 +403,24 @@ const flightEndOf = (job: ReplayJob, launchAt: readonly number[], p: number): nu
 /** すべての弾道が終わり、すべての着弾の演出と外れの印が消えたか */
 const shotDone = (run: Run): boolean => {
   const impactsDone = run.impacts.every((ir) => run.elapsed - ir.at >= (run.cb.roundEnd ? CARVE_AT_MS + 100 : IMPACT_TOTAL_MS));
-  const pathsDone = run.job.paths.every((path, p) => run.elapsed >= flightEndOf(run.job, run.launchAt, p) + (path.impactAt.length === 0 ? MISS_MS : 0));
+  const pathsDone = run.job.paths.every((path, p) => run.elapsed >= flightEndOf(run.job, run.launchAt, p) + (path.impactAt.length === 0 && !run.job.shot.teleport ? MISS_MS : 0));
+  // テレポートは、光の柱が消えるまで落下と後の段へ進めない。留める時間のない対戦でも、カメラを着地点に残す。動きを減らす設定では柱を出さないので待たない
+  if (run.teleportAt !== null && !run.cb.reduceMotion && run.elapsed < run.teleportAt + TELEPORT_FX_MS) return false;
   return impactsDone && pathsDone;
 };
 
+/** 弾が着地点に当たったら、撃った位置と着地点に光の柱を立てる（設計書 42.3） */
+const showTeleport = (run: Run): void => {
+  if (run.teleportAt === null || run.teleportShown || run.elapsed < run.teleportAt) return;
+  run.teleportShown = true;
+  const { input } = run.job.shot, last = run.job.paths[0]?.points.at(-1);
+  const to = run.job.playersAfter[input.seat];
+  run.renderer.effects.teleport({ from: { x: input.x, y: input.y }, to: { x: to.x, y: to.y }, hit: last ? cellOfPoint(last) : { x: to.x, y: to.y },
+    seed: hash32(0, run.job.id, 0, 12), age: run.elapsed - run.teleportAt, mask: run.mask });
+};
+
 const stepShot = (run: Run): void => {
+  showTeleport(run);
   for (let p = 0; p < run.job.paths.length; p++) updateBullet(run, p);
   for (const ir of run.impacts) updateImpact(run, ir);
   updateHits(run);
@@ -448,12 +473,14 @@ export const playReplay = (
   const run: Run = {
     renderer,
     job,
-    view: renderer.projectile(shooter.colors.primary, job.shot.input.weapon),
+    view: renderer.projectile(shooter.colors.primary, job.shot.input.weapon, job.shot.input.item),
     elevations,
     mySeat,
     cb,
     falls: computeFalls(job),
     midFallAt,
+    teleportAt: job.shot.teleport ? flightEndOf(job, launchAt, 0) : null,
+    teleportShown: false,
     launchAt,
     trails: job.paths.map(path => path.points.map(q => ({ x: q.x / ONE, y: q.y / ONE }))),
     impacts,
@@ -461,7 +488,7 @@ export const playReplay = (
     totalShown: false,
     lastCarveAt: 0,
     // 決着のターンはこれまでどおり早くリザルトへ進めるので留めない
-    doneAt: cb.roundEnd ? 0 : Math.max(0, ...job.paths.map((_, p) => flightEndOf(job, launchAt, p))) + replayTailMs(job.shot.impacts),
+    doneAt: cb.roundEnd ? 0 : Math.max(0, ...job.paths.map((_, p) => flightEndOf(job, launchAt, p))) + replayTailMs(job.shot.impacts, Boolean(job.shot.teleport)),
     phase: "shot",
     elapsed: 0,
     phaseStart: 0,

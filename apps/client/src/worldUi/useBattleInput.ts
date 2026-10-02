@@ -3,18 +3,20 @@ import { useHold } from "@/ui/useHold";
 import { usePowerGauge } from "@/ui/usePowerGauge";
 
 type Action = "left" | "right" | "up" | "down" | "fire";
-/** preparation は相手の手番の準備。角度（W/S、上下）と武器（Q/E）だけを受け付け、移動と発射は enabled のときだけ（設計書 30 章） */
-export const useBattleInput = (enabled: boolean, move: (direction: -1 | 1) => void, aim: (delta: number) => void, fire: (power: number) => void, slot: (value: 0 | 1) => void, paused = false, preparation = false) => {
+/** preparation は相手の手番の準備。角度（W/S、上下）と武器（Q/E）と向き（A/D、左右を face へ）だけを受け付け、移動と発射は enabled のときだけ（設計書 30 章） */
+export const useBattleInput = (enabled: boolean, move: (direction: -1 | 1) => void, aim: (delta: number) => void, fire: (power: number) => void, slot: (value: 0 | 1) => void, paused = false, preparation = false, face: (direction: -1 | 1) => void = () => {}) => {
   const aimOwner = useRef<{ id: string | number; action: "up" | "down" } | null>(null);
   const ownedAction = useRef<Action | null>(null);
   const pause = useRef(paused); pause.current = paused;
   const gauge = usePowerGauge(enabled && !paused, fire), owner = useRef<string | number | null>(null);
   const holds = { left: useHold(() => { if (!pause.current) move(-1); }, 100, enabled && !gauge.charging), right: useHold(() => { if (!pause.current) move(1); }, 100, enabled && !gauge.charging), up: useHold(() => { if (!pause.current) aim(1); }, 50, enabled || preparation), down: useHold(() => { if (!pause.current) aim(-1); }, 50, enabled || preparation) };
-  const latest = useRef({ enabled, preparation, holds, gauge, slot }); latest.current = { enabled, preparation, holds, gauge, slot };
+  const latest = useRef({ enabled, preparation, holds, gauge, slot, face }); latest.current = { enabled, preparation, holds, gauge, slot, face };
   const cancel = () => { Object.values(latest.current.holds).forEach(h => h.stop()); latest.current.gauge.cancel(); owner.current = null; aimOwner.current = null; };
   const begin = (id: string | number, action: Action) => {
     const aiming = action === "up" || action === "down";
-    if (pause.current || !(latest.current.enabled || (aiming && latest.current.preparation))) return;
+    if (pause.current || !(latest.current.enabled || (action !== "fire" && latest.current.preparation))) return;
+    // 相手の手番の左右は向きだけを変える。押し続けても繰り返さない
+    if (!latest.current.enabled && (action === "left" || action === "right")) { latest.current.face(action === "left" ? -1 : 1); return; }
     if (aiming) {
       if (aimOwner.current || (owner.current !== null && ownedAction.current !== "fire")) return;
       aimOwner.current = { id, action }; latest.current.holds[action].start(); return;

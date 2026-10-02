@@ -8,7 +8,7 @@ import { actorPoint } from "./PrototypeCanvas";
 
 type Action = "left" | "right" | "up" | "down" | "fire";
 type Owner = { readonly id: number | string; readonly action: Action | "pan" };
-export const usePrototypeInput = (store: Pick<MatchStore, "getView" | "fire" | "changeElevation" | "moveStep" | "selectSlot">, rig: CameraRig, enabled: boolean, blocked: boolean, toggleMenu: () => void, paused = false, preparation = false) => {
+export const usePrototypeInput = (store: Pick<MatchStore, "getView" | "fire" | "changeElevation" | "moveStep" | "selectSlot"> & Partial<Pick<MatchStore, "prepareFacing">>, rig: CameraRig, enabled: boolean, blocked: boolean, toggleMenu: () => void, paused = false, preparation = false) => {
   const aimOwner = useRef<{ id: string | number; action: "up" | "down" } | null>(null);
   const pause = useRef(paused); pause.current = paused;
   const gauge = usePowerGauge(enabled && !blocked && !paused, store.fire);
@@ -29,6 +29,8 @@ export const usePrototypeInput = (store: Pick<MatchStore, "getView" | "fire" | "
   const begin = (id: number | string, action: Action): boolean => {
     if (pause.current || latest.current.blocked) return false;
     const aiming = action === "up" || action === "down";
+    // 相手の手番の左右は向きだけを変える。押し続けても繰り返さない（設計書 37.6）
+    if (!latest.current.enabled && latest.current.preparation && (action === "left" || action === "right")) { store.prepareFacing?.(action === "left" ? -1 : 1); return true; }
     if (!(latest.current.enabled || (aiming && latest.current.preparation))) return false;
     if (action === "up" || action === "down") {
       if (aimOwner.current || (owner.current && owner.current.action !== "fire")) return false;

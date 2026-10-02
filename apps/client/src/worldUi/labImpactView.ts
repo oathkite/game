@@ -5,7 +5,8 @@ import { WRECK_BLINK_MS } from "@/game/tankMotion";
 import type { ProjectileView } from "@/game/projectileView";
 import type { EdgePoint, RendererEffects } from "@/game/renderer";
 import type { presentLabReplay } from "@/networkLab/labReplay";
-import type { TerrainOp, WeaponId } from "@game/protocol";
+import type { ItemId, TerrainOp, WeaponId } from "@game/protocol";
+import { projectileArtOf } from "@/game/projectileSprite";
 import { carve, type TerrainMask } from "@game/sim";
 
 // オンライン対戦の着弾の見せ方。設計書 38 の E1。練習（game/replay.ts）と同じ hitFeedback の時間の流れで描く。
@@ -14,11 +15,14 @@ import { carve, type TerrainMask } from "@game/sim";
 type Presentation = ReturnType<typeof presentLabReplay>;
 
 /** 機体の被弾の姿。白くなる区間は爆風が最大になってからダメージの段階で決まる長さ。押し戻しは爆心から遠ざかる向き（設計書 41 の段階 4） */
-export const labTankHit = (presentation: Presentation, playerId: string, x = 0): { readonly flash: boolean; readonly bar: HpBar | undefined; readonly nudge: number } => {
+export const labTankHit = (presentation: Presentation, playerId: string, x = 0): { readonly flash: boolean; readonly hidden: boolean; readonly bar: HpBar | undefined; readonly nudge: number } => {
   const hits = presentation.effects.flatMap(effect => effect.damages.filter(d => d.playerId === playerId).map(d => ({ effect, amount: d.amount })));
   const latest = hits.filter(h => h.effect.clock >= CARVE_AT_MS).sort((a, b) => a.effect.clock - b.effect.clock)[0];
+  // テレポートした機体は、撃った位置と着地点で白く光り、そのあいだは隠す（設計書 42.3）
+  const warp = presentation.teleport?.playerId === playerId ? presentation.teleport.pose : null;
   return {
-    flash: hits.some(({ effect, amount }) => effect.clock >= CARVE_AT_MS && effect.clock < CARVE_AT_MS + flashMsOf(amount)),
+    flash: hits.some(({ effect, amount }) => effect.clock >= CARVE_AT_MS && effect.clock < CARVE_AT_MS + flashMsOf(amount)) || warp?.white === true,
+    hidden: warp?.at === "hidden",
     bar: presentation.hpBars[playerId],
     nudge: latest ? knockbackAt(latest.effect.clock - CARVE_AT_MS, latest.amount) * (x >= latest.effect.cx ? 1 : -1) : 0,
   };
@@ -78,17 +82,23 @@ export type LabTank = { readonly x: number; readonly y: number; readonly ramp: R
 export const createLabImpactFx = () => {
   let replayKey = "";
   const emitted = new Set<string>(), frozen = new Set<string>(), launched = new Set<string>();
+  let teleported = false;
   return {
-    update: (effects: Pick<RendererEffects, "impact" | "killFlash" | "freeze" | "launch" | "wreck">, presentation: Presentation, replay: { readonly startsAt: number; readonly terrainOpsBefore: number; readonly shooter?: { readonly weapon: WeaponId } }, matchId: string, reduced: boolean, tankOf: (playerId: string) => LabTank | undefined = () => undefined, mask?: TerrainMask): void => {
-      const weapon = replay.shooter?.weapon ?? "cannon";
+    update: (effects: Pick<RendererEffects, "impact" | "killFlash" | "freeze" | "launch" | "wreck" | "teleport">, presentation: Presentation, replay: { readonly startsAt: number; readonly terrainOpsBefore: number; readonly shooter?: { readonly weapon: WeaponId; readonly item?: ItemId | undefined } }, matchId: string, reduced: boolean, tankOf: (playerId: string) => LabTank | undefined = () => undefined, mask?: TerrainMask): void => {
+      const weapon = replay.shooter?.weapon ?? "cannon", art = projectileArtOf(weapon, replay.shooter?.item);
       const key = `${matchId}/${replay.startsAt}`;
-      if (key !== replayKey) { replayKey = key; emitted.clear(); frozen.clear(); launched.clear(); }
+      if (key !== replayKey) { replayKey = key; emitted.clear(); frozen.clear(); launched.clear(); teleported = false; }
       if (reduced) return;
       const match = hashText(matchId);
       for (const l of presentation.launches) {
         if (launched.has(l.key)) continue;
         launched.add(l.key);
-        effects.launch(weapon, l.points, hash32(match, replay.startsAt, Number(l.key), 9), l.age);
+        effects.launch(art, l.points, hash32(match, replay.startsAt, Number(l.key), 9), l.age);
+      }
+      const warp = presentation.teleport;
+      if (warp && !teleported && warp.age >= 0) {
+        teleported = true;
+        effects.teleport({ from: warp.from, to: warp.to, hit: warp.hit, seed: hash32(match, replay.startsAt, 12), age: warp.age, ...(mask ? { mask } : {}) });
       }
       for (const e of presentation.effects) {
         if (!emitted.has(e.key) && e.clock >= 0) {

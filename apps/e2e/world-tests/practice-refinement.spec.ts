@@ -30,7 +30,8 @@ test("射撃後は移動しなくても自機へカメラが戻る", async ({ pa
   await page.getByRole("button", { name: "ステージ1をはじめる" }).click();
   const field = page.getByTestId("camera-world");
   const fire = page.getByRole("button", { name: "発射", exact: true });
-  await expect(fire).toBeEnabled();
+  // 開幕の俯瞰と START を待つ（設計書 37）
+  await expect(fire).toBeEnabled({ timeout: 15000 });
   await expect(field).toHaveAttribute("data-mode", "actor");
   const originalX = Number(await field.getAttribute("data-camera-x"));
   await page.keyboard.down("Space");

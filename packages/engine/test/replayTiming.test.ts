@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { DAMAGE_HOLD_MS, IMPACT_HOLD_MS, REPLAY_SETTLE_MS, replayHoldMs, replayTailMs } from "../src/multiplayer/replayTiming.js";
+import { DAMAGE_HOLD_MS, IMPACT_HOLD_MS, REPLAY_SETTLE_MS, replayHoldMs, replayTailMs, TELEPORT_HOLD_MS } from "../src/multiplayer/replayTiming.js";
 
 // 着弾の後に留める長さ。設計書 41.8
 
@@ -21,7 +21,34 @@ describe("replayHoldMs", () => {
   });
 });
 
+describe("テレポートの演出の長さ（設計書 42.3）", () => {
+  it("着地点へ移れたテレポートは、光の柱と出現を見せる長さを足す。移れなかったら足さない", () => {
+    expect(replayHoldMs([], true)).toBe(TELEPORT_HOLD_MS);
+    expect(replayTailMs([], true)).toBe(REPLAY_SETTLE_MS + TELEPORT_HOLD_MS);
+    expect(replayHoldMs([], false)).toBe(0);
+    expect(REPLAY_SETTLE_MS + TELEPORT_HOLD_MS).toBeGreaterThanOrEqual(1100);
+  });
+});
+
 describe("サーバーの再生の長さ", () => {
+  it("テレポートの再生も、endsAt から replayTailMs を引くと飛翔の終わりになる", async () => {
+    const { MULTIPLAYER_MAPS } = await import("@game/maps");
+    const { COMBAT_TICK_MS } = await import("@game/sim");
+    const { createBattle } = await import("../src/multiplayer/create.js");
+    const { createBattleSession, fireInSession } = await import("../src/multiplayer/session.js");
+    const members = [{ playerId: "p0", teamId: "t0" }, { playerId: "p1", teamId: "t1" }];
+    const landed = new Set<boolean>();
+    for (const power of [5, 30, 55, 80, 100]) {
+      const initial = createBattleSession(createBattle(members, 7, MULTIPLAYER_MAPS[0]!), "tp", 1000, { p0: ["cannon", "digger"], p1: ["cannon", "digger"] }, power);
+      const shot = fireInSession(initial, initial.movement.playerId, { version: 2, type: "turn.fire", matchId: "tp", turnId: 1, commandId: `t${power}`, ackMoveSeq: 0, slot: 0, facing: 1, elevation: 45, power, item: "teleport" }, 1100);
+      const replay = shot.state.replay!, teleported = Boolean(replay.shot.teleport);
+      landed.add(teleported);
+      const flight = Math.min(8000, Math.max(500, replay.shot.ticks * COMBAT_TICK_MS + REPLAY_SETTLE_MS)) - REPLAY_SETTLE_MS;
+      expect(replay.endsAt - replay.startsAt - replayTailMs(replay.shot.impacts, teleported)).toBeCloseTo(flight, 6);
+    }
+    expect(landed.has(true)).toBe(true);
+  });
+
   it("endsAt から replayTailMs を引くと、クライアントが逆算する飛翔の終わりがサーバーの tick の終わりと一致する", async () => {
     const { MULTIPLAYER_MAPS } = await import("@game/maps");
     const { COMBAT_TICK_MS } = await import("@game/sim");

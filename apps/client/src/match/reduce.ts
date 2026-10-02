@@ -24,10 +24,10 @@ const otherSeat = (seat: Seat): Seat => (seat === 0 ? 1 : 0);
 
 const just = (view: MatchView, reply: Reduced["reply"] = null, mismatch = false): Reduced => ({ view, reply, mismatch });
 
-const freshControl = (player: PlayerView, elevation: number, slot: WeaponSlot): LocalControl => ({
+const freshControl = (player: PlayerView, elevation: number, slot: WeaponSlot, facing = player.facing): LocalControl => ({
   x: player.x,
   y: player.y,
-  facing: player.facing,
+  facing,
   elevation: Math.min(ELEVATION_MAX, Math.max(ELEVATION_MIN, elevation)),
   slot,
   item: null,
@@ -127,7 +127,9 @@ export const reduce = (view: MatchView, message: ServerMessage, options: ReduceO
         delay: message.delay,
         wind: message.wind,
         deadlineAt: message.deadlineAt,
-        control: acting ? freshControl(settled.players[message.seat], settled.lastElevation, settled.lastSlot) : null,
+        // 相手の手番に準備した向きで始める（設計書 30 章、37.6）
+        control: acting ? freshControl(settled.players[message.seat], settled.lastElevation, settled.lastSlot, settled.preparedFacing ?? undefined) : null,
+        preparedFacing: acting ? null : settled.preparedFacing,
         skipNextResult: false,
       });
     }

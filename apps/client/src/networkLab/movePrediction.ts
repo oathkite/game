@@ -25,10 +25,15 @@ export type Prediction = {
   readonly creditAt: number;
   /** 発射を送った。結果が返るまで移動も発射も送らない */
   readonly firing: boolean;
+  /**
+   * 相手の手番に準備した向き（設計書 30 章）。サーバーは手番の初めを右向きにするので、自分の手番ではサーバーが歩を記録するまでこの向きを予測に使い、発射の命令で送る。
+   * 自分の手番が終わったら外す
+   */
+  readonly facing: -1 | 1 | null;
 };
 type TurnCommand = Pick<MoveSnapshot, "matchId" | "turnId">;
 
-export const EMPTY_PREDICTION: Prediction = { base: null, sent: [], recorded: [], credit: MOVE_BURST, creditAt: 0, firing: false };
+export const EMPTY_PREDICTION: Prediction = { base: null, sent: [], recorded: [], credit: MOVE_BURST, creditAt: 0, firing: false, facing: null };
 
 const baseOf = (s: MoveSnapshot): Base => ({ matchId: s.matchId, turnId: s.turnId, playerId: s.playerId, ackMoveSeq: s.ackMoveSeq, x: s.x, y: s.y, facing: s.facing, stepsLeft: s.stepsLeft, eliminated: s.eliminated });
 const sameTurn = (base: Base, s: MoveSnapshot): boolean => base.matchId === s.matchId && base.turnId === s.turnId && base.playerId === s.playerId;
@@ -44,19 +49,20 @@ const stepPose = (mask: TerrainMask, pose: OwnPose, direction: -1 | 1): OwnPose 
 
 export const predictedPose = (p: Prediction, mask: TerrainMask): OwnPose | null => {
   if (!p.base) return null;
-  const { x, y, facing, stepsLeft, eliminated } = p.base;
+  // 準備した向きは、サーバーがこの手番の歩をまだ 1 つも記録していないあいだだけ使う。記録した歩はサーバーの向きを歩の向きにする
+  const { x, y, stepsLeft, eliminated } = p.base, facing = p.facing !== null && p.base.ackMoveSeq === 0 ? p.facing : p.base.facing;
   return pending(p, p.base).reduce<OwnPose>((pose, e) => stepPose(mask, pose, e.direction), { x, y, facing, stepsLeft, eliminated });
 };
 
 /** 受信した frame の移動。自分の手番になったら確定位置から予測を始め、手番でなくなったら送った命令を無効にする */
 export const syncTurn = (p: Prediction, snapshot: MoveSnapshot, ownTurn: boolean, now: number): Prediction => {
-  if (!ownTurn) return p.base ? { ...p, base: null, sent: staleAll(p.sent), recorded: [], firing: false } : p;
+  if (!ownTurn) return p.base ? { ...p, base: null, sent: staleAll(p.sent), recorded: [], firing: false, facing: null } : p;
   if (p.base && sameTurn(p.base, snapshot)) {
     if (snapshot.ackMoveSeq < p.base.ackMoveSeq) return p;
     const base = baseOf(snapshot);
     return { ...p, base, recorded: unconfirmed(p.recorded, base) };
   }
-  return { base: baseOf(snapshot), sent: staleAll(p.sent), recorded: [], credit: MOVE_BURST, creditAt: now, firing: false };
+  return { base: baseOf(snapshot), sent: staleAll(p.sent), recorded: [], credit: MOVE_BURST, creditAt: now, firing: false, facing: p.facing };
 };
 
 /**
@@ -73,6 +79,9 @@ export const requestMove = (p: Prediction, mask: TerrainMask, direction: -1 | 1,
   return { prediction: { ...p, sent: [...p.sent, { kind: "move", moveSeq, direction, stale: false }], credit: credit - 1, creditAt },
     command: { matchId: p.base.matchId, turnId: p.base.turnId, moveSeq } };
 };
+
+/** 相手の手番に向きを準備する。自分の手番では使わない（移動の命令で向きを変える） */
+export const prepareFacing = (p: Prediction, facing: -1 | 1): Prediction => (p.base || p.facing === facing ? p : { ...p, facing });
 
 /** 発射の命令。ackMoveSeq は最後に送った移動、向きは予測の向き（サーバーは命令の向きで撃つ） */
 export const requestFire = (p: Prediction, mask: TerrainMask): { readonly prediction: Prediction; readonly shot: TurnCommand & { readonly ackMoveSeq: number; readonly facing: -1 | 1 } } | null => {
@@ -114,7 +123,10 @@ export const createMovePredictor = () => {
       if (request) state = request.prediction;
       return request?.shot ?? null;
     },
+    prepareFacing(facing: -1 | 1): void { state = prepareFacing(state, facing); },
     pose: (): OwnPose | null => mask ? predictedPose(state, mask) : null,
+    /** 相手の手番に準備した向き。準備していなければ null */
+    prepared: (): -1 | 1 | null => state.base ? null : state.facing,
   };
 };
 export type MovePredictor = ReturnType<typeof createMovePredictor>;

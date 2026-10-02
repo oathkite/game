@@ -14,6 +14,8 @@ type FortressView = {
   readonly mask: { readonly width: number; readonly height: number; readonly cells: Uint8Array } | null;
   readonly mismatches: number;
   readonly wind: { readonly value: number };
+  /** 相手の手番に準備した向き（設計書 37.6） */
+  readonly preparedFacing: -1 | 1 | null;
 };
 
 interface Window {

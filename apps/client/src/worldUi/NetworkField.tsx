@@ -65,7 +65,7 @@ export const NetworkField = (props: Props) => {
       const writePositions = (players: LabFrame["players"]): void => { const next = JSON.stringify(players); if (next !== shownPositions) { shownPositions = next; element.dataset.positions = next; } };
       writePositions(latest.current.sample().players);
       stop = r.onFrame(dt => {
-        const { elevation, ownId } = latest.current, { frame, players, presentation, serverNow, own: predicted } = latest.current.sample();
+        const { elevation, ownId } = latest.current, { frame, players, presentation, serverNow, own: predicted, prepared } = latest.current.sample();
         const openingNow = Boolean(frame.opening && serverNow < frame.opening.endsAt);
         writePositions(players);
         const size = layout(), key = `${size.mapWidth}/${size.mapHeight}/${frame.map.width}/${frame.map.height}`;
@@ -86,6 +86,8 @@ export const NetworkField = (props: Props) => {
         facing.set(frame.actorId, predicted?.facing ?? frame.movement.facing);
         const shot = frame.phase === "replaying" ? frame.replay?.shooter : null;
         if (shot) { facing.set(shot.playerId, shot.facing);  }
+        // 相手の手番に準備した向き（設計書 30 章）は自分の画面だけに出す
+        if (prepared && frame.actorId !== ownId && shot?.playerId !== ownId) facing.set(ownId, prepared);
         if (fallMatch !== frame.matchId) { falls.reset(); fallMatch = frame.matchId; }
         const now = performance.now(), reduced = matchMedia("(prefers-reduced-motion: reduce)").matches;
         let ownFalling = false;
@@ -96,10 +98,10 @@ export const NetworkField = (props: Props) => {
         });
         if (settling !== ownFalling) { settling = ownFalling; latest.current.onSettling?.(settling); }
         shown.forEach((p, i) => { const hit = labTankHit(presentation, p.playerId, p.x); r.setTank(i, { x: p.x, y: p.y, tilt: tiltOf(mask, { x: Math.round(p.x), y: Math.round(p.y) }), facing: facing.get(p.playerId) ?? 1,
-          elevation: p.playerId === shot?.playerId ? shot.elevation : p.playerId === ownId ? elevation : 45, hp: hit.bar ? hit.bar.hp : p.eliminated ? 0 : p.hp, ...(hit.bar ? { hpGhost: hit.bar.hpGhost, ghostOn: hit.bar.ghostOn } : {}), visible: p.y < frame.map.height, falling: p.falling || presentation.fallingIds.includes(p.playerId), shotFlashes: p.playerId === shot?.playerId ? presentation.shotFlashes : [], recoil: p.playerId === shot?.playerId ? presentation.recoil : 0, aiming: frame.phase === "acting" && p.playerId === ownId && p.playerId === frame.actorId, charge: frame.phase === "acting" && p.playerId === ownId && p.playerId === frame.actorId ? latest.current.charge ?? 0 : 0, acting: frame.phase === "acting" && p.playerId === frame.actorId, flash: hit.flash, nudge: reducedNow ? 0 : hit.nudge }); });
+          elevation: p.playerId === shot?.playerId ? shot.elevation : p.playerId === ownId ? elevation : 45, hp: hit.bar ? hit.bar.hp : p.eliminated ? 0 : p.hp, ...(hit.bar ? { hpGhost: hit.bar.hpGhost, ghostOn: hit.bar.ghostOn } : {}), visible: p.y < frame.map.height && !hit.hidden, falling: p.falling || presentation.fallingIds.includes(p.playerId), shotFlashes: p.playerId === shot?.playerId ? presentation.shotFlashes : [], recoil: p.playerId === shot?.playerId ? presentation.recoil : 0, aiming: frame.phase === "acting" && p.playerId === ownId && p.playerId === frame.actorId, charge: frame.phase === "acting" && p.playerId === ownId && p.playerId === frame.actorId ? latest.current.charge ?? 0 : 0, acting: frame.phase === "acting" && p.playerId === frame.actorId, flash: hit.flash, nudge: reducedNow ? 0 : hit.nudge }); });
         const actor = shown.find(p => p.playerId === frame.actorId); if (actor && frame.phase === "acting") rig.actor({ x: actor.x, y: actor.y - 6 });
         if (frame.replay && replayKey !== frame.replay.startsAt) {
-          replayKey = frame.replay.startsAt; bullet = r.projectile("yellow", frame.replay.shooter.weapon);
+          replayKey = frame.replay.startsAt; bullet = r.projectile("yellow", frame.replay.shooter.weapon, frame.replay.shooter.item);
           // 自分の射撃の軌跡を次の自分の手番まで残す（設計書 38 の E7）。相手には見せない
           if (frame.replay.shooter.playerId === ownId) guide = guideDots(frame.replay.paths.map(path => path.points));
           const p = presentation.bullets[0]; if (p) rig.focus(p, "shot");
@@ -108,7 +110,7 @@ export const NetworkField = (props: Props) => {
         if (showGuide !== guideShown) { guideShown = showGuide; r.setGuide(showGuide ? guide : null); }
         const replay = frame.phase === "replaying" ? frame.replay : null;
         if (replay) {
-          const flightMs = Math.max(1, replay.endsAt - replay.startsAt - replayTailMs(replay.impacts));
+          const flightMs = Math.max(1, replay.endsAt - replay.startsAt - replayTailMs(replay.impacts, Boolean(replay.teleport)));
           const elapsed = serverNow - replay.startsAt;
           replay.impacts.forEach((impact, index) => {
             const event = `${replay.startsAt}/${index}`;

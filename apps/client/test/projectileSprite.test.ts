@@ -52,4 +52,25 @@ describe("projectilePixels", () => {
   it("掘削弾の導火線の火花はコマで瞬く", () => {
     expect(Array.from(projectilePixels("digger", TEAM_RAMPS.red, 0, 0).pixels).join()).not.toBe(Array.from(projectilePixels("digger", TEAM_RAMPS.red, 0, 1).pixels).join());
   });
+  it("テレポート弾はロケットの絵。標準砲より大きい丸い胴で、主色の先端と尾翼を持ち、向きで描き直す（設計書 42.3、40.8）", () => {
+    const rocket = projectilePixels("teleport", TEAM_RAMPS.red, 0, 0), cannon = projectilePixels("cannon", TEAM_RAMPS.red, 0, 0);
+    const right = opaqueBounds(rocket)!, up = opaqueBounds(projectilePixels("teleport", TEAM_RAMPS.red, -Math.PI / 2, 0))!;
+    expect(right.width).toBeGreaterThan(opaqueBounds(cannon)!.width * 2);
+    expect(right.width).toBeGreaterThan(right.height);
+    expect(up.height).toBeGreaterThan(up.width);
+    expect(PROJECTILE_ROTATES.teleport).toBe(true);
+    const c = colors(rocket);
+    expect(c.has(TEAM_RAMPS.red.base) || c.has(TEAM_RAMPS.red.light)).toBe(true);
+    for (let frame = 0; frame < 3; frame++) for (const color of colors(projectilePixels("teleport", TEAM_RAMPS.cyan, 1, frame))) expect(isPaletteColor(color)).toBe(true);
+  });
+  it("ロケットの炎は白い芯から黄、橙、赤へ変わり、3 コマで長さを変えて揺れる", () => {
+    const frames = [0, 1, 2].map(frame => projectilePixels("teleport", TEAM_RAMPS.red, 0, frame));
+    for (const frame of frames) for (const fire of [PALETTE.white, PALETTE.fire1, PALETTE.fire2, PALETTE.fire4]) expect(colors(frame).has(fire)).toBe(true);
+    expect(new Set(frames.map(f => Array.from(f.pixels).join())).size).toBe(3);
+    expect(new Set(frames.map(f => opaqueBounds(f)!.width)).size).toBeGreaterThan(1);
+    // 3 コマで一巡する
+    expect(Array.from(projectilePixels("teleport", TEAM_RAMPS.red, 0, 3).pixels).join()).toBe(Array.from(frames[0]!.pixels).join());
+    // マップの上を飛ぶとコマの番号は負になる
+    expect(Array.from(projectilePixels("teleport", TEAM_RAMPS.red, 0, -1).pixels).join()).toBe(Array.from(frames[2]!.pixels).join());
+  });
 });

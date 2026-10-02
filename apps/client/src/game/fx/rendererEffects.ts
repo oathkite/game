@@ -8,7 +8,11 @@ import { partitionBatch } from "./particles";
 import { craterGlow, impactSmoke, impactSparks, lightBurst, muzzleSmoke, trackDust, wreckDebris } from "./impactFx";
 import { FLOATER_TABLE, KILL_TABLE, LASER_TABLE, TINT_PRIORITY, WARM_TABLE, type GradeTable } from "./gradeTables";
 import type { ScreenFx } from "./screenFx";
+import type { ProjectileArt } from "../projectileSprite";
 import { terrainDebris } from "./terrainDebris";
+import { hash32 } from "./hash";
+import { ARRIVE_BEAM, DEPART_BEAM, teleportBeam, teleportBloom, teleportBurst, teleportMotes, teleportRing, teleportShock, teleportStreak, teleportTwinkles } from "./teleportFx";
+import { TELEPORT_ARRIVE_MS } from "../teleportMotion";
 import { crossFlash, debrisHeatOf, debrisPowerOf, impactPaletteOf, weaponTrail, type TrailPoint } from "./weaponFx";
 
 // 再生の外で寿命が尽きるまで描く演出の入口。設計書 41。
@@ -29,6 +33,17 @@ export type ImpactSpec = {
   readonly mask?: TerrainMask;
 };
 
+/** テレポート（設計書 42.3）。from は撃った位置、to は着地点の接地点、hit は弾が当たった点（セル）。age は着弾からの ms */
+export type TeleportSpec = {
+  readonly from: { readonly x: number; readonly y: number };
+  readonly to: { readonly x: number; readonly y: number };
+  readonly hit: { readonly x: number; readonly y: number };
+  readonly seed: number;
+  readonly age?: number;
+  /** 着弾の瞬間の地形。着地点のまわりの地表を照らすのに使う */
+  readonly mask?: TerrainMask;
+};
+
 export type RendererEffects = {
   /** 地形が削れた瞬間。削れた地形の破片（D1）、赤熱する縁（I3）、クレーターの底の炎と火の粉 */
   readonly crater: (before: TerrainMask, after: TerrainMask, op: TerrainOp, seed: number, age?: number, weapon?: WeaponId) => void;
@@ -37,7 +52,10 @@ export type RendererEffects = {
   /** 撃破の瞬間（delay ms 後）に 34 ms だけ画面全体を白くし、空を赤く寄せる。白の長さはヒットストップで延ばさない。1 秒に 1 回まで（I5） */
   readonly killFlash: (delay?: number) => void;
   /** 発射。砲口の煙の輪（段階 4）、発射光の光、武器の軌跡の粒（段階 5）。points は弾道の点（セル、発射からの ms） */
-  readonly launch: (weapon: WeaponId, points: readonly TrailPoint[], seed: number, age?: number) => void;
+  /** 発射の煙と光と、弾の絵ごとの軌跡の粒（テレポートはロケットの噴射） */
+  readonly launch: (weapon: ProjectileArt, points: readonly TrailPoint[], seed: number, age?: number) => void;
+  /** テレポートの着弾。撃った位置と着地点に光の柱を立て、光の粒、地を走る光の輪、現れる瞬間の火花を出し、空を青へ寄せる */
+  readonly teleport: (spec: TeleportSpec) => void;
   /** 走行の土煙。位置はセルで接地点 */
   readonly dust: (x: number, y: number, facing: 1 | -1, seed: number) => void;
   /** 撃破の破片と煙の柱。delay ms 後に機体の色で散らす。seat があれば、煙の柱をその機体の今の位置から出し続ける */
@@ -104,6 +122,33 @@ const emitImpact = (d: Deps, s: ImpactSpec): void => {
   if (s.tier >= 3) d.screenFx.dimAt(s.cx, s.cy, Math.min(s.radius * LIGHT_SCALE, LIGHT_MAX_CELLS), from, DIM_MS);
 };
 
+/** 着地点の地表の照り返しの大きさ（セル）と、弾が当たってから照り始めるまで（ms） */
+const TELEPORT_POOL_CELLS = 10;
+const TELEPORT_POOL_AT_MS = 200;
+const TELEPORT_TINT_MS = 600;
+
+const emitTeleport = (d: Deps, s: TeleportSpec): void => {
+  if (d.reduced()) return;
+  const age = s.age ?? 0;
+  // 弾が当たった点の短い光と火花
+  d.fx.emit("back", lightBurst({ cx: s.hit.x, cy: s.hit.y, radius: 2.5 * ART_PER_CELL, duration: 200, strength: 0.8, inner: PALETTE.energy0, outer: PALETTE.energy2 }), age);
+  d.fx.emit("front", impactSparks(s.hit.x, s.hit.y, 3, s.seed, [PALETTE.white, PALETTE.energy0, PALETTE.energy1, PALETTE.energy2]), age);
+  // 撃った位置。機体が白く光って消えるあいだの低い柱
+  d.fx.emit("back", teleportBeam(s.from.x, s.from.y, DEPART_BEAM), age);
+  d.fx.emit("front", teleportMotes(s.from.x, s.from.y, hash32(s.seed, 1), 14, DEPART_BEAM, 0), age);
+  // 着地点。空から降りて閃く柱、地表の照り返し、立ちのぼる粒、現れる瞬間の光の筋と輪、地を走る光、火花
+  d.fx.emit("back", teleportBloom(s.to.x, s.to.y, ARRIVE_BEAM.descend), age);
+  d.fx.emit("back", teleportBeam(s.to.x, s.to.y, ARRIVE_BEAM), age);
+  d.fx.emit("front", teleportTwinkles(s.to.x, s.to.y, hash32(s.seed, 5), 90, 60, 1000), age);
+  d.fx.emit("front", teleportStreak(s.to.x, s.to.y, TELEPORT_ARRIVE_MS), age);
+  d.fx.emit("front", teleportShock(s.to.x, s.to.y, TELEPORT_ARRIVE_MS), age);
+  if (s.mask) d.fx.emit("back", surfaceLight(s.mask, s.to.x, s.to.y, TELEPORT_POOL_CELLS * ART_PER_CELL, PALETTE.energy0, PALETTE.energy2), age - TELEPORT_POOL_AT_MS);
+  d.fx.emit("front", teleportMotes(s.to.x, s.to.y, hash32(s.seed, 2), 60, ARRIVE_BEAM, 80), age);
+  d.fx.emit("front", teleportRing(s.to.x, s.to.y, hash32(s.seed, 3), TELEPORT_ARRIVE_MS), age);
+  d.fx.emit("front", teleportBurst(s.to.x, s.to.y, hash32(s.seed, 4), TELEPORT_ARRIVE_MS), age);
+  d.screenFx.tintAt(FLOATER_TABLE, d.fx.now() - age, TELEPORT_TINT_MS);
+};
+
 /** 時刻 now までに生まれる煙の柱の粒を出し、出し終えていない柱を返す。残骸が見えなくなったら（場外）柱を終える */
 const emitSmoke = (d: Deps, sources: readonly SmokeSource[], now: number): readonly SmokeSource[] => sources.flatMap((s) => {
   let next = s.next;
@@ -151,6 +196,7 @@ export const createRendererEffects = (d: Deps): RendererEffects & { readonly tic
       const trail = weaponTrail(weapon, points, seed);
       if (trail) d.fx.emit("back", trail, age);
     },
+    teleport: (s) => emitTeleport(d, s),
     dust: (x, y, facing, seed) => { if (!d.reduced()) d.fx.emit("back", trackDust(x, y, facing, d.soil.slice(0, 2), seed)); },
     wreck: (x, y, ramp, seed, delay = 0, seat) => {
       if (d.reduced()) return;
