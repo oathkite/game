@@ -90,3 +90,14 @@ it("カメラが追う弾は、1 発目の先頭の弾道とダブルシュー�
   const single = jobOf(shot({ x: 60, elevation: 45, power: 50, weapon: "triple" }), players(60, 150));
   expect(single.paths.map((_, p) => leadsVolley(single, p))).toEqual([true, false, false]);
 });
+
+it("動きを減らす設定では、テレポートは着弾の瞬間に着地点へ移り、柱を待たずに次へ進む", () => {
+  const job = jobOf(shot({ x: 60, elevation: 45, power: 60, item: "teleport" }), players(60, 300));
+  const { renderer, calls, run } = fakeRenderer();
+  const done = vi.fn();
+  playReplay(renderer, job, [45, 45], 0, { sound: vi.fn(), done, reduceMotion: true, roundEnd: true });
+  const flight = (job.paths[0]!.points.length - 1) * (1000 / 60);
+  run(flight + 300);
+  expect(done).toHaveBeenCalled();
+  expect(calls.filter(c => c.name === "setTank" && c.args[0] === 0).every(c => (c.args[1] as { visible: boolean; flash: boolean }).visible && !(c.args[1] as { flash: boolean }).flash)).toBe(true);
+});

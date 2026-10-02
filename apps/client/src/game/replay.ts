@@ -404,8 +404,8 @@ const flightEndOf = (job: ReplayJob, launchAt: readonly number[], p: number): nu
 const shotDone = (run: Run): boolean => {
   const impactsDone = run.impacts.every((ir) => run.elapsed - ir.at >= (run.cb.roundEnd ? CARVE_AT_MS + 100 : IMPACT_TOTAL_MS));
   const pathsDone = run.job.paths.every((path, p) => run.elapsed >= flightEndOf(run.job, run.launchAt, p) + (path.impactAt.length === 0 && !run.job.shot.teleport ? MISS_MS : 0));
-  // テレポートは、光の柱が消えるまで落下と後の段へ進めない。留める時間のない対戦でも、カメラを着地点に残す
-  if (run.teleportAt !== null && run.elapsed < run.teleportAt + TELEPORT_FX_MS) return false;
+  // テレポートは、光の柱が消えるまで落下と後の段へ進めない。留める時間のない対戦でも、カメラを着地点に残す。動きを減らす設定では柱を出さないので待たない
+  if (run.teleportAt !== null && !run.cb.reduceMotion && run.elapsed < run.teleportAt + TELEPORT_FX_MS) return false;
   return impactsDone && pathsDone;
 };
 

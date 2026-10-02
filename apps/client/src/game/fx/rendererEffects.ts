@@ -122,13 +122,14 @@ const emitImpact = (d: Deps, s: ImpactSpec): void => {
   if (s.tier >= 3) d.screenFx.dimAt(s.cx, s.cy, Math.min(s.radius * LIGHT_SCALE, LIGHT_MAX_CELLS), from, DIM_MS);
 };
 
-/** 着地点の地表の照り返しの大きさ（セル） */
+/** 着地点の地表の照り返しの大きさ（セル）と、弾が当たってから照り始めるまで（ms） */
 const TELEPORT_POOL_CELLS = 10;
+const TELEPORT_POOL_AT_MS = 200;
 const TELEPORT_TINT_MS = 600;
 
 const emitTeleport = (d: Deps, s: TeleportSpec): void => {
   if (d.reduced()) return;
-  const age = s.age ?? 0, arrive = age - TELEPORT_ARRIVE_MS;
+  const age = s.age ?? 0;
   // 弾が当たった点の短い光と火花
   d.fx.emit("back", lightBurst({ cx: s.hit.x, cy: s.hit.y, radius: 2.5 * ART_PER_CELL, duration: 200, strength: 0.8, inner: PALETTE.energy0, outer: PALETTE.energy2 }), age);
   d.fx.emit("front", impactSparks(s.hit.x, s.hit.y, 3, s.seed, [PALETTE.white, PALETTE.energy0, PALETTE.energy1, PALETTE.energy2]), age);
@@ -141,7 +142,7 @@ const emitTeleport = (d: Deps, s: TeleportSpec): void => {
   d.fx.emit("front", teleportTwinkles(s.to.x, s.to.y, hash32(s.seed, 5), 90, 60, 1000), age);
   d.fx.emit("front", teleportStreak(s.to.x, s.to.y, TELEPORT_ARRIVE_MS), age);
   d.fx.emit("front", teleportShock(s.to.x, s.to.y, TELEPORT_ARRIVE_MS), age);
-  if (s.mask) d.fx.emit("back", surfaceLight(s.mask, s.to.x, s.to.y, TELEPORT_POOL_CELLS * ART_PER_CELL, PALETTE.energy0, PALETTE.energy2), arrive + 120);
+  if (s.mask) d.fx.emit("back", surfaceLight(s.mask, s.to.x, s.to.y, TELEPORT_POOL_CELLS * ART_PER_CELL, PALETTE.energy0, PALETTE.energy2), age - TELEPORT_POOL_AT_MS);
   d.fx.emit("front", teleportMotes(s.to.x, s.to.y, hash32(s.seed, 2), 60, ARRIVE_BEAM, 80), age);
   d.fx.emit("front", teleportRing(s.to.x, s.to.y, hash32(s.seed, 3), TELEPORT_ARRIVE_MS), age);
   d.fx.emit("front", teleportBurst(s.to.x, s.to.y, hash32(s.seed, 4), TELEPORT_ARRIVE_MS), age);
