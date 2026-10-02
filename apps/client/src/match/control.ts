@@ -1,4 +1,4 @@
-import type { Facing, WeaponSlot } from "@game/protocol";
+import type { Facing, ItemId, WeaponSlot } from "@game/protocol";
 import { ELEVATION_MAX, ELEVATION_MIN, stepOutcome } from "@game/sim";
 import type { MatchView } from "./types";
 
@@ -42,4 +42,12 @@ export const applySlot = (view: MatchView, slot: WeaponSlot, preparation = false
   if (preparation && canPrepare(view)) return slot === view.lastSlot ? view : { ...view, lastSlot: slot };
   if (view.phase !== "acting" || !c || c.slot === slot) return view;
   return { ...view, lastSlot: slot, control: { ...c, slot } };
+};
+
+/** アイテムの選択（設計書 42.1）。自分の手番の間だけ選べ、使い終えたアイテムは選べない。null で外す */
+export const applyItem = (view: MatchView, item: ItemId | null): MatchView => {
+  const c = view.control;
+  if (view.phase !== "acting" || !c || c.item === item) return view;
+  if (item && (view.players?.[view.currentSeat]?.itemsUsed ?? []).includes(item)) return view;
+  return { ...view, control: { ...c, item } };
 };

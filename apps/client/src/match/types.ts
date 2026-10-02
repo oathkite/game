@@ -1,7 +1,7 @@
 import type { CpuPose } from "@/practice/cpuTurn";
 import type { DelayState } from "@game/protocol";
-import { type Facing, type Loadout, type MatchResult, type Seat, type ShotResult, type TankColors, TURN_LIMIT, type WeaponSlot, type Wind } from "@game/protocol";
-import type { ProjectilePath, TerrainMask } from "@game/sim";
+import { type Facing, type ItemId, type Loadout, type MatchResult, type Seat, type ShotResult, type TankColors, TURN_LIMIT, type WeaponSlot, type Wind } from "@game/protocol";
+import type { FirstShot, ProjectilePath, TerrainMask } from "@game/sim";
 
 // クライアントが持つ対戦の表示状態。サーバーの通知から組み立て、勝手には進めない（設計書 04）。
 
@@ -16,6 +16,8 @@ export type PlayerView = {
   readonly y: number;
   readonly facing: Facing;
   readonly connected: boolean;
+  /** 使い終えたアイテム（設計書 42）。持たなければどれも使っていない */
+  readonly itemsUsed?: readonly ItemId[] | undefined;
 };
 
 export type ClientPhase =
@@ -39,6 +41,8 @@ export type LocalControl = {
   readonly elevation: number;
   /** このターンに撃つ武器のスロット（設計書 10） */
   readonly slot: WeaponSlot;
+  /** このターンに使うアイテム。武器のスロットと違い、ターンをまたがない（設計書 42.1） */
+  readonly item: ItemId | null;
   readonly stepsLeft: number;
   /** 落下で移動が終わった */
   readonly fell: boolean;
@@ -54,6 +58,8 @@ export type ReplayJob = {
   readonly maskAfter: TerrainMask;
   readonly playersBefore: readonly [PlayerView, PlayerView];
   readonly playersAfter: readonly [PlayerView, PlayerView];
+  /** ダブルシュートの 1 発目の終わり。1 発目の弾道の本数と、両者が落ちた後の位置（クライアントの再計算から得る） */
+  readonly firstShot?: FirstShot | undefined;
 };
 
 export type MatchView = {

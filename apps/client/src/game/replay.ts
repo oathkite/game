@@ -3,7 +3,7 @@ import { weaponSound } from "@/app/weaponSounds";
 import { shotFlashes } from "./muzzlePose";
 import { shotRecoil } from "./shotRecoil";
 import { COLOR_HEX, type CellPoint, type Impact, type Seat } from "@game/protocol";
-import { carve, isRingOut, MAP_HEIGHT, ONE, tiltOf, weaponSpec, type ProjectilePath, type TerrainMask } from "@game/sim";
+import { carve, DOUBLE_GAP_TICKS, isRingOut, MAP_HEIGHT, ONE, tiltOf, weaponSpec, type ProjectilePath, type TerrainMask } from "@game/sim";
 import type { SoundName } from "@/app/audio";
 import type { PlayerView, ReplayJob } from "@/match/types";
 import {
@@ -87,6 +87,8 @@ type Run = {
   readonly mySeat: Seat | null;
   readonly cb: ReplayCallbacks;
   readonly falls: readonly Fall[];
+  /** ダブルシュートで 1 発目の後に機体を落とし始める時刻。2 発目を撃たない射撃は null（設計書 42.2） */
+  readonly midFallAt: number | null;
   /** 弾道ごとの発射の遅れ */
   readonly launchAt: readonly number[];
   /** 弾道ごとの位置列をセルに直したもの。軌跡に使う */
@@ -139,11 +141,30 @@ const elevationOf = (run: Run, seat: Seat): number => (seat === run.job.shot.inp
 /** 落下前の地表。撃った側は移動後の位置（input.y）、相手はターン開始時の位置 */
 const groundBeforeFall = (job: ReplayJob, seat: Seat): number => (seat === job.shot.input.seat ? job.shot.input.y : job.playersBefore[seat].y);
 
-/** 着弾で地面を失った機体の落下。落下前の地表と、サーバーが決めた落下後の地表の差から求める */
+/** テレポートで移った機体（設計書 42.3）。飛翔の間は撃った位置に置き、落下させずに着地点へ移す */
+const teleported = (job: ReplayJob, seat: Seat): boolean => Boolean(job.shot.teleport) && seat === job.shot.input.seat;
+
+/** ダブルシュートの 1 発目で落ちた後の地表。2 発目を撃たない射撃は落下前の地表 */
+const groundBetweenShots = (job: ReplayJob, seat: Seat): number => {
+  const mid = job.firstShot?.positions[seat];
+  if (!mid) return groundBeforeFall(job, seat);
+  return mid.y >= MAP_HEIGHT ? MAP_HEIGHT + 12 : mid.y;
+};
+
+/** 飛翔の間の地表。ダブルシュートの 1 発目の後は、落ちた後の地表へ落としていく */
+const groundDuringShot = (run: Run, seat: Seat): number => {
+  const from = groundBeforeFall(run.job, seat);
+  if (run.midFallAt === null || run.elapsed < run.midFallAt) return from;
+  const to = groundBetweenShots(run.job, seat);
+  return to > from ? Math.min(to, from + FALL_CELLS_PER_S * (run.elapsed - run.midFallAt) / 1000) : from;
+};
+
+/** 着弾で地面を失った機体の落下。落下前の地表（ダブルシュートは 1 発目の後の地表）と、サーバーが決めた落下後の地表の差から求める */
 const computeFalls = (job: ReplayJob): Fall[] => {
   const falls: Fall[] = [];
   for (const seat of [0, 1] as const) {
-    const from = groundBeforeFall(job, seat);
+    if (teleported(job, seat)) continue;
+    const from = groundBetweenShots(job, seat);
     const after = job.playersAfter[seat];
     const to = isRingOut(job.maskAfter, after) ? MAP_HEIGHT + 12 : after.y;
     if (to > from) falls.push({ seat, from, to });
@@ -159,9 +180,16 @@ const TIME_EPSILON_MS = 1e-6;
 export const endsWithImpact = (flightEnd: number, impactAt: number): boolean => flightEnd - (impactAt + HOLD_MS) <= TIME_EPSILON_MS;
 
 /** 弾道ごとの発射の遅れと、着弾ごとの時刻。弾道の位置列はクライアントの再計算から得る */
-const timeline = (job: ReplayJob): { launchAt: number[]; impacts: ImpactRun[] } => {
+/** ダブルシュートの 1 発目の弾がすべて終わってから 2 発目を撃つまでの間。オンラインの同時処理と同じ 30 tick */
+const DOUBLE_GAP_MS = DOUBLE_GAP_TICKS * STEP_MS;
+
+const timeline = (job: ReplayJob): { launchAt: number[]; impacts: ImpactRun[]; midFallAt: number | null } => {
   const fanCount = weaponSpec(job.shot.input.weapon).fan.length;
-  const launchAt = job.paths.map((_, p) => launchDelayMs(p, fanCount));
+  // ダブルシュートの 2 発目（設計書 42.2）は、1 発目の弾がすべて終わってから DOUBLE_GAP_MS 置いて、同じ遅れの並びで撃つ
+  const first = job.firstShot?.paths ?? job.paths.length;
+  const firstLaunch = job.paths.slice(0, first).map((_, p) => launchDelayMs(p, fanCount));
+  const firstEnd = Math.max(0, ...firstLaunch.map((_, p) => flightEndOf(job, firstLaunch, p)));
+  const launchAt = job.paths.map((_, p) => (p < first ? firstLaunch[p]! : firstEnd + DOUBLE_GAP_MS + launchDelayMs(p - first, fanCount)));
   const impacts = job.shot.impacts.map((impact) => {
     const path = job.paths[impact.projectile];
     const at = (launchAt[impact.projectile] ?? 0) + impactTimeMs(impact.stage, path?.impactAt ?? []);
@@ -170,7 +198,10 @@ const timeline = (job: ReplayJob): { launchAt: number[]; impacts: ImpactRun[] } 
   // 最後の着弾は、その後に弾が飛んでいないときだけヒットストップの対象にする
   const last = impacts.reduce<ImpactRun | null>((a, b) => (a === null || b.at > a.at ? b : a), null);
   const flightEnd = Math.max(0, ...job.paths.map((_, p) => flightEndOf(job, launchAt, p)));
-  return { launchAt, impacts: impacts.map(ir => (ir === last && endsWithImpact(flightEnd, ir.at) ? { ...ir, final: true } : ir)) };
+  // 1 発目の後の落下は、1 発目の最後の着弾の削れが見えてから始める
+  const firstImpacts = impacts.filter(ir => ir.impact.projectile < first);
+  const midFallAt = job.firstShot ? Math.max(firstEnd, ...firstImpacts.map(ir => ir.at + CARVE_AT_MS)) : null;
+  return { launchAt, midFallAt, impacts: impacts.map(ir => (ir === last && endsWithImpact(flightEnd, ir.at) ? { ...ir, final: true } : ir)) };
 };
 
 /** 着弾後の位置で、地形は着弾前のまま描く。落下前の姿勢。HP バーは削れてからの時間で減らしていく */
@@ -179,8 +210,9 @@ const poseAfterHit = (run: Run, seat: Seat, flash: boolean): TankPose => {
   const after = run.job.playersAfter[seat];
   const drain = run.drains[seat];
   const bar = drain ? hpBarAt(run.elapsed - drain.at, drain.before, drain.after) : { hp: run.hp[seat], hpGhost: run.hp[seat], ghostOn: false };
-  // 落下前なので、撃った側は移動後の地表、相手はターン開始時の地表に立つ
-  return poseOf({ ...before, hp: bar.hp, x: after.x, y: groundBeforeFall(run.job, seat), facing: after.facing }, run.job.maskBefore, elevationOf(run, seat), {
+  // 落下前なので、撃った側は移動後の地表、相手はターン開始時の地表に立つ。テレポートした機体は撃った位置に置く
+  const x = teleported(run.job, seat) ? run.job.shot.input.x : after.x;
+  return poseOf({ ...before, hp: bar.hp, x, y: groundDuringShot(run, seat), facing: after.facing }, run.job.maskBefore, elevationOf(run, seat), {
     flash,
     shotFlashes: seat === run.job.shot.input.seat ? shotFlashes(run.elapsed, run.launchAt) : [],
     recoil: seat === run.job.shot.input.seat ? shotRecoil(run.elapsed, run.launchAt) : 0,
@@ -241,6 +273,8 @@ const updateBullet = (run: Run, p: number): void => {
   const points = path.points;
   if (!run.launched[p] && points[0]) {
     run.launched[p] = true;
+    // ダブルシュートの 2 発目の最初の弾道で、発射の音をもう一度鳴らす
+    if (p > 0 && p === run.job.firstShot?.paths) run.cb.sound(weaponSound(run.job.shot.input.weapon, "fire"));
     // 砲口の煙の輪と発射光の光（段階 4）、武器の軌跡（段階 5）。弾がその点を通る時刻は、着弾ごとに止まる分を足して決める
     const trail = points.map((q, i) => ({ x: q.x / ONE, y: q.y / ONE, at: i * STEP_MS + path.impactAt.filter(k => k < i).length * HOLD_MS }));
     run.renderer.effects.launch(run.job.shot.input.weapon, trail, hash32(0, run.job.id, p, 9), t);
@@ -340,7 +374,8 @@ const hitMarkers = (run: Run): readonly EdgePoint[] => ([0, 1] as const).flatMap
 /** 被弾の見せ方。白はダメージが大きいほど長く続き、HP バーは減っていき、画面が揺れる */
 const updateHits = (run: Run): void => {
   for (const seat of [0, 1] as const) {
-    if (run.drains[seat] || seat === run.job.shot.input.seat) run.renderer.setTank(seat, poseAfterHit(run, seat, run.elapsed < run.flashUntil[seat]));
+    // ダブルシュートでは、被弾していない機体も 1 発目の後に落ちることがある
+    if (run.drains[seat] || seat === run.job.shot.input.seat || run.midFallAt !== null) run.renderer.setTank(seat, poseAfterHit(run, seat, run.elapsed < run.flashUntil[seat]));
   }
   run.renderer.setEdgeMarkers(hitMarkers(run), edgeBlinkOn(run.elapsed, run.cb.reduceMotion));
   if (run.cb.reduceMotion) return;
@@ -409,7 +444,7 @@ export const playReplay = (
   cb: ReplayCallbacks,
 ): (() => void) => {
   const shooter = job.playersBefore[job.shot.input.seat];
-  const { launchAt, impacts } = timeline(job);
+  const { launchAt, impacts, midFallAt } = timeline(job);
   const run: Run = {
     renderer,
     job,
@@ -418,6 +453,7 @@ export const playReplay = (
     mySeat,
     cb,
     falls: computeFalls(job),
+    midFallAt,
     launchAt,
     trails: job.paths.map(path => path.points.map(q => ({ x: q.x / ONE, y: q.y / ONE }))),
     impacts,

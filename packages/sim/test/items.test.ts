@@ -179,6 +179,15 @@ describe("2 人対戦の射撃結果（v1）", () => {
     expect(r.finished).toBeNull();
   });
 
+  it("ダブルシュートで 2 発目を撃ったら、1 発目の終わりの位置を持つ", () => {
+    const mask = flatMask();
+    const players = [on(mask, 60), on(mask, 150)] as const;
+    const input = shot({ elevation: 45, power: 50, item: "double" });
+    const out = simulateShot(mask, players, input);
+    expect(out.firstShot).toEqual(simulateCombatWithItem(mask, players, 0, input, false).firstShot);
+    expect("firstShot" in simulateShot(mask, players, shot({ elevation: 45, power: 50 }))).toBe(false);
+  });
+
   it("アイテムを使わない射撃の結果にはテレポートの項目を持たない", () => {
     const mask = flatMask();
     expect("teleport" in simulateShot(mask, [on(mask, 60), on(mask, 300)], shot()).result).toBe(false);

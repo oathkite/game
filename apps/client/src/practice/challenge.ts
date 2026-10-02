@@ -17,7 +17,7 @@ export const initialChallenge = (stage: ChallengeStage, profile: Profile): Chall
   const other: PlayerView = { ...player, seat: 1, x: 399, y: 225 };
   return {
     view: { ...EMPTY_VIEW, phase: "acting", mask: createStageMask(stage), players: [player, other], mySeat: 0, wind: { value: stage.wind },
-      control: { x: player.x, y: player.y, facing: 1, elevation: 45, slot: 0, stepsLeft: STEPS_PER_TURN, fell: false } },
+      control: { x: player.x, y: player.y, facing: 1, elevation: 45, slot: 0, item: null, stepsLeft: STEPS_PER_TURN, fell: false } },
     targets: createTargets(stage), used: 0, status: "playing", pendingTargets: null,
   };
 };
@@ -52,6 +52,6 @@ export const completeChallenge = (state: ChallengeState, stage: ChallengeStage, 
   const status = challengeStatus(state.pendingTargets, state.used, stage.shots, p.y >= job.maskAfter.height);
   return { ...state, status, targets: state.pendingTargets, pendingTargets: null,
     view: { ...state.view, phase: status === "playing" ? "acting" : "finished", mask: job.maskAfter, players: job.playersAfter, replay: null,
-      control: status === "playing" ? { x: p.x, y: p.y, facing: p.facing, elevation: state.view.lastElevation, slot: state.view.lastSlot, stepsLeft: STEPS_PER_TURN, fell: false } : null },
+      control: status === "playing" ? { x: p.x, y: p.y, facing: p.facing, elevation: state.view.lastElevation, slot: state.view.lastSlot, item: null, stepsLeft: STEPS_PER_TURN, fell: false } : null },
   };
 };

@@ -1,5 +1,6 @@
 import type { MAP_CHOICES, MAP_NAMES } from "./constants.js";
 import type { Facing, MatchResult, Seat, TankColors, TerrainOp, Wind } from "./match.js";
+import type { ItemId } from "./items.js";
 import type { Loadout } from "./weapons.js";
 
 // 設計書 06 の 6.1 から 6.3。部屋と対戦の状態。
@@ -54,6 +55,8 @@ export type PlayerState = {
   readonly y: number;
   readonly facing: Facing;
   readonly connected: boolean;
+  /** 使い終えたアイテム（設計書 42）。持たない保存と状態は、どれも使っていないものとして扱う */
+  readonly itemsUsed?: readonly ItemId[];
 };
 
 export type MatchState = {
