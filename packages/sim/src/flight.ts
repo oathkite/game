@@ -59,7 +59,7 @@ export const checkCell = (mask: TerrainMask, cell: CellPoint, centers: readonly 
  * from の次のセルから to までを、縦か横に 1 セルずつ進む 4 連結の整数直線で順に返す。
  * 斜めに抜けると 1 セル幅の斜めの壁をすり抜けるので、対角には進まない。
  */
-const cellsBetween = (from: CellPoint, to: CellPoint): CellPoint[] => {
+export const cellsBetween = (from: CellPoint, to: CellPoint): CellPoint[] => {
   const out: CellPoint[] = [];
   const dx = Math.abs(to.x - from.x);
   const dy = Math.abs(to.y - from.y);

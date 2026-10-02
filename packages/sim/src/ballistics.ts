@@ -4,6 +4,7 @@ import { isqrt } from "./fixed.js";
 import { isRingOut, settle as settleTank, tankCenterY, type TankPos } from "./tank.js";
 import { carve, type TerrainMask } from "./terrain.js";
 import { firstStage, weaponSpec, type StageSpec, type WeaponSpec } from "./weapons.js";
+import { flyTeleport } from "./teleport.js";
 import { checkCell, fly, launch, motionOf, muzzleOf, settle, type FixedPoint, type Flight, type Hit, type Motion, type ProjectilePath } from "./flight.js";
 export { fireAngle, muzzleOf, type FixedPoint, type Muzzle, type ProjectilePath } from "./flight.js";
 
@@ -118,14 +119,14 @@ export const simulateShot = (
   const shooter: TankPos = { x: input.x, y: input.y };
   const other: TankPos = input.seat === 0 ? players[1] : players[0];
   const before: readonly [TankPos, TankPos] = input.seat === 0 ? [shooter, other] : [other, shooter];
-  const v = simulateCombat(mask, before.map((pos, i) => ({ ...pos, hp: players[i]!.hp })), input, false);
+  const v = simulateCombatWithItem(mask, before.map((pos, i) => ({ ...pos, hp: players[i]!.hp })), input.seat, input, false);
   // 落下は削り終わった地形に対して、真下の次の地面まで。地面がなければ奈落
   const after: readonly [TankPos, TankPos] = [v.positions[0]!, v.positions[1]!];
   const ringOut = ringOuts(v.mask, after);
   return {
     mask: v.mask,
     paths: v.paths,
-    result: { input, impacts: v.impacts.map(i => ({ ...i, damage: [i.damage[0]!, i.damage[1]!] })), hpAfter: [v.hpAfter[0]!, v.hpAfter[1]!], xAfter: [after[0].x, after[1].x], yAfter: [after[0].y, after[1].y], ringOut, finished: judge([v.hpAfter[0]!, v.hpAfter[1]!], ringOut) },
+    result: { input, impacts: v.impacts.map(i => ({ ...i, damage: [i.damage[0]!, i.damage[1]!] })), hpAfter: [v.hpAfter[0]!, v.hpAfter[1]!], xAfter: [after[0].x, after[1].x], yAfter: [after[0].y, after[1].y], ringOut, finished: judge([v.hpAfter[0]!, v.hpAfter[1]!], ringOut), ...(v.teleport !== undefined ? { teleport: v.teleport } : {}) },
   };
 };
 
@@ -137,7 +138,11 @@ export type CombatOutcome = {
   readonly hpAfter: readonly number[];
   readonly positions: readonly TankPos[];
   readonly ringOut: readonly number[];
+  /** テレポートの着地点。テレポートを使った射撃だけが持ち、移れなければ null */
+  readonly teleport?: TankPos | null;
 };
+
+const ringOutsOf = (mask: TerrainMask, positions: readonly TankPos[]): number[] => positions.flatMap((p, i) => isRingOut(mask, p) ? [i] : []);
 
 /** 内部用の可変人数物理。全員の確定位置を渡す。勝敗は呼び出し側でチームから判定する。 */
 export const simulateCombat = (
@@ -153,5 +158,54 @@ export const simulateCombat = (
   }
   const positions = players.map(p => settleTank(v.mask, p));
   return { mask: v.mask, paths: v.paths, impacts: v.impacts, hpAfter: v.hp, positions,
-    ringOut: positions.flatMap((p, i) => isRingOut(v.mask, p) ? [i] : []) };
+    ringOut: ringOutsOf(v.mask, positions) };
+};
+
+/** テレポートの射撃。地形も HP も変えず、撃った側だけを着地点へ移す */
+const teleportCombat = (mask: TerrainMask, players: readonly Combatant[], shooter: number, input: Omit<TrajectoryInput, "seat">, removeDefeated: boolean): CombatOutcome => {
+  const centers = players.flatMap(p => !isRingOut(mask, p) && (!removeDefeated || p.hp > 0) ? [{ x: p.x, y: tankCenterY(p) }] : []);
+  const flight = flyTeleport(mask, centers, input);
+  const positions = players.map((p, i) => i === shooter && flight.landing ? flight.landing : { x: p.x, y: p.y });
+  return { mask, paths: [{ points: flight.points, impactAt: [] }], impacts: [], hpAfter: players.map(p => p.hp), positions,
+    ringOut: ringOutsOf(mask, positions), teleport: flight.landing };
+};
+
+/** アイテムの射撃に渡す機体。team を省けば 1 機ずつ別のチームとして扱う（2 人対戦） */
+export type TeamCombatant = Combatant & { readonly team?: string };
+
+/**
+ * 1 発目の後に 2 発目を撃つか（設計書 42.2）。撃った側が生きていて、かつ試合が決まっていないときだけ撃つ。
+ * 試合が決まったかは、HP が残り奈落にいない機体のチームが 2 つ以上あるかで見る
+ */
+export const fireSecond = (players: readonly TeamCombatant[], shooter: number, first: Pick<CombatOutcome, "hpAfter" | "ringOut">): boolean => {
+  const alive = (i: number): boolean => first.hpAfter[i]! > 0 && !first.ringOut.includes(i);
+  const teams = new Set(players.flatMap((p, i) => alive(i) ? [p.team ?? String(i)] : []));
+  return alive(shooter) && teams.size >= 2;
+};
+
+/**
+ * ダブルシュートの射撃。1 発目で全員が落ちた後、撃った側が生きていて試合が決まっていなければ、落ちた後の位置と傾きから同じ仰角とパワーでもう一度撃つ。
+ * 2 発目の弾道の番号は 1 発目の続きにする
+ */
+const doubleCombat = (mask: TerrainMask, players: readonly TeamCombatant[], shooter: number, input: Omit<TrajectoryInput, "seat">, removeDefeated: boolean): CombatOutcome => {
+  const first = simulateCombat(mask, players, input, removeDefeated);
+  if (!fireSecond(players, shooter, first)) return first;
+  const at = first.positions[shooter]!;
+  const after = players.map((_, i) => ({ ...first.positions[i]!, hp: first.hpAfter[i]! }));
+  const second = simulateCombat(first.mask, after, { ...input, x: at.x, y: at.y }, removeDefeated);
+  const offset = first.paths.length;
+  return { ...second, paths: [...first.paths, ...second.paths],
+    impacts: [...first.impacts, ...second.impacts.map(i => ({ ...i, projectile: i.projectile + offset }))] };
+};
+
+/**
+ * アイテム（設計書 42）を含めた 1 手番の射撃。shooter は players の中の撃つ側の添字で、位置は input の x と y と同じであること。
+ * アイテムを使わなければ simulateCombat と同じ
+ */
+export const simulateCombatWithItem = (
+  mask: TerrainMask, players: readonly TeamCombatant[], shooter: number, input: Omit<TrajectoryInput, "seat">, removeDefeated = true,
+): CombatOutcome => {
+  if (input.item === "double") return doubleCombat(mask, players, shooter, input, removeDefeated);
+  if (input.item === "teleport") return teleportCombat(mask, players, shooter, input, removeDefeated);
+  return simulateCombat(mask, players, input, removeDefeated);
 };

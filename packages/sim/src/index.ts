@@ -28,6 +28,9 @@ export {
   muzzleOf,
   simulateShot,
   simulateCombat,
+  simulateCombatWithItem,
+  fireSecond,
+  type TeamCombatant,
   type CombatOutcome,
   type CombatImpact,
   type Combatant,
@@ -38,6 +41,8 @@ export {
 } from "./ballistics.js";
 export { WEAPON_SPECS, firstStage, fullHitDamage, projectileCount, scalePercent, weaponSpec, type FanSpec, type StageSpec, type WeaponSpec } from "./weapons.js";
 
-export { simulateConcurrentCombat, COMBAT_TICK_MS, VOLLEY_GAP_TICKS, IMPACT_HOLD_TICKS, type TimedProjectilePath, type TimedCombatImpact, type ConcurrentOutcome } from "./concurrent.js";
+export { simulateConcurrentCombat, simulateConcurrentCombatWithItem, DOUBLE_GAP_TICKS, COMBAT_TICK_MS, VOLLEY_GAP_TICKS, IMPACT_HOLD_TICKS, type TimedProjectilePath, type TimedCombatImpact, type ConcurrentOutcome } from "./concurrent.js";
+
+export { flyTeleport, teleportLanding, type TeleportFlight } from "./teleport.js";
 
 export { buildInitialTerrain, type InitialTerrain } from "./mapTerrain.js";

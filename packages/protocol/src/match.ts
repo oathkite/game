@@ -1,3 +1,4 @@
+import type { ItemId } from "./items.js";
 import type { WeaponId } from "./weapons.js";
 // 設計書 06 データモデルの型。sim と server と client が共有する。
 // ここでは対戦に関わる型だけを置き、部屋やメッセージの型はサーバー実装時に足す。
@@ -44,6 +45,8 @@ export type TrajectoryInput = {
   readonly power: number;
   /** -10 から 10 の整数 */
   readonly wind: number;
+  /** その手番に使ったアイテム（設計書 42）。使っていなければ持たない。テレポートなら weapon は標準砲 */
+  readonly item?: ItemId;
 };
 
 export type TerrainOp = {
@@ -102,4 +105,6 @@ export type ShotResult = {
   readonly ringOut: readonly Seat[];
   /** 決着していれば勝者と理由。ターン数と成績は対戦全体の状態から埋めるので、ここでは持たない */
   readonly finished: { readonly winner: Seat | null; readonly reason: "hp" | "ringOut" } | null;
+  /** テレポートの着地点（設計書 42.3）。input.item がテレポートのときだけ持ち、失敗なら null */
+  readonly teleport?: CellPoint | null;
 };
