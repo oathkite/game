@@ -1,3 +1,4 @@
+import { teleportPoseAt } from "@/game/teleportMotion";
 import type { TerrainMask } from "@game/sim";
 import { describe, expect, it, vi } from "vitest";
 import { craterGlow, GLOW_MS, impactSmoke, impactSparks, lightBurst, SMOKE_LIMIT, SPARK_LIMIT } from "@/game/fx/impactFx";
@@ -113,11 +114,24 @@ describe("hitstopClock", () => {
 
 type Presentation = ReturnType<typeof presentLabReplay>;
 const effect = (key: string, clock: number, over: Partial<LabEffect> = {}): LabEffect => ({ key, cx: 20, cy: 15, radius: 6, clock, damage: 0, damages: [], kills: [], final: false, ...over });
-const presentation = (effects: readonly LabEffect[]): Presentation => ({ launches: [], players: [], terrainOps: [], bullets: [], trails: [], effects, hpBars: {}, misses: [], fallingIds: [], recoil: 0, shotFlashes: [] }) as Presentation;
-const api = () => ({ impact: vi.fn(), killFlash: vi.fn(), freeze: vi.fn(), launch: vi.fn(), wreck: vi.fn() });
+const presentation = (effects: readonly LabEffect[]): Presentation => ({ teleport: null, launches: [], players: [], terrainOps: [], bullets: [], trails: [], effects, hpBars: {}, misses: [], fallingIds: [], recoil: 0, shotFlashes: [] }) as Presentation;
+const api = () => ({ impact: vi.fn(), killFlash: vi.fn(), freeze: vi.fn(), launch: vi.fn(), wreck: vi.fn(), teleport: vi.fn() });
 
 describe("createLabImpactFx", () => {
   const replay = { startsAt: 1000, terrainOpsBefore: 2 };
+  it("テレポートは弾が着地点に当たってから 1 回だけ光の柱を出し、動きを減らす設定では出さない（設計書 42.3）", () => {
+    const tp = (age: number): Presentation => ({ ...presentation([]), teleport: { playerId: "p1", age, pose: teleportPoseAt(age), from: { x: 20, y: 150 }, to: { x: 200, y: 170 }, hit: { x: 200, y: 165 } } });
+    const fx = createLabImpactFx(), effects = api();
+    fx.update(effects, tp(-10), replay, "m", false);
+    expect(effects.teleport).not.toHaveBeenCalled();
+    fx.update(effects, tp(16), replay, "m", false);
+    fx.update(effects, tp(40), replay, "m", false);
+    expect(effects.teleport).toHaveBeenCalledTimes(1);
+    expect(effects.teleport.mock.calls[0]![0]).toMatchObject({ age: 16, from: { x: 20, y: 150 }, to: { x: 200, y: 170 }, hit: { x: 200, y: 165 } });
+    const reduced = createLabImpactFx(), other = api();
+    reduced.update(other, tp(16), replay, "m", true);
+    expect(other.teleport).not.toHaveBeenCalled();
+  });
   it("着弾ごとに 1 回だけ、爆風が広がり始める時刻に生まれたものとして出す", () => {
     const fx = createLabImpactFx(), effects = api();
     fx.update(effects, presentation([effect("0", 30)]), replay, "m", false);

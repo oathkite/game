@@ -1,3 +1,4 @@
+import { teleportPoseAt, type TeleportPose } from "@/game/teleportMotion";
 import { shotFlashes, type ShotFlash } from "@/game/muzzlePose";
 import { shotRecoil } from "@/game/shotRecoil";
 import { CARVE_AT_MS, hitstopClock, hpBarAt, IMPACT_TOTAL_MS, missMarkAt, type HpBar, type MissMark } from "@/game/hitFeedback";
@@ -132,14 +133,28 @@ const fallsOf = (frame: LabFrame, replay: Replay, firstAt: number, settleAt: num
   return [last, { at: firstAt, positions: new Map(replay.playersBefore.map(before => [before.playerId, { from: before, to: midOf(before.playerId, before), teleport: false }])) }];
 };
 
-const idle = (frame: LabFrame) => ({ launches: [] as readonly LabLaunch[], players: frame.players, terrainOps: frame.terrainOps, bullets: [], trails: [] as readonly (readonly TrailDot[])[], effects: [] as readonly LabEffect[], hpBars: {} as Readonly<Record<string, HpBar>>, misses: [] as readonly (MissMark & { readonly key: string })[], fallingIds: [] as string[], recoil: 0, shotFlashes: [] as readonly ShotFlash[] });
+/** テレポートで着地点へ移る機体の見え方（設計書 42.3）。age は弾が着地点に当たってからの ms。位置はセル */
+export type LabTeleport = { readonly playerId: string; readonly age: number; readonly pose: TeleportPose;
+  readonly from: { readonly x: number; readonly y: number }; readonly to: { readonly x: number; readonly y: number }; readonly hit: { readonly x: number; readonly y: number } };
+
+/** 着地点へ移れたテレポートの見え方。移れなかった射撃と、テレポートでない射撃は null */
+const teleportOf = (frame: LabFrame, line: Timeline, reduced: boolean): LabTeleport | null => {
+  const { replay } = line, path = replay.paths[0], hit = path?.points.at(-1);
+  if (!replay.teleport || !path || !hit) return null;
+  const id = replay.shooter.playerId, before = replay.playersBefore.find(p => p.playerId === id), after = frame.players.find(p => p.playerId === id);
+  if (!before || !after) return null;
+  const age = line.now - timeOf(line, path.endTick);
+  return { playerId: id, age, pose: teleportPoseAt(age, reduced), from: { x: before.x, y: before.y }, to: { x: after.x, y: after.y }, hit: { x: Math.floor(hit.x), y: Math.floor(hit.y) } };
+};
+
+const idle = (frame: LabFrame) => ({ teleport: null as LabTeleport | null, launches: [] as readonly LabLaunch[], players: frame.players, terrainOps: frame.terrainOps, bullets: [], trails: [] as readonly (readonly TrailDot[])[], effects: [] as readonly LabEffect[], hpBars: {} as Readonly<Record<string, HpBar>>, misses: [] as readonly (MissMark & { readonly key: string })[], fallingIds: [] as string[], recoil: 0, shotFlashes: [] as readonly ShotFlash[] });
 
 /** Replay server ticks at a shared pace, retaining a final 300ms settling window. */
 export const presentLabReplay = (frame: LabFrame, now: number, reduced = false) => {
   const replay = frame.replay;
   if (frame.phase !== "replaying" || !replay || now >= replay.endsAt) return idle(frame);
   // 飛翔の終わりはサーバーと同じ関数で逆算する（設計書 41.8）
-  const settleAt = replay.endsAt - replayTailMs(replay.impacts);
+  const settleAt = replay.endsAt - replayTailMs(replay.impacts, Boolean(replay.teleport));
   const base = { replay, settleAt, now, freezeAt: null };
   const final = finalImpactOf(replay);
   // 最後の着弾の削る瞬間から HITSTOP_MS だけ着弾の時計を止める。動きを減らす設定では止めない（設計書 41.6）
@@ -147,12 +162,14 @@ export const presentLabReplay = (frame: LabFrame, now: number, reduced = false) 
   const t = Math.max(0, Math.min(1, (now - replay.startsAt) / Math.max(1, settleAt - replay.startsAt)));
   const tick = t * replay.ticks;
   const impacts = replay.impacts.filter(i => i.tick <= tick);
-  const falls = fallsOf(frame, replay, timeOf(base, replay.firstShot?.tick ?? 0), settleAt);
+  const falls = fallsOf(frame, replay, timeOf(base, replay.firstShot?.tick ?? 0), settleAt), teleport = teleportOf(frame, line, reduced);
   const players = replay.playersBefore.map(before => {
     const after = frame.players.find(p => p.playerId === before.playerId)!;
     const step = falls.find(f => now >= f.at), fall = step?.positions.get(before.playerId);
     const progress = step ? smooth(Math.max(0, Math.min(1, (now - step.at) / FALL_MS))) : 0;
-    const pose = fall ? { x: fall.from.x + (fall.to.x - fall.from.x) * progress, y: fall.from.y + (fall.to.y - fall.from.y) * progress } : { x: before.x, y: before.y };
+    const slid = fall ? { x: fall.from.x + (fall.to.x - fall.from.x) * progress, y: fall.from.y + (fall.to.y - fall.from.y) * progress } : { x: before.x, y: before.y };
+    // テレポートした機体は、光の柱の中に現れるまで撃った位置に置く
+    const pose = teleport?.playerId === before.playerId ? (teleport.pose.at === "to" ? teleport.to : teleport.from) : slid;
     if (now >= settleAt) return { ...after, ...pose };
     const hp = before.hp - impacts.reduce((sum, impact) => sum + (impact.damage.find(d => d.playerId === before.playerId)?.amount ?? 0), 0);
     return { ...before, ...pose, hp, eliminated: before.eliminated || hp <= 0 };
@@ -160,7 +177,7 @@ export const presentLabReplay = (frame: LabFrame, now: number, reduced = false) 
   const fallingIds = falls.flatMap(f => now >= f.at && now < f.at + FALL_MS ? [...f.positions].filter(([, p]) => p.to.y > p.from.y && !p.teleport).map(([id]) => id) : []);
   const launches = replay.paths.map(path => timeOf(line, path.launchTick));
   const flying = now < settleAt;
-  return { launches: launchesAt(line), players, effects: effectsAt(frame, line), hpBars: hpBarsAt(line), misses: missesAt(frame, line), fallingIds, shotFlashes: shotFlashes(now, launches), recoil: shotRecoil(now, launches),
+  return { teleport, launches: launchesAt(line), players, effects: effectsAt(frame, line), hpBars: hpBarsAt(line), misses: missesAt(frame, line), fallingIds, shotFlashes: shotFlashes(now, launches), recoil: shotRecoil(now, launches),
     bullets: flying ? replay.paths.flatMap(path => projectileAt(path, tick)) : [], trails: flying ? replay.paths.map(path => trailAt(path, tick)) : [],
     terrainOps: frame.terrainOps.slice(0, replay.terrainOpsBefore + impacts.length) };
 };

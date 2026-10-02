@@ -56,20 +56,29 @@ it("ダブルシュートの 1 発目で穴に落ちた相手は、2 発目の�
   expect(target.at(-1)).toBe(mid.y);
 });
 
-it("テレポートした機体は飛翔の間は撃った位置にいて、落下させずに着地点へ移る", () => {
+it("テレポートした機体は飛翔の間は撃った位置にいて、着弾で白く光って消え、光の柱の中に白く現れる（設計書 42.3）", () => {
   const job = jobOf(shot({ x: 60, elevation: 45, power: 60, item: "teleport" }), players(60, 300));
   const landing = job.shot.teleport!;
   expect(landing.x).not.toBe(60);
   const { renderer, calls, run } = fakeRenderer();
   const done = vi.fn();
-  playReplay(renderer, job, [45, 45], 0, { sound: vi.fn(), done, reduceMotion: true });
+  playReplay(renderer, job, [45, 45], 0, { sound: vi.fn(), done, reduceMotion: false });
   run(8000);
-  const poses = calls.filter(c => c.name === "setTank" && c.args[0] === 0).map(c => c.args[1] as { x: number; y: number; falling?: boolean });
-  const moved = poses.findIndex(p => p.x === landing.x);
-  expect(moved).toBeGreaterThan(0);
-  expect(poses.slice(0, moved).every(p => p.x === 60)).toBe(true);
+  const poses = calls.filter(c => c.name === "setTank" && c.args[0] === 0).map(c => ({ ...(c.args[1] as { x: number; y: number; visible: boolean; flash: boolean; falling?: boolean }), at: c.at }));
+  const effect = calls.find(c => c.name === "effects.teleport")!;
+  expect(calls.filter(c => c.name === "effects.teleport")).toHaveLength(1);
+  expect(effect.args[0]).toMatchObject({ from: { x: 60 }, to: landing });
+  const before = poses.filter(p => p.at < effect.at), after = poses.filter(p => p.at >= effect.at);
+  expect(before.every(p => p.x === 60 && p.visible && !p.flash)).toBe(true);
+  // 白く光る、消える、着地点に白く現れる、色が戻る、の順
+  const order: readonly string[] = after.map(p => !p.visible ? "hidden" : p.x === landing.x ? (p.flash ? "arrive-white" : "arrive") : p.flash ? "depart-white" : "depart");
+  const firsts = ["depart-white", "hidden", "arrive-white", "arrive"].map(k => order.indexOf(k));
+  expect(firsts.every(i => i >= 0)).toBe(true);
+  expect([...firsts].sort((a, b) => a - b)).toEqual(firsts);
   expect(poses.some(p => p.falling)).toBe(false);
   expect(poses.at(-1)).toMatchObject(landing);
+  // 着地点へ移れた弾は、外れの印を出さない
+  expect(calls.filter(c => c.name === "projectile().setMissMark" && c.args[1] !== null)).toEqual([]);
   expect(done).toHaveBeenCalled();
 });
 

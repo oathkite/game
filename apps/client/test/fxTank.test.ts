@@ -56,7 +56,7 @@ describe("発射と走行と撃破の粒", () => {
 
 type Presentation = ReturnType<typeof presentLabReplay>;
 const effect = (clock: number, over: Partial<LabEffect> = {}): LabEffect => ({ key: "0", cx: 20, cy: 15, radius: 6, clock, damage: 35, damages: [{ playerId: "p1", amount: 35 }], kills: [], final: false, ...over });
-const presentation = (effects: readonly LabEffect[], launches: Presentation["launches"] = []): Presentation => ({ launches, players: [], terrainOps: [], bullets: [], trails: [], effects, hpBars: {}, misses: [], fallingIds: [], recoil: 0, shotFlashes: [] }) as Presentation;
+const presentation = (effects: readonly LabEffect[], launches: Presentation["launches"] = []): Presentation => ({ teleport: null, launches, players: [], terrainOps: [], bullets: [], trails: [], effects, hpBars: {}, misses: [], fallingIds: [], recoil: 0, shotFlashes: [] }) as Presentation;
 
 describe("オンラインの押し戻しと煙の輪と撃破の破片", () => {
   it("爆心から遠ざかる向きに押す", () => {
@@ -65,7 +65,7 @@ describe("オンラインの押し戻しと煙の輪と撃破の破片", () => {
     expect(labTankHit(presentation([effect(100)]), "p1", 30).nudge).toBe(0);
   });
   it("煙の輪は弾道ごとに 1 回、撃破では機体の色の破片を出す", () => {
-    const fx = createLabImpactFx(), api = { impact: vi.fn(), killFlash: vi.fn(), freeze: vi.fn(), launch: vi.fn(), wreck: vi.fn() };
+    const fx = createLabImpactFx(), api = { impact: vi.fn(), killFlash: vi.fn(), freeze: vi.fn(), launch: vi.fn(), wreck: vi.fn(), teleport: vi.fn() };
     const launches = [{ key: "0", x: 10, y: 10, angle: 0, age: 5, points: [{ x: 10, y: 10, at: 0 }, { x: 12, y: 9, at: 16 }] }];
     fx.update(api, presentation([], launches), { startsAt: 1, terrainOpsBefore: 0 }, "m", false);
     fx.update(api, presentation([effect(0, { kills: ["p1"] })], launches), { startsAt: 1, terrainOpsBefore: 0 }, "m", false, () => ({ x: 20, y: 15, ramp: TEAM_RAMPS.red }));

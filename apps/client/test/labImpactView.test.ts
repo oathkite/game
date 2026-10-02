@@ -1,3 +1,4 @@
+import { TELEPORT_ARRIVE_MS, TELEPORT_DEPART_MS, teleportPoseAt } from "@/game/teleportMotion";
 import type { TerrainMask } from "@game/sim";
 import { describe, expect, it, vi } from "vitest";
 import { CARVE_AT_MS, FLASH_MS_BY_TIER, FLICKER_HALF_MS } from "@/game/hitFeedback";
@@ -9,7 +10,7 @@ import { drawLabImpacts, emitLabDebris, labEdgePoints, labShake, labTankHit } fr
 
 type Presentation = ReturnType<typeof presentLabReplay>;
 const effect = (clock: number, amount: number): LabEffect => ({ key: "0", cx: 20, cy: 15, radius: 6, clock, damage: amount, damages: amount > 0 ? [{ playerId: "p1", amount }] : [], kills: [], final: false });
-const presentation = (effects: readonly LabEffect[]): Presentation => ({ launches: [], players: [], terrainOps: [], bullets: [], trails: [], effects, hpBars: {}, misses: [], fallingIds: [], recoil: 0, shotFlashes: [] }) as Presentation;
+const presentation = (effects: readonly LabEffect[]): Presentation => ({ teleport: null, launches: [], players: [], terrainOps: [], bullets: [], trails: [], effects, hpBars: {}, misses: [], fallingIds: [], recoil: 0, shotFlashes: [] }) as Presentation;
 const mask = (): TerrainMask => {
   const cells = new Uint8Array(40 * 30);
   for (let y = 15; y < 30; y++) for (let x = 0; x < 40; x++) cells[y * 40 + x] = 1;
@@ -24,6 +25,17 @@ describe("labTankHit", () => {
     expect(labTankHit(presentation([effect(CARVE_AT_MS + FLASH_MS_BY_TIER[3], 30)]), "p1").flash).toBe(false);
     expect(labTankHit(presentation([effect(CARVE_AT_MS + FLASH_MS_BY_TIER[1], 10)]), "p1").flash).toBe(false);
     expect(labTankHit(presentation([effect(CARVE_AT_MS, 30)]), "p2").flash).toBe(false);
+  });
+});
+
+describe("labTankHit のテレポート（設計書 42.3）", () => {
+  const tp = (age: number): Presentation => ({ ...presentation([]), teleport: { playerId: "p1", age, pose: teleportPoseAt(age), from: { x: 20, y: 150 }, to: { x: 200, y: 170 }, hit: { x: 200, y: 165 } } });
+  it("撃った位置と着地点で白く光り、そのあいだは隠す。ほかの機体は変えない", () => {
+    expect(labTankHit(tp(-1), "p1")).toMatchObject({ flash: false, hidden: false });
+    expect(labTankHit(tp(0), "p1")).toMatchObject({ flash: true, hidden: false });
+    expect(labTankHit(tp(TELEPORT_DEPART_MS), "p1")).toMatchObject({ hidden: true });
+    expect(labTankHit(tp(TELEPORT_ARRIVE_MS), "p1")).toMatchObject({ flash: true, hidden: false });
+    expect(labTankHit(tp(TELEPORT_DEPART_MS), "p2")).toMatchObject({ flash: false, hidden: false });
   });
 });
 
