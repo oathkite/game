@@ -82,8 +82,9 @@ const pixelBullets = (parent: Container, weapon: ProjectileArt, ramp: Ramp) => {
     const bullet = list[index]!;
     bullet.g.visible = x !== null;
     if (x === null) return;
-    // 掘削弾の導火線の火花は、進んだ距離で瞬かせる
-    const grid = projectilePixels(weapon, ramp, angle, Math.floor((x + y) * 2));
+    // 掘削弾の導火線の火花とロケットの炎は、進んだ距離で瞬かせる。x と y のどちらが半セル進んでもコマが変わるよう、
+    // 2 と 3 のどちらとも互いに素な係数で足す（x + y では右上へ 45 度で飛ぶ間に止まる）
+    const grid = projectilePixels(weapon, ramp, angle, Math.floor(x * 2) * 5 + Math.floor(y * 2) * 7);
     if (grid !== bullet.drawn) { drawGrid(bullet.g, grid); bullet.drawn = grid; }
     bullet.g.position.set(snap(x), snap(y));
   };

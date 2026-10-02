@@ -5,7 +5,8 @@ import { WRECK_BLINK_MS } from "@/game/tankMotion";
 import type { ProjectileView } from "@/game/projectileView";
 import type { EdgePoint, RendererEffects } from "@/game/renderer";
 import type { presentLabReplay } from "@/networkLab/labReplay";
-import type { TerrainOp, WeaponId } from "@game/protocol";
+import type { ItemId, TerrainOp, WeaponId } from "@game/protocol";
+import { projectileArtOf } from "@/game/projectileSprite";
 import { carve, type TerrainMask } from "@game/sim";
 
 // オンライン対戦の着弾の見せ方。設計書 38 の E1。練習（game/replay.ts）と同じ hitFeedback の時間の流れで描く。
@@ -79,8 +80,8 @@ export const createLabImpactFx = () => {
   let replayKey = "";
   const emitted = new Set<string>(), frozen = new Set<string>(), launched = new Set<string>();
   return {
-    update: (effects: Pick<RendererEffects, "impact" | "killFlash" | "freeze" | "launch" | "wreck">, presentation: Presentation, replay: { readonly startsAt: number; readonly terrainOpsBefore: number; readonly shooter?: { readonly weapon: WeaponId } }, matchId: string, reduced: boolean, tankOf: (playerId: string) => LabTank | undefined = () => undefined, mask?: TerrainMask): void => {
-      const weapon = replay.shooter?.weapon ?? "cannon";
+    update: (effects: Pick<RendererEffects, "impact" | "killFlash" | "freeze" | "launch" | "wreck">, presentation: Presentation, replay: { readonly startsAt: number; readonly terrainOpsBefore: number; readonly shooter?: { readonly weapon: WeaponId; readonly item?: ItemId | undefined } }, matchId: string, reduced: boolean, tankOf: (playerId: string) => LabTank | undefined = () => undefined, mask?: TerrainMask): void => {
+      const weapon = replay.shooter?.weapon ?? "cannon", art = projectileArtOf(weapon, replay.shooter?.item);
       const key = `${matchId}/${replay.startsAt}`;
       if (key !== replayKey) { replayKey = key; emitted.clear(); frozen.clear(); launched.clear(); }
       if (reduced) return;
@@ -88,7 +89,7 @@ export const createLabImpactFx = () => {
       for (const l of presentation.launches) {
         if (launched.has(l.key)) continue;
         launched.add(l.key);
-        effects.launch(weapon, l.points, hash32(match, replay.startsAt, Number(l.key), 9), l.age);
+        effects.launch(art, l.points, hash32(match, replay.startsAt, Number(l.key), 9), l.age);
       }
       for (const e of presentation.effects) {
         if (!emitted.has(e.key) && e.clock >= 0) {

@@ -26,6 +26,18 @@ describe("weaponTrail", () => {
     expect(Math.abs(b.count - Math.floor(length))).toBeLessThanOrEqual(1);
     for (let i = 1; i < b.count; i++) expect(Math.hypot(b.x0[i]! - b.x0[i - 1]!, b.y0[i]! - b.y0[i - 1]!)).toBeLessThan(1.5);
   });
+  it("ロケットの噴射は弾の中心ではなく尾から出て、後ろへ流れ、炎の色から煙へ冷める（設計書 42.3）", () => {
+    const flat = [{ x: 0, y: 0, at: 0 }, { x: 100, y: 0, at: 1000 }];
+    const b = weaponTrail("teleport", flat, 1)!, style = TRAIL_STYLES.teleport!;
+    expect(b.count).toBeGreaterThan(weaponTrail("cannon", flat, 1)!.count);
+    for (let i = 0; i < b.count; i++) {
+      const center = 100 * (b.t0[i]! / 1000) * 4;
+      expect(b.x0[i]).toBeLessThan(center - style.behind! * 4 + 1);
+      expect(b.vx[i]).toBeLessThan(0);
+    }
+    expect(style.ramp[0]).toBe(PALETTE.white);
+    expect(style.ramp).toContain(PALETTE.fire2);
+  });
   it("軌跡の色は武器ごとに違う", () => {
     const firsts = new Set(WEAPON_IDS.flatMap((w) => (TRAIL_STYLES[w] ? [`${TRAIL_STYLES[w]!.ramp[0]}/${TRAIL_STYLES[w]!.size}/${TRAIL_STYLES[w]!.every}`] : [])));
     expect(firsts.size).toBe(WEAPON_IDS.filter((w) => TRAIL_STYLES[w]).length);

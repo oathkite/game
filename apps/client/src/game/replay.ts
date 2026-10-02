@@ -31,6 +31,7 @@ import {
   STEP_MS,
 } from "./hitFeedback";
 import type { ProjectileView } from "./projectileView";
+import { projectileArtOf } from "./projectileSprite";
 import { hash32 } from "./fx/hash";
 import { TEAM_RAMPS } from "./palette";
 import { WRECK_BLINK_MS } from "./tankMotion";
@@ -280,7 +281,7 @@ const updateBullet = (run: Run, p: number): void => {
     if (p > 0 && p === run.job.firstShot?.paths) run.cb.sound(weaponSound(run.job.shot.input.weapon, "fire"));
     // 砲口の煙の輪と発射光の光（段階 4）、武器の軌跡（段階 5）。弾がその点を通る時刻は、着弾ごとに止まる分を足して決める
     const trail = points.map((q, i) => ({ x: q.x / ONE, y: q.y / ONE, at: i * STEP_MS + path.impactAt.filter(k => k < i).length * HOLD_MS }));
-    run.renderer.effects.launch(run.job.shot.input.weapon, trail, hash32(0, run.job.id, p, 9), t);
+    run.renderer.effects.launch(projectileArtOf(run.job.shot.input.weapon, run.job.shot.input.item), trail, hash32(0, run.job.id, p, 9), t);
   }
   const frame = projectileFrameAt(t, path.impactAt, points.length);
   const last = points[points.length - 1];

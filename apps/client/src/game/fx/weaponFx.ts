@@ -1,4 +1,5 @@
 import type { WeaponId } from "@game/protocol";
+import type { ProjectileArt } from "../projectileSprite";
 import { PALETTE, SMOKE_RAMP } from "../palette";
 import { ART_PER_CELL } from "../pixelGrid";
 import { hash32, unit } from "./hash";
@@ -21,12 +22,15 @@ type TrailStyle = {
   /** 上へ漂う速さ（art px/秒）と、横のばらつき */
   readonly rise: number;
   readonly jitter: number;
+  /** あれば、弾の中心からこの距離（セル）だけ後ろに置き、この速さ（art px/秒）で後ろへ流す。ロケットの噴射を尾から出す */
+  readonly behind?: number;
+  readonly exhaust?: number;
 };
 
 const SMOKE: readonly number[] = SMOKE_RAMP.slice(1);
 
 /** 武器ごとの軌跡。null の武器は軌跡の粒を出さない（貫通弾は掘り進む破片、掘削弾は導火線の火花が個性） */
-export const TRAIL_STYLES: Readonly<Record<WeaponId, TrailStyle | null>> = {
+export const TRAIL_STYLES: Readonly<Record<ProjectileArt, TrailStyle | null>> = {
   cannon: { every: 33, ramp: SMOKE, life: 450, size: 2, rise: 10, jitter: 4 },
   triple: { every: 33, ramp: SMOKE, life: 300, size: 1, rise: 8, jitter: 3 },
   multiple: { every: 50, ramp: [PALETTE.fire1, PALETTE.fire2, PALETTE.fire3], life: 200, size: 1, rise: 0, jitter: 30 },
@@ -36,6 +40,8 @@ export const TRAIL_STYLES: Readonly<Record<WeaponId, TrailStyle | null>> = {
   digger: null,
   floater: { every: 66, ramp: [PALETTE.energy1, PALETTE.energy2], life: 350, size: 2, rise: 0, jitter: 6 },
   stinger: { every: 16, ramp: [PALETTE.white, PALETTE.starDim], life: 110, size: 1, rise: 0, jitter: 0 },
+  // テレポートのロケットの噴射（設計書 42.3）。炎の先から出て後ろへ流れ、白から炎の色、煙へ冷める
+  teleport: { every: 10, ramp: [PALETTE.white, PALETTE.fire1, PALETTE.fire2, PALETTE.fire3, PALETTE.fire4, ...SMOKE], life: 650, size: 2, rise: 4, jitter: 9, behind: 3, exhaust: 30 },
 };
 
 const TRAIL = 8;
@@ -61,8 +67,14 @@ const timesBySpacing = (points: readonly TrailPoint[], spacing: number): number[
   return times;
 };
 
-/** 武器の軌跡の粒。弾が通る時刻に、通った位置に生まれる */
-export const weaponTrail = (weapon: WeaponId, points: readonly TrailPoint[], seed: number): ParticleBatch | null => {
+/** at の時刻の進む向き（単位ベクトル）。止まっていれば右 */
+const headingAt = (points: readonly TrailPoint[], at: number): { readonly x: number; readonly y: number } => {
+  const a = pointAt(points, at - 16), b = pointAt(points, at + 16), length = Math.hypot(b.x - a.x, b.y - a.y);
+  return length > 1e-6 ? { x: (b.x - a.x) / length, y: (b.y - a.y) / length } : { x: 1, y: 0 };
+};
+
+/** 武器の軌跡の粒。弾が通る時刻に、通った位置（behind があればその後ろ）に生まれる */
+export const weaponTrail = (weapon: ProjectileArt, points: readonly TrailPoint[], seed: number): ParticleBatch | null => {
   const style = TRAIL_STYLES[weapon];
   if (!style || points.length < 2) return null;
   const end = points[points.length - 1]!.at;
@@ -71,9 +83,10 @@ export const weaponTrail = (weapon: WeaponId, points: readonly TrailPoint[], see
   const b = allocBatch(count, { ramps: [style.ramp], gravity: 0, drag: 1.5 });
   for (let i = 0; i < count; i++) {
     const h = hash32(seed, TRAIL, i), at = times[i]!, p = pointAt(points, at);
-    b.x0[i] = p.x * ART_PER_CELL; b.y0[i] = p.y * ART_PER_CELL;
-    b.vx[i] = (unit(hash32(h, 1)) * 2 - 1) * style.jitter;
-    b.vy[i] = -style.rise + (unit(hash32(h, 2)) * 2 - 1) * style.jitter;
+    const u = style.behind || style.exhaust ? headingAt(points, at) : { x: 0, y: 0 }, behind = style.behind ?? 0, exhaust = style.exhaust ?? 0;
+    b.x0[i] = (p.x - u.x * behind) * ART_PER_CELL; b.y0[i] = (p.y - u.y * behind) * ART_PER_CELL;
+    b.vx[i] = (unit(hash32(h, 1)) * 2 - 1) * style.jitter - u.x * exhaust;
+    b.vy[i] = -style.rise + (unit(hash32(h, 2)) * 2 - 1) * style.jitter - u.y * exhaust;
     b.t0[i] = at; b.life[i] = style.life * (0.8 + 0.4 * unit(hash32(h, 3)));
     b.size[i] = style.size; b.fade[i] = unit(hash32(h, 4));
   }

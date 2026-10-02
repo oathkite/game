@@ -8,6 +8,7 @@ import { partitionBatch } from "./particles";
 import { craterGlow, impactSmoke, impactSparks, lightBurst, muzzleSmoke, trackDust, wreckDebris } from "./impactFx";
 import { FLOATER_TABLE, KILL_TABLE, LASER_TABLE, TINT_PRIORITY, WARM_TABLE, type GradeTable } from "./gradeTables";
 import type { ScreenFx } from "./screenFx";
+import type { ProjectileArt } from "../projectileSprite";
 import { terrainDebris } from "./terrainDebris";
 import { crossFlash, debrisHeatOf, debrisPowerOf, impactPaletteOf, weaponTrail, type TrailPoint } from "./weaponFx";
 
@@ -37,7 +38,8 @@ export type RendererEffects = {
   /** 撃破の瞬間（delay ms 後）に 34 ms だけ画面全体を白くし、空を赤く寄せる。白の長さはヒットストップで延ばさない。1 秒に 1 回まで（I5） */
   readonly killFlash: (delay?: number) => void;
   /** 発射。砲口の煙の輪（段階 4）、発射光の光、武器の軌跡の粒（段階 5）。points は弾道の点（セル、発射からの ms） */
-  readonly launch: (weapon: WeaponId, points: readonly TrailPoint[], seed: number, age?: number) => void;
+  /** 発射の煙と光と、弾の絵ごとの軌跡の粒（テレポートはロケットの噴射） */
+  readonly launch: (weapon: ProjectileArt, points: readonly TrailPoint[], seed: number, age?: number) => void;
   /** 走行の土煙。位置はセルで接地点 */
   readonly dust: (x: number, y: number, facing: 1 | -1, seed: number) => void;
   /** 撃破の破片と煙の柱。delay ms 後に機体の色で散らす。seat があれば、煙の柱をその機体の今の位置から出し続ける */

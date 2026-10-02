@@ -12,6 +12,7 @@ import { type EdgeSide, edgeMarker } from "./edgeMarker";
 import { spawnDamageLabel } from "./damageLabel";
 import { DAMAGE_LABEL_GAP_PX, type Offset } from "./hitFeedback";
 import { createProjectileView, type ProjectileView } from "./projectileView";
+import { projectileArtOf } from "./projectileSprite";
 import { createExplosionTextures } from "./explosionTextures";
 import { PALETTE, TEAM_RAMPS } from "./palette";
 import type { Layout } from "./scale";
@@ -245,7 +246,7 @@ export const createRenderer = async (init: RendererInit): Promise<Renderer> => {
     },
     projectile: (color, weapon, item) => {
       if (projectile) projectile.destroy();
-      projectile = createProjectileView({ ramp: TEAM_RAMPS[color], explosions, ...(item === "teleport" ? { art: "teleport" as const } : {}) }, weapon, init.projectileTextures?.[weapon], init.impactTextures?.[weapon]);
+      projectile = createProjectileView({ ramp: TEAM_RAMPS[color], explosions, art: projectileArtOf(weapon, item) }, weapon, init.projectileTextures?.[weapon], init.impactTextures?.[weapon]);
       projectileLayer.addChild(projectile.container);
       return projectile;
     },
