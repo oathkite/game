@@ -50,11 +50,13 @@ test("room battle takes keyboard, touch and camera input from both players", asy
       for (const label of ["角度を上げる", "右へ1歩"]) await expect(mobile!.getByRole("button", { name: label, exact: true })).toBeEnabled();
       await expect(mobile!.getByRole("button", { name: "発射", exact: true })).toBeDisabled();
     }
-    const prepared = Number((await observer.getByTestId("camera-angle").textContent())!.replace("°", ""));
+    // 表示する射角は地面の傾きを含み、向きを変えると傾きの符号が変わるので、地面に対する仰角で比べる
+    const elevation = observer.locator(".battle-angle");
+    const prepared = Number(await elevation.getAttribute("data-elevation"));
     await observer.keyboard.press("KeyE");
     await expect(observer.locator(".battle-weapons button").nth(1)).toHaveAttribute("aria-pressed", "true");
     await observer.keyboard.press("KeyW");
-    await expect(observer.getByTestId("camera-angle")).toHaveText(`${prepared + 1}°`);
+    await expect(elevation).toHaveAttribute("data-elevation", String(prepared + 1));
     const observerX = async () => JSON.parse(await actor.getByTestId("network-world").getAttribute("data-positions") ?? "[]").find((p: { playerId: string }) => p.playerId === observerId).x as number;
     const before = await observerX();
     // 左右は向きだけを変える。角度計は右向きなら 90 度より小さく、左向きなら大きい
@@ -72,7 +74,7 @@ test("room battle takes keyboard, touch and camera input from both players", asy
     await expect(control(observer)).toHaveAttribute("data-control", "act");
     await expect.poll(worldAngle).toBeGreaterThan(90);
     await expect(observer.locator(".battle-weapons button").nth(1)).toHaveAttribute("aria-pressed", "true");
-    await expect(observer.getByTestId("camera-angle")).toHaveText(`${prepared + 1}°`);
+    await expect(elevation).toHaveAttribute("data-elevation", String(prepared + 1));
     await expectSameWind(pages);
     await desktop!.screenshot({ path: "test-results/room-controls-desktop.png" });
     await mobile!.screenshot({ path: "test-results/room-controls-mobile.png" });
