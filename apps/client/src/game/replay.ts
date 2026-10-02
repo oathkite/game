@@ -50,10 +50,14 @@ export type ReplayCallbacks = {
   readonly sound: (name: SoundName) => void;
   readonly done: () => void;
   readonly onImpact?: (mask: TerrainMask, impact: Impact) => void;
+  /** 対戦を決着させる射撃。留める時間を省いて早くリザルトへ進める。呼び出し側は decidesMatch で決める */
   readonly roundEnd?: boolean;
   /** 利用者が動きを減らす設定にしている。画面揺れを出さない */
   readonly reduceMotion: boolean;
 };
+
+/** 対戦を決着させる射撃か。delay の有無では決めない。CPU 戦とローカル対戦は全手番が delay を持つ（設計書 41.8） */
+export const decidesMatch = (job: ReplayJob): boolean => job.shot.finished !== null;
 
 /** 最後の着弾が削れてから多段の合計を出すまで（ms） */
 export const TOTAL_AFTER_CARVE_MS = 150;
@@ -404,7 +408,7 @@ const flightEndOf = (job: ReplayJob, launchAt: readonly number[], p: number): nu
 const shotDone = (run: Run): boolean => {
   const impactsDone = run.impacts.every((ir) => run.elapsed - ir.at >= (run.cb.roundEnd ? CARVE_AT_MS + 100 : IMPACT_TOTAL_MS));
   const pathsDone = run.job.paths.every((path, p) => run.elapsed >= flightEndOf(run.job, run.launchAt, p) + (path.impactAt.length === 0 && !run.job.shot.teleport ? MISS_MS : 0));
-  // テレポートは、光の柱が消えるまで落下と後の段へ進めない。留める時間のない対戦でも、カメラを着地点に残す。動きを減らす設定では柱を出さないので待たない
+  // テレポートは、光の柱が消えるまで落下と後の段へ進めない。消えて現れる機体の姿は射撃の段でだけ描くので、先に落下へ進むと途中で切れる。動きを減らす設定では柱を出さないので待たない
   if (run.teleportAt !== null && !run.cb.reduceMotion && run.elapsed < run.teleportAt + TELEPORT_FX_MS) return false;
   return impactsDone && pathsDone;
 };

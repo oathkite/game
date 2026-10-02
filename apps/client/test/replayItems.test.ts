@@ -1,7 +1,8 @@
 import { expect, it, vi } from "vitest";
 import type { TrajectoryInput } from "@game/protocol";
+import { replayTailMs } from "@game/engine/replay-timing";
 import { DOUBLE_GAP_TICKS, flatMask, simulateShot, shot } from "@game/sim";
-import { leadsVolley, playReplay } from "../src/game/replay";
+import { decidesMatch, leadsVolley, playReplay } from "../src/game/replay";
 import type { Renderer } from "../src/game/renderer";
 import type { PlayerView, ReplayJob } from "../src/match/types";
 
@@ -20,8 +21,8 @@ const fakeRenderer = () => {
   return { renderer, calls, run };
 };
 
-const players = (x0: number, x1: number): readonly [PlayerView, PlayerView] => [0, 1].map(seat => ({ seat, nickname: `p${seat}`, colors: { primary: "red", secondary: "blue" }, loadout: ["cannon", "digger"],
-  x: seat === 0 ? x0 : x1, y: 150, hp: 100, facing: seat === 0 ? 1 : -1, connected: true })) as unknown as readonly [PlayerView, PlayerView];
+const players = (x0: number, x1: number, hp1 = 100): readonly [PlayerView, PlayerView] => [0, 1].map(seat => ({ seat, nickname: `p${seat}`, colors: { primary: "red", secondary: "blue" }, loadout: ["cannon", "digger"],
+  x: seat === 0 ? x0 : x1, y: 150, hp: seat === 0 ? 100 : hp1, facing: seat === 0 ? 1 : -1, connected: true })) as unknown as readonly [PlayerView, PlayerView];
 
 const jobOf = (input: TrajectoryInput, before: readonly [PlayerView, PlayerView]): ReplayJob => {
   const mask = flatMask(), out = simulateShot(mask, before, input);
@@ -100,4 +101,32 @@ it("動きを減らす設定では、テレポートは着弾の瞬間に着地�
   run(flight + 300);
   expect(done).toHaveBeenCalled();
   expect(calls.filter(c => c.name === "setTank" && c.args[0] === 0).every(c => (c.args[1] as { visible: boolean; flash: boolean }).visible && !(c.args[1] as { flash: boolean }).flash)).toBe(true);
+});
+
+/** done が呼ばれるまで 10 ms ずつ進め、呼ばれた経過時間を返す */
+const doneTimeOf = (job: ReplayJob, roundEnd: boolean): number => {
+  const { renderer, run } = fakeRenderer();
+  let elapsed = 0, called = false;
+  playReplay(renderer, job, [45, 45], 0, { sound: vi.fn(), done: () => { called = true; }, reduceMotion: true, roundEnd });
+  while (!called && elapsed < 10000) { run(10); elapsed += 10; }
+  return elapsed;
+};
+
+it("決着させる射撃かは、射撃の結果の finished で決める。CPU 戦のように全手番が delay を持っても、通常の射撃は決着ではない（設計書 41.8）", () => {
+  expect(decidesMatch(jobOf(shot({ x: 60, elevation: 45, power: 50 }), players(60, 300)))).toBe(false);
+  const deciding = jobOf(shot({ x: 60, elevation: 45, power: 50 }), players(60, 150, 1));
+  expect(deciding.shot.finished).not.toBeNull();
+  expect(decidesMatch(deciding)).toBe(true);
+});
+
+it("決着でない射撃は、飛翔の終わりからオンラインと同じ長さが過ぎるまで次の手番へ移らない（設計書 41.8）", () => {
+  // 地形に当たってダメージのない着弾。飛翔の終わりから 1000 ms 留める
+  const job = jobOf(shot({ x: 60, elevation: 45, power: 50 }), players(60, 300));
+  expect(job.shot.impacts.length).toBeGreaterThan(0);
+  expect(job.shot.impacts.every(i => i.damage.every(d => d === 0))).toBe(true);
+  const flightAtLeast = (job.paths[0]!.points.length - 1) * (1000 / 60);
+  const held = doneTimeOf(job, decidesMatch(job));
+  expect(held).toBeGreaterThanOrEqual(flightAtLeast + replayTailMs(job.shot.impacts));
+  // 決着の射撃は留めずにリザルトへ進む
+  expect(doneTimeOf(job, true)).toBeLessThan(flightAtLeast + replayTailMs(job.shot.impacts));
 });
