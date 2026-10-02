@@ -28,13 +28,16 @@ export const actorPoint = (view: MatchView) => {
   const actor = view.control ?? view.players?.[view.currentSeat] ?? { x: 90, y: 130 };
   return { x: actor.x, y: actor.y - 6 };
 };
+/** 相手の手番に準備した向きで自機を描く（設計書 37.6）。自分の手番と自分の射撃の再生では、操作か撃った向きのまま */
+const withPrepared = (v: MatchView, seat: number, pose: TankPose): TankPose =>
+  seat === v.mySeat && v.preparedFacing && !v.control && v.replay?.shot.input.seat !== seat ? { ...pose, facing: v.preparedFacing } : pose;
 const posesOf = (v: MatchView, elevations: readonly number[]): readonly TankPose[] => {
   if (!v.mask || !v.players) return [];
   return v.players.map((p, seat) => {
     const control = seat === v.mySeat ? v.control : seat === 1 ? v.cpuPose ?? null : null;
     const position = control ?? p;
-    return { x: position.x, y: position.y, tilt: tiltOf(v.mask!, position), facing: position.facing, elevation: control?.elevation ?? (seat === v.mySeat ? v.lastElevation : elevations[seat]) ?? 45,
-      hp: p.hp, visible: !isRingOut(v.mask!, position), flash: false, aiming: control !== null && v.phase === "acting", acting: turnSeatOf(v) === seat };
+    return withPrepared(v, seat, { x: position.x, y: position.y, tilt: tiltOf(v.mask!, position), facing: position.facing, elevation: control?.elevation ?? (seat === v.mySeat ? v.lastElevation : elevations[seat]) ?? 45,
+      hp: p.hp, visible: !isRingOut(v.mask!, position), flash: false, aiming: control !== null && v.phase === "acting", acting: turnSeatOf(v) === seat });
   });
 };
 
@@ -91,7 +94,7 @@ export const PrototypeCanvas = ({ store, rig, layout, handlers, blocked, followS
           // 自分の射撃の軌跡を次の自分の手番まで残す（設計書 38 の E7）
           if (job.shot.input.seat === v.mySeat) guide = guideDots(job.paths.map(path => path.points.map(q => ({ x: q.x / ONE, y: q.y / ONE }))));
           if (current.followShot) rig.focus(job.shot.input, "shot", reduced.matches);
-          const replayRenderer: Renderer = { ...r, projectile: (color, weapon) => {
+          const replayRenderer: Renderer = { ...r, setTank: (seat, pose) => r.setTank(seat, withPrepared(store.getView(), seat, pose)), projectile: (color, weapon) => {
             const projectile = r.projectile(color, weapon);
             return { ...projectile, setBullet: (index, x, y, angle) => { projectile.setBullet(index, x, y, angle); if (x !== null && leadsVolley(job, index)) rig.shot({ x, y }); } };
           } };

@@ -25,6 +25,11 @@ it("相手の射撃の再生中と相手の手番は、確定した位置と向�
   expect(hudPose(view, 0)).toEqual({ x: 60, y: 150, facing: -1 });
 });
 
+it("相手の手番と相手の射撃の再生中は、準備した向き", () => {
+  expect(hudPose({ ...view, preparedFacing: 1 }, 0)).toEqual({ x: 60, y: 150, facing: 1 });
+  expect(hudPose({ ...view, phase: "replaying", replay: replayOf(1), preparedFacing: 1 }, 0)).toEqual({ x: 60, y: 150, facing: 1 });
+});
+
 it("機体がまだ無ければ null", () => {
   expect(hudPose(EMPTY_VIEW, 0)).toBeNull();
 });

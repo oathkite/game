@@ -2,7 +2,7 @@ import type { Facing, ItemId, Seat, WeaponSlot } from "@game/protocol";
 import { STEPS_PER_TURN } from "@game/sim";
 import { createListeners } from "@/net/connection";
 import type { Connection } from "@/net/connection";
-import { applyElevation, applyItem, applySlot, applyStep, canStep as canStepView } from "./control";
+import { applyElevation, applyFacing, applyItem, applySlot, applyStep, canStep as canStepView } from "./control";
 import { reduce, type ReduceOptions } from "./reduce";
 import { EMPTY_VIEW, type LocalControl, type MatchView } from "./types";
 
@@ -13,6 +13,8 @@ export type MatchStore = {
   readonly subscribe: (fn: () => void) => () => void;
   readonly moveStep: (dir: Facing) => void;
   readonly changeElevation: (delta: number) => void;
+  /** 相手の手番に、次の自分の手番の向きを準備する（設計書 30 章、37.6） */
+  readonly prepareFacing: (dir: Facing) => void;
   /** dir 方向に 1 歩進めるか。進めなければボタンを暗くする */
   readonly canStep: (dir: Facing) => boolean;
   /** このターンに撃つ武器のスロットを選ぶ */
@@ -68,6 +70,11 @@ export const createMatchStore = (connection: Connection, initialOptions: ReduceO
     if (next !== view) set(next);
   };
 
+  const prepareFacing = (dir: Facing): void => {
+    const next = applyFacing(view, dir, options.preparation);
+    if (next !== view) set(next);
+  };
+
   const selectSlot = (slot: WeaponSlot): void => {
     const next = applySlot(view, slot, options.preparation);
     if (next !== view) set(next);
@@ -117,6 +124,7 @@ export const createMatchStore = (connection: Connection, initialOptions: ReduceO
     setSeat,
     moveStep,
     changeElevation,
+    prepareFacing,
     selectSlot,
     selectItem,
     canStep: (dir) => canStepView(view, dir),

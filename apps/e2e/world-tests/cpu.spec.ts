@@ -64,7 +64,13 @@ test("タッチでも敵の手番は準備だけを操作できる", async ({ br
   const aim = page.getByRole("button", { name: "角度を上げる", exact: true });
   await expect(aim).toBeEnabled({ timeout: 15000 });
   await expect(page.getByRole("button", { name: "発射", exact: true })).toBeDisabled();
-  await expect(page.getByRole("button", { name: "左へ移動", exact: true })).toBeDisabled();
+  // 左右は向きだけを変え、位置は動かさない（設計書 37.6）
+  const left = page.getByRole("button", { name: "左へ移動", exact: true });
+  await expect(left).toBeEnabled();
+  const x = await page.evaluate(() => window.__fortress!.getView().players![0].x);
+  await left.tap();
+  await expect.poll(() => page.evaluate(() => window.__fortress!.getView().preparedFacing)).toBe(-1);
+  expect(await page.evaluate(() => window.__fortress!.getView().players![0].x)).toBe(x);
   await aim.tap();
   await page.getByRole("button", { name: "掘削弾", exact: true }).tap();
   await expect(page.getByRole("button", { name: "掘削弾", exact: true })).toHaveAttribute("aria-pressed", "true");

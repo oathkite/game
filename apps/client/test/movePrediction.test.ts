@@ -4,7 +4,7 @@ import { MULTIPLAYER_MAPS } from "@game/maps";
 import { labFrameSchema } from "@game/protocol/v2-lab";
 import type { MoveSnapshot } from "@game/protocol/v2";
 import { applyOps, buildInitialTerrain, spawnPos, walk } from "@game/sim";
-import { acknowledge, createMovePredictor, EMPTY_PREDICTION, predictedPose, requestFire, requestMove, syncTurn, type Prediction } from "../src/networkLab/movePrediction";
+import { acknowledge, createMovePredictor, EMPTY_PREDICTION, predictedPose, prepareFacing, requestFire, requestMove, syncTurn, type Prediction } from "../src/networkLab/movePrediction";
 
 const flat = { id: "flat", version: 1, width: 500, height: 225, surface: Array(500).fill(150) };
 const mask = buildInitialTerrain(flat);
@@ -201,5 +201,37 @@ describe("createMovePredictor", () => {
     expect(predictor.fire()).toEqual({ matchId: "m", turnId: 1, ackMoveSeq: 1, facing: 1 });
     predictor.frame({ ...frame, phase: "replaying" }, "p1", 100);
     expect(predictor.pose()).toBeNull();
+  });
+});
+
+describe("facing prepared during an opponent's turn (design 30, 22.5)", () => {
+  it("carries the prepared facing into the next own turn and fires with it, without sending a move", () => {
+    const prepared = prepareFacing(EMPTY_PREDICTION, -1);
+    expect(prepared.facing).toBe(-1);
+    // サーバーは手番の初めを右向きにするが、準備した向きで始める
+    const turn = syncTurn(prepared, snapshot(start()), true, 0);
+    expect(predictedPose(turn, mask)?.facing).toBe(-1);
+    // 準備した向きへ押しても、進めないなら送らない。発射は準備した向きで撃つ
+    expect(requestFire(turn, mask)?.shot.facing).toBe(-1);
+    // 進めない向き直しは、準備した向きと違えば送る
+    const wall = { ...mask, cells: mask.cells.map((c, i) => (i % mask.width === 99 && Math.floor(i / mask.width) >= 140 ? 1 : c)) };
+    expect(requestMove(turn, wall, -1, 0)).toBeNull();
+  });
+
+  it("drops the prepared facing once the player moves, so the server's facing takes over", () => {
+    const turn = syncTurn(prepareFacing(EMPTY_PREDICTION, -1), snapshot(start()), true, 0);
+    const moved = step(turn, 1, 0).prediction;
+    expect(moved.facing).toBeNull();
+    expect(predictedPose(moved, mask)?.facing).toBe(1);
+    // ack で確定位置が進んでも、準備した向きに戻らない
+    const server = handleMove(start(), mask, "p1", command(1, 1), 10);
+    expect(predictedPose(acknowledge(moved, server.reason, server.snapshot), mask)?.facing).toBe(1);
+  });
+
+  it("is ignored during the player's own turn and cleared when the own turn ends", () => {
+    const turn = own();
+    expect(prepareFacing(turn, -1)).toBe(turn);
+    const ended = syncTurn(syncTurn(prepareFacing(EMPTY_PREDICTION, -1), snapshot(start()), true, 0), snapshot(start()), false, 0);
+    expect(ended.facing).toBeNull();
   });
 });

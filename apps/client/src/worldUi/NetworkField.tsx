@@ -65,7 +65,7 @@ export const NetworkField = (props: Props) => {
       const writePositions = (players: LabFrame["players"]): void => { const next = JSON.stringify(players); if (next !== shownPositions) { shownPositions = next; element.dataset.positions = next; } };
       writePositions(latest.current.sample().players);
       stop = r.onFrame(dt => {
-        const { elevation, ownId } = latest.current, { frame, players, presentation, serverNow, own: predicted } = latest.current.sample();
+        const { elevation, ownId } = latest.current, { frame, players, presentation, serverNow, own: predicted, prepared } = latest.current.sample();
         const openingNow = Boolean(frame.opening && serverNow < frame.opening.endsAt);
         writePositions(players);
         const size = layout(), key = `${size.mapWidth}/${size.mapHeight}/${frame.map.width}/${frame.map.height}`;
@@ -86,6 +86,8 @@ export const NetworkField = (props: Props) => {
         facing.set(frame.actorId, predicted?.facing ?? frame.movement.facing);
         const shot = frame.phase === "replaying" ? frame.replay?.shooter : null;
         if (shot) { facing.set(shot.playerId, shot.facing);  }
+        // 相手の手番に準備した向き（設計書 30 章）は自分の画面だけに出す
+        if (prepared && frame.actorId !== ownId && shot?.playerId !== ownId) facing.set(ownId, prepared);
         if (fallMatch !== frame.matchId) { falls.reset(); fallMatch = frame.matchId; }
         const now = performance.now(), reduced = matchMedia("(prefers-reduced-motion: reduce)").matches;
         let ownFalling = false;

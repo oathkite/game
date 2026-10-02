@@ -26,6 +26,10 @@ export const canPrepare = (view: MatchView): boolean =>
   !view.spectator && view.mySeat !== null && view.mySeat !== view.currentSeat && view.result === null &&
   (view.phase === "waiting" || view.phase === "replaying") && (view.players?.[view.mySeat]?.hp ?? 0) > 0;
 
+/** 相手の手番の向きの準備（設計書 30 章、37.6）。位置は動かさず、次の自分の手番の初めの向きにする */
+export const applyFacing = (view: MatchView, dir: Facing, preparation = false): MatchView =>
+  preparation && canPrepare(view) && view.preparedFacing !== dir ? { ...view, preparedFacing: dir } : view;
+
 /** 仰角の変更。10 から 90 に収める。最後の値はターンをまたいで引き継ぐ */
 export const applyElevation = (view: MatchView, delta: number, preparation = false): MatchView => {
   const c = view.control;

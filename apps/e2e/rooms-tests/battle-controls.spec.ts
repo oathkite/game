@@ -44,11 +44,11 @@ test("room battle takes keyboard, touch and camera input from both players", asy
     await expect(actor.getByTestId("camera-angle")).toHaveText(`${angle + 1}°`);
     await actor.keyboard.press("KeyS");
     await expect(actor.getByTestId("camera-angle")).toHaveText(`${angle}°`);
-    // 相手の手番でも、次の自分の手番へ向けて武器と角度だけは変えられる（設計書 30 章）。移動はできない
+    // 相手の手番でも、次の自分の手番へ向けて武器と角度と向きは変えられる（設計書 30 章）。移動はできない
     await expect(control(observer)).toHaveAttribute("data-control", "prepare");
     if (observer === mobile) {
-      await expect(mobile!.getByRole("button", { name: "角度を上げる", exact: true })).toBeEnabled();
-      for (const label of ["右へ1歩", "発射"]) await expect(mobile!.getByRole("button", { name: label, exact: true })).toBeDisabled();
+      for (const label of ["角度を上げる", "右へ1歩"]) await expect(mobile!.getByRole("button", { name: label, exact: true })).toBeEnabled();
+      await expect(mobile!.getByRole("button", { name: "発射", exact: true })).toBeDisabled();
     }
     const prepared = Number((await observer.getByTestId("camera-angle").textContent())!.replace("°", ""));
     await observer.keyboard.press("KeyE");
@@ -57,14 +57,20 @@ test("room battle takes keyboard, touch and camera input from both players", asy
     await expect(observer.getByTestId("camera-angle")).toHaveText(`${prepared + 1}°`);
     const observerX = async () => JSON.parse(await actor.getByTestId("network-world").getAttribute("data-positions") ?? "[]").find((p: { playerId: string }) => p.playerId === observerId).x as number;
     const before = await observerX();
+    // 左右は向きだけを変える。角度計は右向きなら 90 度より小さく、左向きなら大きい
+    const worldAngle = async () => Number(await observer.locator(".battle-angle").getAttribute("data-world-angle"));
     await observer.keyboard.down("ArrowRight"); await observer.waitForTimeout(300); await observer.keyboard.up("ArrowRight");
+    await expect.poll(worldAngle).toBeLessThan(90);
+    await observer.keyboard.press("ArrowLeft");
+    await expect.poll(worldAngle).toBeGreaterThan(90);
     expect(await observerX()).toBe(before);
     await actor.keyboard.down("Space"); await actor.waitForTimeout(400); await actor.keyboard.up("Space");
     await expect(observer.getByTestId("phase")).toHaveText("射撃を再生中");
     await expect(control(observer)).toHaveAttribute("data-control", "prepare");
     await expect(observer.getByTestId("phase")).toHaveText("操作中", { timeout: 10000 });
-    // 準備した武器と角度は、次の自分の手番へ引き継ぐ
+    // 準備した武器と角度と向きは、次の自分の手番へ引き継ぐ
     await expect(control(observer)).toHaveAttribute("data-control", "act");
+    await expect.poll(worldAngle).toBeGreaterThan(90);
     await expect(observer.locator(".battle-weapons button").nth(1)).toHaveAttribute("aria-pressed", "true");
     await expect(observer.getByTestId("camera-angle")).toHaveText(`${prepared + 1}°`);
     await expectSameWind(pages);
