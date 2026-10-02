@@ -72,7 +72,7 @@ test("online battle uses each item once and teleports the shooter", async ({ bro
     await expect(item(actor, "テレポート")).toHaveAttribute("aria-pressed", "false");
     await item(actor, "テレポート").click();
 
-    // 手番は右向きで始まる（TBD-44）。右側の機体がそのまま撃つと弾がマップの外へ消えて移れないので、相手の方へ 1 歩向ける
+    // 対戦の最初の手番は右向きで始まる（TBD-44）。右側の機体がそのまま撃つと弾がマップの外へ消えて移れないので、相手の方へ 1 歩向ける
     const observerId = await observer.getByTestId("identity").innerText();
     const start = await positionOf(observer, actorId), target = await positionOf(observer, observerId);
     await actor.keyboard.press(target.x < start.x ? "ArrowLeft" : "ArrowRight");

@@ -1,6 +1,6 @@
-import { expect, it } from "vitest";
+import { describe, expect, it } from "vitest";
 import { labFrameSchema } from "@game/protocol/v2-lab";
-import { battleClock, clockKey, sampleLive } from "../src/networkLab/liveView";
+import { battleClock, clockKey, facingUpdates, sampleLive } from "../src/networkLab/liveView";
 
 const player = { playerId: "p1", x: 20, y: 150, hp: 100, teamId: "t0", eliminated: false };
 const frame = labFrameSchema.parse({ type: "lab.frame", build: { protocol: 2, sim: "keropod-sim-v2.1", assets: "keropod-world-v1", rules: "keropod-v2.1", map: { id: "test", version: 1 } }, wind: 0, map: { id: "test", version: 1, width: 500, height: 225, surface: Array(500).fill(150) }, serverTime: 1000, eventSeq: 2, matchId: "m", turnId: 1, actorId: "p1", deadlineAt: 21000,
@@ -55,4 +55,33 @@ it("shows the predicted own move and redraws when its facing or remaining steps 
   const turned = battleClock(frame, sampleLive(frame, 1700, [{ playerId: "p1", x: 21, y: 150 }, positions[1]!], false, { ...pose, facing: -1 }), "p1");
   expect(clockKey(turned)).not.toBe(clockKey(clock));
   expect(battleClock(frame, sampleLive(frame, 1700, positions, false), "p1").move).toBeNull();
+});
+
+describe("facingUpdates (design 30)", () => {
+  const turn = (actorId: string, patch: Partial<typeof frame.movement> = {}) => ({ ...frame, actorId, movement: { ...frame.movement, playerId: actorId, ...patch } });
+  const replaying = (playerId: string, facing: -1 | 1) => ({ ...turn(playerId), phase: "replaying" as const, replay: { shooter: { playerId, facing } } });
+
+  it("keeps the facing shown before another player's turn until the server records a step", () => {
+    // サーバーは手番の初めを右向きにする。歩を記録する前の右向きは、撃った向きを上書きしない
+    expect(facingUpdates({ frame: turn("p2"), own: null, prepared: null }, "p1")).toEqual([]);
+    expect(facingUpdates({ frame: turn("p2", { facing: -1, ackMoveSeq: 1 }), own: null, prepared: null }, "p1")).toEqual([["p2", -1]]);
+    // 進めずに向きだけを変えた歩も記録される
+    expect(facingUpdates({ frame: turn("p2", { facing: 1, ackMoveSeq: 1 }), own: null, prepared: null }, "p1")).toEqual([["p2", 1]]);
+  });
+
+  it("uses the predicted facing in the own turn, even before the server records a step", () => {
+    const own = { x: 20, y: 150, facing: -1 as const, stepsLeft: 30, eliminated: false };
+    expect(facingUpdates({ frame: turn("p1"), own, prepared: null }, "p1")).toEqual([["p1", -1]]);
+  });
+
+  it("shows the shot's facing during its replay", () => {
+    expect(facingUpdates({ frame: replaying("p2", -1), own: null, prepared: null }, "p1")).toEqual([["p2", -1]]);
+    // 自分の射撃の再生中は、次の手番に使う向きより撃った向きを出す
+    expect(facingUpdates({ frame: replaying("p1", -1), own: null, prepared: 1 }, "p1")).toEqual([["p1", -1]]);
+  });
+
+  it("shows the facing for the next own turn on the own tank during another player's turn and replay", () => {
+    expect(facingUpdates({ frame: turn("p2"), own: null, prepared: -1 }, "p1")).toEqual([["p1", -1]]);
+    expect(facingUpdates({ frame: replaying("p2", 1), own: null, prepared: -1 }, "p1")).toEqual([["p2", 1], ["p1", -1]]);
+  });
 });
