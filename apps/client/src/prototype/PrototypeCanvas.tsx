@@ -57,6 +57,9 @@ export const PrototypeCanvas = ({ store, rig, layout, handlers, blocked, followS
     let stopFrames = () => {}, stopReplay = () => {};
     let replayId: number | null = null, lastTurn = -1, lastMask: MatchView["mask"] = null;
     let activeReplay = false, previousLayout = latest.current.layout;
+    // 再生が最後に描いた機体の姿勢。再生は撃っていない機体を毎フレームは描かないので、相手の再生中に向きを準備したらここから描き直す
+    const replayPoses: (TankPose | undefined)[] = [];
+    let shownPrepared: MatchView["preparedFacing"] = null;
     const falls = createFallMotion();
     let available = true;
     const elevations: [number, number] = [45, 45];
@@ -96,7 +99,7 @@ export const PrototypeCanvas = ({ store, rig, layout, handlers, blocked, followS
           // 自分の射撃の軌跡を次の自分の手番まで残す（設計書 38 の E7）
           if (job.shot.input.seat === v.mySeat) guide = guideDots(job.paths.map(path => path.points.map(q => ({ x: q.x / ONE, y: q.y / ONE }))));
           if (current.followShot) rig.focus(job.shot.input, "shot", reduced.matches);
-          const replayRenderer: Renderer = { ...r, setTank: (seat, pose) => r.setTank(seat, withPrepared(store.getView(), seat, pose)), projectile: (color, weapon, item) => {
+          const replayRenderer: Renderer = { ...r, setTank: (seat, pose) => { replayPoses[seat] = pose; r.setTank(seat, withPrepared(store.getView(), seat, pose)); }, projectile: (color, weapon, item) => {
             const projectile = r.projectile(color, weapon, item);
             return { ...projectile, setBullet: (index, x, y, angle) => { projectile.setBullet(index, x, y, angle); if (x !== null && leadsVolley(job, index)) rig.shot({ x, y }); } };
           } };
@@ -108,6 +111,9 @@ export const PrototypeCanvas = ({ store, rig, layout, handlers, blocked, followS
           } });
         }
         if (!v.replay && activeReplay) { stopReplay(); activeReplay = false; }
+        const replayPose = v.mySeat === null ? undefined : replayPoses[v.mySeat];
+        if (activeReplay && replayPose && v.mySeat !== null && v.preparedFacing !== shownPrepared) r.setTank(v.mySeat, withPrepared(v, v.mySeat, replayPose));
+        shownPrepared = v.preparedFacing;
         const showGuide = Boolean(guide) && !activeReplay && !opening && v.phase === "acting" && v.control !== null;
         if (showGuide !== guideShown) { guideShown = showGuide; r.setGuide(showGuide ? guide : null); }
         if (!activeReplay) {

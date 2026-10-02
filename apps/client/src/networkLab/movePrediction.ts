@@ -26,8 +26,8 @@ export type Prediction = {
   /** 発射を送った。結果が返るまで移動も発射も送らない */
   readonly firing: boolean;
   /**
-   * 相手の手番に準備した向き（設計書 30 章）。サーバーは手番の初めを右向きにするので、自分の手番では動くまでこの向きを予測に使い、発射の命令で送る。
-   * 動けば向きは歩の向きになるので外す。自分の手番が終わったら外す
+   * 相手の手番に準備した向き（設計書 30 章）。サーバーは手番の初めを右向きにするので、自分の手番ではサーバーが歩を記録するまでこの向きを予測に使い、発射の命令で送る。
+   * 自分の手番が終わったら外す
    */
   readonly facing: -1 | 1 | null;
 };
@@ -49,7 +49,8 @@ const stepPose = (mask: TerrainMask, pose: OwnPose, direction: -1 | 1): OwnPose 
 
 export const predictedPose = (p: Prediction, mask: TerrainMask): OwnPose | null => {
   if (!p.base) return null;
-  const { x, y, stepsLeft, eliminated } = p.base, facing = p.facing ?? p.base.facing;
+  // 準備した向きは、サーバーがこの手番の歩をまだ 1 つも記録していないあいだだけ使う。記録した歩はサーバーの向きを歩の向きにする
+  const { x, y, stepsLeft, eliminated } = p.base, facing = p.facing !== null && p.base.ackMoveSeq === 0 ? p.facing : p.base.facing;
   return pending(p, p.base).reduce<OwnPose>((pose, e) => stepPose(mask, pose, e.direction), { x, y, facing, stepsLeft, eliminated });
 };
 
@@ -75,7 +76,7 @@ export const requestMove = (p: Prediction, mask: TerrainMask, direction: -1 | 1,
   const creditAt = Math.max(p.creditAt, now), credit = Math.min(MOVE_BURST, p.credit + (creditAt - p.creditAt) / MOVE_INTERVAL_MS);
   if (credit < 1 || (!moves && direction === pose.facing)) return null;
   const moveSeq = p.base.ackMoveSeq + pending(p, p.base).length + 1;
-  return { prediction: { ...p, sent: [...p.sent, { kind: "move", moveSeq, direction, stale: false }], credit: credit - 1, creditAt, facing: null },
+  return { prediction: { ...p, sent: [...p.sent, { kind: "move", moveSeq, direction, stale: false }], credit: credit - 1, creditAt },
     command: { matchId: p.base.matchId, turnId: p.base.turnId, moveSeq } };
 };
 

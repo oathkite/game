@@ -218,14 +218,22 @@ describe("facing prepared during an opponent's turn (design 30, 22.5)", () => {
     expect(requestMove(turn, wall, -1, 0)).toBeNull();
   });
 
-  it("drops the prepared facing once the player moves, so the server's facing takes over", () => {
+  it("gives way to the server's facing once the server records a move", () => {
     const turn = syncTurn(prepareFacing(EMPTY_PREDICTION, -1), snapshot(start()), true, 0);
     const moved = step(turn, 1, 0).prediction;
-    expect(moved.facing).toBeNull();
     expect(predictedPose(moved, mask)?.facing).toBe(1);
-    // ack で確定位置が進んでも、準備した向きに戻らない
+    // ack で確定位置が進めば、準備した向きに戻らない。frame の snapshot が ack より先に届いても同じ
     const server = handleMove(start(), mask, "p1", command(1, 1), 10);
     expect(predictedPose(acknowledge(moved, server.reason, server.snapshot), mask)?.facing).toBe(1);
+    expect(predictedPose(syncTurn(moved, server.snapshot!, true, 20), mask)?.facing).toBe(1);
+  });
+
+  it("keeps the prepared facing when the server refuses the move without recording it", () => {
+    const turn = syncTurn(prepareFacing(EMPTY_PREDICTION, -1), snapshot(start()), true, 0);
+    const moved = step(turn, 1, 0).prediction;
+    const refused = acknowledge(moved, "outside-turn", null);
+    expect(predictedPose(refused, mask)?.facing).toBe(-1);
+    expect(requestFire(refused, mask)?.shot.facing).toBe(-1);
   });
 
   it("is ignored during the player's own turn and cleared when the own turn ends", () => {
