@@ -120,3 +120,38 @@ it("reports the players an impact takes to zero HP", () => {
   const lethal = { ...frame, replay: { ...frame.replay!, impacts: [{ tick: 42, damage: [{ playerId: "p1", amount: 100 }, { playerId: "p2", amount: 20 }] }] } };
   expect(presentLabReplay(lethal, 1700).effects[0]!.kills).toEqual(["p1"]);
 });
+
+// アイテム（設計書 42）。settleAt は 1600、tick 1 は 10 ms
+// 撃つ前と同じ位置にいる参加者。アイテムで動く機体だけを変える
+const still = frame.replay!.playersBefore;
+const withItem = (replay: Partial<NonNullable<typeof frame.replay>>, players = still) => ({ ...frame, players, terrainOps: [{ cx: 20, cy: 150, radius: 4 }, { cx: 20, cy: 160, radius: 4 }],
+  replay: { ...frame.replay!, endsAt: 3200, ticks: 60, ...replay } });
+
+it("ダブルシュートは 1 発目の後に一度落とし、2 発目の後に残りを落とす", () => {
+  const players = still.map(p => p.playerId === "p2" ? { ...p, y: 170, hp: 80 } : p);
+  const double = withItem({ shooter: { ...frame.replay!.shooter, item: "double" },
+    impacts: [{ tick: 20, damage: [{ playerId: "p2", amount: 10 }] }, { tick: 60, damage: [{ playerId: "p2", amount: 10 }] }],
+    paths: [{ launchTick: 0, endTick: 20, points: [{ x: 20, y: 140, tick: 0 }, { x: 60, y: 150, tick: 20 }] }, { launchTick: 50, endTick: 60, points: [{ x: 20, y: 140, tick: 50 }, { x: 60, y: 160, tick: 60 }] }],
+    firstShot: { tick: 20, players: frame.replay!.playersBefore.map(p => ({ playerId: p.playerId, x: p.x, y: p.playerId === "p2" ? 160 : p.y })) } }, players);
+  const p2 = (now: number) => presentLabReplay(double, now).players.find(p => p.playerId === "p2")!;
+  expect(p2(1100)).toMatchObject({ y: 150, hp: 100 });
+  expect(p2(1350).y).toBeCloseTo(155);
+  expect(p2(1350).hp).toBe(90);
+  expect(presentLabReplay(double, 1300).fallingIds).toEqual(["p2"]);
+  expect(p2(1550)).toMatchObject({ y: 160 });
+  expect(presentLabReplay(double, 1550).fallingIds).toEqual([]);
+  expect(p2(1750).y).toBeCloseTo(165);
+  expect(presentLabReplay(double, 1700).fallingIds).toEqual(["p2"]);
+  expect(p2(2000)).toMatchObject({ y: 170, hp: 80 });
+});
+
+it("テレポートした機体は着地点へ横に滑らず移り、落下として数えない", () => {
+  const players = still.map(p => p.playerId === "p1" ? { ...p, x: 200, y: 170 } : p);
+  const teleport = withItem({ shooter: { ...frame.replay!.shooter, item: "teleport" }, teleport: { x: 200, y: 170 }, endsAt: 1900, impacts: [],
+    paths: [{ launchTick: 0, endTick: 60, points: [{ x: 20, y: 140, tick: 0 }, { x: 200, y: 165, tick: 60 }] }] }, players);
+  const p1 = (now: number) => presentLabReplay(teleport, now).players.find(p => p.playerId === "p1")!;
+  expect(p1(1500)).toMatchObject({ x: 20, y: 150 });
+  expect(p1(1650)).toMatchObject({ x: 200, y: 170 });
+  expect(presentLabReplay(teleport, 1650).fallingIds).toEqual([]);
+  expect(presentLabReplay(teleport, 1650).effects).toEqual([]);
+});

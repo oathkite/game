@@ -2,14 +2,14 @@ import { ROUND_REVEAL_MS, createDelay, finishDelay, actionCost } from "@game/pro
 import { recordShotStats, type BattleStats } from "./stats.js";
 import { matchBuild, type MatchBuild } from "@game/protocol/build";
 import { fireCommandSchema, type FireCommand } from "@game/protocol/v2";
-import { DEFAULT_LOADOUT, parseLoadout, type Loadout, type TerrainOp } from "@game/protocol";
+import { DEFAULT_LOADOUT, parseLoadout, shotWeapon, type ItemId, type Loadout, type TerrainOp } from "@game/protocol";
 import { RULE_SET_VERSION } from "./lobby.js";
 import { COMBAT_TICK_MS, type TerrainMask } from "@game/sim";
 import { resolveBattleShot, type BattlePlayer } from "./combat.js";
 import type { createBattle } from "./create.js";
 import { createMovement, type MovementState } from "./movement.js";
 import { moveBattle } from "./moveBattle.js";
-import { REPLAY_SETTLE_MS, replayHoldMs } from "./replayTiming.js";
+import { REPLAY_MAX_MS, REPLAY_SETTLE_MS, replayHoldMs } from "./replayTiming.js";
 import { eliminatePlayers, nextTurn, outcome, type RosterState, type TeamOutcome } from "./rules.js";
 
 import { createBattleWind, advanceBattleWind, type BattleWind } from "./battleWind.js";
@@ -23,6 +23,8 @@ export type BattleSession = {
   readonly map: ReturnType<typeof createBattle>["map"];
   readonly windState: BattleWind;
   readonly loadouts: Readonly<Record<string, Loadout>>; readonly ruleSetVersion: typeof RULE_SET_VERSION;
+  /** 使い終えたアイテム（設計書 42.1）。全員が空の列で始まる */
+  readonly itemsUsed: Readonly<Record<string, readonly ItemId[]>>;
   readonly matchId: string; readonly roster: RosterState; readonly players: readonly BattlePlayer[];
   readonly mask: TerrainMask; readonly movement: MovementState; readonly startedAt: number;
   readonly phase: "acting" | "replaying" | "finished"; readonly result: TeamOutcome;
@@ -44,6 +46,7 @@ export const createBattleSession = (battle: ReturnType<typeof createBattle>, mat
   stats: Object.fromEntries(battle.players.map(p => [p.playerId, { shots: 0, enemyDamage: 0, friendlyDamage: 0, selfDamage: 0 }])),
   build: matchBuild(battle.map), windState: createBattleWind(windSeed),
   loadouts: copyLoadouts(battle, loadouts), ruleSetVersion: RULE_SET_VERSION,
+  itemsUsed: Object.fromEntries(battle.roster.members.map(p => [p.playerId, []])),
   ...battle, roster: { ...battle.roster, delay: createDelay(battle.roster.turnRing) }, matchId, startedAt: now, phase: "acting", result: { type: "ongoing" }, replay: null, lastFire: null,
   movement: movementFor({ ...battle, matchId }, now, 1),
 });
@@ -87,13 +90,19 @@ export const fireInSession = (state: BattleSession, playerId: string, raw: unkno
   if (state.phase !== "acting") return reject("not-acting");
   if (now < state.movement.startsAt || now >= state.movement.deadlineAt) return reject("outside-turn");
   if (command.ackMoveSeq !== state.movement.ackMoveSeq) return reject("move-sync-required");
-  const weapon = state.loadouts[playerId]![command.slot];
+  const used = state.itemsUsed[playerId] ?? [], item = command.item;
+  if (item && used.includes(item)) return reject("item-used");
+  // テレポートの手番は標準砲で撃つ（設計書 42.3）
+  const weapon = shotWeapon(state.loadouts[playerId]![command.slot], item);
   const shot = resolveBattleShot(state.roster, state.mask, state.players, { playerId, weapon, wind: state.windState.value,
-    facing: command.facing, elevation: command.elevation, power: command.power });
-  const duration = Math.min(8000, Math.max(500, shot.ticks * COMBAT_TICK_MS + REPLAY_SETTLE_MS));
+    facing: command.facing, elevation: command.elevation, power: command.power, ...(item ? { item } : {}) });
+  // ダブルシュートは 2 発ぶん再生するので、上限も 2 発ぶんにする（設計書 42.7、TBD-46）
+  const limit = item === "double" ? 2 * REPLAY_MAX_MS : REPLAY_MAX_MS;
+  const duration = Math.min(limit, Math.max(500, shot.ticks * COMBAT_TICK_MS + REPLAY_SETTLE_MS));
   // 着弾の後に留める長さ（設計書 41.8）。クライアントも同じ関数で飛翔の終わりを逆算する
   const holdMs = replayHoldMs(shot.impacts);
-  const next: BattleSession = { ...state, ...(state.stats ? { stats: recordShotStats(state.stats, state.roster.members, playerId, state.players, shot.impacts) } : {}), roster: { ...shot.roster, ...(state.roster.delay ? { delay: finishDelay(state.roster.delay, playerId, actionCost(30 - state.movement.stepsLeft, weapon)) } : {}) }, players: shot.players, mask: shot.mask, phase: "replaying",
+  const next: BattleSession = { ...state, ...(state.stats ? { stats: recordShotStats(state.stats, state.roster.members, playerId, state.players, shot.impacts) } : {}), roster: { ...shot.roster, ...(state.roster.delay ? { delay: finishDelay(state.roster.delay, playerId, actionCost(30 - state.movement.stepsLeft, weapon, item)) } : {}) }, players: shot.players,
+    ...(item ? { itemsUsed: { ...state.itemsUsed, [playerId]: [...used, item] } } : {}), mask: shot.mask, phase: "replaying",
     movement: { ...state.movement, locked: true, eventSeq: state.movement.eventSeq + 1 },
     terrainOps: [...state.terrainOps, ...shot.impacts.map(i => i.terrainOp)],
     replay: { startsAt: now, endsAt: now + duration + holdMs, shot, playersBefore: state.players, eliminatedBefore: state.roster.eliminated, origin: { x: state.movement.x, y: state.movement.y } },

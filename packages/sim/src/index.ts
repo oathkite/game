@@ -31,6 +31,7 @@ export {
   simulateCombatWithItem,
   fireSecond,
   type TeamCombatant,
+  type FirstShot,
   type CombatOutcome,
   type CombatImpact,
   type Combatant,

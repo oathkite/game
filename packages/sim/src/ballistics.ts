@@ -140,7 +140,12 @@ export type CombatOutcome = {
   readonly ringOut: readonly number[];
   /** テレポートの着地点。テレポートを使った射撃だけが持ち、移れなければ null */
   readonly teleport?: TankPos | null;
+  /** ダブルシュートで 2 発目を撃った射撃だけが持つ、1 発目の終わりの状態。再生で 1 発目の後の落下を描くのに使う */
+  readonly firstShot?: FirstShot;
 };
+
+/** ダブルシュートの 1 発目の終わり。paths は 1 発目の弾道の本数、positions は 1 発目で全員が落ちた後の位置 */
+export type FirstShot = { readonly paths: number; readonly positions: readonly TankPos[] };
 
 const ringOutsOf = (mask: TerrainMask, positions: readonly TankPos[]): number[] => positions.flatMap((p, i) => isRingOut(mask, p) ? [i] : []);
 
@@ -194,7 +199,7 @@ const doubleCombat = (mask: TerrainMask, players: readonly TeamCombatant[], shoo
   const after = players.map((_, i) => ({ ...first.positions[i]!, hp: first.hpAfter[i]! }));
   const second = simulateCombat(first.mask, after, { ...input, x: at.x, y: at.y }, removeDefeated);
   const offset = first.paths.length;
-  return { ...second, paths: [...first.paths, ...second.paths],
+  return { ...second, paths: [...first.paths, ...second.paths], firstShot: { paths: offset, positions: first.positions },
     impacts: [...first.impacts, ...second.impacts.map(i => ({ ...i, projectile: i.projectile + offset }))] };
 };
 

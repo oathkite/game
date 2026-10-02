@@ -2,11 +2,11 @@ import { expect, test, type Locator, type Page } from "@playwright/test";
 import { enterFreePractice } from "./practiceFlow";
 
 // 風のメーター（設計書 08 の 8.5）。操作盤を 2 段にし、角度メーターの真下に矢印と数値で今の風を、パワーの真下に残り移動を出す。
-// 操作盤の高さは変えない。風の値は開発用のフック（window.__fortress）で読むので、dev サーバーで確かめる。
+// 操作盤の高さは変えない。ただしスマートフォンの縦持ちは 2026-10-02 に、パワーと残り移動を盤の全幅の段に分けて 216px に高くした（30 章）。風の値は開発用のフック（window.__fortress）で読むので、dev サーバーで確かめる。
 // 対戦の起動は重いので、タッチの有無ごとに 1 回だけ起動し、画面の大きさは setViewportSize で切り替える。
 
 type Box = { readonly x: number; readonly y: number; readonly width: number; readonly height: number };
-type Size = { readonly name: string; readonly viewport: { readonly width: number; readonly height: number }; readonly panel: number; readonly half: { readonly width: number; readonly height: number } };
+type Size = { readonly name: string; readonly viewport: { readonly width: number; readonly height: number }; readonly panel: number; readonly half: { readonly width: number; readonly height: number }; readonly stacked?: boolean };
 const overlaps = (a: Box, b: Box): boolean => a.x < b.x + b.width && b.x < a.x + a.width && a.y < b.y + b.height && b.y < a.y + a.height;
 const box = async (locator: Locator): Promise<Box> => (await locator.boundingBox())!;
 
@@ -18,8 +18,8 @@ const withoutTouch: readonly Size[] = [
 ];
 const withTouch: readonly Size[] = [
   { name: "landscape-phone", viewport: { width: 844, height: 390 }, panel: 112, half: { width: 40, height: 14 } },
-  { name: "portrait-phone", viewport: { width: 390, height: 844 }, panel: 112, half: { width: 40, height: 14 } },
-  { name: "narrow-portrait-phone", viewport: { width: 360, height: 800 }, panel: 112, half: { width: 40, height: 14 } },
+  { name: "portrait-phone", viewport: { width: 390, height: 844 }, panel: 216, half: { width: 40, height: 14 }, stacked: true },
+  { name: "narrow-portrait-phone", viewport: { width: 360, height: 800 }, panel: 216, half: { width: 40, height: 14 }, stacked: true },
 ];
 
 const meterOf = (page: Page) => page.locator(".battle-console > .battle-wind");
@@ -65,10 +65,18 @@ const checkLayout = async (page: Page, size: Size): Promise<void> => {
   expect(gauge.y).toBeLessThanOrEqual(dial.y + dial.height + 12);
   expect(gauge.x).toBeLessThanOrEqual(dial.x + 0.5);
   expect(gauge.x + gauge.width).toBeGreaterThanOrEqual(dial.x + dial.width - 0.5);
-  // 残り移動は同じ下の段で、メーターの右。幅に余裕がある配置ではパワーの左端に揃える
-  expect(Math.abs((movement.y + movement.height / 2) - (gauge.y + gauge.height / 2))).toBeLessThanOrEqual(1);
-  expect(movement.x).toBeGreaterThanOrEqual(gauge.x + gauge.width + 4);
-  if (size.viewport.width >= 480) expect(movement.x).toBeCloseTo(power.x, 0);
+  if (size.stacked) {
+    // 縦持ちは、パワーと残り移動をメーターより下の段に、盤の全幅で置く
+    for (const meter_ of [power, movement]) { expect(meter_.y).toBeGreaterThanOrEqual(gauge.y + gauge.height); expect(meter_.width).toBeGreaterThanOrEqual(panel.width - 17); }
+    expect(movement.y).toBeGreaterThanOrEqual(power.y + power.height);
+    // 発射のボタンは狭い画面でも 44px 以上の幅を残す
+    expect((await box(page.locator(".battle-touch-fire"))).width).toBeGreaterThanOrEqual(44);
+  } else {
+    // 残り移動は同じ下の段で、メーターの右。幅に余裕がある配置ではパワーの左端に揃える
+    expect(Math.abs((movement.y + movement.height / 2) - (gauge.y + gauge.height / 2))).toBeLessThanOrEqual(1);
+    expect(movement.x).toBeGreaterThanOrEqual(gauge.x + gauge.width + 4);
+    if (size.viewport.width >= 480) expect(movement.x).toBeCloseTo(power.x, 0);
+  }
   // 片側は 20 × 7 art px（40.3、40.10）
   for (const half of await meter.locator(".battle-wind-half").all()) expect(await box(half)).toMatchObject(size.half);
   for (const selector of [".battle-power", ".battle-weapons", ".battle-dpad", ".battle-touch-fire", ".battle-menu", ".kp-minimap", ".practice-battle-status", ".turn-order-list"]) {

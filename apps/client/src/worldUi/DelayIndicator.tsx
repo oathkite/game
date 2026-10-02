@@ -1,5 +1,5 @@
 import { TurnOrderList } from "./TurnOrderList";
-import { actionCost, type DelayState, type TankColors, type WeaponId } from "@game/protocol";
+import { actionCost, type DelayState, type ItemId, type TankColors, type WeaponId } from "@game/protocol";
 import { useEffect, useRef } from "react";
 import { closeOnBackdrop } from "./dialogBackdrop";
 import { DotIcon } from "./DotIcon";
@@ -14,11 +14,11 @@ export type DelayInfo = {
   readonly acting: boolean;
   readonly players: readonly { readonly id: string; readonly name: string; readonly colors?: TankColors | undefined; readonly eliminated?: boolean }[];
 };
-export const DelayIndicator = ({ info, steps, weapon }: { readonly info: DelayInfo; readonly steps: number; readonly weapon?: WeaponId | undefined }) => {
+export const DelayIndicator = ({ info, steps, weapon, item }: { readonly info: DelayInfo; readonly steps: number; readonly weapon?: WeaponId | undefined; readonly item?: ItemId | undefined }) => {
   const { t } = useLanguage();
   const dialog = useRef<HTMLDialogElement>(null);
   useEffect(() => { dialog.current?.close(); }, [info.state.round]);
-  const cost = info.state.costs[info.playerId] ?? (info.acting ? actionCost(30 - steps, weapon) : null);
+  const cost = info.state.costs[info.playerId] ?? (info.acting ? actionCost(30 - steps, weapon, item) : null);
   return <>
     <TurnOrderList info={info} cost={cost} onCostClick={() => { info.onOpen(); dialog.current?.showModal(); }} />
     <dialog onKeyDown={e => e.stopPropagation()} ref={dialog} className="room-filter-dialog delay-dialog" aria-label={t("行動コスト")} onClick={e => closeOnBackdrop(e, () => dialog.current?.close())}>
@@ -30,7 +30,7 @@ export const DelayIndicator = ({ info, steps, weapon }: { readonly info: DelayIn
           return <tr key={id}><th>{player.name}</th><td>{info.state.readyAt[id]! - info.state.clock}</td></tr>;
         })}
       </tbody></table>
-      <p>{t("行動後に基本50・武器・移動のコストを加算します。")}</p>
+      <p>{t("行動後に基本50・武器・移動・アイテムのコストを加算します。")}</p>
     </dialog>
   </>;
 };

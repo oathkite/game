@@ -1,6 +1,6 @@
 import type { PlayerColor, WeaponId } from "@game/protocol";
 import { TEAM_RAMPS } from "@/game/palette";
-import { createGrid, getPixel, setPixel, TRANSPARENT, type PixelGrid } from "@/game/pixelGrid";
+import { createGrid, getPixel, opaqueBounds, setPixel, TRANSPARENT, type PixelGrid } from "@/game/pixelGrid";
 import { projectilePixels } from "@/game/projectileSprite";
 
 // 武器のアイコンの絵。設計書 40.10。40.8 の右向きの弾の絵を、13 × 13 art px の枠の中心に置く。
@@ -23,4 +23,14 @@ export const weaponIconGrid = (weapon: WeaponId, color: PlayerColor = "green"): 
     }
   }
   return grid;
+};
+
+/**
+ * 絵の中心を表示の中心へ動かす量（art px）。弾の絵は左右と上下で対称でないので、枠の中心に置くと 0.5 から 1.5 art px ずれる。
+ * 動かす量は 0.5 art px 単位になる。表示範囲は ICON_VIEW の整数のまま保ち、描くときに px へ丸めて動かす（WeaponIcon）
+ */
+export const iconShift = (grid: PixelGrid): { readonly x: number; readonly y: number } => {
+  const b = opaqueBounds(grid);
+  if (!b) return { x: 0, y: 0 };
+  return { x: ICON_VIEW.left + ICON_VIEW.width / 2 - (b.left + b.width / 2), y: ICON_VIEW.top + ICON_VIEW.height / 2 - (b.top + b.height / 2) };
 };
