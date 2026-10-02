@@ -26,8 +26,8 @@ export type Prediction = {
   /** 発射を送った。結果が返るまで移動も発射も送らない */
   readonly firing: boolean;
   /**
-   * 相手の手番に準備した向き（設計書 30 章）。サーバーは手番の初めを右向きにするので、自分の手番ではサーバーが歩を記録するまでこの向きを予測に使い、発射の命令で送る。
-   * 自分の手番が終わったら外す
+   * 次の自分の手番に使う向き（設計書 30 章）。サーバーは手番の初めを右向きにするので、自分の手番ではサーバーが歩を記録するまでこの向きを予測に使い、発射の命令で送る。
+   * 自分の手番が終わったら、終わったときの向きを入れる。相手の手番に左右を押せば、その向きに替える
    */
   readonly facing: -1 | 1 | null;
 };
@@ -40,6 +40,10 @@ const sameTurn = (base: Base, s: MoveSnapshot): boolean => base.matchId === s.ma
 const staleAll = (sent: readonly Sent[]): readonly Sent[] => sent.map(e => ({ ...e, stale: true }));
 const pending = (p: Prediction, base: Base) => [...p.recorded, ...p.sent].flatMap(e => e.kind === "move" && !e.stale && e.moveSeq > base.ackMoveSeq ? [e] : []);
 const unconfirmed = (moves: readonly Move[], base: Base | null): readonly Move[] => base ? moves.filter(e => e.moveSeq > base.ackMoveSeq) : [];
+/** 歩を重ねる前の向き。準備した向きは、サーバーがこの手番の歩をまだ 1 つも記録していないあいだだけ使う。記録した歩はサーバーの向きを歩の向きにする */
+const baseFacing = (p: Prediction, base: Base): -1 | 1 => (p.facing !== null && base.ackMoveSeq === 0 ? p.facing : base.facing);
+/** 手番の終わりの向き。歩は進めなくても向きを歩の向きにする（stepPose）ので、地形なしで求まる。脱落した後は手番が来ないので区別しない */
+const endFacing = (p: Prediction, base: Base): -1 | 1 => pending(p, base).at(-1)?.direction ?? baseFacing(p, base);
 
 /** サーバーの applyMove と同じ 1 歩。進めなくても向きは変わる（設計書 1.9）。脱落の後は動かない */
 const stepPose = (mask: TerrainMask, pose: OwnPose, direction: -1 | 1): OwnPose => {
@@ -49,14 +53,16 @@ const stepPose = (mask: TerrainMask, pose: OwnPose, direction: -1 | 1): OwnPose 
 
 export const predictedPose = (p: Prediction, mask: TerrainMask): OwnPose | null => {
   if (!p.base) return null;
-  // 準備した向きは、サーバーがこの手番の歩をまだ 1 つも記録していないあいだだけ使う。記録した歩はサーバーの向きを歩の向きにする
-  const { x, y, stepsLeft, eliminated } = p.base, facing = p.facing !== null && p.base.ackMoveSeq === 0 ? p.facing : p.base.facing;
+  const { x, y, stepsLeft, eliminated } = p.base, facing = baseFacing(p, p.base);
   return pending(p, p.base).reduce<OwnPose>((pose, e) => stepPose(mask, pose, e.direction), { x, y, facing, stepsLeft, eliminated });
 };
 
-/** 受信した frame の移動。自分の手番になったら確定位置から予測を始め、手番でなくなったら送った命令を無効にする */
+/**
+ * 受信した frame の移動。自分の手番になったら確定位置から予測を始め、手番でなくなったら送った命令を無効にする。
+ * 手番の終わりの向き（撃った向き、撃たなければ最後に向いた向き）は、次の自分の手番へ引き継ぐ
+ */
 export const syncTurn = (p: Prediction, snapshot: MoveSnapshot, ownTurn: boolean, now: number): Prediction => {
-  if (!ownTurn) return p.base ? { ...p, base: null, sent: staleAll(p.sent), recorded: [], firing: false, facing: null } : p;
+  if (!ownTurn) return p.base ? { ...p, base: null, sent: staleAll(p.sent), recorded: [], firing: false, facing: endFacing(p, p.base) } : p;
   if (p.base && sameTurn(p.base, snapshot)) {
     if (snapshot.ackMoveSeq < p.base.ackMoveSeq) return p;
     const base = baseOf(snapshot);
@@ -80,7 +86,7 @@ export const requestMove = (p: Prediction, mask: TerrainMask, direction: -1 | 1,
     command: { matchId: p.base.matchId, turnId: p.base.turnId, moveSeq } };
 };
 
-/** 相手の手番に向きを準備する。自分の手番では使わない（移動の命令で向きを変える） */
+/** 相手の手番に向きを準備する。前の手番から引き継いだ向きより優先する。自分の手番では使わない（移動の命令で向きを変える） */
 export const prepareFacing = (p: Prediction, facing: -1 | 1): Prediction => (p.base || p.facing === facing ? p : { ...p, facing });
 
 /** 発射の命令。ackMoveSeq は最後に送った移動、向きは予測の向き（サーバーは命令の向きで撃つ） */
@@ -105,9 +111,11 @@ export const acknowledge = (p: Prediction, reason: string, snapshot: MoveSnapsho
 
 /** 受信と送信の間で予測を持つ。地形は削られたときだけ作り直す */
 export const createMovePredictor = () => {
-  let state = EMPTY_PREDICTION, mask: TerrainMask | null = null, terrain = "";
+  let state = EMPTY_PREDICTION, mask: TerrainMask | null = null, terrain = "", match = "";
   return {
     frame(frame: LabFrame, ownId: string, now: number): void {
+      // 再戦は同じ接続で新しい対戦を始める。前の対戦の向きを引き継がない
+      if (frame.matchId !== match) { match = frame.matchId; state = { ...state, facing: null }; }
       const key = `${frame.matchId}/${frame.terrainOps.length}`;
       if (!mask || key !== terrain) { terrain = key; mask = applyOps(buildInitialTerrain(frame.map), frame.terrainOps); }
       state = syncTurn(state, frame.movement, frame.phase === "acting" && frame.movement.playerId === ownId, now);
@@ -125,7 +133,7 @@ export const createMovePredictor = () => {
     },
     prepareFacing(facing: -1 | 1): void { state = prepareFacing(state, facing); },
     pose: (): OwnPose | null => mask ? predictedPose(state, mask) : null,
-    /** 相手の手番に準備した向き。準備していなければ null */
+    /** 自分の手番でないときの、次の自分の手番に使う向き。自分の手番がまだ来ていなければ null */
     prepared: (): -1 | 1 | null => state.base ? null : state.facing,
   };
 };

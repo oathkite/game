@@ -202,6 +202,18 @@ describe("createMovePredictor", () => {
     predictor.frame({ ...frame, phase: "replaying" }, "p1", 100);
     expect(predictor.pose()).toBeNull();
   });
+
+  it("carries the facing of the last shot only within the same match", () => {
+    const predictor = createMovePredictor();
+    predictor.frame(frame, "p1", 0);
+    predictor.move(-1, 0);
+    predictor.fire();
+    predictor.frame({ ...frame, phase: "replaying" }, "p1", 100);
+    expect(predictor.prepared()).toBe(-1);
+    // 再戦は同じ接続で新しい対戦を始める。サーバーの初めの向きに戻す
+    predictor.frame({ ...frame, matchId: "m2", movement: snapshot(start(), { matchId: "m2" }) }, "p1", 200);
+    expect(predictor.pose()?.facing).toBe(1);
+  });
 });
 
 describe("facing prepared during an opponent's turn (design 30, 22.5)", () => {
@@ -236,10 +248,46 @@ describe("facing prepared during an opponent's turn (design 30, 22.5)", () => {
     expect(requestFire(refused, mask)?.shot.facing).toBe(-1);
   });
 
-  it("is ignored during the player's own turn and cleared when the own turn ends", () => {
+  it("is ignored during the player's own turn", () => {
     const turn = own();
     expect(prepareFacing(turn, -1)).toBe(turn);
-    const ended = syncTurn(syncTurn(prepareFacing(EMPTY_PREDICTION, -1), snapshot(start()), true, 0), snapshot(start()), false, 0);
-    expect(ended.facing).toBeNull();
+  });
+});
+
+describe("facing at the end of the own turn carries into the next own turn", () => {
+  /** 自分の手番を終え、相手の手番を挟んで、次の自分の手番を始める。サーバーは次の手番も右向きで始める */
+  const nextTurn = (p: Prediction): Prediction => {
+    const opponent = syncTurn(p, snapshot(start(300, "p2", 2)), false, 0);
+    return syncTurn(opponent, snapshot(start(99, "p1", 3)), true, 0);
+  };
+
+  it("starts facing left after moving left and firing, and fires left without sending a move", () => {
+    const fired = requestFire(step(own(), -1, 0).prediction, mask)!;
+    expect(fired.shot.facing).toBe(-1);
+    const next = nextTurn(acknowledge(fired.prediction, "accepted", snapshot(start(), { x: 99, facing: -1, ackMoveSeq: 1, stepsLeft: 29 })));
+    expect(predictedPose(next, mask)?.facing).toBe(-1);
+    expect(requestFire(next, mask)?.shot).toEqual({ matchId: "m", turnId: 3, ackMoveSeq: 0, facing: -1 });
+  });
+
+  it("keeps the facing of a shot fired with the prepared facing", () => {
+    const turn = syncTurn(prepareFacing(EMPTY_PREDICTION, -1), snapshot(start()), true, 0);
+    const next = nextTurn(requestFire(turn, mask)!.prediction);
+    expect(predictedPose(next, mask)?.facing).toBe(-1);
+  });
+
+  it("keeps the last facing when the turn runs out without a shot, even before the ack arrives", () => {
+    const moved = step(step(own(), 1, 0).prediction, -1, 100).prediction;
+    expect(predictedPose(nextTurn(moved), mask)?.facing).toBe(-1);
+  });
+
+  it("ignores a move the server refused without recording it", () => {
+    const refused = acknowledge(step(own(), -1, 0).prediction, "outside-turn", null);
+    expect(predictedPose(nextTurn(refused), mask)?.facing).toBe(1);
+  });
+
+  it("gives way to a facing prepared during the opponent's turn", () => {
+    const fired = requestFire(step(own(), -1, 0).prediction, mask)!.prediction;
+    const opponent = prepareFacing(syncTurn(fired, snapshot(start(300, "p2", 2)), false, 0), 1);
+    expect(predictedPose(syncTurn(opponent, snapshot(start(99, "p1", 3)), true, 0), mask)?.facing).toBe(1);
   });
 });
