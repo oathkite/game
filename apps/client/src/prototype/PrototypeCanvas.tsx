@@ -12,7 +12,7 @@ import { teamColor } from "@/worldUi/teamColors";
 import { useEffect, useRef, useState, type HTMLAttributes } from "react";
 import { isRingOut, ONE, tiltOf } from "@game/sim";
 import { createRenderer, type Renderer } from "@/game/renderer";
-import { leadsVolley, playReplay } from "@/game/replay";
+import { decidesMatch, leadsVolley, playReplay } from "@/game/replay";
 import type { TankPose } from "@/game/tankView";
 import type { Layout } from "@/game/scale";
 import type { MatchStore } from "@/match/matchStore";
@@ -103,7 +103,7 @@ export const PrototypeCanvas = ({ store, rig, layout, handlers, blocked, followS
             const projectile = r.projectile(color, weapon, item);
             return { ...projectile, setBullet: (index, x, y, angle) => { projectile.setBullet(index, x, y, angle); if (x !== null && leadsVolley(job, index)) rig.shot({ x, y }); } };
           } };
-          stopReplay = playReplay(replayRenderer, job, elevations, v.mySeat, { sound: playSound, reduceMotion: reduced.matches, roundEnd: Boolean(v.delay), onImpact: (mask, impact) => practice?.showImpact(mask, impact), done: () => {
+          stopReplay = playReplay(replayRenderer, job, elevations, v.mySeat, { sound: playSound, reduceMotion: reduced.matches, roundEnd: decidesMatch(job), onImpact: (mask, impact) => practice?.showImpact(mask, impact), done: () => {
             activeReplay = false;
             store.completeReplay(job.id);
             const next = store.getView();
