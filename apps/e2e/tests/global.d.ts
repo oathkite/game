@@ -1,6 +1,6 @@
 // client の MatchStage が開発と e2e のために window に置くフック。表示状態を読むだけ。
 
-type FortressPlayer = { readonly x: number; readonly hp: number; readonly colors: import("@game/protocol").TankColors };
+type FortressPlayer = { readonly x: number; readonly hp: number; readonly colors: import("@game/protocol").TankColors; readonly itemsUsed?: readonly import("@game/protocol").ItemId[] | undefined };
 
 type FortressAim = { readonly elevation: number; readonly power: number };
 
