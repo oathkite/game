@@ -132,7 +132,7 @@ const Battle = ({ store, begin, worldArt, cpu, cpuLevel, onExit, onResult }: { r
       <h2>{t("ひと息つこう")}</h2>
       <AudioControls />
       {import.meta.env.DEV && new URLSearchParams(location.search).get("debug") === "1" && <CameraSettingsPanel rig={rig} />}
-      <p className="kp-shortcuts">{t("A / D・← / →：移動")}<br />{t("W / S・↑ / ↓：角度　Space：発射")}<br />{t("Q / E：武器　Tab：機体を順に見る")}<br />{t("Shift + 矢印：見回す　C：手番へ")}</p>
+      <p className="kp-shortcuts">{t("A / D・← / →：移動")}<br />{t("W / S・↑ / ↓：角度　Space：発射")}<br />{t("Q / E：武器　Tab：機体を順に見る")}<br />{t("Shift + 矢印：見回す　C：手番へ")}<br />{t("M：設定を開く　F：全画面")}</p>
       {onResult && <button onClick={() => store.surrender()}>{t("降参して対戦を終える")}</button>}
       <button onClick={() => setMenu(false)}>{t("対戦に戻る")}</button>{onExit ? <button onClick={onExit}>{t("プラクティスへ戻る")}</button> : <a href="/">{t("ガレージへ戻る")}</a>}
     </dialog>

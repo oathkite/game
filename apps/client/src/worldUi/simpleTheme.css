@@ -10,14 +10,14 @@
 .world-ui.world-ui button[aria-pressed=true] { border-color:#fff; }
 .world-ui.world-ui .world-start h1 { width:auto; aspect-ratio:auto; overflow:visible; }
 .world-ui.world-ui .world-shutter { background:repeating-linear-gradient(to bottom,#164b28 0 2px,#031008 2px 6px,#000 6px 30px,#33ff66 30px 32px,#000 32px 40px); image-rendering:pixelated; }
-.world-ui.world-ui :is(.battle-console,.battle-countdown,.battle-wind,.network-world,.battle-menu,.network-overview,.kp-minimap) { color:#33ff66; background:#000; border-color:#0f4d24; border-radius:0; box-shadow:none; }
+.world-ui.world-ui :is(.battle-console,.battle-countdown,.battle-wind,.network-world,.battle-menu,.battle-fullscreen,.network-overview,.kp-minimap) { color:#33ff66; background:#000; border-color:#0f4d24; border-radius:0; box-shadow:none; }
 .world-ui.world-ui .battle-console { border-block:2px solid #0f4d24; }
 .world-ui.world-ui :is(.battle-countdown,.battle-power)::before,.world-ui.world-ui :is(.battle-countdown,.battle-power)::after { display:none; }
 .world-ui.world-ui .battle-angle { filter:none; }
 .world-ui.world-ui .battle-hp { background:#0f4d24; box-shadow:none; border-radius:0; }
 .world-ui.world-ui .battle-weapons button { background:#000!important; color:#33ff66!important; border-color:#0f4d24!important; border-radius:0; box-shadow:none; }
 .world-ui.world-ui .battle-weapons button[aria-pressed=true] { border-color:#33ff66!important; }
-.world-ui.world-ui :is(.battle-touch button,.battle-menu) { color:#33ff66; background:#000; border:2px solid #33ff66; box-shadow:none; border-radius:0; }
+.world-ui.world-ui :is(.battle-touch button,.battle-menu,.battle-fullscreen) { color:#33ff66; background:#000; border:2px solid #33ff66; box-shadow:none; border-radius:0; }
 .world-ui.world-ui :is(.battle-power-value,.battle-power-labels,.battle-movement) { color:#33ff66; }
 .world-ui.world-ui :is(.network-loading,.kp-dialog,.battle-menu-panel) { color:#33ff66; background:#000; border-color:#0f4d24; box-shadow:none; }
 .world-ui.world-ui .kp-world-help { display:none; }
@@ -100,10 +100,13 @@
 
 .world-ui .network-world { position:relative; }
 .world-ui.world-ui .battle-floating-timer { position:absolute; top:8px; left:50%; transform:translateX(-50%); z-index:2; background:transparent; pointer-events:none; }
-.world-ui.world-ui .battle-menu { top:12px; left:16px; right:auto; z-index:3; border:2px solid #33ff66!important; }
+.world-ui.world-ui :is(.battle-menu,.battle-fullscreen) { top:12px; left:16px; right:auto; z-index:3; border:2px solid #33ff66!important; }
+/* 全画面のボタンは設定の右隣に 8px あけて置く。対戦画面のボタンは min-width で 48px になる（設計書 30 章） */
+.world-ui.world-ui .battle-fullscreen { left:72px; }
 .world-ui.world-ui :is(.kp-root,.network-world):has(.battle-console) :is(.kp-minimap,.network-overview) { top:12px; right:16px; border:0; }
 @media (max-width:999px),(max-height:499px) {
-  .world-ui.world-ui .battle-menu { top:8px; left:8px; right:auto; }
+  .world-ui.world-ui :is(.battle-menu,.battle-fullscreen) { top:8px; left:8px; right:auto; }
+  .world-ui.world-ui .battle-fullscreen { left:64px; }
   .world-ui.world-ui :is(.kp-root,.network-world):has(.battle-console) :is(.kp-minimap,.network-overview) { top:8px; right:8px; }
 }
 

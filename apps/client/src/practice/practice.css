@@ -38,6 +38,16 @@
 .challenge-game > .challenge-hint { height: 36px; margin: 6px 12px; text-align: left; color: #a4c9ac; }
 .challenge-game .battle-console { flex: none; }
 
-.practice-battle-status { position: absolute; top: 18px; left: 68px; max-width: calc(50% - 96px); z-index: 2; padding: 4px; background: #000d; color: var(--ui); font-size: 12px; line-height: 1.4; pointer-events: none; }
+/* 設定と全画面のボタン（simpleTheme.css）の右に 4px あけて置き、右端は中央の残り時間の 28px 手前で止める */
+.practice-battle-status { position: absolute; top: 18px; left: 124px; max-width: calc(50% - 152px); z-index: 2; padding: 4px; background: #000d; color: var(--ui); font-size: 12px; line-height: 1.4; pointer-events: none; }
+@media (max-width: 999px), (max-height: 499px) {
+  .practice-battle-status { left: 116px; max-width: calc(50% - 144px); }
+}
+/* 縦持ちのスマートフォンは、2 つのボタンと中央の残り時間の間に「自由練習」が 1 行で入らない。
+   ボタンの下の段へ移し、手番の一覧（delay.css）をその下へ送る。CPU 戦の 2 行（難易度の行）でも重ならない高さにする */
+@media (orientation: portrait) and (max-width: 599px) {
+  .practice-battle-status { top: 64px; left: 8px; max-width: calc(100% - 16px); }
+  body:has(.practice-battle-status) .turn-order-list { top: 108px; }
+}
 
 .cpu-level-label { display: block; font-size: 10px; }
