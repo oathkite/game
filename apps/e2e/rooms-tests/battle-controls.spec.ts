@@ -24,6 +24,20 @@ test("room battle takes keyboard, touch and camera input from both players", asy
       const box = (await mobile!.getByRole("button", { name: label, exact: true }).boundingBox())!;
       expect(box.height).toBeGreaterThanOrEqual(label === "発射" ? 44 : 32); expect(box.x + box.width).toBeLessThanOrEqual(844); expect(box.y + box.height).toBeLessThanOrEqual(390);
     }
+    // 全画面のボタンは設定の右隣（設計書 30 章）。F で全画面を出入りし、M で設定を開く。手番かどうかに関係なく効く
+    for (const page of pages) {
+      const menu = (await page.locator(".battle-menu").boundingBox())!, fullscreen = (await page.getByRole("button", { name: "全画面", exact: true }).boundingBox())!;
+      expect(fullscreen.y).toBeCloseTo(menu.y, 0); expect(fullscreen.x - (menu.x + menu.width)).toBeCloseTo(8, 0);
+    }
+    const fullscreenElement = () => desktop!.evaluate(() => document.fullscreenElement?.tagName ?? null);
+    await desktop!.keyboard.press("KeyF");
+    await expect.poll(fullscreenElement).toBe("HTML");
+    await desktop!.keyboard.press("KeyF");
+    await expect.poll(fullscreenElement).toBeNull();
+    await desktop!.keyboard.press("KeyM");
+    await expect(desktop!.locator(".battle-menu-panel[open]")).toBeVisible();
+    await desktop!.getByRole("button", { name: "閉じる", exact: true }).click();
+    await expect(desktop!.locator(".battle-menu-panel")).toHaveCount(0);
     await expect.poll(async () => (await Promise.all(pages.map(canAct))).filter(Boolean).length).toBe(1);
     const actor = await canAct(desktop!) ? desktop! : mobile!, observer = actor === desktop ? mobile! : desktop!;
     const actorId = await actor.getByTestId("identity").innerText(), observerId = await observer.getByTestId("identity").innerText();

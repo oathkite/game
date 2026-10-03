@@ -4,7 +4,7 @@
 .battle-countdown .timer { background:#000; border:0; padding:0; color:#33ff66; font:inherit; min-width:0; }
 /* 風のメーター（設計書 08 の 8.5） */
 .battle-wind { display:flex; align-items:center; gap:4px; pointer-events:none; font-size:16px; font-weight:400; line-height:1; white-space:nowrap; }
-.world-ui .battle-menu { position:absolute; width:44px; height:44px; padding:8px!important; border-image:none!important; background:#000; color:#33ff66!important; }
+.world-ui :is(.battle-menu,.battle-fullscreen) { position:absolute; width:44px; height:44px; padding:8px!important; border-image:none!important; background:#000; color:#33ff66!important; }
 .world-ui .battle-console { height:120px; display:grid; column-gap:16px; align-items:center; padding:6px 16px; background:#000; color:#33ff66; border:0; }
 /* 風を出す操作盤は 2 段にする（設計書 08 の 8.5）。上の段は角度とパワー、下の段は角度の真下に風、パワーの真下に残り移動。
    武器は 2 段にまたがる。操作盤の高さは変えず、下の段の分だけ角度メーターを縮める。
@@ -44,7 +44,7 @@
 .world-ui .network-world:has(.battle-console) .network-overview { top:12px; bottom:auto; border-radius:0; }
 .battle-sr { position:absolute!important; width:1px; height:1px; overflow:hidden; clip-path:inset(50%); }
 @media(max-width:999px),(max-height:499px) {
- .world-ui .battle-menu { width:40px; }
+ .world-ui :is(.battle-menu,.battle-fullscreen) { width:40px; }
  .battle-countdown { width:40px; height:40px; font-size:21px; }
  .world-ui .battle-console { height:96px; padding:4px 8px; column-gap:8px; }
  .battle-power { height:68px; }.battle-weapons { gap:4px; }
@@ -61,12 +61,12 @@
 .battle-power-value { position:absolute; top:0; transform:translateX(-50%); font-size:19px; color:#33ff66; }
 .battle-power-labels { position:absolute; top:62px; left:0; width:100%; font-size:12px; }
 .battle-power-labels span { position:absolute; transform:translateX(-50%); }.battle-power-labels span:first-child { transform:none; }.battle-power-labels span:last-child { transform:translateX(-100%); }
-.world-ui .network-world .battle-angle,.world-ui .network-world .battle-weapons svg,.world-ui .network-world .battle-menu svg { margin:0; border-radius:0; }
+.world-ui .network-world .battle-angle,.world-ui .network-world .battle-weapons svg,.world-ui .network-world :is(.battle-menu,.battle-fullscreen) svg { margin:0; border-radius:0; }
 .world-ui .network-world .battle-weapons button { margin:0; }
 @media(max-width:999px),(max-height:499px) { .world-ui .kp-root:has(.battle-console) .kp-minimap,.world-ui .network-world:has(.battle-console) .network-overview { width:100px; } .battle-power-labels { font-size:10px; } }
 .battle-menu-panel[open] { display:grid; gap:12px; }.battle-menu-panel::backdrop { background:#000; }
 .world-ui .network-world { position:relative; }
-.world-ui .network-world .battle-menu svg { width:26px; height:26px; }
+.world-ui .network-world :is(.battle-menu,.battle-fullscreen) svg { width:26px; height:26px; }
 .battle-menu-panel textarea { display:block; box-sizing:border-box; width:100%; margin:8px 0; resize:vertical; font:12px var(--font-jp); }
 
 .battle-turn-notice { padding:10px 12px; color:#33ff66; background:#000; border-left:3px solid #e9ce83; }

@@ -18,6 +18,7 @@ export const BattleMenu = ({ seconds, close, surrender, exit, finished, report, 
     <AudioControls />
     {latency != null && <p>{t("通信遅延")} {latency} ms</p>}
     {!spectator && <p>{t("A / D・← / →：移動　W / S・↑ / ↓：角度")}<br />{t("Space：溜めて発射　Q / E：武器　Tab：機体を順に見る")}</p>}
+    <p>{t("M：設定を開く　F：全画面")}</p>
     {report && <ReportControls {...report} />}
     {diagnostics && <details><summary>{t("試合の診断情報")}</summary>
       <textarea ref={text} aria-label={t("試合の診断情報")} readOnly value={diagnostics} rows={7} onFocus={e => e.currentTarget.select()} />

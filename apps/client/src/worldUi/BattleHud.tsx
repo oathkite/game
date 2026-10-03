@@ -6,6 +6,8 @@ import { WeaponIcon } from "./WeaponIcon";
 import type { ReactNode } from "react";
 import { ITEM_IDS, ITEM_LABELS, TELEPORT_DELAY, WEAPON_DELAY, WEAPON_LABELS, type ItemId, type TankColors, type Loadout } from "@game/protocol";
 import { AngleDial, PowerRuler, MovementReserve } from "./BattleInstruments";
+import { useFullscreen } from "./useFullscreen";
+import { useBattleShortcuts } from "./useBattleShortcuts";
 import "./battleHud.css";
 import "./battleHudDesktop.css";
 import "./battleTouch.css";
@@ -14,10 +16,14 @@ import "./battleTouch.css";
 export const touchConsoleHeight = (width: number, height: number): number => (height >= width && width < 600 ? 216 : 112);
 
 export type HudPlayer = { readonly id: string; readonly name: string; readonly hp: number; readonly team: number; readonly colors?: TankColors | undefined };
+/** 設定の右隣に全画面のボタンを置く（設計書 30 章）。全画面を持たない端末（iPhone の Safari）では出さない */
 export const BattleOverlay = ({ clock, onMenu }: { readonly clock: ReactNode; readonly onMenu: () => void }) => { const { t } = useLanguage();
+  const fullscreen = useFullscreen();
+  useBattleShortcuts(onMenu, fullscreen.toggle);
   return <>
   <div className="battle-countdown battle-floating-timer">{clock}</div>
   <button className="battle-menu" aria-label={t("設定を開く")} onClick={onMenu}><DotIcon name="settings" /></button>
+  {fullscreen.supported && <button className="battle-fullscreen" aria-label={t("全画面")} aria-pressed={fullscreen.active} onClick={fullscreen.toggle}><DotIcon name={fullscreen.active ? "exitFullscreen" : "fullscreen"} /></button>}
 </>; };
 
 /** アイテムの操作（設計書 42.1）。selected は撃つ前に選んだアイテムで、もう一度押すと外す */

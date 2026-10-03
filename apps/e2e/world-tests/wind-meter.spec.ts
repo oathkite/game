@@ -84,7 +84,7 @@ const checkLayout = async (page: Page, size: Size): Promise<void> => {
   }
   // 片側は 20 × 7 art px（40.3、40.10）
   for (const half of await meter.locator(".battle-wind-half").all()) expect(await box(half)).toMatchObject(size.half);
-  for (const selector of [".battle-power", ".battle-weapons", ".battle-dpad", ".battle-touch-fire", ".battle-menu", ".kp-minimap", ".practice-battle-status", ".turn-order-list"]) {
+  for (const selector of [".battle-power", ".battle-weapons", ".battle-dpad", ".battle-touch-fire", ".battle-menu", ".battle-fullscreen", ".kp-minimap", ".practice-battle-status", ".turn-order-list"]) {
     const other = page.locator(selector);
     if (await other.isVisible()) expect({ selector, overlaps: overlaps(gauge, await box(other)) }).toEqual({ selector, overlaps: false });
   }
