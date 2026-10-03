@@ -1,6 +1,7 @@
 import { z } from "zod";
 import { MAP_CHOICES, MAP_NAMES, MAP_WIDTH, MAX_MESSAGE_BYTES, NICKNAME_MAX, PLAYER_COLORS, ROOM_CODE_ALPHABET, ROOM_CODE_LENGTH, ROOM_TITLE_MAX } from "./constants.js";
 import { ITEM_IDS } from "./items.js";
+import { FRAME_SKINS, TURRET_SKINS } from "./skins.js";
 import { isValidLoadout, WEAPON_IDS } from "./weapons.js";
 
 // クライアントからサーバーへ届くメッセージの Zod スキーマ。設計書 05 の 5.2。
@@ -15,6 +16,8 @@ export const mapChoiceSchema = z.enum(MAP_CHOICES);
 export const tankColorsSchema = z.object({
   primary: playerColorSchema,
   secondary: playerColorSchema,
+  turret: z.enum(TURRET_SKINS).optional(),
+  frame: z.enum(FRAME_SKINS).optional(),
 });
 
 const weaponIdSchema = z.enum(WEAPON_IDS);

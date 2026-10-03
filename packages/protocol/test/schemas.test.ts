@@ -40,6 +40,16 @@ describe("parseClientMessage", () => {
     expect(join("1234567890123").ok).toBe(false);
   });
 
+  it("機体のスキンは任意で、候補にある砲塔とフレームだけを受け付ける（設計書 43）", () => {
+    const join = (colors: object) =>
+      parseClientMessage(JSON.stringify({ type: "room.join", code: "ABCDEF", playerId: "player-0001", nickname: "a", colors, loadout: ["cannon", "digger"] }));
+    const skinned = join({ primary: "red", secondary: "blue", turret: "fin", frame: "hover" });
+    expect(skinned.ok && skinned.message.type === "room.join" && skinned.message.colors).toEqual({ primary: "red", secondary: "blue", turret: "fin", frame: "hover" });
+    expect(join({ primary: "red", secondary: "blue" }).ok).toBe(true);
+    expect(join({ primary: "red", secondary: "blue", turret: "tower" }).ok).toBe(false);
+    expect(join({ primary: "red", secondary: "blue", frame: "jetpack" }).ok).toBe(false);
+  });
+
   it("JSON でない文字列は拒否する", () => {
     expect(parseClientMessage("{").ok).toBe(false);
   });

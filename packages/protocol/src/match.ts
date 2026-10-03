@@ -1,4 +1,5 @@
 import type { ItemId } from "./items.js";
+import type { FrameSkin, TurretSkin } from "./skins.js";
 import type { WeaponId } from "./weapons.js";
 // 設計書 06 データモデルの型。sim と server と client が共有する。
 // ここでは対戦に関わる型だけを置き、部屋やメッセージの型はサーバー実装時に足す。
@@ -20,9 +21,16 @@ export type PlayerColor =
   | "mint"
   | "white";
 
+/**
+ * 機体の見た目。プレイヤーが出撃準備で選ぶ（設計書 09 の 9.2、43）。
+ * primary（カラー 1）は車体、secondary（カラー 2）は砲塔と砲身を塗る。砲塔とフレームのスキンは、
+ * 足す前に保存した状態と古いクライアントには無いので任意にし、描画は既定のスキンで受ける
+ */
 export type TankColors = {
   readonly primary: PlayerColor;
   readonly secondary: PlayerColor;
+  readonly turret?: TurretSkin | undefined;
+  readonly frame?: FrameSkin | undefined;
 };
 
 export type Wind = {
