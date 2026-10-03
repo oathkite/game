@@ -1,5 +1,5 @@
 import { describe, expect, it, vi } from "vitest";
-import { WEAPON_IDS } from "@game/protocol";
+import { FRAME_SKINS, WEAPON_IDS } from "@game/protocol";
 import { createAudioContextMock } from "./audioContextMock";
 import { playRecipe, type Layer, type Recipe, type SfxGraph } from "../src/app/sfx";
 import { SOUNDS } from "../src/app/soundRecipes";
@@ -29,6 +29,27 @@ describe("演出に合わせた音（設計書 41.14）", () => {
   it("撃破の音は 3 連の爆発（C5）に合わせて 140 ms おきに破裂を置く", () => {
     const starts = [...new Set(SOUNDS.destroy.layers.filter((l) => l.kind === "noise" && l.filter === "highpass").map((l) => l.delay ?? 0))];
     expect(starts).toEqual([0, 0.14, 0.28]);
+  });
+});
+
+describe("移動の音（設計書 43）", () => {
+  it("足回りのスキンごとに別の音を持つ", () => {
+    const recipes = FRAME_SKINS.map((frame) => JSON.stringify(SOUNDS[`move-${frame}`]));
+    expect(new Set(recipes).size).toBe(FRAME_SKINS.length);
+  });
+  it("75 ms ごとに繰り返すので、どれも 0.1 秒以内で、BGM を下げない。いちばん大きい層は 0.27 以上 1 以下にして聞こえるようにする", () => {
+    for (const frame of FRAME_SKINS) {
+      const recipe = SOUNDS[`move-${frame}`];
+      expect(length(recipe), frame).toBeLessThanOrEqual(0.1);
+      expect(recipe.duck ?? 0, frame).toBe(0);
+      const loudest = Math.max(...recipe.layers.map((l) => l.gain));
+      expect(loudest, frame).toBeGreaterThanOrEqual(0.27);
+      expect(loudest, frame).toBeLessThanOrEqual(1);
+    }
+  });
+  it("浮遊は UFO のうねりで、正弦波の音程を上げてから下げる", () => {
+    const tones = SOUNDS["move-hover"].layers.filter((l): l is Extract<Layer, { kind: "tone" }> => l.kind === "tone" && l.wave === "sine" && l.from !== l.to);
+    expect(tones.map((l) => Math.sign(l.to - l.from))).toEqual([1, -1]);
   });
 });
 

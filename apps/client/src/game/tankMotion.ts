@@ -172,11 +172,30 @@ export const antennaSwayAt = (t: number, amplitude: number, reduced: boolean): n
 export const EXHAUST_PERIOD_MS = 1400;
 export const EXHAUST_VISIBLE_MS = 900;
 
-/** 排気口からの煙の粒。接地点からの位置（art px、機体の前が正）、大きさ、濃さ。見えていなければ null。動きを減らす設定では出さない */
-export const exhaustAt = (clock: number, reduced: boolean): { readonly x: number; readonly y: number; readonly size: 1 | 2; readonly tone: 0 | 1 } | null => {
+/** キャタピラの排気口。車体の後ろの下 */
+const TRACKS_EXHAUST: Dot = { x: -15, y: -7 };
+
+/**
+ * 排気口からの煙の粒。接地点からの位置（art px、機体の前が正）、大きさ、濃さ。見えていなければ null。動きを減らす設定では出さない。
+ * port はフレームごとの排気口の位置（設計書 43）。粒はそこから後ろの上へ流れる
+ */
+export const exhaustAt = (clock: number, reduced: boolean, port: Dot = TRACKS_EXHAUST): { readonly x: number; readonly y: number; readonly size: 1 | 2; readonly tone: 0 | 1 } | null => {
   if (reduced) return null;
   const t = Math.max(0, clock) % EXHAUST_PERIOD_MS;
   if (t >= EXHAUST_VISIBLE_MS) return null;
   const f = t / EXHAUST_VISIBLE_MS;
-  return { x: -15 - Math.floor(f * 3), y: -7 - Math.floor(f * 6), size: f < 0.4 ? 1 : 2, tone: f < 0.5 ? 0 : 1 };
+  return { x: port.x - Math.floor(f * 3), y: port.y - Math.floor(f * 6), size: f < 0.4 ? 1 : 2, tone: f < 0.5 ? 0 : 1 };
 };
+
+/** 歩みを描く速さ（セル/ms）。押し続けたときの歩みの間隔（80 ms）で 1 セル進み、1 セルずつの歩みの間を滑らかにつなぐ（設計書 43） */
+export const GLIDE_CELLS_PER_MS = 1 / 80;
+/** 描く位置が実際の位置から遅れてよい上限（セル）。スワイプで一度に何歩も進んだときは、これより先へ飛ばす */
+export const GLIDE_MAX_CELLS = 2;
+
+/** 1 歩進んだ直後の遅れ（セル、進んだ向きが正）。動きを減らす設定では遅らせない */
+export const glideAfterStep = (glide: number, delta: number, reduced: boolean): number =>
+  reduced ? 0 : Math.max(-GLIDE_MAX_CELLS, Math.min(GLIDE_MAX_CELLS, glide + delta));
+
+/** 時間が経った後の遅れ。一定の速さで 0 へ縮める */
+export const glideAfterTime = (glide: number, deltaMs: number): number =>
+  Math.sign(glide) * Math.max(0, Math.abs(glide) - deltaMs * GLIDE_CELLS_PER_MS);

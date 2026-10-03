@@ -1,6 +1,6 @@
 import type { CpuPose } from "@/practice/cpuTurn";
 import type { DelayState } from "@game/protocol";
-import { type Facing, type ItemId, type Loadout, type MatchResult, type Seat, type ShotResult, type TankColors, TURN_LIMIT, type WeaponSlot, type Wind } from "@game/protocol";
+import { type Facing, type ItemId, type Loadout, type MatchResult, type Seat, type ShotResult, type TankColors, TURN_LIMIT, type WeaponId, type WeaponSlot, type Wind } from "@game/protocol";
 import type { FirstShot, ProjectilePath, TerrainMask } from "@game/sim";
 
 // クライアントが持つ対戦の表示状態。サーバーの通知から組み立て、勝手には進めない（設計書 04）。
@@ -18,6 +18,8 @@ export type PlayerView = {
   readonly connected: boolean;
   /** 使い終えたアイテム（設計書 42）。持たなければどれも使っていない */
   readonly itemsUsed?: readonly ItemId[] | undefined;
+  /** 最後に撃った武器。ほかの参加者の砲身に描く（設計書 10.5）。まだ撃っていなければ持たない */
+  readonly lastWeapon?: WeaponId | undefined;
 };
 
 export type ClientPhase =

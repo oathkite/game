@@ -65,8 +65,8 @@ export const drawBursts = (g: Graphics, bursts: readonly Burst[]): void => {
 };
 
 /** 排気口の煙。機体の後ろから小さく昇る。facing で左右を反転する */
-export const drawExhaust = (g: Graphics, clock: number, facing: 1 | -1, reduced: boolean): void => {
-  const puff = exhaustAt(clock, reduced);
+export const drawExhaust = (g: Graphics, clock: number, facing: 1 | -1, reduced: boolean, port?: Dot): void => {
+  const puff = exhaustAt(clock, reduced, port);
   if (!puff) return;
   const x = 0.5 + (facing * puff.x - (facing < 0 ? puff.size : 0)) * ART, y = puff.y * ART;
   g.rect(Math.round(x * ART_PER_CELL) * ART, y, puff.size * ART, puff.size * ART).fill(puff.tone === 0 ? PALETTE.smoke1 : PALETTE.smoke2);

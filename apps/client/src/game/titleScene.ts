@@ -1,3 +1,4 @@
+import type { FrameSkin, Loadout, TankColors, TurretSkin } from "@game/protocol";
 import { maskFromHeights } from "@game/sim";
 import { PALETTE, TEAM_RAMPS } from "./palette";
 import { ART_PER_CELL, createGrid, getPixel, setPixel, TRANSPARENT, type PixelGrid } from "./pixelGrid";
@@ -29,9 +30,10 @@ const placeMountains = (out: PixelGrid, layer: 0 | 1, top: number, height: numbe
   }
 };
 
-const tank = (hull: keyof typeof TEAM_RAMPS, turret: keyof typeof TEAM_RAMPS, facing: 1 | -1, elevation: number): TankSpriteInput => ({
-  hull: TEAM_RAMPS[hull], turret: TEAM_RAMPS[turret], facing, tilt: 0, elevation, recoil: 0, sink: 0, treadPhase: 0,
-  white: false, wrecked: false, rim: "none", flash: null, sparks: [],
+/** タイトルの 2 台。スキンと武器の組み合わせで見た目が変わることを見せる（設計書 43） */
+const tank = (colors: TankColors & { readonly turret: TurretSkin; readonly frame: FrameSkin }, [weapon, sub]: Loadout, facing: 1 | -1, elevation: number): TankSpriteInput => ({
+  hull: TEAM_RAMPS[colors.primary], turret: TEAM_RAMPS[colors.secondary], turretSkin: colors.turret, frame: colors.frame, weapon, sub,
+  facing, tilt: 0, elevation, recoil: 0, sink: 0, treadPhase: 0, white: false, wrecked: false, rim: "none", flash: null, sparks: [],
 });
 
 /** 左の機体から右へ飛ぶ弾の弧。2 px おきの軌跡の点と、先頭の砲弾 */
@@ -62,7 +64,8 @@ export const paintTitleScene = (width: number, height: number): PixelGrid => {
   const terrain = createGrid(0, 0, width, height);
   paintTerrain({ mask, original: mask, depth: terrainDepth(mask), theme: "ridge" }, terrain);
   overlay(out, terrain, 0, 0);
-  const leftTank = tank("red", "yellow", 1, 40), rightTank = tank("blue", "cyan", -1, 35);
+  const leftTank = tank({ primary: "red", secondary: "yellow", turret: "dome", frame: "tracks" }, ["cannon", "digger"], 1, 40);
+  const rightTank = tank({ primary: "blue", secondary: "cyan", turret: "fin", frame: "walker" }, ["laser", "multiple"], -1, 35);
   overlay(out, composeTank(leftTank), left * ART_PER_CELL + 2, ground[left]! * ART_PER_CELL);
   overlay(out, composeTank(rightTank), right * ART_PER_CELL + 2, ground[right]! * ART_PER_CELL);
   drawShot(out, { x: left * ART_PER_CELL + 14, y: ground[left]! * ART_PER_CELL - 26 }, { x: right * ART_PER_CELL, y: ground[right]! * ART_PER_CELL - 10 }, height * 0.28);

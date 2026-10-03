@@ -1,10 +1,11 @@
-import { DEFAULT_LOADOUT, parseLoadout, PLAYER_COLORS, type Loadout, type PlayerColor, type TankColors } from "@game/protocol";
+import { DEFAULT_FRAME, DEFAULT_LOADOUT, DEFAULT_TURRET, isFrameSkin, isTurretSkin, parseLoadout, PLAYER_COLORS, type Loadout, type PlayerColor, type TankColors } from "@game/protocol";
 
 // 端末に保存するプレイヤー設定。設計書 09 の 9.2。
 
 export type Profile = {
   readonly playerId: string;
   readonly nickname: string;
+  /** 機体の色（カラー 1 が砲塔と砲身、カラー 2 が車体）とスキン（砲塔、フレーム）。設計書 43 */
   readonly colors: TankColors;
   /** 装備する 2 つの武器。設計書 10 */
   readonly loadout: Loadout;
@@ -26,7 +27,7 @@ const isColor = (v: unknown): v is PlayerColor => typeof v === "string" && (PLAY
 const defaults = (): Profile => ({
   playerId: randomId(),
   nickname: "",
-  colors: { primary: "red", secondary: "yellow" },
+  colors: { primary: "red", secondary: "yellow", turret: DEFAULT_TURRET, frame: DEFAULT_FRAME },
   loadout: DEFAULT_LOADOUT,
   volume: 0.5,
   bgmVolume: 0.5,
@@ -58,6 +59,9 @@ export const loadProfile = (): Profile => {
     colors: {
       primary: isColor(colors.primary) ? colors.primary : base.colors.primary,
       secondary: isColor(colors.secondary) ? colors.secondary : base.colors.secondary,
+      // スキンを足す前に保存した設定には無いので、既定のスキンにする
+      turret: isTurretSkin(colors.turret) ? colors.turret : DEFAULT_TURRET,
+      frame: isFrameSkin(colors.frame) ? colors.frame : DEFAULT_FRAME,
     },
     loadout: parseLoadout(r.loadout) ?? DEFAULT_LOADOUT,
     volume: typeof r.volume === "number" ? Math.min(1, Math.max(0, r.volume)) : base.volume,

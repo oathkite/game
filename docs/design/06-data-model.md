@@ -105,12 +105,15 @@ y はサーバーが移動の検証と落下で決める（[マップ仕様](./0
 車体の傾きは x、y と地形から決まるので持たない。
 描画のたびに地表の高さと傾きの対応表から求める。
 
-色は主色と副色の 2 つで、候補は [グラフィックの方向性](./08-visual-direction.md) の 7 色を名前で持つ。
+色は主色（画面ではカラー 2）と副色（カラー 1）の 2 つで、候補は protocol の `PLAYER_COLORS` の 10 色を名前で持つ。
+同じ型に、砲塔と足回りのスキンを任意で持つ（[43 章](./43-tank-skins.md)）。
 
 ```ts
 type TankColors = {
   readonly primary: PlayerColor;    // 車体、弾、HP バー、名前
   readonly secondary: PlayerColor;  // 砲塔と主砲
+  readonly turret?: TurretSkin;     // 砲塔の形。無ければドーム
+  readonly frame?: FrameSkin;       // 車体と足回りの形。無ければキャタピラ
 };
 
 type PlayerColor =
@@ -330,8 +333,7 @@ type SeatStats = {
 
 ## 6.9 外見データの拡張境界
 
-以下は将来の設計方針であり、現在の型へ追加済みのフィールドではない。
-既存の colors と loadout を維持し、足回りを独立させる。
-本体は全組み合わせで共通とし、turretShellId の選択フィールドを作らない。
+2026-10-03 に、砲塔と足回り（車体と一体のフレーム）のスキンを `TankColors` の任意の `turret` と `frame` として足した（[43 章](./43-tank-skins.md)）。
+当初は本体の形を全組み合わせで共通にし、形の選択フィールドを作らない方針だったが、色と同じく形もプレイヤーの個性として選べるようにするユーザー指示で改めた。
 接続点、palette、clip はクライアントの素材定義であり、sim の計算入力にしない。
 素材の manifest は対戦プロトコルの型とは別の version を持つ。

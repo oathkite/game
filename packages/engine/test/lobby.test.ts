@@ -138,6 +138,15 @@ it("keeps validated custom colors through match preparation and accepts legacy p
   expect(prepared.setup?.members[1]?.colors).toBeUndefined();
   expect(() => createLobby("bad", "p1", { ...profile, colors: { primary:"invalid", secondary:"red" } as never }, TEST_ARENA)).toThrow();
 });
+it("砲塔とフレームのスキンを色と一緒に対戦の準備へ渡し、知らないスキンは拒否する（設計書 43）", () => {
+  const colors = { primary: "purple", secondary: "orange", turret: "onion", frame: "walker" } as const;
+  let room = joinLobby(createLobby("skin-room", "p1", { ...profile, colors }, TEST_ARENA), "p2", profile);
+  room = editLobby(room, "p1", command(room, "room.assignTeam", { playerId:"p1", teamId:"t0" })).room;
+  room = editLobby(room, "p2", command(room, "room.assignTeam", { playerId:"p2", teamId:"t1" })).room;
+  const prepared = startLobby(ready(room), "p1", room.revision, noRandom);
+  expect(prepared.setup?.members[0]?.colors).toEqual(colors);
+  expect(() => createLobby("bad", "p1", { ...profile, colors: { primary:"red", secondary:"red", frame:"jetpack" } as never }, TEST_ARENA)).toThrow();
+});
 it("lets a custom-room owner start once guests are ready", () => {
   let room = two();
   room = editLobby(room, "p1", command(room, "room.assignTeam", { playerId: "p1", teamId: "t0" })).room;

@@ -3,7 +3,8 @@ import { createDriftLights, DRIFT_COUNT, driftLightAt } from "@/game/driftLights
 import { PALETTE } from "@/game/palette";
 import { getPixel, TRANSPARENT } from "@/game/pixelGrid";
 import { MOUNTAIN_PERIOD, paintTrees, shootingStarAt, SHOOTING_MS, SHOOTING_WINDOW_MS, TREE_HEIGHT } from "@/game/skyPaint";
-import { EXHAUST_PERIOD_MS, EXHAUST_VISIBLE_MS, exhaustAt } from "@/game/tankMotion";
+import { EXHAUST_PORTS } from "@/game/frameSkins";
+import { EXHAUST_PERIOD_MS, EXHAUST_VISIBLE_MS, exhaustAt, GLIDE_MAX_CELLS, glideAfterStep, glideAfterTime } from "@/game/tankMotion";
 
 // 世界の動き（設計書 41 の段階 6）。3 層目の遠景と漂う光
 
@@ -86,5 +87,26 @@ describe("exhaustAt", () => {
     expect(exhaustAt(EXHAUST_VISIBLE_MS + 10, false)).toBeNull();
     expect(exhaustAt(EXHAUST_PERIOD_MS, false)).toMatchObject({ x: -15, y: -7 });
     expect(exhaustAt(0, true)).toBeNull();
+  });
+  it("煙はフレームの排気口から出る。浮遊と石車輪は煙を出さない（設計書 43）", () => {
+    expect(exhaustAt(0, false, EXHAUST_PORTS.wheels!)).toMatchObject({ x: -20, y: -12 });
+    expect(EXHAUST_PORTS.tracks).toEqual({ x: -15, y: -7 });
+    expect(EXHAUST_PORTS.hover).toBeNull();
+    expect(EXHAUST_PORTS.stoneWheels).toBeNull();
+  });
+});
+
+describe("歩みの間を滑らかにつなぐ遅れ（設計書 43.6）", () => {
+  it("1 歩で 1 セル遅れ、押し続けたときの歩みの間隔（80 ms）で 0 に戻る", () => {
+    const after = glideAfterStep(0, 1, false);
+    expect(after).toBe(1);
+    expect(glideAfterTime(after, 40)).toBeCloseTo(0.5, 5);
+    expect(glideAfterTime(after, 80)).toBe(0);
+    expect(glideAfterTime(-1, 120)).toBe(-0);
+  });
+  it("一度に何歩も進んでも遅れは上限まで、動きを減らす設定では遅らせない", () => {
+    expect(glideAfterStep(1.5, 2, false)).toBe(GLIDE_MAX_CELLS);
+    expect(glideAfterStep(-1.5, -2, false)).toBe(-GLIDE_MAX_CELLS);
+    expect(glideAfterStep(0.5, 1, true)).toBe(0);
   });
 });

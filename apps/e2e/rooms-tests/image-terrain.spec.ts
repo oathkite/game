@@ -1,5 +1,6 @@
 import { expect, test, type Page } from "@playwright/test";
 import { control, createRoom, joinByCode, members, readyUp, teamOf } from "./roomFlow";
+import { customizeTank } from "../world-tests/practiceFlow";
 import type { LabFrame } from "@game/protocol/v2-lab";
 // 地形を確実に削る弱い弾を撃つ。page.keyboard で 150 ms 押すと、CDP を通る分だけ押す時間が伸びてパワーが 20〜40 になり、
 // 席と風によっては弾が地形に当たらずに抜けて、このテストが揺らいでいた。ページの中で 100 ms で離して、パワー 6 前後にする
@@ -21,8 +22,7 @@ test("authored terrain is shared after firing and reconnecting", async ({ browse
       }));
       await page.goto("/");
       await page.getByRole("button", { name: "はじめる", exact: true }).click();
-      await page.getByRole("radiogroup", { name:"車体色" }).getByRole("radio", { name:i === 0 ? "purple" : "cyan", exact:true }).click();
-      await page.getByRole("radiogroup", { name:"砲塔色" }).getByRole("radio", { name:"orange", exact:true }).click();
+      await customizeTank(page, { primary:i === 0 ? "purple" : "cyan", secondary:"orange", turret:"フィン", frame:"石車輪" });
       await page.getByLabel("名前", { exact: true }).fill(`Arch${i}`);
       await page.getByRole("button", { name: "出撃", exact: true }).click();
     }
@@ -38,7 +38,7 @@ test("authored terrain is shared after firing and reconnecting", async ({ browse
     expect(frames[0]!.map.id).toBe(mapId);
     expect(frames[0]!.map.solidColumns).toHaveLength(frames[0]!.map.width);
     expect(frames[1]!.map).toEqual(frames[0]!.map);
-    for (const frame of frames) expect(frame!.players.find(p => p.nickname === "Arch0")!.colors).toEqual({ primary:"purple", secondary:"orange" });
+    for (const frame of frames) expect(frame!.players.find(p => p.nickname === "Arch0")!.colors).toEqual({ primary:"purple", secondary:"orange", turret:"fin", frame:"stoneWheels" });
     await expect.poll(() => frames[0]!.opening ? Date.now() >= frames[0]!.opening!.endsAt : true, { timeout: 15000 }).toBe(true);
     const actor = frames[0]!.players.find(p => p.playerId === frames[0]!.actorId)!;
     const shooter = pages[Number(actor.nickname!.slice(-1))]!;
@@ -63,7 +63,7 @@ test("authored terrain is shared after firing and reconnecting", async ({ browse
     });
     await guest.getByRole("button", { name: "出撃", exact: true }).click();
     await expect(guest.getByTestId("network-world")).toHaveAttribute("data-loaded", "true", { timeout: 15000 });
-    expect(frames[1]!.players.find(p => p.nickname === "Arch0")!.colors).toEqual({ primary:"purple", secondary:"orange" });
+    expect(frames[1]!.players.find(p => p.nickname === "Arch0")!.colors).toEqual({ primary:"purple", secondary:"orange", turret:"fin", frame:"stoneWheels" });
     expect(frames[1]!.map).toEqual(map); expect(frames[1]!.terrainOps).toEqual(ops);
     const field = guest.getByTestId("network-world");
     await expect(field).toHaveAttribute("data-initial-camera-x", /[\d.]+/);

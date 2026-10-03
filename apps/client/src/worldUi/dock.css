@@ -14,13 +14,13 @@
 
 @media(prefers-reduced-motion:reduce) { .world-ui.world-ui section.world-lobby { background-image:url("./dock.svg#still"); } }
 
-/* The tank silhouette ends at y=53 in its 55-unit SVG. Anchor the deck there. */
+/* The tank stands on y=0, 34 units below the top of its 35-unit viewBox (TankPortrait PORTRAIT_VIEW). Anchor the deck there. */
 .world-ui.world-ui section.world-lobby .world-machine .tank-portrait { position:relative; overflow:visible; }
 .world-lobby .world-machine .tank-portrait::after {
   content:"";
   position:absolute;
   left:0;
-  top:96.363636%;
+  top:97.142857%;
   width:100%;
   aspect-ratio:300/44;
   background:url("./dockPlatform.svg") center / 100% 100% no-repeat;

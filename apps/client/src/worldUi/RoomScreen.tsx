@@ -121,7 +121,7 @@ export const RoomScreen = ({ onExit }: { readonly onExit: () => void; readonly o
         <div className="room-table-scroll"><table className="room-player-table">
           <thead><tr><th scope="col">{t("プレイヤー名")}</th><th scope="col">{t("チーム")}</th><th scope="col">{t("武器")}</th><th scope="col">{t("状態")}</th></tr></thead>
           <tbody>{room.members.map(p => <tr key={p.playerId} data-ready={p.connected && (p.ready || p.playerId === room.ownerId)}>
-            <th scope="row"><div className="room-player-identity"><TankPortrait colors={p.colors} /><span>{p.nickname}{p.playerId === playerId ? t("（あなた）") : ""}</span></div></th>
+            <th scope="row"><div className="room-player-identity"><TankPortrait colors={p.colors} loadout={p.loadout} /><span>{p.nickname}{p.playerId === playerId ? t("（あなた）") : ""}</span></div></th>
             <td><RoomTeam teamId={p.teamId} editable={room.mode === "custom" && (owner || p.playerId === playerId)} disabled={!connected} change={teamId => edit("room.assignTeam", { playerId: p.playerId, teamId })} /></td>
             <td><RoomWeapons loadout={p.loadout} editable={p.playerId === playerId} disabled={!connected} change={loadout => edit("room.loadout", { loadout })} /></td>
             <td>{!p.connected ? t("切断中") : p.playerId === room.ownerId ? "OWNER" : p.ready ? <span className="room-ready-status"><DotIcon name="check" />{t("準備完了")}</span> : t("準備中")}</td>

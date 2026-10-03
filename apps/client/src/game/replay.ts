@@ -5,6 +5,7 @@ import { shotRecoil } from "./shotRecoil";
 import { COLOR_HEX, type CellPoint, type Impact, type Seat } from "@game/protocol";
 import { carve, DOUBLE_GAP_TICKS, isRingOut, MAP_HEIGHT, ONE, tiltOf, weaponSpec, type ProjectilePath, type TerrainMask } from "@game/sim";
 import type { SoundName } from "@/app/audio";
+import { firedArms } from "@/match/tankArms";
 import type { PlayerView, ReplayJob } from "@/match/types";
 import {
   blastFrameAt,
@@ -132,7 +133,9 @@ type Run = {
   stopFrames: () => void;
 };
 
+/** 再生中の姿勢。砲身には最後に撃った武器を描く。撃った側は playersAfter と同じく、いま撃った武器 */
 const poseOf = (p: PlayerView, mask: TerrainMask, elevation: number, over: Partial<TankPose> = {}): TankPose => ({
+  ...firedArms(p),
   x: p.x,
   y: p.y,
   tilt: tiltOf(mask, p),
@@ -226,7 +229,7 @@ const poseAfterHit = (run: Run, seat: Seat, flash: boolean): TankPose => {
   // 落下前なので、撃った側は移動後の地表、相手はターン開始時の地表に立つ。テレポートした機体は撃った位置で光って消え、着地点に現れる
   const warp = teleported(run.job, seat) && run.teleportAt !== null ? teleportPoseAt(run.elapsed - run.teleportAt, run.cb.reduceMotion) : null;
   const x = warp?.at === "to" ? after.x : warp ? run.job.shot.input.x : after.x, y = warp?.at === "to" ? after.y : groundDuringShot(run, seat);
-  return poseOf({ ...before, hp: bar.hp, x, y, facing: after.facing }, run.job.maskBefore, elevationOf(run, seat), {
+  return poseOf({ ...before, hp: bar.hp, x, y, facing: after.facing, lastWeapon: after.lastWeapon }, run.job.maskBefore, elevationOf(run, seat), {
     flash: flash || warp?.white === true,
     ...(warp?.at === "hidden" ? { visible: false } : {}),
     shotFlashes: seat === run.job.shot.input.seat ? shotFlashes(run.elapsed, run.launchAt) : [],
@@ -511,7 +514,7 @@ export const playReplay = (
   for (const seat of [0, 1] as const) {
     const before = job.playersBefore[seat];
     const position = seat === job.shot.input.seat
-      ? { ...before, x: job.shot.input.x, y: job.shot.input.y, facing: job.shot.input.facing }
+      ? { ...before, x: job.shot.input.x, y: job.shot.input.y, facing: job.shot.input.facing, lastWeapon: job.shot.input.weapon }
       : before;
     renderer.setTank(seat, poseOf(position, job.maskBefore, elevationOf(run, seat)));
   }

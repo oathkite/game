@@ -36,5 +36,9 @@ export const english: Readonly<Record<string, string>> = {
   "カメラを初期値に戻す": "Reset camera", "変更は即時反映され、このブラウザに保存されます。": "Changes apply immediately and are saved in this browser.",
   "標準砲": "Cannon", "トリプル弾": "Triple", "マルチ弾": "Multiple", "貫通弾": "Drill",
   "レーザー弾": "Laser", "掘削弾": "Digger", "浮遊弾": "Floater", "針弾": "Stinger",
-  "車体色": "Body color", "砲塔色": "Turret color", "プレイヤー": "Player", "機体": "Tank",
+  "プレイヤー": "Player", "機体": "Tank",
+  "カラー1": "Color 1", "カラー2": "Color 2", "砲塔": "Turret", "足回り": "Chassis", "完了": "Done",
+  "機体をカスタマイズ": "Customize tank", "機体のカスタマイズ": "Customize tank",
+  "ドーム": "Dome", "ワイド": "Wide", "ボックス": "Box", "ウェッジ": "Wedge", "フィン": "Fin", "ポット": "Pot", "オニオン": "Onion", "フラット": "Flat",
+  "キャタピラ": "Tracks", "大型キャタピラ": "Heavy tracks", "車輪": "Wheels", "多脚": "Walker", "浮遊": "Hover", "石車輪": "Stone wheels",
 };

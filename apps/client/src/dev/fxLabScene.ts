@@ -4,6 +4,7 @@ import { UPDATE_PRIORITY } from "pixi.js";
 import { createRenderer, type Renderer } from "@/game/renderer";
 import { playReplay } from "@/game/replay";
 import type { TankPose } from "@/game/tankView";
+import { firedArms } from "@/match/tankArms";
 import type { PlayerView, ReplayJob } from "@/match/types";
 
 // 演出を調整する開発用の画面（FX ラボ）。設計書 41.11。
@@ -90,6 +91,7 @@ const jobOf = (id: number, mask: TerrainMask, players: readonly [PlayerView, Pla
 };
 
 const poseOf = (p: PlayerView, mask: TerrainMask, elevation: number): TankPose => ({
+  ...firedArms(p),
   x: p.x, y: p.y, tilt: tiltOf(mask, p), facing: p.facing, elevation, hp: p.hp, visible: true, flash: false, aiming: false,
 });
 

@@ -1,6 +1,6 @@
 import { createChipMusic, type MusicName } from "./chipMusic";
 import { createImpulse, createNoiseBuffer, playRecipe, type SfxGraph } from "./sfx";
-import { SOUNDS, type SoundName } from "./soundRecipes";
+import { isMoveSound, SOUNDS, type SoundName } from "./soundRecipes";
 
 // シーン別の BGM と、レイヤー合成の効果音。効果音は外部音源を取得せずにその場で作る。
 
@@ -124,7 +124,7 @@ export const playSound = (name: SoundName): void => {
   const { ctx, sfx } = state;
   if (!ctx || !sfx || state.muted || state.volume <= 0) return;
   const now = ctx.currentTime;
-  const interval = name === "move" ? MOVE_INTERVAL : RETRIGGER_INTERVAL;
+  const interval = isMoveSound(name) ? MOVE_INTERVAL : RETRIGGER_INTERVAL;
   if (now - (lastPlayed.get(name) ?? -Infinity) < interval) return;
   lastPlayed.set(name, now);
   const recipe = SOUNDS[name];
