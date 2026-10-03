@@ -69,16 +69,20 @@ const WEAPONS: Readonly<Record<WeaponSound, Recipe>> = {
     tone("sawtooth", 120, 78, 0.34, 0.24, { lowpass: 900, attack: 0.01 }),
     tone("sawtooth", 126, 80, 0.34, 0.18, { lowpass: 900, attack: 0.01 }),
   ], drive: 2.2, space: 0.2, duck: 0.2, vary: 0.04 },
+  // 刃が地形と装甲を削り抜ける擦れ。共鳴の強いノイズを高い方から下げ、回る刃ののこぎり波を重ね、低音は控えめにする
   "drill-impact": { layers: [
-    tone("sawtooth", 190, 55, 0.36, 0.3, { lowpass: 1300 }),
-    noise("bandpass", 1600, 450, 0.36, 0.55, { q: 1.4 }),
-    thump(105, 38, 0.34, 0.8),
-  ], drive: 2.4, space: 0.25, duck: 0.25, vary: 0.06 },
+    noise("bandpass", 3400, 1400, 0.42, 1, { q: 5 }),
+    noise("bandpass", 1500, 600, 0.38, 0.85, { q: 3, delay: 0.02 }),
+    tone("sawtooth", 320, 140, 0.4, 0.22, { lowpass: 2200 }),
+    thump(110, 45, 0.2, 0.5),
+  ], drive: 1.8, space: 0.2, duck: 0.2, vary: 0.06 },
+  // 重い迫撃砲の射出。低く長い胴の低音と、筒の中で鳴る低域のノイズ、遅れて導火線の擦過音
   "digger-fire": { layers: [
-    thump(210, 70, 0.22, 0.8),
-    rumble(1300, 400, 0.18, 0.45),
-    noise("highpass", 6200, 5200, 0.34, 0.1, { delay: 0.05, attack: 0.03 }),
-  ], drive: 1.8, space: 0.2, duck: 0.15, vary: 0.04 },
+    thump(150, 40, 0.42, 1),
+    noise("lowpass", 520, 140, 0.26, 0.6, { q: 1.2 }),
+    rumble(900, 120, 0.45, 0.75),
+    noise("highpass", 6200, 5200, 0.34, 0.1, { delay: 0.08, attack: 0.03 }),
+  ], drive: 2.2, space: 0.3, duck: 0.25, vary: 0.04 },
   "digger-impact": { layers: [
     crack(0.06, 0.55),
     thump(82, 26, 1.2, 1),
@@ -153,10 +157,13 @@ export const SOUNDS: Readonly<Record<SoundName, Recipe>> = {
   ], drive: 1.8, space: 0.2, duck: 0.3, vary: 0.03 },
   // 自分の弾が相手に入った手応え。上がる向きの短い音で、被弾と区別する
   hitConfirm: { layers: [
-    noise("highpass", 5200, 5200, 0.03, 0.4),
-    tone("square", 660, 1320, 0.12, 0.35, { sweep: 0.06 }),
-    tone("triangle", 1320, 1320, 0.28, 0.4, { delay: 0.06 }),
-  ], space: 0.2, vary: 0 },
+    // 相手の装甲に食い込む鈍い手応え。低域のノイズの胴と、潰れる帯域のノイズ
+    noise("lowpass", 600, 150, 0.18, 0.75, { q: 1 }),
+    noise("bandpass", 1800, 700, 0.1, 0.7, { q: 1.5 }),
+    // 上がる向きの音程は保ち、被弾（下がる向き）と区別する。低めの音域にする
+    tone("square", 260, 520, 0.14, 0.3, { sweep: 0.08, lowpass: 1800 }),
+    tone("triangle", 520, 700, 0.2, 0.25, { delay: 0.05 }),
+  ], drive: 1.6, space: 0.2, vary: 0 },
   // この一撃で HP が尽きた。二段の爆発と、落ちていく電源音
   finish: { layers: [
     crack(0.08, 0.85),
