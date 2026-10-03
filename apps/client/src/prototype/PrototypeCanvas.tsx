@@ -25,6 +25,7 @@ import { backdropTheme } from "@/game/pixelBackdrop";
 import { TERRAIN_THEMES } from "@/game/terrainPaint";
 import { viewportOf, worldToScreen } from "./camera";
 import type { CameraRig } from "./cameraRig";
+import { practiceItemPopupOf } from "@/worldUi/itemPopupRule";
 
 export const actorPoint = (view: MatchView) => {
   const actor = view.control ?? view.players?.[view.currentSeat] ?? { x: 90, y: 130 };
@@ -43,8 +44,8 @@ const posesOf = (v: MatchView, elevations: readonly number[]): readonly TankPose
   });
 };
 
-type Props = { readonly onOpeningComplete: () => void; readonly worldArt?: boolean; readonly store: Pick<MatchStore, "getView" | "completeReplay">; readonly practice?: Pick<ChallengeStore, "getTargets" | "showImpact">; readonly rig: CameraRig; readonly layout: Layout; readonly handlers: HTMLAttributes<HTMLDivElement>; readonly blocked: boolean; readonly followShot: boolean; readonly onReady: (ready: boolean) => void; readonly charge?: number };
-export const PrototypeCanvas = ({ store, rig, layout, handlers, blocked, followShot, onReady, onOpeningComplete, worldArt, practice, charge = 0 }: Props) => {
+type Props = { readonly onOpeningComplete: () => void; readonly worldArt?: boolean; readonly store: Pick<MatchStore, "getView" | "completeReplay">; readonly practice?: Pick<ChallengeStore, "getTargets" | "showImpact">; readonly rig: CameraRig; readonly layout: Layout; readonly handlers: HTMLAttributes<HTMLDivElement>; readonly blocked: boolean; readonly followShot: boolean; readonly onReady: (ready: boolean) => void; readonly charge?: number; /** 自由練習。1 つの画面を交代で使う */ readonly hotseat?: boolean };
+export const PrototypeCanvas = ({ store, rig, layout, handlers, blocked, followShot, onReady, onOpeningComplete, worldArt, practice, charge = 0, hotseat = false }: Props) => {
   const hostRef = useRef<HTMLDivElement>(null), miniRef = useRef<HTMLCanvasElement>(null);
   const latest = useRef({ layout, blocked, followShot, charge });
   latest.current = { layout, blocked, followShot, charge };
@@ -104,6 +105,9 @@ export const PrototypeCanvas = ({ store, rig, layout, handlers, blocked, followS
             const projectile = r.projectile(color, weapon, item);
             return { ...projectile, setBullet: (index, x, y, angle) => { projectile.setBullet(index, x, y, angle); if (x !== null && leadsVolley(job, index)) rig.shot({ x, y }); } };
           } };
+          // アイテムを使った射撃は、撃った機体の上にアイコンを出す（設計書 42.8）。e2e は data-item-popup で読む
+          const item = practiceItemPopupOf(job.shot.input, v.mySeat, hotseat);
+          if (item) { r.showItem(job.shot.input.seat, item); host.dataset.itemPopup = `${job.shot.input.seat}/${item}`; }
           stopReplay = playReplay(replayRenderer, job, elevations, v.mySeat, { sound: playSound, reduceMotion: reduced.matches, roundEnd: decidesMatch(job), onImpact: (mask, impact) => practice?.showImpact(mask, impact), done: () => {
             activeReplay = false;
             store.completeReplay(job.id);
