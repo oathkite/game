@@ -20,3 +20,7 @@ export const DEFAULT_FRAME: FrameSkin = "tracks";
 
 export const isTurretSkin = (v: unknown): v is TurretSkin => typeof v === "string" && (TURRET_SKINS as readonly string[]).includes(v);
 export const isFrameSkin = (v: unknown): v is FrameSkin => typeof v === "string" && (FRAME_SKINS as readonly string[]).includes(v);
+
+/** 描くスキン。欠けた値（スキンを足す前の保存状態）と、後から足されて知らないスキンは既定のスキンにする（設計書 43.9） */
+export const turretSkinOf = (v: unknown): TurretSkin => (isTurretSkin(v) ? v : DEFAULT_TURRET);
+export const frameSkinOf = (v: unknown): FrameSkin => (isFrameSkin(v) ? v : DEFAULT_FRAME);
