@@ -2,8 +2,10 @@ import { describe, expect, it } from "vitest";
 import { FRAME_SKINS, TURRET_SKINS, WEAPON_IDS } from "@game/protocol";
 import { ELEVATION_MAX, ELEVATION_MIN, muzzleOf, ONE, slopedMask, tiltOf, type TerrainMask } from "@game/sim";
 import { isPaletteColor, PALETTE, TEAM_RAMPS } from "@/game/palette";
-import { getPixel, TRANSPARENT, type PixelGrid } from "@/game/pixelGrid";
+import { bigWheel, stoneWheel } from "@/game/frameDraw";
+import { createGrid, getPixel, TRANSPARENT, type PixelGrid } from "@/game/pixelGrid";
 import { chargeSparks, flashFrameAt, FLASH_FRAME_MS } from "@/game/tankFlash";
+import { MATERIAL } from "@/game/tankShape";
 import { barrelGeometry, barrelMask, composeTank, muzzleTip, TANK_FRAME, type TankSpriteInput } from "@/game/tankSprite";
 
 // 機体のスプライト。設計書 40.5、43 と 10.5「全仰角で発射点と絵の砲口が一致する」
@@ -101,6 +103,25 @@ describe("composeTank", () => {
     const turretTop = (grid: PixelGrid) => Math.min(...opaquePixels(grid).filter(p => p.x === 0).map(p => p.y));
     expect(turretTop(at(4))).toBe(turretTop(at(0)));
     expect(Array.from(at(4).pixels).join()).not.toBe(Array.from(at(0).pixels).join());
+  });
+  it("車輪と石の車輪は、進むと上の縁が前へ動く向き（右向きで時計回り）に回る", () => {
+    const wheel = (draw: typeof bigWheel, phase: number) => {
+      const grid = createGrid(-10, -10, 20, 20);
+      draw(grid, 0, 0, 7, phase, false);
+      return grid;
+    };
+    // タイヤの溝は上の縁で前（右）へ流れる。1 px 進んだ並びは、前の並びを右へ 1 px ずらしたものに近い
+    const rim = (phase: number) => Array.from({ length: 12 }, (_, i) => getPixel(wheel(bigWheel, phase), i - 6, -7));
+    const matches = (a: readonly number[], b: readonly number[]) => a.filter((v, i) => v === b[i]).length;
+    const before = rim(0), after = rim(1);
+    expect(matches(after.slice(1), before.slice(0, -1))).toBeGreaterThan(matches(after.slice(0, -1), before.slice(1)));
+    // 石の車輪のひびは、軸の右で下へ回る
+    const crackY = (phase: number) => {
+      const ys: number[] = [];
+      for (let y = -4; y <= 4; y++) for (let x = 3; x <= 5; x++) if (getPixel(wheel(stoneWheel, phase), x, y) === MATERIAL.stoneDeep) ys.push(y);
+      return ys.reduce((sum, y) => sum + y, 0) / ys.length;
+    };
+    expect(crackY(4)).toBeGreaterThan(crackY(1));
   });
   it("サブ武器は車体後部に載り、null なら載せない。残骸には載せない", () => {
     const rear = (input: TankSpriteInput) => opaquePixels(composeTank(input)).filter(p => p.x <= -10 && p.y <= -14 && p.y >= -22).length;

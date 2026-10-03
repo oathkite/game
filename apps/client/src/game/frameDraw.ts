@@ -45,7 +45,7 @@ export const wreckChips = (grid: PixelGrid, top: number, dy: number): void => {
   for (const [x, y] of [[-6, -10], [2, -12], [8, -9], [-11, -9]] as const) setPixel(grid, x, y + dy, M.ember);
 };
 
-/** 進んだ距離のぶん回る大きな車輪。r は半径。タイヤの溝とスポークが回転角で動く */
+/** 進んだ距離のぶん回る大きな車輪。r は半径。タイヤの溝とスポークが回転角で動き、進むと上の縁が前へ動く（右向きで時計回り）。flat ならタイヤが潰れる */
 export const bigWheel = (grid: PixelGrid, cx: number, cy: number, r: number, phase: number, flat: boolean): void => {
   const angle = phase / r;
   for (let y = Math.floor(cy - r); y <= Math.ceil(cy + r); y++) for (let x = Math.floor(cx - r); x <= Math.ceil(cx + r); x++) {
@@ -53,7 +53,7 @@ export const bigWheel = (grid: PixelGrid, cx: number, cy: number, r: number, pha
     const squash = flat && dy > 0 ? dy * 1.6 : dy;
     const d = Math.hypot(dx, squash);
     if (d > r) continue;
-    const a = Math.atan2(dy, dx) + angle;
+    const a = Math.atan2(dy, dx) - angle;
     if (d > r - 2) { setPixel(grid, x, y, mod(Math.floor((a / (2 * Math.PI)) * 12), 2) === 0 && d > r - 1 ? M.metalDeep : M.treadInner); continue; }
     if (d > r - 3) { setPixel(grid, x, y, dy < 0 ? M.metalLight : M.metalBase); continue; }
     if (d < 1.2) { setPixel(grid, x, y, M.metalDeep); continue; }
@@ -62,14 +62,14 @@ export const bigWheel = (grid: PixelGrid, cx: number, cy: number, r: number, pha
   }
 };
 
-/** 石の車輪。回転で動くひびと、木の軸。flat なら割れて欠ける */
+/** 石の車輪。進むと上の縁が前へ動く向きに回るひびと、木の軸。broken なら割れて欠ける */
 export const stoneWheel = (grid: PixelGrid, cx: number, cy: number, r: number, phase: number, broken: boolean): void => {
   const angle = phase / r;
   for (let y = Math.floor(cy - r); y <= Math.ceil(cy + r); y++) for (let x = Math.floor(cx - r); x <= Math.ceil(cx + r); x++) {
     const dx = x + 0.5 - cx, dy = y + 0.5 - cy;
     const d = Math.hypot(dx, dy);
     if (d > r) continue;
-    const a = Math.atan2(dy, dx) + angle;
+    const a = Math.atan2(dy, dx) - angle;
     if (broken && mod(a, 2 * Math.PI) < 1.1) continue;
     if (d < 1.3) { setPixel(grid, x, y, M.wood); continue; }
     // ひびは中心から外へ 3 本。回転角で回る
