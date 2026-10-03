@@ -1,10 +1,14 @@
+import type { FrameSkin } from "@game/protocol";
 import type { WeaponSound } from "./weaponSounds";
 import type { Layer, NoiseLayer, Recipe, ToneLayer } from "./sfx";
 
 // 効果音の設計。発射は「破裂の立ち上がり + 胴の低音 + 爆風のノイズ」、着弾は「サブの低音 + 破裂 + 低域へ沈む余韻」を基本形にする。
 // 多段の武器（レーザー 7 段、マルチ 9 発）は 1 回を短く軽くし、連続しても濁らないようにする。
 
-export type SoundName = WeaponSound | "move" | "tick" | "fire" | "explosion" | "hit" | "hitConfirm" | "finish" | "matchFinish" | "debris" | "sizzle" | "impactStop" | "destroy";
+/** 移動の音。足回りのスキンごとに変える（設計書 43） */
+export type MoveSound = `move-${FrameSkin}`;
+
+export type SoundName = WeaponSound | MoveSound | "tick" | "fire" | "explosion" | "hit" | "hitConfirm" | "finish" | "matchFinish" | "debris" | "sizzle" | "impactStop" | "destroy";
 
 type Extra<T> = Partial<Omit<T, "kind" | "wave" | "filter" | "from" | "to" | "duration" | "gain">>;
 const tone = (wave: OscillatorType, from: number, to: number, duration: number, gain: number, extra: Extra<ToneLayer> = {}): ToneLayer =>
@@ -125,11 +129,43 @@ const SCENE: Readonly<Record<"debris" | "sizzle" | "impactStop" | "destroy", Rec
   ], drive: 1.4, space: 0.35, duck: 0.45, vary: 0.03 },
 };
 
+/** 移動の音。75 ms ごとに繰り返すので、どれも短く控えめにする（設計書 43） */
+const MOVES: Readonly<Record<MoveSound, Recipe>> = {
+  // 履帯の短い噛み合い
+  "move-tracks": { layers: [noise("bandpass", 420, 300, 0.04, 0.13, { q: 3 }), tone("triangle", 95, 55, 0.05, 0.09)], vary: 0.12 },
+  // 大きな履帯の重い噛み合い。低く、板の当たる金属の音を足す
+  "move-bigTracks": { layers: [
+    noise("bandpass", 300, 200, 0.06, 0.15, { q: 2.5 }),
+    tone("triangle", 70, 42, 0.07, 0.11),
+    noise("highpass", 2200, 1800, 0.015, 0.05),
+  ], vary: 0.1 },
+  // タイヤの転がり。噛み合いの無い、柔らかい低いうなり
+  "move-wheels": { layers: [noise("lowpass", 260, 180, 0.07, 0.14, { q: 0.7 }), tone("sine", 62, 50, 0.07, 0.07)], vary: 0.08 },
+  // 脚の油圧の短い駆動音と、足が着く金属の音
+  "move-walker": { layers: [
+    tone("square", 180, 240, 0.05, 0.04, { lowpass: 1200 }),
+    noise("bandpass", 900, 600, 0.03, 0.1, { q: 4, delay: 0.02 }),
+    tone("sine", 110, 50, 0.06, 0.09, { delay: 0.02 }),
+  ], vary: 0.1 },
+  // 噴射のうなりと風。繰り返しが途切れず続いて聞こえるよう、間隔より少し長く鳴らす
+  "move-hover": { layers: [
+    tone("sawtooth", 120, 130, 0.09, 0.05, { lowpass: 600, attack: 0.02 }),
+    noise("bandpass", 1600, 1800, 0.09, 0.06, { q: 1.5, attack: 0.02 }),
+  ], vary: 0.04 },
+  // 石の車輪が地面を噛む、ざらついた低い音
+  "move-stoneWheels": { layers: [
+    noise("bandpass", 220, 160, 0.08, 0.16, { q: 1.2 }),
+    noise("highpass", 1800, 1200, 0.05, 0.05),
+    tone("triangle", 55, 40, 0.08, 0.1),
+  ], vary: 0.12 },
+};
+
+export const isMoveSound = (name: SoundName): name is MoveSound => name.startsWith("move-");
+
 export const SOUNDS: Readonly<Record<SoundName, Recipe>> = {
   ...WEAPONS,
   ...SCENE,
-  // 履帯の短い噛み合い。75 ms ごとに繰り返すので控えめにする
-  move: { layers: [noise("bandpass", 420, 300, 0.04, 0.13, { q: 3 }), tone("triangle", 95, 55, 0.05, 0.09)], vary: 0.12 },
+  ...MOVES,
   // 秒読み。繰り返すので鋭さだけ残して小さく
   tick: { layers: [tone("square", 1760, 1760, 0.05, 0.16), tone("sine", 880, 880, 0.08, 0.14)], vary: 0 },
   fire: { layers: [

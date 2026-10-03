@@ -65,15 +65,15 @@ it("layers an explosion from several sources that all start together", async () 
 it("throttles tread sounds and still honors mute", async () => {
   const { audio, sources, ctx } = await setup();
   audio.unlockAudio();
-  const perMove = SOUNDS.move.layers.length;
-  audio.playSound("move"); audio.playSound("move");
+  const perMove = SOUNDS["move-tracks"].layers.length;
+  audio.playSound("move-tracks"); audio.playSound("move-tracks");
   expect(sources).toHaveLength(perMove);
   ctx.currentTime += .1;
-  audio.playSound("move");
+  audio.playSound("move-tracks");
   expect(sources).toHaveLength(perMove * 2);
   audio.setAudioSettings(.5, true);
   ctx.currentTime += .1;
-  audio.playSound("move");
+  audio.playSound("move-tracks");
   expect(sources).toHaveLength(perMove * 2);
 });
 

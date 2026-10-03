@@ -193,7 +193,7 @@ export const createTankView = (selection: TankColors, nickname: string, team?: s
     const signedDelta = previousX === null ? 0 : pose.x - previousX;
     previousX = pose.x;
     const steps = pose.hp > 0 && pose.visible && !pose.falling && Math.abs(signedDelta) > .001 && Math.abs(signedDelta) <= 2.5;
-    if (steps) { distance += signedDelta; playSound("move"); }
+    if (steps) { distance += signedDelta; playSound("move-tracks"); }
     if (steps && !moving) swing(moments, clock, SWAY_MOVE);
     moving = steps;
     drawHpBar(parts.hpBar, hex(nameColor), pose);
