@@ -144,12 +144,16 @@ const MOVES: Readonly<Record<MoveSound, Recipe>> = {
   ], vary: 0.1 },
   // タイヤの転がり。噛み合いの無い、柔らかい低いうなり
   "move-wheels": { layers: [noise("lowpass", 260, 180, 0.1, 1, { q: 0.7 }), tone("sine", 62, 50, 0.1, 0.9)], vary: 0.08 },
-  // 脚の油圧の短い駆動音と、足が着く金属の音
+  // 多数の脚がガシャガシャ動く。高さの違う金属の当たりを 4 つずらして重ね、下に油圧の駆動音を敷く
   "move-walker": { layers: [
-    tone("square", 180, 240, 0.05, 0.25, { lowpass: 1200 }),
-    noise("bandpass", 900, 600, 0.04, 0.6, { q: 4, delay: 0.02 }),
-    tone("sine", 110, 50, 0.06, 0.5, { delay: 0.02 }),
-  ], vary: 0.1 },
+    tone("square", 160, 220, 0.09, 0.3, { lowpass: 900, attack: 0.01 }),
+    noise("bandpass", 3200, 2400, 0.03, 1, { q: 3 }),
+    noise("bandpass", 2300, 1800, 0.03, 1, { q: 3, delay: 0.022 }),
+    noise("bandpass", 3800, 3000, 0.025, 0.9, { q: 4, delay: 0.045 }),
+    noise("bandpass", 2700, 2100, 0.03, 1, { q: 3, delay: 0.068 }),
+    tone("triangle", 1900, 1700, 0.03, 0.12, { delay: 0.022 }),
+    tone("triangle", 2600, 2400, 0.025, 0.1, { delay: 0.068 }),
+  ], vary: 0.12 },
   // UFO のうねり。正弦波の音程を 0.05 秒で上げて下げ、間隔より少し長く鳴らして、繰り返しが 13 Hz ほどの揺れとして続いて聞こえるようにする
   "move-hover": { layers: [
     tone("sine", 520, 820, 0.05, 0.27, { attack: 0.01 }),
@@ -157,12 +161,13 @@ const MOVES: Readonly<Record<MoveSound, Recipe>> = {
     tone("triangle", 1560, 1640, 0.1, 0.05, { attack: 0.02 }),
     tone("sine", 140, 140, 0.1, 0.12, { attack: 0.02 }),
   ], vary: 0.02 },
-  // 石の車輪が地面を噛む、ざらついた低い音
+  // 石臼のゴリゴリ。共鳴の強い低いノイズを 2 粒ずらして挽く手応えを出し、粗い砂の擦れと、低い唸りを重ねる
   "move-stoneWheels": { layers: [
-    noise("bandpass", 220, 160, 0.1, 1, { q: 1.2 }),
-    noise("highpass", 1800, 1200, 0.05, 0.3),
-    tone("triangle", 55, 40, 0.1, 0.9),
-  ], vary: 0.12 },
+    noise("bandpass", 170, 140, 0.05, 1, { q: 5 }),
+    noise("bandpass", 210, 160, 0.05, 1, { q: 5, delay: 0.045 }),
+    noise("bandpass", 700, 500, 0.09, 0.6, { q: 6 }),
+    tone("square", 48, 44, 0.1, 0.5, { lowpass: 260, attack: 0.01 }),
+  ], vary: 0.1 },
 };
 
 export const isMoveSound = (name: SoundName): name is MoveSound => name.startsWith("move-");
