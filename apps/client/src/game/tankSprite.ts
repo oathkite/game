@@ -1,18 +1,34 @@
+import type { FrameSkin, TurretSkin, WeaponId } from "@game/protocol";
 import { fireAngle } from "@game/sim";
+import { frameParts, hullTop } from "./frameSkins";
+import type { FrameLayer } from "./frameDraw";
 import { PALETTE, type Ramp } from "./palette";
-import { composeLayers, createGrid, mirrorGrid, rotateGrid, setPixel, TRANSPARENT, type Edges, type Layer, type PixelGrid, type Rect } from "./pixelGrid";
+import { composeLayers, createGrid, mirrorGrid, rotateGrid, setPixel, TRANSPARENT, type Layer, type PixelGrid, type Rect } from "./pixelGrid";
 import { flashColorAt, type Spark } from "./tankFlash";
-import { antennaMask, BARREL_PIVOT_UP, BARREL_PX, hullMask, MATERIAL, treadMask, turretMask } from "./tankShape";
+import { barrelPainter, tankPainter, type BarrelRim } from "./tankPaint";
+import { antennaMask, BARREL_PIVOT_UP, BARREL_PX } from "./tankShape";
+import { TURRET_ART, turretGrid } from "./turretSkins";
+import { BARREL_ART, subWeaponGrid } from "./weaponMounts";
 
-// 機体のスプライトを姿勢から描き直す。設計書 40.5。
+// 機体のスプライトを姿勢から描き直す。設計書 40.5 と 43。
 // 車体は右向きの形を左右反転し、傾きで回してから、砲身、発射光、火花を画面の向きで描き足す。
 // 画素はすべて art px の格子に乗り、Container を回さない。
 
-export type BarrelRim = "none" | "charge" | "hot";
+export type { BarrelRim } from "./tankPaint";
 
 export type TankSpriteInput = {
+  /** 主色（カラー 1）。車体を塗る */
   readonly hull: Ramp;
+  /** 副色（カラー 2）。砲塔と砲身を塗る */
   readonly turret: Ramp;
+  /** 砲塔のスキン */
+  readonly turretSkin: TurretSkin;
+  /** 車体と足回りを一体にしたフレームのスキン */
+  readonly frame: FrameSkin;
+  /** 撃つ武器。砲身の形になる */
+  readonly weapon: WeaponId;
+  /** もう一方の武器。車体後部に載せる。null なら載せない */
+  readonly sub: WeaponId | null;
   readonly facing: 1 | -1;
   /** 車体の傾き（整数の度、右が高いと正） */
   readonly tilt: number;
@@ -32,10 +48,12 @@ export type TankSpriteInput = {
   readonly sparks: readonly Spark[];
   /** アンテナの先端の横のずれ（art px）。省略は 0 */
   readonly antenna?: number;
+  /** 時刻で進むコマ（浮遊の噴射の揺らぎ）。省略は 0 */
+  readonly beat?: number;
 };
 
-/** スプライトを描く枠。砲身と発射光と火花が全仰角、全傾きで収まる大きさ */
-export const TANK_FRAME: Rect = { left: -44, top: -48, width: 88, height: 64 };
+/** スプライトを描く枠。砲身と発射光と火花が全仰角、全傾きで収まり、±45 度に傾けた幅の広いフレームの角が接地点より下へ回り込んでも切れない大きさ */
+export const TANK_FRAME: Rect = { left: -52, top: -60, width: 104, height: 84 };
 
 /** 残骸の砲身。付け根を砲塔の崩れた位置へ下げ、18 度垂らし、短くする（38 章 C5） */
 const WRECK_PIVOT = { x: 2, y: -13 } as const;
@@ -76,11 +94,12 @@ export const muzzleTip = (input: TankSpriteInput): Point => {
   return { x: pivot.x + dir.x * length, y: pivot.y + dir.y * length };
 };
 
-/** 砲身の画素。太さ 2、先端 3 px を 4 px に太くした砲口。付け根側は砲塔の下に隠れる */
+/** 砲身の画素。武器ごとの形を、付け根からの距離 u と砲身の下側への距離 v で描く。付け根側は砲塔の後ろに隠れる */
 export const barrelMask = (input: TankSpriteInput): PixelGrid => {
+  const art = BARREL_ART[input.weapon];
   const { pivot, angle, length } = barrelGeometry(input);
   const { dir, normal } = axes(angle, input.facing);
-  const reach = Math.ceil(length + 3);
+  const reach = Math.ceil(length + art.reach + 2);
   const left = Math.floor(pivot.x) - reach, top = Math.floor(pivot.y) - reach;
   const grid = createGrid(left, top, reach * 2 + 1, reach * 2 + 1);
   const recoil = input.wrecked ? 0 : input.recoil;
@@ -88,68 +107,51 @@ export const barrelMask = (input: TankSpriteInput): PixelGrid => {
     const dx = x + 0.5 - pivot.x, dy = y + 0.5 - pivot.y;
     const u = dx * dir.x + dy * dir.y, v = dx * normal.x + dy * normal.y;
     if (u < -recoil || u >= length) continue;
-    const brake = !input.wrecked && u >= length - 3;
-    if (brake ? v < -2 || v >= 2 : v < -1 || v >= 1) continue;
-    setPixel(grid, x, y, brake ? (v < 0 ? MATERIAL.brakeLight : MATERIAL.brakeShadow) : v < 0 ? (input.rim === "none" ? MATERIAL.barrelLight : MATERIAL.rim) : MATERIAL.barrelShadow);
+    // 反動で砲身全体が後ろへ下がる。飾りの位置は砲身の後端から数え、全長は反動の前の長さで渡す
+    const m = art.profile(u + recoil, v, length + recoil);
+    if (m !== null) setPixel(grid, x, y, m);
   }
   return grid;
 };
 
-const MAX_CACHE = 256;
-const bodyCache = new Map<string, readonly PixelGrid[]>();
+type BodyMasks = {
+  readonly under: readonly FrameLayer[];
+  readonly turret: PixelGrid;
+  readonly antenna: PixelGrid | null;
+  readonly hull: PixelGrid;
+  readonly sub: PixelGrid | null;
+  readonly over: readonly FrameLayer[];
+};
 
-/** 反転と傾きを済ませた履帯、車体、砲塔、アンテナ。色によらないので全機体で使い回す。使い回すので、返した格子は書き換えない */
-const bodyMasks = (input: TankSpriteInput): readonly PixelGrid[] => {
-  const phase = input.facing * input.treadPhase;
-  // 転輪は 3 px ごとにコマを替え、履帯の輪（3 px）と端（2 px）と合わせて 6 px で一巡する
-  const wheel = Math.floor(phase / 3);
-  const key = `${input.facing}|${input.tilt}|${input.sink}|${((phase % 6) + 6) % 6}|${((wheel % 2) + 2) % 2}|${input.wrecked}|${input.antenna ?? 0}`;
+const MAX_CACHE = 256;
+const bodyCache = new Map<string, BodyMasks>();
+
+/** 浮遊の噴射だけが時刻で揺らぐ。ほかのフレームは beat で描き直さない */
+const beatOf = (input: TankSpriteInput): number => (input.frame === "hover" ? input.beat ?? 0 : 0);
+
+const bodyKey = (input: TankSpriteInput): string =>
+  `${input.facing}|${input.tilt}|${input.sink}|${input.facing * input.treadPhase}|${input.wrecked}|${input.antenna ?? 0}|${input.turretSkin}|${input.frame}|${input.sub}|${beatOf(input)}`;
+
+/** 反転と傾きを済ませたフレーム、砲塔、アンテナ、サブ武器。色によらないので全機体で使い回す。使い回すので、返した格子は書き換えない */
+const bodyMasks = (input: TankSpriteInput): BodyMasks => {
+  const key = bodyKey(input);
   const cached = bodyCache.get(key);
   if (cached) return cached;
-  const local = [treadMask(phase, wheel, input.wrecked), hullMask(input.sink, input.wrecked), turretMask(input.sink, input.wrecked), ...(input.wrecked ? [] : [antennaMask(input.sink, input.antenna ?? 0)])];
-  const masks = local.map(mask => rotateGrid(input.facing === 1 ? mask : mirrorGrid(mask), input.tilt));
+  const place = (mask: PixelGrid) => rotateGrid(input.facing === 1 ? mask : mirrorGrid(mask), input.tilt);
+  const placeLayer = (layer: FrameLayer): FrameLayer => ({ mask: place(layer.mask), outline: layer.outline });
+  const parts = frameParts(input.frame, input.facing * input.treadPhase, beatOf(input), input.sink, input.wrecked);
+  const art = TURRET_ART[input.turretSkin];
+  const masks: BodyMasks = {
+    under: parts.under.map(placeLayer),
+    turret: place(turretGrid(input.turretSkin, input.sink, input.wrecked)),
+    antenna: input.wrecked ? null : place(antennaMask(input.sink - art.antennaLift, input.antenna ?? 0)),
+    hull: place(parts.hull),
+    sub: input.sub && !input.wrecked ? place(subWeaponGrid(input.sub, input.sink, x => hullTop(parts.hull, x))) : null,
+    over: parts.over.map(placeLayer),
+  };
   if (bodyCache.size >= MAX_CACHE) bodyCache.clear();
   bodyCache.set(key, masks);
   return masks;
-};
-
-const livingColor = (m: number, hull: Ramp, turret: Ramp, rim: BarrelRim): number => {
-  switch (m) {
-    case MATERIAL.linkA: case MATERIAL.wheelRim: case MATERIAL.hatch: case MATERIAL.antenna: case MATERIAL.brakeLight: return PALETTE.metal1;
-    case MATERIAL.linkB: case MATERIAL.hubB: case MATERIAL.brakeShadow: return PALETTE.metal2;
-    case MATERIAL.treadInner: return PALETTE.metal3;
-    case MATERIAL.hubA: case MATERIAL.rivet: return PALETTE.metal0;
-    case MATERIAL.hullLight: return hull.light;
-    case MATERIAL.hullBase: return hull.base;
-    case MATERIAL.hullShadow: return hull.shadow;
-    case MATERIAL.skirt: return hull.deep;
-    case MATERIAL.lamp: return PALETTE.fire1;
-    case MATERIAL.turretLight: case MATERIAL.antennaTip: return turret.light;
-    case MATERIAL.turretBase: case MATERIAL.barrelLight: return turret.base;
-    case MATERIAL.turretShadow: case MATERIAL.barrelShadow: return turret.shadow;
-    case MATERIAL.turretDeep: return turret.deep;
-    case MATERIAL.shine: return PALETTE.white;
-    case MATERIAL.rim: return rim === "hot" ? PALETTE.fire2 : PALETTE.greenLight;
-    default: return PALETTE.smoke2;
-  }
-};
-
-const wreckColor = (m: number): number => {
-  switch (m) {
-    case MATERIAL.hullLight: case MATERIAL.turretLight: return PALETTE.smoke1;
-    case MATERIAL.hullBase: case MATERIAL.turretBase: case MATERIAL.barrelLight: return PALETTE.smoke2;
-    case MATERIAL.ember: return PALETTE.fire5;
-    default: return PALETTE.smoke3;
-  }
-};
-
-/** 材質と縁から色を決める。回した後の画面の上の縁は、車体と砲塔の基準色を光の色にして輪郭を立てる */
-const painter = (input: TankSpriteInput) => (m: number, edges: Edges): number => {
-  if (input.white) return PALETTE.white;
-  if (input.wrecked) return wreckColor(m);
-  if (edges.top && m === MATERIAL.hullBase) return input.hull.light;
-  if (edges.top && m === MATERIAL.turretBase) return input.turret.light;
-  return livingColor(m, input.hull, input.turret, input.rim);
 };
 
 /** 発射光と火花の画素。画面の色をそのまま置く */
@@ -170,13 +172,25 @@ const effectGrid = (input: TankSpriteInput): PixelGrid => {
   return grid;
 };
 
-/** 姿勢から機体の絵を描く。TANK_FRAME の大きさの格子を返す */
+/**
+ * 姿勢から機体の絵を描く。TANK_FRAME の大きさの格子を返す。
+ * 奥から 足回りの奥の部品 → 砲身 → 砲塔 → アンテナ → 車体 → サブ武器 → 足回りの手前の部品 → 発射光の順に重ね、
+ * 砲身の付け根は砲塔の後ろに、砲塔の下端は車体の後ろに隠れる
+ */
 export const composeTank = (input: TankSpriteInput): PixelGrid => {
-  const [tread, hull, turret, antenna] = bodyMasks(input);
-  const paint = painter(input);
+  const masks = bodyMasks(input);
+  const paint = tankPainter(input);
   const outlined = (mask: PixelGrid): Layer => ({ mask, outline: PALETTE.outline, paint });
-  const layers: Layer[] = [outlined(tread!), outlined(hull!), outlined(barrelMask(input)), outlined(turret!)];
-  if (antenna) layers.push({ mask: antenna, outline: null, paint });
+  const part = (layer: FrameLayer): Layer => (layer.outline ? outlined(layer.mask) : { mask: layer.mask, outline: null, paint });
+  const layers: Layer[] = [
+    ...masks.under.map(part),
+    { mask: barrelMask(input), outline: PALETTE.outline, paint: barrelPainter(input) },
+    outlined(masks.turret),
+    ...(masks.antenna ? [{ mask: masks.antenna, outline: null, paint }] : []),
+    outlined(masks.hull),
+    ...(masks.sub ? [outlined(masks.sub)] : []),
+    ...masks.over.map(part),
+  ];
   if (input.flash !== null || input.sparks.length > 0) layers.push({ mask: effectGrid(input), outline: null, paint: (color) => (color === TRANSPARENT ? TRANSPARENT : color) });
   return composeLayers(layers, TANK_FRAME);
 };

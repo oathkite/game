@@ -9,7 +9,7 @@ test("camera offsets keep visible tank plates in bounds without accumulating cor
     const r = await createRenderer({ host, layout: { cell: 8, mapWidth: 667, mapHeight: 159 },
       mask: { width: 100, height: 50, cells: new Uint8Array(5000).fill(1) },
       players: [{ nickname: "Label", colors: { primary: "yellow", secondary: "blue" } }] });
-    r.setTank(0, { x: 40, y: 8, tilt: 0, facing: 1, elevation: 45, hp: 100, visible: true, flash: false, aiming: false });
+    r.setTank(0, { x: 40, y: 8, tilt: 0, facing: 1, elevation: 45, hp: 100, visible: true, flash: false, aiming: false, weapon: "cannon", sub: "digger" });
     // stage は背景、風、地形と機体、名前札、画面外の印の順（renderer.ts）。
     const label = r.app.stage.children[3].children[0];
     const read = () => { const b = label.getBounds(); return { x: b.x, y: b.y, width: b.width, height: b.height }; };

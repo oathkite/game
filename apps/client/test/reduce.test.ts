@@ -74,6 +74,25 @@ describe("reduce", () => {
     expect(r.view.mismatches).toBe(0);
   });
 
+  it("撃った側の最後に撃った武器を覚え、相手の砲身に描けるようにする（設計書 10.5）", () => {
+    const s1 = handle(state, { type: "loaded", seat: 0 }, 0);
+    const s2 = handle(s1.state, { type: "loaded", seat: 1 }, 0);
+    const start = s2.effects[0]?.message as ServerMessageOf<"turn.start">;
+    const fired = handle(s2.state, { type: "fire", seat: 0, fire: { type: "turn.fire", slot: 1, facing: 1, elevation: 45, power: 60, x: 75 } }, 1000);
+    const result = fired.effects[0]?.message as ServerMessageOf<"turn.result">;
+    const after = reduce(apply(EMPTY_VIEW, [setup, start], { ...opts, mySeat: 1 }), result, { ...opts, mySeat: 1 }, 3).view.replay?.playersAfter;
+    expect(after?.[0].lastWeapon).toBe("digger");
+    expect(after?.[1].lastWeapon).toBeUndefined();
+    // テレポートは装備に無い標準砲で撃つので、最後に撃った武器にしない
+    const teleport = handle(s2.state, { type: "fire", seat: 0, fire: { type: "turn.fire", slot: 1, facing: 1, elevation: 45, power: 60, x: 75, item: "teleport" } }, 1000);
+    const warped = teleport.effects[0]?.message as ServerMessageOf<"turn.result">;
+    expect(warped.shot.input).toMatchObject({ item: "teleport", weapon: "cannon" });
+    const view = apply(EMPTY_VIEW, [setup, start], { ...opts, mySeat: 1 });
+    const players = view.players!;
+    const stale = { ...view, players: [{ ...players[0], loadout: ["digger", "laser"] as const }, players[1]] as const };
+    expect(reduce(stale, warped, { ...opts, mySeat: 1 }, 4).view.replay?.playersAfter[0].lastWeapon).toBeUndefined();
+  });
+
   it("サーバーの結果が食い違えば不整合を数え、サーバーの値で上書きする", () => {
     const s1 = handle(state, { type: "loaded", seat: 0 }, 0);
     const s2 = handle(s1.state, { type: "loaded", seat: 1 }, 0);

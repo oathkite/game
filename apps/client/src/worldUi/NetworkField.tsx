@@ -9,7 +9,8 @@ import { teamColor } from "./teamColors";
 import { loadCameraScale } from "./displayScale";
 import { wheelPan } from "@/prototype/wheelPan";
 import { useEffect, useMemo, useRef, useState, type PointerEvent } from "react";
-import type { WeaponId } from "@game/protocol";
+import { DEFAULT_LOADOUT, type Loadout, type WeaponId } from "@game/protocol";
+import { armsOf } from "@/match/tankArms";
 import type { LabFrame } from "@game/protocol/v2-lab";
 import { applyOps, buildInitialTerrain, tiltOf } from "@game/sim";
 import { createRenderer, type Renderer } from "@/game/renderer";
@@ -53,6 +54,12 @@ export const NetworkField = (props: Props) => {
       const colorOf = (playerId: string) => Number.parseInt(teamColor(Number((latest.current.frame.players.find(p => p.playerId === playerId)?.teamId ?? "t0").slice(1))).slice(1), 16);
       const falls = createFallMotion(); let settling = false, wasOpening = false, signalVisible = false, fallMatch = "";
       const facing = new Map<string, -1 | 1>();
+      // ほかの参加者は最後に撃った武器を砲身に描く（設計書 10.5）
+      const fired = new Map<string, WeaponId>();
+      const arms = (p: { readonly playerId: string; readonly loadout?: Loadout | undefined }) => {
+        const loadout = p.loadout ?? DEFAULT_LOADOUT, own = p.playerId === latest.current.ownId ? latest.current.selectedWeapon : undefined;
+        return armsOf(loadout, own ?? fired.get(p.playerId) ?? loadout[0]);
+      };
       let tankIndex = 0;
       renderer = await createRenderer({ mapId: latest.current.frame.map.id, wind: () => latest.current.frame.wind, tankFactory: (colors, name) => createTankView(colors, name, teamColor(Number(latest.current.frame.players[tankIndex++]!.teamId.slice(1)))), host: element, layout: layout(), mask, background: 0x000000, backgroundAlpha:0,
         players: latest.current.frame.players.map(p => ({ nickname: p.nickname ?? p.playerId, colors: p.colors ?? { primary: p.teamId === "t0" ? "yellow" : "cyan", secondary: "blue" } })) });
@@ -86,6 +93,9 @@ export const NetworkField = (props: Props) => {
         for (const [id, value] of facingUpdates({ frame, own: predicted, prepared }, ownId)) facing.set(id, value);
         const facings = JSON.stringify(Object.fromEntries(facing)); if (facings !== shownFacings) { shownFacings = facings; element.dataset.facings = facings; }
         const shot = frame.phase === "replaying" ? frame.replay?.shooter : null;
+        // テレポートは装備に無い標準砲で撃つので、装備の武器で撃ったときだけ覚える
+        const shooter = shot ? players.find(p => p.playerId === shot.playerId) : undefined;
+        if (shot && (shooter?.loadout ?? DEFAULT_LOADOUT).includes(shot.weapon)) fired.set(shot.playerId, shot.weapon);
         if (fallMatch !== frame.matchId) { falls.reset(); fallMatch = frame.matchId; }
         const now = performance.now(), reduced = matchMedia("(prefers-reduced-motion: reduce)").matches;
         let ownFalling = false;
@@ -95,7 +105,7 @@ export const NetworkField = (props: Props) => {
           return { ...p, ...motion };
         });
         if (settling !== ownFalling) { settling = ownFalling; latest.current.onSettling?.(settling); }
-        shown.forEach((p, i) => { const hit = labTankHit(presentation, p.playerId, p.x); r.setTank(i, { x: p.x, y: p.y, tilt: tiltOf(mask, { x: Math.round(p.x), y: Math.round(p.y) }), facing: facing.get(p.playerId) ?? 1,
+        shown.forEach((p, i) => { const hit = labTankHit(presentation, p.playerId, p.x); r.setTank(i, { ...arms(p), x: p.x, y: p.y, tilt: tiltOf(mask, { x: Math.round(p.x), y: Math.round(p.y) }), facing: facing.get(p.playerId) ?? 1,
           elevation: p.playerId === shot?.playerId ? shot.elevation : p.playerId === ownId ? elevation : 45, hp: hit.bar ? hit.bar.hp : p.eliminated ? 0 : p.hp, ...(hit.bar ? { hpGhost: hit.bar.hpGhost, ghostOn: hit.bar.ghostOn } : {}), visible: p.y < frame.map.height && !hit.hidden, falling: p.falling || presentation.fallingIds.includes(p.playerId), shotFlashes: p.playerId === shot?.playerId ? presentation.shotFlashes : [], recoil: p.playerId === shot?.playerId ? presentation.recoil : 0, aiming: frame.phase === "acting" && p.playerId === ownId && p.playerId === frame.actorId, charge: frame.phase === "acting" && p.playerId === ownId && p.playerId === frame.actorId ? latest.current.charge ?? 0 : 0, acting: frame.phase === "acting" && p.playerId === frame.actorId, flash: hit.flash, nudge: reducedNow ? 0 : hit.nudge }); });
         const actor = shown.find(p => p.playerId === frame.actorId); if (actor && frame.phase === "acting") rig.actor({ x: actor.x, y: actor.y - 6 });
         if (frame.replay && replayKey !== frame.replay.startsAt) {

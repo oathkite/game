@@ -10,7 +10,7 @@ import "./lobbyTerminal.css";
 import "./terminalScreens.css";
 import { TankPortrait } from "./TankPortrait";
 
-export type ResultPresentation = { readonly ownId?: string; readonly players: readonly Pick<LabFrame["players"][number], "playerId" | "teamId" | "nickname" | "colors">[]; readonly result: LabFrame["result"] };
+export type ResultPresentation = { readonly ownId?: string; readonly players: readonly Pick<LabFrame["players"][number], "playerId" | "teamId" | "nickname" | "colors" | "loadout">[]; readonly result: LabFrame["result"] };
 type Score = NonNullable<LabFrame["stats"]>[string];
 
 const ScoreCells = ({ score, elapsedMs }: { readonly score: Score | undefined; readonly elapsedMs: number }) => <>
@@ -31,7 +31,7 @@ export const ResultPlayers = ({ players, result, stats, motionDelayMs = 0 }: Res
       const label = t(reaction === "win" ? "勝利" : reaction === "lose" ? "敗北" : "引き分け");
       const team = Number(player.teamId.slice(1));
       return <tr key={player.playerId} data-reaction={reaction} style={{ "--row": index } as CSSProperties}>
-        <th scope="row"><div className="result-player-name"><TankPortrait colors={player.colors} label={`${name}：${label}`} /><span>{name}</span></div></th>
+        <th scope="row"><div className="result-player-name"><TankPortrait colors={player.colors} loadout={player.loadout} label={`${name}：${label}`} /><span>{name}</span></div></th>
         <td><span className="result-team" role="img" aria-label={t(teamColorName(team))} title={t(teamColorName(team))} style={{ backgroundColor: teamColor(team) }} /></td>
         <td className="result-outcome"><span className="result-outcome-label">{reaction === "win" && <DotIcon name="crown" />}{label}</span></td>
         {stats && <ScoreCells score={stats[player.playerId]} elapsedMs={elapsedMs - index * rowStep} />}

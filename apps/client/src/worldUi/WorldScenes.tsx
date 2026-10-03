@@ -105,7 +105,7 @@ const Lobby = ({ go, onPractice }: { readonly go: (scene: Scene) => void; readon
   const settingsDialog = useRef<HTMLDialogElement>(null);
   return <section className="world-lobby">
     <header><PixelButton onClick={() => settingsDialog.current?.showModal()}>{t("設定")}</PixelButton></header>
-    <div className="world-machine"><TankPortrait colors={profile.colors} /></div>
+    <div className="world-machine"><TankPortrait colors={profile.colors} loadout={profile.loadout} /></div>
     <div className="world-loadout">
       <label>{t("名前")}<input aria-label={t("名前")} maxLength={12} value={profile.nickname} placeholder={t("プレイヤー")} onChange={e => update({ nickname: e.target.value })} /></label>
 

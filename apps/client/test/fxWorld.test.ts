@@ -3,6 +3,7 @@ import { createDriftLights, DRIFT_COUNT, driftLightAt } from "@/game/driftLights
 import { PALETTE } from "@/game/palette";
 import { getPixel, TRANSPARENT } from "@/game/pixelGrid";
 import { MOUNTAIN_PERIOD, paintTrees, shootingStarAt, SHOOTING_MS, SHOOTING_WINDOW_MS, TREE_HEIGHT } from "@/game/skyPaint";
+import { EXHAUST_PORTS } from "@/game/frameSkins";
 import { EXHAUST_PERIOD_MS, EXHAUST_VISIBLE_MS, exhaustAt } from "@/game/tankMotion";
 
 // 世界の動き（設計書 41 の段階 6）。3 層目の遠景と漂う光
@@ -86,5 +87,11 @@ describe("exhaustAt", () => {
     expect(exhaustAt(EXHAUST_VISIBLE_MS + 10, false)).toBeNull();
     expect(exhaustAt(EXHAUST_PERIOD_MS, false)).toMatchObject({ x: -15, y: -7 });
     expect(exhaustAt(0, true)).toBeNull();
+  });
+  it("煙はフレームの排気口から出る。浮遊と石輪は煙を出さない（設計書 43）", () => {
+    expect(exhaustAt(0, false, EXHAUST_PORTS.wheels!)).toMatchObject({ x: -20, y: -12 });
+    expect(EXHAUST_PORTS.tracks).toEqual({ x: -15, y: -7 });
+    expect(EXHAUST_PORTS.hover).toBeNull();
+    expect(EXHAUST_PORTS.stoneWheels).toBeNull();
   });
 });

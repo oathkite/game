@@ -1,15 +1,16 @@
 import { describe, expect, it } from "vitest";
+import { FRAME_SKINS, TURRET_SKINS, WEAPON_IDS } from "@game/protocol";
 import { ELEVATION_MAX, ELEVATION_MIN, muzzleOf, ONE, slopedMask, tiltOf, type TerrainMask } from "@game/sim";
 import { isPaletteColor, PALETTE, TEAM_RAMPS } from "@/game/palette";
 import { getPixel, TRANSPARENT, type PixelGrid } from "@/game/pixelGrid";
 import { chargeSparks, flashFrameAt, FLASH_FRAME_MS } from "@/game/tankFlash";
 import { barrelGeometry, barrelMask, composeTank, muzzleTip, TANK_FRAME, type TankSpriteInput } from "@/game/tankSprite";
 
-// 機体のスプライト。設計書 40.5 と 10.5「全仰角で発射点と絵の砲口が一致する」
+// 機体のスプライト。設計書 40.5、43 と 10.5「全仰角で発射点と絵の砲口が一致する」
 
 const base: TankSpriteInput = {
-  hull: TEAM_RAMPS.red, turret: TEAM_RAMPS.yellow, facing: 1, tilt: 0, elevation: 45, recoil: 0, sink: 0, treadPhase: 0,
-  white: false, wrecked: false, rim: "none", flash: null, sparks: [],
+  hull: TEAM_RAMPS.red, turret: TEAM_RAMPS.yellow, turretSkin: "dome", frame: "tracks", weapon: "cannon", sub: "digger",
+  facing: 1, tilt: 0, elevation: 45, recoil: 0, sink: 0, treadPhase: 0, white: false, wrecked: false, rim: "none", flash: null, sparks: [],
 };
 
 const opaquePixels = (grid: PixelGrid): { x: number; y: number; color: number }[] => {
@@ -21,14 +22,17 @@ const opaquePixels = (grid: PixelGrid): { x: number; y: number; color: number }[
   return out;
 };
 
-/** 描いた砲身の先端の列（砲身の向きに最後の 1.5 px）にある画素の中心の重心と、いちばん先の画素の位置（砲身の向きの距離） */
+/**
+ * 描いた砲身の先端（砲身の向きに最後の 1.5 px、軸から 1.5 px 以内）にある画素の中心の重心と、いちばん先の画素の位置（砲身の向きの距離）。
+ * 3 本の管やミサイルの箱のように先端が幅広い砲身でも、弾が出る中央の管で比べる
+ */
 const renderedTip = (input: TankSpriteInput) => {
   const { pivot, angle, length } = barrelGeometry(input);
-  const rad = (angle * Math.PI) / 180, dir = { x: Math.cos(rad), y: -Math.sin(rad) };
+  const rad = (angle * Math.PI) / 180, dir = { x: Math.cos(rad), y: -Math.sin(rad) }, normal = { x: input.facing * Math.sin(rad), y: input.facing * Math.cos(rad) };
   const tip = opaquePixels(barrelMask(input)).map(p => {
     const cx = p.x + 0.5, cy = p.y + 0.5;
-    return { x: cx, y: cy, u: (cx - pivot.x) * dir.x + (cy - pivot.y) * dir.y };
-  }).filter(p => p.u >= length - 1.5);
+    return { x: cx, y: cy, u: (cx - pivot.x) * dir.x + (cy - pivot.y) * dir.y, v: (cx - pivot.x) * normal.x + (cy - pivot.y) * normal.y };
+  }).filter(p => p.u >= length - 1.5 && Math.abs(p.v) < 1.5);
   return { x: tip.reduce((s, p) => s + p.x, 0) / tip.length, y: tip.reduce((s, p) => s + p.y, 0) / tip.length, far: Math.max(...tip.map(p => p.u)), length };
 };
 
@@ -42,11 +46,11 @@ describe("砲口と物理の一致", () => {
   it("傾きの表の値がすべて出ている", () => {
     expect(new Set(cases.map(c => c.tilt)).size).toBeGreaterThanOrEqual(9);
   });
-  it("全仰角、全傾き、両向きで、描いた砲口の先端が物理の砲口から 1.25 art px 以内にある", () => {
+  it.each(WEAPON_IDS)("%s の砲身は、全仰角、全傾き、両向きで、描いた砲口の先端が物理の砲口から 1.25 art px 以内にある", weapon => {
     for (const { mask, tilt } of cases) for (const facing of [1, -1] as const) for (let elevation = ELEVATION_MIN; elevation <= ELEVATION_MAX; elevation++) {
       const muzzle = muzzleOf(mask, { x: 100, y: 150 }, facing, elevation);
       const expected = { x: (muzzle.position.x / ONE - 100.5) * 4, y: (muzzle.position.y / ONE - 150) * 4 };
-      const input = { ...base, facing, tilt, elevation };
+      const input = { ...base, weapon, facing, tilt, elevation };
       const tip = renderedTip(input);
       expect(Math.hypot(tip.x - expected.x, tip.y - expected.y), `tilt ${tilt} facing ${facing} elevation ${elevation}`).toBeLessThanOrEqual(1.25);
       // 砲身の画素は砲口まで届き、越えない
@@ -70,16 +74,40 @@ describe("composeTank", () => {
       for (const p of opaquePixels(grid)) expect(isPaletteColor(p.color), `0x${p.color.toString(16)}`).toBe(true);
     }
   });
-  it("輪郭で囲み、接地点の上に横 32 px、縦 20 px の車体を描く", () => {
-    const pixels = opaquePixels(composeTank({ ...base, elevation: 10 }));
-    // 履帯と車体（砲塔より下）は x −15〜14、輪郭を含めて −16〜15。いちばん下の輪郭が接地点の行 0
+  it("どの砲塔、フレーム、武器の組でも、固定パレットの色で描き、±45 度に傾けても枠の端で切れない", () => {
+    for (const frame of FRAME_SKINS) for (const turretSkin of TURRET_SKINS) for (const tilt of [-45, 0, 45]) for (const wrecked of [false, true]) {
+      const weapon = WEAPON_IDS[(TURRET_SKINS.indexOf(turretSkin) + tilt) & 7]!, sub = WEAPON_IDS[(TURRET_SKINS.indexOf(turretSkin) + 3) & 7]!;
+      const grid = composeTank({ ...base, frame, turretSkin, weapon, sub, tilt, elevation: 90, wrecked, rim: "charge", treadPhase: 5 });
+      const pixels = opaquePixels(grid);
+      for (const p of pixels) expect(isPaletteColor(p.color), `${frame} ${turretSkin} 0x${p.color.toString(16)}`).toBe(true);
+      // 枠の外周の行と列に画素が無い。あれば絵が枠で切れている
+      const edge = pixels.filter(p => p.x === TANK_FRAME.left || p.y === TANK_FRAME.top || p.x === TANK_FRAME.left + TANK_FRAME.width - 1 || p.y === TANK_FRAME.top + TANK_FRAME.height - 1);
+      expect(edge, `${frame} ${turretSkin} tilt ${tilt}`).toEqual([]);
+    }
+  });
+  it("フレームは主色の車体を持ち、砲塔は副色で塗る", () => {
+    for (const frame of FRAME_SKINS) for (const turretSkin of TURRET_SKINS) {
+      const colors = new Set(opaquePixels(composeTank({ ...base, frame, turretSkin })).map(p => p.color));
+      expect(colors.has(TEAM_RAMPS.red.base), `${frame}`).toBe(true);
+      expect(colors.has(TEAM_RAMPS.yellow.base), `${turretSkin}`).toBe(true);
+    }
+  });
+  it("サブ武器は車体後部に載り、null なら載せない。残骸には載せない", () => {
+    const rear = (input: TankSpriteInput) => opaquePixels(composeTank(input)).filter(p => p.x <= -10 && p.y <= -14 && p.y >= -22).length;
+    expect(rear({ ...base, turretSkin: "wedge", sub: "laser" })).toBeGreaterThan(rear({ ...base, turretSkin: "wedge", sub: null }));
+    const wreck = composeTank({ ...base, wrecked: true, sub: "laser" });
+    expect(opaquePixels(wreck).some(p => p.color === PALETTE.energy1)).toBe(false);
+  });
+  it("キャタピラとドームは、輪郭で囲んだ接地点の上の機体を描く", () => {
+    const pixels = opaquePixels(composeTank({ ...base, elevation: 10, sub: null }));
+    // 履帯と車体（砲塔より下）は x −15〜15（前の泥よけまで）、輪郭を含めて −16〜16。いちばん下の輪郭が接地点の行 0
     const body = pixels.filter(p => p.y >= -13);
     const xs = body.map(p => p.x), ys = body.map(p => p.y);
     expect(Math.min(...xs)).toBe(-16);
-    expect(Math.max(...xs)).toBe(15);
+    expect(Math.max(...xs)).toBe(16);
     expect(Math.max(...ys)).toBe(0);
-    // ハッチの上の輪郭が −21。車体の高さは 20 px
-    expect(Math.min(...pixels.filter(p => p.x >= -3 && p.x <= 0).map(p => p.y))).toBe(-21);
+    // ハッチの上の輪郭が −24
+    expect(Math.min(...pixels.filter(p => p.x >= -3 && p.x <= 0).map(p => p.y))).toBe(-24);
     expect(pixels.some(p => p.color === PALETTE.outline)).toBe(true);
     expect(pixels.some(p => p.color === TEAM_RAMPS.red.base)).toBe(true);
     expect(pixels.some(p => p.color === TEAM_RAMPS.yellow.base)).toBe(true);

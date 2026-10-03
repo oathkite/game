@@ -1,7 +1,7 @@
 import { createTurnCaret, placeTurnCaret } from "./turnCaret";
 import { playSound } from "@/app/audio";
 import type { ShotFlash } from "./muzzlePose";
-import { COLOR_HEX, type Facing, type TankColors } from "@game/protocol";
+import { COLOR_HEX, DEFAULT_FRAME, DEFAULT_TURRET, type Facing, type FrameSkin, type TankColors, type TurretSkin, type WeaponId } from "@game/protocol";
 import { Container, Graphics, Text } from "pixi.js";
 import { antennaSwayAt, chargeAt, idleRumble, landingAt, LOW_HP, wreckFrameAt, WRECK_SMOKE_FROM_MS } from "./tankMotion";
 import { drawBursts, drawDust, drawExhaust, drawLowHpSmoke, drawWreckSmoke } from "./tankFx";
@@ -10,6 +10,7 @@ import { ART_PER_CELL } from "./pixelGrid";
 import { createPixelSprite, type PixelSprite } from "./pixelTexture";
 import { chargeSparks, flashFrameAt } from "./tankFlash";
 import { hpBarRects } from "./tankHpBar";
+import { EXHAUST_PORTS } from "./frameSkins";
 import { composeTank, TANK_FRAME, type TankSpriteInput } from "./tankSprite";
 
 // 機体のスプライトを姿勢から描き直し、1 枚の texture として置く。設計書 40.5。
@@ -42,6 +43,10 @@ export type TankPose = {
   readonly charge?: number;
   /** 被弾で押し戻された横のずれ（art px）。爆心から遠ざかる向きが正の向き（設計書 41 の段階 4） */
   readonly nudge?: number;
+  /** 砲身に描く武器（設計書 10.5、43） */
+  readonly weapon: WeaponId;
+  /** 車体後部に描くもう一方の武器。null なら載せない */
+  readonly sub: WeaponId | null;
 };
 
 export type TankView = {
@@ -56,7 +61,11 @@ export type TankView = {
 
 const hex = (c: string): number => Number.parseInt(c.slice(1), 16);
 
-type Ramps = { readonly hull: Ramp; readonly turret: Ramp };
+/** 機体ごとに固定の見た目。色の段とスキン */
+type Look = { readonly hull: Ramp; readonly turret: Ramp; readonly turretSkin: TurretSkin; readonly frame: FrameSkin };
+
+/** 浮遊の噴射を揺らすコマの長さ（ms） */
+const BEAT_MS = 90;
 
 /** 状態の変わり目の時刻。setPose で記録し、tick の時計で経過を測る */
 type Moments = { first: boolean; hp: number; deathAt: number | null; falling: boolean; landAt: number | null; recoil: number; flash: boolean; swayAt: number; swayAmp: number };
@@ -109,14 +118,14 @@ const wreckState = ({ pose, clock, reduced, moments }: Frame) => {
 };
 
 /** 接地点の周りの粒。着地の沈み込みの量を返す */
-const drawFx = (fx: Graphics, f: Frame, wreck: ReturnType<typeof wreckState>): number => {
+const drawFx = (fx: Graphics, f: Frame, wreck: ReturnType<typeof wreckState>, frame: FrameSkin): number => {
   const { pose, clock, reduced, moments } = f;
   fx.clear();
   const landing = moments.landAt === null ? null : landingAt(clock - moments.landAt, reduced);
   if (landing) drawDust(fx, landing.dust);
   if (!wreck.wrecked && pose.hp > 0 && pose.hp <= LOW_HP) drawLowHpSmoke(fx, clock, reduced);
   // 何もしていない間も機体が生きて見えるよう、排気口から小さな煙（HP が少ない機体は煙を出しているので出さない）
-  else if (!wreck.wrecked && pose.hp > 0 && pose.visible && !pose.falling) drawExhaust(fx, clock, pose.facing, reduced);
+  else if (!wreck.wrecked && pose.hp > 0 && pose.visible && !pose.falling && EXHAUST_PORTS[frame]) drawExhaust(fx, clock, pose.facing, reduced, EXHAUST_PORTS[frame]);
   if (wreck.frame) drawBursts(fx, wreck.frame.bursts);
   if (wreck.frame?.smoke && moments.deathAt !== null) drawWreckSmoke(fx, clock - moments.deathAt - WRECK_SMOKE_FROM_MS);
   return landing?.squash ?? 0;
@@ -129,13 +138,13 @@ const flashOf = (pose: TankPose, reduced: boolean): number | null => {
 };
 
 /** 姿勢と時刻から、スプライトを描く引数を決める */
-const spriteInput = (f: Frame, ramps: Ramps, distance: number, squash: number, wreck: ReturnType<typeof wreckState>): TankSpriteInput => {
+const spriteInput = (f: Frame, look: Look, distance: number, squash: number, wreck: ReturnType<typeof wreckState>): TankSpriteInput => {
   const { pose, clock, reduced } = f;
   const wrecked = wreck.wrecked;
   const charge = pose.aiming && !wrecked ? chargeAt(pose.charge ?? 0, clock, reduced) : null;
   const rumble = pose.acting === true && !wrecked && !pose.falling ? idleRumble(clock, reduced) : 0;
   return {
-    hull: ramps.hull, turret: ramps.turret, facing: pose.facing, tilt: Math.round(pose.tilt),
+    ...look, weapon: pose.weapon, sub: pose.sub, facing: pose.facing, tilt: Math.round(pose.tilt),
     elevation: pose.elevation + (charge?.shake ?? 0),
     recoil: reduced || wrecked ? 0 : Math.max(0, Math.min(2, Math.round(pose.recoil ?? 0))),
     sink: rumble + squash, treadPhase: Math.floor(distance * ART_PER_CELL),
@@ -144,12 +153,14 @@ const spriteInput = (f: Frame, ramps: Ramps, distance: number, squash: number, w
     flash: wrecked ? null : flashOf(pose, reduced),
     sparks: charge ? chargeSparks(pose.charge ?? 0, clock, reduced) : [],
     antenna: wrecked ? 0 : antennaSwayAt(clock - f.moments.swayAt, f.moments.swayAmp, reduced),
+    // 時刻のコマは浮遊の噴射だけが使う。ほかのフレームでは 0 にして、時刻で描き直さない
+    beat: look.frame === "hover" && !reduced ? Math.floor(clock / BEAT_MS) : 0,
   };
 };
 
-/** 絵が変わったかを比べる鍵。色は機体ごとに固定なので含めない */
+/** 絵が変わったかを比べる鍵。色とスキンは機体ごとに固定なので含めない */
 const spriteKey = (i: TankSpriteInput): string =>
-  `${i.facing}|${i.tilt}|${i.elevation}|${i.recoil}|${i.sink}|${i.treadPhase}|${i.white}|${i.wrecked}|${i.rim}|${i.flash}|${i.antenna ?? 0}|${i.sparks.map(s => `${s.u},${s.v},${s.color}`).join(";")}`;
+  `${i.facing}|${i.tilt}|${i.elevation}|${i.recoil}|${i.sink}|${i.treadPhase}|${i.white}|${i.wrecked}|${i.rim}|${i.flash}|${i.antenna ?? 0}|${i.weapon}|${i.sub}|${i.beat ?? 0}|${i.sparks.map(s => `${s.u},${s.v},${s.color}`).join(";")}`;
 
 const drawHpBar = (g: Graphics, fill: number, pose: TankPose): void => {
   g.clear();
@@ -159,10 +170,10 @@ const drawHpBar = (g: Graphics, fill: number, pose: TankPose): void => {
 };
 
 /** 1 フレームぶんを描く。スプライトは絵が変わったときだけ描き直し、描いた絵の鍵を返す */
-const renderTank = (parts: Parts, f: Frame, ramps: Ramps, nameColor: string, showHealth: boolean, distance: number, drawnKey: string): string => {
+const renderTank = (parts: Parts, f: Frame, look: Look, nameColor: string, showHealth: boolean, distance: number, drawnKey: string): string => {
   const wreck = wreckState(f);
-  const squash = drawFx(parts.fx, f, wreck);
-  const input = spriteInput(f, ramps, distance, squash, wreck);
+  const squash = drawFx(parts.fx, f, wreck, look.frame);
+  const input = spriteInput(f, look, distance, squash, wreck);
   const key = spriteKey(input);
   if (key !== drawnKey) parts.body.draw(composeTank(input));
   parts.text.style.fill = wreck.wrecked ? 0x929b96 : nameColor;
@@ -175,7 +186,11 @@ const renderTank = (parts: Parts, f: Frame, ramps: Ramps, nameColor: string, sho
 const snap = (cells: number): number => Math.round(cells * ART_PER_CELL) / ART_PER_CELL;
 
 export const createTankView = (selection: TankColors, nickname: string, team?: string, showHealth = true): TankView => {
-  const ramps: Ramps = { hull: TEAM_RAMPS[selection.primary], turret: TEAM_RAMPS[selection.secondary] };
+  const look: Look = {
+    hull: TEAM_RAMPS[selection.primary], turret: TEAM_RAMPS[selection.secondary],
+    // スキンを足す前の保存状態と古いクライアントには無いので、既定のスキンで受ける
+    turretSkin: selection.turret ?? DEFAULT_TURRET, frame: selection.frame ?? DEFAULT_FRAME,
+  };
   const nameColor = team ?? COLOR_HEX[selection.primary];
   const parts = buildParts(nickname, nameColor);
   const moments: Moments = { first: true, hp: 0, deathAt: null, falling: false, landAt: null, recoil: 0, flash: false, swayAt: -Infinity, swayAmp: 0 };
@@ -183,7 +198,7 @@ export const createTankView = (selection: TankColors, nickname: string, team?: s
   let caretElapsed = 0, clock = 0, reduced = false, drawnKey = "", distance = 0, previousX: number | null = null;
   let lastPose: TankPose | null = null, rendered = false;
   const render = (): void => {
-    if (lastPose) drawnKey = renderTank(parts, { pose: lastPose, clock, reduced, moments }, ramps, nameColor, showHealth, distance, drawnKey);
+    if (lastPose) drawnKey = renderTank(parts, { pose: lastPose, clock, reduced, moments }, look, nameColor, showHealth, distance, drawnKey);
   };
   const setPose = (pose: TankPose, cell: number): void => {
     noteMoments(moments, pose, clock);
@@ -193,7 +208,7 @@ export const createTankView = (selection: TankColors, nickname: string, team?: s
     const signedDelta = previousX === null ? 0 : pose.x - previousX;
     previousX = pose.x;
     const steps = pose.hp > 0 && pose.visible && !pose.falling && Math.abs(signedDelta) > .001 && Math.abs(signedDelta) <= 2.5;
-    if (steps) { distance += signedDelta; playSound("move-tracks"); }
+    if (steps) { distance += signedDelta; playSound(`move-${look.frame}`); }
     if (steps && !moving) swing(moments, clock, SWAY_MOVE);
     moving = steps;
     drawHpBar(parts.hpBar, hex(nameColor), pose);

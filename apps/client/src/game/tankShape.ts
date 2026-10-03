@@ -2,14 +2,22 @@ import { createGrid, fillRect, setPixel, TRANSPARENT, type PixelGrid } from "./p
 
 // 機体の部品の形。設計書 40.5。右向き、傾き 0 の車体の座標（art px、原点は接地点）で、材質の番号を置く。
 // 色はまだ決めない。回した後に tankSprite.ts が材質と縁から塗る。
-// 横 32 × 縦 20 art px。履帯 6 行、車体 7 行、砲塔 6 行、ハッチ 1 行。車体（主色）を砲塔（副色）より大きくする。
+// ここにはキャタピラのフレーム（設計書 43）の履帯と車体、アンテナ、砲身の付け根と長さを置く。
+// 砲塔は turretSkins.ts、ほかのフレームは frameSkins.ts、砲身とサブ武器は weaponMounts.ts に置く。
 
 export const MATERIAL = {
   linkA: 1, linkB: 2, treadInner: 3, wheelRim: 4, hubA: 5, hubB: 6,
   hullLight: 10, hullBase: 11, hullShadow: 12, skirt: 13, rivet: 14, lamp: 15, ember: 16,
   turretLight: 20, turretBase: 21, turretShadow: 22, turretDeep: 23, hatch: 24, shine: 25,
   antenna: 30, antennaTip: 31,
-  barrelLight: 40, barrelShadow: 41, brakeLight: 42, brakeShadow: 43, rim: 44,
+  barrelLight: 40, barrelShadow: 41, brakeLight: 42, brakeShadow: 43,
+  // 砲塔のスキン、武器の砲身とサブ武器、フレームのスキンの材質（設計書 43）
+  metalLight: 60, metalBase: 61, metalShadow: 62, metalDeep: 63,
+  energyHot: 64, energyCore: 65, energyDeep: 66,
+  bomb: 67, bombShine: 68, fuse: 69, spark: 70,
+  brassLight: 71, brass: 72, brassShadow: 73, hole: 74,
+  warhead: 76, warheadShadow: 77,
+  woodLight: 78, wood: 79, woodDark: 80, stoneLight: 81, stone: 82, stoneShadow: 83, stoneDeep: 84, bone: 85,
 } as const;
 
 /** 砲身の付け根。接地点から車体基準で真上 16 art px（BARREL_BASE_UP の 4 セル） */
@@ -79,29 +87,6 @@ export const hullMask = (sink: number, wrecked: boolean): PixelGrid => {
     for (let x = 2; x < 6; x++) setPixel(grid, x, -13 + sink, TRANSPARENT);
     for (const [x, y] of [[-6, -10], [2, -12], [8, -9], [-11, -9]] as const) setPixel(grid, x, y + sink, MATERIAL.ember);
   }
-  return grid;
-};
-
-/** 砲塔の行。[y, 左端, 右端の次, 材質] */
-const TURRET_ROWS: readonly (readonly [number, number, number, number])[] = [
-  [-20, -3, 1, MATERIAL.hatch],
-  [-19, -5, 3, MATERIAL.turretLight],
-  [-18, -6, 4, MATERIAL.turretBase],
-  [-17, -7, 5, MATERIAL.turretBase],
-  [-16, -7, 5, MATERIAL.turretBase],
-  [-15, -8, 6, MATERIAL.turretShadow],
-  [-14, -9, 7, MATERIAL.turretDeep],
-];
-
-/** 砲塔。付け根（0, −16）を含むドーム。残骸は前へ崩れて 3 px 沈み、ハッチを失う */
-export const turretMask = (sink: number, wrecked: boolean): PixelGrid => {
-  const dx = wrecked ? 1 : 0, dy = sink + (wrecked ? 3 : 0);
-  const grid = createGrid(-9 + dx, -20 + dy, 16, 7);
-  for (const [y, from, to, material] of TURRET_ROWS) {
-    if (wrecked && material === MATERIAL.hatch) continue;
-    fillRect(grid, from + dx, y + dy, to - from, 1, material);
-  }
-  if (!wrecked) for (const [x, y] of [[-4, -18], [-3, -18], [-5, -17]] as const) setPixel(grid, x, y + dy, MATERIAL.shine);
   return grid;
 };
 

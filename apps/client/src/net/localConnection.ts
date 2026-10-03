@@ -4,7 +4,7 @@ import type { CpuLevel } from "@/practice/cpuLevel";
 import { planCpuTurn, playCpuTurn, type CpuPose } from "@/practice/cpuTurn";
 import { createEngine, createMatchHost, DEFAULT_ENGINE_TIMING, realClock, setupMessage, type MatchHost } from "@game/engine";
 import { resolveMapChoice } from "@game/maps";
-import type { ClientMessage, Loadout, MapChoice, ServerMessage, TankColors, WeaponId } from "@game/protocol";
+import { DEFAULT_FRAME, DEFAULT_TURRET, FRAME_SKINS, TURRET_SKINS, type ClientMessage, type Loadout, type MapChoice, type ServerMessage, type TankColors, type WeaponId } from "@game/protocol";
 import { createListeners, type Connection, type ConnectionStatus } from "./connection";
 
 // solo モード。サーバーなしでエンジンをブラウザ内に置き、両席をひとりで操作する。
@@ -24,9 +24,15 @@ export type LocalMatchOptions = {
   readonly opponentLoadout: Loadout;
 };
 
-const otherColors = (colors: TankColors): TankColors => (colors.primary === "cyan" ? { primary: "orange", secondary: "yellow" } : { primary: "cyan", secondary: "blue" });
+/** 一覧で次のスキン。相手の機体の形を自分と違うものにする */
+const nextOf = <T extends string>(list: readonly T[], value: T): T => list[(list.indexOf(value) + 1) % list.length]!;
 
-export const defaultOpponentColors = otherColors;
+/** 相手の色とスキンは自分と違うものにして、一人でも見分けられるようにする（設計書 43） */
+export const defaultOpponentColors = (colors: TankColors): TankColors => ({
+  ...(colors.primary === "cyan" ? { primary: "orange", secondary: "yellow" } : { primary: "cyan", secondary: "blue" }),
+  turret: nextOf(TURRET_SKINS, colors.turret ?? DEFAULT_TURRET),
+  frame: nextOf(FRAME_SKINS, colors.frame ?? DEFAULT_FRAME),
+});
 
 /** 相手の装備は自分と違うものにして、弾の違いを一人でも見られるようにする */
 export const defaultOpponentLoadout = (loadout: Loadout): Loadout => {

@@ -78,6 +78,8 @@ const onResult = (view: MatchView, shot: ShotResult, replayId: number): Reduced 
     y: shot.yAfter[p.seat],
     facing: p.seat === shot.input.seat ? shot.input.facing : p.facing,
     ...(p.seat === shot.input.seat && shot.input.item ? { itemsUsed: [...(p.itemsUsed ?? []), shot.input.item] } : {}),
+    // テレポートは装備に無い標準砲で撃つので、装備の武器で撃ったときだけ覚える
+    ...(p.seat === shot.input.seat && p.loadout.includes(shot.input.weapon) ? { lastWeapon: shot.input.weapon } : {}),
   });
   const job: ReplayJob = {
     id: replayId,

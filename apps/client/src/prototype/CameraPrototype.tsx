@@ -99,7 +99,7 @@ const Battle = ({ store, begin, worldArt, cpu, cpuLevel, onExit, onResult }: { r
     if (view.phase === "finished" && view.result && view.players && onResult) onResult({
       ownId: String(view.mySeat ?? 0),
       result: view.result.winner === null ? { type: "draw" } : { type: "win", teamId: `t${view.result.winner}` },
-      players: view.players.map(player => ({ playerId: String(player.seat), teamId: `t${player.seat}`, nickname: player.nickname, colors: player.colors })),
+      players: view.players.map(player => ({ playerId: String(player.seat), teamId: `t${player.seat}`, nickname: player.nickname, colors: player.colors, loadout: [player.loadout[0], player.loadout[1]] })),
     });
   }, [view.phase, view.result, view.players, onResult]);
   const hudPlayers = view.players?.map(p => ({ id: String(p.seat), name: p.nickname, hp: p.hp, colors: p.colors, team: p.seat })) ?? [];

@@ -172,11 +172,17 @@ export const antennaSwayAt = (t: number, amplitude: number, reduced: boolean): n
 export const EXHAUST_PERIOD_MS = 1400;
 export const EXHAUST_VISIBLE_MS = 900;
 
-/** 排気口からの煙の粒。接地点からの位置（art px、機体の前が正）、大きさ、濃さ。見えていなければ null。動きを減らす設定では出さない */
-export const exhaustAt = (clock: number, reduced: boolean): { readonly x: number; readonly y: number; readonly size: 1 | 2; readonly tone: 0 | 1 } | null => {
+/** キャタピラの排気口。車体の後ろの下 */
+const TRACKS_EXHAUST: Dot = { x: -15, y: -7 };
+
+/**
+ * 排気口からの煙の粒。接地点からの位置（art px、機体の前が正）、大きさ、濃さ。見えていなければ null。動きを減らす設定では出さない。
+ * port はフレームごとの排気口の位置（設計書 43）。粒はそこから後ろの上へ流れる
+ */
+export const exhaustAt = (clock: number, reduced: boolean, port: Dot = TRACKS_EXHAUST): { readonly x: number; readonly y: number; readonly size: 1 | 2; readonly tone: 0 | 1 } | null => {
   if (reduced) return null;
   const t = Math.max(0, clock) % EXHAUST_PERIOD_MS;
   if (t >= EXHAUST_VISIBLE_MS) return null;
   const f = t / EXHAUST_VISIBLE_MS;
-  return { x: -15 - Math.floor(f * 3), y: -7 - Math.floor(f * 6), size: f < 0.4 ? 1 : 2, tone: f < 0.5 ? 0 : 1 };
+  return { x: port.x - Math.floor(f * 3), y: port.y - Math.floor(f * 6), size: f < 0.4 ? 1 : 2, tone: f < 0.5 ? 0 : 1 };
 };
