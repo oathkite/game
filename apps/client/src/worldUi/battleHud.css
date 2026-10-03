@@ -30,6 +30,8 @@
 .battle-weapons:has(.battle-items) { display:grid; grid-template-columns:repeat(2,auto); align-content:center; }
 .battle-items { grid-row:1; grid-column:1/-1; display:grid; grid-template-columns:subgrid; gap:inherit; }
 .world-ui .battle-weapons .battle-items button { width:auto; min-width:0!important; min-height:0; height:22px; padding:0!important; border-color:#0f4d24!important; }
+/* プラクティスの .world-ui .kp-root button:not(.kp-minimap)（pixelUi.css）は上の規則と同じ詳細度で後に読まれ、min-height:48px が勝って武器が操作盤からはみ出す。詳細度を上げて外す */
+.world-ui .battle-console .battle-weapons .battle-items button { min-height:0; }
 .world-ui .battle-weapons .battle-items button[aria-pressed=true] { border-color:#33ff66!important; }
 .world-ui .battle-weapons .battle-items button[data-used] { opacity:.35; }
 /* 武器のアイコンを大きくする規則（battleHudDesktop.css、battleTouch.css）より優先する */
