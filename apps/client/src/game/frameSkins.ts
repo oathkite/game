@@ -148,6 +148,8 @@ const hover = (beat: number, sink: number, wrecked: boolean): FrameParts => {
   // 底の噴射口
   fillRect(body, -4, -8 + dy, 8, 1, M.metalDeep);
   if (!wrecked) fillRect(body, -2, -8 + dy, 4, 1, M.energyHot);
+  // 残骸は噴射が止まって地面に落ち、潰れた底が地面に着く
+  if (wrecked) rows(body, [[-7, -6, 6, F], [-6, -5, 4, M.metalDeep], [-5, -3, 2, M.metalDeep]], dy);
   if (wrecked) wreckChips(body, -13, dy);
   return { under: [], hull: body, over: wrecked ? [] : [{ mask: hoverGlow(beat, up), outline: false }] };
 };

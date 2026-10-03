@@ -103,6 +103,10 @@ describe("composeTank", () => {
     const turretTop = (grid: PixelGrid) => Math.min(...opaquePixels(grid).filter(p => p.x === 0).map(p => p.y));
     expect(turretTop(at(4))).toBe(turretTop(at(0)));
     expect(Array.from(at(4).pixels).join()).not.toBe(Array.from(at(0).pixels).join());
+    // 残骸は噴射が止まり、地面に落ちる（いちばん下の輪郭が接地点の行）
+    const wreck = opaquePixels(composeTank({ ...base, frame: "hover", wrecked: true }));
+    expect(Math.max(...wreck.map(p => p.y))).toBe(0);
+    expect(wreck.some(p => p.color === PALETTE.energy1)).toBe(false);
   });
   it("車輪と石の車輪は、進むと上の縁が前へ動く向き（右向きで時計回り）に回る", () => {
     const wheel = (draw: typeof bigWheel, phase: number) => {
