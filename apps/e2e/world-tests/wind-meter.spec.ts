@@ -60,6 +60,11 @@ const checkLayout = async (page: Page, size: Size): Promise<void> => {
   expect(panel.height).toBe(size.panel);
   expect(gauge.x).toBeGreaterThanOrEqual(panel.x); expect(gauge.x + gauge.width).toBeLessThanOrEqual(panel.x + panel.width);
   expect(gauge.y).toBeGreaterThanOrEqual(panel.y); expect(gauge.y + gauge.height).toBeLessThanOrEqual(panel.y + panel.height);
+  // 武器とアイテム（設計書 42.1）も操作盤の中に収める。アイテムの段は武器より低い
+  const weapons = await page.locator(".battle-weapons > button").evaluateAll(buttons => buttons.map(b => b.getBoundingClientRect().toJSON() as Box));
+  const items = await page.locator(".battle-items button").evaluateAll(buttons => buttons.map(b => b.getBoundingClientRect().toJSON() as Box));
+  for (const button of [...weapons, ...items]) { expect(button.y).toBeGreaterThanOrEqual(panel.y); expect(button.y + button.height).toBeLessThanOrEqual(panel.y + panel.height); }
+  for (const item of items) expect(item.height).toBeLessThan(weapons[0]!.height);
   // 角度メーターの真下。角度メーターの幅を覆う
   expect(gauge.y).toBeGreaterThanOrEqual(dial.y + dial.height - 0.5);
   expect(gauge.y).toBeLessThanOrEqual(dial.y + dial.height + 12);
