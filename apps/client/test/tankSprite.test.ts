@@ -92,6 +92,16 @@ describe("composeTank", () => {
       expect(colors.has(TEAM_RAMPS.yellow.base), `${turretSkin}`).toBe(true);
     }
   });
+  it("浮遊は地面から浮いて見えるよう、噴射の下に隙間を空け、時刻のコマで車体だけを上下に揺らす", () => {
+    const at = (beat: number) => composeTank({ ...base, frame: "hover", beat, sub: null });
+    // 噴射の真下の 2 行は空き、地面の行に波紋の光がある
+    for (const beat of [0, 4]) for (const y of [-3, -2]) for (let x = -2; x < 2; x++) expect(getPixel(at(beat), x, y), `beat ${beat} (${x}, ${y})`).toBe(TRANSPARENT);
+    expect(opaquePixels(at(0)).some(p => p.y === -1 && p.color === PALETTE.energy1)).toBe(true);
+    // 揺れても砲身と砲塔は動かない
+    const turretTop = (grid: PixelGrid) => Math.min(...opaquePixels(grid).filter(p => p.x === 0).map(p => p.y));
+    expect(turretTop(at(4))).toBe(turretTop(at(0)));
+    expect(Array.from(at(4).pixels).join()).not.toBe(Array.from(at(0).pixels).join());
+  });
   it("サブ武器は車体後部に載り、null なら載せない。残骸には載せない", () => {
     const rear = (input: TankSpriteInput) => opaquePixels(composeTank(input)).filter(p => p.x <= -10 && p.y <= -14 && p.y >= -22).length;
     expect(rear({ ...base, turretSkin: "wedge", sub: "laser" })).toBeGreaterThan(rear({ ...base, turretSkin: "wedge", sub: null }));
