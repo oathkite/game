@@ -22,7 +22,7 @@ test("authored terrain is shared after firing and reconnecting", async ({ browse
       }));
       await page.goto("/");
       await page.getByRole("button", { name: "はじめる", exact: true }).click();
-      await customizeTank(page, { primary:i === 0 ? "purple" : "cyan", secondary:"orange", turret:"フィン", frame:"石輪" });
+      await customizeTank(page, { primary:i === 0 ? "purple" : "cyan", secondary:"orange", turret:"フィン", frame:"石車輪" });
       await page.getByLabel("名前", { exact: true }).fill(`Arch${i}`);
       await page.getByRole("button", { name: "出撃", exact: true }).click();
     }

@@ -88,7 +88,7 @@ describe("exhaustAt", () => {
     expect(exhaustAt(EXHAUST_PERIOD_MS, false)).toMatchObject({ x: -15, y: -7 });
     expect(exhaustAt(0, true)).toBeNull();
   });
-  it("煙はフレームの排気口から出る。浮遊と石輪は煙を出さない（設計書 43）", () => {
+  it("煙はフレームの排気口から出る。浮遊と石車輪は煙を出さない（設計書 43）", () => {
     expect(exhaustAt(0, false, EXHAUST_PORTS.wheels!)).toMatchObject({ x: -20, y: -12 });
     expect(EXHAUST_PORTS.tracks).toEqual({ x: -15, y: -7 });
     expect(EXHAUST_PORTS.hover).toBeNull();

@@ -40,5 +40,5 @@ export const english: Readonly<Record<string, string>> = {
   "カラー1": "Color 1", "カラー2": "Color 2", "砲塔": "Turret", "足回り": "Chassis", "完了": "Done",
   "機体をカスタマイズ": "Customize tank", "機体のカスタマイズ": "Customize tank",
   "ドーム": "Dome", "ワイド": "Wide", "ボックス": "Box", "ウェッジ": "Wedge", "フィン": "Fin", "ポット": "Pot", "オニオン": "Onion", "フラット": "Flat",
-  "キャタピラ": "Tracks", "大型キャタピラ": "Heavy tracks", "車輪": "Wheels", "多脚": "Walker", "浮遊": "Hover", "石輪": "Stone wheels",
+  "キャタピラ": "Tracks", "大型キャタピラ": "Heavy tracks", "車輪": "Wheels", "多脚": "Walker", "浮遊": "Hover", "石車輪": "Stone wheels",
 };

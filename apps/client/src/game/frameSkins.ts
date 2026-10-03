@@ -151,7 +151,7 @@ const hover = (beat: number, sink: number, wrecked: boolean): FrameParts => {
   return { under: [], hull: body, over: wrecked ? [] : [{ mask: hoverGlow(beat), outline: false }] };
 };
 
-// ---- 石輪。原始時代の投擲機のような荷車。前後に大きな石の車輪を車体の手前に重ね、木の梁を縄で縛った台車。荷台の前後の壁で主色を見せる ----
+// ---- 石車輪。原始時代の投擲機のような荷車。前後に大きな石の車輪を車体の手前に重ね、木の梁を縄で縛った台車。荷台の前後の壁で主色を見せる ----
 const stoneWheels = (phase: number, sink: number, wrecked: boolean): FrameParts => {
   const drop = wrecked ? 2 : 0;
   // 奥の車輪は暗い石で、手前の車輪の少し前にずらして描く
@@ -190,7 +190,7 @@ const stoneWheels = (phase: number, sink: number, wrecked: boolean): FrameParts 
 };
 
 /**
- * 待機中に煙を出す排気口（右向き、接地点からの art px）。浮遊は噴射の光があるので、石輪はエンジンが無いので煙を出さない。
+ * 待機中に煙を出す排気口（右向き、接地点からの art px）。浮遊は噴射の光があるので、石車輪はエンジンが無いので煙を出さない。
  * キャタピラは tankMotion.ts の既定の位置と同じ
  */
 export const EXHAUST_PORTS: Readonly<Record<FrameSkin, Point | null>> = {

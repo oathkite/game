@@ -12,7 +12,7 @@ export const TURRET_LABELS: Readonly<Record<TurretSkin, string>> = {
 };
 
 export const FRAME_LABELS: Readonly<Record<FrameSkin, string>> = {
-  tracks: "キャタピラ", bigTracks: "大型キャタピラ", wheels: "車輪", walker: "多脚", hover: "浮遊", stoneWheels: "石輪",
+  tracks: "キャタピラ", bigTracks: "大型キャタピラ", wheels: "車輪", walker: "多脚", hover: "浮遊", stoneWheels: "石車輪",
 };
 
 export const DEFAULT_TURRET: TurretSkin = "dome";
