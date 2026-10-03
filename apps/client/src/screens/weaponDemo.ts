@@ -13,7 +13,7 @@ import { bulletSize, type BulletSize } from "@/game/weaponArt";
 
 /** 切れ端の幅の下限（セル）。これより狭いとレーザー弾が右端から出る */
 export const FIELD_COLS_MIN = 80;
-/** 地面の厚み（セル）。掘削弾の爆風（半径 16）とレーザー弾の 7 段が収まる */
+/** 地面の厚み（セル）。掘削弾の爆風（半径 20）とレーザー弾の 7 段が収まる */
 export const GROUND_ROWS = 36;
 /** 戦車の左端のセル */
 export const TANK_X = 4;
