@@ -17,9 +17,9 @@ import { BARREL_ART, subWeaponGrid } from "./weaponMounts";
 export type { BarrelRim } from "./tankPaint";
 
 export type TankSpriteInput = {
-  /** 主色（カラー 1）。車体を塗る */
+  /** 主色（カラー 2）。車体を塗る */
   readonly hull: Ramp;
-  /** 副色（カラー 2）。砲塔と砲身を塗る */
+  /** 副色（カラー 1）。砲塔と砲身を塗る */
   readonly turret: Ramp;
   /** 砲塔のスキン */
   readonly turretSkin: TurretSkin;

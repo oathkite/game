@@ -5,7 +5,7 @@ import { DEFAULT_FRAME, DEFAULT_LOADOUT, DEFAULT_TURRET, isFrameSkin, isTurretSk
 export type Profile = {
   readonly playerId: string;
   readonly nickname: string;
-  /** 機体の色（カラー 1、カラー 2）とスキン（砲塔、フレーム）。設計書 43 */
+  /** 機体の色（カラー 1 が砲塔と砲身、カラー 2 が車体）とスキン（砲塔、フレーム）。設計書 43 */
   readonly colors: TankColors;
   /** 装備する 2 つの武器。設計書 10 */
   readonly loadout: Loadout;

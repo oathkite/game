@@ -12,7 +12,7 @@ test("custom colors and skins persist, hints are absent, and a held key continue
   await page.getByRole("button", { name:"はじめる", exact:true }).click();
   await page.getByRole("button", { name:"機体をカスタマイズ", exact:true }).click();
   const dialog = page.getByRole("dialog", { name:"機体のカスタマイズ" });
-  await expect(dialog.getByRole("radiogroup", { name:"カラー1" }).getByRole("radio", { name:"purple", exact:true })).toHaveAttribute("aria-checked","true");
+  await expect(dialog.getByRole("radiogroup", { name:"カラー2" }).getByRole("radio", { name:"purple", exact:true })).toHaveAttribute("aria-checked","true");
   await expect(dialog.getByRole("radiogroup", { name:"足回り" }).getByRole("radio", { name:"多脚", exact:true })).toHaveAttribute("aria-checked","true");
   await page.keyboard.press("Escape");
   await expect(dialog).toBeHidden();

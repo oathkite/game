@@ -37,7 +37,7 @@ export const lobby = (page: Page, language: Language = "ja") => page.getByRole("
 
 export type TankLook = { readonly primary?: string; readonly secondary?: string; readonly turret?: string; readonly frame?: string };
 
-/** 出撃準備の「機体をカスタマイズ」を開き、色（カラー1、カラー2）と砲塔と足回りを選んで閉じる（設計書 43）。名前は画面の表記 */
+/** 出撃準備の「機体をカスタマイズ」を開き、色（カラー1 が砲塔と砲身の secondary、カラー2 が車体の primary）と砲塔と足回りを選んで閉じる（設計書 43）。スキンの名前は画面の表記 */
 export const customizeTank = async (page: Page, look: TankLook): Promise<void> => {
   await page.getByRole("button", { name: "機体をカスタマイズ", exact: true }).click();
   const dialog = page.getByRole("dialog", { name: "機体のカスタマイズ" });
@@ -47,8 +47,8 @@ export const customizeTank = async (page: Page, look: TankLook): Promise<void> =
     await radio.click();
     await expect(radio).toHaveAttribute("aria-checked", "true");
   };
-  await pick("カラー1", look.primary);
-  await pick("カラー2", look.secondary);
+  await pick("カラー1", look.secondary);
+  await pick("カラー2", look.primary);
   await pick("砲塔", look.turret);
   await pick("足回り", look.frame);
   await dialog.getByRole("button", { name: "完了", exact: true }).click();

@@ -12,7 +12,7 @@ import "./tankCustomizer.css";
 
 type Props = { readonly colors: TankColors; readonly loadout: Loadout; readonly onChange: (colors: TankColors) => void };
 
-/** 色の 1 列。カラー 1 は車体（主色）、カラー 2 は砲塔と砲身（副色） */
+/** 色の 1 列。カラー 1 は砲塔と砲身（副色）、カラー 2 は車体（主色）。機体の上の部品から順に並べる */
 const ColorChoice = ({ label, value, pick }: { readonly label: string; readonly value: PlayerColor; readonly pick: (color: PlayerColor) => void }) =>
   <fieldset className="tank-look-colors"><legend>{label}</legend><div role="radiogroup" aria-label={label}>
     {PLAYER_COLORS.map(color => <button type="button" role="radio" aria-label={color} aria-checked={value === color} key={color} onClick={() => pick(color)}><i style={{ background: COLOR_HEX[color] }} /></button>)}
@@ -41,8 +41,8 @@ export const TankCustomizer = ({ colors, loadout, onChange }: Props) => {
   return <div className="tank-look">
     <div className="tank-look-summary">
       <span className="tank-look-swatches">
-        <i role="img" aria-label={`${t("カラー1")} ${colors.primary}`} style={{ background: COLOR_HEX[colors.primary] }} />
-        <i role="img" aria-label={`${t("カラー2")} ${colors.secondary}`} style={{ background: COLOR_HEX[colors.secondary] }} />
+        <i role="img" aria-label={`${t("カラー1")} ${colors.secondary}`} style={{ background: COLOR_HEX[colors.secondary] }} />
+        <i role="img" aria-label={`${t("カラー2")} ${colors.primary}`} style={{ background: COLOR_HEX[colors.primary] }} />
       </span>
       <span>{t(TURRET_LABELS[turret])} / {t(FRAME_LABELS[frame])}</span>
     </div>
@@ -54,8 +54,8 @@ export const TankCustomizer = ({ colors, loadout, onChange }: Props) => {
       {open && <div className="tank-look-body">
         <div className="tank-look-preview"><TankPortrait colors={colors} loadout={loadout} /></div>
         <div className="tank-look-options">
-          <ColorChoice label={t("カラー1")} value={colors.primary} pick={primary => onChange({ ...colors, primary })} />
-          <ColorChoice label={t("カラー2")} value={colors.secondary} pick={secondary => onChange({ ...colors, secondary })} />
+          <ColorChoice label={t("カラー1")} value={colors.secondary} pick={secondary => onChange({ ...colors, secondary })} />
+          <ColorChoice label={t("カラー2")} value={colors.primary} pick={primary => onChange({ ...colors, primary })} />
           <SkinChoice label={t("砲塔")} options={TURRET_SKINS} labels={TURRET_LABELS} value={turret} loadout={loadout} look={option => ({ ...colors, turret: option })} pick={option => onChange({ ...colors, turret: option })} />
           <SkinChoice label={t("足回り")} options={FRAME_SKINS} labels={FRAME_LABELS} value={frame} loadout={loadout} look={option => ({ ...colors, frame: option })} pick={option => onChange({ ...colors, frame: option })} />
         </div>

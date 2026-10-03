@@ -2,7 +2,7 @@ import { PALETTE, type Ramp } from "./palette";
 import type { Edges } from "./pixelGrid";
 import { MATERIAL as M } from "./tankShape";
 
-// 機体の材質を色に塗る。設計書 40.5 と 43。主色（カラー 1）は車体、副色（カラー 2）は砲塔と砲身を塗り、
+// 機体の材質を色に塗る。設計書 40.5 と 43。主色（カラー 2）は車体、副色（カラー 1）は砲塔と砲身を塗り、
 // 金属、発光、木、石などの材質はチームの色によらない固定パレットの色にする。
 
 export type BarrelRim = "none" | "charge" | "hot";
