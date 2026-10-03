@@ -129,34 +129,39 @@ const SCENE: Readonly<Record<"debris" | "sizzle" | "impactStop" | "destroy", Rec
   ], drive: 1.4, space: 0.35, duck: 0.45, vary: 0.03 },
 };
 
-/** 移動の音。75 ms ごとに繰り返すので、どれも短く控えめにする（設計書 43） */
+/**
+ * 移動の音。75 ms ごとに繰り返すので、どれも短くする（設計書 43.7）。
+ * 2026-10-03 に、遊んで聞こえなかったという所見で、どの足回りも 39 章の出力経路で 1 回の RMS が −33〜−30 dB になるよう、長さと大きさを上げた
+ */
 const MOVES: Readonly<Record<MoveSound, Recipe>> = {
   // 履帯の短い噛み合い
-  "move-tracks": { layers: [noise("bandpass", 420, 300, 0.04, 0.13, { q: 3 }), tone("triangle", 95, 55, 0.05, 0.09)], vary: 0.12 },
+  "move-tracks": { layers: [noise("bandpass", 420, 300, 0.08, 1, { q: 3 }), noise("bandpass", 840, 600, 0.03, 0.5, { q: 3 }), tone("triangle", 95, 55, 0.08, 0.9)], vary: 0.12 },
   // 大きな履帯の重い噛み合い。低く、板の当たる金属の音を足す
   "move-bigTracks": { layers: [
-    noise("bandpass", 300, 200, 0.06, 0.15, { q: 2.5 }),
-    tone("triangle", 70, 42, 0.07, 0.11),
-    noise("highpass", 2200, 1800, 0.015, 0.05),
+    noise("bandpass", 300, 200, 0.09, 1, { q: 2.5 }),
+    tone("triangle", 70, 42, 0.08, 0.9),
+    noise("highpass", 2200, 1800, 0.02, 0.3),
   ], vary: 0.1 },
   // タイヤの転がり。噛み合いの無い、柔らかい低いうなり
-  "move-wheels": { layers: [noise("lowpass", 260, 180, 0.07, 0.14, { q: 0.7 }), tone("sine", 62, 50, 0.07, 0.07)], vary: 0.08 },
+  "move-wheels": { layers: [noise("lowpass", 260, 180, 0.1, 1, { q: 0.7 }), tone("sine", 62, 50, 0.1, 0.9)], vary: 0.08 },
   // 脚の油圧の短い駆動音と、足が着く金属の音
   "move-walker": { layers: [
-    tone("square", 180, 240, 0.05, 0.04, { lowpass: 1200 }),
-    noise("bandpass", 900, 600, 0.03, 0.1, { q: 4, delay: 0.02 }),
-    tone("sine", 110, 50, 0.06, 0.09, { delay: 0.02 }),
+    tone("square", 180, 240, 0.05, 0.25, { lowpass: 1200 }),
+    noise("bandpass", 900, 600, 0.04, 0.6, { q: 4, delay: 0.02 }),
+    tone("sine", 110, 50, 0.06, 0.5, { delay: 0.02 }),
   ], vary: 0.1 },
-  // 噴射のうなりと風。繰り返しが途切れず続いて聞こえるよう、間隔より少し長く鳴らす
+  // UFO のうねり。正弦波の音程を 0.05 秒で上げて下げ、間隔より少し長く鳴らして、繰り返しが 13 Hz ほどの揺れとして続いて聞こえるようにする
   "move-hover": { layers: [
-    tone("sawtooth", 120, 130, 0.09, 0.05, { lowpass: 600, attack: 0.02 }),
-    noise("bandpass", 1600, 1800, 0.09, 0.06, { q: 1.5, attack: 0.02 }),
-  ], vary: 0.04 },
+    tone("sine", 520, 820, 0.05, 0.27, { attack: 0.01 }),
+    tone("sine", 820, 520, 0.05, 0.27, { delay: 0.05, attack: 0.01 }),
+    tone("triangle", 1560, 1640, 0.1, 0.05, { attack: 0.02 }),
+    tone("sine", 140, 140, 0.1, 0.12, { attack: 0.02 }),
+  ], vary: 0.02 },
   // 石の車輪が地面を噛む、ざらついた低い音
   "move-stoneWheels": { layers: [
-    noise("bandpass", 220, 160, 0.08, 0.16, { q: 1.2 }),
-    noise("highpass", 1800, 1200, 0.05, 0.05),
-    tone("triangle", 55, 40, 0.08, 0.1),
+    noise("bandpass", 220, 160, 0.1, 1, { q: 1.2 }),
+    noise("highpass", 1800, 1200, 0.05, 0.3),
+    tone("triangle", 55, 40, 0.1, 0.9),
   ], vary: 0.12 },
 };
 

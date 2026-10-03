@@ -37,13 +37,19 @@ describe("移動の音（設計書 43）", () => {
     const recipes = FRAME_SKINS.map((frame) => JSON.stringify(SOUNDS[`move-${frame}`]));
     expect(new Set(recipes).size).toBe(FRAME_SKINS.length);
   });
-  it("75 ms ごとに繰り返すので、どれも 0.1 秒以内で、BGM を下げず、控えめな音量にする", () => {
+  it("75 ms ごとに繰り返すので、どれも 0.1 秒以内で、BGM を下げない。いちばん大きい層は 0.27 以上 1 以下にして聞こえるようにする", () => {
     for (const frame of FRAME_SKINS) {
       const recipe = SOUNDS[`move-${frame}`];
       expect(length(recipe), frame).toBeLessThanOrEqual(0.1);
       expect(recipe.duck ?? 0, frame).toBe(0);
-      expect(Math.max(...recipe.layers.map((l) => l.gain)), frame).toBeLessThanOrEqual(0.16);
+      const loudest = Math.max(...recipe.layers.map((l) => l.gain));
+      expect(loudest, frame).toBeGreaterThanOrEqual(0.27);
+      expect(loudest, frame).toBeLessThanOrEqual(1);
     }
+  });
+  it("浮遊は UFO のうねりで、正弦波の音程を上げてから下げる", () => {
+    const tones = SOUNDS["move-hover"].layers.filter((l): l is Extract<Layer, { kind: "tone" }> => l.kind === "tone" && l.wave === "sine" && l.from !== l.to);
+    expect(tones.map((l) => Math.sign(l.to - l.from))).toEqual([1, -1]);
   });
 });
 
