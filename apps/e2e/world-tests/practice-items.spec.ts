@@ -25,8 +25,12 @@ test("free practice players each use an item once and replays stay consistent", 
   await page.getByRole("button", { name: "はじめる", exact: true }).click();
   await startFreePractice(page);
   const first = await shoot(page, "テレポート");
+  // 同じ画面を交代で使うので、撃った機体の上に使ったアイテムのアイコンが出る（42.8）
+  await expect(page.getByTestId("camera-world")).toHaveAttribute("data-item-popup", `${first}/teleport`);
   await expect.poll(async () => (await viewOf(page)).used?.[first], { timeout: 20000 }).toEqual(["teleport"]);
   const second = await shoot(page, "ダブルシュート", first);
+  await expect(page.getByTestId("camera-world")).toHaveAttribute("data-item-popup", `${second}/double`);
+  await page.screenshot({ path: "test-results/practice-item-popup.png" });
   await expect.poll(async () => (await viewOf(page)).used?.[second], { timeout: 20000 }).toEqual(["double"]);
   // 先に撃った席の次の手番では、使ったテレポートは押せず、ダブルシュートは押せる
   await expect.poll(async () => { const v = await viewOf(page); return v.phase === "acting" && v.seat === first; }, { timeout: 30000 }).toBe(true);

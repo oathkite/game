@@ -27,3 +27,10 @@ export const itemPopupOf = (frame: ItemPopupFrame, ownId: string, serverNow: num
   const show = replay.shooter.playerId !== ownId && serverNow - replay.startsAt <= ITEM_POPUP_FRESH_MS;
   return { key: replay.startsAt, playerId: replay.shooter.playerId, item, show };
 };
+
+/**
+ * 練習（v1）の射撃で、撃った機体の上に出すアイテム。出さないなら null。
+ * 自由練習は 1 つの画面を交代で使い、相手も同じ画面を見ているので、撃った席にも出す。CPU 戦ではプレイヤー自身の射撃には出さない。
+ */
+export const practiceItemPopupOf = (input: { readonly seat: number; readonly item?: ItemId | undefined }, mySeat: number | null, hotseat: boolean): ItemId | null =>
+  input.item && (hotseat || input.seat !== mySeat) ? input.item : null;

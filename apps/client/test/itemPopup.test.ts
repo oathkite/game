@@ -1,7 +1,7 @@
 import { Container, type Ticker } from "pixi.js";
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { ITEM_POPUP_MS, itemPopupPose, spawnItemPopup } from "@/game/itemPopup";
-import { ITEM_POPUP_FRESH_MS, itemPopupOf, type ItemPopupFrame } from "@/worldUi/itemPopupRule";
+import { ITEM_POPUP_FRESH_MS, itemPopupOf, practiceItemPopupOf, type ItemPopupFrame } from "@/worldUi/itemPopupRule";
 
 // 相手がアイテムを使ったときに機体の上へ出すアイコン（設計書 42.8）
 
@@ -37,6 +37,21 @@ describe("itemPopupOf", () => {
   it("開始から 1500 ms を過ぎて初めて見た再生は、印だけ付けて出さない（途中参加と再接続）", () => {
     expect(itemPopupOf(replaying("p2", "double"), "p1", 1000 + ITEM_POPUP_FRESH_MS, null)?.show).toBe(true);
     expect(itemPopupOf(replaying("p2", "double"), "p1", 1001 + ITEM_POPUP_FRESH_MS, null)).toMatchObject({ key: 1000, show: false });
+  });
+});
+
+describe("practiceItemPopupOf", () => {
+  it("自由練習は同じ画面を交代で使うので、撃った席にも出す", () => {
+    expect(practiceItemPopupOf({ seat: 0, item: "double" }, 0, true)).toBe("double");
+    expect(practiceItemPopupOf({ seat: 1, item: "teleport" }, 1, true)).toBe("teleport");
+  });
+  it("CPU 戦では、相手の射撃には出し、プレイヤー自身の射撃には出さない", () => {
+    expect(practiceItemPopupOf({ seat: 1, item: "double" }, 0, false)).toBe("double");
+    expect(practiceItemPopupOf({ seat: 0, item: "teleport" }, 0, false)).toBeNull();
+  });
+  it("アイテムを使わない射撃には出さない", () => {
+    expect(practiceItemPopupOf({ seat: 1 }, 0, true)).toBeNull();
+    expect(practiceItemPopupOf({ seat: 1 }, 0, false)).toBeNull();
   });
 });
 
