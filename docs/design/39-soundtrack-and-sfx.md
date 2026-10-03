@@ -53,6 +53,7 @@ node tools/music/analyze.mjs ridgeline # 層ごとの音量と帯域の偏りを
 - 書き出した OGG を手で編集しない。記譜を直して書き出し直す。`provenance.json` の SHA-256 と一致しないとテストが落ちる。
 - ffmpeg や libvorbis の版が違うと、同じ記譜からでも OGG のバイト列は変わる可能性がある。書き出し直したら、OGG と `provenance.json` と `loops.json` を同じコミットに入れる。
 - 旧曲は `assets/workbench/audio/chiptune-2026-09-14` に移して保存した（36 章の「既存音源は制作記録として保存する」）。
+- 2026-10-03 に、どこからも読まれていなかった仮の録音素材（`apps/client/src/assets/audio` の 10 種、wav と mp3 と opus、約 8 MB）と、それを読む `sampleAudio.ts`、作り直すための `scripts/audio/prepare-suno.py` を消した。効果音はすべて合成で、BGM は `assets/music` の OGG で鳴らしている。録音の原本は `assets/workbench/audio/suno-2026-09-11` に制作記録として残っている。
 
 ## 39.4 ループと音量の契約
 
