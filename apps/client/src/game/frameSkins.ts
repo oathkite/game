@@ -98,25 +98,22 @@ const wheels = (phase: number, sink: number, wrecked: boolean): FrameParts => {
   return { under: [{ mask: tires, outline: true }], hull: body, over: [] };
 };
 
-// ---- 浮遊。両翼が張り出した円盤のガンシップ。底と翼端から噴射し、地面から浮いて上下に揺れる ----
-/** 浮遊の上下の揺れ。beat の 8 コマで 1 往復し、車体を 0〜1 px 持ち上げる。砲口の位置を変えないよう、砲塔と砲身は揺らさない */
-const hoverBob = (beat: number): number => (mod(beat, 8) < 4 ? 0 : 1);
-
+// ---- 浮遊。両翼が張り出した円盤のガンシップ。底と翼端から噴射し、地面から浮く ----
 /** 底と翼端の噴射。地面に届く手前で細って消え、地面には噴射の当たる光の波紋を置く */
-const hoverGlow = (beat: number, up: number): PixelGrid => {
+const hoverGlow = (beat: number): PixelGrid => {
   const glow = createGrid(-25, -8, 50, 8);
   const flicker = mod(beat, 3);
   // 底の噴射。中央が白く、外へシアン。長さが揺らぐ
   for (const [i, half] of [4, 3, 2, 1].entries()) {
-    const y = -7 + i - up;
+    const y = -7 + i;
     if (i === 3 && flicker === 0) continue;
     fillRect(glow, -half, y, half * 2, 1, i === 0 ? M.energyCore : M.energyDeep);
     if (half > 1) fillRect(glow, -half + 1, y, (half - 1) * 2, 1, M.energyHot);
   }
   for (const x of [-17, 15]) {
-    fillRect(glow, x, -8 - up, 2, 1, M.energyHot);
-    if (flicker !== 1) fillRect(glow, x, -7 - up, 2, 1, M.energyCore);
-    if (flicker === 2) setPixel(glow, x + (x < 0 ? 0 : 1), -6 - up, M.energyDeep);
+    fillRect(glow, x, -8, 2, 1, M.energyHot);
+    if (flicker !== 1) fillRect(glow, x, -7, 2, 1, M.energyCore);
+    if (flicker === 2) setPixel(glow, x + (x < 0 ? 0 : 1), -6, M.energyDeep);
   }
   // 地面の波紋。噴射の真下から左右へ、コマごとに外へ広がる
   const ripple = mod(beat, 4);
@@ -128,8 +125,8 @@ const hoverGlow = (beat: number, up: number): PixelGrid => {
 };
 
 const hover = (beat: number, sink: number, wrecked: boolean): FrameParts => {
-  const drop = wrecked ? 4 : 0, up = wrecked ? 0 : hoverBob(beat);
-  const dy = sink + drop - up;
+  const drop = wrecked ? 4 : 0;
+  const dy = sink + drop;
   const body = createGrid(-25, -16 + dy, 50, 12);
   // 翼幅はキャタピラ（±15）に近い ±19 に収める。底を薄くして、地面との間に噴射の隙間を空ける
   rows(body, [
@@ -151,7 +148,7 @@ const hover = (beat: number, sink: number, wrecked: boolean): FrameParts => {
   // 残骸は噴射が止まって地面に落ち、潰れた底が地面に着く
   if (wrecked) rows(body, [[-7, -6, 6, F], [-6, -5, 4, M.metalDeep], [-5, -3, 2, M.metalDeep]], dy);
   if (wrecked) wreckChips(body, -13, dy);
-  return { under: [], hull: body, over: wrecked ? [] : [{ mask: hoverGlow(beat, up), outline: false }] };
+  return { under: [], hull: body, over: wrecked ? [] : [{ mask: hoverGlow(beat), outline: false }] };
 };
 
 // ---- 石輪。原始時代の投擲機のような荷車。前後に大きな石の車輪を車体の手前に重ね、木の梁を縄で縛った台車。荷台の前後の壁で主色を見せる ----

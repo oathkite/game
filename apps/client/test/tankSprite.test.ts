@@ -94,15 +94,15 @@ describe("composeTank", () => {
       expect(colors.has(TEAM_RAMPS.yellow.base), `${turretSkin}`).toBe(true);
     }
   });
-  it("浮遊は地面から浮いて見えるよう、噴射の下に隙間を空け、時刻のコマで車体だけを上下に揺らす", () => {
+  it("浮遊は地面から浮いて見えるよう噴射の下に隙間を空け、待機中に車体を上下させない", () => {
     const at = (beat: number) => composeTank({ ...base, frame: "hover", beat, sub: null });
     // 噴射の真下の 2 行は空き、地面の行に波紋の光がある
     for (const beat of [0, 4]) for (const y of [-3, -2]) for (let x = -2; x < 2; x++) expect(getPixel(at(beat), x, y), `beat ${beat} (${x}, ${y})`).toBe(TRANSPARENT);
     expect(opaquePixels(at(0)).some(p => p.y === -1 && p.color === PALETTE.energy1)).toBe(true);
-    // 揺れても砲身と砲塔は動かない
-    const turretTop = (grid: PixelGrid) => Math.min(...opaquePixels(grid).filter(p => p.x === 0).map(p => p.y));
-    expect(turretTop(at(4))).toBe(turretTop(at(0)));
-    expect(Array.from(at(4).pixels).join()).not.toBe(Array.from(at(0).pixels).join());
+    // 時刻のコマで変わるのは噴射と波紋だけで、車体の輪郭の高さは変わらない
+    const hullBottom = (grid: PixelGrid) => Math.max(...opaquePixels(grid).filter(p => p.x === -12 && p.color === PALETTE.outline).map(p => p.y));
+    for (const beat of [1, 2, 3, 4, 5, 6, 7]) expect(hullBottom(at(beat)), `beat ${beat}`).toBe(hullBottom(at(0)));
+    expect(Array.from(at(1).pixels).join()).not.toBe(Array.from(at(0).pixels).join());
     // 残骸は噴射が止まり、地面に落ちる（いちばん下の輪郭が接地点の行）
     const wreck = opaquePixels(composeTank({ ...base, frame: "hover", wrecked: true }));
     expect(Math.max(...wreck.map(p => p.y))).toBe(0);
