@@ -186,3 +186,16 @@ export const exhaustAt = (clock: number, reduced: boolean, port: Dot = TRACKS_EX
   const f = t / EXHAUST_VISIBLE_MS;
   return { x: port.x - Math.floor(f * 3), y: port.y - Math.floor(f * 6), size: f < 0.4 ? 1 : 2, tone: f < 0.5 ? 0 : 1 };
 };
+
+/** 歩みを描く速さ（セル/ms）。押し続けたときの歩みの間隔（80 ms）で 1 セル進み、1 セルずつの歩みの間を滑らかにつなぐ（設計書 43） */
+export const GLIDE_CELLS_PER_MS = 1 / 80;
+/** 描く位置が実際の位置から遅れてよい上限（セル）。スワイプで一度に何歩も進んだときは、これより先へ飛ばす */
+export const GLIDE_MAX_CELLS = 2;
+
+/** 1 歩進んだ直後の遅れ（セル、進んだ向きが正）。動きを減らす設定では遅らせない */
+export const glideAfterStep = (glide: number, delta: number, reduced: boolean): number =>
+  reduced ? 0 : Math.max(-GLIDE_MAX_CELLS, Math.min(GLIDE_MAX_CELLS, glide + delta));
+
+/** 時間が経った後の遅れ。一定の速さで 0 へ縮める */
+export const glideAfterTime = (glide: number, deltaMs: number): number =>
+  Math.sign(glide) * Math.max(0, Math.abs(glide) - deltaMs * GLIDE_CELLS_PER_MS);

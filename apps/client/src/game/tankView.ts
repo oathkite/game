@@ -3,7 +3,7 @@ import { playSound } from "@/app/audio";
 import type { ShotFlash } from "./muzzlePose";
 import { COLOR_HEX, DEFAULT_FRAME, DEFAULT_TURRET, type Facing, type FrameSkin, type TankColors, type TurretSkin, type WeaponId } from "@game/protocol";
 import { Container, Graphics, Text } from "pixi.js";
-import { antennaSwayAt, chargeAt, idleRumble, landingAt, LOW_HP, wreckFrameAt, WRECK_SMOKE_FROM_MS } from "./tankMotion";
+import { antennaSwayAt, chargeAt, glideAfterStep, glideAfterTime, idleRumble, landingAt, LOW_HP, wreckFrameAt, WRECK_SMOKE_FROM_MS } from "./tankMotion";
 import { drawBursts, drawDust, drawExhaust, drawLowHpSmoke, drawWreckSmoke } from "./tankFx";
 import { TEAM_RAMPS, type Ramp } from "./palette";
 import { ART_PER_CELL } from "./pixelGrid";
@@ -196,34 +196,40 @@ export const createTankView = (selection: TankColors, nickname: string, team?: s
   const moments: Moments = { first: true, hp: 0, deathAt: null, falling: false, landAt: null, recoil: 0, flash: false, swayAt: -Infinity, swayAmp: 0 };
   let moving = false;
   let caretElapsed = 0, clock = 0, reduced = false, drawnKey = "", distance = 0, previousX: number | null = null;
+  // 描く位置の、実際の位置からの遅れ（セル）。1 セルずつの歩みを、足回りの動きと合わせて滑らかに見せる
+  let glide = 0;
   let lastPose: TankPose | null = null, rendered = false;
   const render = (): void => {
-    if (lastPose) drawnKey = renderTank(parts, { pose: lastPose, clock, reduced, moments }, look, nameColor, showHealth, distance, drawnKey);
+    if (!lastPose) return;
+    parts.world.position.set(snap(lastPose.x - glide + 0.5 + (lastPose.nudge ?? 0) / ART_PER_CELL), snap(lastPose.y));
+    drawnKey = renderTank(parts, { pose: lastPose, clock, reduced, moments }, look, nameColor, showHealth, distance - glide, drawnKey);
   };
   const setPose = (pose: TankPose, cell: number): void => {
     noteMoments(moments, pose, clock);
     parts.world.visible = pose.visible;
     parts.label.visible = pose.visible;
-    parts.world.position.set(snap(pose.x + 0.5 + (pose.nudge ?? 0) / ART_PER_CELL), snap(pose.y));
     const signedDelta = previousX === null ? 0 : pose.x - previousX;
     previousX = pose.x;
     const steps = pose.hp > 0 && pose.visible && !pose.falling && Math.abs(signedDelta) > .001 && Math.abs(signedDelta) <= 2.5;
     if (steps) { distance += signedDelta; playSound(`move-${look.frame}`); }
+    glide = steps ? glideAfterStep(glide, signedDelta, reduced) : Math.abs(signedDelta) > .001 ? 0 : glide;
     if (steps && !moving) swing(moments, clock, SWAY_MOVE);
     moving = steps;
     drawHpBar(parts.hpBar, hex(nameColor), pose);
     lastPose = pose;
     render();
     rendered = true;
-    parts.label.position.set((pose.x + 0.5) * cell, (pose.y - 12) * cell);
+    parts.label.position.set((pose.x - glide + 0.5) * cell, (pose.y - 12) * cell);
   };
   // 姿勢が毎フレーム届くあいだは setPose が描き、届かないフレームだけ tick が描く
   const tick = (deltaMs: number, reducedMotion: boolean): void => {
     clock += deltaMs;
     reduced = reducedMotion;
+    const gliding = glide !== 0;
+    glide = reducedMotion ? 0 : glideAfterTime(glide, deltaMs);
     caretElapsed = parts.caret.visible ? caretElapsed + deltaMs : 0;
     placeTurnCaret(parts.caret, caretElapsed, reducedMotion);
-    if (!rendered) render();
+    if (!rendered || gliding) render();
     rendered = false;
   };
   const destroy = (): void => {

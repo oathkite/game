@@ -27,7 +27,7 @@ const walkerLeg = (grid: PixelGrid, pose: LegPose, near: boolean): void => {
 };
 // 歩容。4 本を 1/4 周期ずつずらして順に上げ（後ろ手前 → 前手前 → 後ろ奥 → 前奥）、常に 3 本が接地する。
 // 接地中の足は地面に留まって後ろへ流れ、上げた足は弧を描いて前へ戻る。膝は腿と脛の長さから毎コマ解く（2 関節の IK）
-const GAIT_CYCLE = 8;
+const GAIT_CYCLE = 12;
 const STANCE = 0.75;
 const STRIDE = GAIT_CYCLE * STANCE;
 const LIFT = 3;
