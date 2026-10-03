@@ -1,7 +1,7 @@
 import { createTurnCaret, placeTurnCaret } from "./turnCaret";
 import { playSound } from "@/app/audio";
 import type { ShotFlash } from "./muzzlePose";
-import { COLOR_HEX, DEFAULT_FRAME, DEFAULT_TURRET, type Facing, type FrameSkin, type TankColors, type TurretSkin, type WeaponId } from "@game/protocol";
+import { COLOR_HEX, frameSkinOf, turretSkinOf, type Facing, type FrameSkin, type TankColors, type TurretSkin, type WeaponId } from "@game/protocol";
 import { Container, Graphics, Text } from "pixi.js";
 import { antennaSwayAt, chargeAt, glideAfterStep, glideAfterTime, idleRumble, landingAt, LOW_HP, wreckFrameAt, WRECK_SMOKE_FROM_MS } from "./tankMotion";
 import { drawBursts, drawDust, drawExhaust, drawLowHpSmoke, drawWreckSmoke } from "./tankFx";
@@ -188,8 +188,8 @@ const snap = (cells: number): number => Math.round(cells * ART_PER_CELL) / ART_P
 export const createTankView = (selection: TankColors, nickname: string, team?: string, showHealth = true): TankView => {
   const look: Look = {
     hull: TEAM_RAMPS[selection.primary], turret: TEAM_RAMPS[selection.secondary],
-    // スキンを足す前の保存状態と古いクライアントには無いので、既定のスキンで受ける
-    turretSkin: selection.turret ?? DEFAULT_TURRET, frame: selection.frame ?? DEFAULT_FRAME,
+    // スキンを足す前の保存状態と古いクライアントには無く、後から足したスキンはこのクライアントが知らないので、既定のスキンで受ける
+    turretSkin: turretSkinOf(selection.turret), frame: frameSkinOf(selection.frame),
   };
   const nameColor = team ?? COLOR_HEX[selection.primary];
   const parts = buildParts(nickname, nameColor);

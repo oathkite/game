@@ -1,6 +1,6 @@
 import { useMemo } from "react";
 import { useLanguage } from "@/i18n/locale";
-import { DEFAULT_FRAME, DEFAULT_LOADOUT, DEFAULT_TURRET, type Loadout, type TankColors } from "@game/protocol";
+import { DEFAULT_LOADOUT, frameSkinOf, turretSkinOf, type Loadout, type TankColors } from "@game/protocol";
 import { cssHex, TEAM_RAMPS } from "@/game/palette";
 import { colorRuns } from "@/game/pixelGrid";
 import { composeTank } from "@/game/tankSprite";
@@ -15,7 +15,8 @@ type Props = { readonly colors?: TankColors | undefined; readonly loadout?: Load
 export const TankPortrait = ({ colors, loadout = DEFAULT_LOADOUT, label }: Props) => {
   const { t } = useLanguage();
   const primary = colors?.primary ?? "green", secondary = colors?.secondary ?? "green";
-  const turretSkin = colors?.turret ?? DEFAULT_TURRET, frame = colors?.frame ?? DEFAULT_FRAME;
+  // 部屋とリザルトでは相手の色を描く。後から足されて知らないスキンは既定のスキンで描く
+  const turretSkin = turretSkinOf(colors?.turret), frame = frameSkinOf(colors?.frame);
   const [weapon, sub] = loadout;
   const runs = useMemo(() => colorRuns(composeTank({
     hull: TEAM_RAMPS[primary], turret: TEAM_RAMPS[secondary], turretSkin, frame, weapon, sub,
