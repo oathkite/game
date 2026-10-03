@@ -1,0 +1,46 @@
+/* 出撃準備の機体のカスタマイズ（設計書 43）。要約の行と、色とスキンを選ぶモーダル */
+.tank-look { display:flex; align-items:center; justify-content:space-between; gap:12px; margin:20px 0; }
+.tank-look-summary { display:flex; align-items:center; gap:10px; min-width:0; font-size:14px; }
+.tank-look-swatches { display:flex; gap:4px; flex:none; }
+.tank-look-swatches i { display:block; width:20px; height:20px; }
+.world-ui.world-ui .tank-look-open { flex:none; }
+
+.world-ui.world-ui .tank-look-dialog { width:min(900px,calc(100vw - 32px)); max-height:calc(100dvh - 32px); padding:24px; background:#000; color:#33ff66; font:inherit; overflow:hidden; }
+.tank-look-dialog[open] { display:flex; flex-direction:column; }
+/* 完了ボタンはスクロールの外に残し、選択肢だけをスクロールする */
+.tank-look-body { min-height:0; overflow:auto; display:grid; grid-template-columns:minmax(0,280px) minmax(0,1fr); gap:24px; }
+.tank-look-preview { position:sticky; top:0; align-self:start; }
+.tank-look-preview .tank-portrait { width:100%; }
+.tank-look-options { display:grid; gap:16px; }
+.tank-look-options fieldset { margin:0; padding:0; border:0; min-width:0; }
+.tank-look-options legend { margin-bottom:8px; font-size:14px; }
+.world-ui.world-ui .tank-look-done { flex:none; margin-top:16px; }
+
+/* 色の見本は常に 2px の枠の場所を取り、選択中だけ緑にする（ui-border-rule） */
+.tank-look-colors [role=radiogroup] { display:grid; grid-template-columns:repeat(10,28px); gap:6px; }
+.world-ui.world-ui .tank-look-colors button { width:28px; height:28px; min-width:28px; min-height:28px; padding:3px; border:2px solid transparent; }
+.world-ui.world-ui .tank-look-colors button[aria-checked=true] { border-color:#33ff66; }
+.tank-look-colors i { display:block; width:100%; height:100%; }
+
+.tank-look-skins [role=radiogroup] { display:grid; grid-template-columns:repeat(auto-fill,minmax(104px,1fr)); gap:8px; }
+.world-ui.world-ui .tank-look-skins button { display:flex; flex-direction:column; align-items:center; gap:4px; min-width:0; padding:6px 4px; font-size:13px; border:2px solid #0f4d24; }
+.world-ui.world-ui .tank-look-skins button[aria-checked=true] { border-color:#33ff66; background:#0f4d24; }
+.tank-look-skins button > span { display:block; width:100%; pointer-events:none; }
+.tank-look-skins .tank-portrait { width:100%; }
+
+@media (max-width:699px) {
+  .world-ui.world-ui .tank-look-dialog { padding:16px; }
+  .tank-look-body { grid-template-columns:minmax(0,1fr); gap:12px; }
+  .tank-look-preview { position:static; }
+  .tank-look-preview .tank-portrait { width:min(100%,220px); }
+  .tank-look-colors [role=radiogroup] { grid-template-columns:repeat(5,28px); }
+  .tank-look-skins [role=radiogroup] { grid-template-columns:repeat(auto-fill,minmax(88px,1fr)); }
+}
+@media (max-height:550px) and (orientation:landscape) {
+  .tank-look { margin:10px 0; }
+  .world-ui.world-ui .tank-look-dialog { padding:12px 16px; }
+  .tank-look-body { grid-template-columns:minmax(0,180px) minmax(0,1fr); gap:16px; }
+  .tank-look-colors [role=radiogroup] { grid-template-columns:repeat(10,24px); gap:4px; }
+  .world-ui.world-ui .tank-look-colors button { width:24px; height:24px; min-width:24px; min-height:24px; }
+  .world-ui.world-ui .tank-look-done { margin-top:8px; min-height:40px; }
+}

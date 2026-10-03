@@ -25,31 +25,13 @@
 .world-ui.world-ui::before,.world-ui.world-ui .kp-world::before,.world-ui.world-ui .network-field::before { display:none; }
 .world-ui.world-ui :is(.world-lobby h1,.world-settings h1,.world-result-screen h1,.world-machine .tank-portrait,.world-result-screen .tank-portrait) { background:#000; border-color:#0f4d24; box-shadow:none; }
 
-.tank-colors { display:flex; gap:8px; margin-top:10px; }
-.tank-colors fieldset { padding:4px; margin:0; min-width:0; border:2px solid #0f4d24; }
-.tank-colors legend { font-size:11px; }
-.tank-colors [role=radiogroup] { display:flex; gap:2px; flex-wrap:wrap; }
-.world-ui.world-ui .tank-colors button { padding:3px; min-width:24px; min-height:28px; border:2px solid transparent; }
-.tank-colors i { display:block; width:14px; height:16px; }
-.world-ui.world-ui .tank-colors button[aria-checked=true] { border-color:#33ff66; }
-@media (max-height:550px) { .tank-colors { margin-top:4px; gap:4px; } }
-
 /* Lobby: preview and identity lead directly to online play. */
-.world-ui.world-ui .world-lobby :is(h1,.world-machine .tank-portrait,.world-loadout,.tank-colors fieldset) { border:0; box-shadow:none; }
+.world-ui.world-ui .world-lobby :is(h1,.world-machine .tank-portrait,.world-loadout) { border:0; box-shadow:none; }
 .world-ui.world-ui .world-lobby h1 { padding:0; }
 .world-ui.world-ui .world-loadout { padding:0!important; }
-.world-lobby .tank-colors { gap:20px; margin:20px 0; }
-.world-lobby .tank-colors fieldset { flex:1; padding:0; }
-.world-lobby .tank-colors legend { margin-bottom:8px; font-size:14px; }
-.world-lobby .tank-colors [role=radiogroup] { display:grid; grid-template-columns:repeat(5,28px); gap:6px; }
-.world-ui.world-ui .tank-colors button { width:28px; height:28px; min-width:28px; min-height:28px; padding:3px; }
-.world-lobby .tank-colors i { width:100%; height:100%; }
 .world-ui.world-ui .world-lobby .lobby-deploy { width:100%; min-height:52px; background:#33ff66; color:#000; font-size:22px; }
 .world-ui.world-ui .world-lobby footer .pixel-button { min-width:0; }
 @media (max-height:550px) and (orientation:landscape) {
-  .world-lobby .tank-colors { margin:10px 0; gap:12px; }
-  .world-lobby .tank-colors [role=radiogroup] { grid-template-columns:repeat(5,24px); gap:4px; }
-  .world-ui.world-ui .world-lobby .tank-colors button { width:24px; height:24px; min-width:24px; min-height:24px; }
   .world-ui.world-ui .world-lobby .lobby-deploy { min-height:44px; }
 }
 
@@ -97,8 +79,6 @@
   .world-ui,.world-ui * { scrollbar-width:auto; scrollbar-color:auto; }
 }
 /* Visible UI borders use 2px; decorative wrappers remain borderless. */
-.world-ui.world-ui .world-lobby .tank-colors button { border:2px solid transparent; }
-.world-ui.world-ui .world-lobby .tank-colors button[aria-checked=true] { border-color:#33ff66; }
 .world-ui .dot-icon { display:inline-block; width:24px; height:24px; margin:0; vertical-align:middle; image-rendering:pixelated; }
 .world-ui .battle-dpad .dot-icon { width:16px; height:16px; }
 

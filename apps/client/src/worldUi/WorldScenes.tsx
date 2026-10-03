@@ -14,12 +14,13 @@ import { StartScreen } from "./StartScreen";
 import { inviteRoom } from "./roomInvite";
 import { loadDisplayScale, saveDisplayScale } from "./displayScale";
 import { lazy, Suspense, useCallback, useEffect, useRef, useState } from "react";
-import { type MapName, PLAYER_COLORS, COLOR_HEX } from "@game/protocol";
+import type { MapName } from "@game/protocol";
 import { loadProfile, saveProfile } from "@/app/profile";
 import { setAudioActive, setAudioSettings, setMusic, playSound, unlockAudio } from "@/app/audio";
 import { CameraSettingsPanel } from "@/prototype/CameraSettingsPanel";
 import { createCameraRig } from "@/prototype/cameraRig";
 import { PixelButton, PixelPanel } from "./PixelUi";
+import { TankCustomizer } from "./TankCustomizer";
 import { TankPortrait } from "./TankPortrait";
 import { SceneLoading } from "./SceneLoading";
 import { SHUTTER_OPEN_MS, shutterDirection, type ShutterDirection } from "./sceneShutter";
@@ -109,9 +110,7 @@ const Lobby = ({ go, onPractice }: { readonly go: (scene: Scene) => void; readon
     <div className="world-loadout">
       <label>{t("名前")}<input aria-label={t("名前")} maxLength={12} value={profile.nickname} placeholder={t("プレイヤー")} onChange={e => update({ nickname: e.target.value })} /></label>
 
-      <div className="tank-colors">{(["primary", "secondary"] as const).map(part => <fieldset key={part}><legend>{t(part === "primary" ? "車体色" : "砲塔色")}</legend><div role="radiogroup" aria-label={t(part === "primary" ? "車体色" : "砲塔色")}>
-        {PLAYER_COLORS.map(color => <button type="button" role="radio" aria-label={color} aria-checked={profile.colors[part] === color} key={color} onClick={() => update({ colors: { ...profile.colors, [part]: color } })}><i style={{ background: COLOR_HEX[color] }} /></button>)}
-      </div></fieldset>)}</div>
+      <TankCustomizer colors={profile.colors} loadout={profile.loadout} onChange={colors => update({ colors })} />
       <PixelButton className="lobby-deploy" onClick={() => go("rooms")}>{t("出撃")}</PixelButton>
       <PixelButton className="lobby-practice" onClick={onPractice}>{t("プラクティス")}</PixelButton>
     </div>
