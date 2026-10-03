@@ -172,6 +172,20 @@ const MOVES: Readonly<Record<MoveSound, Recipe>> = {
     noise("bandpass", 700, 500, 0.09, 0.6, { q: 6 }),
     tone("square", 48, 44, 0.1, 0.5, { lowpass: 260, attack: 0.01 }),
   ], vary: 0.1 },
+  // 逆関節の一歩。油圧の駆動が上がり、空気が抜け、爪が地面に当たって柔らかく着く
+  "move-reverseJoint": { layers: [
+    tone("sawtooth", 520, 780, 0.06, 0.7, { lowpass: 1800, attack: 0.008 }),
+    noise("bandpass", 4200, 3200, 0.04, 0.45, { q: 1.5, delay: 0.015 }),
+    noise("bandpass", 2400, 2000, 0.02, 0.9, { q: 4, delay: 0.035 }),
+    tone("sine", 180, 100, 0.05, 0.3, { sweep: 0.03, delay: 0.035 }),
+  ], vary: 0.1 },
+  // 大きな球の転がり。中が空の球の共鳴に、面の継ぎ目が地面を叩く小さな音を足す
+  "move-ball": { layers: [
+    noise("bandpass", 230, 200, 0.1, 1, { q: 3 }),
+    tone("triangle", 110, 104, 0.09, 0.45, { attack: 0.01 }),
+    tone("sine", 340, 240, 0.035, 0.4, { delay: 0.04 }),
+    noise("bandpass", 1300, 1100, 0.02, 0.35, { q: 3, delay: 0.04 }),
+  ], vary: 0.06 },
 };
 
 export const isMoveSound = (name: SoundName): name is MoveSound => name.startsWith("move-");

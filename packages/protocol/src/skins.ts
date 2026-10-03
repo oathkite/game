@@ -4,7 +4,7 @@
 export const TURRET_SKINS = ["dome", "wide", "box", "wedge", "fin", "pot", "onion", "flat"] as const;
 export type TurretSkin = (typeof TURRET_SKINS)[number];
 
-export const FRAME_SKINS = ["tracks", "bigTracks", "wheels", "walker", "hover", "stoneWheels"] as const;
+export const FRAME_SKINS = ["tracks", "bigTracks", "wheels", "walker", "hover", "stoneWheels", "reverseJoint", "ball"] as const;
 export type FrameSkin = (typeof FRAME_SKINS)[number];
 
 export const TURRET_LABELS: Readonly<Record<TurretSkin, string>> = {
@@ -12,7 +12,7 @@ export const TURRET_LABELS: Readonly<Record<TurretSkin, string>> = {
 };
 
 export const FRAME_LABELS: Readonly<Record<FrameSkin, string>> = {
-  tracks: "キャタピラ", bigTracks: "大型キャタピラ", wheels: "車輪", walker: "多脚", hover: "浮遊", stoneWheels: "石車輪",
+  tracks: "キャタピラ", bigTracks: "大型キャタピラ", wheels: "車輪", walker: "多脚", hover: "浮遊", stoneWheels: "石車輪", reverseJoint: "逆関節", ball: "大玉",
 };
 
 export const DEFAULT_TURRET: TurretSkin = "dome";

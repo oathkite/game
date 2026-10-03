@@ -2,6 +2,8 @@ import type { FrameSkin } from "@game/protocol";
 import { createGrid, fillRect, getPixel, setPixel, type PixelGrid } from "./pixelGrid";
 import { A, bigWheel, C, dots, E, F, inPolygon, mod, rows, stoneWheel, stroke, wreckChips, type FrameParts, type Point } from "./frameDraw";
 import { hullMask, MATERIAL as M, treadMask } from "./tankShape";
+import { ballFrame } from "./ballFrame";
+import { reverseJointFrame } from "./reverseJointFrame";
 import { walkerFrame } from "./walkerFrame";
 
 // フレームのスキン。設計書 43。車体と足回りを一体にした形で、主色の車体ごと変わる。
@@ -195,6 +197,7 @@ const stoneWheels = (phase: number, sink: number, wrecked: boolean): FrameParts 
  */
 export const EXHAUST_PORTS: Readonly<Record<FrameSkin, Point | null>> = {
   tracks: { x: -15, y: -7 }, bigTracks: { x: -16, y: -17 }, wheels: { x: -20, y: -12 }, walker: { x: -14, y: -11 }, hover: null, stoneWheels: null,
+  reverseJoint: { x: -17, y: -13 }, ball: { x: -16, y: -9 },
 };
 
 /** フレームの部品。phase は進んだ距離（art px）、beat は時刻のコマ */
@@ -206,6 +209,8 @@ export const frameParts = (id: FrameSkin, phase: number, beat: number, sink: num
     case "walker": return walkerFrame(phase, sink, wrecked);
     case "hover": return hover(beat, sink, wrecked);
     case "stoneWheels": return stoneWheels(phase, sink, wrecked);
+    case "reverseJoint": return reverseJointFrame(phase, sink, wrecked);
+    case "ball": return ballFrame(phase, sink, wrecked);
   }
 };
 
