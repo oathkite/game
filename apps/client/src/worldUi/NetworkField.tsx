@@ -28,6 +28,7 @@ import { guideDots } from "@/game/trail";
 import { revealRowsAt } from "./openingTour";
 import { CARVE_AT_MS, IMPACT_TOTAL_MS } from "@/game/hitFeedback";
 import { SceneLoading } from "./SceneLoading";
+import { itemPopupOf } from "./itemPopupRule";
 import { replayTailMs } from "@game/engine/replay-timing";
 import { TOTAL_AFTER_CARVE_MS } from "@/game/replay";
 
@@ -67,6 +68,7 @@ export const NetworkField = (props: Props) => {
       const r = renderer; let bullet = r.projectile("yellow", "cannon");
       let previousMoveX: number | undefined;
       const damageEvents = new Set<string>(), impactFx = createLabImpactFx();
+      let itemPopupKey: number | null = null;
       // e2e が読む表示位置と向き。変わったときだけ書く
       let shownPositions = "", shownFacings = "";
       const writePositions = (players: LabFrame["players"]): void => { const next = JSON.stringify(players); if (next !== shownPositions) { shownPositions = next; element.dataset.positions = next; } };
@@ -113,6 +115,13 @@ export const NetworkField = (props: Props) => {
           // 自分の射撃の軌跡を次の自分の手番まで残す（設計書 38 の E7）。相手には見せない
           if (frame.replay.shooter.playerId === ownId) guide = guideDots(frame.replay.paths.map(path => path.points));
           const p = presentation.bullets[0]; if (p) rig.focus(p, "shot");
+        }
+        // 相手がアイテムを使った射撃は、撃った機体の上にアイコンを出す（設計書 42.8）。e2e は data-item-popup で読む
+        const popup = itemPopupOf(frame, ownId, serverNow, itemPopupKey);
+        if (popup) {
+          itemPopupKey = popup.key;
+          const seat = players.findIndex(p => p.playerId === popup.playerId);
+          if (popup.show && seat >= 0) { r.showItem(seat, popup.item); element.dataset.itemPopup = `${popup.playerId}/${popup.item}`; }
         }
         const showGuide = Boolean(guide) && frame.phase === "acting" && frame.actorId === ownId && !openingActive();
         if (showGuide !== guideShown) { guideShown = showGuide; r.setGuide(showGuide ? guide : null); }

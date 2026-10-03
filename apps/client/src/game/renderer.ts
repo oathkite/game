@@ -10,6 +10,7 @@ import type { TerrainMask } from "@game/sim";
 import { Application, Container, Graphics, type Texture } from "pixi.js";
 import { type EdgeSide, edgeMarker } from "./edgeMarker";
 import { spawnDamageLabel } from "./damageLabel";
+import { spawnItemPopup } from "./itemPopup";
 import { DAMAGE_LABEL_GAP_PX, type Offset } from "./hitFeedback";
 import { createProjectileView, type ProjectileView } from "./projectileView";
 import { projectileArtOf } from "./projectileSprite";
@@ -45,6 +46,8 @@ export type Renderer = {
   readonly setShake: (offset: Offset) => void;
   /** 機体の上にダメージ数字を出す。数字は自分で浮いて消える */
   readonly showDamage: (seat: number, text: string, color: TankColors["primary"], big: boolean, summary?: boolean) => void;
+  /** 機体の上に使ったアイテムのアイコンを出す。ダメージ数字と同じく積み、自分で浮いて消える（設計書 42.8） */
+  readonly showItem: (seat: number, item: ItemId) => void;
   /** 前の射撃の軌跡（セル）。設計書 38 の E7。null なら消す */
   readonly setGuide: (dots: readonly { readonly x: number; readonly y: number }[] | null) => void;
   /** 画面の外で被弾した機体の印。位置はセル。設計書 38 の E6。on が偽なら消す */
@@ -62,6 +65,9 @@ export type { RendererEffects };
 const DAMAGE_STACK_PX = 18;
 const DAMAGE_STACK_BIG_PX = 25;
 const DAMAGE_STACK_LIMIT = 4;
+/** アイテムのアイコンの 1 行の高さ（px）。枠の 8 × 3 + 隙間 2 × 2 + 枠 2 × 2 に 2 px の隙間 */
+const ITEM_STACK_PX = 34;
+type StackedLabel = { readonly push: (px: number) => void; readonly stop: () => void };
 
 /** 粒を描く範囲の余白（art px）。画面揺れでずれた分も描く */
 const FX_MARGIN = 8;
@@ -194,7 +200,24 @@ export const createRenderer = async (init: RendererInit): Promise<Renderer> => {
   const travel: number[] = tanks.map(() => 0);
   const labelStops = new Set<() => void>();
   // 機体ごとの出ている数字。新しい数字が出たら古い数字を 1 行上へ押し上げ、縦に積む（設計書 41 の段階 4）
-  const stacks = tanks.map(() => new Set<{ readonly push: (px: number) => void; readonly stop: () => void }>());
+  const stacks = tanks.map(() => new Set<StackedLabel>());
+  /** 機体の上に数字やアイコンを出し、出ているものを height px だけ押し上げて積む */
+  const stackLabel = (seat: number, height: number, spawn: (x: number, y: number, onEnd: () => void) => StackedLabel): void => {
+    const pose = poses[seat];
+    if (!pose) return;
+    // 名前の文字の上端から隙間を空けて出す。名前は px で描かれるので px で積む
+    const y = tanks[seat]!.label.getBounds().minY - labels.getGlobalPosition().y - DAMAGE_LABEL_GAP_PX;
+    const stack = stacks[seat]!;
+    // 積むのは新しい 4 つまで。古い数字から消す（設計書 41.13）
+    while (stack.size >= DAMAGE_STACK_LIMIT) {
+      const oldest = stack.values().next().value!;
+      oldest.stop(); stack.delete(oldest); labelStops.delete(oldest.stop);
+    }
+    for (const shown of stack) shown.push(height);
+    const label = spawn((pose.x + 0.5) * cell, y, () => { labelStops.delete(label.stop); stack.delete(label); });
+    labelStops.add(label.stop);
+    stack.add(label);
+  };
   const labelOrigins = tanks.map(() => ({ x: 0, y: 0 }));
   const placeLabel = (seat: number): void => {
     const pose = poses[seat];
@@ -263,20 +286,10 @@ export const createRenderer = async (init: RendererInit): Promise<Renderer> => {
       for (const still of [backdrop.container, wind.container, flash]) still.position.set(-offset.dx * cell, -offset.dy * cell);
     },
     showDamage: (seat, text, color, big, summary = false) => {
-      const pose = poses[seat];
-      if (!pose) return;
-      // 名前の文字の上端から隙間を空けて出す。名前は px で描かれるので px で積む
-      const y = tanks[seat]!.label.getBounds().minY - labels.getGlobalPosition().y - DAMAGE_LABEL_GAP_PX;
-      const stack = stacks[seat]!;
-      // 積むのは新しい 4 つまで。古い数字から消す（設計書 41.13）
-      while (stack.size >= DAMAGE_STACK_LIMIT) {
-        const oldest = stack.values().next().value!;
-        oldest.stop(); stack.delete(oldest); labelStops.delete(oldest.stop);
-      }
-      for (const shown of stack) shown.push(big || summary ? DAMAGE_STACK_BIG_PX : DAMAGE_STACK_PX);
-      const label = spawnDamageLabel({ parent: labels, ticker: app.ticker, text, color, big, summary, x: (pose.x + 0.5) * cell, y, onEnd: () => { labelStops.delete(label.stop); stack.delete(label); } });
-      labelStops.add(label.stop);
-      stack.add(label);
+      stackLabel(seat, big || summary ? DAMAGE_STACK_BIG_PX : DAMAGE_STACK_PX, (x, y, onEnd) => spawnDamageLabel({ parent: labels, ticker: app.ticker, text, color, big, summary, x, y, onEnd }));
+    },
+    showItem: (seat, item) => {
+      stackLabel(seat, ITEM_STACK_PX, (x, y, onEnd) => spawnItemPopup({ parent: labels, ticker: app.ticker, item, x, y, onEnd }));
     },
     setGuide: (dots) => {
       guide.clear();

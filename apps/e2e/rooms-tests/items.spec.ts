@@ -80,6 +80,10 @@ test("online battle uses each item once and teleports the shooter", async ({ bro
     const before = await positionOf(observer, actorId);
     await actor.keyboard.down("Space"); await actor.waitForTimeout(400); await actor.keyboard.up("Space");
     await expect(observer.getByTestId("phase")).toHaveText("射撃を再生中");
+    // 相手の画面では、撃った機体の上に使ったアイテムのアイコンが出る。撃った本人には出さない（42.8）
+    await expect(observer.getByTestId("network-world")).toHaveAttribute("data-item-popup", `${actorId}/teleport`);
+    await observer.screenshot({ path: "test-results/items-popup.png" });
+    await expect(actor.getByTestId("network-world")).not.toHaveAttribute("data-item-popup");
     await expect(observer.getByTestId("phase")).toHaveText("操作中", { timeout: 15000 });
     const after = await positionOf(observer, actorId);
     expect(after.x !== before.x || after.y !== before.y).toBe(true);
