@@ -80,10 +80,10 @@ pnpm --filter @game/e2e exec playwright test --config world.config.ts  # タイ�
 
 ## デプロイ
 
-本番は Cloudflare にある。配置の手順と URL は `.github/workflows/deploy.yml` にあり、CPU の Worker の設定は `docs/jev-cpu-setup.md` にある。
+本番は Cloudflare にある。配置の手順と URL は `.github/workflows/deploy.yml` にある。
 
 - `main` へのマージで GitHub Actions が本番へ配置する。PR をマージすることが配置の操作なので、マージはユーザーが明示的に指示したときだけ行い、その前に e2e まで通しておく。
-- 配置の順序は Workers（旧 server の `wrangler.jsonc`、v2 Room API の `wrangler.v2.jsonc`、CPU の `wrangler.cpu.jsonc`）、次に client（3 つの Worker の URL を `VITE_SERVER_URL`、`VITE_ROOM_SERVER_URL`、`VITE_CPU_SERVER_URL` に入れてビルドし、`wrangler pages deploy`）。手で配置するときも workflow と同じ順序にする。
+- 配置の順序は Workers（旧 server の `wrangler.jsonc`、v2 Room API の `wrangler.v2.jsonc`）、次に client（2 つの Worker の URL を `VITE_SERVER_URL`、`VITE_ROOM_SERVER_URL` に入れてビルドし、`wrangler pages deploy`）。手で配置するときも workflow と同じ順序にする。
 - 配置後は 2 つのブラウザで部屋の作成、入室、開始、射撃、ターン進行を確かめる。
 - 費用の見張り: alarm の下限（1 秒）と「部屋も接続も無ければ storage を空にする」を外さない。Durable Object の要求数と storage 書き込みが増える変更（命令ごとの保存回数、alarm の頻度）は PR に見積もりを書く。
 - 認証は `wrangler login` で行い、トークンや `.env` をコミットしない。

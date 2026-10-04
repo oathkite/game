@@ -1,5 +1,3 @@
-import type { CpuDecision } from "@game/protocol/cpu";
-import type { EngineState } from "@game/engine";
 import type { CpuLevel } from "@/practice/cpuLevel";
 import { planCpuTurn, playCpuTurn, type CpuPose } from "@/practice/cpuTurn";
 import { createEngine, createMatchHost, DEFAULT_ENGINE_TIMING, realClock, setupMessage, type MatchHost } from "@game/engine";
@@ -14,7 +12,6 @@ export type LocalMatchOptions = {
   readonly deferReady?: boolean;
   readonly cpu?: boolean;
   readonly cpuLevel?: CpuLevel;
-  readonly decideCpu?: (state: EngineState, level: CpuLevel, signal: AbortSignal) => Promise<CpuDecision | null>;
   /** ランダムなら対戦を作るたび（再戦を含む）に抽選する */
   readonly mapName: MapChoice;
   readonly nickname: string;
@@ -47,10 +44,9 @@ export const createLocalConnection = (options: LocalMatchOptions): Connection & 
   let status: ConnectionStatus = "open";
   const cpuPoses = createListeners<CpuPose | null>();
   let cpuElevation = 45;
-  let pendingCpu: AbortController | null = null;
   let stopCpu = () => {};
   let cpuTimer: ReturnType<typeof setTimeout> | null = null;
-  const cancelCpu = () => { pendingCpu?.abort(); pendingCpu = null; if (cpuTimer !== null) clearTimeout(cpuTimer); cpuTimer = null; stopCpu(); cpuPoses.emit(null); };
+  const cancelCpu = () => { if (cpuTimer !== null) clearTimeout(cpuTimer); cpuTimer = null; stopCpu(); cpuPoses.emit(null); };
   let host: MatchHost | null = null;
   let released = !options.deferReady, requested = false;
   const releaseReady = (): void => {
@@ -67,16 +63,11 @@ export const createLocalConnection = (options: LocalMatchOptions): Connection & 
     if (options.cpu && message.type === "turn.start") {
       cancelCpu();
       if (message.seat !== 1) return;
-      cpuTimer = setTimeout(async () => {
+      cpuTimer = setTimeout(() => {
         cpuTimer = null;
         if (!host || host.state().match.phase !== "acting" || host.state().match.currentSeat !== 1) return;
         const activeHost = host;
-        const controller = new AbortController();
-        pendingCpu = controller;
-        let decision: CpuDecision | null = null;
-        try { decision = await options.decideCpu?.(activeHost.state(), options.cpuLevel ?? "normal", controller.signal) ?? null; } catch { /* 通信障害時はローカルCPUで続行する。 */ }
-        if (controller.signal.aborted || activeHost !== host || activeHost.state().match.currentSeat !== 1 || activeHost.state().match.phase !== "acting") return;
-        const plan = planCpuTurn(activeHost.state(), options.cpuLevel ?? "normal", cpuElevation, Math.random, decision ?? undefined);
+        const plan = planCpuTurn(activeHost.state(), options.cpuLevel ?? "normal", cpuElevation, Math.random);
         stopCpu = playCpuTurn(plan, realClock, pose => { cpuElevation = pose.elevation; cpuPoses.emit(pose); }, () => {
           activeHost.dispatch({ type: "practiceMoveCost", steps: Math.abs(plan.fire.x - activeHost.state().match.players[1].x) });
           activeHost.dispatch({ type: "fire", seat: 1, fire: plan.fire });
