@@ -58,7 +58,7 @@ const apply = (state: EngineState, input: TrajectoryInput, turnNumber: number, w
     match: { ...state.match, players, wind: { ...state.match.wind, value: wind } } };
 };
 
-type Decision = { readonly stayCanHit: boolean; readonly stayExposed: boolean; readonly moved: boolean; readonly destCanHit: boolean; readonly destExposed: boolean };
+type Decision = { readonly stayCanHit: boolean; readonly stayExposed: boolean; readonly moved: boolean; readonly destCanHit: boolean; readonly destExposed: boolean; readonly selfDamage: number };
 
 const playOut = (mapName: typeof MAPS[number], seed: number): Decision[] => {
   const rng = seeded(seed * 97 + mapName.length);
@@ -75,7 +75,8 @@ const playOut = (mapName: typeof MAPS[number], seed: number): Decision[] => {
     const plan = planCpuTurn(state, "normal", 45, rng);
     const y = plan.frames.at(-1)!.pose.y;
     decisions.push({ stayCanHit: canHitAt(state, actor.x, actor.y), stayExposed: exposedAt(state, actor.x, actor.y),
-      moved: plan.fire.x !== actor.x, destCanHit: canHitAt(state, plan.fire.x, y), destExposed: exposedAt(state, plan.fire.x, y) });
+      moved: plan.fire.x !== actor.x, destCanHit: canHitAt(state, plan.fire.x, y), destExposed: exposedAt(state, plan.fire.x, y),
+      selfDamage: damageTo(withCpuAt(state, plan.fire.x, y), 1, cpuInput(withCpuAt(state, plan.fire.x, y), plan.fire)) });
     state = apply(withCpuAt(state, plan.fire.x, y), cpuInput(withCpuAt(state, plan.fire.x, y), plan.fire), turn * 2 + 1, wind());
     if (state.lastResult?.shot.finished) break;
   }
@@ -100,10 +101,45 @@ describe("CPU戦の位置取りの手触り", () => {
     expect(rate(exposed, d => d.moved && !d.destExposed)).toBeGreaterThanOrEqual(0.8);
   });
 
+  it("照準の誤差を含めても、自分を巻き込む射撃は 2% 以下", () => {
+    expect(rate(decisions, d => d.selfDamage > 0)).toBeLessThanOrEqual(0.02);
+  });
+
   it("理由のない場面では、常に停止にも常に移動にもならない", () => {
     const neutral = decisions.filter(d => d.stayCanHit && !d.stayExposed);
     const moved = rate(neutral, d => d.moved);
     expect(moved).toBeGreaterThanOrEqual(0.15);
     expect(moved).toBeLessThanOrEqual(0.55);
+  });
+});
+
+describe("CPU戦の難易度ごとの命中率", () => {
+  // 開始配置で風を変え、1 手目の命中率を測る。位置取りを変えても難易度の差を保つ（設計書 37.6）
+  const hitRate = (level: "easy" | "normal" | "hard") => {
+    let hits = 0, shots = 0;
+    for (const mapName of MAPS) for (let seed = 1; seed <= 10; seed++) {
+      const rng = seeded(seed * 31 + mapName.length);
+      const base = createEngine({ ...DEFAULT_ENGINE_TIMING, rng }, { roomCode: "FEEL00", mapName, players: [
+        { nickname: "P", colors: { primary: "red", secondary: "yellow" }, loadout: ["cannon", "triple"] },
+        { nickname: "CPU", colors: { primary: "cyan", secondary: "blue" }, loadout: ["cannon", "triple"] },
+      ] });
+      const state = { ...base, match: { ...base.match, wind: { ...base.match.wind, value: Math.floor(rng() * 21) - 10 } } };
+      const plan = planCpuTurn(state, level, 45, rng);
+      const moved = withCpuAt(state, plan.fire.x, plan.frames.at(-1)!.pose.y);
+      shots++;
+      if (damageTo(moved, 0, cpuInput(moved, plan.fire)) > 0) hits++;
+    }
+    return hits / shots;
+  };
+  const rates = { easy: hitRate("easy"), normal: hitRate("normal"), hard: hitRate("hard") };
+
+  it("むずかしいは55〜80%、ふつう・やさしいは10〜40%で、むずかしいが最も当てる", () => {
+    expect(rates.hard).toBeGreaterThanOrEqual(0.55);
+    expect(rates.hard).toBeLessThanOrEqual(0.8);
+    for (const level of ["easy", "normal"] as const) {
+      expect(rates[level]).toBeGreaterThanOrEqual(0.1);
+      expect(rates[level]).toBeLessThanOrEqual(0.4);
+      expect(rates[level]).toBeLessThan(rates.hard);
+    }
   });
 });

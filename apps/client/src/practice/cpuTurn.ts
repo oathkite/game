@@ -11,7 +11,7 @@ const range = (rng: () => number, low: number, high: number) => low + Math.floor
 
 export const planCpuTurn = (state: EngineState, level: CpuLevel, elevation: number, rng: () => number): CpuTurnPlan => {
   const actor = state.match.players[1];
-  const { path, fire: best } = choosePosition(positionOptions(state), rng);
+  const { path, fire: best } = choosePosition(positionOptions(state, level), rng);
   const fire = aimCpuShot(best, level, rng);
   let at = range(rng, 700, 1800);
   let pose: CpuPose = { x: actor.x, y: actor.y, facing: actor.facing, elevation, slot: fire.slot, power: 0 };

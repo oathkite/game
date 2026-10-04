@@ -1,18 +1,22 @@
 import type { EngineState } from "@game/engine";
 import type { Facing } from "@game/protocol";
 import { simulateShot, stepOutcome } from "@game/sim";
-import { bestCpuShot, type CpuShot } from "./cpu";
+import { bestCpuShot, CPU_AIM_SPREAD, offsetCpuShot, type CpuShot } from "./cpu";
+import type { CpuLevel } from "./cpuLevel";
 
 // CPU の位置取り（設計書 37.6）。移動は理由のあるものに限る。
 // 候補ごとに照準を探索して「当てられる位置か」を、直前に被弾していれば相手の同じ射撃で「狙われている位置か」を調べる。
+// 当てられる位置は、誤差なしの最善手で相手にダメージを与え、難易度の誤差の範囲（四隅と辺の中点）で撃っても自分を巻き込まない位置とする。
 
 type Step = { readonly x: number; readonly y: number; readonly facing: Facing };
 export type PositionOption = {
   readonly x: number;
   readonly steps: number;
   readonly path: readonly Step[];
-  /** 誤差なしの最善手で相手にダメージを与えられる */
+  /** 誤差なしの最善手で相手にダメージを与え、誤差の範囲で撃っても自分を巻き込まない */
   readonly canHit: boolean;
+  /** 最善手を誤差の範囲で撃つと自分を巻き込むことがある */
+  readonly risky: boolean;
   /** 直前に被弾した相手の射撃を、同じ入力でこの位置へ撃たれると再び被弾する */
   readonly exposed: boolean;
   /** 最善手の着弾から相手までのセル数 */
@@ -57,13 +61,26 @@ const exposedAt = (state: EngineState): boolean => {
   return simulateShot(state.mask, state.match.players, last.input).result.hpAfter[1] < actor.hp;
 };
 
+const AIM_PROBES = [-1, 0, 1].flatMap(a => [-1, 0, 1].map(p => [a, p] as const));
+
+/** 最善手を誤差の四隅・辺の中点・中心で撃ったとき、どれかで自分がダメージを受けるか */
+const selfRisk = (state: EngineState, fire: CpuShot, level: CpuLevel): boolean => {
+  const actor = state.match.players[1];
+  const { angle, power } = CPU_AIM_SPREAD[level];
+  const shots = AIM_PROBES.map(([a, p]) => offsetCpuShot(fire, a * angle, p * power));
+  return shots.some(shot => simulateShot(state.mask, state.match.players, {
+    ...shot, seat: 1, weapon: actor.loadout[shot.slot], y: actor.y, wind: state.match.wind.value,
+  }).result.hpAfter[1] < actor.hp);
+};
+
 /** 各候補の位置で照準を探索し、当てられるか・狙われているかを調べる。盤面は書き換えない */
-export const positionOptions = (state: EngineState): PositionOption[] => candidatePaths(state).map(path => {
+export const positionOptions = (state: EngineState, level: CpuLevel): PositionOption[] => candidatePaths(state).map(path => {
   const [target, actor] = state.match.players;
   const end = path.at(-1) ?? actor;
   const moved = { ...state, match: { ...state.match, players: [target, { ...actor, x: end.x, y: end.y }] as const } };
   const best = bestCpuShot(moved);
-  return { x: end.x, steps: path.length, path, canHit: best.damage > 0, exposed: exposedAt(moved), miss: best.miss, fire: best.fire };
+  const risky = selfRisk(moved, best.fire, level);
+  return { x: end.x, steps: path.length, path, canHit: best.damage > 0 && !risky, risky, exposed: exposedAt(moved), miss: best.miss, fire: best.fire };
 });
 
 const fewestSteps = (options: readonly PositionOption[]) =>
@@ -82,6 +99,7 @@ export const choosePosition = (options: readonly PositionOption[], rng: () => nu
   if (safe.length > 0) return fewestSteps(safe);
   const hitting = options.filter(o => o.canHit);
   if (hitting.length > 0) return fewestSteps(hitting);
-  const unexposed = options.filter(o => !o.exposed);
-  return closest(unexposed.length > 0 ? unexposed : options);
+  // どこからも当てられなければ、巻き込まれない・狙われていない位置を優先して、着弾が相手に最も近い位置へ
+  const pools = [options.filter(o => !o.risky && !o.exposed), options.filter(o => !o.risky), options.filter(o => !o.exposed), options];
+  return closest(pools.find(pool => pool.length > 0)!);
 };

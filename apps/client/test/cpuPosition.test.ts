@@ -2,7 +2,7 @@ import { expect, it } from "vitest";
 import { choosePosition, type PositionOption } from "../src/practice/cpuPosition";
 
 const option = (x: number, steps: number, canHit: boolean, exposed = false, miss = 0): PositionOption =>
-  ({ x, steps, canHit, exposed, miss, path: [], fire: { type: "turn.fire", x, facing: -1, slot: 0, elevation: 45, power: 60 } });
+  ({ x, steps, canHit, risky: false, exposed, miss, path: [], fire: { type: "turn.fire", x, facing: -1, slot: 0, elevation: 45, power: 60 } });
 const stay = (canHit: boolean, exposed = false, miss = 0) => option(300, 0, canHit, exposed, miss);
 
 it("当てられて狙われていなければ、乱数が大きいと留まる", () => {
@@ -50,4 +50,11 @@ it("どこからも当てられなければ、狙われていない位置のう�
 
 it("候補が留まるだけなら留まる", () => {
   expect(choosePosition([stay(false, true, 50)], () => 0).x).toBe(300);
+});
+
+it("どこからも当てられなければ、自分を巻き込まない位置を狙われていない位置より優先する", () => {
+  const risky = (o: PositionOption) => ({ ...o, risky: true });
+  const options = [risky(stay(false, false, 5)), risky(option(294, 6, false, false, 8)), option(312, 12, false, true, 30), option(318, 18, false, false, 40)];
+  expect(choosePosition(options, () => 0.5).x).toBe(318);
+  expect(choosePosition(options.slice(0, 3), () => 0.5).x).toBe(312);
 });

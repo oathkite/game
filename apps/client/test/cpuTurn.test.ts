@@ -1,6 +1,6 @@
 import { expect, it } from "vitest";
 import { createEngine, DEFAULT_ENGINE_TIMING } from "@game/engine";
-import { flatMask, validateMove } from "@game/sim";
+import { flatMask, simulateShot, validateMove } from "@game/sim";
 import { planCpuTurn } from "../src/practice/cpuTurn";
 const initial = () => {
   const state = createEngine({ ...DEFAULT_ENGINE_TIMING, rng: () => 0.5 }, { roomCode: "CPU000", mapName: "ridgeline", players: [
@@ -47,4 +47,19 @@ it("今の位置から当てられなければ、相手から離れる向きで�
   for (let x = 240; x <= 305; x++) for (let y = 125; y < 136; y++) cells[y * state.mask.width + x] = 1;
   const cave = { ...state, mask: { ...state.mask, cells }, match: { ...state.match, wind: { ...state.match.wind, value: 0 } } };
   for (const roll of [0, 0.5, 0.99]) expect(planCpuTurn(cave, "hard", 45, () => roll).fire.x).toBe(318);
+});
+
+it("相手が至近にいても、照準の誤差で自分を巻き込む位置からは撃たない", () => {
+  // 開幕で両機が近いと、以前は誤差で自分を撃ち続けて自滅することがあった
+  const state = initial();
+  const close = { ...state, match: { ...state.match, players: [{ ...state.match.players[0], x: 282 }, state.match.players[1]] as const } };
+  for (const level of ["easy", "normal", "hard"] as const) {
+    for (const roll of [0, 0.1, 0.25, 0.5, 0.75, 0.9, 0.99]) {
+      const plan = planCpuTurn(close, level, 45, () => roll);
+      const actor = close.match.players[1];
+      const y = plan.frames.at(-1)!.pose.y;
+      const { result } = simulateShot(close.mask, [close.match.players[0], { ...actor, x: plan.fire.x, y }], { ...plan.fire, seat: 1, weapon: actor.loadout[plan.fire.slot], y, wind: close.match.wind.value });
+      expect(result.hpAfter[1]).toBe(actor.hp);
+    }
+  }
 });

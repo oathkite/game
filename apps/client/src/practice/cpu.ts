@@ -30,12 +30,20 @@ export const bestCpuShot = (state: EngineState): BestCpuShot => {
   return best;
 };
 
+/** 難易度ごとの照準誤差の最大幅（角度・パワー） */
+export const CPU_AIM_SPREAD: Readonly<Record<CpuLevel, { readonly angle: number; readonly power: number }>> = {
+  easy: { angle: 14, power: 24 }, normal: { angle: 7, power: 12 }, hard: { angle: 2, power: 5 },
+};
+
+/** 照準に角度とパワーのずれを加え、合法範囲に収める */
+export const offsetCpuShot = (fire: CpuShot, angle: number, power: number): CpuShot =>
+  ({ ...fire, elevation: Math.max(10, Math.min(90, fire.elevation + angle)), power: Math.max(1, Math.min(100, fire.power + power)) });
+
 /** 難易度に応じた誤差を最終照準に加える。誤差を加えた後に命中を再探索しない */
 export const aimCpuShot = (fire: CpuShot, level: CpuLevel, rng: () => number): CpuShot => {
-  const spread = level === "easy" ? { angle: 14, power: 24 } : level === "normal" ? { angle: 7, power: 12 } : { angle: 2, power: 4 };
+  const spread = CPU_AIM_SPREAD[level];
   const offset = (range: number) => Math.floor(rng() * (range * 2 + 1)) - range;
-  return { ...fire, elevation: Math.max(10, Math.min(90, fire.elevation + offset(spread.angle))),
-    power: Math.max(1, Math.min(100, fire.power + offset(spread.power))) };
+  return offsetCpuShot(fire, offset(spread.angle), offset(spread.power));
 };
 
 export const chooseCpuShot = (state: EngineState, level: CpuLevel = "hard", rng: () => number = () => 0.5): CpuShot =>
