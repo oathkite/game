@@ -4,7 +4,8 @@ import type { Profile } from "@/app/profile";
 import { setMusic } from "@/app/audio";
 import { ChallengeField } from "./ChallengeField";
 import { createChallengeStore, type ChallengeStore } from "./store";
-import { advanceTutorial, TUTORIAL_STAGE, TUTORIAL_STEPS, type TutorialStep } from "./tutorial";
+import { TURN_LIMIT } from "@game/protocol";
+import { advanceTutorial, nextTutorialStep, TUTORIAL_BUTTON_STEPS, TUTORIAL_STAGE, TUTORIAL_STEPS, type TutorialStep } from "./tutorial";
 import type { ChallengeState } from "./challenge";
 import "./practice.css";
 
@@ -19,38 +20,39 @@ type Props = {
 const useStepMessage = (step: TutorialStep, touch: boolean): string => {
   const { t } = useLanguage();
   switch (step) {
-    case "intro": return t("戦車の動かし方を練習しよう。案内に沿って操作して、最後に的を壊せば完了です。");
+    case "intro": return t("戦車の動かし方を練習しよう。案内に沿って操作して、的を壊したら対戦で知っておくことを確かめます。");
     case "aim": return touch ? t("画面左下の▲▼で、砲の角度を変えられます。角度を変えてみてください。") : t("↑↓キーか画面左下の▲▼で、砲の角度を変えられます。角度を変えてみてください。");
     case "move": return touch ? t("◀▶で、戦車が移動します。1回撃つまでに歩ける歩数には限りがあります。動かしてみてください。") : t("←→キーか◀▶で、戦車が移動します。1回撃つまでに歩ける歩数には限りがあります。動かしてみてください。");
     case "weapon": return touch ? t("武器ボタンで、武器を切り替えられます。武器を切り替えてみてください。") : t("Q・Eキーか武器ボタンで、武器を切り替えられます。武器を切り替えてみてください。");
-    case "fire": return touch ? t("発射ボタンを押し続けるとパワーがたまり、離すと発射します。撃ってみてください。") : t("スペースキーか発射ボタンを押し続けるとパワーがたまり、離すと発射します。撃ってみてください。");
+    case "memo": return t("パワーの目盛りを押すと、目安の線を引けます。当たったパワーを覚えておくのに使えます。目盛りを押してみてください。");
+    case "fire": return touch ? t("発射ボタンを押し続けるとパワーがたまり、離すと発射します。目安の線を目印に、撃ってみてください。") : t("スペースキーか発射ボタンを押し続けるとパワーがたまり、離すと発射します。目安の線を目印に、撃ってみてください。");
     case "target": return t("的は右にあります。左右の操作で砲の向きも変わります。角度とパワーを調整して、的を壊してみてください。画面をドラッグすると見回せます。");
-    case "done": return t("チュートリアル完了！ 対戦では風と地形も弾道に影響します。プラクティスからいつでも復習できます。");
+    case "wind": return t("対戦では風が吹き、弾が流されます。角度メーターの下にある風のメーターで、向きと強さを確かめてから狙いましょう。");
+    case "timer": return t("対戦では、1回の手番に{seconds}秒の制限時間があります。時間内に撃たないと、撃たずに手番が終わります。", { seconds: TURN_LIMIT });
+    case "items": return t("対戦では、アイテムを1試合に1回ずつ使えます。ダブルシュートは同じ弾をもう一度撃ち、テレポートは弾が当たった場所へ移ります。撃つ前に、武器の上のボタンで選びます。");
+    case "done": return t("チュートリアル完了！ プラクティスからいつでも復習できます。");
   }
 };
 
-type GuideProps = { readonly step: TutorialStep; readonly failed: boolean; readonly fromPractice: boolean; readonly onNext: () => void; readonly onSkip: () => void; readonly onRetry: () => void };
+type GuideProps = { readonly step: TutorialStep; readonly failed: boolean; readonly fromPractice: boolean; readonly onNext: () => void; readonly onRetry: () => void };
 
-/** 盤面の下端に重ねるメッセージボックス。操作を促す間はボタンを置かず、Space が発射にだけ効くようにする */
-const TutorialGuide = ({ step, failed, fromPractice, onNext, onSkip, onRetry }: GuideProps) => {
+/** 画面の上の中央に重ねるメッセージボックス。操作を促す間はボタンを置かず、促した操作でだけ進める。Space も発射にだけ効く */
+const TutorialGuide = ({ step, failed, fromPractice, onNext, onRetry }: GuideProps) => {
   const { t } = useLanguage();
   const [touch] = useState(() => matchMedia("(pointer: coarse)").matches);
   const message = useStepMessage(step, touch);
   const action = useRef<HTMLButtonElement>(null);
   const button = failed ? { label: t("再挑戦"), run: onRetry }
-    : step === "intro" ? { label: t("次へ"), run: onNext }
-    : step === "done" ? { label: fromPractice ? t("プラクティスへ戻る") : t("出撃準備へ進む"), run: onNext } : null;
+    : step === "done" ? { label: fromPractice ? t("プラクティスへ戻る") : t("出撃準備へ進む"), run: onNext }
+    : TUTORIAL_BUTTON_STEPS.includes(step) ? { label: t("次へ"), run: onNext } : null;
   useEffect(() => { action.current?.focus({ preventScroll: true }); }, [step, failed]);
-  return <div className="tutorial-slot">
-    <section className="tutorial-guide" aria-labelledby="tutorial-guide-title">
-      <header>
-        <h2 id="tutorial-guide-title">{t("チュートリアル")}<span>{TUTORIAL_STEPS.indexOf(step) + 1}/{TUTORIAL_STEPS.length}</span></h2>
-        {step !== "done" && <button className="tutorial-skip" onClick={onSkip}>{t("スキップ")}</button>}
-      </header>
-      <p aria-live="polite">{failed ? t("弾切れ、または戦車が場外に落ちました。") : message}</p>
+  return <section className="tutorial-guide" aria-label={t("チュートリアル")}>
+    <p aria-live="polite">{failed ? t("弾切れ、または戦車が場外に落ちました。") : message}</p>
+    <footer>
+      <span className="tutorial-progress">{TUTORIAL_STEPS.indexOf(step) + 1}/{TUTORIAL_STEPS.length}</span>
       {button && <button ref={action} className="primary-action" onClick={button.run}>{button.label}</button>}
-    </section>
-  </div>;
+    </footer>
+  </section>;
 };
 
 const TutorialMenu = ({ close, onExit }: { readonly close: () => void; readonly onExit: () => void }) => {
@@ -69,7 +71,6 @@ const TutorialMenu = ({ close, onExit }: { readonly close: () => void; readonly 
 type GameProps = Props & { readonly store: ChallengeStore; readonly step: TutorialStep; readonly onStep: (step: TutorialStep) => void; readonly onRetry: () => void };
 
 const TutorialGame = ({ store, step, onStep, fromPractice, onExit, onRetry }: GameProps) => {
-  const { t } = useLanguage();
   const state = useSyncExternalStore(store.subscribe, store.getState, store.getState);
   const [menu, setMenu] = useState(false), [started, setStarted] = useState(false);
   // 手順ごとに、始まったときの状態を基準にして促した操作ができたかを判定する
@@ -77,11 +78,15 @@ const TutorialGame = ({ store, step, onStep, fromPractice, onExit, onRetry }: Ga
   const go = useCallback((next: TutorialStep) => { from.current = store.getState(); onStep(next); }, [store, onStep]);
   useEffect(() => { const next = advanceTutorial(step, from.current, state); if (next !== step) go(next); }, [state, step, go]);
   const onReady = useCallback(() => setStarted(true), []);
-  const remaining = state.targets.filter(target => !target.destroyed).length;
-  const status = <div className="challenge-status"><strong>{t("チュートリアル")}</strong><span>{t("的 {targets}", { targets: remaining })}</span></div>;
-  const guide = started && <TutorialGuide step={step} failed={state.status === "failed"} fromPractice={fromPractice} onNext={step === "done" ? onExit : () => go(TUTORIAL_STEPS[TUTORIAL_STEPS.indexOf(step) + 1]!)} onSkip={onExit} onRetry={onRetry} />;
-  return <ChallengeField store={store} loadout={TUTORIAL_STAGE.loadout} className={`challenge-game tutorial-game tutorial-step-${started && !menu ? step : "waiting"}`} status={status} guide={guide}
-    paused={menu || !started || step === "intro" || step === "done"} onMenu={() => setMenu(true)} onToggleMenu={() => setMenu(v => !v)} onReady={onReady}>
+  // 目安の線は盤面の状態に残らないので、目盛りを押したことを受けて進める
+  const onPowerMemo = (memo: number | null) => { if (memo !== null && step === "memo") go(nextTutorialStep(step)); };
+  // 案内はメッセージボックスに任せ、上の中央（チャレンジの面の名前と残りの数の場所）には何も出さない。下の枠はヒントの行の高さを保つ
+  const guide = <>
+    {started && <TutorialGuide step={step} failed={state.status === "failed"} fromPractice={fromPractice} onNext={step === "done" ? onExit : () => go(nextTutorialStep(step))} onRetry={onRetry} />}
+    <div className="tutorial-slot" aria-hidden="true" />
+  </>;
+  return <ChallengeField store={store} loadout={TUTORIAL_STAGE.loadout} className={`challenge-game tutorial-game tutorial-step-${started && !menu ? step : "waiting"}`} status={null} guide={guide}
+    paused={menu || !started || TUTORIAL_BUTTON_STEPS.includes(step)} onMenu={() => setMenu(true)} onToggleMenu={() => setMenu(v => !v)} onReady={onReady} onPowerMemo={onPowerMemo}>
     {menu && <TutorialMenu close={() => setMenu(false)} onExit={onExit} />}
   </ChallengeField>;
 };

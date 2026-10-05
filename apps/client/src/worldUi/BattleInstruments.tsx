@@ -10,7 +10,8 @@ export const MovementReserve = ({ steps }: { readonly steps: number }) => {
   </div>;
 };
 
-export const PowerRuler = ({ value }: { readonly value: number }) => {
+/** onMemo は目安の線を引いた（null は消した）ことを知らせる。チュートリアルが目盛りを押したかを知るのに使う（設計書 44.3） */
+export const PowerRuler = ({ value, onMemo }: { readonly value: number; readonly onMemo?: ((memo: number | null) => void) | undefined }) => {
   const { t } = useLanguage();
   const power = Math.max(0, Math.min(100, value));
   const [memo, setMemo] = useState<number | null>(null);
@@ -19,6 +20,7 @@ export const PowerRuler = ({ value }: { readonly value: number }) => {
     if (bounds.width <= 0) return;
     const next = Math.max(0, Math.min(100, Math.round((event.clientX - bounds.left) / bounds.width * 100)));
     setMemo(previous => previous === next ? null : next);
+    onMemo?.(memo === next ? null : next);
   }}>
     <strong className="battle-power-value" style={{ left: `clamp(10px, ${power}%, calc(100% - 10px))` }}>{Math.round(power)}</strong>
     <svg viewBox="0 0 1000 40" preserveAspectRatio="none" aria-hidden="true" shapeRendering="crispEdges">

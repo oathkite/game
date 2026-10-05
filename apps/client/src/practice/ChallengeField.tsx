@@ -27,6 +27,8 @@ type Props = {
   readonly onToggleMenu: () => void;
   /** 開始時の俯瞰が終わり、操作を受け付けられるようになったとき */
   readonly onReady?: () => void;
+  /** パワーの目盛りを押して目安の線を引いたとき（null は消したとき） */
+  readonly onPowerMemo?: (memo: number | null) => void;
   /** 結果やメニューのダイアログ */
   readonly children?: ReactNode;
 };
@@ -34,7 +36,7 @@ type Props = {
 const openingComplete = () => {};
 
 /** ターゲットチャレンジとチュートリアルに共通の盤面と操作盤（設計書 37.1、44） */
-export const ChallengeField = ({ store, loadout, className, status, guide, paused, onMenu, onToggleMenu, onReady, children }: Props) => {
+export const ChallengeField = ({ store, loadout, className, status, guide, paused, onMenu, onToggleMenu, onReady, onPowerMemo, children }: Props) => {
   const state = useSyncExternalStore(store.subscribe, store.getState, store.getState);
   const [size, setSize] = useState({ w: innerWidth, h: innerHeight });
   const [ready, setReady] = useState(false);
@@ -60,7 +62,7 @@ export const ChallengeField = ({ store, loadout, className, status, guide, pause
     <BattleOverlay clock={status} onMenu={openMenu} />
     <PrototypeCanvas store={store} rig={rig} layout={layout} handlers={input.world} blocked={blocked || input.gauge.charging} followShot onReady={handleReady} onOpeningComplete={openingComplete} worldArt practice={store} />
     {guide}
-    <BattleConsole steps={state.view.control?.stepsLeft ?? 0} tilt={tiltOf(state.view.mask!, pose)} elevation={state.view.lastElevation} facing={pose.facing} power={input.gauge.value} loadout={loadout} slot={state.view.lastSlot} disabled={disabled} selectSlot={store.selectSlot}>
+    <BattleConsole steps={state.view.control?.stepsLeft ?? 0} tilt={tiltOf(state.view.mask!, pose)} elevation={state.view.lastElevation} facing={pose.facing} power={input.gauge.value} loadout={loadout} slot={state.view.lastSlot} disabled={disabled} selectSlot={store.selectSlot} onPowerMemo={onPowerMemo}>
       <BattleTouchControls disabled={disabled} button={input.button} />
     </BattleConsole>
     {children}

@@ -1,6 +1,6 @@
 import { expect, it } from "vitest";
 import { createChallengeStore, type ChallengeStore } from "../src/practice/store";
-import { advanceTutorial, AIM_DEGREES, MOVE_CELLS, TUTORIAL_STAGE, TUTORIAL_STEPS, type TutorialStep } from "../src/practice/tutorial";
+import { advanceTutorial, AIM_DEGREES, MOVE_CELLS, nextTutorialStep, TUTORIAL_BUTTON_STEPS, TUTORIAL_STAGE, TUTORIAL_STEPS, type TutorialStep } from "../src/practice/tutorial";
 import type { ChallengeState } from "../src/practice/challenge";
 import type { Profile } from "../src/app/profile";
 import { TUTORIAL_SOLUTION } from "./fixtures/challenge-solutions";
@@ -14,7 +14,7 @@ const guide = (store: ChallengeStore, start: TutorialStep) => {
     const next = advanceTutorial(step, from, store.getState());
     if (next !== step) { step = next; from = store.getState(); }
   });
-  return { step: () => step };
+  return { step: () => step, set: (next: TutorialStep) => { step = next; from = store.getState(); } };
 };
 const replay = (store: ChallengeStore): void => {
   const job = store.getView().replay!;
@@ -33,14 +33,24 @@ const shoot = (store: ChallengeStore, { slot, elevation, power }: { readonly slo
   replay(store);
 };
 
-it("導入と完了は状態が変わってもボタンでだけ進む", () => {
+it("ボタンで進む手順は、状態が変わっても自動では進まない", () => {
   const store = createChallengeStore(TUTORIAL_STAGE, profile);
   const before = store.getState();
   store.changeElevation(20);
   store.moveStep(1);
-  expect(advanceTutorial("intro", before, store.getState())).toBe("intro");
-  expect(advanceTutorial("done", before, store.getState())).toBe("done");
-  expect(TUTORIAL_STEPS).toEqual(["intro", "aim", "move", "weapon", "fire", "target", "done"]);
+  store.selectSlot(1);
+  expect(TUTORIAL_STEPS).toEqual(["intro", "aim", "move", "weapon", "memo", "fire", "target", "wind", "timer", "items", "done"]);
+  expect(TUTORIAL_BUTTON_STEPS).toEqual(["intro", "wind", "timer", "items", "done"]);
+  expect(advanceTutorial("memo", before, store.getState())).toBe("memo");
+  for (const step of TUTORIAL_BUTTON_STEPS) expect(advanceTutorial(step, before, store.getState())).toBe(step);
+});
+
+it("ボタンで進む手順は順に次へ進み、完了で止まる", () => {
+  expect(nextTutorialStep("intro")).toBe("aim");
+  expect(nextTutorialStep("memo")).toBe("fire");
+  expect(nextTutorialStep("wind")).toBe("timer");
+  expect(nextTutorialStep("items")).toBe("done");
+  expect(nextTutorialStep("done")).toBe("done");
 });
 
 it("促した操作をしたときだけ、角度、移動、武器、発射、的の順に進む", () => {
@@ -62,6 +72,11 @@ it("促した操作をしたときだけ、角度、移動、武器、発射、�
   store.moveStep(1);
   expect(tutorial.step()).toBe("weapon");
   store.selectSlot(0);
+  expect(tutorial.step()).toBe("memo");
+  // 目安の線は盤面の状態に残らないので、画面が nextTutorialStep で進める
+  store.changeElevation(1);
+  expect(tutorial.step()).toBe("memo");
+  tutorial.set("fire");
   expect(tutorial.step()).toBe("fire");
   // 外し弾は的の先の遠くへ落とし、開始位置の足場を削らない
   store.changeElevation(20 - store.getView().lastElevation);
@@ -73,7 +88,7 @@ it("促した操作をしたときだけ、角度、移動、武器、発射、�
   expect(tutorial.step()).toBe("target");
   walkHome(store);
   shoot(store, TUTORIAL_SOLUTION);
-  expect(tutorial.step()).toBe("done");
+  expect(tutorial.step()).toBe("wind");
 });
 
 it("角度は下げても進み、戻して差がなくなれば進まない", () => {
@@ -85,12 +100,13 @@ it("角度は下げても進み、戻して差がなくなれば進まない", (
   expect(advanceTutorial("aim", from, store.getState())).toBe("aim");
 });
 
-it("促す前に的を壊したら、残りの手順を飛ばして完了へ進む", () => {
+it("促す前に的を壊したら、操作の手順を飛ばして対戦の説明（風）へ進む", () => {
   const store = createChallengeStore(TUTORIAL_STAGE, profile);
   const tutorial = guide(store, "move");
   shoot(store, TUTORIAL_SOLUTION);
   expect(store.getState().status).toBe("clear");
-  expect(tutorial.step()).toBe("done");
+  expect(tutorial.step()).toBe("wind");
+  for (const step of ["wind", "timer", "items", "done"] as const) expect(advanceTutorial(step, store.getState(), store.getState())).toBe(step);
 });
 
 it("撃ってから再生が終わるまでは、的が壊れていても完了にしない", () => {
@@ -103,7 +119,7 @@ it("撃ってから再生が終わるまでは、的が壊れていても完了�
   for (const impact of job.shot.impacts) store.showImpact(job.maskAfter, impact);
   expect(advanceTutorial("fire", from, store.getState())).toBe("fire");
   store.completeReplay(job.id);
-  expect(advanceTutorial("fire", from, store.getState())).toBe("done");
+  expect(advanceTutorial("fire", from, store.getState())).toBe("wind");
 });
 
 it("チュートリアルの面は外し続けても弾切れで失敗しない", () => {
