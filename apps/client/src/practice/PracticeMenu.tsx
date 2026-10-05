@@ -1,13 +1,16 @@
 import { useLanguage } from "@/i18n/locale";
 
-type Props = { readonly onCpu: () => void; readonly onChallenge: () => void; readonly onFree: () => void; readonly onBack: () => void };
+type Props = { readonly onTutorial: () => void; readonly onCpu: () => void; readonly onChallenge: () => void; readonly onFree: () => void; readonly onBack: () => void };
 
-export const PracticeMenu = ({ onCpu, onChallenge, onFree, onBack }: Props) => {
+export const PracticeMenu = ({ onTutorial, onCpu, onChallenge, onFree, onBack }: Props) => {
   const { t } = useLanguage();
   return <main className="menu-shell practice-menu practice-mode-menu">
     <div className="menu-content practice-content">
       <header className="practice-header"><h1>{t("プラクティス")}</h1><p className="dim">{t("練習モードを選んでください。")}</p></header>
       <div className="practice-modes">
+        <button className="practice-mode" aria-label={t("チュートリアル")} onClick={onTutorial}>
+          <strong>{t("チュートリアル")}</strong><span>{t("案内に沿って、基本の操作を覚えよう。")}</span>
+        </button>
         <button className="practice-mode" aria-label={t("ターゲットチャレンジ")} onClick={onChallenge}>
           <strong>{t("ターゲットチャレンジ")}</strong><span>{t("限られた弾数で、すべてのターゲットを壊そう。")}</span>
         </button>

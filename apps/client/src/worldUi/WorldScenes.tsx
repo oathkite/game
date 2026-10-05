@@ -1,5 +1,7 @@
 import type { CpuLevel } from "@/practice/cpuLevel";
 import { PracticeFlow } from "@/practice/PracticeFlow";
+import { TutorialScreen } from "@/practice/TutorialScreen";
+import { markTutorialSeen, shouldOfferTutorial } from "@/practice/tutorialSeen";
 import { resultTitle } from "./resultTitle";
 import { DotIcon } from "./DotIcon";
 import { closeOnBackdrop } from "@/worldUi/dialogBackdrop";
@@ -36,7 +38,7 @@ const CameraPrototype = lazy(() => loadScene("src/prototype/CameraPrototype.tsx"
 
 const ResultPlayers = lazy(() => loadScene("src/worldUi/ResultPlayers.tsx", () => import("./ResultPlayers")).then(module => ({ default: module.ResultPlayers })));
 
-type Scene = "start" | "lobby" | "battle" | "result" | "network" | "rooms" | "practice";
+type Scene = "start" | "lobby" | "battle" | "result" | "network" | "rooms" | "practice" | "tutorial";
 export const WorldScenes = () => {
   const { t, language } = useLanguage();
   useEffect(() => { document.documentElement.lang = language; }, [language]);
@@ -46,6 +48,8 @@ export const WorldScenes = () => {
   const [practiceMap, setPracticeMap] = useState<MapName | "random">("ridgeline");
   const [practiceProfile, setPracticeProfile] = useState(loadProfile);
   const [result, setResult] = useState<ResultPresentation | null>(null);
+  // 初回だけ「はじめる」からチュートリアルへ入る。保存できない環境でも、同じ画面の中では二度案内しない（設計書 44.1）
+  const [tutorial, setTutorial] = useState<{ readonly offer: boolean; readonly fromPractice: boolean }>(() => ({ offer: shouldOfferTutorial(), fromPractice: false }));
   const [direction, setDirection] = useState<ShutterDirection | null>(null);
   const timer = useRef<ReturnType<typeof setTimeout> | null>(null);
   const heading = useRef<HTMLDivElement>(null);
@@ -57,7 +61,7 @@ export const WorldScenes = () => {
     setClosing(true);
     timer.current = setTimeout(() => { setScene(next); setClosing(false); timer.current = null; }, 400);
   }, []);
-  useWorldBrowserBack(scene !== "start", () => go(scene === "lobby" ? "start" : scene === "battle" || scene === "result" ? "practice" : "lobby"));
+  useWorldBrowserBack(scene !== "start", () => go(scene === "lobby" ? "start" : scene === "battle" || scene === "result" || (scene === "tutorial" && tutorial.fromPractice) ? "practice" : "lobby"));
   useEffect(() => { const profile = loadProfile(); setAudioSettings(profile.volume, profile.muted, profile.bgmVolume ?? profile.volume); }, []);
   useEffect(() => () => { if (timer.current) clearTimeout(timer.current); }, []);
   useEffect(() => { heading.current?.focus({ preventScroll: true }); }, [scene]);
@@ -76,20 +80,28 @@ export const WorldScenes = () => {
   }, []);
   useEffect(() => {
     // Online scenes own their music because their internal phase changes independently.
-    if (scene === "rooms" || scene === "network" || scene === "battle") return;
+    if (scene === "rooms" || scene === "network" || scene === "battle" || scene === "tutorial") return;
     setMusic(scene === "result" && result ? "result" : "hangar");
     if (scene === "result") playSound("matchFinish");
   }, [scene, result]);
   const exitPractice = useCallback(() => { setPracticeProfile(loadProfile()); go("practice"); }, [go]);
   const exit = useCallback(() => go("lobby"), [go]);
+  const begin = useCallback(() => {
+    if (!tutorial.offer) { go("lobby"); return; }
+    markTutorialSeen();
+    setTutorial({ offer: false, fromPractice: false });
+    go("tutorial");
+  }, [go, tutorial.offer]);
+  const startTutorial = useCallback(() => { setTutorial({ offer: false, fromPractice: true }); go("tutorial"); }, [go]);
   const finish = useCallback((value: ResultPresentation) => { setResult(value); go("result"); }, [go]);
   return <div className={`world-ui world-scene-${scene} ${closing ? "world-closing" : ""}`}>
     <SceneBoundary message={t("画面を読み込めませんでした。通信を確認して再読み込みしてください。")} retryLabel={t("再読み込み")}>
     <Suspense fallback={<SceneLoading className="scene-loading-page" steps={[{ label: t("画面を読み込み中"), state: "active" }]} />}>
     {scene === "battle" ? <CameraPrototype cpuLevel={cpuLevel} cpu={practiceCpu} worldArt mapName={practiceMap} onExit={exitPractice} onResult={finish} /> : scene === "rooms" ? <RoomScreen onExit={exit} {...(import.meta.env.DEV ? { onLab: () => go("network") } : {})} /> : scene === "network" ? <NetworkLab worldArt onExit={exit} /> : <>
       <div key={scene} ref={heading} tabIndex={-1} className="world-content">
-        {scene === "start" && <StartScreen onBegin={() => go("lobby")} />}
-        {scene === "practice" && <PracticeFlow profile={practiceProfile} onProfileChange={p => { setPracticeProfile(p); saveProfile(p); setAudioSettings(p.volume, p.muted, p.bgmVolume ?? p.volume); }} onExit={exit} onCpuStart={(map, level) => { setCpuLevel(level); setPracticeCpu(true); setPracticeMap(map); go("battle"); }} onFreeStart={map => { setPracticeCpu(false); setPracticeMap(map); go("battle"); }} />}
+        {scene === "start" && <StartScreen onBegin={begin} />}
+        {scene === "tutorial" && <TutorialScreen profile={practiceProfile} fromPractice={tutorial.fromPractice} onExit={tutorial.fromPractice ? exitPractice : exit} />}
+        {scene === "practice" && <PracticeFlow profile={practiceProfile} onProfileChange={p => { setPracticeProfile(p); saveProfile(p); setAudioSettings(p.volume, p.muted, p.bgmVolume ?? p.volume); }} onExit={exit} onTutorial={startTutorial} onCpuStart={(map, level) => { setCpuLevel(level); setPracticeCpu(true); setPracticeMap(map); go("battle"); }} onFreeStart={map => { setPracticeCpu(false); setPracticeMap(map); go("battle"); }} />}
         {scene === "lobby" && <Lobby go={go} onPractice={() => { setPracticeProfile(loadProfile()); go("practice"); }} />}
         {scene === "result" && result && <section className="world-result-screen terminal-screen result-terminal"><header className="result-header"><h1>{t(resultTitle(result.result, result.players.find(p => p.playerId === result.ownId)?.teamId))}</h1></header><ResultPlayers {...result} motionDelayMs={SHUTTER_OPEN_MS} /><div className="result-actions"><PixelButton onClick={exitPractice}>{t("プラクティス")}</PixelButton><PixelButton className="result-primary" onClick={() => go("battle")}>{t("もう一度プレイ")}</PixelButton></div></section>}
       </div>
