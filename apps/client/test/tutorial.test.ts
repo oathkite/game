@@ -1,30 +1,46 @@
 import { expect, it } from "vitest";
 import { createChallengeStore, type ChallengeStore } from "../src/practice/store";
-import { advanceTutorial, AIM_DEGREES, MOVE_CELLS, nextTutorialStep, TUTORIAL_BUTTON_STEPS, TUTORIAL_STAGE, TUTORIAL_STEPS, type TutorialStep } from "../src/practice/tutorial";
-import type { ChallengeState } from "../src/practice/challenge";
+import {
+  ITEM_TARGET, nextTutorialStep, observeTutorial, startTutorialStep, TUTORIAL_BUTTON_STEPS, TUTORIAL_STAGE, TUTORIAL_STEPS, TUTORIAL_TARGET, TUTORIAL_WIND, tutorialSetup,
+  type TutorialProgress, type TutorialStep,
+} from "../src/practice/tutorial";
 import type { Profile } from "../src/app/profile";
 import { TUTORIAL_SOLUTION } from "./fixtures/challenge-solutions";
 
 const profile: Profile = { playerId: "test", nickname: "", colors: { primary: "red", secondary: "yellow" }, loadout: ["laser", "stinger"], volume: 0, muted: true, swapPanels: false };
+const tutorialStore = () => createChallengeStore(TUTORIAL_STAGE, profile, { endless: true, items: true });
 
-/** 画面と同じく、手番の始まりを基準にして状態が変わるたびに判定する */
+/** 画面と同じく、状態が変わるたびに 1 つずつ見て、手順に入ったら盤面を準備する */
 const guide = (store: ChallengeStore, start: TutorialStep) => {
-  let step = start, from: ChallengeState = store.getState();
+  let progress: TutorialProgress = startTutorialStep(start, store.getState());
+  let previous = store.getState();
+  const prepare = (step: TutorialStep): void => {
+    const setup = tutorialSetup(step);
+    const have = store.getTargets().length;
+    if (have < setup.targets.length) store.addTargets(setup.targets.slice(have));
+    if (store.getView().wind.value !== setup.wind) store.setWind(setup.wind);
+  };
   store.subscribe(() => {
-    const next = advanceTutorial(step, from, store.getState());
-    if (next !== step) { step = next; from = store.getState(); }
+    const now = store.getState();
+    const next = observeTutorial(progress, previous, now);
+    previous = now;
+    const entered = next.step !== progress.step;
+    progress = next;
+    if (entered) prepare(next.step);
   });
-  return { step: () => step, set: (next: TutorialStep) => { step = next; from = store.getState(); } };
+  prepare(start);
+  return { step: () => progress.step, press: () => { progress = startTutorialStep(nextTutorialStep(progress.step), store.getState()); prepare(progress.step); } };
 };
 const replay = (store: ChallengeStore): void => {
   const job = store.getView().replay!;
   for (const impact of job.shot.impacts) store.showImpact(job.maskAfter, impact);
   store.completeReplay(job.id);
 };
-/** 解法は開始位置から撃つ前提なので、そこまで歩いて戻る */
+/** 解法は開始位置から右を向いて撃つ前提なので、そこまで歩いて戻る（左へ行き過ぎてから右へ 1 歩） */
 const walkHome = (store: ChallengeStore): void => {
   const home = TUTORIAL_STAGE.start[0];
-  while (store.getView().control!.x !== home) store.moveStep(store.getView().control!.x < home ? 1 : -1);
+  while (store.getView().control!.x >= home) store.moveStep(-1);
+  while (store.getView().control!.x < home) store.moveStep(1);
 };
 const shoot = (store: ChallengeStore, { slot, elevation, power }: { readonly slot: 0 | 1; readonly elevation: number; readonly power: number }): void => {
   store.selectSlot(slot);
@@ -32,109 +48,121 @@ const shoot = (store: ChallengeStore, { slot, elevation, power }: { readonly slo
   store.fire(power);
   replay(store);
 };
+/** 的の先の遠くへ外す。開始位置の足場を削らない */
+const miss = { slot: 0, elevation: 20, power: 100 } as const;
 
-it("ボタンで進む手順は、状態が変わっても自動では進まない", () => {
-  const store = createChallengeStore(TUTORIAL_STAGE, profile);
-  const before = store.getState();
-  store.changeElevation(20);
-  store.moveStep(1);
-  store.selectSlot(1);
-  expect(TUTORIAL_STEPS).toEqual(["intro", "aim", "move", "weapon", "memo", "fire", "target", "wind", "timer", "items", "done"]);
-  expect(TUTORIAL_BUTTON_STEPS).toEqual(["intro", "wind", "timer", "items", "done"]);
-  expect(advanceTutorial("memo", before, store.getState())).toBe("memo");
-  for (const step of TUTORIAL_BUTTON_STEPS) expect(advanceTutorial(step, before, store.getState())).toBe(step);
-});
-
-it("ボタンで進む手順は順に次へ進み、完了で止まる", () => {
+it("手順は11個で、説明の手順だけが「次へ」で進む", () => {
+  expect(TUTORIAL_STEPS).toEqual(["intro", "aim", "move", "weapon", "fire", "memo", "target", "wind", "timer", "items", "done"]);
+  expect(TUTORIAL_BUTTON_STEPS).toEqual(["intro", "timer", "done"]);
   expect(nextTutorialStep("intro")).toBe("aim");
-  expect(nextTutorialStep("memo")).toBe("fire");
-  expect(nextTutorialStep("wind")).toBe("timer");
-  expect(nextTutorialStep("items")).toBe("done");
   expect(nextTutorialStep("done")).toBe("done");
 });
 
-it("促した操作をしたときだけ、角度、移動、武器、発射、的の順に進む", () => {
-  const store = createChallengeStore(TUTORIAL_STAGE, profile);
+it("ボタンの手順と目安の線は、盤面が変わっても自動では進まない", () => {
+  for (const step of [...TUTORIAL_BUTTON_STEPS, "memo"] as const) {
+    const store = tutorialStore();
+    const tutorial = guide(store, step);
+    store.changeElevation(20);
+    store.changeElevation(-20);
+    store.moveStep(1);
+    store.moveStep(-1);
+    store.selectSlot(1);
+    store.selectSlot(0);
+    expect(tutorial.step()).toBe(step);
+  }
+});
+
+it("角度は上げると下げるの両方をしたときだけ進む", () => {
+  const store = tutorialStore();
   const tutorial = guide(store, "aim");
+  for (let i = 0; i < 5; i++) store.changeElevation(1);
   store.moveStep(1);
   store.selectSlot(1);
-  store.selectSlot(0);
-  store.changeElevation(AIM_DEGREES - 1);
   expect(tutorial.step()).toBe("aim");
-  store.changeElevation(1);
+  store.changeElevation(-1);
   expect(tutorial.step()).toBe("move");
-  store.changeElevation(30);
-  store.selectSlot(1);
-  for (let i = 1; i < MOVE_CELLS; i++) store.moveStep(-1);
+});
+
+it("移動は左右の両方をしたときだけ進む。歩数が尽きても向きを変えれば数える", () => {
+  const store = tutorialStore();
+  const tutorial = guide(store, "move");
+  for (let i = 0; i < 40; i++) store.moveStep(1);
+  expect(store.getView().control!.stepsLeft).toBe(0);
+  store.changeElevation(5);
   expect(tutorial.step()).toBe("move");
   store.moveStep(-1);
+  expect(store.getView().control!.x).toBe(TUTORIAL_STAGE.start[0] + 30);
   expect(tutorial.step()).toBe("weapon");
-  store.moveStep(1);
+});
+
+it("武器、発射、目安の線、的の順に、促した操作でだけ進む。的は的当ての手順で初めて出る", () => {
+  const store = tutorialStore();
+  const tutorial = guide(store, "weapon");
+  expect(store.getTargets()).toEqual([]);
+  store.changeElevation(3);
   expect(tutorial.step()).toBe("weapon");
-  store.selectSlot(0);
-  expect(tutorial.step()).toBe("memo");
-  // 目安の線は盤面の状態に残らないので、画面が nextTutorialStep で進める
-  store.changeElevation(1);
-  expect(tutorial.step()).toBe("memo");
-  tutorial.set("fire");
+  store.selectSlot(1);
   expect(tutorial.step()).toBe("fire");
-  // 外し弾は的の先の遠くへ落とし、開始位置の足場を削らない
-  store.changeElevation(20 - store.getView().lastElevation);
   store.fire(100);
   expect(tutorial.step()).toBe("fire");
   replay(store);
+  expect(tutorial.step()).toBe("memo");
+  expect(store.getTargets()).toEqual([]);
+  // 目安の線は盤面に残らないので、画面が目盛りを押したことを受けて進める
+  tutorial.press();
   expect(tutorial.step()).toBe("target");
-  shoot(store, { slot: 1, elevation: 20, power: 100 });
+  expect(store.getTargets().map(t => [t.x, t.y])).toEqual([TUTORIAL_TARGET]);
+  shoot(store, miss);
   expect(tutorial.step()).toBe("target");
   walkHome(store);
   shoot(store, TUTORIAL_SOLUTION);
   expect(tutorial.step()).toBe("wind");
 });
 
-it("角度は下げても進み、戻して差がなくなれば進まない", () => {
-  const store = createChallengeStore(TUTORIAL_STAGE, profile);
-  const from = store.getState();
-  store.changeElevation(-AIM_DEGREES);
-  expect(advanceTutorial("aim", from, store.getState())).toBe("move");
-  store.changeElevation(AIM_DEGREES);
-  expect(advanceTutorial("aim", from, store.getState())).toBe("aim");
-});
-
-it("促す前に的を壊したら、操作の手順を飛ばして対戦の説明（風）へ進む", () => {
-  const store = createChallengeStore(TUTORIAL_STAGE, profile);
-  const tutorial = guide(store, "move");
-  shoot(store, TUTORIAL_SOLUTION);
-  expect(store.getState().status).toBe("clear");
+it("風の手順で風が吹き始め、風の中で1発撃つと制限時間の説明へ進む", () => {
+  const store = tutorialStore();
+  const tutorial = guide(store, "wind");
+  expect(store.getView().wind.value).toBe(TUTORIAL_WIND);
+  store.fire(40);
+  expect(store.getView().replay!.shot.input.wind).toBe(TUTORIAL_WIND);
   expect(tutorial.step()).toBe("wind");
-  for (const step of ["wind", "timer", "items", "done"] as const) expect(advanceTutorial(step, store.getState(), store.getState())).toBe(step);
+  replay(store);
+  expect(tutorial.step()).toBe("timer");
 });
 
-it("撃ってから再生が終わるまでは、的が壊れていても完了にしない", () => {
-  const store = createChallengeStore(TUTORIAL_STAGE, profile);
-  const from = store.getState();
-  store.selectSlot(TUTORIAL_SOLUTION.slot);
-  store.changeElevation(TUTORIAL_SOLUTION.elevation - 45);
-  store.fire(TUTORIAL_SOLUTION.power);
-  const job = store.getView().replay!;
-  for (const impact of job.shot.impacts) store.showImpact(job.maskAfter, impact);
-  expect(advanceTutorial("fire", from, store.getState())).toBe("fire");
-  store.completeReplay(job.id);
-  expect(advanceTutorial("fire", from, store.getState())).toBe("wind");
+it("アイテムの手順では新しい的が出て、アイテムを使って撃ち終えたときだけ進む", () => {
+  const store = tutorialStore();
+  const tutorial = guide(store, "items");
+  expect(store.getTargets().map(t => [t.x, t.y])).toEqual([TUTORIAL_TARGET, ITEM_TARGET]);
+  shoot(store, miss);
+  expect(tutorial.step()).toBe("items");
+  store.selectItem("double");
+  store.fire(40);
+  // 生きた的があるので、ダブルシュートは 2 発目まで撃つ
+  expect(store.getView().replay!.firstShot).toBeDefined();
+  replay(store);
+  expect(tutorial.step()).toBe("done");
 });
 
-it("チュートリアルの面は外し続けても弾切れで失敗しない", () => {
-  const store = createChallengeStore(TUTORIAL_STAGE, profile);
-  for (let i = 0; i < 20; i++) shoot(store, { slot: 0, elevation: 80, power: 20 + (i % 3) });
+it("盤面の準備は手順から決まり、やり直しでストアを作り直してもかけ直せる", () => {
+  expect(tutorialSetup("fire")).toEqual({ targets: [], wind: 0 });
+  expect(tutorialSetup("target")).toEqual({ targets: [TUTORIAL_TARGET], wind: 0 });
+  expect(tutorialSetup("timer")).toEqual({ targets: [TUTORIAL_TARGET], wind: TUTORIAL_WIND });
+  expect(tutorialSetup("done")).toEqual({ targets: [TUTORIAL_TARGET, ITEM_TARGET], wind: TUTORIAL_WIND });
+  const store = tutorialStore();
+  guide(store, "items");
+  expect(store.getTargets()).toHaveLength(2);
+  expect(store.getView().wind.value).toBe(TUTORIAL_WIND);
+});
+
+it("チュートリアルの盤面は外し続けても、的をすべて壊しても終わらない", () => {
+  const store = tutorialStore();
+  store.addTargets([TUTORIAL_TARGET]);
+  for (let i = 0; i < 20; i++) shoot(store, miss);
   expect(store.getState().status).toBe("playing");
-  expect(TUTORIAL_STAGE.shots).toBeGreaterThanOrEqual(99);
-});
-
-it("歩数を使い切っても場外に落ちず、射撃のたびに歩数が戻る", () => {
-  const store = createChallengeStore(TUTORIAL_STAGE, profile);
-  for (let turn = 0; turn < 12; turn++) {
-    for (let i = 0; i < 40; i++) store.moveStep(-1);
-    shoot(store, { slot: 0, elevation: 80, power: 1 });
-  }
+  walkHome(store);
+  shoot(store, TUTORIAL_SOLUTION);
+  expect(store.getTargets().every(t => t.destroyed)).toBe(true);
   expect(store.getState().status).toBe("playing");
-  expect(store.getView().control!.stepsLeft).toBeGreaterThan(0);
+  expect(store.getView().phase).toBe("acting");
 });
