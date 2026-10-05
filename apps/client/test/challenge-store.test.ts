@@ -127,6 +127,8 @@ describe("チュートリアル向けの盤面（設計書 44）", () => {
     store.fire(50);
     const job = store.getView().replay!;
     expect(job.shot.input.item).toBe("teleport");
+    // 再生は shot.teleport を見て、弾が当たってから光の柱と一緒に機体を移す。無いと撃った直後に移ってしまう
+    expect(job.shot.teleport).toEqual({ x: job.shot.xAfter[0], y: job.shot.yAfter[0] });
     expect(job.shot.impacts).toEqual([]);
     expect(job.maskAfter.cells).toEqual(job.maskBefore.cells);
     replay(store);

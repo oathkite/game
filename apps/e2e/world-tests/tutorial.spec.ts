@@ -9,17 +9,18 @@ const guide = (page: Page) => page.locator(".tutorial-guide");
 const press = async (page: Page, key: string, times: number): Promise<void> => {
   for (let i = 0; i < times; i++) await page.keyboard.press(key);
 };
-/** 発射ボタンの長押しと同じく、押している時間でパワーが決まる。再生が終わって、次を撃てるか次の手順 next へ進むまで待ち、撃ったパワーを返す */
-const shoot = async (page: Page, ms: number, next: string): Promise<number> => {
+/** power で撃ち、再生が終わって、次を撃てるか次の手順 next へ進むまで待つ。
+ * 長押しの時間でパワーが決まるので、practice.spec.ts と同じく偽の時計で押している時間を固定し、マシンの負荷でパワーがずれないようにする */
+const shoot = async (page: Page, power: number, next: string): Promise<void> => {
+  await page.clock.pauseAt(new Date(await page.evaluate(() => Date.now() + 1000)));
   await page.keyboard.down("Space");
-  await page.waitForTimeout(ms);
+  await page.clock.runFor(power * 15 + 3);
   await page.keyboard.up("Space");
-  const power = Number(await page.locator(".battle-console").innerText().then(text => text.split("\n")[1]));
+  await page.clock.resume();
   // デスクトップには発射のボタンが無いので、発射と同じ条件で押せる武器のボタンで見る
   await expect(armed(page)).toBeDisabled();
   // 操作の手順へ進めば武器も押せるので、どちらか 1 つ以上が見つかるまで待つ
   await expect(page.locator(`.tutorial-step-${next}, .battle-weapons > button:first-child:enabled`)).not.toHaveCount(0, { timeout: 20000 });
-  return power;
 };
 
 const throughControls = async (page: Page): Promise<void> => {
@@ -48,7 +49,7 @@ const throughControls = async (page: Page): Promise<void> => {
   await press(page, "KeyQ", 1);
   await expect(guide(page)).toContainText("押し続けるとパワーがたまり");
   // 的はまだ無いので、どこへ撃ってもよい。左を向いているので左の遠くへ撃つ
-  await shoot(page, 1400, "memo");
+  await shoot(page, 90, "memo");
   await expect(guide(page)).toContainText("目安の線を引けます");
   await page.getByTestId("prototype-power").click({ position: { x: 20, y: 10 } });
   await expect(page.locator("[data-power-memo]")).toHaveCount(1);
@@ -57,6 +58,7 @@ const throughControls = async (page: Page): Promise<void> => {
 
 test("初回は「はじめる」からチュートリアルに入り、促した操作で進んで出撃準備へ出る。2回目はロビーへ直行する", async ({ page }) => {
   test.setTimeout(150000);
+  await page.clock.install();
   await page.goto("/");
   await page.getByRole("button", { name: "はじめる", exact: true }).click();
   await throughControls(page);
@@ -65,15 +67,10 @@ test("初回は「はじめる」からチュートリアルに入り、促し�
   await press(page, "ArrowLeft", 2);
   await press(page, "ArrowRight", 1);
   await press(page, "ArrowDown", 1);
-  // 押している時間とパワーの関係は環境で揺れるので、撃ったパワーを見て次の時間を直す（1あたり約15ms）
-  let ms = 560;
-  for (let attempt = 0; attempt < 5 && !(await page.locator(".tutorial-step-wind").count()); attempt++) {
-    const power = await shoot(page, ms, "wind");
-    ms += (45 - power) * 15;
-  }
+  await shoot(page, 45, "wind");
   await expect(guide(page)).toContainText("風が吹き始めました");
   await expect(page.locator(".tutorial-step-wind .battle-wind")).toContainText("右向きの風 6");
-  await shoot(page, 500, "timer");
+  await shoot(page, 33, "timer");
   await expect(guide(page)).toContainText("20秒の制限時間");
   await expect(page.locator(".battle-floating-timer")).toHaveText(/^\d+$/);
   await expect(page.getByRole("button", { name: "次へ", exact: true })).toBeFocused();
@@ -84,11 +81,11 @@ test("初回は「はじめる」からチュートリアルに入り、促し�
   await expect(page.getByRole("button", { name: "テレポート", exact: true })).toBeDisabled();
   await double.click();
   await expect(double).toHaveAttribute("aria-pressed", "true");
-  await shoot(page, 600, "teleport");
+  await shoot(page, 40, "teleport");
   await expect(guide(page)).toContainText("テレポートを選んで撃つと");
   await expect(page.getByRole("button", { name: "ダブルシュート（使用済み）" })).toBeDisabled();
   await page.getByRole("button", { name: "テレポート", exact: true }).click();
-  await shoot(page, 600, "done");
+  await shoot(page, 40, "done");
   await expect(guide(page)).toContainText("チュートリアル完了");
   await expect(page.getByRole("button", { name: "テレポート（使用済み）" })).toBeDisabled();
   await expect(page.getByRole("button", { name: "出撃準備へ進む", exact: true })).toBeFocused();
