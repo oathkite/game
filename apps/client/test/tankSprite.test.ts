@@ -86,7 +86,8 @@ describe("composeTank", () => {
       const edge = pixels.filter(p => p.x === TANK_FRAME.left || p.y === TANK_FRAME.top || p.x === TANK_FRAME.left + TANK_FRAME.width - 1 || p.y === TANK_FRAME.top + TANK_FRAME.height - 1);
       expect(edge, `${frame} ${turretSkin} tilt ${tilt}`).toEqual([]);
     }
-  });
+    // すべての組を描くので重い。手元では 1.4 秒だが、デプロイの CI では既定の 5 秒を超えて落ちることがある（2026-10-03、10-05）
+  }, 30_000);
   it("フレームは主色の車体を持ち、砲塔は副色で塗る", () => {
     for (const frame of FRAME_SKINS) for (const turretSkin of TURRET_SKINS) {
       const colors = new Set(opaquePixels(composeTank({ ...base, frame, turretSkin })).map(p => p.color));
