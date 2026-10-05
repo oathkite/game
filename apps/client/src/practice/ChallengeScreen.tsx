@@ -1,21 +1,11 @@
 import { useLanguage } from "@/i18n/locale";
-import { useEffect, useMemo, useRef, useState, useSyncExternalStore } from "react";
-import { tiltOf } from "@game/sim";
+import { useEffect, useRef, useState, useSyncExternalStore } from "react";
 import type { Profile } from "@/app/profile";
-import { BattleConsole, BattleOverlay } from "@/worldUi/BattleHud";
-import { BattleTouchControls } from "@/worldUi/BattleTouchControls";
-import { useBrowserBackAction } from "@/worldUi/browserBack";
-import { createCameraRig } from "@/prototype/cameraRig";
-import { cameraLayout } from "@/prototype/camera";
-import { PrototypeCanvas } from "@/prototype/PrototypeCanvas";
-import { usePrototypeInput } from "@/prototype/usePrototypeInput";
 import { setMusic } from "@/app/audio";
-import { hudPose } from "@/match/hudPose";
-import { loadCameraScale } from "@/worldUi/displayScale";
+import { ChallengeField } from "./ChallengeField";
 import { createChallengeStore, type ChallengeStore } from "./store";
 import type { ChallengeStage } from "./stages";
 import type { ChallengeState } from "./challenge";
-import "@/prototype/prototype.css";
 
 type Props = {
   readonly stage: ChallengeStage;
@@ -50,39 +40,21 @@ const ChallengeDialog = ({ state, menu, close, ...props }: Props & { readonly st
 };
 
 
-const openingComplete = () => {};
 const ChallengeGame = (props: Props & { readonly store: ChallengeStore }) => {
   const { t } = useLanguage();
   const { store, stage } = props;
   const state = useSyncExternalStore(store.subscribe, store.getState, store.getState);
-  const [size, setSize] = useState({ w: innerWidth, h: innerHeight });
-  const [ready, setReady] = useState(false), [menu, setMenu] = useState(false);
+  const [menu, setMenu] = useState(false);
   const recorded = useRef(false), initialBest = useRef(props.best);
-  const rig = useMemo(createCameraRig, []);
-  useEffect(() => {
-    const resize = () => setSize({ w: innerWidth, h: innerHeight });
-    window.addEventListener("resize", resize);
-    return () => window.removeEventListener("resize", resize);
-  }, []);
   useEffect(() => {
     if (state.status === "clear" && !recorded.current) { recorded.current = true; props.onClear(state.used); }
   }, [state.status, state.used, props.onClear]);
-  // 通常の対戦と同じ倍率で寄せる（設計書 37）
-  const layout = useMemo(() => ({ ...cameraLayout(size.w, size.h, loadCameraScale()), mapHeight: Math.max(1, size.h - 160) }), [size]);
-  const blocked = menu || state.status !== "playing";
-  const input = usePrototypeInput(store, rig, ready && state.view.phase === "acting", blocked, () => { if (state.status === "playing") setMenu(v => !v); });
-  useBrowserBackAction(true, () => { input.cancel(); setMenu(true); });
-  const pose = hudPose(state.view, 0)!;
   const remaining = state.targets.filter(t => !t.destroyed).length;
-  return <main className="kp-root challenge-game" onContextMenu={e => e.preventDefault()}>
-    <BattleOverlay clock={<div className="challenge-status"><strong>{stage.id} {t(stage.title)}</strong><span>{t("的 {targets} · 残り {shots}発", { targets: remaining, shots: stage.shots - state.used })}</span></div>} onMenu={() => { input.cancel(); setMenu(true); }} />
-    <PrototypeCanvas store={store} rig={rig} layout={layout} handlers={input.world} blocked={blocked || input.gauge.charging} followShot onReady={setReady} onOpeningComplete={openingComplete} worldArt practice={store} />
-    <p className="challenge-hint">{t(stage.hint)}</p>
-    <BattleConsole steps={state.view.control?.stepsLeft ?? 0} tilt={tiltOf(state.view.mask!, pose)} elevation={state.view.lastElevation} facing={pose.facing} power={input.gauge.value} loadout={stage.loadout} slot={state.view.lastSlot} disabled={blocked || !ready || state.view.phase !== "acting"} selectSlot={store.selectSlot}>
-      <BattleTouchControls disabled={blocked || !ready || state.view.phase !== "acting"} button={input.button} />
-    </BattleConsole>
-    {blocked && <ChallengeDialog {...props} best={initialBest.current} state={state} menu={menu && state.status === "playing"} close={() => setMenu(false)} />}
-  </main>;
+  const status = <div className="challenge-status"><strong>{stage.id} {t(stage.title)}</strong><span>{t("的 {targets} · 残り {shots}発", { targets: remaining, shots: stage.shots - state.used })}</span></div>;
+  return <ChallengeField store={store} loadout={stage.loadout} className="challenge-game" status={status} guide={<p className="challenge-hint">{t(stage.hint)}</p>}
+    paused={menu} onMenu={() => setMenu(true)} onToggleMenu={() => { if (state.status === "playing") setMenu(v => !v); }}>
+    {(menu || state.status !== "playing") && <ChallengeDialog {...props} best={initialBest.current} state={state} menu={menu && state.status === "playing"} close={() => setMenu(false)} />}
+  </ChallengeField>;
 };
 
 export const ChallengeScreen = (props: Props) => {
