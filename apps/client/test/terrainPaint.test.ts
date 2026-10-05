@@ -1,8 +1,9 @@
 import { describe, expect, it } from "vitest";
 import { carve, maskFromHeights, type TerrainMask } from "@game/sim";
-import { isPaletteColor, PALETTE } from "@/game/palette";
+import { PALETTE } from "@/game/palette";
 import { createGrid, getPixel, TRANSPARENT, type PixelGrid } from "@/game/pixelGrid";
 import { changedRect, paintTerrain, TERRAIN_THEMES, terrainDepth, TEXELS, type TerrainTheme } from "@/game/terrainPaint";
+import { offPalette } from "./offPalette";
 
 // 地形の塗り分け。設計書 40.6。1 セルを 4 × 4 texel で塗り、地形 mask の外は塗らない
 
@@ -56,7 +57,7 @@ describe("paintTerrain", () => {
     const mask = carve(carve(original, { cx: 12, cy: 10, radius: 5 }), { cx: 40, cy: 20, radius: 6 });
     for (const theme of Object.keys(TERRAIN_THEMES) as TerrainTheme[]) {
       const grid = paint(mask, theme, original);
-      for (const color of grid.pixels) if (color !== TRANSPARENT) expect(isPaletteColor(color), `${theme} 0x${color.toString(16)}`).toBe(true);
+      expect(offPalette(grid.pixels.filter(color => color !== TRANSPARENT)), theme).toEqual([]);
     }
   });
   it("ステージごとに地中でいちばん多い色が違う", () => {

@@ -1,8 +1,8 @@
 import { describe, expect, it } from "vitest";
 import { WEAPON_IDS } from "@game/protocol";
-import { isPaletteColor } from "@/game/palette";
 import { opaqueBounds, TRANSPARENT } from "@/game/pixelGrid";
 import { ICON_VIEW, iconShift, weaponIconGrid } from "@/worldUi/weaponIconGrid";
+import { offPalette } from "./offPalette";
 
 // 武器のアイコン。設計書 40.10。40.8 の弾の絵から作り、13 × 13 art px の枠に収める（52 px で 1 art px = 4 px）
 
@@ -16,7 +16,7 @@ describe("weaponIconGrid", () => {
       expect(b.top).toBeGreaterThanOrEqual(ICON_VIEW.top);
       expect(b.left + b.width).toBeLessThanOrEqual(ICON_VIEW.left + ICON_VIEW.width);
       expect(b.top + b.height).toBeLessThanOrEqual(ICON_VIEW.top + ICON_VIEW.height);
-      for (const c of grid.pixels) if (c !== TRANSPARENT) expect(isPaletteColor(c)).toBe(true);
+      expect(offPalette(grid.pixels.filter(c => c !== TRANSPARENT)), weapon).toEqual([]);
       pictures.add(Array.from(grid.pixels).join());
     }
     expect(pictures.size).toBe(WEAPON_IDS.length);
