@@ -47,7 +47,7 @@ pnpm test          # 単体テスト
 ```
 
 e2e は、PR を ready にする前に、変えたものに応じた config を通す。ready のあとにコミットを足したら、マージする HEAD で回し直す。
-CI は PR では走らない。`deploy.yml` が main への push で typecheck と単体テストを回してから配置するだけなので、ここで回す e2e が本番へ出る前の唯一の e2e になる。
+CI は、PR では `ci.yml` が typecheck と単体テストを回し、main への push では `deploy.yml` が同じものを回してから配置する。どちらも e2e は回さないので、ここで回す e2e が本番へ出る前の唯一の e2e になる。PR の CI が赤のままマージしない。
 途中のコミットで回すかどうかは作業者が決める。
 
 ```sh

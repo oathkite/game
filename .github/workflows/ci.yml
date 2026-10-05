@@ -1,0 +1,35 @@
+# PR ごとに typecheck と単体テストを回す。deploy.yml が main への push で配置の前に回すものと同じで、
+# マージの前に落ちることを確かめる（#70、#73 は配置の段で初めて単体テストが落ちた）。
+
+name: ci
+
+on:
+  pull_request:
+  workflow_dispatch:
+
+# 同じ PR に push が続いたら、古い実行を取り消す
+concurrency:
+  group: ci-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+
+jobs:
+  unit:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: pnpm/action-setup@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: pnpm
+
+      - run: pnpm install --frozen-lockfile
+
+      - run: pnpm -r typecheck
+      - run: pnpm test
