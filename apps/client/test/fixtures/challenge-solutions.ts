@@ -9,3 +9,6 @@ export const SOLUTIONS = [
   [{ move: 0, slot: 0, elevation: 10, power: 46 }, { move: 0, slot: 0, elevation: 10, power: 68 }, { move: 0, slot: 0, elevation: 12, power: 92 }],
   [{ move: 0, slot: 0, elevation: 40, power: 76 }, { move: 0, slot: 0, elevation: 62, power: 100 }, { move: 0, slot: 1, elevation: 42, power: 82 }],
 ] as const;
+
+// チュートリアルの的（設計書 44）。標準砲ならどの角度でもパワー42〜50前後で当たる。
+export const TUTORIAL_SOLUTION = { slot: 0, elevation: 46, power: 45 } as const;

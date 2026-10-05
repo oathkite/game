@@ -10,6 +10,7 @@ it("uses the same top-down shutter for every move and enters battle like a CRT",
   expect(shutterDirection("lobby")).toBe("forward");
   expect(shutterDirection("result")).toBe("forward");
   expect(shutterDirection("battle")).toBe("battle");
+  expect(shutterDirection("tutorial")).toBe("battle");
 });
 it("gives every direction a stepped close and open of the same 400 ms", () => {
   expect(css).toMatch(/\.world-shutter\[data-direction\] \{ animation:400ms steps\(8,end\) both; \}/);

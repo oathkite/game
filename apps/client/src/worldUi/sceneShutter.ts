@@ -4,5 +4,5 @@ export type ShutterDirection = "forward" | "battle";
 /** シャッターが開ききるまでの時間。閉じる側は WorldScenes の timer が同じ長さで入力を止める。 */
 export const SHUTTER_OPEN_MS = 400;
 
-/** 対戦へ入る移動だけ battle にする。進むときも戻るときも同じシャッター */
-export const shutterDirection = (next: string): ShutterDirection => (next === "battle" ? "battle" : "forward");
+/** 対戦とチュートリアルの盤面へ入る移動だけ battle にする。進むときも戻るときも同じシャッター */
+export const shutterDirection = (next: string): ShutterDirection => (next === "battle" || next === "tutorial" ? "battle" : "forward");

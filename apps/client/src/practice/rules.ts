@@ -18,7 +18,8 @@ export const resolveTargets = (mask: TerrainMask, targets: readonly Target[], bl
     return hit || fell ? { ...target, destroyed: true } : target;
   });
 
+/** 的がまだ無いときはクリアにしない（チュートリアルは途中で的を出す。設計書 44.3） */
 export const challengeStatus = (targets: readonly Target[], used: number, limit: number, ringOut: boolean): ChallengeStatus => {
-  if (targets.every((target) => target.destroyed)) return "clear";
+  if (targets.length > 0 && targets.every((target) => target.destroyed)) return "clear";
   return ringOut || used >= limit ? "failed" : "playing";
 };

@@ -54,3 +54,7 @@ export const customizeTank = async (page: Page, look: TankLook): Promise<void> =
   await dialog.getByRole("button", { name: "完了", exact: true }).click();
   await expect(dialog).toBeHidden();
 };
+
+/** 撃てる状態かを見る目印。ターゲットチャレンジの発射のボタンは対戦と同じくタッチ端末だけに出すので、
+ * 発射と同じ条件で押せるようになる 1 番目の武器のボタンで見る（設計書 37.1） */
+export const armed = (page: Page) => page.locator(".battle-weapons > button").first();

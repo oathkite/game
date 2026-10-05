@@ -15,7 +15,7 @@ export type Profile = {
   readonly swapPanels: boolean;
 };
 
-const KEY = "fortress.profile.v1";
+export const PROFILE_KEY = "fortress.profile.v1";
 
 const randomId = (): string => {
   if (typeof crypto !== "undefined" && "randomUUID" in crypto) return crypto.randomUUID();
@@ -37,7 +37,7 @@ const defaults = (): Profile => ({
 
 const read = (): unknown => {
   try {
-    const raw = localStorage.getItem(KEY);
+    const raw = localStorage.getItem(PROFILE_KEY);
     return raw ? (JSON.parse(raw) as unknown) : null;
   } catch {
     return null;
@@ -74,7 +74,7 @@ export const loadProfile = (): Profile => {
 
 export const saveProfile = (profile: Profile): void => {
   try {
-    localStorage.setItem(KEY, JSON.stringify(profile));
+    localStorage.setItem(PROFILE_KEY, JSON.stringify(profile));
   } catch {
     // 保存できない環境では保持だけする
   }

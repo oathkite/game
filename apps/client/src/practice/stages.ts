@@ -17,7 +17,7 @@ export type ChallengeStage = {
 };
 const floor: Platform = [0, 180, 399, 224];
 export const STAGES: readonly ChallengeStage[] = [
-  { id: "01", title: "はじめの一発", hint: "上下で角度を調整。発射を押し続け、離して撃とう。", shots: 5, wind: 0, loadout: ["cannon", "triple"], start: [60, 180], platforms: [floor], targets: [[180, 180]] },
+  { id: "01", title: "はじめの一発", hint: "上下で角度を調整。発射（スペースキー）を押し続け、離して撃とう。", shots: 5, wind: 0, loadout: ["cannon", "triple"], start: [60, 180], platforms: [floor], targets: [[180, 180]] },
   { id: "02", title: "丘の向こう", hint: "砲を上に向けて、壁の向こうへ撃ち上げよう。", shots: 5, wind: 0, loadout: ["cannon", "triple"], start: [60, 180], platforms: [floor, [155, 110, 180, 179]], targets: [[255, 180]] },
   { id: "03", title: "まとめて一発", hint: "的の間を狙えば、一つの爆風でまとめて壊せる。", shots: 4, wind: 0, loadout: ["cannon", "triple"], start: [60, 180], platforms: [floor], targets: [[195, 180], [205, 180], [215, 180]] },
   { id: "04", title: "足元が弱点", hint: "掘削弾で細い足場を崩そう。的は落ちても壊れる。", shots: 4, wind: 0, loadout: ["digger", "cannon"], start: [60, 180], platforms: [floor, [205, 120, 213, 179]], targets: [[209, 120]] },
