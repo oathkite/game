@@ -15,7 +15,8 @@ import { AudioControls } from "@/worldUi/AudioControls";
 import { teamColorName } from "@/worldUi/teamColors";
 import { useLanguage } from "@/i18n/locale";
 import { tiltOf } from "@game/sim";
-import { BattleOverlay, BattleConsole, touchConsoleHeight } from "@/worldUi/BattleHud";
+import { BattleOverlay, BattleConsole } from "@/worldUi/BattleHud";
+import { battleConsoleHeight } from "@/worldUi/consoleHeight";
 import { useTouchControls } from "@/worldUi/useTouchControls";
 import { loadCameraScale } from "@/worldUi/displayScale";
 import { useEffect, useMemo, useRef, useState, useSyncExternalStore } from "react";
@@ -65,9 +66,8 @@ const Battle = ({ store, begin, worldArt, cpu, cpuLevel, onExit, onResult }: { r
   const wasMenuOpen = useRef(false);
   const dialog = useRef<HTMLDialogElement>(null), menuButton = useRef<HTMLButtonElement>(null);
   const rig = useMemo(createCameraRig, []);
-  const largeHud = size.width >= 1200 && size.height >= 700;
   const hudTop = 0;
-  const hudBottom = touch ? touchConsoleHeight(size.width, size.height) : largeHud ? 160 : size.height < 500 || size.width < 1000 ? 96 : 120;
+  const hudBottom = battleConsoleHeight(size.width, size.height, touch);
   const layout = useMemo(() => { const base = cameraLayout(size.width, size.height, worldArt ? loadCameraScale() : 9); return worldArt ? { ...base, mapHeight: Math.max(1, size.height - hudTop - hudBottom) } : base; }, [size, worldArt, hudTop, hudBottom]);
   const revealing = useDelayReveal(view.delay?.revealUntil);
   // 落下中は sceneReady が false になる。入力には sceneReady を含めずに渡し、paused で一時停止させる。

@@ -2,6 +2,7 @@ import { useLanguage } from "@/i18n/locale";
 import { useCallback, useEffect, useRef, useState, useSyncExternalStore } from "react";
 import type { Profile } from "@/app/profile";
 import { setMusic } from "@/app/audio";
+import { useTouchControls } from "@/worldUi/useTouchControls";
 import { ChallengeField } from "./ChallengeField";
 import { createChallengeStore, type ChallengeStore } from "./store";
 import { TURN_LIMIT } from "@game/protocol";
@@ -21,11 +22,11 @@ const useStepMessage = (step: TutorialStep, touch: boolean): string => {
   const { t } = useLanguage();
   switch (step) {
     case "intro": return t("戦車の動かし方を練習しよう。案内に沿って操作して、的を壊したら対戦で知っておくことを確かめます。");
-    case "aim": return touch ? t("画面左下の▲▼で、砲の角度を変えられます。角度を変えてみてください。") : t("↑↓キーか画面左下の▲▼で、砲の角度を変えられます。角度を変えてみてください。");
-    case "move": return touch ? t("◀▶で、戦車が移動します。1回撃つまでに歩ける歩数には限りがあります。動かしてみてください。") : t("←→キーか◀▶で、戦車が移動します。1回撃つまでに歩ける歩数には限りがあります。動かしてみてください。");
+    case "aim": return touch ? t("画面左下の▲▼で、砲の角度を変えられます。角度を変えてみてください。") : t("↑↓キーで、砲の角度を変えられます。角度を変えてみてください。");
+    case "move": return touch ? t("◀▶で、戦車が移動します。1回撃つまでに歩ける歩数には限りがあります。動かしてみてください。") : t("←→キーで、戦車が移動します。1回撃つまでに歩ける歩数には限りがあります。動かしてみてください。");
     case "weapon": return touch ? t("武器ボタンで、武器を切り替えられます。武器を切り替えてみてください。") : t("Q・Eキーか武器ボタンで、武器を切り替えられます。武器を切り替えてみてください。");
     case "memo": return t("パワーの目盛りを押すと、目安の線を引けます。当たったパワーを覚えておくのに使えます。目盛りを押してみてください。");
-    case "fire": return touch ? t("発射ボタンを押し続けるとパワーがたまり、離すと発射します。目安の線を目印に、撃ってみてください。") : t("スペースキーか発射ボタンを押し続けるとパワーがたまり、離すと発射します。目安の線を目印に、撃ってみてください。");
+    case "fire": return touch ? t("発射ボタンを押し続けるとパワーがたまり、離すと発射します。目安の線を目印に、撃ってみてください。") : t("スペースキーを押し続けるとパワーがたまり、離すと発射します。目安の線を目印に、撃ってみてください。");
     case "target": return t("的は右にあります。左右の操作で砲の向きも変わります。角度とパワーを調整して、的を壊してみてください。画面をドラッグすると見回せます。");
     case "wind": return t("対戦では風が吹き、弾が流されます。角度メーターの下にある風のメーターで、向きと強さを確かめてから狙いましょう。");
     case "timer": return t("対戦では、1回の手番に{seconds}秒の制限時間があります。時間内に撃たないと、撃たずに手番が終わります。", { seconds: TURN_LIMIT });
@@ -39,7 +40,8 @@ type GuideProps = { readonly step: TutorialStep; readonly failed: boolean; reado
 /** 画面の上の中央に重ねるメッセージボックス。操作を促す間はボタンを置かず、促した操作でだけ進める。Space も発射にだけ効く */
 const TutorialGuide = ({ step, failed, fromPractice, onNext, onRetry }: GuideProps) => {
   const { t } = useLanguage();
-  const [touch] = useState(() => matchMedia("(pointer: coarse)").matches);
+  // ▲▼◀▶ と発射のボタンは対戦と同じくタッチ端末だけに出すので、文言も同じ判定で切り替える
+  const touch = useTouchControls();
   const message = useStepMessage(step, touch);
   const action = useRef<HTMLButtonElement>(null);
   const button = failed ? { label: t("再挑戦"), run: onRetry }
@@ -80,12 +82,9 @@ const TutorialGame = ({ store, step, onStep, fromPractice, onExit, onRetry }: Ga
   const onReady = useCallback(() => setStarted(true), []);
   // 目安の線は盤面の状態に残らないので、目盛りを押したことを受けて進める
   const onPowerMemo = (memo: number | null) => { if (memo !== null && step === "memo") go(nextTutorialStep(step)); };
-  // 案内はメッセージボックスに任せ、上の中央（チャレンジの面の名前と残りの数の場所）には何も出さない。下の枠はヒントの行の高さを保つ
-  const guide = <>
-    {started && <TutorialGuide step={step} failed={state.status === "failed"} fromPractice={fromPractice} onNext={step === "done" ? onExit : () => go(nextTutorialStep(step))} onRetry={onRetry} />}
-    <div className="tutorial-slot" aria-hidden="true" />
-  </>;
-  return <ChallengeField store={store} loadout={TUTORIAL_STAGE.loadout} className={`challenge-game tutorial-game tutorial-step-${started && !menu ? step : "waiting"}`} status={null} guide={guide}
+  // 案内はメッセージボックスに任せ、上の中央（チャレンジの面の名前と残りの数の場所）には何も出さない
+  const guide = started && <TutorialGuide step={step} failed={state.status === "failed"} fromPractice={fromPractice} onNext={step === "done" ? onExit : () => go(nextTutorialStep(step))} onRetry={onRetry} />;
+  return <ChallengeField store={store} loadout={TUTORIAL_STAGE.loadout} className={`challenge-game tutorial-game tutorial-step-${started && !menu ? step : "waiting"}`} status={null} guide={guide} guideRow={false}
     paused={menu || !started || TUTORIAL_BUTTON_STEPS.includes(step)} onMenu={() => setMenu(true)} onToggleMenu={() => setMenu(v => !v)} onReady={onReady} onPowerMemo={onPowerMemo}>
     {menu && <TutorialMenu close={() => setMenu(false)} onExit={onExit} />}
   </ChallengeField>;

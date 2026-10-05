@@ -1,4 +1,5 @@
 import { expect, test, type Page } from "@playwright/test";
+import { armed } from "./practiceFlow";
 
 test("プラクティス入口、未解放ステージ、自由練習、横画面の射撃", async ({ page }) => {
   await page.goto("/");
@@ -22,9 +23,9 @@ test("プラクティス入口、未解放ステージ、自由練習、横画�
   const world = page.getByTestId("camera-world");
   await expect(world).toHaveAttribute("data-scale", "8");
   await expect(world).toHaveAttribute("data-opening", "true");
-  await expect(page.getByRole("button", { name: "発射", exact: true })).toBeDisabled();
+  await expect(armed(page)).toBeDisabled();
   await expect(world).toHaveAttribute("data-opening", "false", { timeout: 15000 });
-  await expect(page.getByRole("button", { name: "発射", exact: true })).toBeEnabled();
+  await expect(armed(page)).toBeEnabled();
   await page.screenshot({ path: "test-results/challenge-desktop.png" });
   await page.getByRole("button", { name: "設定を開く", exact: true }).click();
   await expect(page.getByRole("dialog")).toBeVisible();
@@ -64,14 +65,14 @@ test("実操作で全8面をクリアし、解放・BESTを再読み込み後も
     let elevation = 45;
     for (const action of actions) {
       // 各ステージの初めは開幕の俯瞰と START を待つ（設計書 37）
-      await expect(page.getByRole("button", { name: "発射", exact: true })).toBeEnabled({ timeout: 20000 });
+      await expect(armed(page)).toBeEnabled({ timeout: 20000 });
       for (let i = 0; i < action.move; i++) await page.keyboard.press("ArrowRight");
       for (let i = 0; i < Math.abs(action.elevation - elevation); i++) await page.keyboard.press(action.elevation > elevation ? "ArrowUp" : "ArrowDown");
       elevation = action.elevation;
       await page.keyboard.press(action.slot === 0 ? "KeyQ" : "KeyE");
       await fireAtPower(page, action.power);
-      await expect(page.getByRole("button", { name: "発射", exact: true })).toBeDisabled();
-      if (action !== actions[actions.length - 1]) await expect(page.getByRole("button", { name: "発射", exact: true })).toBeEnabled({ timeout: 20000 });
+      await expect(armed(page)).toBeDisabled();
+      if (action !== actions[actions.length - 1]) await expect(armed(page)).toBeEnabled({ timeout: 20000 });
     }
     await expect(page.getByRole("heading", { name: "CLEAR!", exact: true })).toBeVisible({ timeout: 20000 });
     await page.screenshot({ path: `test-results/challenge-clear-${index + 1}.png` });
@@ -99,7 +100,7 @@ test("弾切れ後に再挑戦でき、メニューを開くと長押し射撃�
   await page.getByRole("button", { name: "練習に戻る" }).click();
   await expect(page.locator(".challenge-status")).toContainText("残り 5発");
   for (let i = 0; i < 5; i++) {
-    await expect(page.getByRole("button", { name: "発射", exact: true })).toBeEnabled({ timeout: 20000 });
+    await expect(armed(page)).toBeEnabled({ timeout: 20000 });
     await page.keyboard.press("Space");
     await expect(page.locator(".challenge-status")).toContainText(`残り ${4 - i}発`);
   }
@@ -107,15 +108,17 @@ test("弾切れ後に再挑戦でき、メニューを開くと長押し射撃�
   await page.getByRole("button", { name: "もう一度", exact: true }).click();
   await expect(page.locator(".challenge-status")).toContainText("的 1 · 残り 5発");
   // もう一度でも開幕の俯瞰から始める
-  await expect(page.getByRole("button", { name: "発射", exact: true })).toBeEnabled({ timeout: 15000 });
+  await expect(armed(page)).toBeEnabled({ timeout: 15000 });
   await page.getByRole("button", { name: "設定を開く", exact: true }).click();
   await page.getByRole("button", { name: "ステージ選択へ戻る" }).click();
   await expect(page.getByRole("button", { name: "02 丘の向こう 未解放" })).toBeDisabled();
 });
 
 
-test("縦画面で操作でき、ブラウザの戻るは練習メニューを開く", async ({ page }) => {
-  await page.setViewportSize({ width: 390, height: 844 });
+test("縦画面のタッチ端末で操作でき、ブラウザの戻るは練習メニューを開く", async ({ browser }) => {
+  // ▲▼◀▶ と発射のボタンは対戦と同じくタッチ端末だけに出す
+  const context = await browser.newContext({ locale: "ja-JP", hasTouch: true, isMobile: true, viewport: { width: 390, height: 844 } });
+  const page = await context.newPage();
   await page.goto("/");
   await page.getByRole("button", { name: "はじめる", exact: true }).click();
   await page.getByRole("button", { name: "プラクティス", exact: true }).click();
@@ -141,6 +144,7 @@ test("縦画面で操作でき、ブラウザの戻るは練習メニューを�
   await page.keyboard.press("Space");
   await expect(page.getByRole("dialog")).toBeHidden();
   await expect(page.locator(".challenge-status")).toContainText("残り 5発");
+  await context.close();
 });
 
 test("英語設定を練習の一覧・説明・操作にも引き継ぐ", async ({ page }) => {

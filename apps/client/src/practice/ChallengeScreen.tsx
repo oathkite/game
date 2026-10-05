@@ -51,7 +51,7 @@ const ChallengeGame = (props: Props & { readonly store: ChallengeStore }) => {
   }, [state.status, state.used, props.onClear]);
   const remaining = state.targets.filter(t => !t.destroyed).length;
   const status = <div className="challenge-status"><strong>{stage.id} {t(stage.title)}</strong><span>{t("的 {targets} · 残り {shots}発", { targets: remaining, shots: stage.shots - state.used })}</span></div>;
-  return <ChallengeField store={store} loadout={stage.loadout} className="challenge-game" status={status} guide={<p className="challenge-hint">{t(stage.hint)}</p>}
+  return <ChallengeField store={store} loadout={stage.loadout} className="challenge-game" status={status} guide={<p className="challenge-hint">{t(stage.hint)}</p>} guideRow
     paused={menu} onMenu={() => setMenu(true)} onToggleMenu={() => { if (state.status === "playing") setMenu(v => !v); }}>
     {(menu || state.status !== "playing") && <ChallengeDialog {...props} best={initialBest.current} state={state} menu={menu && state.status === "playing"} close={() => setMenu(false)} />}
   </ChallengeField>;

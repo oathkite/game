@@ -1,5 +1,5 @@
 import { expect, test, type Page } from "@playwright/test";
-import { lobby } from "./practiceFlow";
+import { armed, lobby } from "./practiceFlow";
 
 // 初回の「はじめる」はチュートリアルへ入る（設計書 44）。この spec だけ保存が空の状態で始める
 test.use({ storageState: { cookies: [], origins: [] } });
@@ -15,8 +15,9 @@ const shoot = async (page: Page, ms: number): Promise<number> => {
   await page.waitForTimeout(ms);
   await page.keyboard.up("Space");
   const power = Number(await page.locator(".battle-console").innerText().then(text => text.split("\n")[1]));
-  await expect(page.locator(".battle-touch-fire")).toBeDisabled();
-  await expect(page.locator(".tutorial-step-wind, .battle-touch-fire:enabled")).toHaveCount(1, { timeout: 20000 });
+  // デスクトップには発射のボタンが無いので、発射と同じ条件で押せる武器のボタンで見る
+  await expect(armed(page)).toBeDisabled();
+  await expect(page.locator(".tutorial-step-wind, .battle-weapons > button:first-child:enabled")).toHaveCount(1, { timeout: 20000 });
   return power;
 };
 
@@ -28,7 +29,9 @@ const throughBasics = async (page: Page): Promise<void> => {
   await expect(guide(page)).toContainText("砲の角度を変えられます");
   // 上の中央にはチャレンジの面の名前と残りの数を出さない
   await expect(page.locator(".challenge-status")).toHaveCount(0);
-  await expect(page.locator(".tutorial-step-aim .dpad-up")).toBeVisible();
+  // デスクトップには ▲▼◀▶ のボタンが無いので、キーだけを書く
+  await expect(page.locator(".battle-dpad")).toHaveCount(0);
+  await expect(guide(page)).not.toContainText("▲▼");
   // 促していない操作では進まない
   await press(page, "KeyE", 1);
   await press(page, "ArrowUp", 9);

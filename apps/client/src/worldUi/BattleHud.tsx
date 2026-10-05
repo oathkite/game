@@ -12,8 +12,7 @@ import "./battleHud.css";
 import "./battleHudDesktop.css";
 import "./battleTouch.css";
 
-/** タッチの操作盤の高さ。縦持ちのスマートフォンはパワーと残り移動を別の段に分けるので高い。battleTouch.css の media query と同じ条件で決める */
-export const touchConsoleHeight = (width: number, height: number): number => (height >= width && width < 600 ? 216 : 112);
+export { touchConsoleHeight } from "./consoleHeight";
 
 export type HudPlayer = { readonly id: string; readonly name: string; readonly hp: number; readonly team: number; readonly colors?: TankColors | undefined };
 /** 設定の右隣に全画面のボタンを置く（設計書 30 章）。全画面を持たない端末（iPhone の Safari）では出さない */

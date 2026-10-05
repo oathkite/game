@@ -33,9 +33,10 @@
 .challenge-modal .primary-action { background: var(--ui); color: var(--bg); }
 
 .challenge-modal input { flex: none; width: 24px; height: 24px; }
-.challenge-game .battle-floating-timer { width: auto; max-width: calc(100% - 90px); left: 16px; transform: none; }
+.challenge-game:not(.tutorial-game) .battle-floating-timer { width: auto; max-width: calc(100% - 90px); left: 16px; transform: none; }
 .challenge-status { display: flex; flex-direction: column; gap: 6px; padding: 10px; background: #000d; font-size: 14px; line-height: 1.4; }
-.challenge-game > .challenge-hint { height: 36px; margin: 6px 12px; text-align: left; color: #a4c9ac; }
+/* DotGothic16 は 16px 以外では点が潰れるので 16px にし、縦持ちで 2 行に折り返しても 36px に収まる行の高さにする */
+.challenge-game > .challenge-hint { height: 36px; margin: 6px 12px; overflow: hidden; text-align: left; color: #a4c9ac; font-size: 16px; line-height: 18px; }
 .challenge-game .battle-console { flex: none; }
 
 /* 設定と全画面のボタン（simpleTheme.css）の右に 4px あけて置き、右端は中央の残り時間の 28px 手前で止める */
@@ -53,9 +54,8 @@
 .cpu-level-label { display: block; font-size: 10px; }
 
 /* チュートリアルのメッセージボックス（設計書 44.2）。画面の上の中央に重ね、左上の設定と全画面のボタン、右上の全体図を避ける。
+   盤面と操作盤の間に行は取らない（ChallengeField の guideRow）。
    DotGothic16 は 16px のドットで描かれた書体で、文字の平滑化を切っているので、16px 以外では点が間引かれて潰れる。文字はすべて 16px にする */
-.tutorial-slot { height: 48px; flex: none; }
-@media (max-height: 450px) { .tutorial-slot { height: 40px; } }
 .tutorial-guide { position: absolute; top: 12px; left: 50%; z-index: 3; transform: translateX(-50%); width: min(560px, calc(100% - 368px)); box-sizing: border-box; display: flex; flex-direction: column; gap: 8px; padding: 12px 16px; background: #080c08f2; border: 2px solid var(--ui); color: var(--ui); font-size: 16px; line-height: 24px; }
 .tutorial-guide p { margin: 0; }
 .tutorial-guide footer { display: flex; align-items: center; justify-content: flex-end; gap: 8px; }
@@ -71,13 +71,15 @@
 /* 左右の間が狭い縦持ちでは、上のボタンと全体図の下の段に出す */
 @media (max-width: 599px) { .tutorial-guide { top: 72px; width: calc(100% - 24px); } }
 
-/* 促している操作のボタンを点滅させる */
+/* 促している操作のボタンを点滅させる。デスクトップには ▲▼◀▶ が無いので、角度メーターと残り移動のバーも点滅させる */
+.tutorial-step-aim .battle-angle, .tutorial-step-move .battle-movement,
 .tutorial-step-aim .dpad-up, .tutorial-step-aim .dpad-down,
 .tutorial-step-move .dpad-left, .tutorial-step-move .dpad-right,
 .tutorial-step-weapon .battle-weapons > button, .tutorial-step-memo .battle-power,
 .tutorial-step-fire .battle-touch-fire { outline: 2px solid #ffe066; outline-offset: 2px; animation: tutorial-pulse 800ms steps(1, end) infinite; }
 @keyframes tutorial-pulse { 50% { outline-color: transparent; } }
 @media (prefers-reduced-motion: reduce) {
+  .tutorial-step-aim .battle-angle, .tutorial-step-move .battle-movement,
   .tutorial-step-aim .dpad-up, .tutorial-step-aim .dpad-down,
   .tutorial-step-move .dpad-left, .tutorial-step-move .dpad-right,
   .tutorial-step-weapon .battle-weapons > button, .tutorial-step-memo .battle-power,
