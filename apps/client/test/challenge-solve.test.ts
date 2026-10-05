@@ -57,6 +57,7 @@ it("移動の面は開始位置から一射で終わらず、壁の面は一射�
       if (completeChallenge(fired, stage, 1).status === "clear") throw new Error(`${stage.id}: ${slot}/${elevation}/${power} で一射クリア`);
     }
   }
+  // 2 面の全仰角と全パワーを撃つので、手元でも 1.5 秒前後かかる。並列に回ると既定の 5 秒に近づくので延ばす
 }, 30000);
 
 it("支柱を撃つと的に爆風が届かなくても落下で壊れる", () => {
