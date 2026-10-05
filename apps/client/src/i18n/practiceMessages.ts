@@ -49,7 +49,7 @@ export const practiceEnglish: Readonly<Record<string, string>> = {
   "的 {targets} · 残り {shots}発": "Targets {targets} · Shots left {shots}",
   "はじめの一発": "First shot", "丘の向こう": "Over the hill", "まとめて一発": "One blast, many targets",
   "足元が弱点": "Weak foundations", "撃つ場所を変えよう": "Find a new angle", "風に乗せて": "Ride the wind", "道を開け": "Clear a path", "最後の三つ": "The final three",
-  "上下で角度を調整。発射を押し続け、離して撃とう。": "Aim up or down. Hold Fire, then release to shoot.",
+  "上下で角度を調整。発射（スペースキー）を押し続け、離して撃とう。": "Aim up or down. Hold Fire (Space), then release to shoot.",
   "砲を上に向けて、壁の向こうへ撃ち上げよう。": "Aim high to shoot over the wall.",
   "的の間を狙えば、一つの爆風でまとめて壊せる。": "Aim between targets to destroy them with one blast.",
   "掘削弾で細い足場を崩そう。的は落ちても壊れる。": "Use Digger to break the narrow support. Falling targets also break.",

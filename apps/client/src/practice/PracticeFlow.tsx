@@ -23,7 +23,7 @@ export const PracticeFlow = ({ onTutorial, onCpuStart, profile, onProfileChange,
   if (page.kind === "free" || page.kind === "cpu") return <FreePracticeSetup cpu={page.kind === "cpu"} profile={profile} onProfileChange={onProfileChange} onStart={page.kind === "cpu" ? onCpuStart : onFreeStart} onBack={back} />;
   if (page.kind === "challenge") {
     const stage = STAGES[page.index]!;
-    return <ChallengeScreen key={`${stage.id}-${page.attempt}`} stage={stage} profile={profile} onProfileChange={onProfileChange} best={progress[stage.id]} onBack={() => setPage({ kind: "stages" })}
+    return <ChallengeScreen key={`${stage.id}-${page.attempt}`} stage={stage} profile={profile} best={progress[stage.id]} onBack={() => setPage({ kind: "stages" })}
       onRetry={() => setPage({ ...page, attempt: page.attempt + 1 })}
       onNext={page.index + 1 < STAGES.length ? () => setPage({ kind: "challenge", index: page.index + 1, attempt: 0 }) : null}
       onClear={(used) => { const next = recordClear(progress, stage.id, used); setProgress(next); setSaved(saveProgress(next)); }} />;

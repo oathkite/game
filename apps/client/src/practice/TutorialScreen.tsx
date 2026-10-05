@@ -4,6 +4,7 @@ import type { Profile } from "@/app/profile";
 import { setMusic } from "@/app/audio";
 import { Timer } from "@/ui/Timer";
 import { useTouchControls } from "@/worldUi/useTouchControls";
+import { AudioControls } from "@/worldUi/AudioControls";
 import { ChallengeField } from "./ChallengeField";
 import { createChallengeStore, type ChallengeStore } from "./store";
 import { TURN_LIMIT } from "@game/protocol";
@@ -64,6 +65,7 @@ const TutorialMenu = ({ close, onExit }: { readonly close: () => void; readonly 
   return <dialog ref={ref} className="challenge-modal" aria-label={t("チュートリアル")} onCancel={(e) => { e.preventDefault(); close(); }}>
     <div className="box column">
       <h2>{t("チュートリアル")}</h2>
+      <AudioControls />
       <button className="primary-action" onClick={close}>{t("チュートリアルに戻る")}</button>
       <button onClick={onExit}>{t("チュートリアルをやめる")}</button>
     </div>

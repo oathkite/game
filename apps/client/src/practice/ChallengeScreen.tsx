@@ -2,6 +2,7 @@ import { useLanguage } from "@/i18n/locale";
 import { useEffect, useRef, useState, useSyncExternalStore } from "react";
 import type { Profile } from "@/app/profile";
 import { setMusic } from "@/app/audio";
+import { AudioControls } from "@/worldUi/AudioControls";
 import { ChallengeField } from "./ChallengeField";
 import { createChallengeStore, type ChallengeStore } from "./store";
 import type { ChallengeStage } from "./stages";
@@ -10,7 +11,6 @@ import type { ChallengeState } from "./challenge";
 type Props = {
   readonly stage: ChallengeStage;
   readonly profile: Profile;
-  readonly onProfileChange: (profile: Profile) => void;
   readonly best: number | undefined;
   readonly onClear: (used: number) => void;
   readonly onBack: () => void;
@@ -31,7 +31,8 @@ const ChallengeDialog = ({ state, menu, close, ...props }: Props & { readonly st
       {clear && <p>{props.best === undefined || state.used < props.best ? t("自己ベスト更新！") : t("BEST {shots}発", { shots: props.best })}</p>}
       {clear && props.onNext && <button className="primary-action" onClick={props.onNext}>{t("次のステージへ")}</button>}
       {clear && !props.onNext && <p>{t("全8ステージクリア！ 次は最少弾数に挑戦しよう。")}</p>}
-      {menu && <label className="row"><input type="checkbox" checked={props.profile.muted} onChange={(e) => props.onProfileChange({ ...props.profile, muted: e.target.checked })} />{t("消音")}</label>}
+      {/* 音の設定は対戦のメニューと同じ部品にする */}
+      {menu && <AudioControls />}
       {menu && <button className="primary-action" onClick={close}>{t("練習に戻る")}</button>}
       <button onClick={props.onRetry}>{t("もう一度")}</button>
       <button onClick={props.onBack}>{t("ステージ選択へ戻る")}</button>
