@@ -21,6 +21,10 @@ describe("ターゲットチャレンジ", () => {
     expect(challengeStatus([target], 2, 3, false)).toBe("playing");
     expect(challengeStatus([target], 0, 3, true)).toBe("failed");
   });
+  it("的がまだ無ければクリアにしない（チュートリアルは途中で的を出す）", () => {
+    expect(challengeStatus([], 1, 3, false)).toBe("playing");
+    expect(challengeStatus([], 3, 3, false)).toBe("failed");
+  });
   it("8面の地形と初期状態を独立して作る", () => {
     expect(STAGES).toHaveLength(8);
     expect(new Set(STAGES.map((s) => s.id)).size).toBe(8);
