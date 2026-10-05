@@ -1,7 +1,7 @@
 import { expect, it } from "vitest";
 import { createChallengeStore, type ChallengeStore } from "../src/practice/store";
 import {
-  ITEM_TARGET, nextTutorialStep, observeTutorial, startTutorialStep, TUTORIAL_BUTTON_STEPS, TUTORIAL_STAGE, TUTORIAL_STEPS, TUTORIAL_TARGET, TUTORIAL_WIND, tutorialSetup,
+  ITEM_TARGET, nextTutorialStep, tutorialItems, observeTutorial, startTutorialStep, TUTORIAL_BUTTON_STEPS, TUTORIAL_STAGE, TUTORIAL_STEPS, TUTORIAL_TARGET, TUTORIAL_WIND, tutorialSetup,
   type TutorialProgress, type TutorialStep,
 } from "../src/practice/tutorial";
 import type { Profile } from "../src/app/profile";
@@ -51,8 +51,8 @@ const shoot = (store: ChallengeStore, { slot, elevation, power }: { readonly slo
 /** 的の先の遠くへ外す。開始位置の足場を削らない */
 const miss = { slot: 0, elevation: 20, power: 100 } as const;
 
-it("手順は11個で、説明の手順だけが「次へ」で進む", () => {
-  expect(TUTORIAL_STEPS).toEqual(["intro", "aim", "move", "weapon", "fire", "memo", "target", "wind", "timer", "items", "done"]);
+it("手順は12個で、説明の手順だけが「次へ」で進む", () => {
+  expect(TUTORIAL_STEPS).toEqual(["intro", "aim", "move", "weapon", "fire", "memo", "target", "wind", "timer", "double", "teleport", "done"]);
   expect(TUTORIAL_BUTTON_STEPS).toEqual(["intro", "timer", "done"]);
   expect(nextTutorialStep("intro")).toBe("aim");
   expect(nextTutorialStep("done")).toBe("done");
@@ -130,18 +130,40 @@ it("風の手順で風が吹き始め、風の中で1発撃つと制限時間の
   expect(tutorial.step()).toBe("timer");
 });
 
-it("アイテムの手順では新しい的が出て、アイテムを使って撃ち終えたときだけ進む", () => {
+it("ダブルシュートの手順では新しい的が出て、ダブルシュートを使って撃ち終えたときだけ進む", () => {
   const store = tutorialStore();
-  const tutorial = guide(store, "items");
+  const tutorial = guide(store, "double");
   expect(store.getTargets().map(t => [t.x, t.y])).toEqual([TUTORIAL_TARGET, ITEM_TARGET]);
   shoot(store, miss);
-  expect(tutorial.step()).toBe("items");
+  expect(tutorial.step()).toBe("double");
   store.selectItem("double");
   store.fire(40);
   // 生きた的があるので、ダブルシュートは 2 発目まで撃つ
   expect(store.getView().replay!.firstShot).toBeDefined();
   replay(store);
+  expect(tutorial.step()).toBe("teleport");
+});
+
+it("テレポートの手順は、テレポートを使って移ったときだけ進む", () => {
+  const store = tutorialStore();
+  const tutorial = guide(store, "teleport");
+  store.selectItem("double");
+  store.fire(40);
+  replay(store);
+  expect(tutorial.step()).toBe("teleport");
+  const before = store.getView().control!.x;
+  store.selectItem("teleport");
+  store.fire(50);
+  replay(store);
+  expect(store.getView().control!.x).not.toBe(before);
   expect(tutorial.step()).toBe("done");
+});
+
+it("アイテムの手順では、その手順のアイテムだけを押せる", () => {
+  expect(tutorialItems("timer")).toEqual([]);
+  expect(tutorialItems("double")).toEqual(["double"]);
+  expect(tutorialItems("teleport")).toEqual(["teleport"]);
+  expect(tutorialItems("done")).toEqual([]);
 });
 
 it("盤面の準備は手順から決まり、やり直しでストアを作り直してもかけ直せる", () => {
@@ -150,7 +172,7 @@ it("盤面の準備は手順から決まり、やり直しでストアを作り�
   expect(tutorialSetup("timer")).toEqual({ targets: [TUTORIAL_TARGET], wind: TUTORIAL_WIND });
   expect(tutorialSetup("done")).toEqual({ targets: [TUTORIAL_TARGET, ITEM_TARGET], wind: TUTORIAL_WIND });
   const store = tutorialStore();
-  guide(store, "items");
+  guide(store, "double");
   expect(store.getTargets()).toHaveLength(2);
   expect(store.getView().wind.value).toBe(TUTORIAL_WIND);
 });

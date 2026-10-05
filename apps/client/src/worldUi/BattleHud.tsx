@@ -26,10 +26,11 @@ export const BattleOverlay = ({ clock, onMenu }: { readonly clock: ReactNode; re
 </>; };
 
 /** アイテムの操作（設計書 42.1）。selected は撃つ前に選んだアイテムで、もう一度押すと外す */
-export type ItemControls = { readonly used: readonly ItemId[]; readonly selected: ItemId | null; readonly disabled: boolean; readonly select: (item: ItemId | null) => void };
+/** allowed を渡すと、そのアイテムだけを押せる（チュートリアルは手順のアイテムだけを押させる。設計書 44.3） */
+export type ItemControls = { readonly used: readonly ItemId[]; readonly selected: ItemId | null; readonly disabled: boolean; readonly select: (item: ItemId | null) => void; readonly allowed?: readonly ItemId[] };
 const BattleItems = ({ items }: { readonly items: ItemControls }) => { const { t } = useLanguage();
   return <div className="battle-items" role="group" aria-label={t("アイテム")}>{ITEM_IDS.map(item => { const used = items.used.includes(item);
-    return <button key={item} aria-pressed={items.selected === item} data-used={used || undefined} disabled={items.disabled || used} aria-label={`${t(ITEM_LABELS[item])}${used ? `（${t("使用済み")}）` : ""}`}
+    return <button key={item} aria-pressed={items.selected === item} data-item={item} data-used={used || undefined} disabled={items.disabled || used || (items.allowed !== undefined && !items.allowed.includes(item))} aria-label={`${t(ITEM_LABELS[item])}${used ? `（${t("使用済み")}）` : ""}`}
       title={`${t(ITEM_LABELS[item])} · ${t("コスト")} ${item === "double" ? t("武器をもう一度") : `+${TELEPORT_DELAY}`}`} onClick={() => items.select(items.selected === item ? null : item)}><DotIcon name={item} /></button>; })}</div>; };
 
 type Props = { readonly items?: ItemControls | undefined; readonly delay?: DelayInfo | undefined; readonly player?: HudPlayer | undefined; readonly steps: number; readonly tilt: number; readonly elevation: number; readonly facing: -1 | 1; readonly power: number; readonly loadout?: Loadout | undefined; readonly slot: number; readonly disabled: boolean; readonly selectSlot: (slot: 0 | 1) => void; readonly wind?: number | null | undefined; readonly onPowerMemo?: ((memo: number | null) => void) | undefined; readonly children?: ReactNode };

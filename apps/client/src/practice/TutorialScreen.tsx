@@ -8,7 +8,7 @@ import { AudioControls } from "@/worldUi/AudioControls";
 import { ChallengeField } from "./ChallengeField";
 import { createChallengeStore, type ChallengeStore } from "./store";
 import { TURN_LIMIT } from "@game/protocol";
-import { nextTutorialStep, observeTutorial, startTutorialStep, TUTORIAL_BUTTON_STEPS, TUTORIAL_STAGE, TUTORIAL_STEPS, tutorialSetup, type TutorialStep } from "./tutorial";
+import { nextTutorialStep, observeTutorial, startTutorialStep, TUTORIAL_BUTTON_STEPS, TUTORIAL_STAGE, TUTORIAL_STEPS, tutorialItems, tutorialSetup, type TutorialStep } from "./tutorial";
 import "./practice.css";
 
 type Props = {
@@ -31,7 +31,8 @@ const useStepMessage = (step: TutorialStep, touch: boolean): string => {
     case "target": return t("右に的が出ました。目安の線を目印に角度とパワーを調整して、的を壊してみてください。左右の操作で向きが変わり、画面をドラッグすると見回せます。");
     case "wind": return t("風が吹き始めました。角度メーターの下の風のメーターで、向きと強さが分かります。弾が風に流されるのを、撃って確かめてみてください。");
     case "timer": return t("対戦では、手番ごとに{seconds}秒の制限時間があり、上の時計で残りが分かります。時間内に撃たないと、撃たずに手番が終わります。", { seconds: TURN_LIMIT });
-    case "items": return t("武器の上のボタンでアイテムを選べます。ダブルシュートは同じ弾をもう一度撃ち、テレポートは弾が当たった場所へ移ります。1試合に1回ずつ使えます。選んで撃ってみてください。");
+    case "double": return t("武器の上のボタンでアイテムを選べます。アイテムは1試合に1回ずつ使えます。ダブルシュートを選んで撃つと、同じ弾をもう一度撃ちます。撃ってみてください。");
+    case "teleport": return t("テレポートを選んで撃つと、弾が当たった場所へ戦車が移ります。移りたい場所へ撃ってみてください。");
     case "done": return t("チュートリアル完了！ プラクティスからいつでも復習できます。");
   }
 };
@@ -119,8 +120,9 @@ const TutorialGame = ({ store, step, onStep, fromPractice, onExit, onRetry }: Ga
   const onPowerMemo = (memo: number | null) => { if (memo !== null && step === "memo") go(nextTutorialStep(step)); };
   // 上の中央はふだん空け、制限時間の手順だけ対戦と同じ時計を出す
   const clock = step === "timer" ? <Timer dial deadlineAt={deadline} clockOffset={0} myTurn /> : null;
-  // アイテムは、使い切って先へ進めなくならないよう、アイテムの手順の間だけ押せる
-  const items = { used: state.view.players?.[0].itemsUsed ?? [], selected: state.view.control?.item ?? null, disabled: step !== "items", select: store.selectItem };
+  // アイテムは、使い切って先へ進めなくならないよう、その手順のアイテムだけを押せる
+  const allowed = tutorialItems(step);
+  const items = { used: state.view.players?.[0].itemsUsed ?? [], selected: state.view.control?.item ?? null, disabled: allowed.length === 0, allowed, select: store.selectItem };
   const guide = started && <TutorialGuide step={step} failed={state.status === "failed"} fromPractice={fromPractice} onNext={step === "done" ? onExit : () => go(nextTutorialStep(step))} onRetry={onRetry} />;
   return <ChallengeField store={store} loadout={TUTORIAL_STAGE.loadout} className={`challenge-game tutorial-game tutorial-step-${started && !menu ? step : "waiting"}`} status={clock} guide={guide} guideRow={false} items={items}
     paused={menu || !started || TUTORIAL_BUTTON_STEPS.includes(step)} onMenu={() => setMenu(true)} onToggleMenu={() => setMenu(v => !v)} onReady={onReady} onPowerMemo={onPowerMemo}>

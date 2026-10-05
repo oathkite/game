@@ -78,13 +78,19 @@ test("初回は「はじめる」からチュートリアルに入り、促し�
   await expect(page.locator(".battle-floating-timer")).toHaveText(/^\d+$/);
   await expect(page.getByRole("button", { name: "次へ", exact: true })).toBeFocused();
   await page.keyboard.press("Enter");
-  await expect(guide(page)).toContainText("アイテムを選べます");
+  // アイテムは手順ごとに 1 つずつ、その手順のアイテムだけを押せる
+  await expect(guide(page)).toContainText("ダブルシュートを選んで撃つと");
   const double = page.getByRole("button", { name: "ダブルシュート", exact: true });
+  await expect(page.getByRole("button", { name: "テレポート", exact: true })).toBeDisabled();
   await double.click();
   await expect(double).toHaveAttribute("aria-pressed", "true");
+  await shoot(page, 600, "teleport");
+  await expect(guide(page)).toContainText("テレポートを選んで撃つと");
+  await expect(page.getByRole("button", { name: "ダブルシュート（使用済み）" })).toBeDisabled();
+  await page.getByRole("button", { name: "テレポート", exact: true }).click();
   await shoot(page, 600, "done");
   await expect(guide(page)).toContainText("チュートリアル完了");
-  await expect(page.getByRole("button", { name: "ダブルシュート（使用済み）" })).toBeDisabled();
+  await expect(page.getByRole("button", { name: "テレポート（使用済み）" })).toBeDisabled();
   await expect(page.getByRole("button", { name: "出撃準備へ進む", exact: true })).toBeFocused();
   await page.keyboard.press("Enter");
   await expect(lobby(page)).toBeVisible();
