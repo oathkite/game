@@ -1,12 +1,13 @@
 import { describe, expect, it } from "vitest";
 import { FRAME_SKINS, TURRET_SKINS, WEAPON_IDS } from "@game/protocol";
 import { ELEVATION_MAX, ELEVATION_MIN, muzzleOf, ONE, slopedMask, tiltOf, type TerrainMask } from "@game/sim";
-import { isPaletteColor, PALETTE, TEAM_RAMPS } from "@/game/palette";
+import { PALETTE, TEAM_RAMPS } from "@/game/palette";
 import { bigWheel, stoneWheel } from "@/game/frameDraw";
 import { createGrid, getPixel, TRANSPARENT, type PixelGrid } from "@/game/pixelGrid";
 import { chargeSparks, flashFrameAt, FLASH_FRAME_MS } from "@/game/tankFlash";
 import { MATERIAL } from "@/game/tankShape";
 import { barrelGeometry, barrelMask, composeTank, muzzleTip, TANK_FRAME, type TankSpriteInput } from "@/game/tankSprite";
+import { offPalette } from "./offPalette";
 
 // 機体のスプライト。設計書 40.5、43 と 10.5「全仰角で発射点と絵の砲口が一致する」
 
@@ -73,7 +74,7 @@ describe("composeTank", () => {
     for (const color of Object.values(TEAM_RAMPS)) for (const tilt of [-45, -18, 0, 27, 45]) for (const facing of [1, -1] as const) {
       const grid = composeTank({ ...base, hull: color, turret: TEAM_RAMPS.blue, tilt, facing, elevation: 90, flash: 0, sparks: chargeSparks(1, 100, false), rim: "hot" });
       expect(grid.width).toBe(TANK_FRAME.width);
-      for (const p of opaquePixels(grid)) expect(isPaletteColor(p.color), `0x${p.color.toString(16)}`).toBe(true);
+      expect(offPalette(opaquePixels(grid).map(p => p.color)), `tilt ${tilt} facing ${facing}`).toEqual([]);
     }
   });
   it("どの砲塔、フレーム、武器の組でも、固定パレットの色で描き、±45 度に傾けても枠の端で切れない", () => {
@@ -81,7 +82,7 @@ describe("composeTank", () => {
       const weapon = WEAPON_IDS[(TURRET_SKINS.indexOf(turretSkin) + tilt) & 7]!, sub = WEAPON_IDS[(TURRET_SKINS.indexOf(turretSkin) + 3) & 7]!;
       const grid = composeTank({ ...base, frame, turretSkin, weapon, sub, tilt, elevation: 90, wrecked, rim: "charge", treadPhase: 5 });
       const pixels = opaquePixels(grid);
-      for (const p of pixels) expect(isPaletteColor(p.color), `${frame} ${turretSkin} 0x${p.color.toString(16)}`).toBe(true);
+      expect(offPalette(pixels.map(p => p.color)), `${frame} ${turretSkin}`).toEqual([]);
       // 枠の外周の行と列に画素が無い。あれば絵が枠で切れている
       const edge = pixels.filter(p => p.x === TANK_FRAME.left || p.y === TANK_FRAME.top || p.x === TANK_FRAME.left + TANK_FRAME.width - 1 || p.y === TANK_FRAME.top + TANK_FRAME.height - 1);
       expect(edge, `${frame} ${turretSkin} tilt ${tilt}`).toEqual([]);
@@ -150,7 +151,7 @@ describe("composeTank", () => {
   });
   it("左向きは右向きを左右反転した絵になる", () => {
     const right = composeTank({ ...base, elevation: 30 }), left = composeTank({ ...base, facing: -1, elevation: 30 });
-    for (const p of opaquePixels(right)) expect(getPixel(left, -1 - p.x, p.y)).toBe(p.color);
+    expect(opaquePixels(right).filter(p => getPixel(left, -1 - p.x, p.y) !== p.color)).toEqual([]);
   });
   it("履帯は 1 px 進むと絵が変わり、6 px で元に戻る", () => {
     const at = (treadPhase: number) => Array.from(composeTank({ ...base, treadPhase }).pixels).join();
@@ -158,7 +159,7 @@ describe("composeTank", () => {
     expect(at(6)).toBe(at(0));
   });
   it("被弾の白は輪郭を残してすべて白にする", () => {
-    for (const p of opaquePixels(composeTank({ ...base, white: true }))) expect([PALETTE.white, PALETTE.outline]).toContain(p.color);
+    expect(opaquePixels(composeTank({ ...base, white: true })).filter(p => p.color !== PALETTE.white && p.color !== PALETTE.outline)).toEqual([]);
   });
   it("残骸は灰と熾火の色で、仰角によらず垂れた砲身を描く", () => {
     const low = composeTank({ ...base, wrecked: true, elevation: 10 }), high = composeTank({ ...base, wrecked: true, elevation: 90 });

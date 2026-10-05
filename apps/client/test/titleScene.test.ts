@@ -1,7 +1,8 @@
 import { describe, expect, it } from "vitest";
-import { isPaletteColor, TEAM_RAMPS } from "@/game/palette";
+import { TEAM_RAMPS } from "@/game/palette";
 import { TRANSPARENT } from "@/game/pixelGrid";
 import { paintTitleScene } from "@/game/titleScene";
+import { offPalette } from "./offPalette";
 
 // タイトル画面の背景。設計書 40.10。対戦と同じ夜空、山並み、地形、機体を 1 枚に描く
 
@@ -11,7 +12,8 @@ describe("paintTitleScene", () => {
       const scene = paintTitleScene(w, h);
       expect(scene.width).toBe(w);
       expect(scene.height).toBe(h);
-      for (const c of scene.pixels) { expect(c).not.toBe(TRANSPARENT); expect(isPaletteColor(c)).toBe(true); }
+      expect(scene.pixels.includes(TRANSPARENT)).toBe(false);
+      expect(offPalette(scene.pixels), `${w}x${h}`).toEqual([]);
     }
   });
   it("向かい合う 2 台の機体を描く（赤と青の車体の色がある）", () => {

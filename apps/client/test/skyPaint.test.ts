@@ -1,7 +1,7 @@
 import { describe, expect, it } from "vitest";
-import { isPaletteColor } from "@/game/palette";
 import { getPixel, TRANSPARENT } from "@/game/pixelGrid";
 import { MOUNTAIN_PERIOD, paintMountains, paintSky, SKY_THEMES, skyStars, twinkleOn, type SkyTheme } from "@/game/skyPaint";
+import { offPalette } from "./offPalette";
 
 // 背景の夜空と山並み。設計書 40.7。画面の art px（2 CSS px）で描く
 
@@ -14,7 +14,7 @@ describe("paintSky", () => {
       const bands = SKY_THEMES[theme].bands;
       expect(getPixel(sky, 3, 0)).toBe(bands[0]);
       expect(getPixel(sky, 3, 89)).toBe(bands[bands.length - 1]);
-      for (const color of sky.pixels) expect(isPaletteColor(color), `${theme} 0x${color.toString(16)}`).toBe(true);
+      expect(offPalette(sky.pixels), theme).toEqual([]);
     }
   });
   it("帯の境目は 2 色の市松でつなぐ（グラデーションを使わない）", () => {
@@ -67,7 +67,7 @@ describe("paintMountains", () => {
       const top = (x: number) => column(x).indexOf("1");
       const steps = Array.from({ length: MOUNTAIN_PERIOD - 1 }, (_, x) => Math.abs(top(x) - top(x + 1)));
       expect(Math.abs(top(0) - top(MOUNTAIN_PERIOD - 1))).toBeLessThanOrEqual(Math.max(...steps));
-      for (const color of m.pixels) if (color !== TRANSPARENT) expect(isPaletteColor(color)).toBe(true);
+      expect(offPalette(m.pixels.filter(color => color !== TRANSPARENT)), `${theme} ${layer}`).toEqual([]);
     }
   });
   it("遠景と中景で色が違い、上の縁に月明かりの線を持つ", () => {
