@@ -40,7 +40,9 @@ export const fireChallenge = (state: ChallengeState, power: number): ChallengeSt
     impacts: outcome.impacts.map((impact) => ({ ...impact, damage: [0, 0] as const })),
     hpAfter: [100, 100] as const, xAfter: [outcome.positions[0]!.x, outcome.positions[1]!.x] as const,
     yAfter: [outcome.positions[0]!.y, outcome.positions[1]!.y] as const,
-    ringOut: outcome.ringOut.filter((seat): seat is 0 | 1 => seat === 0 || seat === 1), finished: null } };
+    ringOut: outcome.ringOut.filter((seat): seat is 0 | 1 => seat === 0 || seat === 1), finished: null,
+    // テレポートの着地点。再生はこれを見て、弾が当たってから光の柱と一緒に機体を移す（設計書 42.3）。対戦の simulateShot と同じく、移れなければ null
+    ...(outcome.teleport !== undefined ? { teleport: outcome.teleport } : {}) } };
 
   const before: readonly [PlayerView, PlayerView] = [{ ...view.players[0], x: c.x, y: c.y, facing: c.facing }, view.players[1]];
   // 練習では自爆ダメージを使わず、場外落下だけを失敗条件にする。
