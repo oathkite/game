@@ -4,7 +4,7 @@
   "packageManager": "pnpm@11.1.1",
   "scripts": {
     "dev": "pnpm --filter game run --parallel \"/^dev:(client|rooms)$/\"",
-    "test": "pnpm assets:test && pnpm assets:check && pnpm -r --no-sort test",
+    "test": "pnpm assets:test && pnpm assets:check && pnpm -r test",
     "typecheck": "pnpm -r typecheck",
     "assets:test": "node --test tools/music/*.test.mjs",
     "music:render": "node tools/music/render.mjs",
