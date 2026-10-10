@@ -1,11 +1,11 @@
 import type { CellPoint, Impact, Seat, ShotResult, TerrainOp, TrajectoryInput } from "@game/protocol";
-import { TANK_RADIUS } from "./constants.js";
+import { CORE_RADIUS } from "./constants.js";
 import { isqrt } from "./fixed.js";
 import { isRingOut, settle as settleTank, tankCenterY, type TankPos } from "./tank.js";
 import { carve, type TerrainMask } from "./terrain.js";
 import { firstStage, weaponSpec, type StageSpec, type WeaponSpec } from "./weapons.js";
 import { flyTeleport } from "./teleport.js";
-import { checkCell, fly, launch, motionOf, muzzleOf, settle, type FixedPoint, type Flight, type Hit, type Motion, type ProjectilePath } from "./flight.js";
+import { checkCell, fly, launch, motionOf, muzzleOf, settle, type FixedPoint, type Flight, type Hit, type HitCircle, type Motion, type ProjectilePath } from "./flight.js";
 export { fireAngle, muzzleOf, type FixedPoint, type Muzzle, type ProjectilePath } from "./flight.js";
 
 // 弾道と着弾の処理。設計書 06 の 6.7 決定論の契約に従い、整数と固定小数点だけを使う。
@@ -17,16 +17,28 @@ export type Combatant = {
   readonly x: number;
   readonly y: number;
   readonly hp: number;
+  /** 弾が当たる半径（セル）。省けば機体の芯（CORE_RADIUS）。練習の的は描いた円いっぱい（TANK_RADIUS）で当てる */
+  readonly hitRadius?: number;
+};
+
+/** 機体に弾が当たる円。中心は地表から体の半径だけ上 */
+export const hitCircleOf = (p: Combatant): HitCircle => {
+  const r = p.hitRadius ?? CORE_RADIUS;
+  return { x: p.x, y: tankCenterY(p), radiusSq: r * r };
 };
 
 /** 1 発の射撃が seat に与えたダメージの合計（全弾道、全段） */
 export const damageDealtTo = (result: ShotResult, seat: Seat): number => result.impacts.reduce((sum, i) => sum + i.damage[seat], 0);
 
-/** 着弾距離（爆心から判定円までのセル数）に対するダメージ。段を省けば標準砲 */
+/**
+ * 着弾距離（爆心から芯の縁までのセル数）に対するダメージ。段を省けば標準砲。
+ * 着弾距離 0 は芯に触れたとき（弾が芯に当たる範囲と同じ）だけで、芯の斜め隣は平方根の切り捨てで 0 になっても 1 とする
+ */
 export const damageAt = (impact: CellPoint, center: CellPoint, stage: StageSpec = firstStage("cannon")): number => {
   const dx = impact.x - center.x;
   const dy = impact.y - center.y;
-  const dist = Math.max(0, isqrt(dx * dx + dy * dy) - TANK_RADIUS);
+  const d2 = dx * dx + dy * dy;
+  const dist = d2 <= CORE_RADIUS * CORE_RADIUS ? 0 : Math.max(1, isqrt(d2) - CORE_RADIUS);
   if (dist > stage.blastRadius) return 0;
   return Math.max(0, stage.damageMax - stage.damagePerCell * dist);
 };
@@ -70,8 +82,8 @@ type Volley = {
   readonly impacts: CombatImpact[];
   readonly removeDefeated: boolean;
   readonly paths: ProjectilePath[];
-  /** 判定円の中心。射撃の間は動かないので、射撃前の地形から一度だけ求める。奈落の機体は null */
-  readonly centers: readonly (CellPoint | null)[];
+  /** 弾が当たる円。射撃の間は動かないので、射撃前の地形から一度だけ求める。奈落の機体は null */
+  readonly centers: readonly (HitCircle | null)[];
 };
 
 const damageOf = (v: Volley, cell: CellPoint, stage: StageSpec): number[] =>
@@ -84,7 +96,7 @@ const damageOf = (v: Volley, cell: CellPoint, stage: StageSpec): number[] =>
 const flyProjectile = (v: Volley, index: number, f: Flight, m: Motion, spec: WeaponSpec): void => {
   const points: FixedPoint[] = [{ x: f.px, y: f.py }];
   const impactAt: number[] = [];
-  const centers = v.centers.filter((c, i): c is CellPoint => c !== null && (!v.removeDefeated || v.hp[i]! > 0));
+  const centers = v.centers.filter((c, i): c is HitCircle => c !== null && (!v.removeDefeated || v.hp[i]! > 0));
   // 砲口のセル自体が壁や機体の中なら、その場で最初の段が着弾する
   const first = checkCell(v.mask, f.prev, centers);
   let hit: Hit | null = null;
@@ -103,7 +115,7 @@ const flyProjectile = (v: Volley, index: number, f: Flight, m: Motion, spec: Wea
     v.mask = carve(v.mask, terrainOp);
     v.hp = v.hp.map((hp, i) => hp - damage[i]!);
     if (stage + 1 >= spec.stages.length) break;
-    if (!hit.tank) hit = fly(v.mask, v.centers.filter((c, i): c is CellPoint => c !== null && (!v.removeDefeated || v.hp[i]! > 0)), f, m, points);
+    if (!hit.tank) hit = fly(v.mask, v.centers.filter((c, i): c is HitCircle => c !== null && (!v.removeDefeated || v.hp[i]! > 0)), f, m, points);
   }
   v.paths.push({ points, impactAt });
 };
@@ -156,7 +168,7 @@ const ringOutsOf = (mask: TerrainMask, positions: readonly TankPos[]): number[] 
 export const simulateCombat = (
   mask: TerrainMask, players: readonly Combatant[], input: Omit<TrajectoryInput, "seat">, removeDefeated = true,
 ): CombatOutcome => {
-  const centers = players.map(p => isRingOut(mask, p) ? null : { x: p.x, y: tankCenterY(p) });
+  const centers = players.map(p => isRingOut(mask, p) ? null : hitCircleOf(p));
   const v: Volley = { mask, hp: players.map(p => p.hp), impacts: [], paths: [], centers, removeDefeated };
   const spec = weaponSpec(input.weapon);
   const muzzle = muzzleOf(mask, input, input.facing, input.elevation);

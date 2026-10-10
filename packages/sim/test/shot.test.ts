@@ -62,13 +62,17 @@ describe("発射角と発射位置", () => {
 });
 
 describe("ダメージ", () => {
-  it("判定円に触れた直撃は 35、離れるほど 3 ずつ減り、着弾距離 11 以上は 0", () => {
+  it("芯に触れた直撃は 35、芯の縁から離れるほど 3 ずつ減り、着弾距離 11 以上は 0", () => {
     const center = { x: 100, y: 147 };
-    expect(damageAt({ x: 100, y: 144 }, center)).toBe(35);
+    expect(damageAt({ x: 100, y: 146 }, center)).toBe(35);
     expect(damageAt({ x: 100, y: 147 }, center)).toBe(35);
-    expect(damageAt({ x: 104, y: 147 }, center)).toBe(32);
-    expect(damageAt({ x: 113, y: 147 }, center)).toBe(5);
-    expect(damageAt({ x: 114, y: 147 }, center)).toBe(0);
+    // 芯の斜め隣は芯に触れていないので、最大は出ない
+    expect(damageAt({ x: 101, y: 146 }, center)).toBe(32);
+    // 体の縁（中心から 3 セル）でも芯の縁から 2 セルなので、最大は出ない
+    expect(damageAt({ x: 100, y: 144 }, center)).toBe(29);
+    expect(damageAt({ x: 102, y: 147 }, center)).toBe(32);
+    expect(damageAt({ x: 111, y: 147 }, center)).toBe(5);
+    expect(damageAt({ x: 112, y: 147 }, center)).toBe(0);
     expect(damageAt({ x: 200, y: 147 }, center)).toBe(0);
   });
 
@@ -117,8 +121,8 @@ describe("1 発の処理", () => {
 
   it("相手に直撃すれば 35 ダメージで直撃と判定できる", () => {
     const mask = flatMask(150);
-    // 相手を近くに置き、低い仰角で撃つ
-    const out = fire(mask, two(60, 72), shot({ elevation: 10, power: 40 }));
+    // 相手を近くに置き、低い仰角で芯を撃つ
+    const out = fire(mask, two(60, 72), shot({ elevation: 10, power: 20 }));
     expect(damageOf(out.result)[1]).toBe(35);
     expect(out.result.hpAfter[1]).toBe(65);
     expect(out.result.finished).toBeNull();
@@ -126,7 +130,7 @@ describe("1 発の処理", () => {
 
   it("HP が 0 以下になれば決着し、理由は hp", () => {
     const mask = flatMask(150);
-    const out = fire(mask, two(60, 72, 100, 20), shot({ elevation: 10, power: 40 }));
+    const out = fire(mask, two(60, 72, 100, 20), shot({ elevation: 10, power: 20 }));
     expect(out.result.hpAfter[1]).toBeLessThanOrEqual(0);
     expect(out.result.finished).toEqual({ winner: 0, reason: "hp" });
   });
@@ -134,7 +138,7 @@ describe("1 発の処理", () => {
   it("足元を削られて地面がなくなればリングアウト", () => {
     // 薄い板の島。自機は広い島、相手は幅 3 セルの島に立つ。至近で直撃させ、爆風で島ごと消す
     const mask = slabMask([[150, 190], [199, 201]], 150, 3);
-    const out = fire(mask, two(187, 200), shot({ x: 187, elevation: 10, power: 40 }));
+    const out = fire(mask, two(187, 200), shot({ x: 187, elevation: 10, power: 20 }));
     expect(impactOf(out.result)).not.toBeNull();
     expect(damageOf(out.result)[1]).toBe(35);
     expect(surfaceY(out.mask, 200)).toBe(MAP_HEIGHT);
@@ -146,11 +150,11 @@ describe("1 発の処理", () => {
   it("両者が同時に落ちたら HP の多い側が勝ち、同じなら引き分け", () => {
     // 幅 3 の島が 2 つ隣り合い、両者とも爆風の中に入る
     const mask = slabMask([[195, 197], [203, 205]], 150, 3);
-    const draw = fire(mask, two(196, 204, 100, 100), shot({ x: 196, elevation: 10, power: 20 }));
+    const draw = fire(mask, two(196, 204, 100, 100), shot({ x: 196, elevation: 10, power: 12 }));
     expect(draw.result.ringOut).toEqual([0, 1]);
     expect(draw.result.finished?.reason).toBe("ringOut");
     expect(draw.result.finished?.winner).toBe(draw.result.hpAfter[0] === draw.result.hpAfter[1] ? null : draw.result.hpAfter[0] > draw.result.hpAfter[1] ? 0 : 1);
-    const uneven = fire(mask, two(196, 204, 100, 40), shot({ x: 196, elevation: 10, power: 20 }));
+    const uneven = fire(mask, two(196, 204, 100, 40), shot({ x: 196, elevation: 10, power: 12 }));
     expect(uneven.result.ringOut).toEqual([0, 1]);
     expect(uneven.result.finished).toEqual({ winner: 0, reason: "ringOut" });
   });

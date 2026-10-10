@@ -42,8 +42,8 @@ const drift = (weapon: WeaponId, power: number): number => flight(weapon, power,
 
 const dealtTo = damageDealtTo;
 
-/** 平地で相手を至近（12 セル）に置き、低い仰角で直撃させる。標準砲なら 35 が出る */
-const pointBlank = (weapon: WeaponId): ShotResult => fire(flatMask(150), [{ x: 60, hp: 100 }, { x: 72, hp: 100 }], shot({ weapon, elevation: 10, power: 40 })).result;
+/** 平地で相手を至近（12 セル）に置き、低い仰角で芯に直撃させる。標準砲なら 35 が出る */
+const pointBlank = (weapon: WeaponId): ShotResult => fire(flatMask(150), [{ x: 60, hp: 100 }, { x: 72, hp: 100 }], shot({ weapon, elevation: 10, power: 20 })).result;
 
 /** 平地を仰角 30 度で撃つ。扇と貫通の着弾の並びを見る */
 const spread = (weapon: WeaponId, power = 60): ShotResult => fire(flatMask(200), [{ x: 20, hp: 100 }, { x: 399, hp: 100 }], shot({ weapon, x: 20, elevation: 30, power })).result;
@@ -220,9 +220,9 @@ describe("1 発 1 段の武器の性格", () => {
     const stinger = firstStage("stinger");
     for (const w of WEAPONS) if (w !== "stinger") expect(stinger.damageMax).toBeGreaterThan(firstStage(w).damageMax);
     const center = { x: 100, y: 147 };
-    expect(damageAt({ x: 100, y: 144 }, center, stinger)).toBe(stinger.damageMax);
-    expect(damageAt({ x: 106, y: 147 }, center, stinger)).toBe(7);
-    expect(damageAt({ x: 107, y: 147 }, center, stinger)).toBe(0);
+    expect(damageAt({ x: 100, y: 146 }, center, stinger)).toBe(stinger.damageMax);
+    expect(damageAt({ x: 104, y: 147 }, center, stinger)).toBe(7);
+    expect(damageAt({ x: 105, y: 147 }, center, stinger)).toBe(0);
   });
 
   it("1 発 1 段の武器は 4 つ", () => {

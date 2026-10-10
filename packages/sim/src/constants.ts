@@ -5,8 +5,15 @@ export const ONE = 65536;
 
 export { MAP_HEIGHT, MAP_WIDTH } from "@game/protocol";
 
+/** 機体の体の半径。立つ位置、天井との空き、傾き、テレポートの着地を決める */
 export const TANK_RADIUS = 3;
 export const TANK_RADIUS_SQ = TANK_RADIUS * TANK_RADIUS;
+/**
+ * 機体の芯の半径。弾は芯にだけ当たり、ダメージの着弾距離も芯から測る。
+ * 芯を外れた弾は車体を素通りして足元の地面に当たり、削る。
+ * 1 にするのは、真上から足元（中心から 2 列）に落としたレーザー弾の段（半径 3、約 4 セル間隔）が機体の列を途切れなく掘り抜けるようにするためである。
+ */
+export const CORE_RADIUS = 1;
 export const BLAST_RADIUS = 10;
 
 export const HP_MAX = 100;

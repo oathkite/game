@@ -1,7 +1,7 @@
-import type { CellPoint, TrajectoryInput } from "@game/protocol";
+import type { TrajectoryInput } from "@game/protocol";
 import { MAX_STEPS } from "./constants.js";
-import { damageAt, fireSecond, type Combatant, type CombatImpact, type CombatOutcome, type FirstShot, type TeamCombatant } from "./ballistics.js";
-import { checkCell, launch, motionOf, muzzleOf, settle, stepFlight, type FixedPoint, type Flight, type Hit, type Motion, type ProjectilePath } from "./flight.js";
+import { damageAt, fireSecond, hitCircleOf, type Combatant, type CombatImpact, type CombatOutcome, type FirstShot, type TeamCombatant } from "./ballistics.js";
+import { checkCell, launch, motionOf, muzzleOf, settle, stepFlight, type FixedPoint, type Flight, type Hit, type HitCircle, type Motion, type ProjectilePath } from "./flight.js";
 import { carve, type TerrainMask } from "./terrain.js";
 import { isRingOut, settle as settleTank, tankCenterY, type TankPos } from "./tank.js";
 import { flyTeleport } from "./teleport.js";
@@ -24,7 +24,7 @@ type Projectile = {
   readonly points: FixedPoint[]; readonly pointTicks: number[]; readonly impactAt: number[];
   stage: number; nextTick: number; started: boolean; done: boolean; stuck: Hit | null;
 };
-const advanceProjectile = (p: Projectile, mask: TerrainMask, centers: readonly CellPoint[], motion: Motion, tick: number): Hit | null => {
+const advanceProjectile = (p: Projectile, mask: TerrainMask, centers: readonly HitCircle[], motion: Motion, tick: number): Hit | null => {
   if (!p.started) {
     p.started = true;
     const check = checkCell(mask, p.flight.prev, centers);
@@ -53,13 +53,13 @@ const projectilesOf = (mask: TerrainMask, input: Omit<TrajectoryInput, "seat">, 
 /** v2: all projectiles inspect one tick's terrain/HP, then apply impacts as a batch. */
 export const simulateConcurrentCombat = (initial: TerrainMask, players: readonly Combatant[], input: Omit<TrajectoryInput, "seat">): ConcurrentOutcome => {
   const spec = weaponSpec(input.weapon), motion = motionOf(spec, input.wind), projectiles = projectilesOf(initial, input, spec);
-  const centers = players.map(p => isRingOut(initial, p) ? null : { x: p.x, y: tankCenterY(p) });
+  const centers = players.map(p => isRingOut(initial, p) ? null : hitCircleOf(p));
   let mask = initial, hp = players.map(p => p.hp), ticks = 0;
   const impacts: TimedCombatImpact[] = [];
   const limit = MAX_STEPS + spec.volleys * VOLLEY_GAP_TICKS + spec.stages.length * IMPACT_HOLD_TICKS + 1;
   for (let tick = 0; tick <= limit; tick++) {
     ticks = tick;
-    const alive = centers.filter((c, i): c is CellPoint => c !== null && hp[i]! > 0);
+    const alive = centers.filter((c, i): c is HitCircle => c !== null && hp[i]! > 0);
     const batch: TimedCombatImpact[] = [];
     for (const p of projectiles) {
       if (p.done || tick < p.nextTick) continue;
