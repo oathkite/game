@@ -121,6 +121,32 @@ CI の runner ではその 4〜6 倍かかり、5 秒のテストの制限にか
 既定の比較と違い、添字以外の独自プロパティは比べない。
 setup を 1 か所に置くのは、各パッケージに複製せず、`protocol` のような役割の違うパッケージにも混ぜないためである。
 
+**スクリーンショットの撮影環境**は、Playwright の既定の headless Chromium（headless shell）だと、対戦のフィールドに無いはずの黒い矩形が写る。
+2026-10-10 に、1440 × 900 の対戦画面で、フィールドの右下（x 1204〜1423、y 626〜727 の画素）に中身の無い黒い矩形が出た。
+フィールドの canvas の高さは 740 px で、全体図のボタンは上端が y 12、下端が y 114（高さ 102 px）にある。
+黒い矩形は、この全体図を上下反転した位置（上端が 740 − 114 = 626、下端が 740 − 12 = 728）に出ている。
+
+実際、全体図を `top: 200px` へ動かすと黒い矩形も y 438〜539 へ動き、全体図を隠すと消えた。
+一方、全体図の背景を赤にしても、中の 2D canvas を隠しても、黒いままだった。
+黒い矩形は全体図の絵が写ったものではなく、全体図の要素が重なっていることで生じている。
+
+したがって Pixi の描画物ではなく、ブラウザの合成で WebGL の canvas が全体図の下を上下反転した位置で抜かれ、後ろの `.network-field` の黒い背景が見えている。
+全体図は画面に固定されているので、カメラを動かしても同じ位置に残る。
+
+| ブラウザ | GPU | 黒い矩形 |
+|---|---|---|
+| Chromium、headless shell（Playwright の既定） | SwiftShader | 出る |
+| Chromium、new headless（`channel: "chromium"`）、`--use-angle=swiftshader` | SwiftShader | 出ない |
+| Chromium、headed、`--use-angle=swiftshader` | SwiftShader | 出ない |
+| Chromium、headed | Apple M1 Max（Metal） | 出ない |
+| Chrome、headed と new headless | Apple M1 Max（Metal） | 出ない |
+
+headless shell の合成だけで起きる現象なので、アプリは直さない。
+macOS の Chrome で遊ぶプレイヤーの画面には出ない。
+Windows の Chrome、Android の Chrome、Safari、Firefox は確かめていない。
+見た目を目で確かめるスクリーンショットは、headed か new headless で撮る。
+e2e の既定のブラウザを new headless に移すかは決めていない（TBD-53）。
+
 **CI** は、PR ごとに typecheck と単体テストを回す（`ci.yml`）。
 main への push では、`deploy.yml` が同じものを回してから配置する。
 以前は PR で何も走らず、PR #70 と #73 は、マージした後の配置で初めて単体テストが落ちて配置が止まった。
