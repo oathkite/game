@@ -28,7 +28,7 @@ import { DEFAULT_LOADOUT, WEAPON_LABELS, type ItemId } from "@game/protocol";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { labOutputSchema, type LabFrame } from "@game/protocol/v2-lab";
 import { NetworkField } from "@/worldUi/NetworkField";
-import { battleClock, clockKey, isObserving, sampleLive, type BattleClock, type LiveSample } from "./liveView";
+import { battleClock, clockKey, isObserving, sampleLive, turnOrderPlayers, type BattleClock, type LiveSample } from "./liveView";
 import { createMovePredictor, type MovePredictor } from "./movePrediction";
 import { canPrepare } from "./onlinePreparation";
 import { createRemoteMotion } from "./remoteMotion";
@@ -47,8 +47,6 @@ export const NetworkLab = ({ worldArt = false, onExit, connection }: { readonly 
   const [latency, setLatency] = useState<number | null>(null);
   useEffect(() => { if (connection) return measureLatency(connection.socket, setLatency); setLatency(null); }, [connection]);
   const [reportStatus, setReportStatus] = useState("");
-  // 降参を送った試合。表示の脱落を待たずに観戦にする
-  const [surrendered, setSurrendered] = useState<string | null>(null);
   const [slot, setSlot] = useState<0 | 1>(0);
   // 武器のスロットと違い、アイテムの選択は手番をまたがない（設計書 42.1）
   const [item, setItem] = useState<ItemId | null>(null);
@@ -154,9 +152,7 @@ export const NetworkLab = ({ worldArt = false, onExit, connection }: { readonly 
     if (shot) ws.send(JSON.stringify({ version: 2, type: "turn.fire", ...shot, commandId: `fire-${playerId}-${++commandId.current}-${Date.now()}`, slot, elevation, power: shotPower, ...(item ? { item } : {}) }));
   };
   const action = (type: "lab.rematch" | "lab.surrender"): void => {
-    if (!frame || socket.current?.readyState !== WebSocket.OPEN) return;
-    socket.current.send(JSON.stringify({ type, matchId: frame.matchId }));
-    if (type === "lab.surrender") setSurrendered(frame.matchId);
+    if (frame && socket.current?.readyState === WebSocket.OPEN) socket.current.send(JSON.stringify({ type, matchId: frame.matchId }));
   };
   const serverNow = view?.clock.serverNow ?? 0, revealed = view?.clock.revealed ?? false, terrain = view?.clock.terrain ?? 0;
   const presentation = view?.live.presentation ?? null, shownPlayers = view?.live.players ?? [];
@@ -168,7 +164,7 @@ export const NetworkLab = ({ worldArt = false, onExit, connection }: { readonly 
   const seconds = view?.clock.seconds ?? null;
   const phaseLabel = frame?.phase === "replaying" ? "射撃を再生中" : frame?.phase === "finished" ? "対戦終了" : "操作中";
   // 脱落は表示している時刻の値で見る。フレームの値は射撃を受け付けた時点で着弾後になっている
-  const observing = isObserving(view?.clock ?? null, playerId, { spectator, surrendered: Boolean(frame && surrendered === frame.matchId) });
+  const observing = isObserving(view?.clock ?? null, playerId, spectator);
   const opening = view?.clock.opening ?? false;
   const canControl = !opening && revealed && frame?.phase === "acting" && frame.actorId === playerId && socket.current?.readyState === WebSocket.OPEN;
   const canAct = canControl && !settling;
@@ -189,7 +185,7 @@ export const NetworkLab = ({ worldArt = false, onExit, connection }: { readonly 
   const delay = frame?.phase !== "finished" ? frame?.delay : undefined;
   const actorPlayer = frame?.phase !== "finished" ? frame?.players.find(p => p.playerId === frame.actorId) : undefined;
   const spectatorActor = actorPlayer ? { name: actorPlayer.nickname ?? actorPlayer.playerId, color: teamColor(Number(actorPlayer.teamId.slice(1))) } : null;
-  const turnPlayers = frame?.players.map(p => ({ id: p.playerId, name: p.nickname ?? p.playerId, colors: p.colors, eliminated: view ? view.clock.eliminated.includes(p.playerId) : p.eliminated })) ?? [];
+  const turnPlayers = frame ? turnOrderPlayers(frame, view?.clock ?? null) : [];
   if (worldArt) return <main className="network-lab network-world" data-control={canAct ? "act" : preparing ? "prepare" : "none"} onPointerDown={() => unlockAudio()} onKeyDown={() => unlockAudio()}>
     <YourTurn turnKey={`${frame?.matchId}/${frame?.turnId}`} active={Boolean(!observing && canControl)} />
     <BattleOverlay clock={<CountdownDial seconds={seconds} />} onMenu={() => { input.cancel(); setMenu(true); }} />

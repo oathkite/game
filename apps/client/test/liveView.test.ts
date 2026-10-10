@@ -1,7 +1,7 @@
 import { describe, expect, it } from "vitest";
 import { labFrameSchema, type LabFrame } from "@game/protocol/v2-lab";
 import { replayTailMs } from "@game/engine/replay-timing";
-import { battleClock, clockKey, facingUpdates, isObserving, sampleLive } from "../src/networkLab/liveView";
+import { battleClock, clockKey, facingUpdates, isObserving, sampleLive, turnOrderPlayers } from "../src/networkLab/liveView";
 
 const player = { playerId: "p1", x: 20, y: 150, hp: 100, teamId: "t0", eliminated: false };
 const frame = labFrameSchema.parse({ type: "lab.frame", build: { protocol: 2, sim: "keropod-sim-v2.1", assets: "keropod-world-v1", rules: "keropod-v2.1", map: { id: "test", version: 1 } }, wind: 0, map: { id: "test", version: 1, width: 500, height: 225, surface: Array(500).fill(150) }, serverTime: 1000, eventSeq: 2, matchId: "m", turnId: 1, actorId: "p1", deadlineAt: 21000,
@@ -90,8 +90,8 @@ describe("facingUpdates (design 30)", () => {
 describe("the eliminated players shown at the replay time", () => {
   // サーバーは射撃を受け付けた時点で、着弾後の脱落をフレームに入れる。前の状態は replay.playersBefore にある
   const before = frame.players;
-  const killing = (damage: { readonly playerId: string; readonly amount: number }[], after: (p: typeof player) => typeof player) => labFrameSchema.parse({ ...frame, phase: "replaying", eventSeq: 3,
-    players: before.map(after),
+  const killing = (damage: { readonly playerId: string; readonly amount: number }[], after: (p: typeof player) => typeof player, terrainOps = frame.terrainOps) => labFrameSchema.parse({ ...frame, phase: "replaying", eventSeq: 3,
+    players: before.map(after), terrainOps,
     replay: { startsAt: 1000, endsAt: 4300, terrainOpsBefore: 0, playersBefore: before, ticks: 42, shooter: { playerId: "p1", facing: 1, elevation: 45, weapon: "cannon" },
       impacts: [{ tick: 40, damage }], paths: [{ launchTick: 0, endTick: 40, points: [{ x: 20, y: 140, tick: 0 }, { x: 300, y: 150, tick: 40 }] }] } });
   const timing = (f: LabFrame) => {
@@ -105,12 +105,27 @@ describe("the eliminated players shown at the replay time", () => {
     const { impactAt } = timing(shot);
     expect(clockAt(shot, 1000).eliminated).toEqual([]);
     expect(clockAt(shot, Math.floor(impactAt) - 1).eliminated).toEqual([]);
-    expect(isObserving(clockAt(shot, Math.floor(impactAt) - 1), "p2", { spectator: false, surrendered: false })).toBe(false);
+    expect(isObserving(clockAt(shot, Math.floor(impactAt) - 1), "p2", false)).toBe(false);
+    expect(turnOrderPlayers(shot, clockAt(shot, Math.floor(impactAt) - 1)).map(p => p.eliminated)).toEqual([false, false]);
     expect(clockAt(shot, Math.ceil(impactAt) + 1).eliminated).toEqual(["p2"]);
-    expect(isObserving(clockAt(shot, Math.ceil(impactAt) + 1), "p2", { spectator: false, surrendered: false })).toBe(true);
-    // 撃った側の手番順も同じ時刻に変わる。着弾の瞬間に描き直す
+    expect(isObserving(clockAt(shot, Math.ceil(impactAt) + 1), "p2", false)).toBe(true);
+    // 撃った側の手番順も同じ時刻に変わる
     expect(clockAt(shot, Math.floor(impactAt) - 1, "p1").eliminated).toEqual([]);
-    expect(clockKey(clockAt(shot, Math.floor(impactAt) - 1))).not.toBe(clockKey(clockAt(shot, Math.ceil(impactAt) + 1)));
+    expect(clockAt(shot, Math.ceil(impactAt) + 1, "p1").eliminated).toEqual(["p2"]);
+  });
+
+  it("redraws at the impact even when the impact carves no terrain", () => {
+    const uncarved = killing([{ playerId: "p2", amount: 100 }], p => p.playerId === "p2" ? { ...p, hp: 0, eliminated: true } : p, []);
+    const { impactAt } = timing(uncarved);
+    expect(clockKey(clockAt(uncarved, Math.floor(impactAt) - 1))).not.toBe(clockKey(clockAt(uncarved, Math.ceil(impactAt) + 1)));
+  });
+
+  it("shows a surrender or a disconnect during the replay as soon as the frame carries it", () => {
+    // p1 の射撃は誰にも当たらない。再生中に p2 が降参した
+    const surrendered = killing([], p => p.playerId === "p2" ? { ...p, eliminated: true } : p);
+    expect(clockAt(surrendered, 1000).eliminated).toEqual(["p2"]);
+    expect(isObserving(clockAt(surrendered, 1000), "p2", false)).toBe(true);
+    expect(turnOrderPlayers(surrendered, clockAt(surrendered, 1000)).map(p => [p.id, p.eliminated])).toEqual([["p1", false], ["p2", true]]);
   });
 
   it("shows a fall out of the map caused by the shot when the replay settles", () => {
@@ -136,11 +151,11 @@ describe("the eliminated players shown at the replay time", () => {
     expect(clockAt(frame, 1000).eliminated).toEqual([]);
   });
 
-  it("observes as a spectator, or right after sending a surrender while a replay still shows the player in", () => {
+  it("always observes as a spectator, and falls back to the frame before the first clock", () => {
     const { impactAt } = timing(shot), flying = clockAt(shot, Math.floor(impactAt) - 1, "p1");
-    expect(isObserving(flying, "p1", { spectator: true, surrendered: false })).toBe(true);
-    expect(isObserving(flying, "p1", { spectator: false, surrendered: true })).toBe(true);
-    expect(isObserving(flying, "p1", { spectator: false, surrendered: false })).toBe(false);
-    expect(isObserving(null, "p1", { spectator: false, surrendered: false })).toBe(false);
+    expect(isObserving(flying, "p1", true)).toBe(true);
+    expect(isObserving(flying, "p1", false)).toBe(false);
+    expect(isObserving(null, "p1", false)).toBe(false);
+    expect(turnOrderPlayers(shot, null).map(p => [p.id, p.name, p.eliminated])).toEqual([["p1", "p1", false], ["p2", "p2", true]]);
   });
 });
