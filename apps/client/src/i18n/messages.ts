@@ -35,7 +35,7 @@ export const english: Readonly<Record<string, string>> = {
   "大きいほど、離したあと長く流れます。0で無効。": "Higher values glide longer after release. Set to 0 to disable.",
   "カメラを初期値に戻す": "Reset camera", "変更は即時反映され、このブラウザに保存されます。": "Changes apply immediately and are saved in this browser.",
   "標準砲": "Cannon", "トリプル弾": "Triple", "マルチ弾": "Multiple", "貫通弾": "Drill",
-  "レーザー弾": "Laser", "掘削弾": "Digger", "浮遊弾": "Floater", "針弾": "Stinger",
+  "レーザー弾": "Laser", "掘削弾": "Digger", "跳ね弾": "Bouncer", "針弾": "Stinger",
   "プレイヤー": "Player", "機体": "Tank",
   "カラー1": "Color 1", "カラー2": "Color 2", "砲塔": "Turret", "足回り": "Chassis", "完了": "Done",
   "機体をカスタマイズ": "Customize tank", "機体のカスタマイズ": "Customize tank",
