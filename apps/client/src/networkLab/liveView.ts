@@ -55,6 +55,11 @@ export type BattleClock = {
   readonly move: Pick<OwnPose, "facing" | "stepsLeft"> | null;
   /** 相手の手番に準備した向き。操作盤の向きに出す */
   readonly prepared: -1 | 1 | null;
+  /**
+   * 表示している時刻に脱落している参加者。サーバーは射撃を受け付けた時点で着弾後の脱落をフレームに入れるので、
+   * 再生中は撃たれた機体の HP が尽きる着弾まで（射撃で落ちた機体は再生が落ち着くまで）入れない
+   */
+  readonly eliminated: readonly string[];
 };
 
 export const battleClock = (frame: LabFrame, live: LiveSample, ownId: string): BattleClock => {
@@ -69,9 +74,17 @@ export const battleClock = (frame: LabFrame, live: LiveSample, ownId: string): B
     terrain: live.presentation.terrainOps.length,
     move: live.own ? { facing: live.own.facing, stepsLeft: live.own.stepsLeft } : null,
     prepared: live.prepared,
+    eliminated: live.presentation.players.filter(p => p.eliminated).map(p => p.playerId),
   };
 };
 
 /** serverNow を除いた値が同じなら同じ文字列。変わったときだけ React の state を更新する */
 export const clockKey = (clock: BattleClock): string =>
-  [clock.seconds, clock.opening, clock.revealed, clock.returnSeconds, clock.own?.x, clock.own?.y, clock.terrain, clock.move?.facing, clock.move?.stepsLeft, clock.prepared].join("|");
+  [clock.seconds, clock.opening, clock.revealed, clock.returnSeconds, clock.own?.x, clock.own?.y, clock.terrain, clock.move?.facing, clock.move?.stepsLeft, clock.prepared, clock.eliminated.join(",")].join("|");
+
+/**
+ * 操作盤の代わりに観戦の表示を出すか（設計書 21.4）。観戦者と、表示している時刻に脱落している参加者。
+ * 他人の射撃の再生中に降参を送った参加者は、表示の脱落が再生の落ち着くまで遅れるので、送った時点で観戦にする
+ */
+export const isObserving = (clock: Pick<BattleClock, "eliminated"> | null, playerId: string, { spectator, surrendered }: { readonly spectator: boolean; readonly surrendered: boolean }): boolean =>
+  spectator || surrendered || Boolean(clock?.eliminated.includes(playerId));
