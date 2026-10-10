@@ -18,6 +18,8 @@ import { BattleMenu } from "@/worldUi/BattleMenu";
 import { applyOps, buildInitialTerrain, tiltOf } from "@game/sim";
 import { BattleConsole, BattleOverlay } from "@/worldUi/BattleHud";
 import { WindGauge } from "@/worldUi/WindGauge";
+import { SpectatorConsole } from "@/worldUi/SpectatorConsole";
+import { teamColor } from "@/worldUi/teamColors";
 import { useTouchControls } from "@/worldUi/useTouchControls";
 import { SceneLoading } from "@/worldUi/SceneLoading";
 import { LAB_CONNECTED_STATUS, LAB_CONNECTING_STATUS, labLoadingSteps } from "@/worldUi/connectionSteps";
@@ -161,6 +163,8 @@ export const NetworkLab = ({ worldArt = false, onExit, connection }: { readonly 
   const loadout = frame?.players.find(p => p.playerId === playerId)?.loadout ?? DEFAULT_LOADOUT;
   const itemsUsed = frame?.players.find(p => p.playerId === playerId)?.itemsUsed ?? [];
   useEffect(() => { setItem(null); }, [frame?.matchId, frame?.turnId]);
+  // 手動視点は試合ごとに戻す。前の試合のチェックが残ると、脱落した直後に手番の機体へ寄らない（設計書 21.2）
+  useEffect(() => { setKeepView(false); }, [frame?.matchId]);
   const seconds = view?.clock.seconds ?? null;
   const phaseLabel = frame?.phase === "replaying" ? "射撃を再生中" : frame?.phase === "finished" ? "対戦終了" : "操作中";
   // 脱落は表示している時刻の値で見る。フレームの値は射撃を受け付けた時点で着弾後になっている
@@ -183,6 +187,8 @@ export const NetworkLab = ({ worldArt = false, onExit, connection }: { readonly 
   const ground = own && shownTerrain ? tiltOf(shownTerrain, own) : 0;
   // 手番順リストは document.body への portal なので、結果画面では出さない（出すと見出しと表に重なる）
   const delay = frame?.phase !== "finished" ? frame?.delay : undefined;
+  const actorPlayer = frame?.phase !== "finished" ? frame?.players.find(p => p.playerId === frame.actorId) : undefined;
+  const spectatorActor = actorPlayer ? { name: actorPlayer.nickname ?? actorPlayer.playerId, color: teamColor(Number(actorPlayer.teamId.slice(1))) } : null;
   const turnPlayers = frame?.players.map(p => ({ id: p.playerId, name: p.nickname ?? p.playerId, colors: p.colors, eliminated: view ? view.clock.eliminated.includes(p.playerId) : p.eliminated })) ?? [];
   if (worldArt) return <main className="network-lab network-world" data-control={canAct ? "act" : preparing ? "prepare" : "none"} onPointerDown={() => unlockAudio()} onKeyDown={() => unlockAudio()}>
     <YourTurn turnKey={`${frame?.matchId}/${frame?.turnId}`} active={Boolean(!observing && canControl)} />
@@ -190,7 +196,7 @@ export const NetworkLab = ({ worldArt = false, onExit, connection }: { readonly 
     <span className="battle-sr" data-testid="identity">{playerId}</span><span className="battle-sr" data-testid="phase">{t(phaseLabel)}</span>
     {frame && view ? <NetworkField key={frame.matchId} sample={sample} charge={input.gauge.charging ? input.gauge.value / 100 : 0} onSettling={setSettling} blocked={menu || confirmLeave || input.gauge.charging || !revealed} frame={frame} elevation={elevation} ownId={playerId} followTurns={!observing || !keepView} {...(!observing ? { selectedWeapon: loadout[slot] } : {})} /> : <SceneLoading steps={labLoadingSteps(status, t)} />}
     {observing && frame && delay && <TurnOrderList info={{ onOpen: input.cancel, serverNow, state: delay, playerId, acting: false, players: turnPlayers }} />}
-    {observing ? <footer className="battle-console"><span role="status">{t("観戦中")}</span><label><input type="checkbox" checked={keepView} onChange={e => setKeepView(e.target.checked)} />{t("手動視点を維持")}</label>{frame && <WindGauge wind={frame.wind} />}</footer> : <BattleConsole delay={frame && delay ? { onOpen: input.cancel, serverNow, state: delay, playerId, acting: frame.actorId === playerId && frame.phase === "acting", players: turnPlayers } : undefined} player={hudPlayers.find(p => p.id === playerId)} steps={moving ? moving.stepsLeft : frame?.actorId === playerId ? frame.movement.stepsLeft : 0} tilt={ground} elevation={elevation} facing={ownFacing.current} power={input.gauge.value} loadout={loadout} slot={slot} wind={frame ? frame.wind : null} items={{ used: itemsUsed, selected: item, disabled: !canAct || menu || confirmLeave || input.gauge.charging, select: setItem }} disabled={(!canAct && !preparing) || menu || confirmLeave || input.gauge.charging} selectSlot={setSlot}>
+    {observing ? <SpectatorConsole actor={spectatorActor} keepView={keepView} onKeepView={setKeepView} wind={frame && <WindGauge wind={frame.wind} />} /> : <BattleConsole delay={frame && delay ? { onOpen: input.cancel, serverNow, state: delay, playerId, acting: frame.actorId === playerId && frame.phase === "acting", players: turnPlayers } : undefined} player={hudPlayers.find(p => p.id === playerId)} steps={moving ? moving.stepsLeft : frame?.actorId === playerId ? frame.movement.stepsLeft : 0} tilt={ground} elevation={elevation} facing={ownFacing.current} power={input.gauge.value} loadout={loadout} slot={slot} wind={frame ? frame.wind : null} items={{ used: itemsUsed, selected: item, disabled: !canAct || menu || confirmLeave || input.gauge.charging, select: setItem }} disabled={(!canAct && !preparing) || menu || confirmLeave || input.gauge.charging} selectSlot={setSlot}>
       {touch && <BattleTouchControls disabled={!canAct || confirmLeave || menu} aimDisabled={(!canAct && !preparing) || confirmLeave || menu} moveDisabled={(!canAct && !preparing) || confirmLeave || menu} button={input.button} steps />}
     </BattleConsole>}
     {latency !== null && latency > 300 && <span className="network-latency" role="status">{t("通信遅延")} {latency} ms</span>}
