@@ -21,7 +21,7 @@ export type FanSpec = {
   readonly speedPercent: number;
 };
 
-/** 跳ね返り。地形に当たった段の後、貫通せずに跳ね返り、当たった向きの速度を反転して keepPercent（%）に落とす */
+/** 跳ね返り。地形に当たった段の後、貫通せずに跳ね返り、当たった向きの速度を反転して、速さ全体を keepPercent（%）に落とす */
 export type BounceSpec = {
   readonly keepPercent: number;
 };
@@ -85,7 +85,8 @@ export const WEAPON_SPECS: Readonly<Record<WeaponId, WeaponSpec>> = {
       { blastRadius: 8, damageMax: 22, damagePerCell: 3 },
     ],
     ...STANDARD_FLIGHT,
-    bounce: { keepPercent: 70 },
+    // 縦だけを 70% に落とすと横の勢いが残り、最初の飛距離の 7 割も跳ねて不自然だった（ユーザーの所見）。速さ全体を半分にすると 4 分の 1 ほどの小さな跳ねになる
+    bounce: { keepPercent: 50 },
   },
   stinger: { ...ONE_SHOT, stages: single(3, 70, 21), speedPercent: 105, gravityPercent: 100, windPercent: 100 },
 };

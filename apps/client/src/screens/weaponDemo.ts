@@ -158,10 +158,10 @@ export const exitTime = (field: Field, f: Flight): number => {
 
 type Stages = { readonly stages: readonly Stage[]; readonly mask: TerrainMask; readonly segments: readonly Segment[] };
 
-/** 跳ね返った後の区間。平らな地面に当たった点から、上下の速度を反転して keepPercent に落として飛び直す（sim の跳ね返りと同じ規則） */
+/** 跳ね返った後の区間。平らな地面に当たった点から、上下の速度を反転し、速さ全体を keepPercent に落として飛び直す（sim の跳ね返りと同じ規則） */
 const bounceSegment = (seg: Segment, local: number, p: Point, keepPercent: number, start: number): Segment => {
   const vyAt = seg.flight.vy - seg.flight.gravity * local;
-  return { start, flight: { ...seg.flight, vy: (-vyAt * keepPercent) / 100, from: { x: p.x, y: Math.floor(p.y) - 0.01 } } };
+  return { start, flight: { ...seg.flight, vx: (seg.flight.vx * keepPercent) / 100, vy: (-vyAt * keepPercent) / 100, from: { x: p.x, y: Math.floor(p.y) - 0.01 } } };
 };
 
 /**

@@ -142,8 +142,8 @@ export const settle = (f: Flight, cell: CellPoint, tank: boolean, points: FixedP
 export const canBounce = (hit: Hit): boolean => !hit.tank && (hit.from.x !== hit.cell.x || hit.from.y !== hit.cell.y);
 
 /**
- * 跳ね返る。弾を当たる直前の空きセルの中心に置き直し、当たった向きの速度を反転して keepPercent に落とす。
- * 弾は縦か横に 1 セルずつ進むので、横から当たれば左右の速度を、縦から当たれば上下の速度を反転する。もう一方の速度は変えない。
+ * 跳ね返る。弾を当たる直前の空きセルの中心に置き直し、当たった向きの速度を反転して、速さ全体を keepPercent に落とす。
+ * 弾は縦か横に 1 セルずつ進むので、横から当たれば左右の速度を、縦から当たれば上下の速度を反転する。縦と横を同じ割合で落とすので、入ってきた角度を鏡に映した向きへ跳ねる。
  * 置き直した点は弾道に足さない。足すと再生で弾が着弾セルから 1 セル戻って見えるので、着弾の点から次の位置へそのまま進める
  */
 export const bounceOff = (f: Flight, hit: Hit, spec: BounceSpec): void => {
@@ -151,8 +151,10 @@ export const bounceOff = (f: Flight, hit: Hit, spec: BounceSpec): void => {
   f.px = c.x;
   f.py = c.y;
   f.prev = hit.from;
-  if (hit.from.x !== hit.cell.x) f.vx = -scalePercent(f.vx, spec.keepPercent);
-  else f.vy = -scalePercent(f.vy, spec.keepPercent);
+  const vx = scalePercent(f.vx, spec.keepPercent);
+  const vy = scalePercent(f.vy, spec.keepPercent);
+  f.vx = hit.from.x !== hit.cell.x ? -vx : vx;
+  f.vy = hit.from.x !== hit.cell.x ? vy : -vy;
 };
 
 /**

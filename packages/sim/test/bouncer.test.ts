@@ -17,7 +17,7 @@ describe("跳ね弾", () => {
   it("最初の接触で爆発して 1 回跳ね、次の接触でもう一度爆発する", () => {
     const spec = weaponSpec("bouncer");
     expect(spec.stages).toHaveLength(2);
-    expect(spec.bounce).toEqual({ keepPercent: 70 });
+    expect(spec.bounce).toEqual({ keepPercent: 50 });
     const { cannon, bouncer } = both(flatMask(150), { x: 60, elevation: 45, power: 50 });
     const [first, second] = bouncer.result.impacts;
     expect(bouncer.result.impacts).toHaveLength(2);
@@ -34,6 +34,17 @@ describe("跳ね弾", () => {
     const path = bouncer.paths[0]!;
     const at = path.impactAt[0]!;
     expect(path.points[at + 1]!.y).toBeLessThan(path.points[at]!.y);
+  });
+
+  it("跳ねは小さく、2 回目は最初の飛距離の半分より手前で、1 回目の爆風の外で爆発する", () => {
+    const [stage1] = weaponSpec("bouncer").stages;
+    for (const [elevation, power] of [[10, 40], [45, 50], [60, 70], [20, 100]] as const) {
+      const { bouncer } = both(flatMask(150), { x: 60, elevation, power });
+      const [first, second] = bouncer.result.impacts;
+      const hop = second!.cell.x - first!.cell.x;
+      expect(hop, `${elevation}/${power}`).toBeLessThan((first!.cell.x - 60) / 2);
+      expect(hop, `${elevation}/${power}`).toBeGreaterThan(stage1!.blastRadius);
+    }
   });
 
   it("壁で跳ねると向きが反転し、2 回目は壁の手前で爆発する", () => {

@@ -2564,10 +2564,10 @@ exports[`golden replay > 跳ね弾 壁で跳ね返る 1`] = `
   "paths": [
     {
       "last": {
-        "x": 7503872,
+        "x": 7897088,
         "y": 9863168,
       },
-      "steps": 54,
+      "steps": 57,
     },
   ],
   "result": {
@@ -2596,7 +2596,7 @@ exports[`golden replay > 跳ね弾 壁で跳ね返る 1`] = `
       },
       {
         "cell": {
-          "x": 114,
+          "x": 120,
           "y": 150,
         },
         "damage": [
@@ -2606,7 +2606,7 @@ exports[`golden replay > 跳ね弾 壁で跳ね返る 1`] = `
         "projectile": 0,
         "stage": 1,
         "terrainOp": {
-          "cx": 114,
+          "cx": 120,
           "cy": 150,
           "radius": 8,
         },
@@ -2640,10 +2640,10 @@ exports[`golden replay > 跳ね弾 平地 床で跳ねて 2 回爆発する 1`] 
   "paths": [
     {
       "last": {
-        "x": 13467648,
+        "x": 10911744,
         "y": 9863168,
       },
-      "steps": 118,
+      "steps": 104,
     },
   ],
   "result": {
@@ -2672,7 +2672,7 @@ exports[`golden replay > 跳ね弾 平地 床で跳ねて 2 回爆発する 1`] 
       },
       {
         "cell": {
-          "x": 205,
+          "x": 166,
           "y": 150,
         },
         "damage": [
@@ -2682,7 +2682,7 @@ exports[`golden replay > 跳ね弾 平地 床で跳ねて 2 回爆発する 1`] 
         "projectile": 0,
         "stage": 1,
         "terrainOp": {
-          "cx": 205,
+          "cx": 166,
           "cy": 150,
           "radius": 8,
         },
@@ -2716,10 +2716,10 @@ exports[`golden replay > 跳ね弾 谷 向かい風 10 1`] = `
   "paths": [
     {
       "last": {
-        "x": 20611072,
-        "y": 9207808,
+        "x": 17334272,
+        "y": 10387456,
       },
-      "steps": 166,
+      "steps": 151,
     },
   ],
   "result": {
@@ -2748,8 +2748,8 @@ exports[`golden replay > 跳ね弾 谷 向かい風 10 1`] = `
       },
       {
         "cell": {
-          "x": 314,
-          "y": 140,
+          "x": 264,
+          "y": 158,
         },
         "damage": [
           0,
@@ -2758,8 +2758,8 @@ exports[`golden replay > 跳ね弾 谷 向かい風 10 1`] = `
         "projectile": 0,
         "stage": 1,
         "terrainOp": {
-          "cx": 314,
-          "cy": 140,
+          "cx": 264,
+          "cy": 158,
           "radius": 8,
         },
       },
