@@ -48,8 +48,9 @@ it("supports 2..8 players on the authored terrain with clear separated spawns", 
       expect(hasClearance(mask, spawn.x, spawn.y)).toBe(true);
       expect(isRingOut(mask, spawn)).toBe(false);
       if (i > 0) expect(spawn.x - spawns[i - 1]!.x).toBeGreaterThanOrEqual(TANK_RADIUS * 2);
+      // x = 340 のスポーンは右の 6 列で 11 セル上がる 45 度より急な盛り上がりの麓にあり、右へは登れない（設計書 02 の 2.6）。左へは動ける
       expect(stepOutcome(mask, spawn, -1).kind).toBe("moved");
-      expect(stepOutcome(mask, spawn, 1).kind).toBe("moved");
+      expect(stepOutcome(mask, spawn, 1).kind).toBe(spawn.x === 340 ? "blocked" : "moved");
     }
   }
 });

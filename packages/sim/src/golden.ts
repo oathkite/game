@@ -5,6 +5,7 @@ import { flatMask, islandMask, shot, slopedMask, valleyMask, wallMask } from "./
 import type { TerrainMask } from "./terrain.js";
 
 // golden replay のケース。Node の vitest とブラウザ（Playwright）が同じ関数を呼び、結果を比べる。
+// 「直撃」のケースは、至近の相手の芯（設計書 02 の 2.3）に当たる仰角 10、パワー 20 で撃つ。
 // 設計書 07 の 7.5「クロス環境」。
 
 export type GoldenCase = {
@@ -26,7 +27,7 @@ export const GOLDEN_CASES: readonly GoldenCase[] = [
   { name: "谷 向かい風 10", mask: valleyMask, players: two(60, 340), input: shot({ x: 60, elevation: 45, power: 72, wind: -10 }) },
   { name: "谷 山越えの高角度", mask: valleyMask, players: two(60, 340), input: shot({ x: 60, elevation: 80, power: 100, wind: 3 }) },
   { name: "谷 左向きから", mask: valleyMask, players: two(340, 60), input: shot({ seat: 0, x: 340, facing: -1, elevation: 45, power: 72, wind: 0 }) },
-  { name: "平地 直撃", mask: flatMask, players: two(60, 72), input: shot({ x: 60, elevation: 10, power: 40, wind: 0 }) },
+  { name: "平地 直撃", mask: flatMask, players: two(60, 72), input: shot({ x: 60, elevation: 10, power: 20, wind: 0 }) },
   { name: "平地 最小仰角 最小パワー", mask: flatMask, players: two(60, 340), input: shot({ x: 60, elevation: 10, power: 0, wind: 0 }) },
   { name: "平地 真上 最大パワー", mask: flatMask, players: two(200, 340), input: shot({ x: 200, elevation: 90, power: 100, wind: 0 }) },
   { name: "平地 右端から右へ 消失", mask: flatMask, players: two(390, 60), input: shot({ x: 390, elevation: 10, power: 100, wind: 0 }) },
@@ -37,16 +38,17 @@ export const GOLDEN_CASES: readonly GoldenCase[] = [
   { name: "浮島 相手の足元を狙う", mask: islandMask, players: two(80, 300), input: shot({ x: 80, elevation: 50, power: 88, wind: -2 }) },
   // 武器ごとの弾道（設計書 10）。標準砲と同じ入力で撃ち、初速、重力、風、爆風、ダメージの違いを記録する
   { name: "トリプル弾 谷 基本の直接射撃", mask: valleyMask, players: two(60, 340), input: shot({ weapon: "triple", x: 60, elevation: 45, power: 72, wind: 0 }) },
-  { name: "トリプル弾 平地 至近で 3 発をまとめて当てる", mask: flatMask, players: two(60, 72), input: shot({ weapon: "triple", x: 60, elevation: 10, power: 40, wind: 0 }) },
+  { name: "トリプル弾 平地 至近で 3 発をまとめて当てる", mask: flatMask, players: two(60, 72), input: shot({ weapon: "triple", x: 60, elevation: 10, power: 20, wind: 0 }) },
   { name: "マルチ弾 谷 追い風 10", mask: valleyMask, players: two(60, 340), input: shot({ weapon: "multiple", x: 60, elevation: 45, power: 72, wind: 10 }) },
   { name: "貫通弾 谷 基本の直接射撃", mask: valleyMask, players: two(60, 340), input: shot({ weapon: "drill", x: 60, elevation: 45, power: 72, wind: 0 }) },
-  { name: "貫通弾 平地 直撃", mask: flatMask, players: two(60, 72), input: shot({ weapon: "drill", x: 60, elevation: 10, power: 40, wind: 0 }) },
+  { name: "貫通弾 平地 直撃", mask: flatMask, players: two(60, 72), input: shot({ weapon: "drill", x: 60, elevation: 10, power: 20, wind: 0 }) },
   { name: "貫通弾 壁の中で爆発 自爆", mask: () => wallMask(104, 130), players: two(100, 300), input: shot({ weapon: "drill", x: 100, elevation: 10, power: 50, wind: 0 }) },
   { name: "レーザー弾 谷 向かい風 10", mask: valleyMask, players: two(60, 340), input: shot({ weapon: "laser", x: 60, elevation: 45, power: 72, wind: -10 }) },
-  { name: "レーザー弾 平地 直撃", mask: flatMask, players: two(60, 72), input: shot({ weapon: "laser", x: 60, elevation: 10, power: 40, wind: 0 }) },
-  { name: "掘削弾 平地 直撃", mask: flatMask, players: two(60, 72), input: shot({ weapon: "digger", x: 60, elevation: 10, power: 40, wind: 0 }) },
+  { name: "レーザー弾 平地 直撃", mask: flatMask, players: two(60, 72), input: shot({ weapon: "laser", x: 60, elevation: 10, power: 20, wind: 0 }) },
+  { name: "レーザー弾 平地 足元を掘り抜く", mask: flatMask, players: two(100, 200), input: shot({ weapon: "laser", x: 100, elevation: 80, power: 82, wind: 0 }) },
+  { name: "掘削弾 平地 直撃", mask: flatMask, players: two(60, 72), input: shot({ weapon: "digger", x: 60, elevation: 10, power: 20, wind: 0 }) },
   { name: "浮遊弾 谷 向かい風 10", mask: valleyMask, players: two(60, 340), input: shot({ weapon: "floater", x: 60, elevation: 45, power: 72, wind: -10 }) },
-  { name: "針弾 平地 直撃", mask: flatMask, players: two(60, 72), input: shot({ weapon: "stinger", x: 60, elevation: 10, power: 40, wind: 0 }) },
+  { name: "針弾 平地 直撃", mask: flatMask, players: two(60, 72), input: shot({ weapon: "stinger", x: 60, elevation: 10, power: 20, wind: 0 }) },
   // アイテム（設計書 42）。ダブルシュートは落下後の位置からもう一度撃ち、テレポートは削らずに着地点へ移る
   { name: "ダブルシュート 平地 穴に落ちた相手へもう一度", mask: flatMask, players: two(60, 150), input: shot({ x: 60, elevation: 45, power: 50, wind: 0, item: "double" }) },
   { name: "ダブルシュート トリプル弾 谷 追い風 3", mask: valleyMask, players: two(60, 340), input: shot({ weapon: "triple", x: 60, elevation: 45, power: 72, wind: 3, item: "double" }) },

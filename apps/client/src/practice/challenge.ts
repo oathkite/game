@@ -1,6 +1,6 @@
 import type { Profile } from "@/app/profile";
 import { EMPTY_VIEW, type MatchView, type PlayerView } from "@/match/types";
-import { simulateCombatWithItem, STEPS_PER_TURN } from "@game/sim";
+import { simulateCombatWithItem, STEPS_PER_TURN, TANK_RADIUS } from "@game/sim";
 import { shotWeapon } from "@game/protocol";
 import { challengeStatus, resolveTargets, TARGET_HEIGHT, type ChallengeStatus, type Target } from "./rules";
 import { createStageMask, createTargets, type ChallengeStage } from "./stages";
@@ -31,7 +31,8 @@ export const fireChallenge = (state: ChallengeState, power: number): ChallengeSt
   const c = view.control;
   if (state.status !== "playing" || view.phase !== "acting" || !c || !view.mask || !view.players) return state;
   if (!Number.isInteger(power) || power < 0 || power > 100) return state;
-  const targets = state.targets.filter((t) => !t.destroyed).map((t) => ({ x: t.x, y: t.y - TARGET_HEIGHT + 3, hp: 100 }));
+  // 的は機体の芯ではなく、描いた円いっぱい（体の半径）で弾を止める
+  const targets = state.targets.filter((t) => !t.destroyed).map((t) => ({ x: t.x, y: t.y - TARGET_HEIGHT + 3, hp: 100, hitRadius: TANK_RADIUS }));
   const item = c.item ?? undefined;
   // テレポートは選んだ武器に関わらず標準砲の弾道で飛ぶ（設計書 42.3）
   const input = { seat: 0 as const, weapon: shotWeapon(view.players[0].loadout[c.slot], item), x: c.x, y: c.y, facing: c.facing, elevation: c.elevation, power, wind: view.wind.value, ...(item ? { item } : {}) };

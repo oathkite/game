@@ -41,12 +41,13 @@ it("崖へ向かう移動は落ちる前に止める", () => {
 });
 
 it("今の位置から当てられなければ、相手から離れる向きでも当てられる位置へ動く", () => {
-  // CPU の頭上から左へ屋根を張る。屋根の下からは撃ち出せず、右へ 18 歩出ると屋根越しに山なりで届く
+  // CPU の頭上から左へ屋根を張る。屋根の下からは撃ち出せず、右へ 12 歩出ると屋根越しに山なりで届く。
+  // 自分への爆風は芯から測る（設計書 01 の 1.7）ので、屋根の端の爆風に巻き込まれない最も近い位置が 312 になる
   const state = initial();
   const cells = state.mask.cells.slice();
   for (let x = 240; x <= 305; x++) for (let y = 125; y < 136; y++) cells[y * state.mask.width + x] = 1;
   const cave = { ...state, mask: { ...state.mask, cells }, match: { ...state.match, wind: { ...state.match.wind, value: 0 } } };
-  for (const roll of [0, 0.5, 0.99]) expect(planCpuTurn(cave, "hard", 45, () => roll).fire.x).toBe(318);
+  for (const roll of [0, 0.5, 0.99]) expect(planCpuTurn(cave, "hard", 45, () => roll).fire.x).toBe(312);
 });
 
 it("相手が至近にいても、照準の誤差で自分を巻き込む位置からは撃たない", () => {

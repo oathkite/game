@@ -1,4 +1,5 @@
 import type { CellPoint, TrajectoryInput } from "@game/protocol";
+import { TANK_RADIUS_SQ } from "./constants.js";
 import { cellOf } from "./fixed.js";
 import { cellsBetween, checkCell, launch, motionOf, muzzleOf, stepFlight, type FixedPoint, type Flight } from "./flight.js";
 import { hasClearance, type TankPos } from "./tank.js";
@@ -7,6 +8,7 @@ import { weaponSpec } from "./weapons.js";
 
 // テレポートの弾（設計書 42.3）。扇も貫通もせず 1 本だけ飛び、地形も機体も削らない。
 // 弾道は入力の武器の初速、重力、風で決まる。標準砲で飛ばすのは呼び出し側（protocol の shotWeapon）の責務。
+// 機体との当たりは芯ではなく体の半径で見る。芯で見ると相手の車体を素通りして、重なる位置に着地してしまう。
 
 const STRAIGHT = { deg: 0, speedPercent: 100 } as const;
 
@@ -41,10 +43,11 @@ export const flyTeleport = (mask: TerrainMask, centers: readonly CellPoint[], in
   const f = launch(muzzleOf(mask, input, input.facing, input.elevation), spec, input, STRAIGHT);
   const m = motionOf(spec, input.wind);
   const points: FixedPoint[] = [{ x: f.px, y: f.py }];
-  if (checkCell(mask, f.prev, centers) !== "free") return { points, landing: null };
+  const bodies = centers.map((c) => ({ ...c, radiusSq: TANK_RADIUS_SQ }));
+  if (checkCell(mask, f.prev, bodies) !== "free") return { points, landing: null };
   while (true) {
     const before = { px: f.px, py: f.py, prev: f.prev };
-    const result = stepFlight(mask, centers, f, m, points);
+    const result = stepFlight(mask, bodies, f, m, points);
     if (result === null) return { points, landing: null };
     if (result !== "flying") return { points, landing: teleportLanding(mask, freeCellBefore(before, f, result.cell)) };
   }

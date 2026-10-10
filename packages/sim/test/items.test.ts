@@ -214,8 +214,8 @@ describe("多人数の同時処理（v2）", () => {
     expect(out.mask.cells).toEqual(second.mask.cells);
   });
 
-  // 1 発目で 72 の相手が倒れる配置。300 の機体は爆風の外にいる
-  const input = shot({ elevation: 10, power: 40 });
+  // 1 発目で 72 の相手の芯に当たって倒れる配置。300 の機体は爆風の外にいる
+  const input = shot({ elevation: 10, power: 20 });
   const targetDown = (teams: readonly string[]) =>
     [{ x: 60, y: 150, hp: 100 }, { x: 72, y: 150, hp: 1 }, { x: 300, y: 150, hp: 100 }].map((p, i) => ({ ...p, team: teams[i]! }));
 

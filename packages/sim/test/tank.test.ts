@@ -3,6 +3,7 @@ import {
   BLAST_RADIUS,
   carve,
   CLIMB_MAX,
+  CLIMB_AHEAD,
   groundBelow,
   hasClearance,
   isRingOut,
@@ -10,8 +11,6 @@ import {
   maskFromHeights,
   MAP_WIDTH,
   settle,
-  SLOPE_RISE_MAX,
-  SLOPE_RUN,
   spawnPos,
   STEPS_PER_TURN,
   stepOutcome,
@@ -119,53 +118,78 @@ describe("移動", () => {
     expect(stepOutcome(allowedStep, at(allowedStep, 100), -1).kind).toBe("moved");
   });
 
-  it("単発のクレーターは縁を越えて通り抜けられ、2 発重なった崖は登れない", () => {
-    const flat = flatMask(150);
-    const one = carve(flat, { cx: 100, cy: 150, radius: BLAST_RADIUS });
-    expect(walk(one, at(one, 85), 1, STEPS_PER_TURN)).toMatchObject({ x: 115, stepsUsed: STEPS_PER_TURN, fell: false });
-    expect(walk(one, at(one, 115), -1, STEPS_PER_TURN)).toMatchObject({ x: 85, stepsUsed: STEPS_PER_TURN, fell: false });
-    // 同じ場所を 2 発削ると縁が 13 セルの崖になり、底に降りたら落下で止まり、登って出られない。
-    // 縁のひさしの下の窪みには 1 歩だけ入れるが、その先は壁で進めない
-    const two = carve(one, { cx: 100, cy: surfaceY(one, 100), radius: BLAST_RADIUS });
-    const down = walk(two, at(two, 85), 1, STEPS_PER_TURN);
-    expect(down.fell).toBe(true);
-    const back = walk(two, down, -1, STEPS_PER_TURN);
-    expect(back.stepsUsed).toBeLessThanOrEqual(1);
-    expect(back.x).toBeGreaterThanOrEqual(down.x - 1);
-  });
-
-  it("14 列で 13 セルまでの上り坂は登れて、それより急な坂は途中で壁になる", () => {
-    expect([SLOPE_RUN, SLOPE_RISE_MAX]).toEqual([14, 13]);
-    // x が 6 進むごとに 5 セル上がる坂（約 40 度）。14 列で 11 か 12 セル
-    const gentle = heights((x) => (x < 100 ? 150 : 150 - Math.floor(((x - 100) * 5) / 6)));
-    expect(walk(gentle, at(gentle, 95), 1, STEPS_PER_TURN)).toMatchObject({ x: 125, stepsUsed: STEPS_PER_TURN, fell: false });
-    // 1 列に 1 セル上がる坂（45 度）。14 列目で背後との差が 13 セルを超える
-    const steep = heights((x) => (x < 100 ? 150 : 150 - (x - 100)));
+  it("前方 6 列で 6 セルより高く上がる（45 度より急な）上りには進めず、45 度までは登れる", () => {
+    expect(CLIMB_AHEAD).toBe(6);
+    // 1 列に 1 セル上がる坂（45 度）は、どこまでも登れる
+    const even = heights((x) => (x < 100 ? 150 : 150 - (x - 100)));
+    expect(walk(even, at(even, 95), 1, STEPS_PER_TURN)).toMatchObject({ x: 125, stepsUsed: STEPS_PER_TURN, fell: false });
+    // 6 列で 7 セル上がる坂（約 49 度）は、坂に入る 1 歩目から進めない
+    const steep = heights((x) => (x < 100 ? 150 : 150 - Math.floor(((x - 100) * 7) / 6)));
     const stopped = walk(steep, at(steep, 95), 1, STEPS_PER_TURN);
-    expect(stopped).toMatchObject({ x: 113, y: 137, fell: false });
-    expect(stepOutcome(steep, stopped, 1)).toEqual({ kind: "blocked", y: 137 });
+    expect(stopped).toMatchObject({ x: 100, y: 150, fell: false });
+    expect(stepOutcome(steep, stopped, 1)).toEqual({ kind: "blocked", y: 150 });
   });
 
-  it("1 歩で登れる段差でも、積み重なって急な崖になれば登れない", () => {
-    // 2 列ごとに 3 セルの段。1 歩の段差は CLIMB_MAX 以内だが、14 列で 21 セル上がる
-    const stairs = heights((x) => (x < 100 ? 150 : 150 - 3 * (Math.floor((x - 100) / 2) + 1)));
-    const r = walk(stairs, at(stairs, 95), 1, STEPS_PER_TURN);
-    expect(r.fell).toBe(false);
-    expect(150 - r.y).toBeLessThanOrEqual(SLOPE_RISE_MAX);
+  it("前方 6 列のうちに 6 セルより高い所があれば、短い盛り上がりでも登れない", () => {
+    // 1 列に 2 セル上がって 5 列目で 10 セルの頂に達し、また下がる盛り上がり。1 歩目の移動先から 6 列先は頂より 6 セル低い
+    const mound = heights((x) => (x <= 100 || x >= 110 ? 150 : 150 - 2 * Math.min(x - 100, 110 - x)));
+    const r = walk(mound, at(mound, 95), 1, STEPS_PER_TURN);
+    expect(r).toMatchObject({ x: 100, y: 150, fell: false });
+    expect(stepOutcome(mound, r, 1).kind).toBe("blocked");
+    // 同じ形でも頂が 6 セルなら登って越えられる
+    const low = heights((x) => (x <= 100 || x >= 106 ? 150 : 150 - 2 * Math.min(x - 100, 106 - x)));
+    expect(walk(low, at(low, 95), 1, STEPS_PER_TURN)).toMatchObject({ x: 125, stepsUsed: STEPS_PER_TURN, fell: false });
   });
 
-  it("登れない急な坂も下りは進める", () => {
-    const steep = heights((x) => (x < 100 ? 150 : 150 - (x - 100)));
-    expect(walk(steep, at(steep, 130), -1, STEPS_PER_TURN)).toMatchObject({ x: 100, y: 150, stepsUsed: STEPS_PER_TURN, fell: false });
+  it("天井は前方の地表と数えず、機体が立てる高さのトンネルでは 1 セルの段差を登れる", () => {
+    // 床 150、105 列から 1 セル高い床。天井の下端は床から 7 セル上（機体の高さ 6 に 1 セルの余裕）
+    const tunnel = heights((x) => (x >= 105 ? 149 : 150));
+    for (let x = 0; x < MAP_WIDTH; x++) for (let y = 100; y < 143; y++) tunnel.cells[y * MAP_WIDTH + x] = 1;
+    expect(walk(tunnel, { x: 90, y: 150 }, 1, STEPS_PER_TURN)).toMatchObject({ x: 120, y: 149, stepsUsed: STEPS_PER_TURN, fell: false });
+    // 地面から続く高い壁は、天井と違って下に空きが無いので、これまでどおり壁と数える
+    const wall = heights((x) => (x >= 108 ? 140 : x >= 105 ? 149 : 150));
+    expect(walk(wall, { x: 90, y: 150 }, 1, STEPS_PER_TURN)).toMatchObject({ x: 104, y: 150, fell: false });
   });
 
-  it("背後が奈落や落下する段差なら、その先の高さは坂に数えない", () => {
-    // 左に地面のない浮島の縁から、14 列で 9 セル上がる坂を登る
+  it("うしろが奈落や崖でも、前方の坂が緩ければ登れる", () => {
+    // 左に地面のない浮島の縁から、3 列で 2 セル上がる坂を登る
     const edge = heights((x) => (x < 100 ? MAP_HEIGHT : 150 - Math.floor(((x - 100) * 2) / 3)));
     expect(walk(edge, at(edge, 100), 1, 20)).toMatchObject({ x: 120, stepsUsed: 20, fell: false });
     // 足元の 20 セル下に低い地面がある崖の上でも同じ
     const ledge = heights((x) => (x < 100 ? 170 : 150 - Math.floor(((x - 100) * 2) / 3)));
     expect(walk(ledge, at(ledge, 100), 1, 20)).toMatchObject({ x: 120, stepsUsed: 20, fell: false });
+  });
+
+  it("同じ形の段差は、どこから歩いてきたかに関わらず同じ結果になる", () => {
+    // 平地の 2 セルの段差。車体の幅より後ろの地形だけを変えた 2 つで、段差を登れるかは変わらない
+    const step = (behind: (x: number) => number) => heights((x) => (x >= 110 ? 148 : x >= 105 ? 150 : behind(x)));
+    const flat = step(() => 150);
+    const deepBehind = step((x) => 150 + 3 * (105 - x));
+    for (const mask of [flat, deepBehind]) expect(stepOutcome(mask, at(mask, 109), 1)).toEqual({ kind: "moved", y: 148 });
+  });
+
+  it("1 歩で登れる段差でも、積み重なって 45 度より急な崖になれば登れない", () => {
+    // 2 列ごとに 3 セルの段（約 56 度）。1 歩の段差は CLIMB_MAX 以内
+    const stairs = heights((x) => (x < 100 ? 150 : 150 - 3 * (Math.floor((x - 100) / 2) + 1)));
+    const r = walk(stairs, at(stairs, 95), 1, STEPS_PER_TURN);
+    expect(r).toMatchObject({ x: 99, y: 150, fell: false });
+    expect(stepOutcome(stairs, r, 1).kind).toBe("blocked");
+  });
+
+  it("主砲のクレーターは降りられるが、縁が 45 度より急なので登って出られない", () => {
+    const one = carve(flatMask(150), { cx: 100, cy: 150, radius: BLAST_RADIUS });
+    const down = walk(one, at(one, 85), 1, STEPS_PER_TURN);
+    expect(down.x).toBeGreaterThan(100);
+    expect(down.y).toBeGreaterThan(150 + CLIMB_MAX);
+    for (const dir of [-1, 1] as const) {
+      const out = [0, 1, 2].reduce((pos) => walk(one, pos, dir, STEPS_PER_TURN), { x: 100, y: groundBelow(one, 100, 0) });
+      expect(out.y).toBeGreaterThan(150 + CLIMB_MAX);
+    }
+  });
+
+  it("登れない急な坂も下りは進める", () => {
+    const steep = heights((x) => (x < 100 ? 150 : 150 - (x - 100)));
+    expect(walk(steep, at(steep, 130), -1, STEPS_PER_TURN)).toMatchObject({ x: 100, y: 150, stepsUsed: STEPS_PER_TURN, fell: false });
   });
 
   it("踏み外した先は真下の次の地面で、なければ奈落", () => {

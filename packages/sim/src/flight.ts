@@ -1,5 +1,5 @@
 import type { CellPoint, Facing, TrajectoryInput } from "@game/protocol";
-import { BARREL_BASE_UP, BARREL_LENGTH, GRAVITY, MAX_SPEED, MAX_STEPS, ONE, POWER_MAX, TANK_RADIUS_SQ, WIND_ACCEL_PER_UNIT } from "./constants.js";
+import { BARREL_BASE_UP, BARREL_LENGTH, GRAVITY, MAX_SPEED, MAX_STEPS, ONE, POWER_MAX, WIND_ACCEL_PER_UNIT } from "./constants.js";
 import { cellOf, cosFixed, mulFixed, sinFixed } from "./fixed.js";
 import { tiltOf, type TankPos } from "./tank.js";
 import { isSolid, type TerrainMask } from "./terrain.js";
@@ -38,20 +38,23 @@ export const muzzleOf = (mask: TerrainMask, pos: TankPos, facing: Facing, elevat
   };
 };
 
-const hitsTank = (cell: CellPoint, centers: readonly CellPoint[]): boolean =>
-  centers.some((c) => {
+/** 弾が当たる円。機体の中心と半径の 2 乗。爆発する弾は機体の芯、テレポートの弾と練習の的は体の半径で当たる */
+export type HitCircle = CellPoint & { readonly radiusSq: number };
+
+const hitsTank = (cell: CellPoint, circles: readonly HitCircle[]): boolean =>
+  circles.some((c) => {
     const dx = cell.x - c.x;
     const dy = cell.y - c.y;
-    return dx * dx + dy * dy <= TANK_RADIUS_SQ;
+    return dx * dx + dy * dy <= c.radiusSq;
   });
 
 type CellCheck = "free" | "terrain" | "tank" | "vanish";
 
-export const checkCell = (mask: TerrainMask, cell: CellPoint, centers: readonly CellPoint[]): CellCheck => {
+export const checkCell = (mask: TerrainMask, cell: CellPoint, circles: readonly HitCircle[]): CellCheck => {
   if (cell.x < 0 || cell.x >= mask.width || cell.y >= mask.height) return "vanish";
   if (cell.y < 0) return "free";
   if (isSolid(mask, cell.x, cell.y)) return "terrain";
-  if (hitsTank(cell, centers)) return "tank";
+  if (hitsTank(cell, circles)) return "tank";
   return "free";
 };
 
@@ -138,21 +141,21 @@ export const settle = (f: Flight, cell: CellPoint, tank: boolean, points: FixedP
  * 物理を1tick進める。飛行継続は flying、着弾は Hit、消失は null。
  * 位置は points に足していく。着弾したら弾は着弾セルの中心に置かれる。
  */
-export const stepFlight = (mask: TerrainMask, centers: readonly CellPoint[], f: Flight, m: Motion, points: FixedPoint[]): Hit | "flying" | null => {
+export const stepFlight = (mask: TerrainMask, circles: readonly HitCircle[], f: Flight, m: Motion, points: FixedPoint[]): Hit | "flying" | null => {
   if (f.steps >= MAX_STEPS) return null;
   f.steps++; f.vx += m.windAccel; f.vy += m.gravity; f.px += f.vx; f.py += f.vy;
   const next: CellPoint = { x: cellOf(f.px), y: cellOf(f.py) };
   for (const cell of cellsBetween(f.prev, next)) {
-    const check = checkCell(mask, cell, centers);
+    const check = checkCell(mask, cell, circles);
     if (check === "terrain" || check === "tank") return settle(f, cell, check === "tank", points);
     if (check === "vanish") return null;
   }
   points.push({ x: f.px, y: f.py }); f.prev = next;
   return "flying";
 };
-export const fly = (mask: TerrainMask, centers: readonly CellPoint[], f: Flight, m: Motion, points: FixedPoint[]): Hit | null => {
+export const fly = (mask: TerrainMask, circles: readonly HitCircle[], f: Flight, m: Motion, points: FixedPoint[]): Hit | null => {
   while (true) {
-    const result = stepFlight(mask, centers, f, m, points);
+    const result = stepFlight(mask, circles, f, m, points);
     if (result !== "flying") return result;
   }
 };
