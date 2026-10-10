@@ -80,8 +80,16 @@ describe("武器の数値", () => {
     }
   });
 
-  it("高コストの連射と狙撃が高火力、浮遊弾は標準砲より強く広い", () => {
-    const order: WeaponId[] = ["multiple", "stinger", "laser", "triple", "drill", "floater", "cannon", "digger"];
+  it("2 発の全弾直撃で沈められるのは針弾だけで、ほかは 3 発以上かかる", () => {
+    for (const w of WEAPONS) {
+      const twice = fullHitDamage(weaponSpec(w)) * 2;
+      if (w === "stinger") expect(twice, w).toBeGreaterThanOrEqual(HP_MAX);
+      else expect(twice, w).toBeLessThan(HP_MAX);
+    }
+  });
+
+  it("狙撃が最も高火力で、連射と多段が続き、浮遊弾は標準砲より強く広い", () => {
+    const order: WeaponId[] = ["stinger", "floater", "multiple", "drill", "laser", "triple", "cannon", "digger"];
     for (let i = 1; i < order.length; i++) expect(fullHitDamage(weaponSpec(order[i-1]!))).toBeGreaterThan(fullHitDamage(weaponSpec(order[i]!)));
     expect(firstStage("floater").blastRadius).toBeGreaterThan(firstStage("cannon").blastRadius);
     expect(firstStage("digger").blastRadius).toBeGreaterThan(firstStage("floater").blastRadius);

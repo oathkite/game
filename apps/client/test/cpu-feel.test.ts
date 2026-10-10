@@ -12,7 +12,8 @@ import { planCpuTurn } from "../src/practice/cpuTurn";
 // 「今の位置から当てられない」場面はこの進め方ではほぼ生じないため、cpuTurn.test.ts の屋根の盤面で確かめる。
 
 const MAPS = ["ridgeline", "stone-bridge", "terraces", "sky-islands"] as const;
-const SEEDS = [1, 2, 3, 4, 5, 6];
+// 6 シードでは「逃げられる場面」が 12 前後しかなく、1 場面で率が 8 ポイント動いた。率を安定させるため 12 シードにする
+const SEEDS = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12];
 const CPU_TURNS = 4;
 
 const seeded = (seed: number) => () => { seed = (seed * 1103515245 + 12345) % 2147483648; return seed / 2147483648; };

@@ -53,6 +53,13 @@ describe("機体の芯", () => {
     }
   });
 
+  it("レーザー弾は中心から 3 列ずれた足元に落としても、機体を落とす", () => {
+    for (const x of [TARGET - 3, TARGET + 3]) {
+      const r = shotLandingAt("laser", x).result;
+      expect(fallOf(r)).toBeGreaterThanOrEqual(15);
+    }
+  });
+
   it("足元に落とした貫通弾も機体を落とす", () => {
     const r = shotLandingAt("drill", TARGET + 2).result;
     expect(fallOf(r)).toBeGreaterThanOrEqual(10);

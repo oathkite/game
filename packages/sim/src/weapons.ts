@@ -2,6 +2,7 @@ import type { WeaponId } from "@game/protocol";
 import { BLAST_RADIUS, DAMAGE_MAX, DAMAGE_PER_CELL } from "./constants.js";
 
 // 武器ごとの物理の数値。設計書 10 の 10.2。標準砲は設計書 01 と 06 の初期値そのままで、他は標準砲からの倍率で定める。
+// 2 発の全弾直撃で沈められる（全弾全段直撃の合計が 50 以上）のは針弾だけにする。ほかは 3 発以上かかる。
 // 倍率は百分率の整数で持ち、初速と重力と風は整数除算（切り捨て）で換算する。浮動小数点を持ち込まない。
 
 /** 着弾 1 段ぶんの数値。1 段しかない武器は 1 要素 */
@@ -53,20 +54,21 @@ const STANDARD_FLIGHT = { speedPercent: 100, gravityPercent: 100, windPercent: 1
 
 export const WEAPON_SPECS: Readonly<Record<WeaponId, WeaponSpec>> = {
   cannon: { ...ONE_SHOT, stages: single(BLAST_RADIUS, DAMAGE_MAX, DAMAGE_PER_CELL), ...STANDARD_FLIGHT },
-  triple: { fan: TRIPLE_FAN, volleys: 1, stages: single(6, 18, 3), ...STANDARD_FLIGHT },
-  multiple: { fan: TRIPLE_FAN, volleys: 3, stages: single(3, 8, 2), ...STANDARD_FLIGHT },
+  triple: { fan: TRIPLE_FAN, volleys: 1, stages: single(6, 13, 3), ...STANDARD_FLIGHT },
+  multiple: { fan: TRIPLE_FAN, volleys: 3, stages: single(3, 5, 2), ...STANDARD_FLIGHT },
   // 着弾しても止まらず 3 段掘り進む。段ごとに半径とダメージが小さくなる
   drill: {
     ...ONE_SHOT,
     stages: [
-      { blastRadius: 8, damageMax: 26, damagePerCell: 3 },
-      { blastRadius: 6, damageMax: 16, damagePerCell: 3 },
-      { blastRadius: 4, damageMax: 10, damagePerCell: 3 },
+      { blastRadius: 8, damageMax: 22, damagePerCell: 3 },
+      { blastRadius: 6, damageMax: 14, damagePerCell: 3 },
+      { blastRadius: 4, damageMax: 8, damagePerCell: 3 },
     ],
     ...STANDARD_FLIGHT,
   },
   // 到達距離は初速の 2 乗を重力で割った値に比例するので、重力 70% で標準砲の 1.4 倍ほど伸びる。初速も上げると届きすぎる
-  laser: { ...ONE_SHOT, stages: Array.from({ length: 7 }, () => ({ blastRadius: 3, damageMax: 8, damagePerCell: 4 })), speedPercent: 100, gravityPercent: 70, windPercent: 100 },
+  // 爆風 4 は、中心から 3 列ずれた足元でも段が機体の列を掘り抜く広さ
+  laser: { ...ONE_SHOT, stages: Array.from({ length: 7 }, () => ({ blastRadius: 4, damageMax: 6, damagePerCell: 4 })), speedPercent: 100, gravityPercent: 70, windPercent: 100 },
   digger: { ...ONE_SHOT, stages: single(20, 22, 1), speedPercent: 90, gravityPercent: 100, windPercent: 100 },
   floater: { ...ONE_SHOT, stages: single(12, 46, 3), speedPercent: 70, gravityPercent: 50, windPercent: 200 },
   stinger: { ...ONE_SHOT, stages: single(3, 70, 21), speedPercent: 105, gravityPercent: 100, windPercent: 100 },
