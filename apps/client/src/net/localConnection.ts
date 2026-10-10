@@ -33,7 +33,7 @@ export const defaultOpponentColors = (colors: TankColors): TankColors => ({
 
 /** 相手の装備は自分と違うものにして、弾の違いを一人でも見られるようにする */
 export const defaultOpponentLoadout = (loadout: Loadout): Loadout => {
-  const pool: readonly WeaponId[] = ["triple", "drill", "laser", "multiple", "floater", "stinger"];
+  const pool: readonly WeaponId[] = ["triple", "drill", "laser", "multiple", "bouncer", "stinger"];
   const [a, b] = pool.filter((w) => !loadout.includes(w));
   return [a ?? "triple", b ?? "drill"];
 };

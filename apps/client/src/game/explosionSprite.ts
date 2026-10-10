@@ -21,7 +21,7 @@ const FIRE_COOL: readonly (readonly [number, number])[] = [[0.3, PALETTE.fire2],
 const ENERGY_HOT: readonly (readonly [number, number])[] = [[0.35, PALETTE.white], [0.6, PALETTE.energy0], [0.85, PALETTE.energy1], [1.01, PALETTE.energy2]];
 const ENERGY_COOL: readonly (readonly [number, number])[] = [[0.4, PALETTE.energy1], [0.75, PALETTE.energy2], [1.01, PALETTE.violet0]];
 
-const energyOf = (weapon: WeaponId): boolean => weapon === "laser" || weapon === "floater";
+const energyOf = (weapon: WeaponId): boolean => weapon === "laser";
 
 /** 中心からの割合 t（0〜1）の色。境目は市松でずらし、冷えた火球の外側は煙の色と交互にする */
 const rampColor = (weapon: WeaponId, stage: "hot" | "cool", t: number, x: number, y: number): number => {
@@ -63,16 +63,6 @@ const shapeOf = (weapon: WeaponId, r: number): Shape => {
   };
 };
 
-/** 浮遊弾の二重の輪。外側の輪と、半径の半分の内側の輪（半径 4 未満は外側だけ） */
-const floaterRings = (r: number) => {
-  const outer = limitOf(r), inner = Math.ceil(r / 2) * ART_PER_CELL + 2;
-  return (d: number): number | null => {
-    if (d <= outer && d > outer - ART_PER_CELL) return (outer - d) / ART_PER_CELL;
-    if (r >= 4 && d <= inner && d > inner - ART_PER_CELL) return (inner - d) / ART_PER_CELL;
-    return null;
-  };
-};
-
 /** 消失の輪の画素。外周から内へ何 px か（1 セル幅の帯の外なら null）。レーザー弾は両端だけ */
 const ringDepth = (weapon: WeaponId, r: number, dx: number, dy: number): number | null => {
   const limit = limitOf(r);
@@ -86,10 +76,6 @@ const pixelColor = (weapon: WeaponId, r: number, stage: BlastStage, ramp: Ramp, 
   if (stage === "ring") {
     const depth = ringDepth(weapon, r, dx, dy);
     return depth === null ? null : ringColor(ramp, depth);
-  }
-  if (weapon === "floater") {
-    const band = floaterRings(r)(Math.hypot(dx, dy));
-    return band === null ? null : rampColor(weapon, stage, band, x, y);
   }
   const t = shape(dx, dy);
   return t === null ? null : rampColor(weapon, stage, t, x, y);

@@ -89,10 +89,10 @@ describe("武器の数値", () => {
   });
 
   it("狙撃が最も高火力で、連射と多段が続き、浮遊弾は標準砲より強く広い", () => {
-    const order: WeaponId[] = ["stinger", "floater", "multiple", "drill", "laser", "triple", "cannon", "digger"];
+    const order: WeaponId[] = ["stinger", "multiple", "drill", "laser", "triple", "bouncer", "cannon", "digger"];
     for (let i = 1; i < order.length; i++) expect(fullHitDamage(weaponSpec(order[i-1]!))).toBeGreaterThan(fullHitDamage(weaponSpec(order[i]!)));
-    expect(firstStage("floater").blastRadius).toBeGreaterThan(firstStage("cannon").blastRadius);
-    expect(firstStage("digger").blastRadius).toBeGreaterThan(firstStage("floater").blastRadius);
+    // 跳ね弾は 2 回爆発する代わりに、どちらの爆風も標準砲より狭い
+    for (const stage of weaponSpec("bouncer").stages) expect(stage.blastRadius).toBeLessThan(firstStage("cannon").blastRadius);
   });
 
   it("弾数が多い武器は 1 発が小さく、爆風も狭い", () => {
@@ -213,15 +213,10 @@ describe("1 発 1 段の武器の性格", () => {
     expect(digger.damageMax).toBeLessThanOrEqual(DAMAGE_MAX * 0.7);
   });
 
-  it("浮遊弾は標準砲と同じくらいの距離と高さを、3 割以上長い時間をかけて飛び、風 10 のずれは 3 倍以上", () => {
-    const c = flight("cannon", 60, 0);
-    const f = flight("floater", 60, 0);
-    expect(f.range / c.range).toBeGreaterThan(0.85);
-    expect(f.range / c.range).toBeLessThan(1.15);
-    expect(f.apex / c.apex).toBeGreaterThan(0.85);
-    expect(f.apex / c.apex).toBeLessThan(1.15);
-    expect(f.steps).toBeGreaterThan(c.steps * 1.3);
-    expect(drift("floater", 60)).toBeGreaterThanOrEqual(drift("cannon", 60) * 3);
+  it("跳ね弾は標準砲と同じ飛び方で、覚えた照準がそのまま使える", () => {
+    const { bounce: _, stages: __, ...flightOf } = weaponSpec("bouncer");
+    const { stages: ___, ...cannonFlight } = weaponSpec("cannon");
+    expect(flightOf).toEqual(cannonFlight);
   });
 
   it("針弾は直撃なら全武器で最大、着弾距離 3 セルで 1 割、4 セル以上は 0", () => {
@@ -233,7 +228,7 @@ describe("1 発 1 段の武器の性格", () => {
     expect(damageAt({ x: 105, y: 147 }, center, stinger)).toBe(0);
   });
 
-  it("1 発 1 段の武器は 4 つ", () => {
-    expect(SINGLE.sort()).toEqual(["cannon", "digger", "floater", "stinger"].sort());
+  it("1 発 1 段の武器は 3 つ", () => {
+    expect(SINGLE.sort()).toEqual(["cannon", "digger", "stinger"].sort());
   });
 });

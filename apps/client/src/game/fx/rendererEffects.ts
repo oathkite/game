@@ -6,7 +6,7 @@ import { craterFlames, flameGlow, surfaceLight, WRECK_SMOKE_COUNT, wreckSmokeBir
 import type { FxLayer } from "./fxLayer";
 import { partitionBatch } from "./particles";
 import { craterGlow, impactSmoke, impactSparks, lightBurst, muzzleSmoke, trackDust, wreckDebris } from "./impactFx";
-import { FLOATER_TABLE, KILL_TABLE, LASER_TABLE, TINT_PRIORITY, WARM_TABLE, type GradeTable } from "./gradeTables";
+import { KILL_TABLE, LASER_TABLE, TELEPORT_TABLE, TINT_PRIORITY, WARM_TABLE, type GradeTable } from "./gradeTables";
 import type { ScreenFx } from "./screenFx";
 import type { ProjectileArt } from "../projectileSprite";
 import { terrainDebris } from "./terrainDebris";
@@ -80,14 +80,13 @@ const MUZZLE_LIGHT_CELLS = 6;
 const MUZZLE_LIGHT_MS = 140;
 /** クレーターの底に炎を置く爆風半径の下限（セル）。マルチ弾の 9 発では炎を出さない */
 const FLAME_MIN_RADIUS = 6;
-/** 空の色を寄せる長さ（設計書 41.13）。レーザー弾は短く、浮遊弾は長く */
-const TINT_MS: Readonly<Record<"digger" | "laser" | "floater", number>> = { digger: 450, laser: 200, floater: 500 };
+/** 空の色を寄せる長さ（設計書 41.13）。レーザー弾は短く */
+const TINT_MS: Readonly<Record<"digger" | "laser", number>> = { digger: 450, laser: 200 };
 const KILL_TINT_MS = 500;
 /** 武器ごとの空の色。ダメージ段階 3 は暗転だけで空を寄せない（赤は撃破だけに使う。評価の 3 回目） */
 const tintOf = (weapon: WeaponId): { readonly table: GradeTable; readonly ms: number } | null => {
   if (weapon === "digger") return { table: WARM_TABLE, ms: TINT_MS.digger };
   if (weapon === "laser") return { table: LASER_TABLE, ms: TINT_MS.laser };
-  if (weapon === "floater") return { table: FLOATER_TABLE, ms: TINT_MS.floater };
   return null;
 };
 
@@ -146,7 +145,7 @@ const emitTeleport = (d: Deps, s: TeleportSpec): void => {
   d.fx.emit("front", teleportMotes(s.to.x, s.to.y, hash32(s.seed, 2), 60, ARRIVE_BEAM, 80), age);
   d.fx.emit("front", teleportRing(s.to.x, s.to.y, hash32(s.seed, 3), TELEPORT_ARRIVE_MS), age);
   d.fx.emit("front", teleportBurst(s.to.x, s.to.y, hash32(s.seed, 4), TELEPORT_ARRIVE_MS), age);
-  d.screenFx.tintAt(FLOATER_TABLE, d.fx.now() - age, TELEPORT_TINT_MS);
+  d.screenFx.tintAt(TELEPORT_TABLE, d.fx.now() - age, TELEPORT_TINT_MS);
 };
 
 /** 時刻 now までに生まれる煙の柱の粒を出し、出し終えていない柱を返す。残骸が見えなくなったら（場外）柱を終える */

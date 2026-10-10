@@ -18,7 +18,7 @@ const engine = () =>
       mapName: "valley",
       players: [
         { nickname: "a", colors: { primary: "red", secondary: "red" }, loadout: ["cannon", "digger"] },
-        { nickname: "b", colors: { primary: "blue", secondary: "blue" }, loadout: ["triple", "floater"] },
+        { nickname: "b", colors: { primary: "blue", secondary: "blue" }, loadout: ["triple", "bouncer"] },
       ],
     },
   );

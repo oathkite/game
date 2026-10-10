@@ -5,7 +5,7 @@ import { isRingOut, settle as settleTank, tankCenterY, type TankPos } from "./ta
 import { carve, type TerrainMask } from "./terrain.js";
 import { firstStage, weaponSpec, type StageSpec, type WeaponSpec } from "./weapons.js";
 import { flyTeleport } from "./teleport.js";
-import { checkCell, fly, launch, motionOf, muzzleOf, settle, type FixedPoint, type Flight, type Hit, type HitCircle, type Motion, type ProjectilePath } from "./flight.js";
+import { bounceOff, canBounce, checkCell, fly, launch, motionOf, muzzleOf, settle, type FixedPoint, type Flight, type Hit, type HitCircle, type Motion, type ProjectilePath } from "./flight.js";
 export { fireAngle, muzzleOf, type FixedPoint, type Muzzle, type ProjectilePath } from "./flight.js";
 
 // 弾道と着弾の処理。設計書 06 の 6.7 決定論の契約に従い、整数と固定小数点だけを使う。
@@ -91,7 +91,7 @@ const damageOf = (v: Volley, cell: CellPoint, stage: StageSpec): number[] =>
 
 /**
  * 弾道 1 本を最後の段まで飛ばし、着弾を v に足す。
- * 地形に当たった弾は削った穴を抜けて次の段へ飛び、機体に当たった弾は食い込んで残りの段を同じセルで起こす。
+ * 地形に当たった弾は削った穴を抜けて次の段へ飛び（跳ねる武器は跳ね返って飛び）、機体に当たった弾は食い込んで残りの段を同じセルで起こす。
  */
 const flyProjectile = (v: Volley, index: number, f: Flight, m: Motion, spec: WeaponSpec): void => {
   const points: FixedPoint[] = [{ x: f.px, y: f.py }];
@@ -115,6 +115,8 @@ const flyProjectile = (v: Volley, index: number, f: Flight, m: Motion, spec: Wea
     v.mask = carve(v.mask, terrainOp);
     v.hp = v.hp.map((hp, i) => hp - damage[i]!);
     if (stage + 1 >= spec.stages.length) break;
+    // 跳ねる武器は穴を抜けずに跳ね返って次の段へ飛ぶ。砲口が壁の中で跳ねられなければ、ほかの武器と同じく穴を抜ける
+    if (!hit.tank && spec.bounce && canBounce(hit)) bounceOff(f, hit, spec.bounce);
     if (!hit.tank) hit = fly(v.mask, v.centers.filter((c, i): c is HitCircle => c !== null && (!v.removeDefeated || v.hp[i]! > 0)), f, m, points);
   }
   v.paths.push({ points, impactAt });

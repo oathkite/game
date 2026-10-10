@@ -12,7 +12,7 @@ const state = createEngine({ ...DEFAULT_ENGINE_TIMING, rng: () => 0.5 }, {
   roomCode: "ABCDEF", mapName: "valley",
   players: [
     { nickname: "a", colors: { primary: "red", secondary: "red" }, loadout: ["cannon", "digger"] },
-    { nickname: "b", colors: { primary: "blue", secondary: "blue" }, loadout: ["triple", "floater"] },
+    { nickname: "b", colors: { primary: "blue", secondary: "blue" }, loadout: ["triple", "bouncer"] },
   ],
 });
 const apply = (view: MatchView, messages: readonly ServerMessage[]): MatchView => messages.reduce((v, m, i) => reduce(v, m, opts, i + 1).view, view);

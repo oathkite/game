@@ -11,5 +11,5 @@ it("uses separate emission ports and follows recoil at the original pixel scale"
   expect([0, 1, 2].map(index => muzzlePose("multiple", { age: 0, index }, 0).y)).toEqual([-106 / 12, -8, -87 / 12]);
 });
 it("energy flashes use their first frame and fade instead of an orange muzzle", () => {
-  for (const weapon of ["laser", "floater"] as const) expect(muzzlePose(weapon, { age: 70, index: 0 }, 0)).toMatchObject({ id: "effect-energy", frame: 0, alpha: .5 });
+  for (const weapon of ["laser"] as const) expect(muzzlePose(weapon, { age: 70, index: 0 }, 0)).toMatchObject({ id: "effect-energy", frame: 0, alpha: .5 });
 });

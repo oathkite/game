@@ -110,8 +110,12 @@ describe("demoShots", () => {
     }
   });
 
-  it("浮遊弾は標準砲より長く飛び、針弾は遠くに落ちる", () => {
-    expect(landAt("floater")).toBeGreaterThan(landAt("cannon"));
+  it("跳ね弾は標準砲と同じ所で 1 回目が爆発し、跳ねて先で 2 回目が爆発する。針弾は遠くに落ちる", () => {
+    const [bounce, last] = firstShot("bouncer").stages;
+    const cannon = first(firstShot("cannon").stages);
+    expect(bounce!.x).toBeCloseTo(cannon.x, 1);
+    expect(last!.x).toBeGreaterThan(bounce!.x + 5);
+    expect(last!.y).toBeGreaterThanOrEqual(FIELD.ground - 1);
     expect(first(firstShot("stinger").stages).x).toBeGreaterThan(first(firstShot("cannon").stages).x);
   });
 });

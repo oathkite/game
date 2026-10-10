@@ -1,7 +1,7 @@
 // 武器。設計書 10。候補と、画面に出す名前と説明。
 // 物理の数値（爆風半径、ダメージ、初速の倍率、弾数、段数）は sim の weapons.ts に置く。ここには語彙だけを置く。
 
-export const WEAPON_IDS = ["cannon", "triple", "multiple", "drill", "laser", "digger", "floater", "stinger"] as const;
+export const WEAPON_IDS = ["cannon", "triple", "multiple", "drill", "laser", "digger", "bouncer", "stinger"] as const;
 
 export type WeaponId = (typeof WEAPON_IDS)[number];
 
@@ -21,7 +21,7 @@ export const WEAPON_LABELS: Readonly<Record<WeaponId, string>> = {
   drill: "貫通弾",
   laser: "レーザー弾",
   digger: "掘削弾",
-  floater: "浮遊弾",
+  bouncer: "跳ね弾",
   stinger: "針弾",
 };
 
@@ -30,12 +30,18 @@ export const isWeaponId = (v: unknown): v is WeaponId => typeof v === "string" &
 /** 装備として成り立つか。2 つとも武器で、同じ武器を 2 つ選んでいない */
 export const isValidLoadout = (loadout: readonly [WeaponId, WeaponId]): boolean => loadout[0] !== loadout[1];
 
+/** 作り替えた武器の古い ID と、今の ID。浮遊弾は跳ね弾に作り替えた（設計書 10.2） */
+const RENAMED_WEAPONS: Readonly<Record<string, WeaponId>> = { floater: "bouncer" };
+
+const renamed = (v: unknown): unknown => (typeof v === "string" && Object.hasOwn(RENAMED_WEAPONS, v) ? RENAMED_WEAPONS[v] : v);
+
 /**
  * 保存された値から装備を読む。今の形（武器 2 つの組）と、最初の版の形（メインとサブの対）を受け付ける。
- * 削除した武器や同じ武器 2 つなど、装備として成り立たなければ null
+ * 作り替えた武器の古い ID は今の ID に読み替える。削除した武器や同じ武器 2 つなど、装備として成り立たなければ null
  */
 export const parseLoadout = (v: unknown): Loadout | null => {
-  const pair: readonly [unknown, unknown] | null = Array.isArray(v) && v.length === 2 ? [v[0], v[1]] : isOldLoadout(v) ? [v.main, v.sub] : null;
+  const raw: readonly [unknown, unknown] | null = Array.isArray(v) && v.length === 2 ? [v[0], v[1]] : isOldLoadout(v) ? [v.main, v.sub] : null;
+  const pair = raw && ([renamed(raw[0]), renamed(raw[1])] as const);
   if (!pair || !isWeaponId(pair[0]) || !isWeaponId(pair[1]) || !isValidLoadout([pair[0], pair[1]])) return null;
   return [pair[0], pair[1]];
 };

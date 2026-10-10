@@ -45,9 +45,9 @@ describe("weaponTrail", () => {
 });
 
 describe("着弾の色と破片の勢い", () => {
-  it("レーザー弾と浮遊弾は発光色、ほかは炎の色。掘削弾は破片を強く噴き上げる", () => {
+  it("レーザー弾は発光色、ほかは炎の色。掘削弾は破片を強く噴き上げる", () => {
     expect(impactPaletteOf("laser").lightInner).toBe(PALETTE.energy0);
-    expect(impactPaletteOf("floater").sparks).toContain(PALETTE.energy1);
+    expect(impactPaletteOf("bouncer").lightInner).toBe(PALETTE.fire1);
     expect(impactPaletteOf("cannon").lightInner).toBe(PALETTE.fire1);
     expect(debrisPowerOf("digger")).toBeGreaterThan(1);
     expect(debrisPowerOf("cannon")).toBe(1);

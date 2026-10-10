@@ -1,6 +1,6 @@
 import { describe, expect, it, vi } from "vitest";
 import type { FxLayer } from "@/game/fx/fxLayer";
-import { brighterHalf, composeTables, DIM_TABLE, FLOATER_TABLE, KILL_TABLE, LASER_TABLE, TINT_PRIORITY, WARM_TABLE, type GradeTable, type TintPriority } from "@/game/fx/gradeTables";
+import { brighterHalf, composeTables, DIM_TABLE, TELEPORT_TABLE, KILL_TABLE, LASER_TABLE, TINT_PRIORITY, WARM_TABLE, type GradeTable, type TintPriority } from "@/game/fx/gradeTables";
 import { createRendererEffects } from "@/game/fx/rendererEffects";
 import { createScreenFx, nextTint, nextTints, shownTint, TINT_EDGE_MS, tintPhaseAt, type ScreenFx, type Tint } from "@/game/fx/screenFx";
 import { HOLD_MS, HP_DRAIN_MS } from "@/game/hitFeedback";
@@ -20,7 +20,7 @@ const luminance = (c: number): number => 0.2126 * ((c >> 16) & 0xff) + 0.7152 * 
 
 describe("置き換え表", () => {
   it("どの表も、元も先もパレットの色だけ", () => {
-    for (const table of [DIM_TABLE, WARM_TABLE, LASER_TABLE, FLOATER_TABLE, KILL_TABLE]) {
+    for (const table of [DIM_TABLE, WARM_TABLE, LASER_TABLE, TELEPORT_TABLE, KILL_TABLE]) {
       for (const [from, to] of table) {
         expect(isPaletteColor(from)).toBe(true);
         expect(isPaletteColor(to)).toBe(true);
@@ -36,9 +36,9 @@ describe("置き換え表", () => {
     expect(red(WARM_TABLE.get(PALETTE.sky3)!)).toBeGreaterThan(blue(WARM_TABLE.get(PALETTE.sky3)!));
     expect(red(KILL_TABLE.get(PALETTE.sky4)!)).toBeGreaterThan(blue(KILL_TABLE.get(PALETTE.sky4)!) * 2);
     expect(blue(LASER_TABLE.get(PALETTE.sky3)!)).toBeGreaterThanOrEqual(red(LASER_TABLE.get(PALETTE.sky3)!));
-    // 浮遊弾はレーザー弾と違う青。空のいちばん上の帯も置き換え、継ぎ目を出さない
-    expect(FLOATER_TABLE.get(PALETTE.sky3)).not.toBe(LASER_TABLE.get(PALETTE.sky3));
-    for (const table of [WARM_TABLE, LASER_TABLE, FLOATER_TABLE, KILL_TABLE]) expect(table.has(PALETTE.sky0)).toBe(true);
+    // テレポートはレーザー弾と違う青。空のいちばん上の帯も置き換え、継ぎ目を出さない
+    expect(TELEPORT_TABLE.get(PALETTE.sky3)).not.toBe(LASER_TABLE.get(PALETTE.sky3));
+    for (const table of [WARM_TABLE, LASER_TABLE, TELEPORT_TABLE, KILL_TABLE]) expect(table.has(PALETTE.sky0)).toBe(true);
   });
   it("掘削弾の近い山並みは、地面（土の明るい 3 段）より暗い", () => {
     const lum = (c: number) => 0.2126 * ((c >> 16) & 0xff) + 0.7152 * ((c >> 8) & 0xff) + 0.0722 * (c & 0xff);
@@ -77,8 +77,8 @@ describe("空の色の寄せの段", () => {
   });
   it("別の表や、効き終わった後の同じ表は、新しい寄せとしてやり直す", () => {
     const laser = { table: LASER_TABLE, from: 1000, ms: 200, entry: true, priority: TINT_PRIORITY.weapon };
-    const floater = { table: FLOATER_TABLE, from: 1100, ms: 500, entry: true, priority: TINT_PRIORITY.weapon };
-    expect(nextTint(laser, floater)).toBe(floater);
+    const teleport = { table: TELEPORT_TABLE, from: 1100, ms: 500, entry: true, priority: TINT_PRIORITY.weapon };
+    expect(nextTint(laser, teleport)).toBe(teleport);
     expect(nextTint(laser, { ...laser, from: 1300 })).toEqual({ ...laser, from: 1300 });
     expect(nextTint(null, laser)).toBe(laser);
   });

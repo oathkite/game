@@ -1985,65 +1985,6 @@ exports[`golden replay > 浮島 相手の足元を狙う 1`] = `
 }
 `;
 
-exports[`golden replay > 浮遊弾 谷 向かい風 10 1`] = `
-{
-  "paths": [
-    {
-      "last": {
-        "x": 12091392,
-        "y": 12419072,
-      },
-      "steps": 160,
-    },
-  ],
-  "result": {
-    "finished": null,
-    "hpAfter": [
-      100,
-      100,
-    ],
-    "impacts": [
-      {
-        "cell": {
-          "x": 184,
-          "y": 189,
-        },
-        "damage": [
-          0,
-          0,
-        ],
-        "projectile": 0,
-        "stage": 0,
-        "terrainOp": {
-          "cx": 184,
-          "cy": 189,
-          "radius": 12,
-        },
-      },
-    ],
-    "input": {
-      "elevation": 45,
-      "facing": 1,
-      "power": 72,
-      "seat": 0,
-      "weapon": "floater",
-      "wind": -10,
-      "x": 60,
-      "y": 140,
-    },
-    "ringOut": [],
-    "xAfter": [
-      60,
-      340,
-    ],
-    "yAfter": [
-      140,
-      140,
-    ],
-  },
-}
-`;
-
 exports[`golden replay > 谷 向かい風 10 1`] = `
 {
   "paths": [
@@ -2602,6 +2543,234 @@ exports[`golden replay > 貫通弾 谷 基本の直接射撃 1`] = `
       "seat": 0,
       "weapon": "drill",
       "wind": 0,
+      "x": 60,
+      "y": 140,
+    },
+    "ringOut": [],
+    "xAfter": [
+      60,
+      340,
+    ],
+    "yAfter": [
+      140,
+      140,
+    ],
+  },
+}
+`;
+
+exports[`golden replay > 跳ね弾 壁で跳ね返る 1`] = `
+{
+  "paths": [
+    {
+      "last": {
+        "x": 7503872,
+        "y": 9863168,
+      },
+      "steps": 54,
+    },
+  ],
+  "result": {
+    "finished": null,
+    "hpAfter": [
+      100,
+      100,
+    ],
+    "impacts": [
+      {
+        "cell": {
+          "x": 150,
+          "y": 135,
+        },
+        "damage": [
+          0,
+          0,
+        ],
+        "projectile": 0,
+        "stage": 0,
+        "terrainOp": {
+          "cx": 150,
+          "cy": 135,
+          "radius": 6,
+        },
+      },
+      {
+        "cell": {
+          "x": 114,
+          "y": 150,
+        },
+        "damage": [
+          0,
+          0,
+        ],
+        "projectile": 0,
+        "stage": 1,
+        "terrainOp": {
+          "cx": 114,
+          "cy": 150,
+          "radius": 8,
+        },
+      },
+    ],
+    "input": {
+      "elevation": 20,
+      "facing": 1,
+      "power": 80,
+      "seat": 0,
+      "weapon": "bouncer",
+      "wind": 0,
+      "x": 60,
+      "y": 150,
+    },
+    "ringOut": [],
+    "xAfter": [
+      60,
+      390,
+    ],
+    "yAfter": [
+      150,
+      60,
+    ],
+  },
+}
+`;
+
+exports[`golden replay > 跳ね弾 平地 床で跳ねて 2 回爆発する 1`] = `
+{
+  "paths": [
+    {
+      "last": {
+        "x": 13467648,
+        "y": 9863168,
+      },
+      "steps": 118,
+    },
+  ],
+  "result": {
+    "finished": null,
+    "hpAfter": [
+      100,
+      100,
+    ],
+    "impacts": [
+      {
+        "cell": {
+          "x": 144,
+          "y": 150,
+        },
+        "damage": [
+          0,
+          0,
+        ],
+        "projectile": 0,
+        "stage": 0,
+        "terrainOp": {
+          "cx": 144,
+          "cy": 150,
+          "radius": 6,
+        },
+      },
+      {
+        "cell": {
+          "x": 205,
+          "y": 150,
+        },
+        "damage": [
+          0,
+          0,
+        ],
+        "projectile": 0,
+        "stage": 1,
+        "terrainOp": {
+          "cx": 205,
+          "cy": 150,
+          "radius": 8,
+        },
+      },
+    ],
+    "input": {
+      "elevation": 45,
+      "facing": 1,
+      "power": 50,
+      "seat": 0,
+      "weapon": "bouncer",
+      "wind": 0,
+      "x": 60,
+      "y": 150,
+    },
+    "ringOut": [],
+    "xAfter": [
+      60,
+      390,
+    ],
+    "yAfter": [
+      150,
+      150,
+    ],
+  },
+}
+`;
+
+exports[`golden replay > 跳ね弾 谷 向かい風 10 1`] = `
+{
+  "paths": [
+    {
+      "last": {
+        "x": 20611072,
+        "y": 9207808,
+      },
+      "steps": 166,
+    },
+  ],
+  "result": {
+    "finished": null,
+    "hpAfter": [
+      100,
+      100,
+    ],
+    "impacts": [
+      {
+        "cell": {
+          "x": 237,
+          "y": 176,
+        },
+        "damage": [
+          0,
+          0,
+        ],
+        "projectile": 0,
+        "stage": 0,
+        "terrainOp": {
+          "cx": 237,
+          "cy": 176,
+          "radius": 6,
+        },
+      },
+      {
+        "cell": {
+          "x": 314,
+          "y": 140,
+        },
+        "damage": [
+          0,
+          0,
+        ],
+        "projectile": 0,
+        "stage": 1,
+        "terrainOp": {
+          "cx": 314,
+          "cy": 140,
+          "radius": 8,
+        },
+      },
+    ],
+    "input": {
+      "elevation": 45,
+      "facing": 1,
+      "power": 72,
+      "seat": 0,
+      "weapon": "bouncer",
+      "wind": -10,
       "x": 60,
       "y": 140,
     },

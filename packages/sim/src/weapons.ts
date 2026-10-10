@@ -21,6 +21,11 @@ export type FanSpec = {
   readonly speedPercent: number;
 };
 
+/** 跳ね返り。地形に当たった段の後、貫通せずに跳ね返り、当たった向きの速度を反転して keepPercent（%）に落とす */
+export type BounceSpec = {
+  readonly keepPercent: number;
+};
+
 export type WeaponSpec = {
   /** 弾道ごとのずれ。長さが弾道の本数で、順に発射する。1 発の武器は [{ deg: 0, speedPercent: 100 }] */
   readonly fan: readonly FanSpec[];
@@ -34,6 +39,8 @@ export type WeaponSpec = {
   readonly gravityPercent: number;
   /** 風の作用の倍率（%） */
   readonly windPercent: number;
+  /** 跳ね返り。持つ武器は、地形に当たった段の後に穴を抜けずに跳ね返って次の段へ飛ぶ */
+  readonly bounce?: BounceSpec;
 };
 
 const single = (blastRadius: number, damageMax: number, damagePerCell: number): readonly StageSpec[] => [{ blastRadius, damageMax, damagePerCell }];
@@ -70,7 +77,16 @@ export const WEAPON_SPECS: Readonly<Record<WeaponId, WeaponSpec>> = {
   // 爆風 4 は、中心から 3 列ずれた足元でも段が機体の列を掘り抜く広さ
   laser: { ...ONE_SHOT, stages: Array.from({ length: 7 }, () => ({ blastRadius: 4, damageMax: 6, damagePerCell: 4 })), speedPercent: 100, gravityPercent: 70, windPercent: 100 },
   digger: { ...ONE_SHOT, stages: single(20, 22, 1), speedPercent: 90, gravityPercent: 100, windPercent: 100 },
-  floater: { ...ONE_SHOT, stages: single(12, 46, 3), speedPercent: 70, gravityPercent: 50, windPercent: 200 },
+  // 飛び方は標準砲と同じで、覚えた照準が使える。最初の接触で小さく爆発して 1 回跳ね、次の接触で爆発する。壁や天井の向こう、穴の底を狙う武器
+  bouncer: {
+    ...ONE_SHOT,
+    stages: [
+      { blastRadius: 6, damageMax: 15, damagePerCell: 3 },
+      { blastRadius: 8, damageMax: 22, damagePerCell: 3 },
+    ],
+    ...STANDARD_FLIGHT,
+    bounce: { keepPercent: 70 },
+  },
   stinger: { ...ONE_SHOT, stages: single(3, 70, 21), speedPercent: 105, gravityPercent: 100, windPercent: 100 },
 };
 

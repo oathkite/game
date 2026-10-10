@@ -40,8 +40,8 @@ const skyTable = (to: Readonly<Record<"sky0" | "sky1" | "sky2" | "sky3" | "sky4"
 export const WARM_TABLE: GradeTable = skyTable({ sky0: P.loam3, sky1: P.loam3, sky2: P.loam2, sky3: P.ochre2, sky4: P.ochre1, violet0: P.ochre1, violet1: P.ochre2, violet2: P.loam3, starFaint: P.ochre1 });
 /** レーザー弾。空を淡い青灰へ短く寄せる */
 export const LASER_TABLE: GradeTable = skyTable({ sky0: P.sky1, sky1: P.sky2, sky2: P.sky4, sky3: P.stone2, sky4: P.stone1, violet0: P.stone1, violet1: P.sky4, violet2: P.sky3, starFaint: P.stone1 });
-/** 浮遊弾。空を深い青へ長めに寄せる（レーザー弾と同じ青灰だと見分けられなかった） */
-export const FLOATER_TABLE: GradeTable = skyTable({ sky0: P.sky1, sky1: P.sky3, sky2: P.sky4, sky3: P.sky4, sky4: P.stone2, violet0: P.stone2, violet1: P.sky4, violet2: P.sky3, starFaint: P.energy2 });
+/** テレポート。空を深い青へ長めに寄せる（もとは浮遊弾の表。浮遊弾を跳ね弾に作り替えたのでテレポートだけが使う） */
+export const TELEPORT_TABLE: GradeTable = skyTable({ sky0: P.sky1, sky1: P.sky3, sky2: P.sky4, sky3: P.sky4, sky4: P.stone2, violet0: P.stone2, violet1: P.sky4, violet2: P.sky3, starFaint: P.energy2 });
 /** 撃破。空を深い赤へ。赤は撃破だけに使う（ダメージ段階 3 は暗転だけにした。直撃のたびに赤くなると撃破との差が薄れた） */
 export const KILL_TABLE: GradeTable = skyTable({ sky0: P.loam3, sky1: P.fire6, sky2: P.fire6, sky3: P.fire5, sky4: P.fire5, violet0: P.fire5, violet1: P.fire6, violet2: P.fire6, starFaint: P.fire4 });
 

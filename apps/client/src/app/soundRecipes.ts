@@ -42,17 +42,17 @@ const WEAPONS: Readonly<Record<WeaponSound, Recipe>> = {
     tone("triangle", 1000, 140, 0.12, 0.3),
     thump(130, 55, 0.12, 0.45),
   ], drive: 1.5, duck: 0.08, vary: 0.08 },
-  "floater-fire": { layers: [
-    tone("sine", 150, 620, 0.36, 0.55, { attack: 0.01 }),
-    tone("triangle", 300, 1240, 0.3, 0.12, { delay: 0.02 }),
-    noise("bandpass", 280, 1100, 0.34, 0.35, { q: 1, attack: 0.03 }),
-  ], space: 0.25, vary: 0.04 },
-  "floater-impact": { layers: [
-    tone("sine", 520, 70, 0.4, 0.55, { sweep: 0.2 }),
-    thump(95, 32, 0.7, 0.9),
-    rumble(1800, 140, 0.9, 0.75),
-    noise("bandpass", 2400, 900, 0.35, 0.18, { q: 2, delay: 0.04 }),
-  ], drive: 1.8, space: 0.45, duck: 0.4, vary: 0.05 },
+  // 跳ね弾。ばねで弾き出す短い発射音と、標準砲より軽い破裂
+  "bouncer-fire": { layers: [
+    thump(170, 70, 0.14, 0.6),
+    tone("triangle", 260, 520, 0.16, 0.3, { delay: 0.02 }),
+    noise("bandpass", 1800, 700, 0.1, 0.25, { q: 1.4 }),
+  ], drive: 1.6, space: 0.15, duck: 0.1, vary: 0.05 },
+  "bouncer-impact": { layers: [
+    thump(115, 42, 0.38, 0.8),
+    rumble(2400, 260, 0.5, 0.55),
+    noise("bandpass", 1600, 600, 0.22, 0.25, { q: 1.2 }),
+  ], drive: 1.9, space: 0.3, duck: 0.25, vary: 0.05 },
   "triple-fire": { layers: [...pops(3, 0.055, 200), rumble(2600, 400, 0.35, 0.35)], drive: 2, space: 0.2, duck: 0.15, vary: 0.04 },
   "triple-impact": { layers: [
     crack(0.045, 0.65),

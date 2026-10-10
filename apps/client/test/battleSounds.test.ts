@@ -37,8 +37,8 @@ it("accepts a slightly late shot frame but does not repeat events when the clock
   expect(sounds(shot, 1500)).toEqual([]);
 });
 
-it("uses distinct laser and floater sounds on the same timeline", () => {
-  for (const weapon of ["laser", "floater"] as const) {
+it("uses distinct laser and bouncer sounds on the same timeline", () => {
+  for (const weapon of ["laser", "bouncer"] as const) {
     const sounds = createBattleSounds(); sounds(acting, 900);
     const frame = { ...shot, replay: { ...shot.replay!, shooter: { weapon } } };
     expect(sounds(frame, 1000)).toEqual([`${weapon}-fire`]);

@@ -97,6 +97,12 @@ describe("parseLoadout", () => {
     expect(parseLoadout({ main: "cannon", sub: "stinger" })).toEqual(["cannon", "stinger"]);
   });
 
+  it("浮遊弾は跳ね弾に作り替えたので、保存された浮遊弾は跳ね弾として読む（設計書 10.2）", () => {
+    expect(parseLoadout(["cannon", "floater"])).toEqual(["cannon", "bouncer"]);
+    expect(parseLoadout({ main: "floater", sub: "stinger" })).toEqual(["bouncer", "stinger"]);
+    expect(parseLoadout(["floater", "bouncer"])).toBeNull();
+  });
+
   it("削除した武器、同じ武器 2 つ、形の違う値は null", () => {
     expect(parseLoadout({ main: "heavy", sub: "stinger" })).toBeNull();
     expect(parseLoadout(["cannon", "cannon"])).toBeNull();

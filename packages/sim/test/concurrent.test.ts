@@ -18,7 +18,7 @@ it("resolves all simultaneous muzzle impacts against the same living targets", (
 });
 it("retains single-flight physical results and records monotonic global ticks", () => {
   const players = [{ x: 60, y: 150, hp: 10000 }, { x: 300, y: 150, hp: 10000 }];
-  for (const weapon of ["cannon", "digger", "floater", "stinger"] as const) {
+  for (const weapon of ["cannon", "digger", "bouncer", "stinger"] as const) {
     const input = shot({ weapon }), legacy = simulateCombat(flatMask(), players, input), next = simulateConcurrentCombat(flatMask(), players, input);
     expect(next.mask).toEqual(legacy.mask); expect(next.hpAfter).toEqual(legacy.hpAfter);
     expect(next.paths.map(({ points, impactAt }) => ({ points, impactAt }))).toEqual(legacy.paths);

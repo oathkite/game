@@ -47,7 +47,9 @@ export const GOLDEN_CASES: readonly GoldenCase[] = [
   { name: "レーザー弾 平地 直撃", mask: flatMask, players: two(60, 72), input: shot({ weapon: "laser", x: 60, elevation: 10, power: 20, wind: 0 }) },
   { name: "レーザー弾 平地 足元を掘り抜く", mask: flatMask, players: two(100, 200), input: shot({ weapon: "laser", x: 100, elevation: 80, power: 82, wind: 0 }) },
   { name: "掘削弾 平地 直撃", mask: flatMask, players: two(60, 72), input: shot({ weapon: "digger", x: 60, elevation: 10, power: 20, wind: 0 }) },
-  { name: "浮遊弾 谷 向かい風 10", mask: valleyMask, players: two(60, 340), input: shot({ weapon: "floater", x: 60, elevation: 45, power: 72, wind: -10 }) },
+  { name: "跳ね弾 谷 向かい風 10", mask: valleyMask, players: two(60, 340), input: shot({ weapon: "bouncer", x: 60, elevation: 45, power: 72, wind: -10 }) },
+  { name: "跳ね弾 平地 床で跳ねて 2 回爆発する", mask: flatMask, players: two(60, 390), input: shot({ weapon: "bouncer", x: 60, elevation: 45, power: 50, wind: 0 }) },
+  { name: "跳ね弾 壁で跳ね返る", mask: () => wallMask(150, 60), players: two(60, 390), input: shot({ weapon: "bouncer", x: 60, elevation: 20, power: 80, wind: 0 }) },
   { name: "針弾 平地 直撃", mask: flatMask, players: two(60, 72), input: shot({ weapon: "stinger", x: 60, elevation: 10, power: 20, wind: 0 }) },
   // アイテム（設計書 42）。ダブルシュートは落下後の位置からもう一度撃ち、テレポートは削らずに着地点へ移る
   { name: "ダブルシュート 平地 穴に落ちた相手へもう一度", mask: flatMask, players: two(60, 150), input: shot({ x: 60, elevation: 45, power: 50, wind: 0, item: "double" }) },
