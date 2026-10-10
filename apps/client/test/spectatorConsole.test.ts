@@ -29,7 +29,7 @@ describe("BattleMenu for spectators", () => {
 
   it("shows the camera keys that work while spectating, without the surrender and aiming keys", () => {
     const html = menu(true);
-    expect(html).toContain("Tab：機体を順に見る　C：手番へ");
+    expect(html).toContain("<p>Tab：機体を順に見る</p>");
     expect(html).not.toContain("降参");
     expect(html).not.toContain("Space：溜めて発射");
   });

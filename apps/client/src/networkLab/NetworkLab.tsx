@@ -159,8 +159,6 @@ export const NetworkLab = ({ worldArt = false, onExit, connection }: { readonly 
   const loadout = frame?.players.find(p => p.playerId === playerId)?.loadout ?? DEFAULT_LOADOUT;
   const itemsUsed = frame?.players.find(p => p.playerId === playerId)?.itemsUsed ?? [];
   useEffect(() => { setItem(null); }, [frame?.matchId, frame?.turnId]);
-  // 手動視点は試合ごとに戻す。前の試合のチェックが残ると、脱落した直後に手番の機体へ寄らない（設計書 21.2）
-  useEffect(() => { setKeepView(false); }, [frame?.matchId]);
   const seconds = view?.clock.seconds ?? null;
   const phaseLabel = frame?.phase === "replaying" ? "射撃を再生中" : frame?.phase === "finished" ? "対戦終了" : "操作中";
   // 脱落は表示している時刻の値で見る。フレームの値は射撃を受け付けた時点で着弾後になっている
