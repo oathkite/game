@@ -1,4 +1,5 @@
 import { defineConfig } from "@playwright/test";
+import { chromium } from "./chromium";
 import { tutorialSeen } from "./tutorialSeen";
 
 export default defineConfig({
@@ -9,7 +10,7 @@ export default defineConfig({
   reporter: "list",
   use: { baseURL: "http://127.0.0.1:5173", storageState: tutorialSeen("http://127.0.0.1:5173"), locale: "ja-JP", actionTimeout: 8000 },
   projects: [
-    { name: "chromium", use: { browserName: "chromium" } },
+    { name: "chromium", use: chromium },
     { name: "firefox", use: { browserName: "firefox" } },
     { name: "webkit", use: { browserName: "webkit" } },
   ],
