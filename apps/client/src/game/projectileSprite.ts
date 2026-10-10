@@ -28,15 +28,16 @@ const PATTERNS: Readonly<Record<ProjectileArt, Pattern>> = {
   drill: { left: -4, top: -2, outline: true, rows: [".ttbkb..", "tttbkbnn", "tttbkbnn", ".ttbkb.."] },
   laser: { left: -5, top: -1, outline: false, rows: ["EEeelccccc", "EEeelccccc"] },
   digger: { left: -3, top: -4, outline: true, rows: [".dddd.", "dsdddd", "dddddd", "tttttt", "dddddd", ".dddd."] },
-  floater: { left: -5, top: -3, outline: true, rows: ["...eeee...", "..leeeeE..", "..eeeeeE..", "tttttttttt", "..EeeeEE..", "...EEEE..."] },
+  // 主色の帯を巻いた丸いゴム球
+  bouncer: { left: -3, top: -3, outline: true, rows: [".bbbb.", "bsbbbb", "tttttt", "tttttt", "bbbbbn", ".bnnn."] },
   stinger: { left: -5, top: -1, outline: true, rows: ["ttbbbbbbbn"] },
   // 中央でふくらむ金属の胴に、主色の丸い鼻と尾翼、縁どりのある丸窓、尾に暗いノズル。炎は ROCKET_FLAMES で別に描く
   teleport: { left: -7, top: -4, outline: true, rows: ["..tt...........", "..ttbbbbb......", ".ttbbbbbbbbt...", "ktbbbbkkbbbbtt.", "kbbbbkkskbbbtt.", "ktbbbbkkbbbbtt.", ".ttbbbbbbbbt...", "..ttbbbbb......", "..tt..........."] },
 };
 
-/** 向きで描き直す武器。マルチ弾、掘削弾、浮遊弾は丸いので向きで変えない */
+/** 向きで描き直す武器。マルチ弾、掘削弾、跳ね弾は丸いので向きで変えない */
 export const PROJECTILE_ROTATES: Readonly<Record<ProjectileArt, boolean>> = {
-  cannon: true, triple: true, multiple: false, drill: true, laser: true, digger: false, floater: false, stinger: true, teleport: true,
+  cannon: true, triple: true, multiple: false, drill: true, laser: true, digger: false, bouncer: false, stinger: true, teleport: true,
 };
 
 /** 画面の角度（ラジアン、右が 0、y は下向き）を 22.5 度ごとの 16 方向に丸める */

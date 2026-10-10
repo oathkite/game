@@ -81,18 +81,11 @@ export const BARREL_ART: Readonly<Record<WeaponId, BarrelArt>> = {
     if ((u >= 4 && u < 5) || (u >= 8 && u < 9)) return v < 0 ? M.metalBase : M.metalShadow;
     return v < -1.5 ? M.barrelLight : v >= 1.5 ? M.turretDeep : v < 0 ? M.turretBase : M.barrelShadow;
   } },
-  // 細い砲身にコイル、先に大きな光の輪と球
-  floater: { reach: 5, profile: (u, v, length) => {
-    if (u >= length - 1.5) return within(v, 1.5) ? M.energyHot : null;
-    if (u >= length - 4) {
-      if (within(v, 1)) return M.energyHot;
-      if (!within(v, 5)) return null;
-      // 輪は外を明るく、内側を暗く抜いて穴に見せる
-      if (u < length - 2) return Math.abs(v) >= 3.5 ? M.energyCore : Math.abs(v) >= 2.5 ? M.energyDeep : M.hole;
-      return Math.abs(v) >= 3.5 ? M.energyDeep : null;
-    }
-    if ([5, 8].some(c => u >= c && u < c + 1) && within(v, 1.5)) return v < 0 ? M.metalBase : M.metalShadow;
-    return within(v, 1) ? upper(v) : null;
+  // ばねで弾き出す太く短い砲身。胴にコイルを 3 巻き、先に広い口
+  bouncer: { reach: 3, profile: (u, v, length) => {
+    if (u >= length - 1.5) return within(v, 3) ? (v < 0 ? M.brakeLight : M.brakeShadow) : null;
+    if ([4, 6, 8].some(c => u >= c && u < c + 1) && within(v, 2.5)) return v < 0 ? M.metalBase : M.metalShadow;
+    return within(v, 2) ? upper(v) : null;
   } },
   // 狙撃銃。照準のレール、細い針の銃身、先に減音器
   stinger: { reach: 2, profile: (u, v, length) => {
@@ -163,14 +156,14 @@ const SUB_WEAPON_ART: Readonly<Record<WeaponId, readonly string[]>> = {
     "kkkkk.",
     "pkkkpp",
   ],
-  // 籠に入った光る球
-  floater: [
-    ".nnnn.",
-    "neecdn",
-    "necddn",
-    ".nddn.",
-    "..nn..",
-    ".pppp.",
+  // ばねに載せた予備の球
+  bouncer: [
+    ".LBB..",
+    "LwBBS.",
+    "BBBSD.",
+    ".SDD..",
+    "n.n.n.",
+    "pppppp",
   ],
   // 針の矢筒
   stinger: [

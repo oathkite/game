@@ -13,8 +13,8 @@ describe("機体に描く武器", () => {
     expect(firedArms({ loadout: ["triple", "stinger"], lastWeapon: "stinger" })).toEqual({ weapon: "stinger", sub: "triple" });
   });
   it("自分の席は操作中のスロットか、最後に選んだスロットをすぐに描く", () => {
-    const player = { loadout: ["cannon", "floater"] as const, lastWeapon: "cannon" as const };
-    expect(seatArms({ mySeat: 0, control: null, lastSlot: 1 }, 0, player).weapon).toBe("floater");
+    const player = { loadout: ["cannon", "bouncer"] as const, lastWeapon: "cannon" as const };
+    expect(seatArms({ mySeat: 0, control: null, lastSlot: 1 }, 0, player).weapon).toBe("bouncer");
     expect(seatArms({ mySeat: 1, control: null, lastSlot: 1 }, 0, player).weapon).toBe("cannon");
   });
 });

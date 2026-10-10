@@ -1,7 +1,7 @@
 import type { TrajectoryInput } from "@game/protocol";
 import { MAX_STEPS } from "./constants.js";
 import { damageAt, fireSecond, hitCircleOf, type Combatant, type CombatImpact, type CombatOutcome, type FirstShot, type TeamCombatant } from "./ballistics.js";
-import { checkCell, launch, motionOf, muzzleOf, settle, stepFlight, type FixedPoint, type Flight, type Hit, type HitCircle, type Motion, type ProjectilePath } from "./flight.js";
+import { bounceOff, canBounce, checkCell, launch, motionOf, muzzleOf, settle, stepFlight, type FixedPoint, type Flight, type Hit, type HitCircle, type Motion, type ProjectilePath } from "./flight.js";
 import { carve, type TerrainMask } from "./terrain.js";
 import { isRingOut, settle as settleTank, tankCenterY, type TankPos } from "./tank.js";
 import { flyTeleport } from "./teleport.js";
@@ -71,6 +71,8 @@ export const simulateConcurrentCombat = (initial: TerrainMask, players: readonly
         damage: centers.map((c, i) => c && hp[i]! > 0 ? damageAt(hit.cell, c, stage) : 0) });
       p.stage++; p.done = p.stage === spec.stages.length;
       p.stuck = hit.tank ? hit : null; p.nextTick = tick + IMPACT_HOLD_TICKS;
+      // 跳ねる武器は穴を抜けずに跳ね返って次の段へ飛ぶ（ballistics の flyProjectile と同じ規則）
+      if (!p.done && !hit.tank && spec.bounce && canBounce(hit)) bounceOff(p.flight, hit, spec.bounce);
     }
     for (const impact of batch) mask = carve(mask, impact.terrainOp);
     if (batch.length) hp = hp.map((value, i) => value - batch.reduce((sum, impact) => sum + impact.damage[i]!, 0));

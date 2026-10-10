@@ -22,7 +22,7 @@ export const bulletSize = (weapon: WeaponId): BulletSize => {
       return { w: 8, h: 0.5 };
     case "digger":
       return { w: 1.4, h: 1.4 };
-    case "floater":
+    case "bouncer":
       return { w: 1.2, h: 1.2 };
     case "stinger":
       return { w: 1, h: 0.4 };
@@ -32,7 +32,7 @@ export const bulletSize = (weapon: WeaponId): BulletSize => {
 /** Authored projectile sheets retain their origin; enlarge small silhouettes only for rendering. */
 export const projectileArtScale = (weapon: WeaponId): number => ({
   cannon: 1.25, triple: 2.4, multiple: 3.5, drill: 1.3,
-  laser: 2, digger: 1.2, floater: 1.5, stinger: 1.5,
+  laser: 2, digger: 1.2, bouncer: 1.5, stinger: 1.5,
 })[weapon] / 12;
 
 /** 爆風のセル。中心から半径 r の円をセルで塗る。ring なら縁の 1 セルの輪だけ（設計書 03 の 3.9 の消失） */

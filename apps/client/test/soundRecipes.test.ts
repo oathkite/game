@@ -69,7 +69,7 @@ describe("sound design", () => {
   });
 
   it("gives the heavy blasts a long tail and a sub-bass drop the old single tones lacked", () => {
-    for (const name of ["explosion", "digger-impact", "floater-impact", "finish"] as const) {
+    for (const name of ["explosion", "digger-impact", "finish"] as const) {
       expect(length(SOUNDS[name]), name).toBeGreaterThanOrEqual(0.7);
       expect(lowest(SOUNDS[name]), name).toBeLessThanOrEqual(35);
       expect(SOUNDS[name].duck, name).toBeGreaterThanOrEqual(0.4);

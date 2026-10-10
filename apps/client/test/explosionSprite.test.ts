@@ -52,17 +52,15 @@ describe("explosionPixels", () => {
       expect(Math.hypot(p.x + 0.5, p.y + 0.5)).toBeGreaterThan(6 * 4 + 2 - 4 - 0.01);
     }
   });
-  it("武器ごとの形（38 章 E4）。レーザー弾は横に長い十字、掘削弾は下へ長い、浮遊弾は二重の輪", () => {
+  it("武器ごとの形（38 章 E4）。レーザー弾は横に長い十字、掘削弾は下へ長い", () => {
     const extent = (weapon: (typeof WEAPON_IDS)[number]) => {
       const ps = opaque(explosionPixels(weapon, 6, "hot", TEAM_RAMPS.red));
       return { w: Math.max(...ps.map(p => p.x)) - Math.min(...ps.map(p => p.x)), up: -Math.min(...ps.map(p => p.y)), down: Math.max(...ps.map(p => p.y)), count: ps.length };
     };
-    const laser = extent("laser"), digger = extent("digger"), cannon = extent("cannon"), floater = extent("floater");
+    const laser = extent("laser"), digger = extent("digger"), cannon = extent("cannon");
     expect(laser.w).toBeGreaterThan(laser.up * 1.5);
     expect(laser.count).toBeLessThan(cannon.count / 2);
     expect(digger.down).toBeGreaterThan(digger.up);
-    expect(floater.count).toBeLessThan(cannon.count);
-    expect(getPixel(explosionPixels("floater", 6, "hot", TEAM_RAMPS.red), 0, 0)).toBe(TRANSPARENT);
   });
   it("描いた画素はすべて固定パレットの色", () => {
     for (const weapon of WEAPON_IDS) for (const stage of ["hot", "cool", "ring"] as const) {

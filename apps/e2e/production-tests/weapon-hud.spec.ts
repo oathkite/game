@@ -1,7 +1,7 @@
 import { expect, test } from "@playwright/test";
 import { openFreePracticeSetup } from "../world-tests/practiceFlow";
 
-const loadouts = [["cannon", "triple"], ["multiple", "drill"], ["laser", "digger"], ["floater", "stinger"]] as const;
+const loadouts = [["cannon", "triple"], ["multiple", "drill"], ["laser", "digger"], ["bouncer", "stinger"]] as const;
 for (const [first, second] of loadouts) {
   test(`weapon HUD shows ${first}/${second} and selects both shortcuts`, async ({ page }, testInfo) => {
     await page.setViewportSize({ width: 1440, height: 900 });

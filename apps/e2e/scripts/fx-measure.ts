@@ -11,7 +11,7 @@ const arg = (name: string, fallback: string): string => {
 };
 
 const url = arg("url", "http://127.0.0.1:5173");
-const weapons = arg("weapons", "cannon,triple,multiple,drill,laser,digger,floater,stinger").split(",");
+const weapons = arg("weapons", "cannon,triple,multiple,drill,laser,digger,bouncer,stinger").split(",");
 const measureMs = Number(arg("ms", "4000"));
 const gpu = process.argv.includes("--gpu");
 

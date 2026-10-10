@@ -3,7 +3,7 @@ import { shotWeapon, type ItemId } from "./items.js";
 import type { WeaponId } from "./weapons.js";
 
 export const WEAPON_DELAY: Readonly<Record<WeaponId, number>> = {
-  cannon: 30, digger: 40, triple: 45, drill: 45, laser: 50, multiple: 65, floater: 50, stinger: 55,
+  cannon: 30, digger: 40, triple: 45, drill: 45, bouncer: 45, laser: 50, multiple: 65, stinger: 55,
 };
 export const ROUND_REVEAL_MS = 600;
 export const PASS_DELAY = 65;

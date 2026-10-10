@@ -38,7 +38,8 @@ export const TRAIL_STYLES: Readonly<Record<ProjectileArt, TrailStyle | null>> = 
   // 間を空けずに並べて 1 本の線に見せる。白い芯から発光色へ冷める（設計書 41.13 の評価で点線から改めた）
   laser: { every: 4, spacing: 1, ramp: [PALETTE.white, PALETTE.energy0, PALETTE.energy1, PALETTE.energy2], life: 380, size: 2, rise: 0, jitter: 0 },
   digger: null,
-  floater: { every: 66, ramp: [PALETTE.energy1, PALETTE.energy2], life: 350, size: 2, rise: 0, jitter: 6 },
+  // 跳ね弾。間をあけた石の灰色の粒で、跳ねた後の弧を読みやすくする
+  bouncer: { every: 50, ramp: [PALETTE.stone0, PALETTE.stone1, PALETTE.stone2], life: 400, size: 1, rise: 0, jitter: 2 },
   stinger: { every: 16, ramp: [PALETTE.white, PALETTE.starDim], life: 110, size: 1, rise: 0, jitter: 0 },
   // テレポートのロケットの噴射（設計書 42.3）。炎の先から出て後ろへ流れ、白から炎の色、煙へ冷める
   teleport: { every: 10, ramp: [PALETTE.white, PALETTE.fire1, PALETTE.fire2, PALETTE.fire3, PALETTE.fire4, ...SMOKE], life: 650, size: 2, rise: 4, jitter: 9, behind: 3, exhaust: 30 },
@@ -93,13 +94,13 @@ export const weaponTrail = (weapon: ProjectileArt, points: readonly TrailPoint[]
   return b;
 };
 
-/** 着弾の火花と光の色。レーザー弾と浮遊弾は発光色、ほかは炎の色 */
+/** 着弾の火花と光の色。レーザー弾は発光色、ほかは炎の色 */
 export type ImpactPalette = { readonly sparks: readonly number[]; readonly lightInner: number; readonly lightOuter: number };
 
 const FIRE: ImpactPalette = { sparks: [PALETTE.white, PALETTE.fire1, PALETTE.fire2, PALETTE.fire3, PALETTE.fire5], lightInner: PALETTE.fire1, lightOuter: PALETTE.fire3 };
 const ENERGY: ImpactPalette = { sparks: [PALETTE.white, PALETTE.energy0, PALETTE.energy1, PALETTE.energy2], lightInner: PALETTE.energy0, lightOuter: PALETTE.energy2 };
 
-export const impactPaletteOf = (weapon: WeaponId): ImpactPalette => (weapon === "laser" || weapon === "floater" ? ENERGY : FIRE);
+export const impactPaletteOf = (weapon: WeaponId): ImpactPalette => (weapon === "laser" ? ENERGY : FIRE);
 
 const CROSS = 9;
 
@@ -118,9 +119,9 @@ export const crossFlash = (cx: number, cy: number, seed: number): ParticleBatch 
   return b;
 };
 
-/** 削れた地形の破片のうち熱い粒の色の段。レーザー弾と浮遊弾は発光色で冷める（設計書 41.13 の評価の 2 回目） */
+/** 削れた地形の破片のうち熱い粒の色の段。レーザー弾は発光色で冷める（設計書 41.13 の評価の 2 回目） */
 export const debrisHeatOf = (weapon: WeaponId): readonly number[] =>
-  weapon === "laser" || weapon === "floater"
+  weapon === "laser"
     ? [PALETTE.energy0, PALETTE.energy1, PALETTE.energy1, PALETTE.energy2, PALETTE.energy2, PALETTE.sky4, PALETTE.sky4]
     : [PALETTE.fire1, PALETTE.fire2, PALETTE.fire3, PALETTE.fire3, PALETTE.fire5, PALETTE.fire5, PALETTE.fire5];
 
