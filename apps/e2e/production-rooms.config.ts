@@ -1,11 +1,12 @@
 import { defineConfig } from "@playwright/test";
+import { chromium } from "./chromium";
 import { tutorialSeen } from "./tutorialSeen";
 
 export default defineConfig({
   testDir: "./rooms-tests", testMatch: ["eight-players.spec.ts", "result-timeout.spec.ts", "formations.spec.ts", "public-rooms.spec.ts", "invite-token.spec.ts"], workers: 1, timeout: 120000, reporter: "list",
   metadata: { measureTransfer: true },
   projects: [
-    { name: "chromium", use: { browserName: "chromium" } },
+    { name: "chromium", use: chromium },
     { name: "firefox", use: { browserName: "firefox" } },
     { name: "webkit", use: { browserName: "webkit" } },
   ],

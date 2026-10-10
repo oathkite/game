@@ -141,6 +141,16 @@ describe("移動", () => {
     expect(walk(low, at(low, 95), 1, STEPS_PER_TURN)).toMatchObject({ x: 125, stepsUsed: STEPS_PER_TURN, fell: false });
   });
 
+  it("天井は前方の地表と数えず、機体が立てる高さのトンネルでは 1 セルの段差を登れる", () => {
+    // 床 150、105 列から 1 セル高い床。天井の下端は床から 7 セル上（機体の高さ 6 に 1 セルの余裕）
+    const tunnel = heights((x) => (x >= 105 ? 149 : 150));
+    for (let x = 0; x < MAP_WIDTH; x++) for (let y = 100; y < 143; y++) tunnel.cells[y * MAP_WIDTH + x] = 1;
+    expect(walk(tunnel, { x: 90, y: 150 }, 1, STEPS_PER_TURN)).toMatchObject({ x: 120, y: 149, stepsUsed: STEPS_PER_TURN, fell: false });
+    // 地面から続く高い壁は、天井と違って下に空きが無いので、これまでどおり壁と数える
+    const wall = heights((x) => (x >= 108 ? 140 : x >= 105 ? 149 : 150));
+    expect(walk(wall, { x: 90, y: 150 }, 1, STEPS_PER_TURN)).toMatchObject({ x: 104, y: 150, fell: false });
+  });
+
   it("うしろが奈落や崖でも、前方の坂が緩ければ登れる", () => {
     // 左に地面のない浮島の縁から、3 列で 2 セル上がる坂を登る
     const edge = heights((x) => (x < 100 ? MAP_HEIGHT : 150 - Math.floor(((x - 100) * 2) / 3)));

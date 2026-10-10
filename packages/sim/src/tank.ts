@@ -56,16 +56,28 @@ export const tiltOf = (mask: TerrainMask, pos: TankPos): number => {
 };
 
 /**
+ * x 列の、地表 there から見た前方の地表。there より CLIMB_AHEAD + 1 だけ上から下へ見て最初の地面で、それより高い壁は CLIMB_AHEAD + 1 上と数える。
+ * ただし見た所から続く地面の下に、there より上で空きがあれば、それは天井（トンネルやひさし）なので地表と数えず、空きの下の地面を地表にする
+ */
+const groundAhead = (mask: TerrainMask, x: number, there: number): number => {
+  const top = there - CLIMB_AHEAD - 1;
+  const ground = groundBelow(mask, x, top);
+  if (ground > top) return ground;
+  let y = top;
+  while (y < there && isSolid(mask, x, y)) y++;
+  return y < there ? groundBelow(mask, x, y) : ground;
+};
+
+/**
  * 移動先 nx の地表 there から、前方 CLIMB_AHEAD 列のうち最も高い地表までに上がる高さ。
- * 6 列先の 1 点だけを見ると、その手前で上がって下がる短い急な盛り上がりを見逃すので、前方の列をすべて見る。
- * 前方の地表は there より CLIMB_AHEAD + 1 だけ上から下へ見るので、それより高い壁は CLIMB_AHEAD + 1 と数える。マップ端より先は見ない
+ * 6 列先の 1 点だけを見ると、その手前で上がって下がる短い急な盛り上がりを見逃すので、前方の列をすべて見る。マップ端より先は見ない
  */
 const riseAhead = (mask: TerrainMask, nx: number, there: number, dir: -1 | 1): number => {
   let rise = 0;
   for (let k = 1; k <= CLIMB_AHEAD; k++) {
     const x = nx + dir * k;
     if (x < 0 || x >= mask.width) break;
-    rise = Math.max(rise, there - neighborGround(mask, x, there, CLIMB_AHEAD + 1));
+    rise = Math.max(rise, there - groundAhead(mask, x, there));
   }
   return rise;
 };

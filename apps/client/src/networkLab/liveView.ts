@@ -55,6 +55,18 @@ export type BattleClock = {
   readonly move: Pick<OwnPose, "facing" | "stepsLeft"> | null;
   /** 相手の手番に準備した向き。操作盤の向きに出す */
   readonly prepared: -1 | 1 | null;
+  /**
+   * 表示している時刻に脱落している参加者。サーバーは射撃を受け付けた時点で着弾後の脱落をフレームに入れるので、
+   * 再生中は撃たれた機体の HP が尽きる着弾まで（射撃で落ちた機体は再生が落ち着くまで）入れない。
+   * 射撃では説明できない脱落（再生中の降参と切断）は、フレームに入った時点で入れる
+   */
+  readonly eliminated: readonly string[];
+};
+
+// 射撃が脱落させるのは HP が尽きた機体と場外へ落ちた機体だけ（engine の resolveBattleShot）。それ以外の脱落は降参か切断
+const shownEliminated = (frame: LabFrame, presentation: Presentation): readonly string[] => {
+  const shown = new Set(presentation.players.filter(p => p.eliminated).map(p => p.playerId));
+  return frame.players.filter(p => shown.has(p.playerId) || (p.eliminated && p.hp > 0 && p.y < frame.map.height)).map(p => p.playerId);
 };
 
 export const battleClock = (frame: LabFrame, live: LiveSample, ownId: string): BattleClock => {
@@ -69,9 +81,18 @@ export const battleClock = (frame: LabFrame, live: LiveSample, ownId: string): B
     terrain: live.presentation.terrainOps.length,
     move: live.own ? { facing: live.own.facing, stepsLeft: live.own.stepsLeft } : null,
     prepared: live.prepared,
+    eliminated: shownEliminated(frame, live.presentation),
   };
 };
 
 /** serverNow を除いた値が同じなら同じ文字列。変わったときだけ React の state を更新する */
 export const clockKey = (clock: BattleClock): string =>
-  [clock.seconds, clock.opening, clock.revealed, clock.returnSeconds, clock.own?.x, clock.own?.y, clock.terrain, clock.move?.facing, clock.move?.stepsLeft, clock.prepared].join("|");
+  [clock.seconds, clock.opening, clock.revealed, clock.returnSeconds, clock.own?.x, clock.own?.y, clock.terrain, clock.move?.facing, clock.move?.stepsLeft, clock.prepared, clock.eliminated.join(",")].join("|");
+
+/** 操作盤の代わりに観戦の表示を出すか（設計書 21.4）。観戦者と、表示している時刻に脱落している参加者 */
+export const isObserving = (clock: Pick<BattleClock, "eliminated"> | null, playerId: string, spectator: boolean): boolean =>
+  spectator || Boolean(clock?.eliminated.includes(playerId));
+
+/** 手番順の一覧に渡す参加者。脱落は表示している時刻の値で、clock がまだ無ければフレームの値で決める */
+export const turnOrderPlayers = (frame: LabFrame, clock: Pick<BattleClock, "eliminated"> | null) =>
+  frame.players.map(p => ({ id: p.playerId, name: p.nickname ?? p.playerId, colors: p.colors, eliminated: clock ? clock.eliminated.includes(p.playerId) : p.eliminated }));

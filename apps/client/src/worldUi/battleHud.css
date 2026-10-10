@@ -92,3 +92,13 @@
 
 .battle-movement .battle-movement-bar { width:100%; }
 .battle-movement .battle-movement-bar i { background:#33ff66; }
+/* 観戦の帯（設計書 21.4）。列は中身の幅で取り、狭い画面でも風のメーターを列からはみ出させない */
+.world-ui.world-ui .battle-console.battle-spectator:not(.has-touch) { grid-template-columns:auto minmax(0,1fr) auto; }
+.battle-spectator > [role=status] { font-weight:800; white-space:nowrap; }
+.battle-spectator-center { display:flex; flex-direction:column; align-items:center; gap:2px; min-width:0; }
+.battle-spectator-center strong { max-width:100%; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; font-size:16px; }
+.world-ui .network-world .battle-spectator label { display:inline-flex; align-items:center; gap:8px; width:auto; min-height:44px; margin:0; font-size:14px; font-weight:400; cursor:pointer; }
+/* ネイティブのチェックボックスは緑のテーマが当たらないので、ドットの正方形で描く */
+.world-ui.world-ui .battle-spectator input[type=checkbox] { appearance:none; display:grid; place-content:center; flex:none; width:20px; height:20px; margin:0; padding:0; border:2px solid #33ff66; background:#000; cursor:pointer; }
+.world-ui.world-ui .battle-spectator input[type=checkbox]:checked::before { content:""; width:10px; height:10px; background:#33ff66; }
+.world-ui.world-ui .battle-spectator input[type=checkbox]:focus-visible { outline-offset:2px; }

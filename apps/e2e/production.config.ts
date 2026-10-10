@@ -1,8 +1,9 @@
 import { defineConfig } from "@playwright/test";
+import { chromium } from "./chromium";
 import { tutorialSeen } from "./tutorialSeen";
 export default defineConfig({ testDir: "./production-tests", workers: 1, timeout: 45000, reporter: "list",
   projects: [
-    { name: "chromium", use: { browserName: "chromium" } },
+    { name: "chromium", use: chromium },
     { name: "firefox", use: { browserName: "firefox" } },
     { name: "webkit", use: { browserName: "webkit" } },
   ],
