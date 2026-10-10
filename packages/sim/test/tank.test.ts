@@ -154,6 +154,19 @@ describe("移動", () => {
     expect(150 - r.y).toBeLessThanOrEqual(SLOPE_RISE_MAX);
   });
 
+  it("狭い穴の底から登るときは、うしろの最も低い地表から坂を測り、向こう側の壁の高さで打ち消さない", () => {
+    // 底（168）から左右とも 1 列に 3 セルずつ上がる、幅 14 列の穴。右の 14 列うしろは穴を越えた先の地表（150）になる
+    const pit = heights((x) => {
+      if (x >= 100 && x <= 105) return 150 + 3 * (x - 99);
+      if (x >= 106 && x <= 107) return 168;
+      if (x >= 108 && x <= 113) return 168 - 3 * (x - 107);
+      return 150;
+    });
+    const r = walk(pit, at(pit, 107), -1, STEPS_PER_TURN);
+    expect(r).toMatchObject({ x: 101, y: 156, fell: false });
+    expect(stepOutcome(pit, r, -1)).toEqual({ kind: "blocked", y: 156 });
+  });
+
   it("登れない急な坂も下りは進める", () => {
     const steep = heights((x) => (x < 100 ? 150 : 150 - (x - 100)));
     expect(walk(steep, at(steep, 130), -1, STEPS_PER_TURN)).toMatchObject({ x: 100, y: 150, stepsUsed: STEPS_PER_TURN, fell: false });

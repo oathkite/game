@@ -56,20 +56,23 @@ export const tiltOf = (mask: TerrainMask, pos: TankPos): number => {
 };
 
 /**
- * 移動先 nx の地表 there から SLOPE_RUN 列うしろまでに上った高さ。
+ * 移動先 nx の地表 there まで、SLOPE_RUN 列うしろのうち最も低い地表から上った高さ。
  * 今の位置から逆向きに地表をたどり、落下になる段差、奈落、マップ端でたどるのをやめる。
  * そこから先の低い地面は、歩いて来られない場所なので坂に数えない（浮島の縁、崖の上）。
+ * 終点ではなく最も低い地表から測るのは、狭い穴でたどる線が底を越えて反対側の壁を登り、底からの上りを打ち消さないようにするためである。
  */
 const riseBehind = (mask: TerrainMask, pos: TankPos, dir: -1 | 1, there: number): number => {
   let y = pos.y;
+  let lowest = y;
   for (let k = 2; k <= SLOPE_RUN; k++) {
     const x = pos.x + dir - dir * k;
     if (x < 0 || x >= mask.width) break;
     const ground = groundBelow(mask, x, y - CLIMB_MAX);
     if (ground - y > CLIMB_MAX) break;
     y = ground;
+    lowest = Math.max(lowest, y);
   }
-  return y - there;
+  return lowest - there;
 };
 
 export type StepKind = "moved" | "blocked" | "fell";
