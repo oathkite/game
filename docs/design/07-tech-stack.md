@@ -144,8 +144,19 @@ setup を 1 か所に置くのは、各パッケージに複製せず、`protoco
 headless shell の合成だけで起きる現象なので、アプリは直さない。
 macOS の Chrome で遊ぶプレイヤーの画面には出ない。
 Windows の Chrome、Android の Chrome、Safari、Firefox は確かめていない。
-見た目を目で確かめるスクリーンショットは、headed か new headless で撮る。
-e2e の既定のブラウザを new headless に移すかは決めていない（TBD-53）。
+直すのは撮る側で、e2e の Chromium を new headless（`channel: "chromium"`）で動かす。
+指定は `apps/e2e/chromium.ts` の 1 か所に置き、全 config の Chromium がこれを使う。
+config を通さずに Playwright を起こすスクリプトは既定の headless shell になるので、`scripts/fx-measure.ts` と同じく自分で `channel` を渡す。
+
+new headless へ移すと、FX ラボの基準画像（41.11）が 5 つの時刻のすべてで変わった。
+ただし違う画素は、機体の名札（shooter、target）とダメージの数字 `-35` の 2〜3 か所の文字に限られ、爆発、破片、地形、機体は 1 画素も変わらなかった。
+Pixi の文字は 2D canvas で描くので、ブラウザのビルドが変わって文字のラスタライズが 1 px ほどずれたと見ている。
+撮り直した基準画像は、2 回続けて回しても一致した。
+
+e2e の時間はむしろ縮んだ。
+2026-10-10 に、ほかの worktree の e2e と同時に 1 回ずつ回すと、world の全件は 10.6 分から 8.5 分、rooms の全件は 12.9 分から 6.3 分になった。
+macOS の new headless は Metal の GPU で描き、headless shell は SwiftShader で描くためと考えている。
+同時に回した値なので、時間の差は目安にとどまる。
 
 **CI** は、PR ごとに typecheck と単体テストを回す（`ci.yml`）。
 main への push では、`deploy.yml` が同じものを回してから配置する。
