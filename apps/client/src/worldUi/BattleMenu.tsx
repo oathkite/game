@@ -17,7 +17,7 @@ export const BattleMenu = ({ seconds, close, surrender, exit, finished, report, 
     <button className="modal-close" aria-label={t("閉じる")} autoFocus onClick={close}><DotIcon name="close" /></button>{!spectator && <button disabled={finished} onClick={surrender}>{t("降参")}</button>}<button onClick={exit}>{t("ロビーに戻る")}</button>
     <AudioControls />
     {latency != null && <p>{t("通信遅延")} {latency} ms</p>}
-    {!spectator && <p>{t("A / D・← / →：移動　W / S・↑ / ↓：角度")}<br />{t("Space：溜めて発射　Q / E：武器　Tab：機体を順に見る")}</p>}
+    {spectator ? <p>{t("Tab：機体を順に見る")}</p> : <p>{t("A / D・← / →：移動　W / S・↑ / ↓：角度")}<br />{t("Space：溜めて発射　Q / E：武器　Tab：機体を順に見る")}</p>}
     <p>{t("M：設定を開く　F：全画面")}</p>
     {report && <ReportControls {...report} />}
     {diagnostics && <details><summary>{t("試合の診断情報")}</summary>
