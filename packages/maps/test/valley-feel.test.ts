@@ -98,7 +98,9 @@ describe("1 ターンで動ける範囲", () => {
     }
   });
 
-  it("双塔・浮島群を除くどのマップでも、主砲のクレーターから移動でき、4セルを超える縁では止まる", () => {
+  it("双塔・浮島群を除くどのマップでも、スポーンにできた主砲のクレーターの縁は 45 度より急で登って出られず、低い側が開いた段の縁だけ抜けられる", () => {
+    // 段の縁にできたクレーターは低い側の縁が無く、その向きへは歩いて出られる
+    const open = ["cave/1/1", "terraces/0/1", "terraces/1/-1"];
     for (const name of MAP_NAMES.filter((n) => n !== "towers" && n !== "sky-islands")) {
       const map = getMap(name);
       const base = map.build();
@@ -107,21 +109,14 @@ describe("1 ターンで動ける範囲", () => {
         const x = pos.x;
         const mask = carve(base, { cx: x, cy: pos.y, radius: BLAST_RADIUS });
         for (const dir of [-1, 1] as const) {
-          const { y: _y, ...r } = walk(mask, { x, y: groundBelow(mask, x, pos.y) }, dir, STEPS_PER_TURN);
-          const steepEdges = ["cave/0/1", "cave/1/-1", "rock-arch/1/1", "stone-bridge/1/-1"];
-          if (steepEdges.includes(`${name}/${side}/${dir}`)) {
-            // 4セルを超える急なクレーターの縁では止まる。
-            expect(r.x).toBe(x + dir * 9);
-            expect(r.stepsUsed).toBeLessThan(STEPS_PER_TURN);
+          const r = walk(mask, { x, y: groundBelow(mask, x, pos.y) }, dir, STEPS_PER_TURN);
+          const where = `${name}/${side}/${dir}`;
+          if (open.includes(where)) {
+            expect({ where, steps: r.stepsUsed }).toEqual({ where, steps: STEPS_PER_TURN });
             continue;
           }
-          // クレーターの底から縁までは 10 列。歩数の途中で止まればハマっている
-          expect({ where: `${name} x=${x} dir=${dir}`, ...r }).toEqual({
-            where: `${name} x=${x} dir=${dir}`,
-            x: x + dir * STEPS_PER_TURN,
-            stepsUsed: STEPS_PER_TURN,
-            fell: false,
-          });
+          // 底から縁までは 10 列。縁に届く前に止まり、クレーターの中に残る
+          expect({ where, inside: Math.abs(r.x - x) < BLAST_RADIUS, fell: r.fell }).toEqual({ where, inside: true, fell: false });
         }
       }
     }

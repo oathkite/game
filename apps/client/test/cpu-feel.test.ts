@@ -3,6 +3,7 @@ import { createEngine, DEFAULT_ENGINE_TIMING, type EngineState } from "@game/eng
 import type { TrajectoryInput } from "@game/protocol";
 import { simulateShot } from "@game/sim";
 import { chooseCpuShot } from "../src/practice/cpu";
+import { positionOptions } from "../src/practice/cpuPosition";
 import { planCpuTurn } from "../src/practice/cpuTurn";
 
 // CPU戦の位置取りの手触りを数値で固定する（設計書 37.6）。
@@ -58,7 +59,7 @@ const apply = (state: EngineState, input: TrajectoryInput, turnNumber: number, w
     match: { ...state.match, players, wind: { ...state.match.wind, value: wind } } };
 };
 
-type Decision = { readonly stayCanHit: boolean; readonly stayExposed: boolean; readonly moved: boolean; readonly destCanHit: boolean; readonly destExposed: boolean; readonly selfDamage: number };
+type Decision = { readonly canEscape: boolean; readonly stayCanHit: boolean; readonly stayExposed: boolean; readonly moved: boolean; readonly destCanHit: boolean; readonly destExposed: boolean; readonly selfDamage: number };
 
 const playOut = (mapName: typeof MAPS[number], seed: number): Decision[] => {
   const rng = seeded(seed * 97 + mapName.length);
@@ -74,7 +75,10 @@ const playOut = (mapName: typeof MAPS[number], seed: number): Decision[] => {
     const actor = state.match.players[1];
     const plan = planCpuTurn(state, "normal", 45, rng);
     const y = plan.frames.at(-1)!.pose.y;
-    decisions.push({ stayCanHit: canHitAt(state, actor.x, actor.y), stayExposed: exposedAt(state, actor.x, actor.y),
+    const stayExposed = exposedAt(state, actor.x, actor.y);
+    // 狙われた場面だけ、歩いて行ける位置のどれかが狙われないかを調べる（判定はこのテストの exposedAt にそろえる）
+    const canEscape = stayExposed && positionOptions(state, "normal").some(o => !exposedAt(state, o.x, (o.path.at(-1) ?? actor).y));
+    decisions.push({ canEscape, stayCanHit: canHitAt(state, actor.x, actor.y), stayExposed,
       moved: plan.fire.x !== actor.x, destCanHit: canHitAt(state, plan.fire.x, y), destExposed: exposedAt(state, plan.fire.x, y),
       selfDamage: damageTo(withCpuAt(state, plan.fire.x, y), 1, cpuInput(withCpuAt(state, plan.fire.x, y), plan.fire)) });
     state = apply(withCpuAt(state, plan.fire.x, y), cpuInput(withCpuAt(state, plan.fire.x, y), plan.fire), turn * 2 + 1, wind());
@@ -96,9 +100,11 @@ describe("CPU戦の位置取りの手触り", () => {
     expect(decisions.filter(d => d.stayCanHit && !d.destCanHit)).toEqual([]);
   });
 
-  it("被弾した位置が再び狙われるなら、ほとんどの場面で狙われない位置へ逃げる", () => {
+  it("被弾した位置が再び狙われるなら、狙われない位置へ歩いて行ける場面ではほとんど逃げる", () => {
+    // 足元のクレーターの縁は 45 度より急で登れない（設計書 02 の 2.6）ので、逃げ場の無い場面もある
     const exposed = decisions.filter(d => d.stayExposed);
-    expect(rate(exposed, d => d.moved && !d.destExposed)).toBeGreaterThanOrEqual(0.8);
+    expect(exposed.some(d => !d.canEscape)).toBe(true);
+    expect(rate(exposed.filter(d => d.canEscape), d => d.moved && !d.destExposed)).toBeGreaterThanOrEqual(0.8);
   });
 
   it("照準の誤差を含めても、自分を巻き込む射撃は 2% 以下", () => {

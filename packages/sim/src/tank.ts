@@ -1,4 +1,4 @@
-import { CLIMB_MAX, SLOPE_RISE_MAX, SLOPE_RUN, STEPS_PER_TURN, TANK_RADIUS, TILT_DIFF_MAX, TILT_HALF_WIDTH } from "./constants.js";
+import { CLIMB_AHEAD, CLIMB_MAX, STEPS_PER_TURN, TANK_RADIUS, TILT_DIFF_MAX, TILT_HALF_WIDTH } from "./constants.js";
 import { clamp } from "./fixed.js";
 import { TILT_TABLE } from "./tables.js";
 import { groundBelow, isSolid, type TerrainMask } from "./terrain.js";
@@ -56,23 +56,18 @@ export const tiltOf = (mask: TerrainMask, pos: TankPos): number => {
 };
 
 /**
- * 移動先 nx の地表 there まで、SLOPE_RUN 列うしろのうち最も低い地表から上った高さ。
- * 今の位置から逆向きに地表をたどり、落下になる段差、奈落、マップ端でたどるのをやめる。
- * そこから先の低い地面は、歩いて来られない場所なので坂に数えない（浮島の縁、崖の上）。
- * 終点ではなく最も低い地表から測るのは、狭い穴でたどる線が底を越えて反対側の壁を登り、底からの上りを打ち消さないようにするためである。
+ * 移動先 nx の地表 there から、前方 CLIMB_AHEAD 列のうち最も高い地表までに上がる高さ。
+ * 6 列先の 1 点だけを見ると、その手前で上がって下がる短い急な盛り上がりを見逃すので、前方の列をすべて見る。
+ * 前方の地表は there より CLIMB_AHEAD + 1 だけ上から下へ見るので、それより高い壁は CLIMB_AHEAD + 1 と数える。マップ端より先は見ない
  */
-const riseBehind = (mask: TerrainMask, pos: TankPos, dir: -1 | 1, there: number): number => {
-  let y = pos.y;
-  let lowest = y;
-  for (let k = 2; k <= SLOPE_RUN; k++) {
-    const x = pos.x + dir - dir * k;
+const riseAhead = (mask: TerrainMask, nx: number, there: number, dir: -1 | 1): number => {
+  let rise = 0;
+  for (let k = 1; k <= CLIMB_AHEAD; k++) {
+    const x = nx + dir * k;
     if (x < 0 || x >= mask.width) break;
-    const ground = groundBelow(mask, x, y - CLIMB_MAX);
-    if (ground - y > CLIMB_MAX) break;
-    y = ground;
-    lowest = Math.max(lowest, y);
+    rise = Math.max(rise, there - neighborGround(mask, x, there, CLIMB_AHEAD + 1));
   }
-  return lowest - there;
+  return rise;
 };
 
 export type StepKind = "moved" | "blocked" | "fell";
@@ -88,7 +83,7 @@ export type StepOutcome = {
  * 機体の高さぶんの空きがない（反り立つ壁や低い天井）ときは進めない。CLIMB_MAX 以下の下りは進める。
  * それを超える下りは落下扱いで、その歩で移動は終わる。落下先は真下の次の地面（なければ奈落）。
  * 上りと下りで同じ閾値を使うのは、降りた先から同じ道を登って戻れるようにするためである。
- * ただし上りは坂の急さも見て、SLOPE_RUN 列で SLOPE_RISE_MAX より高く上る歩は壁にする（riseBehind）。
+ * ただし上りは前方の坂の急さも見て、前方 CLIMB_AHEAD 列で CLIMB_AHEAD セルより高く上がる（45 度より急な）歩は壁にする（riseAhead）。
  * 急な坂は下りられても登り返せない。崖を「回り込む場所」にするためである。
  */
 export const stepOutcome = (mask: TerrainMask, pos: TankPos, dir: -1 | 1): StepOutcome => {
@@ -97,7 +92,7 @@ export const stepOutcome = (mask: TerrainMask, pos: TankPos, dir: -1 | 1): StepO
   const there = neighborGround(mask, nx, pos.y, CLIMB_MAX);
   if (!hasClearance(mask, nx, there)) return { kind: "blocked", y: pos.y };
   const drop = there - pos.y;
-  if (drop < 0 && riseBehind(mask, pos, dir, there) > SLOPE_RISE_MAX) return { kind: "blocked", y: pos.y };
+  if (drop < 0 && riseAhead(mask, nx, there, dir) > CLIMB_AHEAD) return { kind: "blocked", y: pos.y };
   return { kind: drop > CLIMB_MAX ? "fell" : "moved", y: there };
 };
 
