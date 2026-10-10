@@ -1,4 +1,5 @@
 import { defineConfig } from "@playwright/test";
+import { chromium } from "./chromium";
 
 // 2 つのブラウザで 1 戦を通す e2e と、ブラウザで golden replay を走らせて Node と比べるテスト。
 // ゲームサーバーと Vite の開発サーバーを起動してから走る。既に動いていればそれを使う。
@@ -29,5 +30,5 @@ export default defineConfig({
       timeout: 60_000,
     },
   ],
-  projects: [{ name: "chromium", use: { browserName: "chromium" } }],
+  projects: [{ name: "chromium", use: chromium }],
 });
