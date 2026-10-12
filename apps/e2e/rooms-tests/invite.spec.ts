@@ -8,7 +8,8 @@ test("invitation skips the title and an independent spectator watches without co
     for (const page of [a!, b!, viewer!]) page.on("pageerror", e => errors.push(e.message));
     await enterRooms(a!);
     const code = await createRoom(a!);
-    await a!.getByRole("button", { name: "招待リンク", exact: true }).click();
+    // 1 人の部屋では招待の面が最初から出ていて、ドックの主操作がリンクのコピーになる（設計書 45.3）
+    await expect(a!.getByRole("button", { name: "招待リンクをコピー", exact: true })).toBeEnabled();
     const link = await a!.getByLabel("招待リンク", { exact: true }).inputValue();
     expect(new URL(link).searchParams.has("token")).toBe(false);
     // 招待リンクはタイトルとロビーを飛ばすので、名前はロビーで保存済みのものを使う。

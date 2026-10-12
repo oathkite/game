@@ -1,20 +1,15 @@
 import "./terminalScreens.css";
-import { TankPortrait } from "./TankPortrait";
 import { CreateRoomDialog } from "./CreateRoomDialog";
 import { RoomPasswordDialog } from "./RoomPasswordDialog";
+import { RoomWaiting } from "./RoomWaiting";
 import type { CreateRoomOptions } from "@game/protocol/v2-rooms";
-import { DotIcon } from "./DotIcon";
-import { RoomInviteLink } from "./RoomInviteLink";
 import { useRegionSelection } from "./useRegionSelection";
 import { PublicRooms } from "./PublicRooms";
 import { useBrowserBackAction } from "./browserBack";
 import { setMusic } from "@/app/audio";
-import { RoomTeam } from "./RoomTeam";
 import { useLanguage } from "@/i18n/locale";
 import { CLIENT_BUILD, compatibleMatch } from "@game/protocol/build";
-import { MULTIPLAYER_MAPS, MULTIPLAYER_MAP_LABELS } from "@game/maps";
 import { useEffect, useRef, useState } from "react";
-import { RoomWeapons } from "./RoomWeapons";
 import { roomOutputSchema, type RoomSnapshot } from "@game/protocol/v2-rooms";
 import { loadProfile } from "@/app/profile";
 import { NetworkLab, type RoomConnection } from "@/networkLab/NetworkLab";
@@ -37,7 +32,7 @@ export const RoomScreen = ({ onExit }: { readonly onExit: () => void; readonly o
   const [status, setStatus] = useState(() => new URL(location.href).searchParams.has("room") && !inviteRoom(location.href) ? "招待リンクの部屋コードが無効です。" : ""), [busy, setBusy] = useState(false);
   const { region, measuring, selectRegion } = useRegionSelection(serverBase, "1v1");
   const [waited, setWaited] = useState(false);
-  const [sharing, setSharing] = useState(false), [spectator, setSpectator] = useState(false);
+  const [spectator, setSpectator] = useState(false);
   const [battle, setBattle] = useState<RoomConnection | null>(null);
   useEffect(() => { if (!battle) setMusic(room ? "room" : "lobby"); }, [battle, room?.roomId]);
   const socket = useRef<WebSocket | null>(null), active = useRef(true), attempt = useRef(0);
@@ -91,46 +86,29 @@ export const RoomScreen = ({ onExit }: { readonly onExit: () => void; readonly o
   const send = (message: unknown) => { if (socket.current?.readyState === WebSocket.OPEN) { setStatus(""); socket.current.send(JSON.stringify(message)); } };
   const edit = (type: string, fields: object = {}) => { if (room) send({ type, version: 2, roomId: room.roomId, revision: room.revision, ...fields }); };
   const leave = () => { send({ type: "room.leave" }); sessionStorage.removeItem(tokenKey); sessionStorage.removeItem(roomKey); onExit(); };
-  const returnToList = () => { send({ type: "room.leave" }); socket.current?.close(); socket.current = null; attempt.current++; sessionStorage.removeItem(tokenKey); sessionStorage.removeItem(roomKey); setRoom(null); setBattle(null); setStatus(""); setBusy(false); setSharing(false); setSpectator(false); setPlayerId(""); };
+  const returnToList = () => { send({ type: "room.leave" }); socket.current?.close(); socket.current = null; attempt.current++; sessionStorage.removeItem(tokenKey); sessionStorage.removeItem(roomKey); setRoom(null); setBattle(null); setStatus(""); setBusy(false); setSpectator(false); setPlayerId(""); };
   useBrowserBackAction(!battle, room ? returnToList : leave);
   const profile = () => { const p = loadProfile(); return { nickname: p.nickname.trim() || "プレイヤー", loadout: p.loadout, colors: p.colors }; };
-  const me = room?.members.find(p => p.playerId === playerId), owner = room?.ownerId === playerId;
-  const canStart = owner && room!.members.length >= 2 && room!.members.every(p => (p.playerId === room!.ownerId || p.ready) && p.connected && p.teamId) && new Set(room!.members.map(p => p.teamId)).size >= 2;
   const connected = socket.current?.readyState === WebSocket.OPEN;
   const loadingSteps = roomLoadingSteps({ status, joined: Boolean(playerId), hasRoom: Boolean(room) }, t);
   if (battle) return <><NetworkLab connection={battle} worldArt onExit={leave} />{status && <div className="room-battle-status" role="status">{t(status)}{!connected && <PixelButton disabled={busy} onClick={() => connect({ type: "room.resume", token: sessionStorage.getItem(tokenKey) })}>{t("再接続")}</PixelButton>}</div>}</>;
-  return <section key={room?.roomId ?? "entry"} className={`room-screen terminal-screen${room ? " room-detail-terminal" : " lobby-terminal"}`}>
+  if (room) return <RoomWaiting key={room.roomId} room={room} playerId={playerId} spectator={spectator} connected={connected} busy={busy}
+    status={loadingSteps ? "" : status} loading={loadingSteps} waited={waited} base={serverBase} token={sessionStorage.getItem(tokenKey)}
+    edit={edit} leave={returnToList} resume={() => connect({ type: "room.resume", token: sessionStorage.getItem(tokenKey) })} />;
+  return <section key="entry" className="room-screen terminal-screen lobby-terminal">
     {creating && <CreateRoomDialog region={region} busy={busy} close={() => setCreating(false)} create={options => { void connect({ type: "room.create", options, password: options.password, profile: profile() }); }} />}
     {passwordJoin && <RoomPasswordDialog close={() => setPasswordJoin(null)} submit={password => { void connect({ ...passwordJoin, password, ...(passwordJoin.type === "room.join" ? { profile: profile() } : {}) }); setPasswordJoin(null); }} />}
     <header className="room-header">
-      {!room && <PixelButton onClick={leave}>{t("出撃準備")}</PixelButton>}
-      {room ? <h1>{room.name || t("部屋")} <span data-testid="room-code">{room.roomId}</span></h1> : <div className="room-header-actions">
+      <PixelButton onClick={leave}>{t("出撃準備")}</PixelButton>
+      <div className="room-header-actions">
         <select aria-label={t("クイック対戦地域")} value={region} onChange={e => selectRegion(e.target.value as "asia" | "europe" | "americas")}><option value="" disabled>{t(measuring ? "地域を測定中…" : "地域を選択してください")}</option><option value="asia">{t("アジア")}</option><option value="europe">{t("ヨーロッパ")}</option><option value="americas">{t("アメリカ")}</option></select>
         {serverBase && <PixelButton disabled={busy} aria-expanded={filtersOpen} aria-controls="room-filters" onClick={() => setFiltersOpen(value => !value)}>{t("部屋を探す")}</PixelButton>}
         <PixelButton className="room-create" disabled={busy} onClick={() => setCreating(true)}>{t("部屋を作る")}</PixelButton>
-      </div>}
-      {room && <div className="room-header-actions room-detail-actions"><select aria-label={t("マップ")} value={room.randomMap ? "random" : room.map.id} disabled={room.mode !== "custom" || !connected || !owner} onChange={e => edit("room.map", { mapId: e.target.value })}><option value="random">{t("ランダム")}</option>{MULTIPLAYER_MAPS.map(map => <option key={map.id} value={map.id}>{t(MULTIPLAYER_MAP_LABELS[map.id] ?? map.id)}</option>)}</select><PixelButton disabled={!!serverBase && (!me || !connected)} onClick={() => setSharing(v => !v)}>{t("招待リンク")}</PixelButton></div>}
+      </div>
     </header>
     <div className="room-body"><PixelPanel>
-      {!room ? <>
-        {serverBase && <PublicRooms initialCode={inviteRoom(location.href) ?? ""} base={serverBase} busy={busy} filtersOpen={filtersOpen} closeFilters={() => setFiltersOpen(false)} join={(roomId, type, locked) => { if (locked) { setPasswordJoin({ roomId, type }); return; } void connect({ type, roomId, ...(type === "room.join" ? { profile: profile() } : {}) }); }} />}
-</> : <>
-        {spectator && <p role="status">{t("観戦中")}</p>}
-        {room.mode !== "custom" && <div><strong>{room.mode === "1v1" ? "1 vs 1" : "2 vs 2"}　{room.members.length} / {room.mode === "1v1" ? 2 : 4}</strong><PixelButton onClick={returnToList}>{t("待機をキャンセル")}</PixelButton>{waited && <p role="status">{t("対戦相手を待っています。キャンセルして地域を変更するか、出撃準備からプラクティスを開始できます。")}</p>}</div>}
-        {sharing && <RoomInviteLink key={room.roomId} base={serverBase} roomId={room.roomId} token={sessionStorage.getItem(tokenKey)} />}
-        <div className="room-table-scroll"><table className="room-player-table">
-          <thead><tr><th scope="col">{t("プレイヤー名")}</th><th scope="col">{t("チーム")}</th><th scope="col">{t("武器")}</th><th scope="col">{t("状態")}</th></tr></thead>
-          <tbody>{room.members.map(p => <tr key={p.playerId} data-ready={p.connected && (p.ready || p.playerId === room.ownerId)}>
-            <th scope="row"><div className="room-player-identity"><TankPortrait colors={p.colors} loadout={p.loadout} /><span>{p.nickname}{p.playerId === playerId ? t("（あなた）") : ""}</span></div></th>
-            <td><RoomTeam teamId={p.teamId} editable={room.mode === "custom" && (owner || p.playerId === playerId)} disabled={!connected} change={teamId => edit("room.assignTeam", { playerId: p.playerId, teamId })} /></td>
-            <td><RoomWeapons loadout={p.loadout} editable={p.playerId === playerId} disabled={!connected} change={loadout => edit("room.loadout", { loadout })} /></td>
-            <td>{!p.connected ? t("切断中") : p.playerId === room.ownerId ? "OWNER" : p.ready ? <span className="room-ready-status"><DotIcon name="check" />{t("準備完了")}</span> : t("準備中")}</td>
-          </tr>)}</tbody>
-        </table></div>
-      </>}
+      {serverBase && <PublicRooms initialCode={inviteRoom(location.href) ?? ""} base={serverBase} busy={busy} filtersOpen={filtersOpen} closeFilters={() => setFiltersOpen(false)} join={(roomId, type, locked) => { if (locked) { setPasswordJoin({ roomId, type }); return; } void connect({ type, roomId, ...(type === "room.join" ? { profile: profile() } : {}) }); }} />}
     </PixelPanel></div>
-    <footer>{room && <PixelButton className="room-back" onClick={returnToList}>{t("ロビーに戻る")}</PixelButton>}{loadingSteps ? <SceneLoading className="scene-loading-inline" steps={loadingSteps} /> : status && <span role="status">{t(status)}</span>}{!connected && sessionStorage.getItem(tokenKey) && <PixelButton disabled={busy} onClick={() => connect({ type: "room.resume", token: sessionStorage.getItem(tokenKey) })}>{t("再接続")}</PixelButton>}
-      {room && me && <>{(!owner || room.mode !== "custom") && <PixelButton className="room-ready-button" aria-pressed={me.ready} disabled={!connected} onClick={() => edit("room.ready", { ready: !me.ready })}>{me.ready ? <><DotIcon name="check" />{t("準備完了済み")}</> : t("準備完了")}</PixelButton>}{owner && room.mode === "custom" && <PixelButton className="room-start-button" disabled={!connected || !canStart} onClick={() => edit("room.start")}>{t("対戦開始")}</PixelButton>}</>}
-    </footer>
+    <footer>{loadingSteps ? <SceneLoading className="scene-loading-inline" steps={loadingSteps} /> : status && <span role="status">{t(status)}</span>}{!connected && sessionStorage.getItem(tokenKey) && <PixelButton disabled={busy} onClick={() => connect({ type: "room.resume", token: sessionStorage.getItem(tokenKey) })}>{t("再接続")}</PixelButton>}</footer>
   </section>;
 };

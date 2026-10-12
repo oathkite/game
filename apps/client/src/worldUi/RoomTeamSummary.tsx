@@ -1,3 +1,4 @@
+import type { CSSProperties } from "react";
 import { useLanguage } from "@/i18n/locale";
 import { teamColor, teamColorName } from "./teamColors";
 
@@ -8,7 +9,7 @@ export const RoomTeamSummary = ({ members }: { readonly members: readonly { read
   const uneven = new Set(teams.map(team => team.count)).size > 1;
   return <div className="room-team-summary">
     <ul aria-label={t("チーム編成")}>
-      {teams.map(team => <li key={team.index} style={{ borderLeftColor: teamColor(team.index) }}>{t("{color}チーム: {count}人", { color: t(teamColorName(team.index)), count: team.count })}</li>)}
+      {teams.map(team => <li key={team.index} style={{ "--team": teamColor(team.index) } as CSSProperties}>{t("{color}チーム: {count}人", { color: t(teamColorName(team.index)), count: team.count })}</li>)}
       {unassigned > 0 && <li>{t("未配置: {count}人", { count: unassigned })}</li>}
     </ul>
     {uneven && <strong>{t("人数差あり")}</strong>}

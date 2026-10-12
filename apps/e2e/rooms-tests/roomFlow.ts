@@ -1,11 +1,12 @@
 import { expect, type Page } from "@playwright/test";
 
-// 部屋画面の操作手順。チームと武器は表の行の「変更」から開くダイアログで選ぶ。
+// 部屋画面の操作手順（設計書 45 章）。チームと武器は、参加者の行のチームの色と武器のアイコンのボタンから開くダイアログで選ぶ。
+// マップはオーナーだけが、マップのボタンから開くサムネイルの一覧で選ぶ。
 
 const TEAM_NAMES = ["青", "赤", "緑", "紫", "黄", "青緑", "桃", "銀"] as const;
 export const teamLabel = (teamId: string): string => `${TEAM_NAMES[Number(teamId.slice(1))]}チーム`;
 
-export const members = (page: Page) => page.locator(".room-player-table tbody tr");
+export const members = (page: Page) => page.locator(".room-roster-list > li");
 
 /** タイトルからロビーを経て部屋一覧へ進む。名前を渡すとロビーで入力する。 */
 export const enterRooms = async (page: Page, nickname?: string): Promise<void> => {
@@ -53,7 +54,7 @@ export const teamOf = (page: Page, index: number) => members(page).nth(index).lo
 
 /** index 番目の参加者のチームを変える。オーナーは全員を、ほかの参加者は自分だけを変えられる。 */
 export const assignTeam = async (page: Page, index: number, teamId: string): Promise<void> => {
-  await members(page).nth(index).locator(".room-team-current").getByRole("button", { name: "変更", exact: true }).click();
+  await members(page).nth(index).locator(".room-team-current").getByRole("button", { name: /^チームを変更/ }).click();
   await page.getByRole("dialog", { name: "チーム" }).getByRole("button", { name: teamLabel(teamId), exact: true }).click();
   await expect(teamOf(page, index)).toHaveAccessibleName(teamLabel(teamId));
 };
@@ -61,12 +62,22 @@ export const assignTeam = async (page: Page, index: number, teamId: string): Pro
 /** 自分の装備の slot 番目（0 始まり）を武器の表示名で選ぶ。 */
 export const chooseWeapon = async (page: Page, slot: 0 | 1, weapon: string): Promise<void> => {
   const own = members(page).filter({ hasText: "（あなた）" });
-  await own.locator(".room-member-weapons").getByRole("button", { name: "変更", exact: true }).click();
+  await own.locator(".room-member-weapons").getByRole("button", { name: "武器を変更", exact: true }).click();
   const dialog = page.getByRole("dialog", { name: "武器変更" });
   await dialog.getByRole("button", { name: new RegExp(`^装備 ${slot + 1} `) }).click();
   await dialog.locator(".room-weapon-options").getByRole("button", { name: new RegExp(`^${weapon}`) }).click();
   await expect(own.locator(".room-member-weapons [role=img]").nth(slot)).toHaveAccessibleName(weapon);
   await dialog.getByRole("button", { name: "閉じる", exact: true }).click();
+};
+
+/** 部屋に出ている今のマップ。オーナーにはボタン、ほかの参加者には絵と名前で出る。どちらも data-map-id を持つ */
+export const mapOf = (page: Page) => page.locator(".room-map-summary [data-map-id]");
+
+/** オーナーがマップを選ぶ。 */
+export const chooseMap = async (page: Page, mapId: string): Promise<void> => {
+  await page.getByRole("button", { name: /^マップを変更/ }).click();
+  await page.getByRole("dialog", { name: "マップ" }).locator(`button[data-map-id="${mapId}"]`).click();
+  await expect(mapOf(page)).toHaveAttribute("data-map-id", mapId);
 };
 
 export const readyUp = async (page: Page): Promise<void> => {

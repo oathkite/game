@@ -1,0 +1,192 @@
+/* 部屋の作成から対戦開始まで（設計書 45 章）。値はすべてこのトークンから取る。
+   色は 40.4 のパレットの値（pixelTheme.css の --px-）だけを使う。 */
+.world-ui {
+  /* 文字。DotGothic16 は 16 の倍数でだけ滲まないので、階層は大きさではなく色と面で付ける（45.6） */
+  --rf-text: 16px;
+  --rf-leading: 24px;
+  /* 余白。基準 4px（UI のドット 2px の 2 倍）の倍数 */
+  --rf-space-part: 4px;     /* 部品の中（アイコンと文字） */
+  --rf-space-group: 8px;    /* 組の中（行の中の項目、行と行） */
+  --rf-space-block: 16px;   /* 面の内側、見出しと中身 */
+  --rf-space-region: 24px;  /* 領域の間 */
+  /* 大きさ */
+  --rf-target: 48px;        /* 押せるものの高さと幅の下限 */
+  --rf-row: 64px;           /* 参加者の 1 行 */
+  --rf-portrait-w: 64px;
+  --rf-portrait-h: 44px;
+  --rf-weapon: 39px;        /* 武器のアイコン。13 art px の整数倍（40.10） */
+  --rf-swatch: 16px;        /* チームの色見本 */
+  --rf-aside: 280px;        /* マップと編成の列 */
+  --rf-action: 240px;       /* 主操作の幅の下限 */
+  --rf-thumb: 112px;        /* マップの選択肢のサムネイルの幅の下限。5 枚を 1 行に並べる */
+  --rf-thumb-field: 96px;   /* 今のマップを示すボタンのサムネイル */
+  --rf-dialog: 720px;       /* マップの選択の幅 */
+  --rf-code-dot: 1px;       /* 部屋コードの 1 art px（見出し）。グリフの 1 画素が UI のドット 2px になる */
+  --rf-code-dot-large: 2px; /* 部屋コードの 1 art px（招待の面）。グリフの 1 画素が 4px */
+  --rf-line: 2px;           /* 枠線は操作と選択だけ（UI の枠線の規則） */
+  /* 色。役割ごとに 1 つの意味 */
+  --rf-bg: var(--px-black);           /* 地 */
+  --rf-surface: var(--px-green-black); /* 面。囲みの枠の代わりに塗りで区別する */
+  --rf-ink: var(--px-green);          /* 主文 */
+  --rf-muted: var(--px-green-mid);    /* 補助の文と、押せない操作 */
+  --rf-fill: var(--px-green);         /* 主操作の塗り */
+  --rf-fill-hover: var(--px-green-light);
+  --rf-on-fill: var(--px-black);      /* 主操作の文字 */
+  --rf-wait: var(--px-fire2);         /* 未完了・待ち */
+  --rf-danger: var(--px-fire4);       /* 切断・エラー */
+  --rf-selected: var(--px-white);     /* 選択中の枠 */
+}
+@media (max-width:699px),(max-height:550px) {
+  .world-ui {
+    --rf-space-region: 8px;
+    --rf-target: 44px;
+    --rf-row: 48px;
+    --rf-portrait-w: 48px;
+    --rf-portrait-h: 33px;
+    --rf-weapon: 26px;
+    --rf-action: 160px;
+    --rf-thumb-field: 64px;
+  }
+  /* 枠の帯（terminalScreens.css）は 8px に細るので、内側の余白も詰めて一覧の高さを確保する */
+  .world-ui.world-ui.world-ui .room-wait.room-wait { padding:var(--rf-space-block); }
+}
+
+/* ---- 部屋の中 ---- */
+.world-ui.world-ui.world-ui .room-wait.room-wait {
+  grid-template-columns:minmax(0,1fr) var(--rf-aside);
+  grid-template-rows:auto minmax(0,1fr) auto;
+  grid-template-areas:"bar bar" "roster aside" "dock dock";
+  column-gap:var(--rf-space-region);
+  row-gap:var(--rf-space-region);
+  font-size:var(--rf-text);
+  line-height:var(--rf-leading);
+}
+.world-ui.world-ui.world-ui .room-wait > * { width:auto; max-width:none; margin:0; min-width:0; }
+.world-ui.world-ui.world-ui .room-wait :is(h1,h2,p) { margin:0; font-size:var(--rf-text); line-height:var(--rf-leading); font-weight:400; }
+.world-ui.world-ui.world-ui .room-wait :is(button,input) { min-height:var(--rf-target); font-size:var(--rf-text); line-height:var(--rf-leading); }
+
+.room-wait-bar { grid-area:bar; display:flex; align-items:center; gap:var(--rf-space-group); }
+.world-ui.world-ui.world-ui .room-wait-bar > button { flex-shrink:0; margin:0; padding:0 var(--rf-space-block); white-space:nowrap; }
+.room-wait-title { display:flex; align-items:center; gap:var(--rf-space-group); min-width:0; margin-right:auto; }
+.world-ui.world-ui.world-ui .room-wait-title h1 { overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+
+/* 部屋コード。題名と同じドット文字（45.6 のシグネチャー）。art px を整数の CSS px で描く */
+.room-code { display:inline-flex; flex-shrink:0; }
+.world-ui.world-ui.world-ui .room-code .title-logo { width:auto; height:calc(17 * var(--rf-code-dot)); }
+.world-ui.world-ui.world-ui .room-code-large .title-logo { height:calc(17 * var(--rf-code-dot-large)); }
+
+.room-roster { grid-area:roster; display:flex; flex-direction:column; gap:var(--rf-space-group); min-height:0; overflow:auto; }
+.room-roster-head { display:flex; flex-wrap:wrap; align-items:center; gap:var(--rf-space-group) var(--rf-space-block); color:var(--rf-muted); }
+.room-roster-list { display:grid; grid-template-columns:minmax(0,1fr); gap:var(--rf-space-part); margin:0; padding:0; list-style:none; }
+
+.room-member {
+  display:grid; grid-template-columns:var(--rf-portrait-w) minmax(0,1fr) auto auto; align-items:center;
+  gap:var(--rf-space-group); min-height:var(--rf-row); padding:0 var(--rf-space-group); background:var(--rf-surface);
+}
+.world-ui.world-ui.world-ui .room-member .tank-portrait { width:var(--rf-portrait-w); height:var(--rf-portrait-h); margin:0; border:0; background:transparent; }
+.room-member-identity { display:flex; flex-direction:column; min-width:0; }
+.room-member-name { overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+.room-member-state { display:flex; align-items:center; gap:var(--rf-space-part); white-space:nowrap; }
+.room-member-state[data-tone=wait] { color:var(--rf-wait); }
+.room-member-state[data-tone=danger] { color:var(--rf-danger); }
+.world-ui .room-member-state .dot-icon { width:var(--rf-space-block); height:var(--rf-space-block); }
+
+/* チームと武器。自分の行（チームはオーナーなら全員）はボタンにして、表示がそのまま変更の入口になる */
+.world-ui.world-ui.world-ui .room-member :is(.room-team-current,.room-member-weapons) { grid-column:auto; display:flex; align-items:center; gap:var(--rf-space-part); white-space:nowrap; }
+.world-ui.world-ui.world-ui .room-member :is(.room-team-current,.room-member-weapons) > button {
+  display:inline-flex; align-items:center; gap:var(--rf-space-part); min-width:var(--rf-target); margin:0;
+  padding:0 var(--rf-space-group); border-width:var(--rf-line); background:var(--rf-bg);
+}
+.room-team-color { display:block; width:var(--rf-swatch); height:var(--rf-swatch); flex-shrink:0; background:var(--team); }
+.world-ui .room-member-weapons svg { display:block; width:var(--rf-weapon); height:var(--rf-weapon); }
+.room-member-weapons > span { display:flex; }
+
+.room-wait-aside { grid-area:aside; display:flex; flex-direction:column; gap:var(--rf-space-block); min-width:0; }
+.room-map-summary { display:grid; grid-template-columns:minmax(0,1fr); gap:var(--rf-space-group); }
+.room-map-current { display:grid; grid-template-columns:minmax(0,1fr); gap:var(--rf-space-part); }
+.room-map-summary dl { display:grid; grid-template-columns:auto minmax(0,1fr); gap:0 var(--rf-space-block); margin:0; }
+.room-map-summary dt { color:var(--rf-muted); }
+.room-map-summary dd { margin:0; }
+.world-ui.world-ui.world-ui .room-map-summary > button { margin:0; }
+
+/* チーム人数。参加者の一覧の見出しに、人数と並べて出す。色見本と文字を並べ、色だけで伝えない */
+.world-ui.world-ui.world-ui .room-wait .room-team-summary { display:flex; flex-wrap:wrap; align-items:center; gap:0 var(--rf-space-block); padding:0; background:transparent; color:var(--rf-ink); }
+.room-wait .room-team-summary ul { display:flex; flex-wrap:wrap; gap:0 var(--rf-space-block); margin:0; padding:0; list-style:none; }
+.world-ui.world-ui.world-ui .room-wait .room-team-summary li { display:flex; align-items:center; gap:var(--rf-space-part); padding:0; border:0; font-size:var(--rf-text); }
+.room-wait .room-team-summary li[style]::before { content:""; width:var(--rf-swatch); height:var(--rf-swatch); background:var(--team); }
+.world-ui.world-ui.world-ui .room-wait .room-team-summary > strong { margin:0; color:var(--rf-wait); font-size:var(--rf-text); font-weight:400; }
+
+/* 招待。1 人のときは一覧の下に出す。2 人以上ではダイアログに出す */
+.room-invite { display:flex; flex-direction:column; gap:var(--rf-space-group); padding:var(--rf-space-block); background:var(--rf-surface); }
+.room-invite-code { display:flex; flex-wrap:wrap; align-items:center; gap:var(--rf-space-block); }
+.room-invite small { color:var(--rf-muted); font-size:var(--rf-text); }
+.world-ui.world-ui.world-ui .room-invite input { width:100%; margin:0; padding:0 var(--rf-space-group); border-width:var(--rf-line); background:var(--rf-bg); }
+.world-ui.world-ui.world-ui .room-invite label { display:flex; flex-direction:column; gap:var(--rf-space-part); margin:0; font-size:var(--rf-text); font-weight:400; color:var(--rf-muted); }
+
+/* ドック。次にすることの 1 文と、主操作を 1 つだけ置く */
+.room-dock { grid-area:dock; display:flex; align-items:center; justify-content:flex-end; gap:var(--rf-space-block); min-height:var(--rf-target); }
+.world-ui.world-ui.world-ui .room-dock .room-next { margin-right:auto; min-width:0; padding:0; background:transparent; color:var(--rf-ink); }
+.world-ui.world-ui.world-ui .room-dock .room-next[data-tone=wait] { color:var(--rf-wait); }
+.world-ui.world-ui.world-ui .room-dock .room-next[data-tone=danger] { color:var(--rf-danger); }
+.world-ui.world-ui.world-ui .room-dock .scene-loading { margin-right:auto; padding:0; font-size:var(--rf-text); }
+.world-ui.world-ui.world-ui .room-dock .room-primary { flex-shrink:0; min-width:var(--rf-action); margin:0; border-width:var(--rf-line); }
+.world-ui.world-ui.world-ui .room-dock .room-primary:not(:disabled) { background:var(--rf-fill); border-color:var(--rf-fill); color:var(--rf-on-fill); }
+.world-ui.world-ui.world-ui .room-dock .room-primary:hover:not(:disabled) { background:var(--rf-fill-hover); border-color:var(--rf-fill-hover); color:var(--rf-on-fill); }
+.world-ui.world-ui.world-ui .room-dock .room-primary:disabled { opacity:1; color:var(--rf-muted); border-color:var(--rf-muted); background:var(--rf-bg); }
+/* 準備完了の切り替えは、押した後を「押せる主操作」と見分けるため塗らずに枠とチェックで示す */
+.world-ui.world-ui.world-ui .room-dock .room-ready-button[aria-pressed=true]:not(:disabled) { background:var(--rf-bg); border-color:var(--rf-ink); color:var(--rf-ink); }
+.world-ui.world-ui.world-ui .room-dock .room-ready-button[aria-pressed=true]:hover:not(:disabled) { background:var(--rf-surface); color:var(--rf-ink); }
+
+/* マップの選択（9.4）。サムネイルを並べ、選択中は白い枠と文字で示す */
+.room-map-options { display:grid; grid-template-columns:repeat(auto-fill,minmax(var(--rf-thumb),1fr)); gap:var(--rf-space-group); margin:0; padding:0; list-style:none; }
+.world-ui.world-ui.world-ui .room-map-options button {
+  display:flex; flex-direction:column; align-items:stretch; gap:var(--rf-space-part); width:100%; margin:0;
+  padding:var(--rf-space-part); border-width:var(--rf-line); border-color:transparent; background:var(--rf-bg);
+  font-size:var(--rf-text); line-height:var(--rf-leading); font-weight:400;
+}
+.world-ui.world-ui.world-ui .room-map-options button[aria-pressed=true] { border-color:var(--rf-selected); }
+.world-ui.world-ui.world-ui .room-map-field { display:grid; grid-template-columns:var(--rf-thumb-field) minmax(0,1fr) auto; align-items:center; gap:var(--rf-space-group); width:100%; margin:0; padding:var(--rf-space-part); border-width:var(--rf-line); font-weight:400; text-align:left; }
+.room-map-field .room-map-preview { width:var(--rf-thumb-field); }
+.world-ui.world-ui.world-ui .room-map-dialog { width:min(var(--rf-dialog),calc(100vw - 2 * var(--page-gutter))); }
+
+/* 部屋を作るダイアログ。作成ボタンはスクロールしても見える位置に残す */
+.world-ui.world-ui.world-ui .room-create-form { gap:var(--rf-space-block); }
+.world-ui.world-ui.world-ui .room-create-form > button[type=submit] { position:sticky; bottom:0; min-height:var(--rf-target); }
+
+/* 狭い横画面。マップを見出しの右へ上げ、一覧を 2 列にして 8 人をスクロールなしで並べる */
+@media (max-height:550px) and (orientation:landscape) {
+  .world-ui.world-ui.world-ui .room-wait.room-wait {
+    grid-template-columns:minmax(0,1fr) auto;
+    grid-template-areas:"bar aside" "roster roster" "dock dock";
+  }
+  .room-wait-aside { flex-direction:row; align-items:center; }
+  .room-roster-list { grid-template-columns:repeat(2,minmax(0,1fr)); }
+  .room-map-summary dl { display:none; }
+  /* 招待の面は、コードとリンクを横に並べて高さを抑える */
+  .room-invite { display:grid; grid-template-columns:auto minmax(0,1fr); align-items:start; gap:var(--rf-space-part) var(--rf-space-block); padding:var(--rf-space-group); }
+  .room-invite-code { flex-direction:column; align-items:flex-start; gap:var(--rf-space-part); grid-row:span 3; }
+}
+/* 狭い画面では、今のマップを小さなサムネイルと名前の横並びにする */
+@media (max-height:550px) and (orientation:landscape),(orientation:portrait) {
+  .room-map-current { grid-template-columns:var(--rf-thumb-field) auto; align-items:center; gap:var(--rf-space-group); }
+  .room-map-current .room-map-preview { width:var(--rf-thumb-field); }
+}
+/* 縦画面。マップを一覧の上に横長で置く */
+@media (orientation:portrait) {
+  .world-ui.world-ui.world-ui .room-wait.room-wait {
+    grid-template-columns:minmax(0,1fr);
+    grid-template-rows:auto auto minmax(0,1fr) auto;
+    grid-template-areas:"bar" "aside" "roster" "dock";
+  }
+  .room-wait-aside { flex-direction:row; align-items:center; }
+  .room-map-summary { grid-template-columns:auto minmax(0,1fr); align-items:center; gap:var(--rf-space-block); }
+  .room-dock { flex-direction:column; align-items:stretch; }
+  .world-ui.world-ui.world-ui .room-dock .room-primary { width:100%; }
+}
+
+/* 対戦開始の合図（StartSignal） */
+.battle-start-text {
+  padding:var(--rf-space-block) var(--rf-space-region); border:var(--rf-line) solid currentColor;
+  color:var(--rf-ink); background:var(--rf-bg); font-family:var(--font-jp); font-size:calc(var(--rf-text) * 4); line-height:1;
+}
+@media (max-width:699px),(max-height:550px) { .battle-start-text { font-size:calc(var(--rf-text) * 2); } }

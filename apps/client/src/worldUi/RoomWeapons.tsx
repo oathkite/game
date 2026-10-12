@@ -14,10 +14,11 @@ export const RoomWeapons = ({ loadout, editable = false, disabled = false, chang
   const [open, setOpen] = useState(false);
   const [slot, setSlot] = useState<0 | 1>(0);
   useEffect(() => { if (open) dialog.current?.showModal(); else dialog.current?.close(); }, [open]);
+  // 自分の行では、武器のアイコンそのものを変更の入口にする（設計書 45.3）
+  const icons = loadout.map((weapon, index) => <span key={index} role="img" aria-label={t(WEAPON_LABELS[weapon])} title={t(WEAPON_LABELS[weapon])}><WeaponIcon weapon={weapon} /></span>);
   return <div className="room-member-weapons">
-    {loadout.map((weapon, index) => <span key={index} role="img" aria-label={t(WEAPON_LABELS[weapon])} title={t(WEAPON_LABELS[weapon])}><WeaponIcon weapon={weapon} /></span>)}
+    {editable ? <PixelButton aria-label={t("武器を変更")} disabled={disabled} onClick={() => setOpen(true)}>{icons}</PixelButton> : icons}
     {editable && <>
-      <PixelButton disabled={disabled} onClick={() => setOpen(true)}>{t("変更")}</PixelButton>
       <dialog ref={dialog} className="room-filter-dialog room-weapon-dialog" aria-label={t("武器変更")} onCancel={() => setOpen(false)} onClick={event => {
         if (event.target !== event.currentTarget) return;
         const box = event.currentTarget.getBoundingClientRect();

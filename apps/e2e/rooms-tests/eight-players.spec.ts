@@ -1,6 +1,6 @@
 import { assertRosterReadable, turnOrder } from "./rosterReadability";
 import { expect, test } from "@playwright/test";
-import { assignTeam, canAct, createRoom, enterRooms, joinByCode, members, readyUp, teamLabel, teamOf, waitForBattle } from "./roomFlow";
+import { assignTeam, canAct, chooseMap, createRoom, enterRooms, joinByCode, mapOf, members, readyUp, teamLabel, teamOf, waitForBattle } from "./roomFlow";
 
 test("eight independent players complete a 4v4 match and return together", async ({ browser }) => {
   test.setTimeout(180000);
@@ -19,8 +19,8 @@ test("eight independent players complete a 4v4 match and return together", async
     await expect(members(owner)).toHaveCount(8);
     const mapId = test.info().project.metadata.mapId;
     if (typeof mapId === "string") {
-      await owner.getByLabel("マップ", { exact: true }).selectOption(mapId);
-      await expect(pages[7]!.getByLabel("マップ", { exact: true })).toHaveValue(mapId);
+      await chooseMap(owner, mapId);
+      await expect(mapOf(pages[7]!)).toHaveAttribute("data-map-id", mapId);
     }
     for (let index = 1; index < 8; index++) {
       await assignTeam(owner, index, index < 4 ? "t0" : "t1");
@@ -28,6 +28,15 @@ test("eight independent players complete a 4v4 match and return together", async
     }
     for (const page of pages.slice(1)) await readyUp(page);
     await expect(owner.getByRole("button", { name: "対戦開始", exact: true })).toBeEnabled();
+    // 狭い横画面でも 8 人の行と主操作がスクロールせずに見える（設計書 45.5 の指標）
+    for (const size of [{ width: 844, height: 390 }, { width: 667, height: 375 }, { width: 1440, height: 900 }]) {
+      await owner.setViewportSize(size);
+      const fit = await owner.evaluate(() => {
+        const roster = document.querySelector(".room-roster")!, start = document.querySelector(".room-start-button")!.getBoundingClientRect();
+        return { scrolls: roster.scrollHeight > roster.clientHeight, startVisible: start.bottom <= innerHeight && start.right <= innerWidth };
+      });
+      expect(fit, `${size.width}x${size.height}`).toEqual({ scrolls: false, startVisible: true });
+    }
     await owner.getByRole("button", { name: "対戦開始", exact: true }).click();
     for (const page of pages) {
       await expect(page.getByTestId("network-world")).toHaveAttribute("data-loaded", "true", { timeout: 20000 });
