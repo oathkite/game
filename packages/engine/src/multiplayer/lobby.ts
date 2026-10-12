@@ -2,6 +2,7 @@ import { CLIENT_BUILD } from "@game/protocol/build";
 import type { Loadout, TankColors } from "@game/protocol";
 import { lobbyCommandSchema, lobbyProfileSchema } from "@game/protocol/v2";
 import { MULTIPLAYER_MAPS, multiplayerMap, buildMapSpec, type MapSpec } from "@game/maps";
+import { startBlocker } from "./startBlocker.js";
 
 export const RULE_SET_VERSION = CLIENT_BUILD.rules;
 export type LobbyProfile = { readonly nickname: string; readonly loadout: Loadout; readonly colors?: TankColors | undefined };
@@ -86,11 +87,8 @@ export const startLobby = (room: LobbyState, authenticatedId: string, revision: 
   if (room.ownerId !== authenticatedId) return reject("not-owner");
   if (room.phase !== "waiting") return reject("locked");
   if (revision !== room.revision) return reject("stale-revision");
-  if (room.members.length < 2) return reject("not-enough-players");
-  if (room.members.some(p => !p.connected)) return reject("disconnected");
-  if (room.members.some(p => p.teamId === null)) return reject("unassigned");
-  if (new Set(room.members.map(p => p.teamId)).size < 2) return reject("not-enough-teams");
-  if (room.members.some(p => !p.ready && (requireOwnerReady || p.playerId !== room.ownerId))) return reject("not-ready");
+  const blocker = startBlocker(room.members, room.ownerId, requireOwnerReady);
+  if (blocker) return reject(blocker);
   const map = room.randomMap ? MULTIPLAYER_MAPS[Math.min(MULTIPLAYER_MAPS.length - 1, Math.floor(rng() * MULTIPLAYER_MAPS.length))]! : room.map;
   try { buildMapSpec(map, room.members.length); } catch { return reject("unsupported-map"); }
   return { room: { ...room, map: copyMap(map), phase: "started" }, reason: "started", setup: {

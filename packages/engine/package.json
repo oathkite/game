@@ -6,7 +6,8 @@
   "exports": {
     ".": "./src/index.ts",
     "./multiplayer": "./src/multiplayer/index.ts",
-    "./replay-timing": "./src/multiplayer/replayTiming.ts"
+    "./replay-timing": "./src/multiplayer/replayTiming.ts",
+    "./start-blocker": "./src/multiplayer/startBlocker.ts"
   },
   "scripts": {
     "test": "vitest run",
