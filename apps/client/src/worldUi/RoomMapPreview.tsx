@@ -1,7 +1,10 @@
 import { memo, useEffect, useRef } from "react";
 import { MULTIPLAYER_MAPS, buildMapSpec } from "@game/maps";
+import { cssHex, PALETTE } from "@/game/palette";
 
 // Reuse the real collision terrain, including bridge openings and floating islands.
+// 色は 40.4 のパレット。地表を緑、地中を 2 段の暗い緑の点描にする（設計書 45.6）
+const SURFACE = cssHex(PALETTE.green), SOIL = cssHex(PALETTE.greenDeep), DEEP = cssHex(PALETTE.greenBlack);
 const masks = new Map(MULTIPLAYER_MAPS.map(map => [map.id, buildMapSpec(map, 2).mask]));
 export const RoomMapPreview = memo(({ mapId }: { readonly mapId: string }) => {
   const canvas = useRef<HTMLCanvasElement>(null);
@@ -15,7 +18,7 @@ export const RoomMapPreview = memo(({ mapId }: { readonly mapId: string }) => {
       const mx = Math.floor(x * mask.width / 160), my = Math.floor(y * mask.height / 80);
       if (!mask.cells[my * mask.width + mx]) continue;
       const edge = my < 3 || !mask.cells[(my - 3) * mask.width + mx];
-      context.fillStyle = edge ? "#33ff66" : (x * 7 + y * 11) % 13 < 3 ? "#185a30" : "#0b301b";
+      context.fillStyle = edge ? SURFACE : (x * 7 + y * 11) % 13 < 3 ? SOIL : DEEP;
       context.fillRect(x, y, 1, 1);
     }
   }, [mapId]);

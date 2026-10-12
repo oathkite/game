@@ -8,13 +8,13 @@ test("a participant creates an expiring link that another browser can join", asy
     await owner!.getByRole("button", { name: "出撃", exact: true }).click();
     await owner!.getByRole("button", { name: "部屋を作る", exact: true }).click();
     const code = owner!.getByTestId("room-code"); await expect(code).toHaveText(/^[A-F0-9]{6}$/);
-    await owner!.getByRole("button", { name: "招待リンク", exact: true }).click();
+    // 1 人の部屋では招待の面が最初から出ている（設計書 45.3）
     const link = owner!.getByRole("textbox", { name: "招待リンク", exact: true });
     await expect(link).toHaveValue(/#invite=[a-f0-9-]{36}$/);
     await expect(owner!.getByText("有効期限", { exact: false })).toBeVisible();
     await guest!.goto(await link.inputValue());
     await guest!.getByRole("button", { name: "部屋に参加", exact: true }).click();
     await expect(guest!.getByTestId("room-code")).toHaveText((await code.textContent())!);
-    await expect(owner!.locator(".room-members li")).toHaveCount(2);
+    await expect(owner!.locator(".room-roster-list > li")).toHaveCount(2);
   } finally { await Promise.all(contexts.map(context => context.close())); }
 });

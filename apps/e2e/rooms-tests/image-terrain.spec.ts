@@ -1,5 +1,5 @@
 import { expect, test, type Page } from "@playwright/test";
-import { control, createRoom, joinByCode, members, readyUp, teamOf } from "./roomFlow";
+import { chooseMap, control, createRoom, joinByCode, mapOf, members, readyUp, teamOf } from "./roomFlow";
 import { customizeTank } from "../world-tests/practiceFlow";
 import type { LabFrame } from "@game/protocol/v2-lab";
 // 地形を確実に削る弱い弾を撃つ。page.keyboard で 150 ms 押すと、CDP を通る分だけ押す時間が伸びてパワーが 20〜40 になり、
@@ -29,8 +29,8 @@ test("authored terrain is shared after firing and reconnecting", async ({ browse
     const owner = pages[0]!, guest = pages[1]!;
     await joinByCode(guest, await createRoom(owner));
     await expect(members(owner)).toHaveCount(2);
-    await owner.getByLabel("マップ", { exact: true }).selectOption(mapId);
-    await expect(guest.getByLabel("マップ", { exact: true })).toHaveValue(mapId);
+    await chooseMap(owner, mapId);
+    await expect(mapOf(guest)).toHaveAttribute("data-map-id", mapId);
     await expect(teamOf(guest, 1)).toHaveAccessibleName("赤チーム");
     await readyUp(guest);
     await owner.getByRole("button", { name: "対戦開始", exact: true }).click();

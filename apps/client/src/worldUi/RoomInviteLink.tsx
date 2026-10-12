@@ -1,13 +1,17 @@
 import { useEffect, useState } from "react";
 import { useLanguage } from "@/i18n/locale";
-import { PixelButton } from "./PixelUi";
 import { roomInviteUrl } from "./roomInvite";
-export const RoomInviteLink = ({ base, roomId, token }: { readonly base: string; readonly roomId: string; readonly token: string | null }) => {
-  const { t } = useLanguage();
+import { RoomCode } from "./RoomCode";
+
+export type InviteLink = { readonly url: string; readonly expires: number | null; readonly status: string };
+
+/** 招待リンクを作る。部屋の API があるときは期限付きの招待を発行し、無いときは部屋コードだけの URL にする。
+ *  発行は Durable Object への要求になるので、招待の面を出している間（enabled）だけ行う */
+export const useInviteLink = (base: string, roomId: string, token: string | null, enabled = true): InviteLink => {
   const [url, setUrl] = useState(base ? "" : roomInviteUrl(location.href, roomId));
   const [expires, setExpires] = useState<number | null>(null), [status, setStatus] = useState("");
   useEffect(() => {
-    if (!base) return;
+    if (!base || !enabled) return;
     const controller = new AbortController(), timer = setTimeout(() => controller.abort(), 10000);
     let active = true;
     void (async () => {
@@ -21,9 +25,23 @@ export const RoomInviteLink = ({ base, roomId, token }: { readonly base: string;
       finally { clearTimeout(timer); }
     })();
     return () => { active = false; controller.abort(); clearTimeout(timer); };
-  }, [base, roomId, token]);
-  return <div>{url ? <label>{t("招待リンク")}<input aria-label={t("招待リンク")} readOnly value={url} onFocus={e => e.currentTarget.select()} />
-    {expires !== null && <small>{t("有効期限")} {new Date(expires).toLocaleString()}</small>}
-    <PixelButton onClick={() => { void (navigator.clipboard?.writeText(url) ?? Promise.reject()).then(() => setStatus("招待リンクをコピーしました。"), () => setStatus("リンクを選択してコピーしてください。")); }}>{t("コピー")}</PixelButton>
-  </label> : !status && <span role="status">{t("招待リンクを作成中…")}</span>}{status && <span role="status">{t(status)}</span>}</div>;
+  }, [base, roomId, token, enabled]);
+  return { url, expires, status };
+};
+
+/** 押した操作の中でクリップボードへ書く。書けない環境ではリンクを選んでもらう */
+export const copyInvite = (url: string): Promise<string> =>
+  (navigator.clipboard?.writeText(url) ?? Promise.reject()).then(() => "招待リンクをコピーしました。", () => "リンクを選択してコピーしてください。");
+
+/** 招待の面。大きな部屋コードと招待リンク。コピーの操作はドック（1 人のとき）かダイアログ（2 人以上）が持つ（設計書 45.3） */
+export const RoomInvite = ({ roomId, invite, copied, codeTestId = true }: { readonly roomId: string; readonly invite: InviteLink; readonly copied: string; readonly codeTestId?: boolean }) => {
+  const { t } = useLanguage();
+  return <section className="room-invite" aria-label={t("相手を招待")}>
+    <div className="room-invite-code"><small>{t("部屋コード")}</small><RoomCode code={roomId} large testId={codeTestId} /></div>
+    {invite.url
+      ? <label>{t("招待リンク")}<input aria-label={t("招待リンク")} readOnly value={invite.url} onFocus={e => e.currentTarget.select()} /></label>
+      : !invite.status && <span role="status">{t("招待リンクを作成中…")}</span>}
+    {invite.expires !== null && <small>{t("有効期限")} {new Date(invite.expires).toLocaleString()}</small>}
+    {(invite.status || copied) && <span role="status">{t(invite.status || copied)}</span>}
+  </section>;
 };

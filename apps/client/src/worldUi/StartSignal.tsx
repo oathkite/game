@@ -2,6 +2,7 @@ import { useState } from "react";
 import { charCount, prefersReducedMotion, typedText } from "./motion";
 import { useTicks } from "./useTicks";
 import "./startSignal.css";
+import "./roomFlow.css";
 
 export const START_TEXT = "START!";
 export const START_TYPE_MS = 40;
@@ -10,7 +11,8 @@ export const START_TYPE_MS = 40;
 const StartText = () => {
   const [reduced] = useState(prefersReducedMotion);
   const typed = typedText(START_TEXT, useTicks(START_TYPE_MS, charCount(START_TEXT), !reduced) * START_TYPE_MS, START_TYPE_MS);
-  return <strong aria-hidden="true" style={{ color: "#33ff66", background: "#000", border: "2px solid currentColor", padding: "12px 28px", fontFamily: "var(--font-jp)", fontSize: "clamp(28px, 6vw, 64px)" }}>
+  // 見た目は roomFlow.css のトークンから取る（設計書 45.6）
+  return <strong aria-hidden="true" className="battle-start-text">
     {typed}<span className="battle-start-rest">{START_TEXT.slice(typed.length)}</span>
   </strong>;
 };
