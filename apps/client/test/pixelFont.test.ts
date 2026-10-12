@@ -9,6 +9,12 @@ describe("logoPixels", () => {
   it("TANK SHOOT の文字をすべて持つ", () => {
     for (const ch of "TANKSHO") expect(GLYPHS[ch]).toHaveLength(7);
   });
+  it("部屋コードの文字（英大文字 A〜F と数字）をすべて持ち、全グリフが 5 × 7 で互いに異なる（設計書 45.6）", () => {
+    for (const ch of "ABCDEF0123456789") expect(GLYPHS[ch], ch).toHaveLength(7);
+    for (const glyph of Object.values(GLYPHS)) for (const row of glyph) expect(row).toMatch(/^[.#]{5}$/);
+    const shapes = Object.values(GLYPHS).map(glyph => glyph.join("/"));
+    expect(new Set(shapes).size).toBe(shapes.length);
+  });
   it("幅は文字数に比例し、高さは 7 × 2 に輪郭と押し出しを足した 17 px", () => {
     const one = opaqueBounds(logoPixels("T"))!, two = opaqueBounds(logoPixels("TT"))!;
     expect(one.height).toBe(17);
