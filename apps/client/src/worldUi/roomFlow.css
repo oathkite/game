@@ -152,6 +152,7 @@
 /* 部屋を作るダイアログ。作成ボタンはスクロールしても見える位置に残す */
 .world-ui.world-ui.world-ui .room-create-form { gap:var(--rf-space-block); }
 .world-ui.world-ui.world-ui .room-create-form > button[type=submit] { position:sticky; bottom:0; min-height:var(--rf-target); }
+.world-ui.world-ui.world-ui .room-create-status { margin:0; }
 
 /* 狭い横画面。マップを見出しの右へ上げ、一覧を 2 列にして 8 人をスクロールなしで並べる */
 @media (max-height:550px) and (orientation:landscape) {

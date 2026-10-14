@@ -91,24 +91,25 @@ export const RoomScreen = ({ onExit }: { readonly onExit: () => void; readonly o
   const profile = () => { const p = loadProfile(); return { nickname: p.nickname.trim() || "プレイヤー", loadout: p.loadout, colors: p.colors }; };
   const connected = socket.current?.readyState === WebSocket.OPEN;
   const loadingSteps = roomLoadingSteps({ status, joined: Boolean(playerId), hasRoom: Boolean(room) }, t);
+  const plainStatus = loadingSteps ? "" : status;
   if (battle) return <><NetworkLab connection={battle} worldArt onExit={leave} />{status && <div className="room-battle-status" role="status">{t(status)}{!connected && <PixelButton disabled={busy} onClick={() => connect({ type: "room.resume", token: sessionStorage.getItem(tokenKey) })}>{t("再接続")}</PixelButton>}</div>}</>;
   if (room) return <RoomWaiting key={room.roomId} room={room} playerId={playerId} spectator={spectator} connected={connected} busy={busy}
-    status={loadingSteps ? "" : status} loading={loadingSteps} waited={waited} base={serverBase} token={sessionStorage.getItem(tokenKey)}
+    status={plainStatus} loading={loadingSteps} waited={waited} base={serverBase} token={sessionStorage.getItem(tokenKey)}
     edit={edit} leave={returnToList} resume={() => connect({ type: "room.resume", token: sessionStorage.getItem(tokenKey) })} />;
   return <section key="entry" className="room-screen terminal-screen lobby-terminal">
-    {creating && <CreateRoomDialog region={region} busy={busy} close={() => setCreating(false)} create={options => { void connect({ type: "room.create", options, password: options.password, profile: profile() }); }} />}
+    {creating && <CreateRoomDialog region={region} busy={busy} status={plainStatus} close={() => setCreating(false)} create={options => { void connect({ type: "room.create", options, password: options.password, profile: profile() }); }} />}
     {passwordJoin && <RoomPasswordDialog close={() => setPasswordJoin(null)} submit={password => { void connect({ ...passwordJoin, password, ...(passwordJoin.type === "room.join" ? { profile: profile() } : {}) }); setPasswordJoin(null); }} />}
     <header className="room-header">
       <PixelButton onClick={leave}>{t("出撃準備")}</PixelButton>
       <div className="room-header-actions">
         <select aria-label={t("クイック対戦地域")} value={region} onChange={e => selectRegion(e.target.value as "asia" | "europe" | "americas")}><option value="" disabled>{t(measuring ? "地域を測定中…" : "地域を選択してください")}</option><option value="asia">{t("アジア")}</option><option value="europe">{t("ヨーロッパ")}</option><option value="americas">{t("アメリカ")}</option></select>
         {serverBase && <PixelButton disabled={busy} aria-expanded={filtersOpen} aria-controls="room-filters" onClick={() => setFiltersOpen(value => !value)}>{t("部屋を探す")}</PixelButton>}
-        <PixelButton className="room-create" disabled={busy} onClick={() => setCreating(true)}>{t("部屋を作る")}</PixelButton>
+        <PixelButton className="room-create" disabled={busy} onClick={() => { setStatus(""); setCreating(true); }}>{t("部屋を作る")}</PixelButton>
       </div>
     </header>
     <div className="room-body"><PixelPanel>
       {serverBase && <PublicRooms initialCode={inviteRoom(location.href) ?? ""} base={serverBase} busy={busy} filtersOpen={filtersOpen} closeFilters={() => setFiltersOpen(false)} join={(roomId, type, locked) => { if (locked) { setPasswordJoin({ roomId, type }); return; } void connect({ type, roomId, ...(type === "room.join" ? { profile: profile() } : {}) }); }} />}
     </PixelPanel></div>
-    <footer>{loadingSteps ? <SceneLoading className="scene-loading-inline" steps={loadingSteps} /> : status && <span role="status">{t(status)}</span>}{!connected && sessionStorage.getItem(tokenKey) && <PixelButton disabled={busy} onClick={() => connect({ type: "room.resume", token: sessionStorage.getItem(tokenKey) })}>{t("再接続")}</PixelButton>}</footer>
+    <footer>{loadingSteps ? <SceneLoading className="scene-loading-inline" steps={loadingSteps} /> : status && !creating && <span role="status">{t(status)}</span>}{!connected && sessionStorage.getItem(tokenKey) && <PixelButton disabled={busy} onClick={() => connect({ type: "room.resume", token: sessionStorage.getItem(tokenKey) })}>{t("再接続")}</PixelButton>}</footer>
   </section>;
 };
