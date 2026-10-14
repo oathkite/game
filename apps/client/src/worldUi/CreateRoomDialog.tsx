@@ -7,8 +7,8 @@ import { readRoomPreferences, saveRoomPreferences } from "./roomPreferences";
 import { PixelButton } from "./PixelUi";
 import { RoomMapField } from "./RoomMapPicker";
 import "./roomFlow.css";
-export const CreateRoomDialog = ({ region, busy, close, create }: {
-  readonly region: CreateRoomOptions["region"]; readonly busy: boolean; readonly close: () => void;
+export const CreateRoomDialog = ({ region, busy, status, close, create }: {
+  readonly region: CreateRoomOptions["region"]; readonly busy: boolean; readonly status: string; readonly close: () => void;
   readonly create: (options: CreateRoomOptions) => void;
 }) => {
   const { t } = useLanguage();
@@ -32,6 +32,8 @@ export const CreateRoomDialog = ({ region, busy, close, create }: {
       </fieldset>
       <label>{t("部屋名（任意）")}<input maxLength={32} value={name} onChange={event => setName(event.target.value)} /></label>
       <label>{t("パスワード（任意）")}<input type="password" autoComplete="new-password" maxLength={64} value={password} onChange={event => setPassword(event.target.value)} /></label>
+      {/* 作れなかった理由はダイアログの中に出す。モーダルの外は inert で読み上げられない（設計書 45.3） */}
+      {status && <p className="room-create-status" role="status">{t(status)}</p>}
       <PixelButton className="room-create" type="submit" disabled={busy}>{t("部屋を作る")}</PixelButton>
     </form>
   </dialog>;
