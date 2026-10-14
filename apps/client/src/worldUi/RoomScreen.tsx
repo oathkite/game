@@ -17,7 +17,7 @@ import { PixelButton, PixelPanel } from "./PixelUi";
 import "./rooms.css";
 import "./lobbyTerminal.css";
 import { inviteRoom } from "./roomInvite";
-import { resolveRoomUrl } from "./roomTransport";
+import { resolveRoomUrl, ROOM_UNREACHABLE_STATUS, roomFailureStatus } from "./roomTransport";
 import { SceneLoading } from "./SceneLoading";
 import { ROOM_CONNECTING_STATUS, roomLoadingSteps } from "./connectionSteps";
 const serverBase = import.meta.env.VITE_ROOM_SERVER_URL || (import.meta.env.PROD ? location.origin : "");
@@ -45,7 +45,7 @@ export const RoomScreen = ({ onExit }: { readonly onExit: () => void; readonly o
     try { url = serverBase
       ? await resolveRoomUrl(initial, serverBase, sessionStorage.getItem(roomKey))
       : `ws://${location.hostname}:8795`; }
-    catch { if (active.current && currentAttempt === attempt.current) { setBusy(false); setStatus("対戦サーバーに接続できません。"); } return; }
+    catch (error) { if (active.current && currentAttempt === attempt.current) { setBusy(false); setStatus(roomFailureStatus(error)); } return; }
     if (!active.current || currentAttempt !== attempt.current) return;
     const invitation = serverBase && ["room.join", "room.spectate"].includes(initial.type) && initial.roomId === inviteRoom(location.href)
       ? new URLSearchParams(new URL(location.href).hash.slice(1)).get("invite") : null;
@@ -73,7 +73,7 @@ export const RoomScreen = ({ onExit }: { readonly onExit: () => void; readonly o
         if (message.reason === "invalid-session") { sessionStorage.removeItem(tokenKey); sessionStorage.removeItem(roomKey); socket.current = null; setRoom(null); setBattle(null); ws.close(); } }
     };
     ws.onclose = () => { if (versionMismatch) return; if (active.current && socket.current === ws) { setBusy(false); setStatus("接続が切れました。再接続で復帰できます（60秒以内）。"); } };
-    ws.onerror = () => { if (active.current && socket.current === ws) { setBusy(false); setStatus("対戦サーバーに接続できません。"); } };
+    ws.onerror = () => { if (active.current && socket.current === ws) { setBusy(false); setStatus(ROOM_UNREACHABLE_STATUS); } };
   };
   useEffect(() => { active.current = true; const token = sessionStorage.getItem(tokenKey); if (token && (!inviteRoom(location.href) || sessionStorage.getItem(roomKey) === inviteRoom(location.href))) connect({ type: "room.resume", token });
     return () => { active.current = false; attempt.current++; socket.current?.close(); }; }, []);

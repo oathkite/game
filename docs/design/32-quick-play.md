@@ -28,6 +28,7 @@ Directoryの一覧更新失敗が既存の招待・再接続を妨げない。
 - モード・地域はstrict schemaで検証。POST bodyは512 bytesまで読む。
 - 匿名の割当APIはCF-Connecting-IPをキーとし、120回/60秒のRate Limitを適用する。
 - 共有IPの利用者も同じ枠になるため、公開前の負荷・実利用計測でこの閾値を確認する。
+- clientは割当APIの400（`invalid mode`、`invalid room settings`）を「対戦の設定を受け付けられませんでした」、429を「しばらく待ってから再試行」と出し、それ以外の失敗（届かない、5xx、不正な応答）だけを「対戦サーバーに接続できません」とする（`apps/client/src/worldUi/roomTransport.ts`）。Retry-Afterの秒数は文言に入れない。
 - binding namespace_id=2026091001は、公開先アカウントで既存用途と重複しないことをリリース時に確認する。
 - [Rate Limiting API](https://developers.cloudflare.com/workers/runtime-apis/bindings/rate-limit/)はlocation単位であり、厳密な課金上限には使用しない。
 
