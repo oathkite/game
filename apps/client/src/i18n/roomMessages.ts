@@ -53,6 +53,8 @@ export const roomEnglish: Readonly<Record<string, string>> = {
   "再接続": "Reconnect", "準備を解除": "Not ready", "対戦開始": "Start battle",
   "招待リンクの部屋コードが無効です。": "This invitation has an invalid room code.", "接続しています…": "Connecting…",
   "対戦サーバーに接続できません。": "Cannot connect to the battle server.",
+  "対戦の設定を受け付けられませんでした。設定を変えるか、再読み込みしてから再試行してください。": "The battle settings were not accepted. Change them or reload the page, then try again.",
+  "部屋の割り当てが続いたため、一時的に受け付けを止めています。しばらく待ってから再試行してください。": "Too many room requests. Please wait a moment and try again.",
   "接続が切れました。再接続で復帰できます（60秒以内）。": "Disconnected. Reconnect within 60 seconds to return.",
   "ゲームの更新が必要です。再読み込みしてください。": "A game update is required. Reload this page.",
   "この部屋は別の対戦形式です。クイック参加から入り直してください。": "This room uses another mode. Try Quick play again.",

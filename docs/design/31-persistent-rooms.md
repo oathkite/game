@@ -9,7 +9,7 @@
 各RoomObjectはSQLiteにsnapshotと次alarmを同一transactionで保存する。
 RoomDirectoryは公開summaryのみを保持し、token/入力/地形計算を持たない。コードの再利用による過去のRoomObjectへの誤接続を防ぐため割当済みコードを保持する。
 
-- `POST /v2/rooms`: 部屋コードを割り当てる。
+- `POST /v2/rooms`: 部屋コードを割り当てる。設定が不正なら400、割当のRate Limit（32章）を超えたら429（Retry-After: 60）。clientはこの2つを接続失敗と分けて表示する（32章「入力と運用」）。
 - `GET /v2/rooms`: 最大100件の公開summary。
 - `GET /v2/rooms/:id`: WebSocket接続。作成者はroom.create、参加者はroom.join、復帰者はroom.resumeを送る。
 - OriginはALLOWED_ORIGINSの完全一致。公開ドメインはリリース時に確定して設定する。
