@@ -1,4 +1,4 @@
-import { MULTIPLAYER_MAPS } from "@game/maps";
+import { roomMapChoiceAllowed } from "./roomMapChoice.js";
 import { directoryKey, directoryLocation, directoryRegions, directoryModes, mergeRoomPages } from "./directoryPartitions.js";
 import { readSmallJson } from "../rooms/readSmallJson.js";
 import { quickRequestSchema, roomPageCursorSchema, roomListFilterSchema, createRoomOptionsSchema } from "@game/protocol/v2-rooms";
@@ -26,7 +26,7 @@ export default {
     }
     if (url.pathname === "/v2/rooms" && request.method === "POST") {
       const input = createRoomOptionsSchema.safeParse(request.body ? await readSmallJson(request) : {});
-      if (!input.success || !MULTIPLAYER_MAPS.some(map => map.id === input.data.mapId)) return new Response("invalid room settings", { status: 400, headers });
+      if (!input.success || !roomMapChoiceAllowed(input.data.mapId)) return new Response("invalid room settings", { status: 400, headers });
       const options = input.data;
       const roomId = await env.DIRECTORY.getByName(directoryKey(options.region, "custom"), { locationHint: directoryLocation(options.region) }).allocate("custom", options.region);
       await env.ROOMS.getByName(roomId, { locationHint: directoryLocation(options.region) }).initialize(roomId, "custom", options.region, options);
